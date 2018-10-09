@@ -19,7 +19,7 @@ $ npm install -g architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-architect/0.1.0 darwin-x64 node-v9.5.0
+architect/0.1.0 darwin-x64 node-v8.9.4
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -30,6 +30,7 @@ USAGE
 <!-- commands -->
 * [`architect hello [FILE]`](#architect-hello-file)
 * [`architect help [COMMAND]`](#architect-help-command)
+* [`architect init [FILE]`](#architect-init-file)
 
 ## `architect hello [FILE]`
 
@@ -67,4 +68,20 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.2/src/commands/help.ts)_
+
+## `architect init [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect init [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/init.ts)_
 <!-- commandsstop -->
