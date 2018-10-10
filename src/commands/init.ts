@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 import * as path from 'path';
 
+import {INIT_INTRO_TEXT} from '../common/i18n';
 import ManagedFiles from '../common/managed-files';
 import ServiceConfig from '../common/service-config';
 import {SemvarValidator} from '../common/validation-utils';
@@ -21,6 +22,10 @@ export default class Init extends Command {
       char: 'n',
       default: Init.getDefaultServiceName(),
     }),
+    description: flags.string({
+      char: 'd',
+      default: '',
+    }),
     version: flags.string({
       char: 'v',
       default: '0.1.0'
@@ -36,6 +41,11 @@ export default class Init extends Command {
       char: 'l',
       default: 'MIT'
     }),
+    output: flags.string({
+      char: 'o',
+      description: 'Directory to write file to',
+      hidden: true,
+    })
   };
 
   static args = [];
@@ -50,7 +60,7 @@ export default class Init extends Command {
   }
 
   async run() {
-    this.printIntro();
+    this.log(_info(INIT_INTRO_TEXT));
     const answers: any = await this.promptOptions();
 
     let config = (new ServiceConfig())
@@ -62,7 +72,8 @@ export default class Init extends Command {
       .setLicense(answers.license);
 
     try {
-      const savePath = path.join(process.cwd(), ManagedFiles.ARCHITECT_JSON);
+      const {flags} = this.parse(Init);
+      const savePath = path.join(flags.output || process.cwd(), ManagedFiles.ARCHITECT_JSON);
       const configJSON = JSON.stringify(config, null, 2);
       fs.writeFileSync(savePath, configJSON);
       this.log(_success(`${ManagedFiles.ARCHITECT_JSON} created successfully`));
@@ -73,16 +84,6 @@ export default class Init extends Command {
     }
 
     this.exit();
-  }
-
-  printIntro() {
-    this.log(_info(
-      'This utility will walk you through creating an architect.json file.\n' +
-      'Use `architect install <service_name>` afterwards to install a service and\n' +
-      'save it as a requirement in the architect.json file.\n' +
-      '\n' +
-      'Press ^C at any time to quit.'
-    ));
   }
 
   async promptOptions() {
@@ -105,7 +106,8 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'description',
-      message: 'description:'
+      message: 'description:',
+      default: flags.description,
     }, {
       type: 'input',
       name: 'keywords',

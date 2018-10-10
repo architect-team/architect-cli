@@ -1,14 +1,18 @@
 import {expect, test} from '@oclif/test';
 import * as inquirer from 'inquirer';
+import * as os from 'os';
 import * as sinon from 'sinon';
 
+import {INIT_INTRO_TEXT} from '../../src/common/i18n';
+import ServiceConfig from '../../src/common/service-config';
+
 interface InitInput {
-  name?: string;
-  version?: string;
-  description?: string;
-  keywords?: string[];
-  author?: string[];
-  license?: string;
+  name: string;
+  version: string;
+  description: string;
+  keywords: string[];
+  author: string;
+  license: string;
 }
 
 const MOCK_SERVICE_CONFIG: InitInput = {
@@ -16,14 +20,17 @@ const MOCK_SERVICE_CONFIG: InitInput = {
   version: '0.1.0',
   description: 'Test description',
   keywords: ['test', 'this'],
-  author: ['Architect'],
+  author: 'Architect',
   license: 'MIT'
 };
 
 describe('init', () => {
+  let _sinon: sinon.SinonSandbox;
+
   beforeEach(() => {
-    sinon.stub(inquirer, 'prompt')
-      .resolves((questions: inquirer.Question[]) => {
+    _sinon = sinon.createSandbox();
+    _sinon.stub(inquirer, 'prompt')
+      .callsFake(function (questions: inquirer.Question[]) {
         let mock_config: InitInput = MOCK_SERVICE_CONFIG;
 
         questions.forEach((question: inquirer.Question) => {
@@ -43,23 +50,62 @@ describe('init', () => {
 
   afterEach(() => {
     // @ts-ignore
-    inquirer.prompt.restore();
+    _sinon.restore();
   });
 
-
-  // START TESTS
   test
     .stdout()
-    .command(['init'])
-    .it('should match default', ctx => {
-      // Check filesystem for config file
-      expect(ctx.stdout).to.contain('hello world');
+    .command(['init', '--output', os.tmpdir()])
+    .exit(0)
+    .it('should match default values', ctx => {
+      const config = new ServiceConfig()
+        .setName(MOCK_SERVICE_CONFIG.name)
+        .setDescription(MOCK_SERVICE_CONFIG.description)
+        .setVersion(MOCK_SERVICE_CONFIG.version)
+        .setKeywords(MOCK_SERVICE_CONFIG.keywords)
+        .setLicense(MOCK_SERVICE_CONFIG.license)
+        .setAuthor(MOCK_SERVICE_CONFIG.author);
+      expect(ctx.stdout).to.contain(INIT_INTRO_TEXT);
+      expect(ctx.stdout).to.contain(JSON.stringify(config, null, 2));
     });
 
   test
     .stdout()
-    .command(['init', '--name', 'jeff'])
-    .it('runs hello --name jeff', ctx => {
-      expect(ctx.stdout).to.contain('hello jeff');
+    .command(['init', '--name', 'test', '--output', os.tmpdir()])
+    .exit(0)
+    .it('should match provided name', ctx => {
+      const config = new ServiceConfig()
+        .setName('test')
+        .setDescription(MOCK_SERVICE_CONFIG.description)
+        .setVersion(MOCK_SERVICE_CONFIG.version)
+        .setKeywords(MOCK_SERVICE_CONFIG.keywords)
+        .setLicense(MOCK_SERVICE_CONFIG.license)
+        .setAuthor(MOCK_SERVICE_CONFIG.author);
+      expect(ctx.stdout).to.contain(INIT_INTRO_TEXT);
+      expect(ctx.stdout).to.contain(JSON.stringify(config, null, 2));
+    });
+
+  test
+    .stdout()
+    .command([
+      'init',
+      '--description', 'test',
+      '--version', '1.2.3',
+      '--keywords', 'test,this',
+      '--author', 'Architect',
+      '--license', 'Apache',
+      '--output', os.tmpdir()
+    ])
+    .exit(0)
+    .it('should match all other fields', ctx => {
+      const config = new ServiceConfig()
+        .setName(MOCK_SERVICE_CONFIG.name)
+        .setDescription('test')
+        .setVersion('1.2.3')
+        .setKeywords(['test', 'this'])
+        .setLicense('Apache')
+        .setAuthor('Architect');
+      expect(ctx.stdout).to.contain(INIT_INTRO_TEXT);
+      expect(ctx.stdout).to.contain(JSON.stringify(config, null, 2));
     });
 });
