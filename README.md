@@ -19,7 +19,7 @@ $ npm install -g architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-architect/0.1.0 darwin-x64 node-v8.9.4
+architect/0.1.0 darwin-x64 node-v9.5.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -28,29 +28,9 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`architect hello [FILE]`](#architect-hello-file)
 * [`architect help [COMMAND]`](#architect-help-command)
-* [`architect init [FILE]`](#architect-init-file)
-
-## `architect hello [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ architect hello [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-
-EXAMPLE
-  $ architect hello
-  hello world from ./src/hello.ts!
-```
-
-_See code: [src/commands/hello.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/hello.ts)_
+* [`architect init`](#architect-init)
+* [`architect install [FILE]`](#architect-install-file)
 
 ## `architect help [COMMAND]`
 
@@ -69,13 +49,33 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.2/src/commands/help.ts)_
 
-## `architect init [FILE]`
+## `architect init`
+
+Create an architect.json file for a service
+
+```
+USAGE
+  $ architect init
+
+OPTIONS
+  -a, --author=author
+  -d, --description=description
+  -h, --help                     show CLI help
+  -k, --keywords=keywords
+  -l, --license=license          [default: MIT]
+  -n, --name=name                [default: architect-cli]
+  -v, --version=version          [default: 0.1.0]
+```
+
+_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/init.ts)_
+
+## `architect install [FILE]`
 
 describe the command here
 
 ```
 USAGE
-  $ architect init [FILE]
+  $ architect install [FILE]
 
 OPTIONS
   -f, --force
@@ -83,5 +83,5 @@ OPTIONS
   -n, --name=name  name to print
 ```
 
-_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/init.ts)_
+_See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/install.ts)_
 <!-- commandsstop -->
