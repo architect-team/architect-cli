@@ -1,6 +1,6 @@
-enum SUPPORTED_LANGUAGE {
+enum SUPPORTED_LANGUAGES {
   JAVASCRIPT = 'javascript',
   PYTHON = 'python'
 }
 
-export default SUPPORTED_LANGUAGE;
+export default SUPPORTED_LANGUAGES;

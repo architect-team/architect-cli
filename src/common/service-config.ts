@@ -1,9 +1,18 @@
-import SUPPORTED_LANGUAGE from './supported-languages';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import MANAGED_PATHS from './managed-paths';
+import SUPPORTED_LANGUAGES from './supported-languages';
 import {SemvarValidator} from './validation-utils';
 
 export default class ServiceConfig {
-  static loadFromFile(filepath: string) {
-    const configJSON = require(filepath);
+  static loadFromPath(filepath: string): ServiceConfig {
+    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    if (!fs.existsSync(config_path)) {
+      throw new MissingConfigFileError(config_path);
+    }
+
+    const configJSON = require(config_path);
     return (new ServiceConfig())
       .setName(configJSON.name)
       .setVersion(configJSON.version)
@@ -17,16 +26,24 @@ export default class ServiceConfig {
       .setLanguage(configJSON.language);
   }
 
+  static loadForDependency(dependency_identifier: string): ServiceConfig {
+    if (dependency_identifier.indexOf('file:') === 0) {
+      return this.loadFromPath(path.resolve(dependency_identifier.slice(5)));
+    }
+
+    throw new UnsupportedDependencyIdentifierError(dependency_identifier);
+  }
+
   name: string;
   version: string;
   description: string;
   keywords: string[];
   author: string;
   license: string;
-  dependencies: object;
+  dependencies: {[s: string]: string};
   proto?: string;
   main: string;
-  language: SUPPORTED_LANGUAGE;
+  language: SUPPORTED_LANGUAGES;
 
   constructor() {
     this.name = '';
@@ -38,7 +55,7 @@ export default class ServiceConfig {
     this.dependencies = {};
     this.proto = undefined;
     this.main = 'index.js';
-    this.language = SUPPORTED_LANGUAGE.JAVASCRIPT;
+    this.language = SUPPORTED_LANGUAGES.JAVASCRIPT;
   }
 
   setName(name: string) {
@@ -77,7 +94,7 @@ export default class ServiceConfig {
     return this;
   }
 
-  setDependencies(dependencies: object) {
+  setDependencies(dependencies: {[s: string]: string}) {
     this.dependencies = dependencies;
     return this;
   }
@@ -92,8 +109,28 @@ export default class ServiceConfig {
     return this;
   }
 
-  setLanguage(language: SUPPORTED_LANGUAGE) {
+  setLanguage(language: SUPPORTED_LANGUAGES) {
     this.language = language;
     return this;
+  }
+}
+
+export class UnsupportedDependencyIdentifierError implements TypeError {
+  name: string;
+  message: string;
+
+  constructor(identifier: string) {
+    this.name = 'unsupported_dependency_identifier';
+    this.message = `Unsupported dependency identifier format: ${identifier}`;
+  }
+}
+
+export class MissingConfigFileError implements Error {
+  name: string;
+  message: string;
+
+  constructor(filepath: string) {
+    this.name = 'missing_config_file';
+    this.message = `No config file found at ${filepath}`;
   }
 }

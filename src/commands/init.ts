@@ -5,7 +5,7 @@ import * as inquirer from 'inquirer';
 import * as path from 'path';
 
 import {INIT_INTRO_TEXT} from '../common/i18n';
-import ManagedFiles from '../common/managed-files';
+import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 import {SemvarValidator} from '../common/validation-utils';
 
@@ -14,7 +14,7 @@ const _success = chalk.green;
 const _error = chalk.red;
 
 export default class Init extends Command {
-  static description = `Create an ${ManagedFiles.ARCHITECT_JSON} file for a service`;
+  static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 
   static flags = {
     help: flags.help({char: 'h'}),
@@ -73,13 +73,13 @@ export default class Init extends Command {
 
     try {
       const {flags} = this.parse(Init);
-      const savePath = path.join(flags.output || process.cwd(), ManagedFiles.ARCHITECT_JSON);
+      const savePath = path.join(flags.output || process.cwd(), MANAGED_PATHS.ARCHITECT_JSON);
       const configJSON = JSON.stringify(config, null, 2);
       fs.writeFileSync(savePath, configJSON);
-      this.log(_success(`${ManagedFiles.ARCHITECT_JSON} created successfully`));
+      this.log(_success(`${MANAGED_PATHS.ARCHITECT_JSON} created successfully`));
       this.log(_success(configJSON));
     } catch (error) {
-      this.error(_error(`Error creating ${ManagedFiles.ARCHITECT_JSON} file`));
+      this.error(_error(`Error creating ${MANAGED_PATHS.ARCHITECT_JSON} file`));
       this.error(_error(error));
     }
 

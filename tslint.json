@@ -1,6 +1,7 @@
 {
   "extends": "@oclif/tslint",
   "rules": {
-    "semicolon": [true, "always"]
+    "semicolon": [true, "always"],
+    "ter-indent": [false]
   }
 }
