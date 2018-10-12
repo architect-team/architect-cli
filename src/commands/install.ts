@@ -29,7 +29,11 @@ export default class Install extends Command {
   }
 
   async run() {
-    this.installServiceDependencies(process.cwd());
+    try {
+      this.installServiceDependencies(process.cwd());
+    } catch (error) {
+      this.error(error.message);
+    }
   }
 
   installServiceDependencies(service_path: string) {
@@ -58,6 +62,7 @@ export default class Install extends Command {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
     }
 
+    this.log(`Generating stubs for ${dependency_config.name}`);
     const stub_directory = path.join(target_path, dependency_config.name);
     if (!existsSync(stub_directory)) {
       mkdirSync(stub_directory);
