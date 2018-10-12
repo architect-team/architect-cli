@@ -6,13 +6,17 @@ import SUPPORTED_LANGUAGES from './supported-languages';
 import {SemvarValidator} from './validation-utils';
 
 export default class ServiceConfig {
+  static _require(path: string) {
+    return require(path);
+  }
+
   static loadFromPath(filepath: string): ServiceConfig {
     const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
     if (!fs.existsSync(config_path)) {
-      throw new MissingConfigFileError(config_path);
+      throw new MissingConfigFileError(filepath);
     }
 
-    const configJSON = require(config_path);
+    const configJSON = ServiceConfig._require(config_path);
     return (new ServiceConfig())
       .setName(configJSON.name)
       .setVersion(configJSON.version)
@@ -24,14 +28,6 @@ export default class ServiceConfig {
       .setProto(configJSON.proto)
       .setMainFile(configJSON.main)
       .setLanguage(configJSON.language);
-  }
-
-  static loadForDependency(dependency_identifier: string): ServiceConfig {
-    if (dependency_identifier.indexOf('file:') === 0) {
-      return this.loadFromPath(path.resolve(dependency_identifier.slice(5)));
-    }
-
-    throw new UnsupportedDependencyIdentifierError(dependency_identifier);
   }
 
   name: string;

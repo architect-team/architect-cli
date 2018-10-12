@@ -19,7 +19,7 @@ $ npm install -g architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-architect/0.1.0 darwin-x64 node-v9.5.0
+architect/0.1.0 darwin-x64 node-v8.9.4
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -28,9 +28,26 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
+* [`architect debug [FILE]`](#architect-debug-file)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init`](#architect-init)
-* [`architect install [FILE]`](#architect-install-file)
+* [`architect install`](#architect-install)
+
+## `architect debug [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect debug [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/debug.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/debug.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -69,18 +86,17 @@ OPTIONS
 
 _See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/init.ts)_
 
-## `architect install [FILE]`
+## `architect install`
 
-describe the command here
+Install dependencies of the current service
 
 ```
 USAGE
-  $ architect install [FILE]
+  $ architect install
 
 OPTIONS
-  -f, --force
   -h, --help       show CLI help
-  -n, --name=name  name to print
+  -r, --recursive  Generate architect dependency files for all services in the dependency tree.
 ```
 
 _See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/install.ts)_
