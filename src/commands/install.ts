@@ -4,7 +4,7 @@ import {existsSync, mkdirSync} from 'fs';
 import * as path from 'path';
 
 import MANAGED_PATHS from '../common/managed-paths';
-import ServiceConfig, {UnsupportedDependencyIdentifierError} from '../common/service-config'
+import ServiceConfig from '../common/service-config';
 import SUPPORTED_LANGUAGES from '../common/supported-languages';
 
 export default class Install extends Command {
@@ -19,14 +19,6 @@ export default class Install extends Command {
   };
 
   static args = [];
-
-  static parsePathFromDependencyIdentifier(dependency_identifier: string) {
-    if (dependency_identifier.indexOf('file:') === 0) {
-      return path.resolve(dependency_identifier.slice(5));
-    }
-
-    throw new UnsupportedDependencyIdentifierError(dependency_identifier);
-  }
 
   async run() {
     try {
@@ -50,7 +42,7 @@ export default class Install extends Command {
     Object.keys(service_config.dependencies).forEach((dependency_name: string) => {
       if (service_config.dependencies.hasOwnProperty(dependency_name)) {
         const dependency_identifier = service_config.dependencies[dependency_name];
-        const dependency_path = Install.parsePathFromDependencyIdentifier(dependency_identifier);
+        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier);
         this.installDependency(dependency_path, stubs_directory, service_config.language);
       }
     });

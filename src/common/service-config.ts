@@ -5,9 +5,15 @@ import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import {SemvarValidator} from './validation-utils';
 
+const _require = (path: string) => require(path);
+
 export default class ServiceConfig {
-  static _require(path: string) {
-    return require(path);
+  static parsePathFromDependencyIdentifier(dependency_identifier: string) {
+    if (dependency_identifier.indexOf('file:') === 0) {
+      return path.resolve(dependency_identifier.slice(5));
+    }
+
+    throw new UnsupportedDependencyIdentifierError(dependency_identifier);
   }
 
   static loadFromPath(filepath: string): ServiceConfig {
@@ -16,7 +22,7 @@ export default class ServiceConfig {
       throw new MissingConfigFileError(filepath);
     }
 
-    const configJSON = ServiceConfig._require(config_path);
+    const configJSON = _require(config_path);
     return (new ServiceConfig())
       .setName(configJSON.name)
       .setVersion(configJSON.version)
@@ -111,16 +117,6 @@ export default class ServiceConfig {
   }
 }
 
-export class UnsupportedDependencyIdentifierError implements TypeError {
-  name: string;
-  message: string;
-
-  constructor(identifier: string) {
-    this.name = 'unsupported_dependency_identifier';
-    this.message = `Unsupported dependency identifier format: ${identifier}`;
-  }
-}
-
 export class MissingConfigFileError implements Error {
   name: string;
   message: string;
@@ -128,5 +124,15 @@ export class MissingConfigFileError implements Error {
   constructor(filepath: string) {
     this.name = 'missing_config_file';
     this.message = `No config file found at ${filepath}`;
+  }
+}
+
+export class UnsupportedDependencyIdentifierError implements TypeError {
+  name: string;
+  message: string;
+
+  constructor(identifier: string) {
+    this.name = 'unsupported_dependency_identifier';
+    this.message = `Unsupported dependency identifier format: ${identifier}`;
   }
 }
