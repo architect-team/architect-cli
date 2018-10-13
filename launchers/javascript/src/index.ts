@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command';
 import * as fs from 'fs';
-import grpc from 'grpc';
+import * as grpc from 'grpc';
 import * as path from 'path';
 
 import DeploymentConfig from './deployment-config';
@@ -9,7 +9,7 @@ import ServiceConfig from './service-config';
 
 const _removeFileExt = (filename: string): string => filename.slice(0, filename.lastIndexOf('.'));
 
-export default class ArchitectJavascriptLauncher extends Command {
+class ArchitectJavascriptLauncher extends Command {
   static description = 'Launches instances of architect services written in javascript';
 
   static flags = {
@@ -142,3 +142,5 @@ class DependencyInstallError extends Error {
     super(`${dependency_name} has not been installed properly for ${service_name}. Try re-running the install command.`);
   }
 }
+
+export = ArchitectJavascriptLauncher;

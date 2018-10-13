@@ -5,9 +5,11 @@ import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import {SemvarValidator} from './validation-utils';
 
-const _require = (path: string) => require(path);
-
 export default class ServiceConfig {
+  static _require(path: string) {
+    return require(path);
+  }
+
   static parsePathFromDependencyIdentifier(dependency_identifier: string) {
     if (dependency_identifier.indexOf('file:') === 0) {
       return path.resolve(dependency_identifier.slice(5));
@@ -22,7 +24,7 @@ export default class ServiceConfig {
       throw new MissingConfigFileError(filepath);
     }
 
-    const configJSON = _require(config_path);
+    const configJSON = ServiceConfig._require(config_path);
     return (new ServiceConfig())
       .setName(configJSON.name)
       .setVersion(configJSON.version)
