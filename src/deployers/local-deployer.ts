@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 
-import IDeployer from './ideployer';
 import ServiceConfig from '../common/service-config';
+
+import IDeployer from './ideployer';
 
 export default class LocalDeployer implements IDeployer {
   service_config: ServiceConfig;

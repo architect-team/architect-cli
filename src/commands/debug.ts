@@ -5,7 +5,7 @@ import * as net from 'net';
 import * as os from 'os';
 import * as path from 'path';
 
-import DeploymentConfig from '../common/deployment-config';
+import DeploymentConfig, {ServiceEnvironment} from '../common/deployment-config';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 
@@ -68,7 +68,7 @@ export default class Debug extends Command {
 
       let deployment_config = Debug.loadDeploymentConfig(config_path);
       deployment_config = await this.startService(service_path, deployment_config);
-      Debug.saveDeploymentConfig(config_path, deployment_config);
+      // Debug.saveDeploymentConfig(config_path, deployment_config);
 
       this.log(JSON.stringify(deployment_config, null, 2));
       this.exit();
@@ -95,6 +95,15 @@ export default class Debug extends Command {
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
+    deployment_config[service_config.name] = await this.executeLauncher(service_path, service_config);
     return deployment_config;
+  }
+
+  async executeLauncher(service_path: string, service_config: ServiceConfig): Promise<ServiceEnvironment> {
+    const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
+    return {
+      host: cmd_path,
+      port: 1234
+    };
   }
 }
