@@ -1,13 +1,20 @@
 import {Command, flags} from '@oclif/command';
 import * as fs from 'fs';
 import * as grpc from 'grpc';
+import * as os from 'os';
 import * as path from 'path';
 
 import DeploymentConfig from './deployment-config';
 import MANAGED_PATHS from './managed-paths';
 import ServiceConfig from './service-config';
 
-const _removeFileExt = (filename: string): string => filename.slice(0, filename.lastIndexOf('.'));
+const _removeFileExt = (filename: string): string =>
+  filename.slice(0, filename.lastIndexOf('.'));
+
+const _expandPath = (file: string): string =>
+  file.indexOf('~') === 0 ?
+    path.join(os.homedir(), file.substr(1)) :
+    path.resolve(file);
 
 class ArchitectJavascriptLauncher extends Command {
   static description = 'Launches instances of architect services written in javascript';
@@ -20,11 +27,13 @@ class ArchitectJavascriptLauncher extends Command {
       char: 's',
       description: 'Local path of the service to launch',
       required: true,
+      parse: _expandPath
     }),
     config_path: flags.string({
       char: 'c',
       description: 'Local path of the configuration file containing dependency details',
       required: true,
+      parse: _expandPath
     }),
     target_port: flags.integer({
       char: 'p',

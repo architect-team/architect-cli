@@ -22,13 +22,13 @@ export default class Install extends Command {
 
   async run() {
     try {
-      this.installServiceDependencies(process.cwd());
+      this.installDependencies(process.cwd());
     } catch (error) {
       this.error(error.message);
     }
   }
 
-  installServiceDependencies(service_path: string) {
+  installDependencies(service_path: string) {
     const service_config = ServiceConfig.loadFromPath(service_path);
     this.log(`Installing dependencies for ${service_config.name}`);
 
@@ -46,6 +46,8 @@ export default class Install extends Command {
         this.installDependency(dependency_path, stubs_directory, service_config.language);
       }
     });
+
+    this.installDependency(service_path, stubs_directory, service_config.language);
   }
 
   installDependency(dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES) {
@@ -88,7 +90,7 @@ export default class Install extends Command {
 
     const {flags} = this.parse(Install);
     if (flags.recursive) {
-      this.installServiceDependencies(dependency_path);
+      this.installDependencies(dependency_path);
     }
   }
 }
