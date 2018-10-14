@@ -84,7 +84,10 @@ class ArchitectJavascriptLauncher extends Command {
     dependencies: string[]
   ): DependencyStubs[] {
     return dependencies.map((dependency_name: string) => {
-      if (!deployment_config.hasOwnProperty(dependency_name)) {
+      if (
+        dependency_name !== service_config.name &&
+        !deployment_config.hasOwnProperty(dependency_name)
+      ) {
         throw new DependencyInitializationError(dependency_name, service_config.name);
       }
 
