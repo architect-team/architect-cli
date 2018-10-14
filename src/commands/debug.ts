@@ -103,7 +103,8 @@ export default class Debug extends Command {
     const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
     return {
       host: cmd_path,
-      port: 1234
+      port: 1234,
+      service_path,
     };
   }
 }

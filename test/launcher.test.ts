@@ -71,7 +71,7 @@ describe('launchers', () => {
 
         setTimeout(() => {
           cmd.kill();
-        }, 1000);
+        }, 2000);
       });
     });
   });
