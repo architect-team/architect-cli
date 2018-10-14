@@ -47,7 +47,9 @@ export default class Install extends Command {
       }
     });
 
-    this.installDependency(service_path, stubs_directory, service_config.language);
+    if (service_config.proto) {
+      this.installDependency(service_path, stubs_directory, service_config.language);
+    }
   }
 
   installDependency(dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES) {

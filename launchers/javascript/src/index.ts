@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as grpc from 'grpc';
 import * as os from 'os';
 import * as path from 'path';
+import * as proxyquire from 'proxyquire';
 
 import DeploymentConfig from './deployment-config';
 import MANAGED_PATHS from './managed-paths';
@@ -43,6 +44,7 @@ class ArchitectJavascriptLauncher extends Command {
   };
 
   async run() {
+    proxyquire.noCallThru();
     const {flags} = this.parse(ArchitectJavascriptLauncher);
     if (!fs.existsSync(flags.config_path)) {
       throw new TypeError(`Invalid config path: ${flags.config_path}`);
@@ -59,6 +61,12 @@ class ArchitectJavascriptLauncher extends Command {
       throw new MainFileError(module_path, service_config.name);
     }
 
+    deployment_config[service_config.name] = {
+      host: '0.0.0.0',
+      port: target_port,
+      service_path,
+    };
+
     const module = require(module_path);
     let module_args: DependencyStubs[] = [];
     if (module.hasOwnProperty('dependencies')) {
@@ -71,18 +79,20 @@ class ArchitectJavascriptLauncher extends Command {
       if (!fs.existsSync(service_stubs_path)) {
         throw new DependencyInstallError(service_config.name, service_config.name);
       }
-      const grpc_service_details = require(path.join(service_stubs_path, `${proto_filename}_grpc_pb.js`));
+      const grpc_service_details = proxyquire(path.join(service_stubs_path, `${proto_filename}_grpc_pb.js`), {grpc});
       const service_init = grpc_service_details.SnappiService;
 
       let server = new grpc.Server();
-      server.addService(service_init, module(...module_args));
+      server.addService(service_init, new module(...module_args));
       server.bind(`0.0.0.0:${target_port}`, grpc.ServerCredentials.createInsecure());
       server.start();
-      this.log(`${service_config.name} running on port: ${target_port}`);
-      this.exit();
+      this.log('Host: 0.0.0.0');
+      this.log(`Port: ${target_port}`);
+      proxyquire.callThru();
     } else {
       delete deployment_config[service_config.name];
       module(...module_args);
+      proxyquire.callThru();
     }
   }
 
@@ -105,7 +115,7 @@ class ArchitectJavascriptLauncher extends Command {
         throw new DependencyInstallError(dependency_name, service_config.name);
       }
 
-      const dependency_environment = deployment_config[dependency_name];
+      let dependency_environment = deployment_config[dependency_name];
 
       let dependency_config = service_config;
       if (dependency_name !== service_config.name) {
@@ -114,8 +124,8 @@ class ArchitectJavascriptLauncher extends Command {
 
       if (dependency_config.proto) {
         const proto_filename = _removeFileExt(dependency_config.proto);
-        const {SnappiClient} = require(path.join(dependency_stubs_path, `${proto_filename}_grpc_pb.js`));
-        const rpc_messages = require(path.join(dependency_stubs_path, `${proto_filename}_pb.js`));
+        const {SnappiClient} = proxyquire(path.join(dependency_stubs_path, `${proto_filename}_grpc_pb.js`), {grpc});
+        const rpc_messages = proxyquire(path.join(dependency_stubs_path, `${proto_filename}_pb.js`), {grpc});
         const client = new SnappiClient(
           `${dependency_environment.host}:${dependency_environment.port}`,
           grpc.credentials.createInsecure()

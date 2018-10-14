@@ -1,5 +1,10 @@
 {
   "extends": "@oclif/tslint",
+  "linterOptions": {
+    "exclude": [
+      "third_party/**/*"
+    ]
+  },
   "rules": {
     "semicolon": [true, "always"],
     "ter-indent": [false]

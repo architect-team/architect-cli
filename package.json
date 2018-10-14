@@ -12,6 +12,7 @@
     "@oclif/config": "^1.8.6",
     "@oclif/plugin-help": "^2.1.2",
     "chalk": "^2.4.1",
+    "grpc": "1.15.1",
     "inquirer": "^6.2.0",
     "tslib": "^1.9.3"
   },
