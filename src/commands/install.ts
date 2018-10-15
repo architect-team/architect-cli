@@ -29,6 +29,7 @@ export default class Install extends Command {
   }
 
   installDependencies(service_path: string) {
+    const {flags} = this.parse(Install);
     const service_config = ServiceConfig.loadFromPath(service_path);
     this.log(`Installing dependencies for ${service_config.name}`);
 
@@ -44,6 +45,9 @@ export default class Install extends Command {
         const dependency_identifier = service_config.dependencies[dependency_name];
         const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier);
         this.installDependency(dependency_path, stubs_directory, service_config.language);
+        if (flags.recursive) {
+          this.installDependencies(dependency_path);
+        }
       }
     });
 
@@ -89,10 +93,5 @@ export default class Install extends Command {
 
     const grpc_options_string = grpc_options.map(pair => `--${pair.join('=')}`).join(' ');
     execSync(`protoc ${grpc_options_string} ${proto_path}`);
-
-    const {flags} = this.parse(Install);
-    if (flags.recursive) {
-      this.installDependencies(dependency_path);
-    }
   }
 }

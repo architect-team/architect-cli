@@ -47,7 +47,7 @@ OPTIONS
   -n, --name=name  name to print
 ```
 
-_See code: [src/commands/debug.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/debug.ts)_
+_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/debug.ts)_
 
 ## `architect help [COMMAND]`
 

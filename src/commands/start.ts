@@ -12,7 +12,7 @@ import ServiceConfig from '../common/service-config';
 
 const AVAILABLE_PORTS = ['50051', '50052', '50053', '50054', '50055'];
 
-export default class Debug extends Command {
+export default class Start extends Command {
   static description = 'Start the service locally';
 
   static flags = {
@@ -43,7 +43,7 @@ export default class Debug extends Command {
       return require(config_path);
     } else {
       const config = {};
-      Debug.saveDeploymentConfig(config_path, config);
+      Start.saveDeploymentConfig(config_path, config);
       return config;
     }
   }
@@ -67,7 +67,7 @@ export default class Debug extends Command {
     let port;
 
     for (let p of AVAILABLE_PORTS) {
-      const isAvailable = await Debug.isPortAvailable(p);
+      const isAvailable = await Start.isPortAvailable(p);
       if (isAvailable) {
         port = p;
         break;
@@ -80,14 +80,14 @@ export default class Debug extends Command {
 
   async run() {
     try {
-      const {flags} = this.parse(Debug);
+      const {flags} = this.parse(Start);
 
       const service_path = process.cwd();
       const service_config = ServiceConfig.loadFromPath(service_path);
 
       let config_path = flags.config_path;
       if (!config_path || !fs.existsSync(config_path)) {
-        config_path = Debug.buildDeploymentConfigPath(service_config);
+        config_path = Start.buildDeploymentConfigPath(service_config);
       }
 
       let deployment_config = await this.startService(service_path, config_path);
@@ -102,7 +102,7 @@ export default class Debug extends Command {
   }
 
   async startService(service_path: string, config_path: string): Promise<DeploymentConfig> {
-    let deployment_config = Debug.loadDeploymentConfig(config_path);
+    let deployment_config = Start.loadDeploymentConfig(config_path);
     const service_config = ServiceConfig.loadFromPath(service_path);
     Object.keys(service_config.dependencies).forEach(async dependency_name => {
       const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
@@ -132,7 +132,7 @@ export default class Debug extends Command {
       try {
         const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
 
-        const target_port = await Debug.getAvailablePort();
+        const target_port = await Start.getAvailablePort();
         const cmd = spawn(cmd_path, [
           '--target_port', `${target_port}`,
           '--service_path', service_path,
