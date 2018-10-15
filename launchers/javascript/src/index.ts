@@ -1,5 +1,6 @@
 import {Command, flags} from '@oclif/command';
 import * as fs from 'fs';
+import * as protobuf from 'google-protobuf';
 import * as grpc from 'grpc';
 import * as os from 'os';
 import * as path from 'path';
@@ -43,6 +44,19 @@ class ArchitectJavascriptLauncher extends Command {
     })
   };
 
+  static loadGRPCMessagesAndClient(proto_filename: string, stubs_path: string): {pb: any, grpc_pb: any} {
+    const pb = proxyquire(path.join(stubs_path, `${proto_filename}_pb.js`), {
+      grpc,
+      'google-protobuf': protobuf
+    });
+    const grpc_pb = proxyquire(path.join(stubs_path, `${proto_filename}_grpc_pb.js`), {
+      grpc,
+      [`./${proto_filename}_pb.js`]: pb,
+    });
+
+    return {pb, grpc_pb};
+  }
+
   async run() {
     proxyquire.noCallThru();
     const {flags} = this.parse(ArchitectJavascriptLauncher);
@@ -79,8 +93,8 @@ class ArchitectJavascriptLauncher extends Command {
       if (!fs.existsSync(service_stubs_path)) {
         throw new DependencyInstallError(service_config.name, service_config.name);
       }
-      const grpc_service_details = proxyquire(path.join(service_stubs_path, `${proto_filename}_grpc_pb.js`), {grpc});
-      const service_init = grpc_service_details.SnappiService;
+      const {grpc_pb} = ArchitectJavascriptLauncher.loadGRPCMessagesAndClient(proto_filename, service_stubs_path);
+      const service_init = grpc_pb.SnappiService;
 
       let server = new grpc.Server();
       server.addService(service_init, new module(...module_args));
@@ -90,7 +104,8 @@ class ArchitectJavascriptLauncher extends Command {
       this.log(`Port: ${target_port}`);
     } else {
       delete deployment_config[service_config.name];
-      new module(...module_args);
+      const script = new module(...module_args);
+      script.run();
     }
     proxyquire.callThru();
   }
@@ -123,16 +138,18 @@ class ArchitectJavascriptLauncher extends Command {
 
       if (dependency_config.proto) {
         const proto_filename = _removeFileExt(dependency_config.proto);
-        const {SnappiClient} = proxyquire(path.join(dependency_stubs_path, `${proto_filename}_grpc_pb.js`), {grpc});
-        const rpc_messages = proxyquire(path.join(dependency_stubs_path, `${proto_filename}_pb.js`), {grpc});
-        const client = new SnappiClient(
+        const {pb, grpc_pb} = ArchitectJavascriptLauncher.loadGRPCMessagesAndClient(
+          proto_filename,
+          dependency_stubs_path
+        );
+        const client = new grpc_pb.SnappiClient(
           `${dependency_environment.host}:${dependency_environment.port}`,
           grpc.credentials.createInsecure()
         );
 
         return {
           client,
-          messages: rpc_messages
+          messages: pb
         };
       }
 
