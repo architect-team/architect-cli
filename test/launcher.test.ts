@@ -1,5 +1,7 @@
 import {expect} from '@oclif/test';
 import {spawn, spawnSync} from 'child_process';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import SUPPORTED_LANGUAGES from '../src/common/supported-languages';
@@ -41,9 +43,12 @@ describe('launchers', () => {
       });
 
       it('should successfully start server', done => {
+        const tmp_config_path = path.join(os.tmpdir(), `architect-test-launcher-${language}.json`);
+        fs.writeFileSync(tmp_config_path, JSON.stringify({}));
+
         const cmd = spawn(script_path, [
-          '--service_path', 'test_path',
-          '--config_path', 'test_path',
+          '--service_path', path.join(__dirname, 'test-service/addition-service'),
+          '--config_path', tmp_config_path,
           '--target_port', '8080',
         ]);
 
@@ -65,7 +70,7 @@ describe('launchers', () => {
 
         cmd.on('close', code => {
           expect(isDone).to.be.eq(true);
-          expect(code).to.be.eq(0);
+          expect(code).to.be.eq(null);
           done();
         });
 

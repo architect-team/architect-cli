@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message SubtractRequest {
+    int32 first = 1;
+    int32 second = 2;
+}
+
+message SubtractionResponse {
+    int32 output = 1;
+}
+
+service Snappi {
+    rpc Subtract (SubtractRequest) returns (SubtractionResponse);
+}

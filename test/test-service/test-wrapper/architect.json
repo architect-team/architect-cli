@@ -1,0 +1,19 @@
+{
+  "name": "test-wrapper",
+  "version": "0.1.0",
+  "description": "Test service",
+  "keywords": [
+    "architect",
+    "test"
+  ],
+  "author": [
+    "David Thor"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "subtraction-service": "file:../subtraction-service/"
+  },
+  "proto": null,
+  "main": "index.js",
+  "language": "javascript"
+}

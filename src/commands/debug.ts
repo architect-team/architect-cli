@@ -1,5 +1,6 @@
 import {Command, flags} from '@oclif/command';
 import chalk from 'chalk';
+import {spawn} from 'child_process';
 import * as fs from 'fs';
 import * as net from 'net';
 import * as os from 'os';
@@ -8,6 +9,8 @@ import * as path from 'path';
 import DeploymentConfig, {ServiceEnvironment} from '../common/deployment-config';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
+
+const AVAILABLE_PORTS = ['50051', '50052', '50053', '50054', '50055'];
 
 export default class Debug extends Command {
   static description = 'Start the service locally';
@@ -36,7 +39,13 @@ export default class Debug extends Command {
   }
 
   static loadDeploymentConfig(config_path: string): DeploymentConfig {
-    return fs.existsSync(config_path) ? require(config_path) : {};
+    if (fs.existsSync(config_path)) {
+      return require(config_path);
+    } else {
+      const config = {};
+      Debug.saveDeploymentConfig(config_path, config);
+      return config;
+    }
   }
 
   static saveDeploymentConfig(config_path: string, config: DeploymentConfig): void {
@@ -44,7 +53,7 @@ export default class Debug extends Command {
   }
 
   static async isPortAvailable(port: string) {
-    return new Promise(resolve => {
+    return new Promise<boolean>(resolve => {
       const tester: net.Server = net.createServer()
         .once('error', () => resolve(false))
         .once('listening', () =>
@@ -52,6 +61,21 @@ export default class Debug extends Command {
         )
         .listen(port);
     });
+  }
+
+  static async getAvailablePort() {
+    let port;
+
+    for (let p of AVAILABLE_PORTS) {
+      const isAvailable = await Debug.isPortAvailable(p);
+      if (isAvailable) {
+        port = p;
+        break;
+      }
+    }
+
+    if (!port) throw new Error('No valid ports available');
+    return port;
   }
 
   async run() {
@@ -66,8 +90,7 @@ export default class Debug extends Command {
         config_path = Debug.buildDeploymentConfigPath(service_config);
       }
 
-      let deployment_config = Debug.loadDeploymentConfig(config_path);
-      deployment_config = await this.startService(service_path, deployment_config);
+      let deployment_config = await this.startService(service_path, config_path);
       // Debug.saveDeploymentConfig(config_path, deployment_config);
 
       this.log(JSON.stringify(deployment_config, null, 2));
@@ -78,13 +101,14 @@ export default class Debug extends Command {
     }
   }
 
-  async startService(service_path: string, deployment_config: DeploymentConfig): Promise<DeploymentConfig> {
+  async startService(service_path: string, config_path: string): Promise<DeploymentConfig> {
+    let deployment_config = Debug.loadDeploymentConfig(config_path);
     const service_config = ServiceConfig.loadFromPath(service_path);
     Object.keys(service_config.dependencies).forEach(async dependency_name => {
       const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
         service_config.dependencies[dependency_name]
       );
-      deployment_config = await this.startService(dependency_path, deployment_config);
+      deployment_config = await this.startService(dependency_path, config_path);
     });
 
     // Check if the service is already running
@@ -95,16 +119,62 @@ export default class Debug extends Command {
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
-    deployment_config[service_config.name] = await this.executeLauncher(service_path, service_config);
+    deployment_config[service_config.name] = await this.executeLauncher(config_path, service_path, service_config);
     return deployment_config;
   }
 
-  async executeLauncher(service_path: string, service_config: ServiceConfig): Promise<ServiceEnvironment> {
-    const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
-    return {
-      host: cmd_path,
-      port: 1234,
-      service_path,
-    };
+  async executeLauncher(
+    deployment_config_path: string,
+    service_path: string,
+    service_config: ServiceConfig
+  ): Promise<ServiceEnvironment> {
+    return new Promise<ServiceEnvironment>(async (resolve, reject) => {
+      try {
+        const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
+
+        const target_port = await Debug.getAvailablePort();
+        const cmd = spawn(cmd_path, [
+          '--target_port', `${target_port}`,
+          '--service_path', service_path,
+          '--config_path', deployment_config_path,
+        ]);
+
+        let host: string;
+        let port: string;
+        cmd.stdout.on('data', data => {
+          data = data.toString();
+          if (data.indexOf('Host: ') === 0) {
+            host = data.substring(6).trim();
+          } else if (data.indexOf('Port: ') === 0) {
+            port = data.substring(6).trim();
+          }
+
+          if (host && port) {
+            resolve({
+              host,
+              port: parseInt(port, 10),
+              service_path
+            });
+          }
+        });
+
+        cmd.stderr.on('data', data => {
+          data = data.toString();
+          console.log(data);
+        });
+
+        cmd.on('close', () => {
+          reject(new ServiceLaunchError(service_config.name));
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+}
+
+class ServiceLaunchError extends Error {
+  constructor(service_name: string) {
+    super(`Failed to start the service: ${service_name}`);
   }
 }
