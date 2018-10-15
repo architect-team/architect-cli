@@ -104,12 +104,14 @@ export default class Start extends Command {
   async startService(service_path: string, config_path: string): Promise<DeploymentConfig> {
     let deployment_config = Start.loadDeploymentConfig(config_path);
     const service_config = ServiceConfig.loadFromPath(service_path);
-    Object.keys(service_config.dependencies).forEach(async dependency_name => {
+    const dependency_names = Object.keys(service_config.dependencies);
+    for (let dependency_name of dependency_names) {
       const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
         service_config.dependencies[dependency_name]
       );
       deployment_config = await this.startService(dependency_path, config_path);
-    });
+      Start.saveDeploymentConfig(config_path, deployment_config);
+    }
 
     // Check if the service is already running
     if (Object.keys(deployment_config).includes(service_config.name)) {
@@ -160,7 +162,7 @@ export default class Start extends Command {
 
         cmd.stderr.on('data', data => {
           data = data.toString();
-          console.log(data);
+          this.error(data);
         });
 
         cmd.on('close', () => {

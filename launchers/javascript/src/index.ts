@@ -88,12 +88,11 @@ class ArchitectJavascriptLauncher extends Command {
       server.start();
       this.log('Host: 0.0.0.0');
       this.log(`Port: ${target_port}`);
-      proxyquire.callThru();
     } else {
       delete deployment_config[service_config.name];
-      module(...module_args);
-      proxyquire.callThru();
+      new module(...module_args);
     }
+    proxyquire.callThru();
   }
 
   generateServiceArgs(
