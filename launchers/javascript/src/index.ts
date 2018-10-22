@@ -8,7 +8,7 @@ import * as proxyquire from 'proxyquire';
 
 import DeploymentConfig from './deployment-config';
 import MANAGED_PATHS from './managed-paths';
-import ServiceConfig from './service-config';
+import ServiceConfig, {MissingConfigFileError} from './service-config'
 
 const _removeFileExt = (filename: string): string =>
   filename.slice(0, filename.lastIndexOf('.'));
@@ -67,7 +67,15 @@ class ArchitectJavascriptLauncher extends Command {
     const deployment_config = require(flags.config_path);
     const target_port = flags.target_port;
     const service_path = flags.service_path;
-    const service_config = ServiceConfig.loadFromPath(service_path);
+    let service_config: ServiceConfig;
+
+    try {
+      service_config = ServiceConfig.loadFromPath(service_path);
+    } catch (error) {
+      this.error(error.message);
+      return this.exit(1);
+    }
+
     const stubs_path = path.join(service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
 
     const module_path = path.join(service_path, service_config.main);
@@ -87,25 +95,32 @@ class ArchitectJavascriptLauncher extends Command {
       module_args = this.generateServiceArgs(service_config, deployment_config, stubs_path, module.dependencies);
     }
 
-    if (service_config.proto) {
-      const proto_filename = _removeFileExt(service_config.proto);
-      const service_stubs_path = path.join(stubs_path, service_config.name);
-      if (!fs.existsSync(service_stubs_path)) {
-        throw new DependencyInstallError(service_config.name, service_config.name);
-      }
-      const {grpc_pb} = ArchitectJavascriptLauncher.loadGRPCMessagesAndClient(proto_filename, service_stubs_path);
-      const service_init = grpc_pb.SnappiService;
+    try {
+      if (service_config.proto) {
+        const proto_filename = _removeFileExt(service_config.proto);
+        const service_stubs_path = path.join(stubs_path, service_config.name);
+        if (!fs.existsSync(service_stubs_path)) {
+          const error = new DependencyInstallError(service_config.name, service_config.name);
+          this.error(error.message);
+          return this.exit(1);
+        }
+        const {grpc_pb} = ArchitectJavascriptLauncher.loadGRPCMessagesAndClient(proto_filename, service_stubs_path);
+        const service_init = grpc_pb.SnappiService;
 
-      let server = new grpc.Server();
-      server.addService(service_init, new module(...module_args));
-      server.bind(`0.0.0.0:${target_port}`, grpc.ServerCredentials.createInsecure());
-      server.start();
-      this.log('Host: 0.0.0.0');
-      this.log(`Port: ${target_port}`);
-    } else {
-      delete deployment_config[service_config.name];
-      const script = new module(...module_args);
-      script.run();
+        let server = new grpc.Server();
+        server.addService(service_init, new module(...module_args));
+        server.bind(`0.0.0.0:${target_port}`, grpc.ServerCredentials.createInsecure());
+        server.start();
+        this.log('Host: 0.0.0.0');
+        this.log(`Port: ${target_port}`);
+      } else {
+        delete deployment_config[service_config.name];
+        const script = new module(...module_args);
+        script.run();
+      }
+    } catch (error) {
+      this.error(error.message);
+      return this.exit(1);
     }
     proxyquire.callThru();
   }
