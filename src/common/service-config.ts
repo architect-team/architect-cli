@@ -117,6 +117,13 @@ export default class ServiceConfig {
     this.language = language;
     return this;
   }
+
+  // Indicates whether or not this configuration exposes a new
+  // architect service that can be called as a dependency or if
+  // its simply a script to be called once.
+  isScript() {
+    return this.proto === null || this.proto === undefined;
+  }
 }
 
 export class MissingConfigFileError implements Error {

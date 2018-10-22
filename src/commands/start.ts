@@ -121,7 +121,10 @@ export default class Start extends Command {
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
-    deployment_config[service_config.name] = await this.executeLauncher(config_path, service_path, service_config);
+    const new_service = await this.executeLauncher(config_path, service_path, service_config);
+    if (new_service) {
+      deployment_config[service_config.name] = new_service;
+    }
     return deployment_config;
   }
 
@@ -129,8 +132,8 @@ export default class Start extends Command {
     deployment_config_path: string,
     service_path: string,
     service_config: ServiceConfig
-  ): Promise<ServiceEnvironment> {
-    return new Promise<ServiceEnvironment>(async (resolve, reject) => {
+  ): Promise<ServiceEnvironment | null> {
+    return new Promise<ServiceEnvironment | null>(async (resolve, reject) => {
       try {
         const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
 
@@ -144,29 +147,37 @@ export default class Start extends Command {
         let host: string;
         let port: string;
         cmd.stdout.on('data', data => {
-          data = data.toString();
-          if (data.indexOf('Host: ') === 0) {
-            host = data.substring(6).trim();
-          } else if (data.indexOf('Port: ') === 0) {
-            port = data.substring(6).trim();
-          }
+          data = data.toString().trim();
+          if (service_config.isScript() && data.length > 0) {
+            this.log(data);
+          } else {
+            if (data.indexOf('Host: ') === 0) {
+              host = data.substring(6);
+            } else if (data.indexOf('Port: ') === 0) {
+              port = data.substring(6);
+            }
 
-          if (host && port) {
-            resolve({
-              host,
-              port: parseInt(port, 10),
-              service_path
-            });
+            if (host && port) {
+              resolve({
+                host,
+                port: parseInt(port, 10),
+                service_path
+              });
+            }
           }
         });
 
         cmd.stderr.on('data', data => {
-          data = data.toString();
+          data = data.toString().trim();
           this.error(data);
         });
 
         cmd.on('close', () => {
-          reject(new ServiceLaunchError(service_config.name));
+          if (!service_config.isScript()) {
+            reject(new ServiceLaunchError(service_config.name));
+          } else {
+            resolve();
+          }
         });
       } catch (error) {
         reject(error);
