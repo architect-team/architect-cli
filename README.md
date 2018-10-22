@@ -28,30 +28,14 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`architect debug [FILE]`](#architect-debug-file)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init`](#architect-init)
 * [`architect install`](#architect-install)
-
-## `architect debug [FILE]`
-
-describe the command here
-
-```
-USAGE
-  $ architect debug [FILE]
-
-OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
-```
-
-_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/debug.ts)_
+* [`architect start`](#architect-start)
 
 ## `architect help [COMMAND]`
 
-display help for architect
+Display help for the architect CLI
 
 ```
 USAGE
@@ -88,7 +72,8 @@ _See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v
 
 ## `architect install`
 
-Install dependencies of the current service
+Install dependencies needed for the current service and generate their corresponding 
+API stubs
 
 ```
 USAGE
@@ -96,8 +81,25 @@ USAGE
 
 OPTIONS
   -h, --help       show CLI help
-  -r, --recursive  Generate architect dependency files for all services in the dependency tree.
+  -r, --recursive  Generate architect dependency stubs for all services in the dependency tree.
 ```
 
 _See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/install.ts)_
+
+## `architect start`
+
+Start the current service and if needed its corresponding dependencies. Each service 
+will automatically be injected a client stub enriched with the location of the peers. 
+Services that are already running can be specified in a provided config file.
+
+```
+USAGE
+  $ architect start
+
+OPTIONS
+  -h, --help          show CLI help
+  -c, --config_path   Path to a config file containing locations of each service in the application
+```
+
+_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/start.ts)_
 <!-- commandsstop -->
