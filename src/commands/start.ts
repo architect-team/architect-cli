@@ -85,15 +85,12 @@ export default class Start extends Command {
       const service_path = process.cwd();
       const service_config = ServiceConfig.loadFromPath(service_path);
 
-      let config_path = flags.config_path;
+      let config_path = path.resolve(`${flags.config_path}`);
       if (!config_path || !fs.existsSync(config_path)) {
         config_path = Start.buildDeploymentConfigPath(service_config);
       }
 
-      let deployment_config = await this.startService(service_path, config_path);
-      // Debug.saveDeploymentConfig(config_path, deployment_config);
-
-      this.log(JSON.stringify(deployment_config, null, 2));
+      await this.startService(service_path, config_path);
       this.exit();
     } catch (error) {
       this.error(error);
