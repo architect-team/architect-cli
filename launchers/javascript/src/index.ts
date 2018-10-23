@@ -1,10 +1,10 @@
 import {Command, flags} from '@oclif/command';
 import * as fs from 'fs';
-import * as protobuf from 'google-protobuf';
+// import * as protobuf from 'google-protobuf';
+// @ts-ignore
 import * as grpc from 'grpc';
 import * as os from 'os';
 import * as path from 'path';
-import * as proxyquire from 'proxyquire';
 
 import DeploymentConfig from './deployment-config';
 import MANAGED_PATHS from './managed-paths';
@@ -45,20 +45,13 @@ class ArchitectJavascriptLauncher extends Command {
   };
 
   static loadGRPCMessagesAndClient(proto_filename: string, stubs_path: string): {pb: any, grpc_pb: any} {
-    const pb = proxyquire(path.join(stubs_path, `${proto_filename}_pb.js`), {
-      grpc,
-      'google-protobuf': protobuf
-    });
-    const grpc_pb = proxyquire(path.join(stubs_path, `${proto_filename}_grpc_pb.js`), {
-      grpc,
-      [`./${proto_filename}_pb.js`]: pb,
-    });
+    const pb = require(path.join(stubs_path, `${proto_filename}_pb.js`));
+    const grpc_pb = require(path.join(stubs_path, `${proto_filename}_grpc_pb.js`));
 
     return {pb, grpc_pb};
   }
 
   async run() {
-    proxyquire.noCallThru();
     const {flags} = this.parse(ArchitectJavascriptLauncher);
     if (!fs.existsSync(flags.config_path)) {
       throw new TypeError(`Invalid config path: ${flags.config_path}`);
@@ -122,7 +115,6 @@ class ArchitectJavascriptLauncher extends Command {
       this.error(error.message);
       return this.exit(1);
     }
-    proxyquire.callThru();
   }
 
   generateServiceArgs(

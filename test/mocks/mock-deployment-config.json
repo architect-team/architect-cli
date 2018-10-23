@@ -1,17 +1,17 @@
 {
   "addition-service": {
     "host": "0.0.0.0",
-    "port": "5001",
+    "port": 5001,
     "service_path": "/Users/davidthor/Workspaces/Architect/architect-cli/test/mocks/addition-service/"
   },
   "subtraction-service": {
     "host": "0.0.0.0",
-    "port": "5002",
+    "port": 5002,
     "service_path": "/Users/davidthor/Workspaces/Architect/architect-cli/test/mocks/subtraction-service/"
   },
   "division-service": {
     "host": "0.0.0.0",
-    "port": "5003",
+    "port": 5003,
     "service_path": "/Users/davidthor/Workspaces/Architect/architect-cli/test/mocks/division-service/"
   }
 }

@@ -116,8 +116,11 @@ export default class Start extends Command {
     // Check if the service is already running
     if (Object.keys(deployment_config).includes(service_config.name)) {
       const instance_details = deployment_config[service_config.name];
-      this.log(`${service_config.name} already deployed at ${instance_details.host}:${instance_details.port}`);
-      return deployment_config;
+      const port_check = await Start.isPortAvailable(`${instance_details.port}`);
+      if (!port_check) {
+        this.log(`${service_config.name} already deployed at ${instance_details.host}:${instance_details.port}`);
+        return deployment_config;
+      }
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
