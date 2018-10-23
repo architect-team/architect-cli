@@ -17,7 +17,7 @@ function deserialize_AddRequest(buffer_arg) {
 
 function serialize_AddResponse(arg) {
   if (!(arg instanceof service_pb.AddResponse)) {
-    throw new Error('Expected argument of type AddResponse');
+    // throw new Error('Expected argument of type AddResponse');
   }
   return new Buffer(arg.serializeBinary());
 }

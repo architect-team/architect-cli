@@ -8,7 +8,7 @@ import * as proxyquire from 'proxyquire';
 
 import DeploymentConfig from './deployment-config';
 import MANAGED_PATHS from './managed-paths';
-import ServiceConfig, {MissingConfigFileError} from './service-config'
+import ServiceConfig from './service-config';
 
 const _removeFileExt = (filename: string): string =>
   filename.slice(0, filename.lastIndexOf('.'));

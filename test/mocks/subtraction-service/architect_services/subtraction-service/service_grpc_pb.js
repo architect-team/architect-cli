@@ -17,7 +17,7 @@ function deserialize_SubtractRequest(buffer_arg) {
 
 function serialize_SubtractionResponse(arg) {
   if (!(arg instanceof service_pb.SubtractionResponse)) {
-    throw new Error('Expected argument of type SubtractionResponse');
+    // throw new Error('Expected argument of type SubtractionResponse');
   }
   return new Buffer(arg.serializeBinary());
 }

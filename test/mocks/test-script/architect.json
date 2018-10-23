@@ -1,9 +1,9 @@
 {
-  "name": "test-wrapper",
+  "name": "test-service",
   "version": "0.1.0",
   "description": "Test service",
   "keywords": [
-    "architect",
+    "snappi",
     "test"
   ],
   "author": [
@@ -11,7 +11,7 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "subtraction-service": "file:../subtraction-service/"
+    "division-service": "file:../division-service/"
   },
   "proto": null,
   "main": "index.js",
