@@ -3,9 +3,6 @@ architect
 
 Command line interface for creating and deploying architect services
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Version](https://img.shields.io/npm/v/architect.svg)](https://npmjs.org/package/architect)
-[![Downloads/week](https://img.shields.io/npm/dw/architect.svg)](https://npmjs.org/package/architect)
 [![License](https://img.shields.io/npm/l/architect.svg)](https://github.com/snappi/architect-cli/blob/master/package.json)
 
 <!-- toc -->
