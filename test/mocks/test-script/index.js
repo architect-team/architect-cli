@@ -1,6 +1,6 @@
 'use strict';
 
-const first = 10;
+const first = 50;
 const second = 5;
 
 class Architect {

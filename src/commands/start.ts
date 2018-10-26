@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command';
 import chalk from 'chalk';
-import {spawn} from 'child_process';
+import {ChildProcess, spawn} from 'child_process';
 import * as fs from 'fs';
 import * as net from 'net';
 import * as os from 'os';
@@ -78,6 +78,8 @@ export default class Start extends Command {
     return port;
   }
 
+  child_processes: ChildProcess[] = [];
+
   async run() {
     try {
       const {flags} = this.parse(Start);
@@ -90,7 +92,7 @@ export default class Start extends Command {
         config_path = Start.buildDeploymentConfigPath(service_config);
       }
 
-      await this.startService(service_path, config_path);
+      await this.startService(service_path, config_path, true);
       this.exit();
     } catch (error) {
       this.error(error);
@@ -98,7 +100,7 @@ export default class Start extends Command {
     }
   }
 
-  async startService(service_path: string, config_path: string): Promise<DeploymentConfig> {
+  async startService(service_path: string, config_path: string, is_root_service = false): Promise<DeploymentConfig> {
     let deployment_config = Start.loadDeploymentConfig(config_path);
     const service_config = ServiceConfig.loadFromPath(service_path);
     const dependency_names = Object.keys(service_config.dependencies);
@@ -121,7 +123,7 @@ export default class Start extends Command {
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
-    const new_service = await this.executeLauncher(config_path, service_path, service_config);
+    const new_service = await this.executeLauncher(config_path, service_path, service_config, is_root_service);
     if (new_service) {
       deployment_config[service_config.name] = new_service;
     }
@@ -131,7 +133,8 @@ export default class Start extends Command {
   async executeLauncher(
     deployment_config_path: string,
     service_path: string,
-    service_config: ServiceConfig
+    service_config: ServiceConfig,
+    is_root_service = false,
   ): Promise<ServiceEnvironment | null> {
     return new Promise<ServiceEnvironment | null>(async (resolve, reject) => {
       try {
@@ -143,6 +146,8 @@ export default class Start extends Command {
           '--service_path', service_path,
           '--config_path', deployment_config_path,
         ]);
+
+        this.child_processes.push(cmd);
 
         let host: string;
         let port: string;
@@ -174,10 +179,13 @@ export default class Start extends Command {
 
         cmd.on('close', () => {
           if (!service_config.isScript()) {
-            reject(new ServiceLaunchError(service_config.name));
-          } else {
-            resolve();
+            this.child_processes.map(child_process => child_process.kill());
+            return reject(new ServiceLaunchError(service_config.name));
+          } else if (is_root_service) {
+            this.child_processes.map(child_process => child_process.kill());
           }
+
+          resolve();
         });
       } catch (error) {
         reject(error);
