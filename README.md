@@ -17,7 +17,7 @@ $ npm install -g @snappi/architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@snappi/architect/0.0.2 darwin-x64 node-v9.11.2
+@snappi/architect/0.0.3 darwin-x64 node-v9.11.2
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -66,7 +66,7 @@ OPTIONS
   -v, --version=version          [default: 0.1.0]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.0.2/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.0.3/src/commands/init.ts)_
 
 ## `architect install`
 
@@ -81,7 +81,7 @@ OPTIONS
   -r, --recursive  Generate architect dependency files for all services in the dependency tree.
 ```
 
-_See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.0.2/src/commands/install.ts)_
+_See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.0.3/src/commands/install.ts)_
 
 ## `architect start`
 
@@ -96,7 +96,7 @@ OPTIONS
   -h, --help                     show CLI help
 ```
 
-_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.0.2/src/commands/start.ts)_
+_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.0.3/src/commands/start.ts)_
 <!-- commandsstop -->
 
 # Demo
