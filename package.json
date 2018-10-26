@@ -39,7 +39,8 @@
   },
   "files": [
     "/bin",
-    "/lib",
+    "/launchers",
+    "/src",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],

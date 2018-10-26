@@ -97,3 +97,27 @@ OPTIONS
 
 _See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.0.1/src/commands/start.ts)_
 <!-- commandsstop -->
+
+# Demo
+Install architect via yarn
+```
+$ yarn global add @snappi/architect
+```
+
+Clone the demo project
+```
+$ git clone git@github.com:snappi/calculator-service-demo.git
+$ cd calculator-service-demo/test-service
+```
+
+Install the client stubs for the test script and its dependencies
+```
+$ architect install --recursive
+```
+
+Start the test service
+```
+$ architect start
+```
+
+Done!
