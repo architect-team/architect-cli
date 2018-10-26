@@ -15,11 +15,11 @@ Command line interface for creating and deploying architect services
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g architect
+$ npm install -g @snappi/architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-architect/0.1.0 darwin-x64 node-v8.9.4
+@snappi/architect/0.0.1 darwin-x64 node-v9.11.2
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -35,7 +35,7 @@ USAGE
 
 ## `architect help [COMMAND]`
 
-Display help for the architect CLI
+display help for architect
 
 ```
 USAGE
@@ -48,7 +48,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.2/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.3/src/commands/help.ts)_
 
 ## `architect init`
 
@@ -68,12 +68,11 @@ OPTIONS
   -v, --version=version          [default: 0.1.0]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/snappi/architect-cli/blob/v0.0.1/src/commands/init.ts)_
 
 ## `architect install`
 
-Install dependencies needed for the current service and generate their corresponding 
-API stubs
+Install dependencies of the current service
 
 ```
 USAGE
@@ -81,25 +80,23 @@ USAGE
 
 OPTIONS
   -h, --help       show CLI help
-  -r, --recursive  Generate architect dependency stubs for all services in the dependency tree.
+  -r, --recursive  Generate architect dependency files for all services in the dependency tree.
 ```
 
-_See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/install.ts)_
+_See code: [src/commands/install.ts](https://github.com/snappi/architect-cli/blob/v0.0.1/src/commands/install.ts)_
 
 ## `architect start`
 
-Start the current service and if needed its corresponding dependencies. Each service 
-will automatically be injected a client stub enriched with the location of the peers. 
-Services that are already running can be specified in a provided config file.
+Start the service locally
 
 ```
 USAGE
   $ architect start
 
 OPTIONS
-  -h, --help          show CLI help
-  -c, --config_path   Path to a config file containing locations of each service in the application
+  -c, --config_path=config_path  Path to a config file containing locations of each service in the application
+  -h, --help                     show CLI help
 ```
 
-_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.1.0/src/commands/start.ts)_
+_See code: [src/commands/start.ts](https://github.com/snappi/architect-cli/blob/v0.0.1/src/commands/start.ts)_
 <!-- commandsstop -->
