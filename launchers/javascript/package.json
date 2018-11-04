@@ -20,6 +20,7 @@
     "@types/chai": "^4.1.6",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.11.7",
+    "@types/protobufjs": "^6.0.0",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "nyc": "^13.0.1",
@@ -31,6 +32,7 @@
     "node": ">=8.0.0"
   },
   "files": [
+    "launcher",
     "/bin",
     "/lib"
   ],

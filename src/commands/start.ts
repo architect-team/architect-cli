@@ -100,7 +100,11 @@ export default class Start extends Command {
     }
   }
 
-  async startService(service_path: string, config_path: string, is_root_service = false): Promise<DeploymentConfig> {
+  async startService(
+    service_path: string,
+    config_path: string,
+    is_root_service = false
+  ): Promise<DeploymentConfig> {
     let deployment_config = Start.loadDeploymentConfig(config_path);
     const service_config = ServiceConfig.loadFromPath(service_path);
     const dependency_names = Object.keys(service_config.dependencies);

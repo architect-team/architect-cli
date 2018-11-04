@@ -1,6 +1,5 @@
 import {Command, flags} from '@oclif/command';
 import * as fs from 'fs';
-// import * as protobuf from 'google-protobuf';
 // @ts-ignore
 import * as grpc from 'grpc';
 import * as os from 'os';
