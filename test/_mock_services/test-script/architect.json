@@ -15,5 +15,5 @@
   },
   "proto": null,
   "main": "index.js",
-  "language": "javascript"
+  "language": "nodejs"
 }

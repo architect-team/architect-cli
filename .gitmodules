@@ -1,0 +1,3 @@
+[submodule "launchers/nodejs"]
+	path = launchers/nodejs
+	url = git@github.com:architect-team/nodejs-launcher.git

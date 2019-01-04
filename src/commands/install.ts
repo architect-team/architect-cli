@@ -74,7 +74,7 @@ export default class Install extends Command {
     grpc_options.push(['proto_path', dependency_path]);
     grpc_options.push(['grpc_out', stub_directory]);
     switch (target_language) {
-      case SUPPORTED_LANGUAGES.JAVASCRIPT:
+      case SUPPORTED_LANGUAGES.NODEJS:
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
         grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_node_plugin`']);
         break;

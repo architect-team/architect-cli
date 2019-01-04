@@ -14,5 +14,5 @@
   "dependencies": {},
   "proto": "service.proto",
   "main": "index.js",
-  "language": "javascript"
+  "language": "nodejs"
 }

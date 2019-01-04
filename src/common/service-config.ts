@@ -59,7 +59,7 @@ export default class ServiceConfig {
     this.dependencies = {};
     this.proto = undefined;
     this.main = 'index.js';
-    this.language = SUPPORTED_LANGUAGES.JAVASCRIPT;
+    this.language = SUPPORTED_LANGUAGES.NODEJS;
   }
 
   setName(name: string) {

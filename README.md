@@ -17,7 +17,7 @@ $ npm install -g @snappi/architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@snappi/architect/0.0.5 darwin-x64 node-v9.11.2
+@snappi/architect/0.0.5 darwin-x64 node-v10.13.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
