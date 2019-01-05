@@ -1,5 +1,5 @@
 {
-  "name": "architect-cli",
+  "name": "@snappi/architect-cli",
   "description": "Command line interface for creating and deploying architect services",
   "version": "0.0.5",
   "author": "David Thor @davidthor",

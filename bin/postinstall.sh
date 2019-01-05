@@ -18,7 +18,7 @@ npm install --prefix ./launchers/nodejs/
 
 # Install relative copy of GRPC for Node
 NODE_PATH="$(npm root -g)"
-grep -q -x -F "export NODE_PATH=${NODE_PATH}" ~/.bashrc || echo "export NODE_PATH=${NODE_PATH}" >> ~/.bashrc
+grep -q -x -F "export NODE_PATH=" ~/.bashrc || echo "export NODE_PATH=${NODE_PATH}" >> ~/.bashrc
 npm install -g grpc
 ln -s ${NODE_PATH}/grpc ./node_modules
 ln -s ${NODE_PATH}/grpc ./launchers/nodejs/node_modules
