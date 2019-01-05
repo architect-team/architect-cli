@@ -1,12 +1,12 @@
 {
-  "name": "@snappi/architect",
+  "name": "architect-cli",
   "description": "Command line interface for creating and deploying architect services",
   "version": "0.0.5",
   "author": "David Thor @davidthor",
   "bin": {
     "architect": "./bin/run"
   },
-  "bugs": "https://github.com/snappi/architect-cli/issues",
+  "bugs": "https://github.com/architect-team/architect-cli/issues",
   "dependencies": {
     "@oclif/command": "^1.5.2",
     "@oclif/config": "^1.8.6",
@@ -43,7 +43,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/snappi/architect-cli",
+  "homepage": "https://github.com/architect-team/architect-cli",
   "keywords": [
     "oclif"
   ],
@@ -56,7 +56,7 @@
       "@oclif/plugin-help"
     ]
   },
-  "repository": "snappi/architect-cli",
+  "repository": "architect-team/architect-cli",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "tslint -p test -t stylish",
