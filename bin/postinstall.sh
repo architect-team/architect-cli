@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 # Check to see if GRPC and protoc has been installed
+echo $PWD
 protoc --version
-if [[ $? -eq 0 ]]; then
+if [[ $? -ne 0 ]]; then
   echo "Please follow instructions below to install GRPC from source:"
   echo "https://github.com/grpc/grpc/blob/master/BUILDING.md"
   exit 1
@@ -17,9 +18,7 @@ npm install --prefix ./launchers/nodejs/
 
 # Install relative copy of GRPC for Node
 NODE_PATH="$(npm root -g)"
+grep -q -x -F "export NODE_PATH=${NODE_PATH}" ~/.bashrc || echo "export NODE_PATH=${NODE_PATH}" >> ~/.bashrc
 npm install -g grpc
-npm install -g google-protobuf
-unlink ./node_modules/grpc
-unlink ./launchers/nodejs/node_modules/grpc
 ln -s ${NODE_PATH}/grpc ./node_modules
 ln -s ${NODE_PATH}/grpc ./launchers/nodejs/node_modules
