@@ -132,3 +132,6 @@ $ architect start
 ```
 
 * Done!
+
+# Known Issues
+* https://github.com/grpc/grpc-node/issues/670
