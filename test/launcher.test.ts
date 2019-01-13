@@ -12,7 +12,7 @@ describe('launchers', () => {
       let script_path: string;
 
       before(() => {
-        script_path = path.join(__dirname, '../launchers', language, 'launcher');
+        script_path = path.join(__dirname, '../node_modules/.bin/', `architect-${language}-launcher`);
       });
 
       it('should fail w/out service path', () => {
@@ -47,7 +47,7 @@ describe('launchers', () => {
         fs.writeFileSync(tmp_config_path, JSON.stringify({}));
 
         const cmd = spawn(script_path, [
-          '--service_path', path.join(__dirname, 'test-service/addition-service'),
+          '--service_path', path.join(__dirname, './calculator-example/addition-service/'),
           '--config_path', tmp_config_path,
           '--target_port', '8080',
         ]);

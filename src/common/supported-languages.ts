@@ -1,6 +1,5 @@
 enum SUPPORTED_LANGUAGES {
-  NODE = 'node',
-  PYTHON = 'python'
+  NODE = 'node'
 }
 
 export default SUPPORTED_LANGUAGES;
