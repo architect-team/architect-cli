@@ -1,5 +1,5 @@
 enum SUPPORTED_LANGUAGES {
-  NODEJS = 'nodejs',
+  NODE = 'node',
   PYTHON = 'python'
 }
 

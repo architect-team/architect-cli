@@ -10,9 +10,14 @@ export default class ServiceConfig {
     return require(path);
   }
 
-  static parsePathFromDependencyIdentifier(dependency_identifier: string) {
+  static parsePathFromDependencyIdentifier(
+    dependency_identifier: string,
+    path_prefix?: string,
+  ) {
     if (dependency_identifier.indexOf('file:') === 0) {
-      return path.resolve(dependency_identifier.slice(5));
+      return path_prefix ?
+        path.join(path_prefix, dependency_identifier.slice(5)) :
+        path.resolve(dependency_identifier.slice(5));
     }
 
     throw new UnsupportedDependencyIdentifierError(dependency_identifier);
@@ -59,7 +64,7 @@ export default class ServiceConfig {
     this.dependencies = {};
     this.proto = undefined;
     this.main = 'index.js';
-    this.language = SUPPORTED_LANGUAGES.NODEJS;
+    this.language = SUPPORTED_LANGUAGES.NODE;
   }
 
   setName(name: string) {

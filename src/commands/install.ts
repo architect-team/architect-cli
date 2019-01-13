@@ -12,6 +12,10 @@ export default class Install extends Command {
 
   static flags = {
     help: flags.help({char: 'h'}),
+    prefix: flags.string({
+      char: 'p',
+      description: 'Path prefix indicating where the install command should execute from.'
+    }),
     recursive: flags.boolean({
       char: 'r',
       description: 'Generate architect dependency files for all services in the dependency tree.'
@@ -22,7 +26,12 @@ export default class Install extends Command {
 
   async run() {
     try {
-      this.installDependencies(process.cwd());
+      const {flags} = this.parse(Install);
+      let process_path = process.cwd();
+      if (flags.prefix) {
+        process_path = path.join(process_path, flags.prefix);
+      }
+      this.installDependencies(process_path);
     } catch (error) {
       this.error(error.message);
     }
@@ -43,7 +52,7 @@ export default class Install extends Command {
     Object.keys(service_config.dependencies).forEach((dependency_name: string) => {
       if (service_config.dependencies.hasOwnProperty(dependency_name)) {
         const dependency_identifier = service_config.dependencies[dependency_name];
-        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier);
+        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier, service_path);
         this.installDependency(dependency_path, stubs_directory, service_config.language);
         if (flags.recursive) {
           this.installDependencies(dependency_path);
@@ -62,7 +71,6 @@ export default class Install extends Command {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
     }
 
-    this.log(`Generating stubs for ${dependency_config.name}`);
     const stub_directory = path.join(target_path, dependency_config.name);
     if (!existsSync(stub_directory)) {
       mkdirSync(stub_directory);
@@ -74,7 +82,7 @@ export default class Install extends Command {
     grpc_options.push(['proto_path', dependency_path]);
     grpc_options.push(['grpc_out', stub_directory]);
     switch (target_language) {
-      case SUPPORTED_LANGUAGES.NODEJS:
+      case SUPPORTED_LANGUAGES.NODE:
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
         grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_node_plugin`']);
         break;
