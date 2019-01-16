@@ -1,13 +1,10 @@
 import {Command, flags} from '@oclif/command';
 import chalk from 'chalk';
 import {ChildProcess, spawn} from 'child_process';
-import * as fs from 'fs';
 import * as net from 'net';
-import * as os from 'os';
 import * as path from 'path';
 
-import DeploymentConfig, {ServiceEnvironment} from '../common/deployment-config';
-import MANAGED_PATHS from '../common/managed-paths';
+import DeploymentConfig from '../common/deployment-config';
 import ServiceConfig from '../common/service-config';
 
 const AVAILABLE_PORTS = ['50051', '50052', '50053', '50054', '50055'];
@@ -23,34 +20,6 @@ export default class Start extends Command {
         'each service in the application'
     })
   };
-
-  static buildDeploymentConfigPath(service_config: ServiceConfig): string {
-    const hidden_path = path.join(os.homedir(), MANAGED_PATHS.HIDDEN);
-    if (!fs.existsSync(hidden_path)) {
-      fs.mkdirSync(hidden_path);
-    }
-
-    const deployments_path = path.join(hidden_path, MANAGED_PATHS.DEPLOYMENT_CONFIGS);
-    if (!fs.existsSync(deployments_path)) {
-      fs.mkdirSync(deployments_path);
-    }
-
-    return path.join(deployments_path, `${service_config.name}.json`);
-  }
-
-  static loadDeploymentConfig(config_path: string): DeploymentConfig {
-    if (fs.existsSync(config_path)) {
-      return require(config_path);
-    } else {
-      const config = {};
-      Start.saveDeploymentConfig(config_path, config);
-      return config;
-    }
-  }
-
-  static saveDeploymentConfig(config_path: string, config: DeploymentConfig): void {
-    fs.writeFileSync(config_path, JSON.stringify(config, null, 2));
-  }
 
   static async isPortAvailable(port: string) {
     return new Promise<boolean>(resolve => {
@@ -78,83 +47,76 @@ export default class Start extends Command {
     return port;
   }
 
-  child_processes: ChildProcess[] = [];
+  deployment_config: DeploymentConfig = {};
 
   async run() {
-    try {
-      const {flags} = this.parse(Start);
+    const service_path = process.cwd();
+    await this.startService(service_path, true);
+    this.exit();
+  }
 
-      const service_path = process.cwd();
-      const service_config = ServiceConfig.loadFromPath(service_path);
-
-      let config_path = path.resolve(`${flags.config_path}`);
-      if (!config_path || !fs.existsSync(config_path)) {
-        config_path = Start.buildDeploymentConfigPath(service_config);
-      }
-
-      await this.startService(service_path, config_path, true);
-      this.exit();
-    } catch (error) {
-      this.error(error);
-      this.exit(1);
-    }
+  setServiceEnvironmentDetails(
+    service_name: string,
+    child_process: ChildProcess,
+    host: string,
+    port: number,
+    service_path: string,
+  ): void {
+    const key = `ARCHITECT_${service_name.toUpperCase().replace('-', '_')}`;
+    const value = {host, port, service_path};
+    process.env[key] = JSON.stringify(value);
+    this.deployment_config[service_name] = {
+      host,
+      port,
+      service_path,
+      process: child_process,
+    };
   }
 
   async startService(
     service_path: string,
-    config_path: string,
     is_root_service = false
-  ): Promise<DeploymentConfig> {
-    let deployment_config = Start.loadDeploymentConfig(config_path);
+  ): Promise<void> {
     const service_config = ServiceConfig.loadFromPath(service_path);
     const dependency_names = Object.keys(service_config.dependencies);
     for (let dependency_name of dependency_names) {
       const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
         service_config.dependencies[dependency_name]
       );
-      deployment_config = await this.startService(dependency_path, config_path);
-      Start.saveDeploymentConfig(config_path, deployment_config);
+      await this.startService(dependency_path);
     }
 
     // Check if the service is already running
-    if (Object.keys(deployment_config).includes(service_config.name)) {
-      const instance_details = deployment_config[service_config.name];
+    if (Object.keys(this.deployment_config).includes(service_config.name)) {
+      const instance_details = this.deployment_config[service_config.name];
       const port_check = await Start.isPortAvailable(`${instance_details.port}`);
       if (!port_check) {
         this.log(`${service_config.name} already deployed at ${instance_details.host}:${instance_details.port}`);
-        return deployment_config;
+        return;
       }
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
-    const new_service = await this.executeLauncher(config_path, service_path, service_config, is_root_service);
-    if (new_service) {
-      deployment_config[service_config.name] = new_service;
-    }
-    return deployment_config;
+    await this.executeLauncher(service_path, service_config, is_root_service);
   }
 
   async executeLauncher(
-    deployment_config_path: string,
     service_path: string,
     service_config: ServiceConfig,
     is_root_service = false,
-  ): Promise<ServiceEnvironment | null> {
-    return new Promise<ServiceEnvironment | null>(async (resolve, reject) => {
+  ): Promise<void> {
+    return new Promise<void>(async (resolve, reject) => {
       try {
-        const cmd_path = path.join(__dirname, '../../launchers/', service_config.language, 'launcher');
+        const cmd_path = path.join(`architect-${service_config.language}-launcher`);
 
         const target_port = await Start.getAvailablePort();
         const cmd = spawn(cmd_path, [
           '--target_port', `${target_port}`,
           '--service_path', service_path,
-          '--config_path', deployment_config_path,
         ]);
 
-        this.child_processes.push(cmd);
-
         let host: string;
-        let port: string;
+        let port: number;
         cmd.stdout.on('data', data => {
           data = data.toString().trim();
           if (service_config.isScript() && data.length > 0) {
@@ -167,11 +129,8 @@ export default class Start extends Command {
             }
 
             if (host && port) {
-              resolve({
-                host,
-                port: parseInt(port, 10),
-                service_path
-              });
+              this.setServiceEnvironmentDetails(service_config.name, cmd, host, port, service_path);
+              resolve();
             }
           }
         });
@@ -183,10 +142,10 @@ export default class Start extends Command {
 
         cmd.on('close', () => {
           if (!service_config.isScript()) {
-            this.child_processes.map(child_process => child_process.kill());
+            Object.values(this.deployment_config).map(config => config.process.kill());
             return reject(new ServiceLaunchError(service_config.name));
           } else if (is_root_service) {
-            this.child_processes.map(child_process => child_process.kill());
+            Object.values(this.deployment_config).map(config => config.process.kill());
           }
 
           resolve();

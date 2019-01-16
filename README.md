@@ -14,11 +14,11 @@ Command line interface for creating and deploying architect services
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @snappi/architect-cli
+$ npm install -g @snappi/architect
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@snappi/architect-cli/0.0.7 darwin-x64 node-v8.9.4
+@snappi/architect/0.0.7 darwin-x64 node-v9.11.2
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -78,8 +78,9 @@ USAGE
   $ architect install
 
 OPTIONS
-  -h, --help       show CLI help
-  -r, --recursive  Generate architect dependency files for all services in the dependency tree.
+  -h, --help           show CLI help
+  -p, --prefix=prefix  Path prefix indicating where the install command should execute from.
+  -r, --recursive      Generate architect dependency files for all services in the dependency tree.
 ```
 
 _See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.0.7/src/commands/install.ts)_

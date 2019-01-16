@@ -86,10 +86,10 @@ export default class Install extends Command {
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
         grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_node_plugin`']);
         break;
-      case SUPPORTED_LANGUAGES.PYTHON:
-        protobuf_options.push(['python_out', stub_directory]);
-        grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_python_plugin`']);
-        break;
+      // case SUPPORTED_LANGUAGES.PYTHON:
+      //   protobuf_options.push(['python_out', stub_directory]);
+      //   grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_python_plugin`']);
+      //   break;
       default:
         protobuf_options.push([`${target_language}_out`, stub_directory]);
         throw new Error(`RPC stub generation not supported for ${target_language}`);

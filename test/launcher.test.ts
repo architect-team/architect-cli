@@ -1,5 +1,5 @@
 import {expect} from '@oclif/test';
-import {spawn, spawnSync} from 'child_process';
+import {spawn, spawnSync, execSync} from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -23,18 +23,9 @@ describe('launchers', () => {
         expect(stderr.toString()).to.include('--service_path');
       });
 
-      it('should fail w/out config path', () => {
-        const {status, stderr} = spawnSync(script_path, ['--service_path', 'test_path']);
-        expect(status).not.to.be.eq(null);
-        expect(status).not.to.be.eq(0);
-        expect(stderr.toString()).to.include('Error: Missing required flag');
-        expect(stderr.toString()).to.include('--config_path');
-      });
-
       it('should fail w/out target port', () => {
         const {status, stderr} = spawnSync(script_path, [
-          '--service_path', 'test_path',
-          '--config_path', 'test_path'
+          '--service_path', 'test_path'
         ]);
         expect(status).not.to.be.eq(null);
         expect(status).not.to.be.eq(0);
@@ -48,7 +39,6 @@ describe('launchers', () => {
 
         const cmd = spawn(script_path, [
           '--service_path', path.join(__dirname, './calculator-example/addition-service/'),
-          '--config_path', tmp_config_path,
           '--target_port', '8080',
         ]);
 
@@ -67,6 +57,10 @@ describe('launchers', () => {
             cmd.kill();
           }
         });
+
+        cmd.stderr.on('data', data => {
+          console.log(data.toString());
+        })
 
         cmd.on('close', code => {
           expect(isDone).to.be.eq(true);
