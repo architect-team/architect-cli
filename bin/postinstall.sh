@@ -8,7 +8,7 @@ grep -q -x -F 'export ARCHITECT_PATH=$ARCHITECT_PATH' ~/.bashrc || echo 'export 
 # Hack to allow GRPC to be used as part of the launcher and inside
 # the *_pb.js files
 npm install -g grpc
-npm link grpc
+npm link grpc --local
 
 # Check to see if GRPC and protoc has been installed
 protoc --version
