@@ -8,7 +8,7 @@
   },
   "bugs": "https://github.com/architect-team/architect-cli/issues",
   "dependencies": {
-    "@architect-io/node-launcher": "0.0.4",
+    "@architect-io/node-launcher": "0.0.5",
     "@oclif/command": "^1.5.2",
     "@oclif/config": "^1.8.6",
     "@oclif/plugin-help": "^2.1.2",
