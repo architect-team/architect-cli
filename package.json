@@ -13,6 +13,7 @@
     "@oclif/config": "^1.8.6",
     "@oclif/plugin-help": "^2.1.2",
     "chalk": "^2.4.1",
+    "grpc-tools": "^1.6.6",
     "inquirer": "^6.2.0",
     "oclif": "^1.12.5",
     "protocol-buffers": "^4.1.0",

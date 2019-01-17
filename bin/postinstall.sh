@@ -14,6 +14,7 @@ npm link grpc --local
 protoc --version
 if [[ $? -ne 0 ]]; then
   echo "protoc not installed. Installing now..."
+  apt-get install build-essential autoconf libtool pkg-config
   git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc ${ARCHITECT_PATH}/grpc --recursive
   cd ${ARCHITECT_PATH}/grpc/
   make

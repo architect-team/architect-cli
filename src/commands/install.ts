@@ -83,8 +83,9 @@ export default class Install extends Command {
     grpc_options.push(['grpc_out', stub_directory]);
     switch (target_language) {
       case SUPPORTED_LANGUAGES.NODE:
+        const grpc_plugin_path = path.join(__dirname, '../../node_modules/grpc-tools/bin/grpc_node_plugin');
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
-        grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_node_plugin`']);
+        grpc_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
         break;
       // case SUPPORTED_LANGUAGES.PYTHON:
       //   protobuf_options.push(['python_out', stub_directory]);
