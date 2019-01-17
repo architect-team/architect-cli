@@ -107,9 +107,13 @@ export default class Start extends Command {
   ): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       try {
+        const cmd_path = path.join(
+          __dirname,
+          '../../node_modules/.bin/',
+          `architect-${service_config.language}-launcher`
+        );
         const target_port = await Start.getAvailablePort();
-        const cmd = spawn('npx', [
-          `architect-${service_config.language}-launcher`,
+        const cmd = spawn(cmd_path, [
           '--target_port', `${target_port}`,
           '--service_path', service_path,
         ]);
