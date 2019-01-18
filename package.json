@@ -1,7 +1,7 @@
 {
   "name": "@snappi/architect",
   "description": "Command line interface for creating and deploying architect services",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "author": "David Thor @davidthor",
   "bin": {
     "architect": "./bin/run"
