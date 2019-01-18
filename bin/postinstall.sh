@@ -13,18 +13,6 @@ npm link grpc --local
 # Check to see if GRPC and protoc has been installed
 protoc --version
 if [[ $? -ne 0 ]]; then
-  echo "protoc not installed. Installing now..."
-  apt-get install build-essential autoconf libtool pkg-config
-  git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc ${ARCHITECT_PATH}/grpc --recursive
-  cd ${ARCHITECT_PATH}/grpc/
-  make
-  cd ./third_party/protobuf
-  make install
-  cd ../../../
-  protoc --version
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to install protoc. Please follow instructions below to install GRPC from source:"
-    echo "https://github.com/grpc/grpc/blob/master/BUILDING.md"
-    exit 1
-  fi
+  echo "Protoc compiler not installed. Please make sure to download the correct version for your OS:"
+  echo "https://github.com/protocolbuffers/protobuf/releases"
 fi

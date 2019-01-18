@@ -11,6 +11,11 @@ Command line interface for creating and deploying architect services
 * [Demo](#demo)
 * [Known Issues](#known-issues)
 <!-- tocstop -->
+
+# Requirements
+* Node >= v8.x
+* [Protoc compiler](https://github.com/protocolbuffers/protobuf/releases) - used to generate RPC stubs
+
 # Usage
 <!-- usage -->
 ```sh-session
@@ -136,4 +141,5 @@ $ architect start
 * Done!
 
 # Known Issues
+* Must run `npm config set unsafe-perm=true` in order for install to work
 * https://github.com/grpc/grpc-node/issues/670
