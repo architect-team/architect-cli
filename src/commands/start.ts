@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import {ChildProcess, spawn} from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
+import * as readline from 'readline';
 
 import DeploymentConfig from '../common/deployment-config';
 import ServiceConfig from '../common/service-config';
@@ -120,8 +121,12 @@ export default class Start extends Command {
 
         let host: string;
         let port: number;
-        cmd.stdout.on('data', data => {
-          data = data.toString().trim();
+
+        readline.createInterface({
+          input: cmd.stdout,
+          terminal: false
+        }).on('line', data => {
+          data = data.trim();
           if (service_config.isScript() && data.length > 0) {
             this.log(data);
           } else {
