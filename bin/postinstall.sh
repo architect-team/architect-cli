@@ -37,7 +37,7 @@ if [[ $? -ne 0 ]]; then
   curl ${PROTOC_DOWNLOAD_LINK}/protoc-${PROTOC_VERSION}-${OS}-${ARCHITECTURE}.zip -L -o ${ARCHITECT_PATH}/protoc.zip
   mkdir ${ARCHITECT_PATH}/protoc/
   unzip ${ARCHITECT_PATH}/protoc.zip -d ${ARCHITECT_PATH}/protoc/
-  ln -s ${ARCHITECT_PATH}/protoc/bin/protoc /usr/local/bin/
+  sudo ln -s ${ARCHITECT_PATH}/protoc/bin/protoc /usr/local/bin/
   protoc --version
   echo "Unable to install protoc compiler. Please install manually:"
   echo "https://github.com/protocolbuffers/protobuf/releases"
