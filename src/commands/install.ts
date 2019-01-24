@@ -81,16 +81,20 @@ export default class Install extends Command {
     protobuf_options.push(['proto_path', dependency_path]);
     grpc_options.push(['proto_path', dependency_path]);
     grpc_options.push(['grpc_out', stub_directory]);
+
+    const grpc_plugin_path = path.join(
+      process.env.ARCHITECT_PATH || '~/.architect/grpc/',
+      'grpc/bins/opt/',
+      `grpc_${target_language}_plugin`
+    );
+    grpc_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
     switch (target_language) {
       case SUPPORTED_LANGUAGES.NODE:
-        const grpc_plugin_path = path.join(__dirname, '../../node_modules/grpc-tools/bin/grpc_node_plugin');
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
-        grpc_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
         break;
-      // case SUPPORTED_LANGUAGES.PYTHON:
-      //   protobuf_options.push(['python_out', stub_directory]);
-      //   grpc_options.push(['plugin', 'protoc-gen-grpc=`which grpc_python_plugin`']);
-      //   break;
+      case SUPPORTED_LANGUAGES.PYTHON:
+        protobuf_options.push(['python_out', stub_directory]);
+        break;
       default:
         protobuf_options.push([`${target_language}_out`, stub_directory]);
         throw new Error(`RPC stub generation not supported for ${target_language}`);
