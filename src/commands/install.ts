@@ -1,6 +1,6 @@
 import {Command, flags} from '@oclif/command';
 import {execSync} from 'child_process';
-import {existsSync, mkdirSync} from 'fs';
+import {existsSync, mkdirSync, writeFileSync} from 'fs';
 import * as path from 'path';
 
 import MANAGED_PATHS from '../common/managed-paths';
@@ -88,15 +88,15 @@ export default class Install extends Command {
       `grpc_${target_language}_plugin`
     );
     grpc_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
+
     switch (target_language) {
       case SUPPORTED_LANGUAGES.NODE:
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
         break;
       case SUPPORTED_LANGUAGES.PYTHON:
-        protobuf_options.push(['python_out', stub_directory]);
+        protobuf_options.push([`${target_language}_out`, stub_directory]);
         break;
       default:
-        protobuf_options.push([`${target_language}_out`, stub_directory]);
         throw new Error(`RPC stub generation not supported for ${target_language}`);
     }
 
@@ -106,5 +106,9 @@ export default class Install extends Command {
 
     const grpc_options_string = grpc_options.map(pair => `--${pair.join('=')}`).join(' ');
     execSync(`protoc ${grpc_options_string} ${proto_path}`);
+
+    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
+      writeFileSync(path.join(stub_directory, '__init__.py'), '');
+    }
   }
 }
