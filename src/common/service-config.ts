@@ -68,7 +68,8 @@ export default class ServiceConfig {
   }
 
   setName(name: string) {
-    this.name = name;
+    // Hyphen replacement is done to support python module conventions
+    this.name = name.replace('-', '_');
     return this;
   }
 
