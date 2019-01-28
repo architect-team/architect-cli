@@ -12,4 +12,4 @@ npm install -g grpc
 npm link grpc --local
 
 # Check to see if GRPC and protoc has been installed
-sh ./bin/install-protoc.sh
+./bin/install-protoc.sh
