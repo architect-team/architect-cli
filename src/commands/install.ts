@@ -83,7 +83,7 @@ export default class Install extends Command {
     grpc_options.push(['grpc_out', stub_directory]);
 
     const grpc_plugin_path = path.join(
-      process.env.ARCHITECT_PATH || '~/.architect/grpc/',
+      process.env.ARCHITECT_PATH || '~/.architect/',
       'grpc/bins/opt/',
       `grpc_${target_language}_plugin`
     );
