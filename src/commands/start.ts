@@ -51,6 +51,9 @@ export default class Start extends Command {
   deployment_config: DeploymentConfig = {};
 
   async run() {
+    // Ensures that the python launcher doesn't buffer output and cause hanging
+    process.env.PYTHONUNBUFFERED = 'true';
+
     const service_path = process.cwd();
     await this.startService(service_path, true);
     this.exit();

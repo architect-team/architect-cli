@@ -43,6 +43,10 @@ export default class ServiceConfig {
       .setLanguage(configJSON.language);
   }
 
+  static convertServiceNameToFolderName(service_name: string): string {
+    return service_name.replace('-', '_');
+  }
+
   name: string;
   version: string;
   description: string;
@@ -68,8 +72,7 @@ export default class ServiceConfig {
   }
 
   setName(name: string) {
-    // Hyphen replacement is done to support python module conventions
-    this.name = name.replace('-', '_');
+    this.name = name;
     return this;
   }
 
@@ -128,7 +131,7 @@ export default class ServiceConfig {
   // architect service that can be called as a dependency or if
   // its simply a script to be called once.
   isScript() {
-    return this.proto === null || this.proto === undefined;
+    return !this.proto;
   }
 }
 

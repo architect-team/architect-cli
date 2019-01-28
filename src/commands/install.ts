@@ -71,7 +71,7 @@ export default class Install extends Command {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
     }
 
-    const stub_directory = path.join(target_path, dependency_config.name);
+    const stub_directory = path.join(target_path, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
     if (!existsSync(stub_directory)) {
       mkdirSync(stub_directory);
     }
