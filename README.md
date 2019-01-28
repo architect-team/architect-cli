@@ -1,9 +1,11 @@
-architect
+Architect CLI
 =========
 
-Command line interface for creating and deploying architect services
+### [View Documentation](https://docs.architect.io/)
 
-[![License](https://img.shields.io/npm/l/architect.svg)](https://github.com/snappi/architect-cli/blob/master/package.json)
+[![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
+
+Command line interface for creating and deploying architect services.
 
 <!-- toc -->
 * [Requirements](#requirements)
@@ -15,7 +17,6 @@ Command line interface for creating and deploying architect services
 
 # Requirements
 * Node >= v8.x
-* [Protoc compiler](https://github.com/protocolbuffers/protobuf/releases) - used to generate RPC stubs
 
 # Usage
 <!-- usage -->
