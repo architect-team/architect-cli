@@ -50,7 +50,7 @@
   "keywords": [
     "oclif"
   ],
-  "license": "MIT",
+  "license": "GPL-3.0",
   "main": "lib/index.js",
   "oclif": {
     "commands": "./lib/commands",
