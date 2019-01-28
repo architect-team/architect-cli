@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command line interface for creating and deploying architect services",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "author": "David Thor @davidthor",
   "bin": {
     "architect": "./bin/run"
