@@ -80,7 +80,6 @@ export default class Install extends Command {
     let grpc_options: [string, string][] = [];
     protobuf_options.push(['proto_path', dependency_path]);
     grpc_options.push(['proto_path', dependency_path]);
-    grpc_options.push(['grpc_out', stub_directory]);
 
     const grpc_plugin_path = path.join(
       process.env.ARCHITECT_PATH || '~/.architect/',
@@ -92,9 +91,11 @@ export default class Install extends Command {
     switch (target_language) {
       case SUPPORTED_LANGUAGES.NODE:
         protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
+        grpc_options.push(['grpc_out', `minimum_node_version=8:${stub_directory}`]);
         break;
       case SUPPORTED_LANGUAGES.PYTHON:
         protobuf_options.push([`${target_language}_out`, stub_directory]);
+        grpc_options.push(['grpc_out', stub_directory]);
         break;
       default:
         throw new Error(`RPC stub generation not supported for ${target_language}`);
