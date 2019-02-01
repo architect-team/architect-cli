@@ -1,6 +1,7 @@
 import {Command, flags} from '@oclif/command';
 import {execSync} from 'child_process';
 import {existsSync, mkdirSync, writeFileSync} from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import MANAGED_PATHS from '../common/managed-paths';
@@ -82,7 +83,7 @@ export default class Install extends Command {
     grpc_options.push(['proto_path', dependency_path]);
 
     const grpc_plugin_path = path.join(
-      process.env.ARCHITECT_PATH || '~/.architect/',
+      process.env.ARCHITECT_PATH || path.join(os.homedir(), '.architect'),
       'grpc/bins/opt/',
       `grpc_${target_language}_plugin`
     );

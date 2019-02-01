@@ -144,4 +144,3 @@ $ architect start
 
 # Known Issues
 * Must run `npm config set unsafe-perm=true` in order for install to work
-* https://github.com/grpc/grpc-node/issues/670
