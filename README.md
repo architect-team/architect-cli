@@ -108,39 +108,5 @@ OPTIONS
 _See code: [src/commands/start.ts](https://github.com/architect-team/architect-cli/blob/v0.1.3/src/commands/start.ts)_
 <!-- commandsstop -->
 
-# Demo
-
-* [Install GRPC and Protoc](https://github.com/grpc/grpc/blob/master/BUILDING.md#pre-requisites)
-* [Make sure you have node JS installed](https://nodejs.org/en/download/package-manager/)
-* The demo includes javascript services, which means we'll need the node plugins for grpc and protobuf
-```
-$ npm install -g yarn
-$ yarn global add grpc
-$ yarn global add google-protobuf
-```
-
-* Install architect via yarn
-```
-$ yarn global add @snappi/architect
-```
-
-* Clone the demo project
-```
-$ git clone git@github.com:snappi/calculator-service-demo.git
-$ cd calculator-service-demo/test-service
-```
-
-* Install the client stubs for the test script and its dependencies
-```
-$ architect install --recursive
-```
-
-* Start the test service
-```
-$ architect start
-```
-
-* Done!
-
 # Known Issues
 * Must run `npm config set unsafe-perm=true` in order for install to work

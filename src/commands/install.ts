@@ -30,7 +30,9 @@ export default class Install extends Command {
       const {flags} = this.parse(Install);
       let process_path = process.cwd();
       if (flags.prefix) {
-        process_path = path.join(process_path, flags.prefix);
+        process_path = path.isAbsolute(flags.prefix) ?
+          flags.prefix :
+          path.join(process_path, flags.prefix);
       }
       this.installDependencies(process_path);
     } catch (error) {
