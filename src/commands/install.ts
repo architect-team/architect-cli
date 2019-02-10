@@ -1,12 +1,10 @@
 import {Command, flags} from '@oclif/command';
-import {execSync} from 'child_process';
-import {existsSync, mkdirSync, writeFileSync} from 'fs';
-import * as os from 'os';
+import {existsSync, mkdirSync} from 'fs';
 import * as path from 'path';
 
 import MANAGED_PATHS from '../common/managed-paths';
+import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
-import SUPPORTED_LANGUAGES from '../common/supported-languages';
 
 export default class Install extends Command {
   static description = 'Install dependencies of the current service';
@@ -56,7 +54,7 @@ export default class Install extends Command {
       if (service_config.dependencies.hasOwnProperty(dependency_name)) {
         const dependency_identifier = service_config.dependencies[dependency_name];
         const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier, service_path);
-        this.installDependency(dependency_path, stubs_directory, service_config.language);
+        ProtocExecutor.execute(dependency_path, stubs_directory, service_config.language);
         if (flags.recursive) {
           this.installDependencies(dependency_path);
         }
@@ -64,55 +62,7 @@ export default class Install extends Command {
     });
 
     if (service_config.proto) {
-      this.installDependency(service_path, stubs_directory, service_config.language);
-    }
-  }
-
-  installDependency(dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES) {
-    const dependency_config = ServiceConfig.loadFromPath(dependency_path);
-    if (!dependency_config.proto) {
-      throw new Error(`${dependency_config.name} has no .proto file configured.`);
-    }
-
-    const stub_directory = path.join(target_path, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
-    if (!existsSync(stub_directory)) {
-      mkdirSync(stub_directory);
-    }
-
-    let protobuf_options: [string, string][] = [];
-    let grpc_options: [string, string][] = [];
-    protobuf_options.push(['proto_path', dependency_path]);
-    grpc_options.push(['proto_path', dependency_path]);
-
-    const grpc_plugin_path = path.join(
-      process.env.ARCHITECT_PATH || path.join(os.homedir(), '.architect'),
-      'grpc/bins/opt/',
-      `grpc_${target_language}_plugin`
-    );
-    grpc_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
-
-    switch (target_language) {
-      case SUPPORTED_LANGUAGES.NODE:
-        protobuf_options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
-        grpc_options.push(['grpc_out', `minimum_node_version=8:${stub_directory}`]);
-        break;
-      case SUPPORTED_LANGUAGES.PYTHON:
-        protobuf_options.push([`${target_language}_out`, stub_directory]);
-        grpc_options.push(['grpc_out', stub_directory]);
-        break;
-      default:
-        throw new Error(`RPC stub generation not supported for ${target_language}`);
-    }
-
-    const proto_path = path.join(dependency_path, dependency_config.proto);
-    const protobuf_options_string = protobuf_options.map(pair => `--${pair.join('=')}`).join(' ');
-    execSync(`protoc ${protobuf_options_string} ${proto_path}`);
-
-    const grpc_options_string = grpc_options.map(pair => `--${pair.join('=')}`).join(' ');
-    execSync(`protoc ${grpc_options_string} ${proto_path}`);
-
-    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
-      writeFileSync(path.join(stub_directory, '__init__.py'), '');
+      ProtocExecutor.execute(service_path, stubs_directory, service_config.language);
     }
   }
 }
