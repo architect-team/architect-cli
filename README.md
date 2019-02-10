@@ -3,6 +3,7 @@ Architect CLI
 
 ### [View Documentation](https://docs.architect.io/)
 
+[![License](https://img.shields.io/circleci/project/github/architect-team/architect-cli.svg)](https://circleci.com/gh/architect-team/architect-cli/tree/master)
 [![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
 
 Command line interface for creating and deploying architect services.

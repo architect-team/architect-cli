@@ -8,7 +8,7 @@ import * as readline from 'readline';
 import DeploymentConfig from '../common/deployment-config';
 import ServiceConfig from '../common/service-config';
 
-const AVAILABLE_PORTS = Array.from({length: 1000}, (v, k) => k + 50000);
+const AVAILABLE_PORTS = Array.from({length: 1000}, (_, k) => k + 50000);
 
 export default class Start extends Command {
   static description = 'Start the service locally';
