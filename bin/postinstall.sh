@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-
 # Setup Architect home directory
 ARCHITECT_PATH=$HOME/.architect
 mkdir -p ${ARCHITECT_PATH}
+export ARCHITECT_PATH=${ARCHITECT_PATH}
 grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
 
 # Hack to allow GRPC to be used as part of the launcher and inside
@@ -33,7 +33,7 @@ if ! [[ -x "$(command -v protoc)" ]]; then
 
   git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc ${ARCHITECT_PATH}/grpc --recursive
   cd ${ARCHITECT_PATH}/grpc/
-  make
+  make HAS_SYSTEM_PROTOBUF=false
   cd ${ARCHITECT_PATH}/grpc/third_party/protobuf
   make install
 
