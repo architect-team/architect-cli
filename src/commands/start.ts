@@ -8,7 +8,7 @@ import * as readline from 'readline';
 import DeploymentConfig from '../common/deployment-config';
 import ServiceConfig from '../common/service-config';
 
-const AVAILABLE_PORTS = Array.from({length: 1000}, (_, k) => k + 50000);
+const AVAILABLE_PORTS = Array.from({length: 1000}, (_, k) => `${k + 50000}`);
 
 export default class Start extends Command {
   static description = 'Start the service locally';
@@ -53,6 +53,7 @@ export default class Start extends Command {
   async run() {
     // Ensures that the python launcher doesn't buffer output and cause hanging
     process.env.PYTHONUNBUFFERED = 'true';
+    process.env.PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION = 'python';
 
     const service_path = process.cwd();
     await this.startService(service_path, true);

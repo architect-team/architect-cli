@@ -1,5 +1,5 @@
 import {execSync} from 'child_process';
-import {existsSync, mkdirSync, writeFileSync} from 'fs';
+import {copyFileSync, existsSync, mkdirSync, writeFileSync} from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -7,7 +7,7 @@ import ServiceConfig from './service-config';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
-  const getOutputOptions = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): [string, string][] => {
+  const _getOutputOptions = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): [string, string][] => {
     let options: [string, string][] = [];
 
     switch (target_language) {
@@ -23,7 +23,7 @@ namespace ProtocExecutor {
     return options;
   };
 
-  const postHooks = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): void => {
+  const _postHooks = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): void => {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
       writeFileSync(path.join(stub_directory, '__init__.py'), '');
     }
@@ -41,7 +41,15 @@ namespace ProtocExecutor {
     }
 
     let protobuf_options: [string, string][] = [];
-    protobuf_options.push(['proto_path', dependency_path]);
+    const tmpDir = path.join(os.tmpdir(), ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir);
+    }
+    copyFileSync(
+      path.join(dependency_path, dependency_config.proto),
+      path.join(tmpDir, dependency_config.proto)
+    );
+    protobuf_options.push(['proto_path', os.tmpdir()]);
 
     const grpc_plugin_path = path.join(
       process.env.ARCHITECT_PATH || path.join(os.homedir(), '.architect'),
@@ -49,13 +57,13 @@ namespace ProtocExecutor {
       `grpc_${target_language}_plugin`
     );
     protobuf_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
-    protobuf_options = protobuf_options.concat(getOutputOptions(stub_directory, target_language));
+    protobuf_options = protobuf_options.concat(_getOutputOptions(target_path, target_language));
 
-    const proto_path = path.join(dependency_path, dependency_config.proto);
     const protobuf_options_string = protobuf_options.map(pair => `--${pair.join('=')}`).join(' ');
-    execSync(`protoc ${protobuf_options_string} ${proto_path}`);
+    execSync(`protoc ${protobuf_options_string} ${path.join(tmpDir, dependency_config.proto)}`);
+    execSync(`rm -rf ${tmpDir}`);
 
-    postHooks(stub_directory, target_language);
+    _postHooks(stub_directory, target_language);
   };
 }
 
