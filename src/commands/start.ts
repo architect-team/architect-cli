@@ -1,14 +1,12 @@
 import {Command, flags} from '@oclif/command';
 import chalk from 'chalk';
 import {ChildProcess, spawn} from 'child_process';
-import * as net from 'net';
 import * as path from 'path';
 import * as readline from 'readline';
 
 import DeploymentConfig from '../common/deployment-config';
+import PortUtil from '../common/port-util';
 import ServiceConfig from '../common/service-config';
-
-const AVAILABLE_PORTS = Array.from({length: 1000}, (_, k) => `${k + 50000}`);
 
 export default class Start extends Command {
   static description = 'Start the service locally';
@@ -22,32 +20,6 @@ export default class Start extends Command {
     })
   };
 
-  static async isPortAvailable(port: string) {
-    return new Promise<boolean>(resolve => {
-      const tester: net.Server = net.createServer()
-        .once('error', () => resolve(false))
-        .once('listening', () =>
-          tester.once('close', () => resolve(true)).close()
-        )
-        .listen(port);
-    });
-  }
-
-  static async getAvailablePort() {
-    let port;
-
-    for (let p of AVAILABLE_PORTS) {
-      const isAvailable = await Start.isPortAvailable(p);
-      if (isAvailable) {
-        port = p;
-        break;
-      }
-    }
-
-    if (!port) throw new Error('No valid ports available');
-    return port;
-  }
-
   deployment_config: DeploymentConfig = {};
 
   async run() {
@@ -58,6 +30,16 @@ export default class Start extends Command {
     const service_path = process.cwd();
     await this.startService(service_path, true);
     this.exit();
+  }
+
+  async isServiceRunning(service_name: string) {
+    if (Object.keys(this.deployment_config).includes(service_name)) {
+      const instance_details = this.deployment_config[service_name];
+      const port_check = await PortUtil.isPortAvailable(instance_details.port);
+      return !port_check;
+    }
+
+    return false;
   }
 
   setServiceEnvironmentDetails(
@@ -91,14 +73,9 @@ export default class Start extends Command {
       await this.startService(dependency_path);
     }
 
-    // Check if the service is already running
-    if (Object.keys(this.deployment_config).includes(service_config.name)) {
-      const instance_details = this.deployment_config[service_config.name];
-      const port_check = await Start.isPortAvailable(`${instance_details.port}`);
-      if (!port_check) {
-        this.log(`${service_config.name} already deployed at ${instance_details.host}:${instance_details.port}`);
-        return;
-      }
+    if (this.isServiceRunning(service_config.name)) {
+      this.log(`${service_config.name} already deployed`);
+      return;
     }
 
     this.log(`Deploying ${chalk.blue(service_config.name)}`);
@@ -117,7 +94,7 @@ export default class Start extends Command {
           '../../node_modules/.bin/',
           `architect-${service_config.language}-launcher`
         );
-        const target_port = await Start.getAvailablePort();
+        const target_port = await PortUtil.getAvailablePort();
         const cmd = spawn(cmd_path, [
           '--target_port', `${target_port}`,
           '--service_path', service_path,
