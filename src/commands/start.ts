@@ -53,7 +53,6 @@ export default class Start extends Command {
     process.env[key] = JSON.stringify({
       host,
       port,
-      service_path,
       proto_prefix: service_config.getProtoName()
     });
     this.deployment_config[service_config.name] = {
