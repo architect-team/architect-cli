@@ -36,7 +36,7 @@ export default class Start extends Command {
     if (Object.keys(this.deployment_config).includes(service_name)) {
       const instance_details = this.deployment_config[service_name];
       const port_check = await PortUtil.isPortAvailable(instance_details.port);
-      return !port_check;
+      return !!port_check;
     }
 
     return false;
@@ -53,7 +53,6 @@ export default class Start extends Command {
     process.env[key] = JSON.stringify({
       host,
       port,
-      service_path,
       proto_prefix: service_config.getProtoName()
     });
     this.deployment_config[service_config.name] = {
@@ -78,7 +77,8 @@ export default class Start extends Command {
       await this.startService(dependency_path);
     }
 
-    if (this.isServiceRunning(service_config.name)) {
+    const isServiceRunning = await this.isServiceRunning(service_config.name);
+    if (isServiceRunning) {
       this.log(`${service_config.name} already deployed`);
       return;
     }
