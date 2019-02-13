@@ -20,7 +20,8 @@ describe('launchers', () => {
         process.env.ARCHITECT_ADDITION_SERVICE = JSON.stringify({
           host: '0.0.0.0',
           port: '8080',
-          service_path: path.join(calculator_example_path, './addition-service/')
+          service_path: path.join(calculator_example_path, './addition-service/'),
+          proto_prefix: 'service'
         });
       });
 

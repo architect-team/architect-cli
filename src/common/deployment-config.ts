@@ -4,6 +4,7 @@ export interface ServiceEnvironment {
   host: string;
   port: number;
   service_path: string;
+  proto_prefix?: string;
   process: ChildProcess;
 }
 

@@ -43,19 +43,24 @@ export default class Start extends Command {
   }
 
   setServiceEnvironmentDetails(
-    service_name: string,
+    service_config: ServiceConfig,
     child_process: ChildProcess,
     host: string,
     port: number,
     service_path: string,
   ): void {
-    const key = `ARCHITECT_${service_name.toUpperCase().replace('-', '_')}`;
-    const value = {host, port, service_path};
-    process.env[key] = JSON.stringify(value);
-    this.deployment_config[service_name] = {
+    const key = `ARCHITECT_${service_config.getNormalizedName().toUpperCase()}`;
+    process.env[key] = JSON.stringify({
       host,
       port,
       service_path,
+      proto_prefix: service_config.getProtoName()
+    });
+    this.deployment_config[service_config.name] = {
+      host,
+      port,
+      service_path,
+      proto_prefix: service_config.getProtoName(),
       process: child_process,
     };
   }
@@ -118,7 +123,7 @@ export default class Start extends Command {
             }
 
             if (host && port) {
-              this.setServiceEnvironmentDetails(service_config.name, cmd, host, port, service_path);
+              this.setServiceEnvironmentDetails(service_config, cmd, host, port, service_path);
               resolve();
             }
           }

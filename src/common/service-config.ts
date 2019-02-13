@@ -71,6 +71,16 @@ export default class ServiceConfig {
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
 
+  getNormalizedName() {
+    return ServiceConfig.convertServiceNameToFolderName(this.name);
+  }
+
+  getProtoName() {
+    return this.proto ?
+      this.proto.slice(0, this.proto.lastIndexOf('.')) :
+      undefined;
+  }
+
   setName(name: string) {
     this.name = name;
     return this;
