@@ -1,24 +1,17 @@
-FROM ubuntu:16.04
-LABEL maintainer = "david.thor@architect.io"
+FROM architectio/architect-cli-base:latest
 
-# Install Node.js & Python
-RUN apt-get update && \
-  apt-get install -y build-essential autoconf libtool pkg-config curl git sudo unzip python-pip && \
-  pip install --upgrade pip && \
-  curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh && \
-  bash ./nodesource_setup.sh && \
-  apt-get install -y nodejs
+WORKDIR /usr/src/app
+ENV ARCHITECT_PATH=~/.architect
+ENV NODE_PATH=/usr/lib/node_modules:$NODE_PATH
 
-# Setup Architect home directory
-ARG ARCHITECT_PATH=/root/.architect
-RUN mkdir -p ${ARCHITECT_PATH} && \
-  grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
+ARG SERVICE_LANGUAGE
+ENV SERVICE_LANGUAGE=${SERVICE_LANGUAGE}
+ENV TARGET_PORT=8080
 
-# Install GRPC
-RUN git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc ${ARCHITECT_PATH}/grpc --recursive && \
-  cd ${ARCHITECT_PATH}/grpc/ && \
-  make && \
-  cd ${ARCHITECT_PATH}/grpc/third_party/protobuf && \
-  make install
+COPY . .
 
+RUN npm config set unsafe-perm=true && \
+  npm install -g @architect-io/cli
 
+CMD ["bash", "-c", "/usr/lib/node_modules/@architect-io/cli/node_modules/.bin/architect-${SERVICE_LANGUAGE}-launcher --service_path=. --target_port=${TARGET_PORT}"]
+EXPOSE 8080
