@@ -1,5 +1,5 @@
 import {execSync} from 'child_process';
-import {copyFileSync, existsSync, mkdirSync, writeFileSync, realpathSync} from 'fs';
+import {copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync} from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
