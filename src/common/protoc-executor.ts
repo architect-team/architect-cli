@@ -1,5 +1,5 @@
 import {execSync} from 'child_process';
-import {copyFileSync, existsSync, mkdirSync, writeFileSync} from 'fs';
+import {copyFileSync, existsSync, mkdirSync, writeFileSync, realpathSync} from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -31,7 +31,8 @@ namespace ProtocExecutor {
       mkdirSync(stub_directory);
     }
 
-    const tmpDir = path.join(os.tmpdir(), ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
+    const tmpRoot = realpathSync(os.tmpdir());
+    const tmpDir = path.join(tmpRoot, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
     if (!existsSync(tmpDir)) {
       mkdirSync(tmpDir);
     }
@@ -44,10 +45,10 @@ namespace ProtocExecutor {
     execSync([
       'docker', 'run',
       '-v', `${target_path}:/defs`,
-      '-v', `/private${os.tmpdir()}:${os.tmpdir()}`,
+      '-v', `${tmpRoot}:${tmpRoot}`,
       'architectio/protoc-all',
       '-f', proto_path,
-      '-i', os.tmpdir(),
+      '-i', tmpRoot,
       '-l', target_language,
       '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
     ].join(' '), {stdio: 'ignore'});
