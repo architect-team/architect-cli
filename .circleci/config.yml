@@ -9,6 +9,7 @@ jobs:
       - run:
           name: Install Docker
           command: curl -sSL https://get.docker.com/ | sh
+      - setup_remote_docker
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
