@@ -109,5 +109,5 @@ OPTIONS
 _See code: [src/commands/start.ts](https://github.com/architect-team/architect-cli/blob/v0.1.6/src/commands/start.ts)_
 <!-- commandsstop -->
 
-# Known Issues
-* Must run `npm config set unsafe-perm=true` in order for install to work
+# Special Thanks
+* [namely/docker-protoc](https://github.com/namely/docker-protoc) - excellent, compact container for generating GRPC clients for all languages

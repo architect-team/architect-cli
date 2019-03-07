@@ -11,6 +11,7 @@ describe('install', () => {
 
   test
     .stdout()
+    .timeout(15000)
     .command([
       'install',
       '--recursive',
