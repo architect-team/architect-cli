@@ -41,17 +41,16 @@ namespace ProtocExecutor {
       path.join(tmpDir, dependency_config.proto)
     );
 
-    const proto_path = path.join(tmpDir, dependency_config.proto);
+    const mount_dirname = '/home/protoc';
+    const mounted_proto_path = path.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
     execSync([
       'docker', 'run',
       '-v', `${target_path}:/defs`,
-      '-v', `${tmpRoot}:${tmpRoot}`,
-      '--user', '$(id -u)',
-      '--env', 'UID=$(id -u)',
-      '--env', 'GUI=$(id -g)',
+      '-v', `${tmpRoot}:${mount_dirname}`,
+      '--user', '$(id -u):$(id -g)',
       'architectio/protoc-all',
-      '-f', proto_path,
-      '-i', tmpRoot,
+      '-f', `${mounted_proto_path}`,
+      '-i', mount_dirname,
       '-l', target_language,
       '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
     ].join(' '), {stdio: 'ignore'});
