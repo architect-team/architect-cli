@@ -41,7 +41,7 @@ namespace ProtocExecutor {
       path.join(tmpDir, dependency_config.proto)
     );
 
-    const mount_dirname = '/home/protoc';
+    const mount_dirname = '/opt/protoc';
     const mounted_proto_path = path.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
     execSync([
       'docker', 'run',
