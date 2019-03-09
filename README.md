@@ -13,7 +13,7 @@ Command line interface for creating and deploying architect services.
 * [Requirements](#requirements)
 * [Usage](#usage)
 * [Commands](#commands)
-* [Known Issues](#known-issues)
+* [Special Thanks](#special-thanks)
 <!-- tocstop -->
 
 # Requirements
@@ -26,7 +26,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.1.6 darwin-x64 node-v10.15.0
+@architect-io/cli/0.1.7 darwin-x64 node-v10.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -75,7 +75,7 @@ OPTIONS
   -v, --version=version          [default: 0.1.0]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.1.6/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.1.7/src/commands/init.ts)_
 
 ## `architect install`
 
@@ -91,7 +91,7 @@ OPTIONS
   -r, --recursive      Generate architect dependency files for all services in the dependency tree.
 ```
 
-_See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.1.6/src/commands/install.ts)_
+_See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.1.7/src/commands/install.ts)_
 
 ## `architect start`
 
@@ -106,7 +106,7 @@ OPTIONS
   -h, --help                     show CLI help
 ```
 
-_See code: [src/commands/start.ts](https://github.com/architect-team/architect-cli/blob/v0.1.6/src/commands/start.ts)_
+_See code: [src/commands/start.ts](https://github.com/architect-team/architect-cli/blob/v0.1.7/src/commands/start.ts)_
 <!-- commandsstop -->
 
 # Special Thanks
