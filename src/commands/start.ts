@@ -8,6 +8,10 @@ import DeploymentConfig from '../common/deployment-config';
 import PortUtil from '../common/port-util';
 import ServiceConfig from '../common/service-config';
 
+const _info = chalk.blue;
+const _success = chalk.green;
+const _error = chalk.red;
+
 export default class Start extends Command {
   static description = 'Start the service locally';
 
@@ -79,11 +83,11 @@ export default class Start extends Command {
 
     const isServiceRunning = await this.isServiceRunning(service_config.name);
     if (isServiceRunning) {
-      this.log(`${service_config.name} already deployed`);
+      this.log(`${_info(service_config.name)} already deployed`);
       return;
     }
 
-    this.log(`Deploying ${chalk.blue(service_config.name)}`);
+    this.log(`Deploying ${_info(service_config.name)}`);
     await this.executeLauncher(service_path, service_config, is_root_service);
   }
 
@@ -100,10 +104,11 @@ export default class Start extends Command {
           `architect-${service_config.language}-launcher`
         );
         const target_port = await PortUtil.getAvailablePort();
-        const cmd = spawn(cmd_path, [
+        const cmd_args = [
           '--target_port', `${target_port}`,
           '--service_path', service_path,
-        ]);
+        ];
+        const cmd = spawn(cmd_path, cmd_args);
 
         let host: string;
         let port: number;
@@ -114,7 +119,7 @@ export default class Start extends Command {
         }).on('line', data => {
           data = data.trim();
           if (service_config.isScript() && data.length > 0) {
-            this.log(data);
+            this.log(_success(data));
           } else {
             if (data.indexOf('Host: ') === 0) {
               host = data.substring(6);
@@ -129,9 +134,10 @@ export default class Start extends Command {
           }
         });
 
-        cmd.stderr.on('data', data => {
-          data = data.toString().trim();
-          this.error(data);
+        cmd.stderr.on('data', () => {
+          this.warn(_error(`Error executing architect-${service_config.language}-launcher`));
+          this.warn(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
+          this.exit(1);
         });
 
         cmd.on('close', () => {

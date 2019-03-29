@@ -1,28 +1,13 @@
 import {execSync} from 'child_process';
-import {copyFileSync, existsSync, mkdirSync, writeFileSync} from 'fs';
+import {copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync} from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+import MANAGED_PATHS from './managed-paths';
 import ServiceConfig from './service-config';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
-  const _getOutputOptions = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): [string, string][] => {
-    let options: [string, string][] = [];
-
-    switch (target_language) {
-      case SUPPORTED_LANGUAGES.NODE:
-        options.push(['js_out', `import_style=commonjs,binary:${stub_directory}`]);
-        options.push(['grpc_out', `minimum_node_version=8:${stub_directory}`]);
-        break;
-      default:
-        options.push([`${target_language}_out`, stub_directory]);
-        options.push(['grpc_out', stub_directory]);
-    }
-
-    return options;
-  };
-
   const _postHooks = (stub_directory: string, target_language: SUPPORTED_LANGUAGES): void => {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
       writeFileSync(path.join(stub_directory, '__init__.py'), '');
@@ -35,13 +20,19 @@ namespace ProtocExecutor {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
     }
 
-    const stub_directory = path.join(target_path, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
+    // Make the folder to store dependency stubs
+    const stubs_directory = path.join(target_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
+    if (!existsSync(stubs_directory)) {
+      mkdirSync(stubs_directory);
+    }
+
+    const stub_directory = path.join(stubs_directory, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
     if (!existsSync(stub_directory)) {
       mkdirSync(stub_directory);
     }
 
-    let protobuf_options: [string, string][] = [];
-    const tmpDir = path.join(os.tmpdir(), ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
+    const tmpRoot = realpathSync(os.tmpdir());
+    const tmpDir = path.join(tmpRoot, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
     if (!existsSync(tmpDir)) {
       mkdirSync(tmpDir);
     }
@@ -49,18 +40,20 @@ namespace ProtocExecutor {
       path.join(dependency_path, dependency_config.proto),
       path.join(tmpDir, dependency_config.proto)
     );
-    protobuf_options.push(['proto_path', os.tmpdir()]);
 
-    const grpc_plugin_path = path.join(
-      process.env.ARCHITECT_PATH || path.join(os.homedir(), '.architect'),
-      'grpc/bins/opt/',
-      `grpc_${target_language}_plugin`
-    );
-    protobuf_options.push(['plugin', `protoc-gen-grpc=${grpc_plugin_path}`]);
-    protobuf_options = protobuf_options.concat(_getOutputOptions(target_path, target_language));
-
-    const protobuf_options_string = protobuf_options.map(pair => `--${pair.join('=')}`).join(' ');
-    execSync(`protoc ${protobuf_options_string} ${path.join(tmpDir, dependency_config.proto)}`);
+    const mount_dirname = '/opt/protoc';
+    const mounted_proto_path = path.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
+    execSync([
+      'docker', 'run',
+      '-v', `${target_path}:/defs`,
+      '-v', `${tmpRoot}:${mount_dirname}`,
+      '--user', '$(id -u):$(id -g)',
+      'architectio/protoc-all',
+      '-f', `${mounted_proto_path}`,
+      '-i', mount_dirname,
+      '-l', target_language,
+      '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
+    ].join(' '), {stdio: 'ignore'});
     execSync(`rm -rf ${tmpDir}`);
 
     _postHooks(stub_directory, target_language);

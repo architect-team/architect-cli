@@ -9,16 +9,11 @@ RUN apt-get update && \
   bash ./nodesource_setup.sh && \
   apt-get install -y nodejs
 
+# Install Docker
+RUN curl -sSL https://get.docker.com/ | sh
+
 # Setup Architect home directory
 ARG ARCHITECT_PATH=/root/.architect
 RUN mkdir -p ${ARCHITECT_PATH} && \
   grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
-
-# Install GRPC
-RUN git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc ${ARCHITECT_PATH}/grpc --recursive && \
-  cd ${ARCHITECT_PATH}/grpc/ && \
-  make && \
-  cd ${ARCHITECT_PATH}/grpc/third_party/protobuf && \
-  make install
-
 

@@ -1,10 +1,12 @@
 import {Command, flags} from '@oclif/command';
-import {existsSync, mkdirSync} from 'fs';
+import chalk from 'chalk';
 import * as path from 'path';
 
-import MANAGED_PATHS from '../common/managed-paths';
 import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
+
+const _info = chalk.blue;
+const _error = chalk.red;
 
 export default class Install extends Command {
   static description = 'Install dependencies of the current service';
@@ -34,27 +36,21 @@ export default class Install extends Command {
       }
       this.installDependencies(process_path);
     } catch (error) {
-      this.error(error.message);
+      this.error(_error(error.message));
     }
   }
 
   installDependencies(service_path: string) {
     const {flags} = this.parse(Install);
     const service_config = ServiceConfig.loadFromPath(service_path);
-    this.log(`Installing dependencies for ${service_config.name}`);
-
-    // Make the folder to store dependency stubs
-    const stubs_directory = path.join(service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
-    if (!existsSync(stubs_directory)) {
-      mkdirSync(stubs_directory);
-    }
+    this.log(`Installing dependencies for ${_info(service_config.name)}`);
 
     // Install all dependencies
     Object.keys(service_config.dependencies).forEach((dependency_name: string) => {
       if (service_config.dependencies.hasOwnProperty(dependency_name)) {
         const dependency_identifier = service_config.dependencies[dependency_name];
         const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier, service_path);
-        ProtocExecutor.execute(dependency_path, stubs_directory, service_config.language);
+        ProtocExecutor.execute(dependency_path, service_path, service_config.language);
         if (flags.recursive) {
           this.installDependencies(dependency_path);
         }
@@ -62,7 +58,7 @@ export default class Install extends Command {
     });
 
     if (service_config.proto) {
-      ProtocExecutor.execute(service_path, stubs_directory, service_config.language);
+      ProtocExecutor.execute(service_path, service_path, service_config.language);
     }
   }
 }
