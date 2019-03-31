@@ -8,11 +8,13 @@ ARG SERVICE_LANGUAGE
 ENV SERVICE_LANGUAGE=${SERVICE_LANGUAGE}
 ENV TARGET_PORT=8080
 ENV PYTHONUNBUFFERED=true
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 COPY . .
 
 RUN npm config set unsafe-perm=true && \
-  npm install -g @architect-io/cli
+  npm install -g @architect-io/${SERVICE_LANGUAGE}-launcher
 
-CMD ["bash", "-c", "/usr/lib/node_modules/@architect-io/cli/node_modules/.bin/architect-${SERVICE_LANGUAGE}-launcher --service_path=. --target_port=${TARGET_PORT}"]
+CMD ["bash", "-c", "/usr/bin/architect-${SERVICE_LANGUAGE}-launcher --service_path=. --target_port=${TARGET_PORT}"]
 EXPOSE 8080
