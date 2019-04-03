@@ -68,7 +68,6 @@ describe('init', () => {
     test
       .stdout()
       .command(['init', '--output', os.tmpdir()])
-      .exit(0)
       .it('should match default values', ctx => {
         const config = new ServiceConfig()
           .setName(MOCK_SERVICE_CONFIG.name)
@@ -84,7 +83,6 @@ describe('init', () => {
     test
       .stdout()
       .command(['init', '--name', 'test', '--output', os.tmpdir()])
-      .exit(0)
       .it('should match provided name', ctx => {
         const config = new ServiceConfig()
           .setName('test')
@@ -108,7 +106,6 @@ describe('init', () => {
         '--license', 'Apache',
         '--output', os.tmpdir()
       ])
-      .exit(0)
       .it('should match all other fields', ctx => {
         const config = new ServiceConfig()
           .setName(MOCK_SERVICE_CONFIG.name)

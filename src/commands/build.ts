@@ -10,6 +10,7 @@ import Install from './install';
 
 const _info = chalk.blue;
 const _error = chalk.red;
+const _success = chalk.green;
 
 export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
@@ -41,8 +42,12 @@ export default class Build extends Command {
     if (args.context) {
       root_service_path = path.resolve(args.context);
     }
-    await this.buildImage(root_service_path);
-    this.exit();
+
+    try {
+      await this.buildImage(root_service_path);
+    } catch (err) {
+      this.error(_error(err.message));
+    }
   }
 
   async buildImage(service_path: string) {
@@ -68,6 +73,7 @@ export default class Build extends Command {
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     await Install.run(['--prefix', service_path]);
     const tag_name = flags.tag || `architect-${service_config.name}`;
-    execSync(`docker build --build-arg SERVICE_LANGUAGE=${service_config.language} -t ${tag_name} -f ${dockerfile_path} ${service_path}`, {stdio: 'inherit'});
+    execSync(`docker build --build-arg SERVICE_LANGUAGE=${service_config.language} -t ${tag_name} -f ${dockerfile_path} ${service_path}`);
+    this.log(_success(`Successfully built image for ${service_config.name}`));
   }
 }
