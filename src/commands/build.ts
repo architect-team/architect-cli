@@ -9,6 +9,7 @@ import ServiceConfig from '../common/service-config';
 import Install from './install';
 
 const _info = chalk.blue;
+const _error = chalk.red;
 
 export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
@@ -39,6 +40,10 @@ export default class Build extends Command {
     const {flags} = this.parse(Build);
     const service_config = ServiceConfig.loadFromPath(service_path);
 
+    if (flags.recursive && flags.tag) {
+      this.error(_error('Cannot override tag for recursive builds'));
+    }
+
     if (flags.recursive) {
       const dependency_names = Object.keys(service_config.dependencies);
       for (let dependency_name of dependency_names) {
@@ -52,6 +57,7 @@ export default class Build extends Command {
     this.log(_info(`Building docker image for ${service_config.name}`));
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     await Install.run(['--prefix', service_path]);
-    execSync(`docker build --build-arg SERVICE_LANGUAGE=${service_config.language} -t architect-${service_config.name} -f ${dockerfile_path} ${service_path}`, {stdio: 'inherit'});
+    const tag_name = flags.tag || `architect-${service_config.name}`;
+    execSync(`docker build --build-arg SERVICE_LANGUAGE=${service_config.language} -t ${tag_name} -f ${dockerfile_path} ${service_path}`, {stdio: 'inherit'});
   }
 }
