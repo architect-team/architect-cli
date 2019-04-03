@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 LABEL maintainer = "david.thor@architect.io"
 
 # Install Node.js & Python
@@ -11,8 +11,8 @@ RUN apt-get update && \
   apt-get install -y nodejs
 
 # Map python3 to python
-RUN sudo rm /usr/bin/python && \
-  sudo ln -s /usr/bin/python3 /usr/bin/python
+RUN rm /usr/bin/python && \
+  ln -s /usr/bin/python3 /usr/bin/python
 
 # Install Docker
 RUN curl -sSL https://get.docker.com/ | sh
