@@ -4,6 +4,7 @@ import {execSync} from 'child_process';
 describe('build', () => {
   test
     .stdout()
+    .timeout(7000)
     .command(['build', './test/calculator-example/addition-service/'])
     .it('builds docker image', ctx => {
       const {stdout} = ctx;
@@ -17,6 +18,7 @@ describe('build', () => {
 
   test
     .stdout()
+    .timeout(7000)
     .command(['build', '--tag', 'tag-override', './test/calculator-example/addition-service/'])
     .it('allows tag overrides', ctx => {
       const {stdout} = ctx;
