@@ -28,10 +28,19 @@ export default class Build extends Command {
     })
   };
 
-  static args = [];
+  static args = [
+    {
+      name: 'context',
+      description: 'Path to the service to build'
+    }
+  ];
 
   async run() {
-    const root_service_path = process.cwd();
+    const {args} = this.parse(Build);
+    let root_service_path = process.cwd();
+    if (args.context) {
+      root_service_path = path.resolve(args.context);
+    }
     await this.buildImage(root_service_path);
     this.exit();
   }
@@ -48,7 +57,8 @@ export default class Build extends Command {
       const dependency_names = Object.keys(service_config.dependencies);
       for (let dependency_name of dependency_names) {
         const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
-          service_config.dependencies[dependency_name]
+          service_config.dependencies[dependency_name],
+          service_path
         );
         await this.buildImage(dependency_path);
       }
