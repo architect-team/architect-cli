@@ -4,7 +4,7 @@ LABEL maintainer = "david.thor@architect.io"
 # Install Node.js & Python
 RUN apt-get update && \
   apt-get -y upgrade && \
-  apt-get install -y build-essential autoconf libtool pkg-config curl git sudo unzip python3-pip && \
+  apt-get install -y build-essential autoconf libtool pkg-config curl git unzip python3-pip && \
   pip3 install --upgrade pip click grpcio && \
   curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh && \
   bash ./nodesource_setup.sh && \
