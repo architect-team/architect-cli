@@ -154,8 +154,8 @@ export default class Start extends Command {
 
         cmd.on('close', () => {
           if (hadError) {
-            this.error(_error(`Error executing architect-${service_config.language}-launcher`));
-            this.error(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
+            this.log(_error(`Error executing architect-${service_config.language}-launcher`));
+            this.log(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
             this.exit(1);
           }
           if (!service_config.isScript()) {
