@@ -82,8 +82,6 @@ export default class Init extends Command {
       this.error(_error(`Error creating ${MANAGED_PATHS.ARCHITECT_JSON} file`));
       this.error(_error(error));
     }
-
-    this.exit();
   }
 
   async promptOptions() {

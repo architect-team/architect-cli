@@ -1,20 +1,20 @@
-FROM ubuntu:18.04
-LABEL maintainer = "david.thor@architect.io"
+FROM architectio/architect-cli-base:latest
 
-# Install Node.js & Python
-RUN apt-get update && \
-  apt-get install -y build-essential autoconf libtool pkg-config curl git sudo unzip python-pip && \
-  pip install --upgrade pip && \
-  curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh && \
-  bash ./nodesource_setup.sh && \
-  apt-get install -y nodejs
+WORKDIR /usr/src/app
+ENV ARCHITECT_PATH=~/.architect
+ENV NODE_PATH=/usr/lib/node_modules:$NODE_PATH
 
-# Install Docker
-RUN curl -sSL https://get.docker.com/ | sh
+ARG SERVICE_LANGUAGE
+ENV SERVICE_LANGUAGE=${SERVICE_LANGUAGE}
+ENV TARGET_PORT=8080
+ENV PYTHONUNBUFFERED=true
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
-# Setup Architect home directory
-ARG ARCHITECT_PATH=/root/.architect
-RUN mkdir -p ${ARCHITECT_PATH} && \
-  grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
+COPY . .
 
+RUN npm config set unsafe-perm=true && \
+  npm install -g @architect-io/${SERVICE_LANGUAGE}-launcher
 
+CMD ["bash", "-c", "/usr/bin/architect-${SERVICE_LANGUAGE}-launcher --service_path=. --target_port=${TARGET_PORT}"]
+EXPOSE 8080
