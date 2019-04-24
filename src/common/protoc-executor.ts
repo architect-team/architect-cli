@@ -47,7 +47,7 @@ namespace ProtocExecutor {
       'docker', 'run',
       '-v', `${target_path}:/defs`,
       '-v', `${tmpRoot}:${mount_dirname}`,
-      process.platform === 'win32' ? '' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
+      '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
       'architectio/protoc-all',
       '-f', `${mounted_proto_path}`,
       '-i', mount_dirname,
