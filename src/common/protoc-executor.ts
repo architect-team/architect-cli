@@ -42,12 +42,12 @@ namespace ProtocExecutor {
     );
 
     const mount_dirname = '/opt/protoc';
-    const mounted_proto_path = path.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
+    const mounted_proto_path = path.posix.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
     execSync([
       'docker', 'run',
       '-v', `${target_path}:/defs`,
       '-v', `${tmpRoot}:${mount_dirname}`,
-      '--user', '$(id -u):$(id -g)',
+      process.platform === 'win32' ? '' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
       'architectio/protoc-all',
       '-f', `${mounted_proto_path}`,
       '-i', mount_dirname,
