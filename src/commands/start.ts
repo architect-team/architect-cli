@@ -169,10 +169,10 @@ export default class Start extends Command {
           resolve();
         });
 
-        cmd.on('error', e => {
+        cmd.on('error', error => {
           this.log(_error(`Error: spawning architect-${service_config.language}-launcher`));
-          this.log(_error(e.toString()));
-          this.exit(1);
+          this.log(_error(error.toString()));
+          reject(error);
         });
       } catch (error) {
         reject(error);
