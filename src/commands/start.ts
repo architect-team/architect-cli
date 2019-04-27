@@ -126,6 +126,8 @@ export default class Start extends Command {
               host = data.substring(6);
             } else if (data.indexOf('Port: ') === 0) {
               port = data.substring(6);
+            } else if (data.length > 0) {
+              this.log(_info(`[${service_config.name}]`), data);
             }
 
             if (host && port) {
@@ -135,13 +137,28 @@ export default class Start extends Command {
           }
         });
 
-        cmd.stderr.on('data', () => {
-          this.warn(_error(`Error executing architect-${service_config.language}-launcher`));
-          this.warn(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
-          this.exit(1);
+        let hadError = false;
+        readline.createInterface({
+          input: cmd.stderr,
+          terminal: false
+        }).on('line', data => {
+          hadError = true;
+          data = data.trim();
+          if (data.length > 0) {
+            if (service_config.isScript()) {
+              this.log(_error(data));
+            } else {
+              this.log(_info(`[${service_config.name}]`), _error(data));
+            }
+          }
         });
 
         cmd.on('close', () => {
+          if (hadError) {
+            this.log(_error(`Error executing architect-${service_config.language}-launcher`));
+            this.log(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
+            this.exit(1);
+          }
           if (!service_config.isScript()) {
             Object.values(this.deployment_config).map(config => config.process.kill());
             return reject(new ServiceLaunchError(service_config.name));

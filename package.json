@@ -1,15 +1,15 @@
 {
   "name": "@architect-io/cli",
   "description": "Command line interface for creating and deploying architect services",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "David Thor @davidthor",
   "bin": {
     "architect": "./bin/run"
   },
   "bugs": "https://github.com/architect-team/architect-cli/issues",
   "dependencies": {
-    "@architect-io/node-launcher": "^0.1.2",
-    "@architect-io/python-launcher": "^0.1.8",
+    "@architect-io/node-launcher": "^0.1.12",
+    "@architect-io/python-launcher": "^0.1.12",
     "@oclif/command": "^1.5.2",
     "@oclif/config": "^1.8.6",
     "@oclif/plugin-help": "^2.1.2",
