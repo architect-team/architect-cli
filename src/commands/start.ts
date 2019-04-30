@@ -1,9 +1,10 @@
-import {Command, flags} from '@oclif/command';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import {ChildProcess, spawn} from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import * as path from 'path';
 import * as readline from 'readline';
 
+import Command from '../base';
 import DeploymentConfig from '../common/deployment-config';
 import PortUtil from '../common/port-util';
 import ServiceConfig from '../common/service-config';
@@ -16,7 +17,7 @@ export default class Start extends Command {
   static description = 'Start the service locally';
 
   static flags = {
-    help: flags.help({char: 'h'}),
+    help: flags.help({ char: 'h' }),
     config_path: flags.string({
       char: 'c',
       description: 'Path to a config file containing locations of ' +

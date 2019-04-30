@@ -1,8 +1,9 @@
-import {Command, flags} from '@oclif/command';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import {execSync} from 'child_process';
+import { execSync } from 'child_process';
 import * as path from 'path';
 
+import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 
@@ -16,7 +17,7 @@ export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 
   static flags = {
-    help: flags.help({char: 'h'}),
+    help: flags.help({ char: 'h' }),
     tag: flags.string({
       char: 't',
       required: false,
@@ -37,7 +38,7 @@ export default class Build extends Command {
   ];
 
   async run() {
-    const {args} = this.parse(Build);
+    const { args } = this.parse(Build);
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
@@ -51,7 +52,7 @@ export default class Build extends Command {
   }
 
   async buildImage(service_path: string) {
-    const {flags} = this.parse(Build);
+    const { flags } = this.parse(Build);
     const service_config = ServiceConfig.loadFromPath(service_path);
 
     if (flags.recursive && flags.tag) {
