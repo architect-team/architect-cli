@@ -98,15 +98,16 @@ export default class Start extends Command {
   ): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       try {
+        const ext = process.platform === 'win32' ? '.cmd' : '';
         const cmd_path = path.join(
           __dirname,
           '../../node_modules/.bin/',
-          `architect-${service_config.language}-launcher`
+          `architect-${service_config.language}-launcher${ext}`
         );
         const target_port = await PortUtil.getAvailablePort();
         const cmd_args = [
           '--target_port', `${target_port}`,
-          '--service_path', service_path,
+          '--service_path', service_path
         ];
         const cmd = spawn(cmd_path, cmd_args);
 
@@ -166,6 +167,12 @@ export default class Start extends Command {
           }
 
           resolve();
+        });
+
+        cmd.on('error', error => {
+          this.log(_error(`Error: spawning architect-${service_config.language}-launcher`));
+          this.log(_error(error.toString()));
+          reject(error);
         });
       } catch (error) {
         reject(error);
