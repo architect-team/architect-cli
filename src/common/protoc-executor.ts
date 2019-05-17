@@ -1,5 +1,5 @@
-import {execSync} from 'child_process';
-import {copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync} from 'fs';
+import { exec, execSync } from 'child_process';
+import { copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -14,7 +14,7 @@ namespace ProtocExecutor {
     }
   };
 
-  export const execute = (dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES): void => {
+  export const execute = async (dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES): Promise<void> => {
     const dependency_config = ServiceConfig.loadFromPath(dependency_path);
     if (!dependency_config.proto) {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
@@ -43,17 +43,26 @@ namespace ProtocExecutor {
 
     const mount_dirname = '/opt/protoc';
     const mounted_proto_path = path.posix.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
-    execSync([
-      'docker', 'run',
-      '-v', `${target_path}:/defs`,
-      '-v', `${tmpRoot}:${mount_dirname}`,
-      '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
-      'architectio/protoc-all',
-      '-f', `${mounted_proto_path}`,
-      '-i', mount_dirname,
-      '-l', target_language,
-      '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-    ].join(' '), {stdio: 'ignore'});
+
+    // execSync caused the output logs to hang
+    await new Promise(resolve => {
+      const thread = exec([
+        'docker', 'run',
+        '-v', `${target_path}:/defs`,
+        '-v', `${tmpRoot}:${mount_dirname}`,
+        '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
+        'architectio/protoc-all',
+        '-f', `${mounted_proto_path}`,
+        '-i', mount_dirname,
+        '-l', target_language,
+        '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
+      ].join(' '));
+
+      thread.on('close', () => {
+        resolve();
+      });
+    });
+
     execSync(`rm -rf ${tmpDir}`);
 
     _postHooks(stub_directory, target_language);

@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import * as Listr from 'listr';
 import * as path from 'path';
 
 import Command from '../base';
@@ -8,6 +9,7 @@ import ServiceConfig from '../common/service-config';
 
 const _info = chalk.blue;
 const _error = chalk.red;
+const _success = chalk.green;
 
 export default class Install extends Command {
   static description = 'Install dependencies of the current service';
@@ -27,39 +29,51 @@ export default class Install extends Command {
   static args = [];
 
   async run() {
-    try {
-      const { flags } = this.parse(Install);
-      let process_path = process.cwd();
-      if (flags.prefix) {
-        process_path = path.isAbsolute(flags.prefix) ?
-          flags.prefix :
-          path.join(process_path, flags.prefix);
-      }
-      this.installDependencies(process_path);
-    } catch (error) {
-      this.error(_error(error.message));
+    const { flags } = this.parse(Install);
+    let process_path = process.cwd();
+    if (flags.prefix) {
+      process_path = path.isAbsolute(flags.prefix) ?
+        flags.prefix :
+        path.join(process_path, flags.prefix);
     }
+
+    const tasks = new Listr(await this.getTasks(process_path, flags.recursive), { concurrent: 3 });
+    await tasks.run();
+    this.log(_success('Installed'));
   }
 
-  installDependencies(service_path: string) {
-    const { flags } = this.parse(Install);
-    const service_config = ServiceConfig.loadFromPath(service_path);
-    this.log(`Installing dependencies for ${_info(service_config.name)}`);
+  async getTasks(root_service_path: string, recursive: boolean): Promise<Listr.ListrTask[]> {
+    const tasks: Listr.ListrTask[] = [];
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
+    dependencies.forEach(dependency => {
+      const sub_tasks: Listr.ListrTask[] = [];
 
-    // Install all dependencies
-    Object.keys(service_config.dependencies).forEach((dependency_name: string) => {
-      if (service_config.dependencies.hasOwnProperty(dependency_name)) {
-        const dependency_identifier = service_config.dependencies[dependency_name];
-        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier, service_path);
-        ProtocExecutor.execute(dependency_path, service_path, service_config.language);
-        if (flags.recursive) {
-          this.installDependencies(dependency_path);
-        }
+      if (dependency.service_config.proto) {
+        sub_tasks.push({
+          title: _info(dependency.service_config.name),
+          task: () => {
+            return ProtocExecutor.execute(dependency.service_path, dependency.service_path, dependency.service_config.language);
+          }
+        });
       }
+
+      dependency.dependencies.forEach(sub_dependency => {
+        sub_tasks.push({
+          title: _info(sub_dependency.service_config.name),
+          task: () => {
+            return ProtocExecutor.execute(sub_dependency.service_path, dependency.service_path, dependency.service_config.language);
+          }
+        });
+      });
+
+      tasks.push({
+        title: `Installing dependencies for ${_info(dependency.service_config.name)}`,
+        task: () => {
+          return new Listr(sub_tasks, { concurrent: 2 });
+        }
+      });
     });
 
-    if (service_config.proto) {
-      ProtocExecutor.execute(service_path, service_path, service_config.language);
-    }
+    return tasks;
   }
 }

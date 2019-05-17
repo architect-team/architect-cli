@@ -3,7 +3,14 @@ import * as path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
-import {SemvarValidator} from './validation-utils';
+import { SemvarValidator } from './validation-utils';
+
+interface ServiceDependency {
+  service_path: string;
+  service_config: ServiceConfig;
+
+  dependencies: ServiceDependency[];
+}
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -43,6 +50,49 @@ export default class ServiceConfig {
       .setLanguage(configJSON.language);
   }
 
+  static async getDependencies(root_service_path: string, recursive: boolean): Promise<ServiceDependency[]> {
+    const service_dependencies: ServiceDependency[] = [];
+    const services_map: any = {};
+
+    const root_service_config = ServiceConfig.loadFromPath(root_service_path!);
+    services_map[root_service_path] = {
+      service_path: root_service_path!,
+      service_config: root_service_config,
+      dependencies: []
+    };
+    const queue = [services_map[root_service_path]];
+
+    while (queue.length > 0) {
+      const service_dependency = queue.shift()!;
+      const service_config = service_dependency.service_config;
+      service_dependencies.push(service_dependency);
+
+      if (recursive) {
+        const dependency_names = Object.keys(service_config.dependencies);
+        for (let dependency_name of dependency_names) {
+          const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
+            service_config.dependencies[dependency_name],
+            service_dependency.service_path
+          );
+
+          // Handle circular deps
+          if (!services_map[dependency_path]) {
+            const dependency_config = ServiceConfig.loadFromPath(dependency_path!);
+            services_map[dependency_path] = {
+              service_path: dependency_path,
+              service_config: dependency_config,
+              dependencies: []
+            };
+            queue.push(services_map[dependency_path]);
+          }
+          service_dependency.dependencies.push(services_map[dependency_path]);
+        }
+      }
+    }
+
+    return service_dependencies;
+  }
+
   static convertServiceNameToFolderName(service_name: string): string {
     return service_name.replace('-', '_');
   }
@@ -53,7 +103,7 @@ export default class ServiceConfig {
   keywords: string[];
   author: string;
   license: string;
-  dependencies: {[s: string]: string};
+  dependencies: { [s: string]: string };
   proto?: string;
   main: string;
   language: SUPPORTED_LANGUAGES;
@@ -117,7 +167,7 @@ export default class ServiceConfig {
     return this;
   }
 
-  setDependencies(dependencies: {[s: string]: string}) {
+  setDependencies(dependencies: { [s: string]: string }) {
     this.dependencies = dependencies;
     return this;
   }
