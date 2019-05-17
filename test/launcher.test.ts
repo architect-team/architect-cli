@@ -1,5 +1,5 @@
-import {expect} from '@oclif/test';
-import {execSync, spawn, spawnSync} from 'child_process';
+import { expect } from '@oclif/test';
+import { execSync, spawn, spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -26,7 +26,7 @@ describe('launchers', () => {
       });
 
       it('should fail w/out service path', () => {
-        const {status, stderr} = spawnSync(script_path);
+        const { status, stderr } = spawnSync(script_path);
         expect(status).not.to.be.eq(null);
         expect(status).not.to.be.eq(0);
         expect(stderr.toString()).to.include('Missing required flag');
@@ -34,7 +34,7 @@ describe('launchers', () => {
       });
 
       it('should fail w/out target port', () => {
-        const {status, stderr} = spawnSync(script_path, [
+        const { status, stderr } = spawnSync(script_path, [
           '--service_path', 'test_path'
         ]);
         expect(status).not.to.be.eq(null);
@@ -54,7 +54,7 @@ describe('launchers', () => {
           `./${language}-subtraction-service/${MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY}`
         )}`);
 
-        const {status, stderr} = spawnSync(script_path, [
+        const { status, stderr } = spawnSync(script_path, [
           '--service_path', path.join(__dirname, `./calculator-example/${language}-subtraction-service/`),
           '--target_port', '8081',
         ]);
@@ -104,7 +104,7 @@ describe('launchers', () => {
         setTimeout(() => {
           cmd.kill();
         }, 2000);
-      }).timeout(10000);
+      }).timeout(20000);
     });
   });
 });

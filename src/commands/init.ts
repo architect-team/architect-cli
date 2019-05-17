@@ -1,13 +1,14 @@
-import {Command, flags} from '@oclif/command';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 import * as path from 'path';
 
-import {INIT_INTRO_TEXT} from '../common/i18n';
+import Command from '../base';
+import { INIT_INTRO_TEXT } from '../common/i18n';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
-import {SemvarValidator} from '../common/validation-utils';
+import { SemvarValidator } from '../common/validation-utils';
 
 const _info = chalk.blue;
 const _success = chalk.green;
@@ -17,7 +18,7 @@ export default class Init extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 
   static flags = {
-    help: flags.help({char: 'h'}),
+    help: flags.help({ char: 'h' }),
     name: flags.string({
       char: 'n',
       default: Init.getDefaultServiceName(),
@@ -72,7 +73,7 @@ export default class Init extends Command {
       .setLicense(answers.license);
 
     try {
-      const {flags} = this.parse(Init);
+      const { flags } = this.parse(Init);
       const savePath = path.join(flags.output || process.cwd(), MANAGED_PATHS.ARCHITECT_JSON);
       const configJSON = JSON.stringify(config, null, 2);
       fs.writeFileSync(savePath, configJSON);
@@ -85,16 +86,14 @@ export default class Init extends Command {
   }
 
   async promptOptions() {
-    const {flags} = this.parse(Init);
+    const { flags } = this.parse(Init);
     return inquirer.prompt([{
       type: 'input',
       name: 'name',
-      message: 'name:',
       default: flags.name
     }, {
       type: 'input',
       name: 'version',
-      message: 'version:',
       default: flags.version,
       validate: value => {
         const validator = new SemvarValidator();
@@ -104,7 +103,6 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'description',
-      message: 'description:',
       default: flags.description,
     }, {
       type: 'input',
@@ -115,13 +113,11 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'author',
-      message: 'author:',
       default: flags.author || null,
       filter: input => [input]
     }, {
       type: 'input',
       name: 'license',
-      message: 'license:',
       default: flags.license
     }]);
   }

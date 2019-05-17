@@ -12,11 +12,22 @@
     "@architect-io/python-launcher": "^0.1.12",
     "@oclif/command": "^1.5.2",
     "@oclif/config": "^1.8.6",
+    "@oclif/errors": "^1.2.2",
     "@oclif/plugin-help": "^2.1.2",
+    "@types/auth0": "^2.9.11",
+    "@types/fs-extra": "^7.0.0",
+    "@types/keytar": "^4.4.0",
+    "@types/listr": "^0.14.0",
+    "@types/request": "^2.48.1",
+    "auth0": "^2.17.0",
     "chalk": "^2.4.1",
+    "fs-extra": "^8.0.1",
     "inquirer": "^6.2.0",
+    "keytar": "^4.6.0",
+    "listr": "^0.14.3",
     "oclif": "^1.12.5",
     "protocol-buffers": "^4.1.0",
+    "request": "^2.88.0",
     "tslib": "^1.9.3"
   },
   "devDependencies": {
@@ -55,7 +66,8 @@
     "commands": "./lib/commands",
     "bin": "architect",
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
     ]
   },
   "repository": "architect-team/architect-cli",
@@ -63,6 +75,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "posttest": "tslint -p test -t stylish",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "bash ./bin/postinstall.sh",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"

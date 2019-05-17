@@ -1,8 +1,9 @@
-import { Command, flags } from '@oclif/command';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import * as path from 'path';
 
+import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 
