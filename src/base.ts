@@ -3,11 +3,15 @@ import * as keytar from 'keytar';
 import * as request from 'request';
 import * as url from 'url';
 
+import { AppConfig } from './app-config';
+
 export default abstract class extends Command {
+  app_config!: AppConfig;
   architect!: ArchitectClient;
 
   async init() {
-    this.architect = new ArchitectClient();
+    this.app_config = new AppConfig();
+    this.architect = new ArchitectClient(this.app_config.api_host);
   }
 
   styled_json(obj: object) {
@@ -17,7 +21,11 @@ export default abstract class extends Command {
 }
 
 class ArchitectClient {
-  private readonly domain = 'https://api.architect.io';
+  private readonly domain: string;
+
+  constructor(domain: string) {
+    this.domain = domain;
+  }
 
   async get(path: string) {
     return this.request('GET', path);

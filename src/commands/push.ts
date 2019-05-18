@@ -71,7 +71,7 @@ export default class Push extends Command {
   async pushImage(service_path: string, service_config: ServiceConfig, tag?: string) {
     await Build.run([service_path]);
     const tag_name = tag || `architect-${service_config.name}`;
-    const repository_name = url.resolve('localhost:8081/', tag_name);
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, tag_name);
     execSync(`docker push ${repository_name}`);
   }
 }
