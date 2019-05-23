@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import * as Listr from 'listr';
 import * as path from 'path';
 import * as url from 'url';
@@ -12,7 +12,6 @@ import Build from './build';
 
 const _info = chalk.blue;
 const _error = chalk.red;
-const _success = chalk.green;
 
 export default class Push extends Command {
   static description = 'Push service(s) to a registry';
@@ -49,29 +48,44 @@ export default class Push extends Command {
       root_service_path = path.resolve(args.context);
     }
 
-    const tasks = new Listr(await this.getTasks(root_service_path, flags.recursive, flags.tag), { concurrent: 2 });
+    const tasks = new Listr(await this.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2 });
     await tasks.run();
-    this.log(_success('Pushed'));
   }
 
-  async getTasks(service_path: string, recursive: boolean, tag?: string): Promise<Listr.ListrTask[]> {
-    const dependencies = await ServiceConfig.getDependencies(service_path, recursive);
+  async getTasks(root_service_path: string, tag?: string, recursive?: boolean): Promise<Listr.ListrTask[]> {
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
     const tasks: Listr.ListrTask[] = [];
     dependencies.forEach(dependency => {
       tasks.push({
-        title: _info(`Pushing docker image for ${dependency.service_config.name}`),
+        title: `Pushing docker image for ${_info(dependency.service_config.name)}`,
         task: async () => {
-          await this.pushImage(dependency.service_path, dependency.service_config, tag);
+          const build_tasks = await Build.getTasks(dependency.service_path, tag);
+          const push_task = {
+            title: 'Pushing',
+            task: async () => {
+              await this.pushImage(dependency.service_config, tag);
+            }
+          };
+          return new Listr(build_tasks.concat([push_task]));
         }
       });
     });
     return tasks;
   }
 
-  async pushImage(service_path: string, service_config: ServiceConfig, tag?: string) {
-    await Build.run([service_path]);
+  async pushImage(service_config: ServiceConfig, tag?: string) {
     const tag_name = tag || `architect-${service_config.name}`;
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, tag_name);
-    execSync(`docker push ${repository_name}`);
+
+    const user = await this.architect.getUser();
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${tag_name}`);
+    execSync(`docker tag ${tag_name} ${repository_name}`);
+    // execSync caused the output logs to hang
+    await new Promise(resolve => {
+      const thread = exec(`docker push ${repository_name}`);
+
+      thread.on('close', () => {
+        resolve();
+      });
+    });
   }
 }

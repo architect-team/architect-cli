@@ -50,7 +50,7 @@ export default class ServiceConfig {
       .setLanguage(configJSON.language);
   }
 
-  static async getDependencies(root_service_path: string, recursive: boolean): Promise<ServiceDependency[]> {
+  static async getDependencies(root_service_path: string, recursive?: boolean): Promise<ServiceDependency[]> {
     const service_dependencies: ServiceDependency[] = [];
     const services_map: any = {};
 

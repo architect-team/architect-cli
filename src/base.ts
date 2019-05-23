@@ -20,11 +20,29 @@ export default abstract class extends Command {
   }
 }
 
+class UserEntity {
+  readonly access_token: string;
+  readonly username: string;
+
+  constructor(partial: { [key: string]: string }) {
+    this.access_token = partial.access_token;
+    this.username = partial['https://architect.io/username'];
+  }
+}
+
 class ArchitectClient {
   private readonly domain: string;
 
   constructor(domain: string) {
     this.domain = domain;
+  }
+
+  async getUser() {
+    const credentials = await keytar.findCredentials('architect.io');
+    if (credentials.length === 0) {
+      throw Error('denied: `architect login` required');
+    }
+    return new UserEntity(JSON.parse(credentials[0].password));
   }
 
   async get(path: string) {
@@ -48,7 +66,8 @@ class ArchitectClient {
     if (credentials.length === 0) {
       throw Error('denied: `architect login` required');
     }
-    const access_token = JSON.parse(credentials[0].password).access_token;
+    const user = await this.getUser();
+    const access_token = user.access_token;
 
     const options = {
       url: url.resolve(this.domain, path),

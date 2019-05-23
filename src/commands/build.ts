@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import * as Listr from 'listr';
 import * as path from 'path';
 
 import Command from '../base';
@@ -11,7 +12,6 @@ import Install from './install';
 
 const _info = chalk.blue;
 const _error = chalk.red;
-const _success = chalk.green;
 
 export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
@@ -37,53 +37,62 @@ export default class Build extends Command {
     }
   ];
 
+  static async getTasks(service_path: string, tag?: string, recursive?: boolean): Promise<Listr.ListrTask[]> {
+    const dependencies = await ServiceConfig.getDependencies(service_path, recursive);
+    const tasks: Listr.ListrTask[] = [];
+
+    dependencies.forEach(dependency => {
+      tasks.push({
+        title: `Building docker image for ${_info(dependency.service_config.name)}`,
+        task: async () => {
+          const install_tasks = await Install.getTasks(dependency.service_path);
+          const build_task = {
+            title: 'Building',
+            task: async () => {
+              await Build.buildImage(dependency.service_path, dependency.service_config, tag);
+            }
+          };
+          return new Listr(install_tasks.concat([build_task]));
+        }
+      });
+    });
+    return tasks;
+  }
+
+  static async buildImage(service_path: string, service_config: ServiceConfig, tag?: string) {
+    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
+    const tag_name = tag || `architect-${service_config.name}`;
+
+    // execSync caused the output logs to hang
+    await new Promise(resolve => {
+      const thread = exec([
+        'docker', 'build',
+        '--compress',
+        '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
+        '-t', tag_name,
+        '-f', dockerfile_path,
+        '--label', `architect.json='${JSON.stringify(service_config)}'`,
+        service_path
+      ].join(' '));
+
+      thread.on('close', () => {
+        resolve();
+      });
+    });
+  }
+
   async run() {
-    const { args } = this.parse(Build);
+    const { args, flags } = this.parse(Build);
+    if (flags.recursive && flags.tag) {
+      this.error(_error('Cannot specify tag for recursive builds'));
+    }
+
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
     }
 
-    try {
-      await this.buildImage(root_service_path);
-    } catch (err) {
-      this.error(_error(err.message));
-    }
-  }
-
-  async buildImage(service_path: string) {
-    const { flags } = this.parse(Build);
-    const service_config = ServiceConfig.loadFromPath(service_path);
-
-    if (flags.recursive && flags.tag) {
-      this.error(_error('Cannot override tag for recursive builds'));
-    }
-
-    if (flags.recursive) {
-      const dependency_names = Object.keys(service_config.dependencies);
-      for (let dependency_name of dependency_names) {
-        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
-          service_config.dependencies[dependency_name],
-          service_path
-        );
-        await this.buildImage(dependency_path);
-      }
-    }
-
-    this.log(_info(`Building docker image for ${service_config.name}`));
-    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
-    await Install.run(['--prefix', service_path]);
-    const tag_name = flags.tag || `architect-${service_config.name}`;
-
-    execSync([
-      'docker', 'build',
-      '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', tag_name,
-      '-f', dockerfile_path,
-      '--label', `architect.json='${JSON.stringify(service_config)}'`,
-      service_path
-    ].join(' '));
-    this.log(_success(`Successfully built image for ${service_config.name}`));
+    const tasks = new Listr(await Build.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2 });
+    await tasks.run();
   }
 }

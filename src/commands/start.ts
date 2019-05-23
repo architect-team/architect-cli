@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { ChildProcess, spawn } from 'child_process';
+import * as Listr from 'listr';
 import * as path from 'path';
 import * as readline from 'readline';
 
@@ -17,24 +18,53 @@ export default class Start extends Command {
   static description = 'Start the service locally';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-    config_path: flags.string({
-      char: 'c',
-      description: 'Path to a config file containing locations of ' +
-        'each service in the application'
-    })
+    help: flags.help({ char: 'h' })
   };
+
+  static args = [
+    {
+      name: 'context',
+      description: 'Path to the service to build'
+    }
+  ];
 
   deployment_config: DeploymentConfig = {};
 
   async run() {
+    const { args } = this.parse(Start);
     // Ensures that the python launcher doesn't buffer output and cause hanging
     process.env.PYTHONUNBUFFERED = 'true';
     process.env.PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION = 'python';
 
-    const service_path = process.cwd();
-    await this.startService(service_path, true);
-    this.exit();
+    let service_path = process.cwd();
+    if (args.context) {
+      service_path = path.resolve(args.context);
+    }
+
+    const tasks = new Listr(await this.getTasks(service_path), { renderer: 'verbose' });
+    await tasks.run();
+  }
+
+  async getTasks(root_service_path: string): Promise<Listr.ListrTask[]> {
+    const recursive = true;
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
+    dependencies.reverse();
+    const tasks: Listr.ListrTask[] = [];
+    dependencies.forEach(dependency => {
+      tasks.push({
+        title: `Deploying ${_info(dependency.service_config.name)}`,
+        task: async () => {
+          const isServiceRunning = await this.isServiceRunning(dependency.service_config.name);
+          if (isServiceRunning) {
+            this.log(`${_info(dependency.service_config.name)} already deployed`);
+            return;
+          }
+          const is_root_service = root_service_path === dependency.service_path;
+          await this.executeLauncher(dependency.service_path, dependency.service_config, is_root_service);
+        }
+      });
+    });
+    return tasks;
   }
 
   async isServiceRunning(service_name: string) {
@@ -67,29 +97,6 @@ export default class Start extends Command {
       proto_prefix: service_config.getProtoName(),
       process: child_process,
     };
-  }
-
-  async startService(
-    service_path: string,
-    is_root_service = false
-  ): Promise<void> {
-    const service_config = ServiceConfig.loadFromPath(service_path);
-    const dependency_names = Object.keys(service_config.dependencies);
-    for (let dependency_name of dependency_names) {
-      const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
-        service_config.dependencies[dependency_name]
-      );
-      await this.startService(dependency_path);
-    }
-
-    const isServiceRunning = await this.isServiceRunning(service_config.name);
-    if (isServiceRunning) {
-      this.log(`${_info(service_config.name)} already deployed`);
-      return;
-    }
-
-    this.log(`Deploying ${_info(service_config.name)}`);
-    await this.executeLauncher(service_path, service_config, is_root_service);
   }
 
   async executeLauncher(
