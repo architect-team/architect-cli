@@ -67,7 +67,7 @@ export default class ServiceConfig {
       const service_config = service_dependency.service_config;
       service_dependencies.push(service_dependency);
 
-      if (recursive) {
+      if (root_service_path === service_dependency.service_path || recursive) {
         const dependency_names = Object.keys(service_config.dependencies);
         for (let dependency_name of dependency_names) {
           const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
@@ -83,7 +83,9 @@ export default class ServiceConfig {
               service_config: dependency_config,
               dependencies: []
             };
-            queue.push(services_map[dependency_path]);
+            if (recursive) {
+              queue.push(services_map[dependency_path]);
+            }
           }
           service_dependency.dependencies.push(services_map[dependency_path]);
         }

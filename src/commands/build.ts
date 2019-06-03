@@ -27,6 +27,10 @@ export default class Build extends Command {
       char: 'r',
       default: false,
       description: 'Whether or not to build images for the cited dependencies'
+    }),
+    verbose: flags.boolean({
+      char: 'v',
+      description: 'Verbose log output'
     })
   };
 
@@ -85,7 +89,8 @@ export default class Build extends Command {
       root_service_path = path.resolve(args.context);
     }
 
-    const tasks = new Listr(await Build.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2 });
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await Build.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2, renderer });
     await tasks.run();
   }
 }

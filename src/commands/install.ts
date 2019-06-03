@@ -16,11 +16,15 @@ export default class Install extends Command {
     help: flags.help({ char: 'h' }),
     prefix: flags.string({
       char: 'p',
-      description: 'Path prefix indicating where the install command should execute from.'
+      description: 'Path prefix indicating where the install command should execute from'
     }),
     recursive: flags.boolean({
       char: 'r',
-      description: 'Generate architect dependency files for all services in the dependency tree.'
+      description: 'Generate architect dependency files for all services in the dependency tree'
+    }),
+    verbose: flags.boolean({
+      char: 'v',
+      description: 'Verbose log output'
     })
   };
 
@@ -70,7 +74,8 @@ export default class Install extends Command {
         path.join(process_path, flags.prefix);
     }
 
-    const tasks = new Listr(await Install.getTasks(process_path, flags.recursive), { concurrent: 3 });
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await Install.getTasks(process_path, flags.recursive), { concurrent: 3, renderer });
     await tasks.run();
   }
 }

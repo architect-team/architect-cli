@@ -5,7 +5,7 @@ describe('build', () => {
   test
     .stdout()
     .timeout(10000)
-    .command(['build', './test/calculator-example/addition-service/'])
+    .command(['build', './test/calculator-example/addition-service/', '--verbose'])
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for addition-service');
@@ -18,7 +18,7 @@ describe('build', () => {
   test
     .stdout()
     .timeout(10000)
-    .command(['build', '--tag', 'tag-override', './test/calculator-example/addition-service/'])
+    .command(['build', '--tag', 'tag-override', './test/calculator-example/addition-service/', '--verbose'])
     .it('allows tag overrides', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for addition-service');
@@ -30,8 +30,8 @@ describe('build', () => {
 
   test
     .stdout()
-    .timeout(15000)
-    .command(['build', '--recursive', './test/calculator-example/python-subtraction-service/'])
+    .timeout(20000)
+    .command(['build', '--recursive', './test/calculator-example/python-subtraction-service/', '--verbose'])
     .it('builds images recursively', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for subtraction-service');
