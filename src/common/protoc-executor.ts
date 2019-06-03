@@ -1,4 +1,4 @@
-import { exec, execSync } from 'child_process';
+import * as execa from 'execa';
 import { copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -44,26 +44,18 @@ namespace ProtocExecutor {
     const mount_dirname = '/opt/protoc';
     const mounted_proto_path = path.posix.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
 
-    // execSync caused the output logs to hang
-    await new Promise(resolve => {
-      const thread = exec([
-        'docker', 'run',
-        '-v', `${target_path}:/defs`,
-        '-v', `${tmpRoot}:${mount_dirname}`,
-        '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
-        'architectio/protoc-all',
-        '-f', `${mounted_proto_path}`,
-        '-i', mount_dirname,
-        '-l', target_language,
-        '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-      ].join(' '));
-
-      thread.on('close', () => {
-        resolve();
-      });
-    });
-
-    execSync(`rm -rf ${tmpDir}`);
+    await execa.shell([
+      'docker', 'run',
+      '-v', `${target_path}:/defs`,
+      '-v', `${tmpRoot}:${mount_dirname}`,
+      '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
+      'architectio/protoc-all',
+      '-f', `${mounted_proto_path}`,
+      '-i', mount_dirname,
+      '-l', target_language,
+      '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
+    ].join(' '));
+    await execa.shell(`rm -rf ${tmpDir}`);
 
     _postHooks(stub_directory, target_language);
   };

@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { exec } from 'child_process';
+import * as execa from 'execa';
 import * as Listr from 'listr';
 import * as path from 'path';
 
@@ -63,22 +63,15 @@ export default class Build extends Command {
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     const tag_name = tag || `architect-${service_config.name}`;
 
-    // execSync caused the output logs to hang
-    await new Promise(resolve => {
-      const thread = exec([
-        'docker', 'build',
-        '--compress',
-        '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-        '-t', tag_name,
-        '-f', dockerfile_path,
-        '--label', `architect.json='${JSON.stringify(service_config)}'`,
-        service_path
-      ].join(' '));
-
-      thread.on('close', () => {
-        resolve();
-      });
-    });
+    await execa.shell([
+      'docker', 'build',
+      '--compress',
+      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
+      '-t', tag_name,
+      '-f', dockerfile_path,
+      '--label', `architect.json='${JSON.stringify(service_config)}'`,
+      service_path
+    ].join(' '));
   }
 
   async run() {

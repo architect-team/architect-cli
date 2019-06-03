@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { exec, execSync } from 'child_process';
+import * as execa from 'execa';
 import * as Listr from 'listr';
 import * as path from 'path';
 import * as url from 'url';
@@ -78,14 +78,7 @@ export default class Push extends Command {
 
     const user = await this.architect.getUser();
     const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${tag_name}`);
-    execSync(`docker tag ${tag_name} ${repository_name}`);
-    // execSync caused the output logs to hang
-    await new Promise(resolve => {
-      const thread = exec(`docker push ${repository_name}`);
-
-      thread.on('close', () => {
-        resolve();
-      });
-    });
+    await execa.shell(`docker tag ${tag_name} ${repository_name}`);
+    await execa.shell(`docker push ${repository_name}`);
   }
 }
