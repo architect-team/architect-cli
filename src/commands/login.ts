@@ -53,8 +53,8 @@ export default class Login extends Command {
 
   async login(username: string, password: string) {
     const auth0 = new AuthenticationClient({
-      domain: 'architect.auth0.com',
-      clientId: 'X9U08B2hg6QEmRUIFKZoCSqgNBmAM6aU'
+      domain: this.app_config.oauth_domain,
+      clientId: this.app_config.oauth_client_id
     });
 
     auth0.passwordGrant({
@@ -66,7 +66,7 @@ export default class Login extends Command {
         this.log(_error(err.message));
       } else {
         const auth = JSON.stringify(authResult);
-        const registry_domain = 'registry.architect.io';
+        const registry_domain = this.app_config.default_registry_host;
         const res = spawnSync('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: auth });
         if (res.status === 0) {
           await keytar.setPassword('architect.io', username, auth);
