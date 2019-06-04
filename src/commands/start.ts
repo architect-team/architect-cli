@@ -31,21 +31,21 @@ export default class Start extends Command {
   deployment_config: DeploymentConfig = {};
 
   async run() {
-    const { args } = this.parse(Start);
     // Ensures that the python launcher doesn't buffer output and cause hanging
     process.env.PYTHONUNBUFFERED = 'true';
     process.env.PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION = 'python';
 
-    let service_path = process.cwd();
-    if (args.context) {
-      service_path = path.resolve(args.context);
-    }
-
-    const tasks = new Listr(await this.getTasks(service_path), { renderer: 'verbose' });
+    const tasks = new Listr(await this.tasks(), { renderer: 'verbose' });
     await tasks.run();
   }
 
-  async getTasks(root_service_path: string): Promise<Listr.ListrTask[]> {
+  async tasks(): Promise<Listr.ListrTask[]> {
+    const { args } = this.parse(Start);
+    let root_service_path = process.cwd();
+    if (args.context) {
+      root_service_path = path.resolve(args.context);
+    }
+
     const recursive = true;
     const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
     dependencies.reverse();

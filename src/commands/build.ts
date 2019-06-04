@@ -41,28 +41,6 @@ export default class Build extends Command {
     }
   ];
 
-  static async getTasks(service_path: string, tag?: string, recursive?: boolean): Promise<Listr.ListrTask[]> {
-    const dependencies = await ServiceConfig.getDependencies(service_path, recursive);
-    const tasks: Listr.ListrTask[] = [];
-
-    dependencies.forEach(dependency => {
-      tasks.push({
-        title: `Building docker image for ${_info(dependency.service_config.name)}`,
-        task: async () => {
-          const install_tasks = await Install.getTasks(dependency.service_path);
-          const build_task = {
-            title: 'Building',
-            task: async () => {
-              await Build.buildImage(dependency.service_path, dependency.service_config, tag);
-            }
-          };
-          return new Listr(install_tasks.concat([build_task]));
-        }
-      });
-    });
-    return tasks;
-  }
-
   static async buildImage(service_path: string, service_config: ServiceConfig, tag?: string) {
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     const tag_name = tag || `architect-${service_config.name}`;
@@ -79,18 +57,40 @@ export default class Build extends Command {
   }
 
   async run() {
-    const { args, flags } = this.parse(Build);
+    const { flags } = this.parse(Build);
     if (flags.recursive && flags.tag) {
       this.error(_error('Cannot specify tag for recursive builds'));
     }
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
+    await tasks.run();
+  }
 
+  async tasks(): Promise<Listr.ListrTask[]> {
+    const { args, flags } = this.parse(Build);
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
     }
 
-    const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await Build.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2, renderer });
-    await tasks.run();
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
+    const tasks: Listr.ListrTask[] = [];
+
+    dependencies.forEach(dependency => {
+      tasks.push({
+        title: `Building docker image for ${_info(dependency.service_config.name)}`,
+        task: async () => {
+          const install_tasks = await Install.tasks(['-p', dependency.service_path]);
+          const build_task = {
+            title: 'Building',
+            task: async () => {
+              await Build.buildImage(dependency.service_path, dependency.service_config, flags.tag);
+            }
+          };
+          return new Listr(install_tasks.concat([build_task]));
+        }
+      });
+    });
+    return tasks;
   }
 }

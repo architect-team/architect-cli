@@ -30,9 +30,22 @@ export default class Install extends Command {
 
   static args = [];
 
-  static async getTasks(root_service_path: string, recursive?: boolean): Promise<Listr.ListrTask[]> {
+  async run() {
+    const { flags } = this.parse(Install);
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await this.tasks(), { concurrent: 3, renderer });
+    await tasks.run();
+  }
+
+  async tasks(): Promise<Listr.ListrTask[]> {
+    const { flags } = this.parse(Install);
+    let root_service_path = process.cwd();
+    if (flags.prefix) {
+      root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
+    }
+
     const tasks: Listr.ListrTask[] = [];
-    const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
     dependencies.forEach(dependency => {
       const sub_tasks: Listr.ListrTask[] = [];
 
@@ -63,19 +76,5 @@ export default class Install extends Command {
     });
 
     return tasks;
-  }
-
-  async run() {
-    const { flags } = this.parse(Install);
-    let process_path = process.cwd();
-    if (flags.prefix) {
-      process_path = path.isAbsolute(flags.prefix) ?
-        flags.prefix :
-        path.join(process_path, flags.prefix);
-    }
-
-    const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await Install.getTasks(process_path, flags.recursive), { concurrent: 3, renderer });
-    await tasks.run();
   }
 }

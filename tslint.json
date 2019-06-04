@@ -8,6 +8,7 @@
   "rules": {
     "semicolon": [true, "always"],
     "ter-indent": [false],
-    "object-curly-spacing": ["always"]
+    "object-curly-spacing": ["always"],
+    "quotemark": [true, "single"]
   }
 }

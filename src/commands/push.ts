@@ -42,33 +42,33 @@ export default class Push extends Command {
   ];
 
   async run() {
-    const { args, flags } = this.parse(Push);
+    const { flags } = this.parse(Push);
     if (flags.recursive && flags.tag) {
       this.error(_error('Cannot specify tag for recursive pushes'));
     }
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
+    await tasks.run();
+  }
 
+  async tasks(): Promise<Listr.ListrTask[]> {
+    const { args, flags } = this.parse(Push);
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
     }
 
-    const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await this.getTasks(root_service_path, flags.tag, flags.recursive), { concurrent: 2, renderer });
-    await tasks.run();
-  }
-
-  async getTasks(root_service_path: string, tag?: string, recursive?: boolean): Promise<Listr.ListrTask[]> {
-    const dependencies = await ServiceConfig.getDependencies(root_service_path, recursive);
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
     const tasks: Listr.ListrTask[] = [];
     dependencies.forEach(dependency => {
       tasks.push({
         title: `Pushing docker image for ${_info(dependency.service_config.name)}`,
         task: async () => {
-          const build_tasks = await Build.getTasks(dependency.service_path, tag);
+          const build_tasks = await Build.tasks([dependency.service_path, '-t', flags.tag || '']);
           const push_task = {
             title: 'Pushing',
             task: async () => {
-              await this.pushImage(dependency.service_config, tag);
+              await this.pushImage(dependency.service_config, flags.tag);
             }
           };
           return new Listr(build_tasks.concat([push_task]));
