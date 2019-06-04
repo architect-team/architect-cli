@@ -1,5 +1,5 @@
-import {execSync} from 'child_process';
-import {copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync} from 'fs';
+import * as execa from 'execa';
+import { copyFileSync, existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -14,47 +14,48 @@ namespace ProtocExecutor {
     }
   };
 
-  export const execute = (dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES): void => {
+  export const execute = async (dependency_path: string, target_path: string, target_language: SUPPORTED_LANGUAGES): Promise<void> => {
     const dependency_config = ServiceConfig.loadFromPath(dependency_path);
     if (!dependency_config.proto) {
       throw new Error(`${dependency_config.name} has no .proto file configured.`);
     }
+    const dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency_config.name);
+    const target_config = ServiceConfig.loadFromPath(target_path);
+    // Prevent race conditions when building the same service concurrently for different targets
+    const namespace = `${ServiceConfig.convertServiceNameToFolderName(target_config.name)}__${dependency_folder}`;
 
     // Make the folder to store dependency stubs
-    const stubs_directory = path.join(target_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
-    if (!existsSync(stubs_directory)) {
-      mkdirSync(stubs_directory);
-    }
-
-    const stub_directory = path.join(stubs_directory, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
+    const stub_directory = path.join(target_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY, dependency_folder);
     if (!existsSync(stub_directory)) {
-      mkdirSync(stub_directory);
+      mkdirSync(stub_directory, { recursive: true });
     }
 
-    const tmpRoot = realpathSync(os.tmpdir());
-    const tmpDir = path.join(tmpRoot, ServiceConfig.convertServiceNameToFolderName(dependency_config.name));
-    if (!existsSync(tmpDir)) {
-      mkdirSync(tmpDir);
+    const tmp_root = realpathSync(os.tmpdir());
+    const tmp_dir = path.join(tmp_root, namespace);
+    const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
+    if (!existsSync(tmp_dependency_dir)) {
+      mkdirSync(tmp_dependency_dir, { recursive: true });
     }
     copyFileSync(
       path.join(dependency_path, dependency_config.proto),
-      path.join(tmpDir, dependency_config.proto)
+      path.join(tmp_dependency_dir, dependency_config.proto)
     );
 
     const mount_dirname = '/opt/protoc';
-    const mounted_proto_path = path.posix.join(mount_dirname, ServiceConfig.convertServiceNameToFolderName(dependency_config.name), dependency_config.proto);
-    execSync([
+    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder, dependency_config.proto);
+
+    await execa.shell([
       'docker', 'run',
       '-v', `${target_path}:/defs`,
-      '-v', `${tmpRoot}:${mount_dirname}`,
+      '-v', `${tmp_dir}:${mount_dirname}`,
       '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
       'architectio/protoc-all',
       '-f', `${mounted_proto_path}`,
       '-i', mount_dirname,
       '-l', target_language,
       '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-    ].join(' '), {stdio: 'ignore'});
-    execSync(`rm -rf ${tmpDir}`);
+    ].join(' '));
+    await execa.shell(`rm -rf ${tmp_dir}`);
 
     _postHooks(stub_directory, target_language);
   };

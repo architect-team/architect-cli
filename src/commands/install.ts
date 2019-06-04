@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import * as Listr from 'listr';
 import * as path from 'path';
 
 import Command from '../base';
@@ -7,7 +8,6 @@ import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
 
 const _info = chalk.blue;
-const _error = chalk.red;
 
 export default class Install extends Command {
   static description = 'Install dependencies of the current service';
@@ -16,50 +16,65 @@ export default class Install extends Command {
     help: flags.help({ char: 'h' }),
     prefix: flags.string({
       char: 'p',
-      description: 'Path prefix indicating where the install command should execute from.'
+      description: 'Path prefix indicating where the install command should execute from'
     }),
     recursive: flags.boolean({
       char: 'r',
-      description: 'Generate architect dependency files for all services in the dependency tree.'
+      description: 'Generate architect dependency files for all services in the dependency tree'
+    }),
+    verbose: flags.boolean({
+      char: 'v',
+      description: 'Verbose log output'
     })
   };
 
   static args = [];
 
   async run() {
-    try {
-      const { flags } = this.parse(Install);
-      let process_path = process.cwd();
-      if (flags.prefix) {
-        process_path = path.isAbsolute(flags.prefix) ?
-          flags.prefix :
-          path.join(process_path, flags.prefix);
-      }
-      this.installDependencies(process_path);
-    } catch (error) {
-      this.error(_error(error.message));
-    }
+    const { flags } = this.parse(Install);
+    const renderer = flags.verbose ? 'verbose' : 'default';
+    const tasks = new Listr(await this.tasks(), { concurrent: 3, renderer });
+    await tasks.run();
   }
 
-  installDependencies(service_path: string) {
+  async tasks(): Promise<Listr.ListrTask[]> {
     const { flags } = this.parse(Install);
-    const service_config = ServiceConfig.loadFromPath(service_path);
-    this.log(`Installing dependencies for ${_info(service_config.name)}`);
+    let root_service_path = process.cwd();
+    if (flags.prefix) {
+      root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
+    }
 
-    // Install all dependencies
-    Object.keys(service_config.dependencies).forEach((dependency_name: string) => {
-      if (service_config.dependencies.hasOwnProperty(dependency_name)) {
-        const dependency_identifier = service_config.dependencies[dependency_name];
-        const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(dependency_identifier, service_path);
-        ProtocExecutor.execute(dependency_path, service_path, service_config.language);
-        if (flags.recursive) {
-          this.installDependencies(dependency_path);
-        }
+    const tasks: Listr.ListrTask[] = [];
+    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
+    dependencies.forEach(dependency => {
+      const sub_tasks: Listr.ListrTask[] = [];
+
+      if (dependency.service_config.proto) {
+        sub_tasks.push({
+          title: _info(dependency.service_config.name),
+          task: () => {
+            return ProtocExecutor.execute(dependency.service_path, dependency.service_path, dependency.service_config.language);
+          }
+        });
       }
+
+      dependency.dependencies.forEach(sub_dependency => {
+        sub_tasks.push({
+          title: _info(sub_dependency.service_config.name),
+          task: () => {
+            return ProtocExecutor.execute(sub_dependency.service_path, dependency.service_path, dependency.service_config.language);
+          }
+        });
+      });
+
+      tasks.push({
+        title: `Installing dependencies for ${_info(dependency.service_config.name)}`,
+        task: () => {
+          return new Listr(sub_tasks, { concurrent: 2 });
+        }
+      });
     });
 
-    if (service_config.proto) {
-      ProtocExecutor.execute(service_path, service_path, service_config.language);
-    }
+    return tasks;
   }
 }

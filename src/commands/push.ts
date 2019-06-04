@@ -3,18 +3,18 @@ import chalk from 'chalk';
 import * as execa from 'execa';
 import * as Listr from 'listr';
 import * as path from 'path';
+import * as url from 'url';
 
 import Command from '../base';
-import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 
-import Install from './install';
+import Build from './build';
 
 const _info = chalk.blue;
 const _error = chalk.red;
 
-export default class Build extends Command {
-  static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
+export default class Push extends Command {
+  static description = 'Push service(s) to a registry';
 
   static flags = {
     help: flags.help({ char: 'h' }),
@@ -41,25 +41,10 @@ export default class Build extends Command {
     }
   ];
 
-  static async buildImage(service_path: string, service_config: ServiceConfig, tag?: string) {
-    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
-    const tag_name = tag || `architect-${service_config.name}`;
-
-    await execa.shell([
-      'docker', 'build',
-      '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', tag_name,
-      '-f', dockerfile_path,
-      '--label', `architect.json='${JSON.stringify(service_config)}'`,
-      service_path
-    ].join(' '));
-  }
-
   async run() {
-    const { flags } = this.parse(Build);
+    const { flags } = this.parse(Push);
     if (flags.recursive && flags.tag) {
-      this.error(_error('Cannot specify tag for recursive builds'));
+      this.error(_error('Cannot specify tag for recursive pushes'));
     }
     const renderer = flags.verbose ? 'verbose' : 'default';
     const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
@@ -67,7 +52,7 @@ export default class Build extends Command {
   }
 
   async tasks(): Promise<Listr.ListrTask[]> {
-    const { args, flags } = this.parse(Build);
+    const { args, flags } = this.parse(Push);
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
@@ -75,22 +60,30 @@ export default class Build extends Command {
 
     const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
     const tasks: Listr.ListrTask[] = [];
-
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Building docker image for ${_info(dependency.service_config.name)}`,
+        title: `Pushing docker image for ${_info(dependency.service_config.name)}`,
         task: async () => {
-          const install_tasks = await Install.tasks(['-p', dependency.service_path]);
-          const build_task = {
-            title: 'Building',
+          const build_tasks = await Build.tasks([dependency.service_path, '-t', flags.tag || '']);
+          const push_task = {
+            title: 'Pushing',
             task: async () => {
-              await Build.buildImage(dependency.service_path, dependency.service_config, flags.tag);
+              await this.pushImage(dependency.service_config, flags.tag);
             }
           };
-          return new Listr(install_tasks.concat([build_task]));
+          return new Listr(build_tasks.concat([push_task]));
         }
       });
     });
     return tasks;
+  }
+
+  async pushImage(service_config: ServiceConfig, tag?: string) {
+    const tag_name = tag || `architect-${service_config.name}`;
+
+    const user = await this.architect.getUser();
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${tag_name}`);
+    await execa.shell(`docker tag ${tag_name} ${repository_name}`);
+    await execa.shell(`docker push ${repository_name}`);
   }
 }

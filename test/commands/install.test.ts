@@ -1,11 +1,11 @@
-import {expect, test} from '@oclif/test';
+import { expect, test } from '@oclif/test';
 
 describe('install', () => {
   test
     .stdout()
-    .command(['install', '--prefix', './test/calculator-example/addition-service/'])
+    .command(['install', '--prefix', './test/calculator-example/addition-service/', '--verbose'])
     .it('installs dependency stubs', ctx => {
-      const {stdout} = ctx;
+      const { stdout } = ctx;
       expect(stdout).to.contain('Installing dependencies for addition-service');
     });
 
@@ -15,10 +15,11 @@ describe('install', () => {
     .command([
       'install',
       '--recursive',
-      '--prefix', './test/calculator-example/test-script/'
+      '--prefix', './test/calculator-example/test-script/',
+      '--verbose'
     ])
     .it('installs dependencies recursively', ctx => {
-      const {stdout} = ctx;
+      const { stdout } = ctx;
       expect(stdout).to.contain('Installing dependencies for test-service');
       expect(stdout).to.contain('Installing dependencies for division-service');
       expect(stdout).to.contain('Installing dependencies for subtraction-service');
