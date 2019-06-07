@@ -81,7 +81,7 @@ export default class Push extends Command {
   async pushImage(service_config: ServiceConfig, tag?: string) {
     const tag_name = tag || `architect-${service_config.name}`;
     const user = await this.architect.user;
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${tag_name}`);
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.name}`);
     await execa.shell(`docker tag ${tag_name} ${repository_name}`);
     await execa.shell(`docker push ${repository_name}`);
   }
