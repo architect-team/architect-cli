@@ -1,4 +1,5 @@
 import { flags } from '@oclif/command';
+import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 import * as Listr from 'listr';
 
@@ -50,10 +51,13 @@ export default class CreateEnvironment extends Command {
       default: flags.cluster_ca_certificate
     }]);
 
-    // TODO upload or read cert files
-    throw Error('Not Implemented');
-
-    const data = { ...flags, ...answers };
+    const data = {
+      name: answers.name,
+      host: answers.host,
+      client_certificate: fs.readFileSync(answers.client_certificate, 'utf8'),
+      client_key: fs.readFileSync(answers.client_key, 'utf8'),
+      cluster_ca_certificate: fs.readFileSync(answers.cluster_ca_certificate, 'utf8')
+    };
 
     const tasks = new Listr([
       {
