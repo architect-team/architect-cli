@@ -4,7 +4,7 @@ import Command from '../../base';
 
 export default class Services extends Command {
   static description = 'List, create, or delete services';
-  static usage = 'services [OPTIONS]\n$ architect services:generate [ID] [OPTIONS]';
+  static usage = 'services [OPTIONS]\n$ architect services:generate [ID] [OPTIONS]\n$ architect services:plan [ID] [OPTIONS]';
   static aliases = ['services:list'];
 
   static flags = {
