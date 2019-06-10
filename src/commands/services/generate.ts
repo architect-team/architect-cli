@@ -18,7 +18,7 @@ export default class Generate extends Command {
 
   async run() {
     const { args, flags } = this.parse(Generate);
-    const { body: template } = await this.architect.get(`/registry/repositories/${args.id}/generate`);
+    const { data: template } = await this.architect.get(`/registry/repositories/${args.id}/generate`);
     if (flags.file) {
       await fs.writeJson(flags.file, template, { spaces: 2 });
     } else {

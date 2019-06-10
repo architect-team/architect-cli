@@ -2,6 +2,9 @@ import * as dotenv from 'dotenv';
 import * as Joi from 'joi';
 
 const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
+  DEBUG: Joi
+    .boolean()
+    .default(false),
   OAUTH_DOMAIN: Joi
     .string()
     .hostname()
@@ -34,6 +37,7 @@ const validate_config = (
 };
 
 export class AppConfig {
+  readonly debug: boolean;
   readonly oauth_domain: string;
   readonly oauth_client_id: string;
   readonly default_registry_host: string;
@@ -44,6 +48,7 @@ export class AppConfig {
     dotenv.config();
 
     const app_env = validate_config(process.env);
+    this.debug = Boolean(app_env.DEBUG);
     this.oauth_domain = app_env.OAUTH_DOMAIN;
     this.oauth_client_id = app_env.OAUTH_CLIENT_ID;
     this.default_registry_host = app_env.DEFAULT_REGISTRY_HOST;
