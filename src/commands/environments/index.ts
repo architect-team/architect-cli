@@ -13,7 +13,7 @@ export default class Environments extends Command {
   async run() {
     this.parse(Environments);
 
-    const { body: environments } = await this.architect.get('/environments');
+    const { data: environments } = await this.architect.get('/environments');
     this.styled_json(environments);
   }
 }

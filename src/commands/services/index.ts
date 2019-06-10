@@ -14,7 +14,7 @@ export default class Services extends Command {
   async run() {
     this.parse(Services);
 
-    const { body: services } = await this.architect.get('/registry/repositories');
+    const { data: services } = await this.architect.get('/registry/repositories');
     this.styled_json(services);
   }
 }

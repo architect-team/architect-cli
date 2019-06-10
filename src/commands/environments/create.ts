@@ -69,7 +69,7 @@ export default class CreateEnvironment extends Command {
           } else {
             res = this.architect.post('/environments', data);
           }
-          const { body: environment } = await res;
+          const { data: environment } = await res;
           context.environment = environment;
         }
       },

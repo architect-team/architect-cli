@@ -18,7 +18,7 @@ export default class Plan extends Command {
 
   async run() {
     const { args, flags } = this.parse(Plan);
-    const { body: template } = await this.architect.get(`/registry/repositories/${args.id}/plan`);
+    const { data: template } = await this.architect.get(`/registry/repositories/${args.id}/plan`);
     if (flags.file) {
       await fs.writeJson(flags.file, template, { spaces: 2 });
     } else {
