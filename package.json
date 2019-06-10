@@ -14,7 +14,6 @@
     "@oclif/config": "^1.8.6",
     "@oclif/errors": "^1.2.2",
     "@oclif/plugin-help": "^2.1.2",
-    "@types/auth0": "^2.9.11",
     "@types/dotenv": "^6.1.1",
     "@types/execa": "^0.9.0",
     "@types/fs-extra": "^7.0.0",

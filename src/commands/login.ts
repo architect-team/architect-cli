@@ -60,7 +60,8 @@ export default class Login extends Command {
     auth0.passwordGrant({
       realm: 'Username-Password-Authentication',
       username,
-      password
+      password,
+      scope: 'openid profile'
     }, async (err, authResult) => {
       if (err) {
         this.log(_error(err.message));

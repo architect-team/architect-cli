@@ -1,5 +1,6 @@
 import Command from '@oclif/command';
 import * as Config from '@oclif/config';
+import { AuthenticationClient } from 'auth0';
 import * as keytar from 'keytar';
 import * as Listr from 'listr';
 import * as request from 'request';
@@ -23,9 +24,12 @@ export default abstract class ArchitectCommand extends Command {
   async init() {
     if (!ArchitectCommand.app_config) {
       ArchitectCommand.app_config = new AppConfig();
-      ArchitectCommand.architect = new ArchitectClient(ArchitectCommand.app_config.api_host);
     }
     this.app_config = ArchitectCommand.app_config;
+
+    if (!ArchitectCommand.architect) {
+      ArchitectCommand.architect = new ArchitectClient(this.app_config);
+    }
     this.architect = ArchitectCommand.architect;
   }
 
@@ -57,29 +61,25 @@ class UserEntity {
   readonly access_token: string;
   readonly username: string;
 
-  constructor(partial: { [key: string]: string }) {
-    this.access_token = partial.access_token;
-    this.username = partial['https://architect.io/username'];
+  constructor(access_token: string, username: string) {
+    this.access_token = access_token;
+    this.username = username;
   }
 }
 
 class ArchitectClient {
-  private readonly domain: string;
+  protected readonly app_config: AppConfig;
+  protected _user?: Promise<UserEntity>;
 
-  constructor(domain: string) {
-    this.domain = domain;
+  constructor(app_config: AppConfig) {
+    this.app_config = app_config;
   }
 
-  async getUser() {
-    const credentials = await keytar.findCredentials('architect.io');
-    if (credentials.length === 0) {
-      throw Error('denied: `architect login` required');
+  get user(): Promise<UserEntity> {
+    if (!this._user) {
+      this._user = this.getUser();
     }
-    const user = new UserEntity(JSON.parse(credentials[0].password));
-    if (!user.username) {
-      throw Error('denied: `architect login` required');
-    }
-    return user;
+    return this._user;
   }
 
   async get(path: string) {
@@ -98,16 +98,37 @@ class ArchitectClient {
     return this.request('POST', path, body);
   }
 
-  private async request(method: string, path: string, body?: object) {
+  protected async getUser(): Promise<UserEntity> {
     const credentials = await keytar.findCredentials('architect.io');
     if (credentials.length === 0) {
       throw Error('denied: `architect login` required');
     }
-    const user = await this.getUser();
+
+    const auth0 = new AuthenticationClient({
+      domain: this.app_config.oauth_domain,
+      clientId: this.app_config.oauth_client_id
+    });
+
+    const access_token = JSON.parse(credentials[0].password).access_token;
+    const profile = await auth0.getProfile(access_token);
+
+    const user = new UserEntity(access_token, profile.nickname);
+    if (!user.username) {
+      throw Error('denied: `architect login` required');
+    }
+    return user;
+  }
+
+  protected async request(method: string, path: string, body?: object) {
+    const credentials = await keytar.findCredentials('architect.io');
+    if (credentials.length === 0) {
+      throw Error('denied: `architect login` required');
+    }
+    const user = await this.user;
     const access_token = user.access_token;
 
     const options = {
-      url: url.resolve(this.domain, path),
+      url: url.resolve(this.app_config.api_host, path),
       headers: {
         authorization: `Bearer ${access_token}`,
         method,
