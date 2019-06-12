@@ -123,6 +123,10 @@ export default class ServiceConfig {
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
 
+  get full_name() {
+    return `${this.name}:${this.version}`;
+  }
+
   getNormalizedName() {
     return ServiceConfig.convertServiceNameToFolderName(this.name);
   }

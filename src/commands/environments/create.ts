@@ -81,8 +81,6 @@ export default class CreateEnvironment extends Command {
       }
     ]);
 
-    tasks.run().catch(err => {
-      this.error(err);
-    });
+    await tasks.run();
   }
 }

@@ -11,18 +11,12 @@ import ServiceConfig from '../common/service-config';
 import Build from './build';
 
 const _info = chalk.blue;
-const _error = chalk.red;
 
 export default class Push extends Command {
   static description = 'Push service(s) to a registry';
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    tag: flags.string({
-      char: 't',
-      required: false,
-      description: 'Name and optionally a tag in the ‘name:tag’ format'
-    }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
@@ -43,9 +37,6 @@ export default class Push extends Command {
 
   async run() {
     const { flags } = this.parse(Push);
-    if (flags.recursive && flags.tag) {
-      this.error(_error('Cannot specify tag for recursive pushes'));
-    }
     const renderer = flags.verbose ? 'verbose' : 'default';
     const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
     await tasks.run();
@@ -62,13 +53,13 @@ export default class Push extends Command {
     const tasks: Listr.ListrTask[] = [];
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Pushing docker image for ${_info(dependency.service_config.name)}`,
+        title: `Pushing docker image for ${_info(dependency.service_config.full_name)}`,
         task: async () => {
-          const build_tasks = await Build.tasks([dependency.service_path, '-t', flags.tag || '']);
+          const build_tasks = await Build.tasks([dependency.service_path]);
           const push_task = {
             title: 'Pushing',
             task: async () => {
-              await this.pushImage(dependency.service_config, flags.tag);
+              await this.pushImage(dependency.service_config);
             }
           };
           return new Listr(build_tasks.concat([push_task]));
@@ -78,10 +69,10 @@ export default class Push extends Command {
     return tasks;
   }
 
-  async pushImage(service_config: ServiceConfig, tag?: string) {
-    const tag_name = tag || `architect-${service_config.name}`;
+  async pushImage(service_config: ServiceConfig) {
+    const tag_name = `architect-${service_config.full_name}`;
     const user = await this.architect.user;
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.name}`);
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.full_name}`);
     await execa.shell(`docker tag ${tag_name} ${repository_name}`);
     await execa.shell(`docker push ${repository_name}`);
   }

@@ -11,18 +11,12 @@ import ServiceConfig from '../common/service-config';
 import Install from './install';
 
 const _info = chalk.blue;
-const _error = chalk.red;
 
 export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    tag: flags.string({
-      char: 't',
-      required: false,
-      description: 'Name and optionally a tag in the ‘name:tag’ format'
-    }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
@@ -41,26 +35,8 @@ export default class Build extends Command {
     }
   ];
 
-  static async buildImage(service_path: string, service_config: ServiceConfig, tag?: string) {
-    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
-    const tag_name = tag || `architect-${service_config.name}`;
-
-    await execa.shell([
-      'docker', 'build',
-      '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', tag_name,
-      '-f', dockerfile_path,
-      '--label', `architect.json='${JSON.stringify(service_config)}'`,
-      service_path
-    ].join(' '));
-  }
-
   async run() {
     const { flags } = this.parse(Build);
-    if (flags.recursive && flags.tag) {
-      this.error(_error('Cannot specify tag for recursive builds'));
-    }
     const renderer = flags.verbose ? 'verbose' : 'default';
     const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
     await tasks.run();
@@ -78,13 +54,13 @@ export default class Build extends Command {
 
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Building docker image for ${_info(dependency.service_config.name)}`,
+        title: `Building docker image for ${_info(dependency.service_config.full_name)}`,
         task: async () => {
           const install_tasks = await Install.tasks(['-p', dependency.service_path]);
           const build_task = {
             title: 'Building',
             task: async () => {
-              await Build.buildImage(dependency.service_path, dependency.service_config, flags.tag);
+              await this.buildImage(dependency.service_path, dependency.service_config);
             }
           };
           return new Listr(install_tasks.concat([build_task]));
@@ -92,5 +68,20 @@ export default class Build extends Command {
       });
     });
     return tasks;
+  }
+
+  async buildImage(service_path: string, service_config: ServiceConfig) {
+    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
+    const tag_name = `architect-${service_config.full_name}`;
+
+    await execa.shell([
+      'docker', 'build',
+      '--compress',
+      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
+      '-t', tag_name,
+      '-f', dockerfile_path,
+      '--label', `architect.json='${JSON.stringify(service_config)}'`,
+      service_path
+    ].join(' '));
   }
 }
