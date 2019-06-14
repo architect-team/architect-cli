@@ -7,6 +7,7 @@ import * as path from 'path';
 import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
+import ServiceDependency from '../common/service-dependency';
 
 import Install from './install';
 
@@ -49,21 +50,21 @@ export default class Build extends Command {
       root_service_path = path.resolve(args.context);
     }
 
-    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
+    if (flags.recursive) {
+      await Install.run(['-p', root_service_path, '-r', '--only_load']);
+    } else {
+      await Install.run(['-p', root_service_path, '--only_load']);
+    }
+
+    const root_service = ServiceDependency.create(this.app_config, root_service_path);
+    const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
     const tasks: Listr.ListrTask[] = [];
 
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Building docker image for ${_info(dependency.service_config.full_name)}`,
+        title: `Building docker image for ${_info(dependency.config.full_name)}`,
         task: async () => {
-          const install_tasks = await Install.tasks(['-p', dependency.service_path]);
-          const build_task = {
-            title: 'Building',
-            task: async () => {
-              await this.buildImage(dependency.service_path, dependency.service_config);
-            }
-          };
-          return new Listr(install_tasks.concat([build_task]));
+          await this.buildImage(dependency.service_path, dependency.config);
         }
       });
     });

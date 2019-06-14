@@ -1,7 +1,7 @@
 import * as net from 'net';
 
 namespace PortUtil {
-  const AVAILABLE_PORTS = Array.from({length: 1000}, (_, k) => k + 50000);
+  const AVAILABLE_PORTS = Array.from({ length: 1000 }, (_, k) => k + 50000);
 
   export const isPortAvailable = async (port: number) => new Promise<boolean>(resolve => {
     const tester: net.Server = net.createServer()
@@ -9,7 +9,7 @@ namespace PortUtil {
       .once('listening', () =>
         tester.once('close', () => resolve(true)).close()
       )
-      .listen(port);
+      .listen(port, '0.0.0.0');
   });
 
   export const getAvailablePort = async () => {

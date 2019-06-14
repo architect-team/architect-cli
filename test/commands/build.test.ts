@@ -9,23 +9,8 @@ describe('build', () => {
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for addition-service');
-      expect(stdout).to.contain('Installing dependencies for addition-service');
-
       const docker_images = execSync('docker images | grep architect-addition-service');
       expect(docker_images.toString()).to.contain('architect-addition-service');
-    });
-
-  test
-    .stdout()
-    .timeout(10000)
-    .command(['build', '--tag', 'tag-override', './test/calculator-example/addition-service/', '--verbose'])
-    .it('allows tag overrides', ctx => {
-      const { stdout } = ctx;
-      expect(stdout).to.contain('Building docker image for addition-service');
-      expect(stdout).to.contain('Installing dependencies for addition-service');
-
-      const docker_images = execSync('docker images | grep tag-override');
-      expect(docker_images.toString()).to.contain('tag-override');
     });
 
   test
@@ -35,9 +20,7 @@ describe('build', () => {
     .it('builds images recursively', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for subtraction-service');
-      expect(stdout).to.contain('Installing dependencies for subtraction-service');
       expect(stdout).to.contain('Building docker image for addition-service');
-      expect(stdout).to.contain('Installing dependencies for addition-service');
 
       const docker_images = execSync('docker images | grep architect-');
       expect(docker_images.toString()).to.contain('architect-subtraction-service');
