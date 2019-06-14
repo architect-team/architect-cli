@@ -31,23 +31,25 @@ export default abstract class ServiceDependency {
   local = false;
   protected _config!: ServiceConfig;
   protected _proto?: string;
+  protected _loaded: boolean;
 
   constructor(app_config: AppConfig, service_path: string, _root: boolean) {
     this.app_config = app_config;
     this.service_path = service_path;
     this.root = _root;
+    this._loaded = false;
   }
 
   get config(): ServiceConfig {
     if (!this._config) {
-      throw new Error('Not loaded');
+      throw new Error(`Not loaded ${this.service_path}`);
     }
     return this._config;
   }
 
   get proto(): string | undefined {
     if (!this._config) {
-      throw new Error('Not loaded');
+      throw new Error(`Not loaded ${this.service_path}`);
     }
     return this._proto;
   }
@@ -93,13 +95,21 @@ export default abstract class ServiceDependency {
     return service_dependencies;
   }
 
-  abstract async load(): Promise<void>;
+  async load() {
+    if (this._loaded) {
+      return;
+    }
+    await this._load();
+    this._loaded = true;
+  }
+
+  abstract async _load(): Promise<void>;
 }
 
 class LocalServiceDependency extends ServiceDependency {
   local = true;
 
-  async load() {
+  async _load() {
     this._config = ServiceConfig.loadFromPath(this.service_path);
     if (this.config.proto) {
       this._proto = readFileSync(path.join(this.service_path, this.config.proto)).toString('utf-8');
@@ -108,7 +118,7 @@ class LocalServiceDependency extends ServiceDependency {
 }
 
 class DockerServiceDependency extends ServiceDependency {
-  async load() {
+  async _load() {
     const default_registry_host = this.app_config.default_registry_host;
     const repository_name = url.resolve(`${default_registry_host}/`, this.service_path);
     try {

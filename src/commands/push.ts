@@ -58,7 +58,7 @@ export default class Push extends Command {
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
-    const user = await this.architect.user;
+    const user = await this.architect.getUser();
 
     const tasks: Listr.ListrTask[] = [];
     dependencies.forEach(dependency => {
@@ -78,7 +78,7 @@ export default class Push extends Command {
 
   async pushImage(service_config: ServiceConfig) {
     const tag_name = `architect-${service_config.full_name}`;
-    const user = await this.architect.user;
+    const user = await this.architect.getUser();
     const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.full_name}`);
     await execa.shell(`docker tag ${tag_name} ${repository_name}`);
     await execa.shell(`docker push ${repository_name}`);
