@@ -83,9 +83,9 @@ class ArchitectClient {
     this.app_config = app_config;
   }
 
-  get user(): Promise<UserEntity> {
+  async getUser(): Promise<UserEntity> {
     if (!this._user) {
-      this._user = this.getUser();
+      this._user = this._getUser();
     }
     return this._user;
   }
@@ -106,7 +106,7 @@ class ArchitectClient {
     return this.request('POST', path, data);
   }
 
-  protected async getUser(): Promise<UserEntity> {
+  protected async _getUser(): Promise<UserEntity> {
     const credentials = await keytar.findCredentials('architect.io');
     if (credentials.length === 0) {
       throw Error('`architect login` required');
@@ -128,7 +128,7 @@ class ArchitectClient {
   }
 
   protected async request(method: Method, path: string, data?: object) {
-    const user = await this.user;
+    const user = await this.getUser();
     const access_token = user.access_token;
 
     const options = {

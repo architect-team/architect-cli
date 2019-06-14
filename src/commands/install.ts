@@ -6,6 +6,7 @@ import * as path from 'path';
 import Command from '../base';
 import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
+import ServiceDependency from '../common/service-dependency';
 
 const _info = chalk.blue;
 
@@ -22,58 +23,99 @@ export default class Install extends Command {
       char: 'r',
       description: 'Generate architect dependency files for all services in the dependency tree'
     }),
+    only_load: flags.boolean({
+      description: 'Skip installing dependencies'
+    }),
     verbose: flags.boolean({
       char: 'v',
       description: 'Verbose log output'
     })
   };
 
-  static args = [];
+  static args = [
+    {
+      name: 'service_name',
+      description: 'Remote service dependency',
+      required: false
+    }
+  ];
 
   async run() {
     const { flags } = this.parse(Install);
     const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await this.tasks(), { concurrent: 3, renderer });
+    const tasks = new Listr(await this.tasks(), { renderer });
     await tasks.run();
   }
 
   async tasks(): Promise<Listr.ListrTask[]> {
-    const { flags } = this.parse(Install);
+    const { args, flags } = this.parse(Install);
     let root_service_path = process.cwd();
     if (flags.prefix) {
       root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
     }
 
-    const tasks: Listr.ListrTask[] = [];
-    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
-    dependencies.forEach(dependency => {
-      const sub_tasks: Listr.ListrTask[] = [];
-
-      if (dependency.service_config.proto) {
-        sub_tasks.push({
-          title: _info(dependency.service_config.name),
-          task: () => {
-            return ProtocExecutor.execute(dependency.service_path, dependency.service_path, dependency.service_config.language);
-          }
-        });
+    const root_service = ServiceDependency.create(this.app_config, root_service_path);
+    if (args.service_name) {
+      await root_service.load();
+      const [service_name, service_version] = args.service_name.split('@');
+      if (!service_version) {
+        throw new Error('Specify version ex. service:0.1.0');
       }
 
-      dependency.dependencies.forEach(sub_dependency => {
-        sub_tasks.push({
-          title: _info(sub_dependency.service_config.name),
-          task: () => {
-            return ProtocExecutor.execute(sub_dependency.service_path, dependency.service_path, dependency.service_config.language);
-          }
-        });
-      });
+      // Load/install only the new dependency
+      const new_dependencies: { [s: string]: string } = {};
+      new_dependencies[service_name] = service_version;
+      root_service.config.setDependencies(new_dependencies);
 
+      const tasks = this.get_tasks(root_service, flags.recursive, flags.only_load);
       tasks.push({
-        title: `Installing dependencies for ${_info(dependency.service_config.name)}`,
+        title: 'Updating architect.json',
         task: () => {
-          return new Listr(sub_tasks, { concurrent: 2 });
+          const config_json = ServiceConfig.loadJSONFromPath(root_service_path);
+          config_json.dependencies[service_name] = service_version;
+          ServiceConfig.writeToPath(root_service_path, config_json);
         }
       });
-    });
+      return tasks;
+    } else {
+      return this.get_tasks(root_service, flags.recursive, flags.only_load);
+    }
+  }
+
+  get_tasks(service_dependency: ServiceDependency, recursive: boolean, only_load: boolean): Listr.ListrTask[] {
+    let service_name = service_dependency.local ? service_dependency.service_path.match(/([^\/]*)\/*$/)![1] : service_dependency.service_path;
+
+    let tasks: Listr.ListrTask[] = [{
+      title: `Loading ${_info(service_name)}`,
+      task: async () => {
+        await service_dependency.load();
+        let sub_tasks: Listr.ListrTask[] = [];
+        if (recursive || service_dependency.root) {
+          service_dependency.dependencies.forEach(sub_dependency => {
+            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive, only_load));
+          });
+        }
+        return new Listr(sub_tasks);
+      }
+    }];
+
+    if (!only_load && service_dependency.local && (recursive || service_dependency.root)) {
+      tasks.push({
+        title: `Installing dependencies for ${_info(service_name)}`,
+        task: async () => {
+          const promises = [];
+          if (service_dependency.config.proto) {
+            promises.push(ProtocExecutor.execute(service_dependency, service_dependency));
+          }
+          service_dependency.dependencies.forEach(sub_dependency => {
+            if (sub_dependency.config.proto) {
+              promises.push(ProtocExecutor.execute(sub_dependency, service_dependency));
+            }
+          });
+          await Promise.all(promises);
+        }
+      });
+    }
 
     return tasks;
   }

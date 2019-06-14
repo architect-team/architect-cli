@@ -5,13 +5,6 @@ import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import { SemvarValidator } from './validation-utils';
 
-interface ServiceDependency {
-  service_path: string;
-  service_config: ServiceConfig;
-
-  dependencies: ServiceDependency[];
-}
-
 export default class ServiceConfig {
   static _require(path: string) {
     return require(path);
@@ -30,13 +23,28 @@ export default class ServiceConfig {
     throw new UnsupportedDependencyIdentifierError(dependency_identifier);
   }
 
-  static loadFromPath(filepath: string): ServiceConfig {
+  static loadJSONFromPath(filepath: string): any {
     const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
     if (!fs.existsSync(config_path)) {
       throw new MissingConfigFileError(filepath);
     }
+    return ServiceConfig._require(config_path);
+  }
 
-    const configJSON = ServiceConfig._require(config_path);
+  static loadFromPath(filepath: string): ServiceConfig {
+    const config_json = ServiceConfig.loadJSONFromPath(filepath);
+    return ServiceConfig.create(config_json);
+  }
+
+  static writeToPath(filepath: string, config_json: object) {
+    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    if (!fs.existsSync(config_path)) {
+      throw new MissingConfigFileError(filepath);
+    }
+    fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
+  }
+
+  static create(configJSON: any) {
     return (new ServiceConfig())
       .setName(configJSON.name)
       .setVersion(configJSON.version)
@@ -50,53 +58,8 @@ export default class ServiceConfig {
       .setLanguage(configJSON.language);
   }
 
-  static async getDependencies(root_service_path: string, recursive?: boolean): Promise<ServiceDependency[]> {
-    const service_dependencies: ServiceDependency[] = [];
-    const services_map: any = {};
-
-    const root_service_config = ServiceConfig.loadFromPath(root_service_path!);
-    services_map[root_service_path] = {
-      service_path: root_service_path!,
-      service_config: root_service_config,
-      dependencies: []
-    };
-    const queue = [services_map[root_service_path]];
-
-    while (queue.length > 0) {
-      const service_dependency = queue.shift()!;
-      const service_config = service_dependency.service_config;
-      service_dependencies.push(service_dependency);
-
-      if (root_service_path === service_dependency.service_path || recursive) {
-        const dependency_names = Object.keys(service_config.dependencies);
-        for (let dependency_name of dependency_names) {
-          const dependency_path = ServiceConfig.parsePathFromDependencyIdentifier(
-            service_config.dependencies[dependency_name],
-            service_dependency.service_path
-          );
-
-          // Handle circular deps
-          if (!services_map[dependency_path]) {
-            const dependency_config = ServiceConfig.loadFromPath(dependency_path!);
-            services_map[dependency_path] = {
-              service_path: dependency_path,
-              service_config: dependency_config,
-              dependencies: []
-            };
-            if (recursive) {
-              queue.push(services_map[dependency_path]);
-            }
-          }
-          service_dependency.dependencies.push(services_map[dependency_path]);
-        }
-      }
-    }
-
-    return service_dependencies;
-  }
-
   static convertServiceNameToFolderName(service_name: string): string {
-    return service_name.replace('-', '_');
+    return service_name.replace(/-/g, '_');
   }
 
   name: string;
@@ -121,6 +84,10 @@ export default class ServiceConfig {
     this.proto = undefined;
     this.main = 'index.js';
     this.language = SUPPORTED_LANGUAGES.NODE;
+  }
+
+  get full_name() {
+    return `${this.name}:${this.version}`;
   }
 
   getNormalizedName() {

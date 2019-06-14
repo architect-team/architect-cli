@@ -7,22 +7,17 @@ import * as url from 'url';
 
 import Command from '../base';
 import ServiceConfig from '../common/service-config';
+import ServiceDependency from '../common/service-dependency';
 
 import Build from './build';
 
 const _info = chalk.blue;
-const _error = chalk.red;
 
 export default class Push extends Command {
   static description = 'Push service(s) to a registry';
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    tag: flags.string({
-      char: 't',
-      required: false,
-      description: 'Name and optionally a tag in the ‘name:tag’ format'
-    }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
@@ -43,9 +38,6 @@ export default class Push extends Command {
 
   async run() {
     const { flags } = this.parse(Push);
-    if (flags.recursive && flags.tag) {
-      this.error(_error('Cannot specify tag for recursive pushes'));
-    }
     const renderer = flags.verbose ? 'verbose' : 'default';
     const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
     await tasks.run();
@@ -58,30 +50,36 @@ export default class Push extends Command {
       root_service_path = path.resolve(args.context);
     }
 
-    const dependencies = await ServiceConfig.getDependencies(root_service_path, flags.recursive);
+    if (flags.recursive) {
+      await Build.run([root_service_path, '-r']);
+    } else {
+      await Build.run([root_service_path]);
+    }
+
+    const root_service = ServiceDependency.create(this.app_config, root_service_path);
+    const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
+    const user = await this.architect.getUser();
+
     const tasks: Listr.ListrTask[] = [];
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Pushing docker image for ${_info(dependency.service_config.name)}`,
+        title: `Pushing docker image for ${_info(`${user.username}/${dependency.config.full_name}`)}`,
         task: async () => {
-          const build_tasks = await Build.tasks([dependency.service_path, '-t', flags.tag || '']);
-          const push_task = {
-            title: 'Pushing',
-            task: async () => {
-              await this.pushImage(dependency.service_config, flags.tag);
-            }
-          };
-          return new Listr(build_tasks.concat([push_task]));
+          if (dependency.dependencies.some(d => d.local)) {
+            throw new Error('Cannot push image with local dependencies');
+          } else {
+            return this.pushImage(dependency.config);
+          }
         }
       });
     });
     return tasks;
   }
 
-  async pushImage(service_config: ServiceConfig, tag?: string) {
-    const tag_name = tag || `architect-${service_config.name}`;
-    const user = await this.architect.user;
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.name}`);
+  async pushImage(service_config: ServiceConfig) {
+    const tag_name = `architect-${service_config.full_name}`;
+    const user = await this.architect.getUser();
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.full_name}`);
     await execa.shell(`docker tag ${tag_name} ${repository_name}`);
     await execa.shell(`docker push ${repository_name}`);
   }
