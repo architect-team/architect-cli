@@ -5,6 +5,7 @@ import * as path from 'path';
 
 import Command from '../base';
 import ProtocExecutor from '../common/protoc-executor';
+import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
 
 const _info = chalk.blue;
@@ -48,18 +49,37 @@ export default class Install extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Install);
-
-    if (args.service_name) {
-      // TODO write to architect.json
-    }
-
     let root_service_path = process.cwd();
     if (flags.prefix) {
       root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
     }
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
-    return this.get_tasks(root_service, flags.recursive, flags.only_load);
+    if (args.service_name) {
+      await root_service.load();
+      const [service_name, service_version] = args.service_name.split('@');
+      if (!service_version) {
+        throw new Error('Specify version ex. service:0.1.0');
+      }
+
+      // Load/install only the new dependency
+      const new_dependencies: { [s: string]: string } = {};
+      new_dependencies[service_name] = service_version;
+      root_service.config.setDependencies(new_dependencies);
+
+      const tasks = this.get_tasks(root_service, flags.recursive, flags.only_load);
+      tasks.push({
+        title: 'Updating architect.json',
+        task: () => {
+          const config_json = ServiceConfig.loadJSONFromPath(root_service_path);
+          config_json.dependencies[service_name] = service_version;
+          ServiceConfig.writeToPath(root_service_path, config_json);
+        }
+      });
+      return tasks;
+    } else {
+      return this.get_tasks(root_service, flags.recursive, flags.only_load);
+    }
   }
 
   get_tasks(service_dependency: ServiceDependency, recursive: boolean, only_load: boolean): Listr.ListrTask[] {

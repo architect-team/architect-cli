@@ -23,14 +23,25 @@ export default class ServiceConfig {
     throw new UnsupportedDependencyIdentifierError(dependency_identifier);
   }
 
-  static loadFromPath(filepath: string): ServiceConfig {
+  static loadJSONFromPath(filepath: string): any {
     const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
     if (!fs.existsSync(config_path)) {
       throw new MissingConfigFileError(filepath);
     }
+    return ServiceConfig._require(config_path);
+  }
 
-    const configJSON = ServiceConfig._require(config_path);
-    return ServiceConfig.create(configJSON);
+  static loadFromPath(filepath: string): ServiceConfig {
+    const config_json = ServiceConfig.loadJSONFromPath(filepath);
+    return ServiceConfig.create(config_json);
+  }
+
+  static writeToPath(filepath: string, config_json: object) {
+    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    if (!fs.existsSync(config_path)) {
+      throw new MissingConfigFileError(filepath);
+    }
+    fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
   }
 
   static create(configJSON: any) {
