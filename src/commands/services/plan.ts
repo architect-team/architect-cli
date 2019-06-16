@@ -8,7 +8,8 @@ export default class Plan extends Command {
   static usage = 'services:plan [ID] [OPTIONS]';
 
   static args = [
-    { name: 'id', description: 'Service Id', required: true }
+    { name: 'id', description: 'Service Id', required: true },
+    { name: 'environment_id', description: 'Environment Id', required: true }
   ];
 
   static flags = {
@@ -18,11 +19,11 @@ export default class Plan extends Command {
 
   async run() {
     const { args, flags } = this.parse(Plan);
-    const { data: template } = await this.architect.get(`/registry/repositories/${args.id}/plan`);
+    const { data: template } = await this.architect.get(`/repositories/${args.id}/plan/${args.environment_id}`);
     if (flags.file) {
-      await fs.writeJson(flags.file, template, { spaces: 2 });
+      await fs.writeFile(flags.file, template);
     } else {
-      this.styled_json(template);
+      this.log(template);
     }
   }
 }

@@ -24,32 +24,8 @@ export default class CreateEnvironment extends Command {
   };
 
   async run() {
-    const { args, flags } = this.parse(CreateEnvironment);
-
-    const answers: any = await inquirer.prompt([{
-      type: 'input',
-      name: 'name',
-      default: flags.name
-    }, {
-      type: 'input',
-      name: 'host',
-      default: flags.host
-    }, {
-      type: 'input',
-      name: 'client_certificate',
-      message: 'client certificate (path):',
-      default: flags.client_certificate
-    }, {
-      type: 'input',
-      name: 'client_key',
-      message: 'client key (path):',
-      default: flags.client_key
-    }, {
-      type: 'input',
-      name: 'cluster_ca_certificate',
-      message: 'cluster certificate (path):',
-      default: flags.cluster_ca_certificate
-    }]);
+    const { args } = this.parse(CreateEnvironment);
+    const answers = await this.promptOptions();
 
     const data = {
       name: answers.name,
@@ -82,5 +58,35 @@ export default class CreateEnvironment extends Command {
     ]);
 
     await tasks.run();
+  }
+
+  async promptOptions() {
+    const { flags } = this.parse(CreateEnvironment);
+
+    let answers: any = await inquirer.prompt([{
+      type: 'input',
+      name: 'name',
+      when: !flags.name
+    }, {
+      type: 'input',
+      name: 'host',
+      when: !flags.host
+    }, {
+      type: 'input',
+      name: 'client_certificate',
+      message: 'client certificate (path):',
+      when: !flags.client_certificate
+    }, {
+      type: 'input',
+      name: 'client_key',
+      message: 'client key (path):',
+      when: !flags.client_key
+    }, {
+      type: 'input',
+      name: 'cluster_ca_certificate',
+      message: 'cluster certificate (path):',
+      when: !flags.cluster_ca_certificate
+    }]);
+    return { ...flags, ...answers };
   }
 }

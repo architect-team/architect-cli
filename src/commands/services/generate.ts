@@ -8,7 +8,8 @@ export default class Generate extends Command {
   static usage = 'services:generate [ID] [OPTIONS]';
 
   static args = [
-    { name: 'id', description: 'Service Id', required: true }
+    { name: 'id', description: 'Service Id', required: true },
+    { name: 'environment_id', description: 'Environment Id', required: true }
   ];
 
   static flags = {
@@ -18,7 +19,7 @@ export default class Generate extends Command {
 
   async run() {
     const { args, flags } = this.parse(Generate);
-    const { data: template } = await this.architect.get(`/registry/repositories/${args.id}/generate`);
+    const { data: template } = await this.architect.get(`/repositories/${args.id}/generate/${args.environment_id}`);
     if (flags.file) {
       await fs.writeJson(flags.file, template, { spaces: 2 });
     } else {

@@ -18,11 +18,6 @@ export default class Push extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    recursive: flags.boolean({
-      char: 'r',
-      default: false,
-      description: 'Whether or not to build images for the cited dependencies'
-    }),
     verbose: flags.boolean({
       char: 'v',
       description: 'Verbose log output'
@@ -50,30 +45,21 @@ export default class Push extends Command {
       root_service_path = path.resolve(args.context);
     }
 
-    if (flags.recursive) {
-      await Build.run([root_service_path, '-r']);
-    } else {
-      await Build.run([root_service_path]);
-    }
+    await Build.run([root_service_path]);
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
-    const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
     const user = await this.architect.getUser();
 
-    const tasks: Listr.ListrTask[] = [];
-    dependencies.forEach(dependency => {
-      tasks.push({
-        title: `Pushing docker image for ${_info(`${user.username}/${dependency.config.full_name}`)}`,
-        task: async () => {
-          if (dependency.dependencies.some(d => d.local)) {
-            throw new Error('Cannot push image with local dependencies');
-          } else {
-            return this.pushImage(dependency.config);
-          }
+    return [{
+      title: `Pushing docker image for ${_info(`${user.username}/${root_service.config.full_name}`)}`,
+      task: async () => {
+        if (root_service.dependencies.some(d => d.local)) {
+          throw new Error('Cannot push image with local dependencies');
+        } else {
+          return this.pushImage(root_service.config);
         }
-      });
-    });
-    return tasks;
+      }
+    }];
   }
 
   async pushImage(service_config: ServiceConfig) {

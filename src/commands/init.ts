@@ -87,14 +87,14 @@ export default class Init extends Command {
 
   async promptOptions() {
     const { flags } = this.parse(Init);
-    return inquirer.prompt([{
+    const answers = inquirer.prompt([{
       type: 'input',
       name: 'name',
-      default: flags.name
+      when: !flags.name
     }, {
       type: 'input',
       name: 'version',
-      default: flags.version,
+      when: !flags.version,
       validate: value => {
         const validator = new SemvarValidator();
         if (validator.test(value)) return true;
@@ -103,22 +103,24 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'description',
-      default: flags.description,
+      when: !flags.description,
     }, {
       type: 'input',
       name: 'keywords',
       message: 'keywords (comma-separated):',
-      default: flags.keywords,
+      when: !flags.keywords,
       filter: input => input.split(',').map(string => string.trim())
     }, {
       type: 'input',
       name: 'author',
-      default: flags.author || null,
+      when: !flags.author,
       filter: input => [input]
     }, {
       type: 'input',
       name: 'license',
-      default: flags.license
+      when: !flags.license
     }]);
+
+    return { ...flags, ...answers };
   }
 }

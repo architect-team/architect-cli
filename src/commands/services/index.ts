@@ -18,7 +18,7 @@ export default class Services extends Command {
   async run() {
     const { args } = this.parse(Services);
 
-    const url = args.id ? `/registry/repositories/${args.id}` : '/registry/repositories';
+    const url = args.id ? `/repositories/${args.id}` : '/repositories';
     const { data: services } = await this.architect.get(url);
     this.styled_json(services);
   }
