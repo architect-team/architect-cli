@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
-import * as fs from 'fs-extra';
 import inquirer = require('inquirer');
+import * as Listr from 'listr';
 
 import Command from '../../base';
 
@@ -15,17 +15,51 @@ export default class Plan extends Command {
   ];
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-    file: flags.string({ char: 'f' })
+    help: flags.help({ char: 'h' })
   };
 
   async run() {
     const answers = await this.promptOptions();
-    const { data: template } = await this.architect.get(`/repositories/${answers.service_id}/plan/${answers.environment_id}`);
-    if (answers.file) {
-      await fs.writeFile(answers.file, template);
+
+    let plan: any;
+    const tasks = new Listr([
+      {
+        title: `Planning`,
+        task: async () => {
+          const params = {
+            environment_id: answers.environment_id,
+            service_version: answers.service_version,
+          };
+          const { data } = await this.architect.get(`/repositories/${answers.service_id}/plan`, { params });
+          plan = data;
+        }
+      }
+    ]);
+    await tasks.run();
+    this.log(plan.info);
+
+    const confirmation = await inquirer.prompt({
+      type: 'confirm',
+      name: 'apply',
+      message: 'Would you like to apply this plan?'
+    } as inquirer.Question);
+
+    if (confirmation.apply) {
+      const tasks = new Listr([
+        {
+          title: `Applying`,
+          task: async () => {
+            const params = {
+              environment_id: answers.environment_id,
+              timestamp: plan.timestamp
+            };
+            await this.architect.get(`/repositories/${answers.service_id}/apply`, { params });
+          }
+        }
+      ]);
+      await tasks.run();
     } else {
-      this.log(template);
+      this.warn('Canceled apply');
     }
   }
 
