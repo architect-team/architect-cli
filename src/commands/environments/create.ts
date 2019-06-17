@@ -41,9 +41,9 @@ export default class CreateEnvironment extends Command {
         task: async context => {
           let res;
           if (args.id) {
-            res = this.architect.put(`/environments/${args.id}`, data);
+            res = this.architect.put(`/environments/${args.id}`, { data });
           } else {
-            res = this.architect.post('/environments', data);
+            res = this.architect.post('/environments', { data });
           }
           const { data: environment } = await res;
           context.environment = environment;
@@ -75,17 +75,17 @@ export default class CreateEnvironment extends Command {
       type: 'input',
       name: 'client_certificate',
       message: 'client certificate (path):',
-      when: !flags.client_certificate
+      when: !flags.client_certificate,
     }, {
       type: 'input',
       name: 'client_key',
       message: 'client key (path):',
-      when: !flags.client_key
+      when: !flags.client_key,
     }, {
       type: 'input',
       name: 'cluster_ca_certificate',
       message: 'cluster certificate (path):',
-      when: !flags.cluster_ca_certificate
+      when: !flags.cluster_ca_certificate,
     }]);
     return { ...flags, ...answers };
   }
