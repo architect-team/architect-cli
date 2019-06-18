@@ -7,7 +7,7 @@ import Command from '../../base';
 
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
-  static aliases = ['environments:update'];
+  static aliases = ['environments:update', 'envs:create', 'envs:update'];
   static usage = 'environments:create [OPTIONS]\n$ architect environments:update [ID] [OPTIONS]';
 
   static args = [

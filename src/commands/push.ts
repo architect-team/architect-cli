@@ -39,7 +39,7 @@ export default class Push extends Command {
   }
 
   async tasks(): Promise<Listr.ListrTask[]> {
-    const { args, flags } = this.parse(Push);
+    const { args } = this.parse(Push);
     let root_service_path = process.cwd();
     if (args.context) {
       root_service_path = path.resolve(args.context);
@@ -48,10 +48,8 @@ export default class Push extends Command {
     await Build.run([root_service_path]);
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
-    const user = await this.architect.getUser();
-
     return [{
-      title: `Pushing docker image for ${_info(`${user.username}/${root_service.config.full_name}`)}`,
+      title: `Pushing docker image for ${_info(`${root_service.config.full_name}`)}`,
       task: async () => {
         if (root_service.dependencies.some(d => d.local)) {
           throw new Error('Cannot push image with local dependencies');
@@ -64,8 +62,7 @@ export default class Push extends Command {
 
   async pushImage(service_config: ServiceConfig) {
     const tag_name = `architect-${service_config.full_name}`;
-    const user = await this.architect.getUser();
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${user.username}/${service_config.full_name}`);
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, service_config.full_name);
     await execa.shell(`docker tag ${tag_name} ${repository_name}`);
     await execa.shell(`docker push ${repository_name}`);
   }

@@ -164,21 +164,23 @@ export default class ServiceConfig {
   }
 }
 
-export class MissingConfigFileError implements Error {
+export class MissingConfigFileError extends Error {
   name: string;
   message: string;
 
   constructor(filepath: string) {
+    super();
     this.name = 'missing_config_file';
     this.message = `No config file found at ${filepath}`;
   }
 }
 
-export class UnsupportedDependencyIdentifierError implements TypeError {
+export class UnsupportedDependencyIdentifierError extends TypeError {
   name: string;
   message: string;
 
   constructor(identifier: string) {
+    super();
     this.name = 'unsupported_dependency_identifier';
     this.message = `Unsupported dependency identifier format: ${identifier}`;
   }
