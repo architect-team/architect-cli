@@ -2,20 +2,18 @@ import { flags } from '@oclif/command';
 import inquirer = require('inquirer');
 import * as Listr from 'listr';
 
-import Command from '../../base';
+import Command from '../base';
 
-export default class Plan extends Command {
-  static description = 'Plan terraform template for service and dependencies';
-  static usage = 'services:plan [ID] [OPTIONS]';
+export default class Deploy extends Command {
+  static description = 'Deploy service to environments';
 
   static args = [
-    { name: 'service_id', description: 'Service Id' },
-    { name: 'service_version', description: 'Service Version' },
-    { name: 'environment_id', description: 'Environment Id' }
+    { name: 'service', description: 'Service name' }
   ];
 
   static flags = {
-    help: flags.help({ char: 'h' })
+    help: flags.help({ char: 'h' }),
+    environment: flags.string({ char: 'e' }),
   };
 
   async run() {
@@ -27,10 +25,10 @@ export default class Plan extends Command {
         title: `Planning`,
         task: async () => {
           const params = {
-            environment_id: answers.environment_id,
+            environment: answers.environment,
             service_version: answers.service_version,
           };
-          const { data } = await this.architect.get(`/repositories/${answers.service_id}/plan`, { params });
+          const { data } = await this.architect.post(`/repositories/${answers.service_name}/plan`, { params });
           plan = data;
         }
       }
@@ -47,58 +45,62 @@ export default class Plan extends Command {
     if (confirmation.apply) {
       const tasks = new Listr([
         {
-          title: `Applying`,
+          title: `Deploying`,
           task: async () => {
-            const params = {
-              environment_id: answers.environment_id,
-              timestamp: plan.timestamp
-            };
-            await this.architect.get(`/repositories/${answers.service_id}/apply`, { params });
+            const params = { timestamp: plan.timestamp };
+            await this.architect.post(`/environments/${answers.environment}/deploy`, { params });
           }
         }
       ]);
       await tasks.run();
     } else {
-      this.warn('Canceled apply');
+      this.warn('Canceled deploy');
     }
   }
 
   async promptOptions() {
-    const { args, flags } = this.parse(Plan);
+    const { args, flags } = this.parse(Deploy);
+
+    const [service_name, service_version] = args.service ? args.service.split('@') : [undefined, undefined];
+    let options = {
+      service_name,
+      service_version,
+      environment: flags.environment
+    };
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
     const answers = await inquirer.prompt([{
       type: 'autocomplete',
-      name: 'service_id',
+      name: 'service_name',
       message: 'Select service:',
       source: async (_: any, input: string) => {
         const params = { q: input };
         const { data: services } = await this.architect.get('/repositories', { params });
-        return services.map((service: any) => ({ name: service.name, value: service.id }));
+        return services.map((service: any) => service.name);
       },
-      when: !args.service_id
+      when: !service_name
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
       message: 'Select version:',
       choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_id}`);
+        const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
-      when: !args.service_version
+      when: !service_version
     }, {
       type: 'autocomplete',
-      name: 'environment_id',
+      name: 'environment',
       message: 'Select environment:',
       source: async (_: any, input: string) => {
         const params = { q: input };
         const { data: environments } = await this.architect.get('/environments', { params });
-        return environments.map((environment: any) => ({ name: environment.name, value: environment.id }));
+        return environments.map((environment: any) => environment.name);
       },
-      when: !args.environment_id
+      when: !flags.environment
     } as inquirer.Question]);
 
-    return { ...args, ...flags, ...answers };
+    return { ...options, ...answers };
   }
 }

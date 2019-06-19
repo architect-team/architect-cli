@@ -7,16 +7,15 @@ import Command from '../../base';
 
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
-  static aliases = ['environments:update', 'envs:create', 'envs:update'];
-  static usage = 'environments:create [OPTIONS]\n$ architect environments:update [ID] [OPTIONS]';
+  static aliases = ['envs:create'];
 
   static args = [
-    { name: 'id', description: 'Environment Id', required: false }
+    { name: 'name', description: 'Environment name' }
   ];
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    name: flags.string(),
+    type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
     client_certificate: flags.string({ description: 'File path of client_certificate' }),
     client_key: flags.string({ description: 'File path of client_key' }),
@@ -24,12 +23,11 @@ export default class CreateEnvironment extends Command {
   };
 
   async run() {
-    const { args } = this.parse(CreateEnvironment);
     const answers = await this.promptOptions();
-
     const data = {
       name: answers.name,
       host: answers.host,
+      type: answers.type,
       client_certificate: fs.readFileSync(answers.client_certificate, 'utf8'),
       client_key: fs.readFileSync(answers.client_key, 'utf8'),
       cluster_ca_certificate: fs.readFileSync(answers.cluster_ca_certificate, 'utf8')
@@ -37,15 +35,9 @@ export default class CreateEnvironment extends Command {
 
     const tasks = new Listr([
       {
-        title: `${args.id ? 'Updating' : 'Creating'} Environment`,
+        title: 'Creating Environment',
         task: async context => {
-          let res;
-          if (args.id) {
-            res = this.architect.put(`/environments/${args.id}`, { data });
-          } else {
-            res = this.architect.post('/environments', { data });
-          }
-          const { data: environment } = await res;
+          const { data: environment } = await this.architect.post('/environments', { data });
           context.environment = environment;
         }
       },
@@ -61,12 +53,12 @@ export default class CreateEnvironment extends Command {
   }
 
   async promptOptions() {
-    const { flags } = this.parse(CreateEnvironment);
+    const { args, flags } = this.parse(CreateEnvironment);
 
     let answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'name',
-      when: !flags.name
+      when: !args.name
     }, {
       type: 'input',
       name: 'host',
@@ -87,6 +79,6 @@ export default class CreateEnvironment extends Command {
       message: 'cluster certificate (path):',
       when: !flags.cluster_ca_certificate,
     }]);
-    return { ...flags, ...answers };
+    return { ...args, ...flags, ...answers };
   }
 }
