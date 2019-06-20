@@ -57,9 +57,12 @@ export default class Install extends Command {
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     if (args.service_name) {
       await root_service.load();
-      const [service_name, service_version] = args.service_name.split('@');
+      const [service_name, service_version] = args.service_name.split(':');
       if (!service_version) {
-        throw new Error('Specify version ex. service@0.1.0');
+        throw new Error('Specify version ex. service:0.1.0');
+      }
+      if (root_service.config.name === service_name) {
+        throw new Error('Cannot install a service inside its own config');
       }
 
       // Load/install only the new dependency

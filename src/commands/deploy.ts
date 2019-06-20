@@ -61,7 +61,7 @@ export default class Deploy extends Command {
   async promptOptions() {
     const { args, flags } = this.parse(Deploy);
 
-    const [service_name, service_version] = args.service ? args.service.split('@') : [undefined, undefined];
+    const [service_name, service_version] = args.service ? args.service.split(':') : [undefined, undefined];
     let options = {
       service_name,
       service_version,
