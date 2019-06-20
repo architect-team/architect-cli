@@ -1,7 +1,7 @@
 import Command from '@oclif/command';
 import * as Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
-import axios, { Method } from 'axios';
+import axios, { AxiosRequestConfig, Method } from 'axios';
 import * as keytar from 'keytar';
 import * as Listr from 'listr';
 import * as url from 'url';
@@ -34,6 +34,9 @@ export default abstract class ArchitectCommand extends Command {
   }
 
   async catch(err: any) {
+    if (err.response && err.response.data) {
+      this.styled_json(err.response.data);
+    }
     if (this.app_config && this.app_config.debug) {
       throw err;
     } else {
@@ -90,20 +93,20 @@ class ArchitectClient {
     return this._user;
   }
 
-  async get(path: string) {
-    return this.request('GET', path);
+  async get(path: string, options?: AxiosRequestConfig) {
+    return this.request('GET', path, options);
   }
 
-  async put(path: string, data: object) {
-    return this.request('PUT', path, data);
+  async put(path: string, options?: AxiosRequestConfig) {
+    return this.request('PUT', path, options);
   }
 
-  async delete(path: string) {
-    return this.request('DELETE', path);
+  async delete(path: string, options?: AxiosRequestConfig) {
+    return this.request('DELETE', path, options);
   }
 
-  async post(path: string, data: object) {
-    return this.request('POST', path, data);
+  async post(path: string, options?: AxiosRequestConfig) {
+    return this.request('POST', path, options);
   }
 
   protected async _getUser(): Promise<UserEntity> {
@@ -127,18 +130,18 @@ class ArchitectClient {
     return user;
   }
 
-  protected async request(method: Method, path: string, data?: object) {
+  protected async request(method: Method, path: string, options?: AxiosRequestConfig) {
     const user = await this.getUser();
     const access_token = user.access_token;
 
-    const options = {
+    const base_options = {
       url: url.resolve(this.app_config.api_host, path),
       headers: {
         authorization: `Bearer ${access_token}`,
       },
-      method,
-      data
+      method
     };
+    options = { ...base_options, ...(options || {}) };
 
     return axios(options).catch(err => {
       if (err.response && err.response.status === 401) {

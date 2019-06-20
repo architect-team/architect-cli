@@ -1,25 +1,38 @@
 import { flags } from '@oclif/command';
+import inquirer = require('inquirer');
 
 import Command from '../../base';
 
 export default class Services extends Command {
-  static description = 'List, create, or delete services';
-  static usage = 'services [OPTIONS]\n$ architect services:generate [ID] [OPTIONS]\n$ architect services:plan [ID] [OPTIONS]';
-  static aliases = ['services:list'];
+  static description = 'Search services';
+  static aliases = ['services:list', 'services:versions'];
 
   static args = [
-    { name: 'id', description: 'Service Id', required: false }
+    { name: 'service_name', description: 'Service name', required: false }
   ];
 
   static flags = {
-    help: flags.help({ char: 'h' })
+    help: flags.help({ char: 'h' }),
   };
 
   async run() {
     const { args } = this.parse(Services);
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const url = args.id ? `/registry/repositories/${args.id}` : '/registry/repositories';
-    const { data: services } = await this.architect.get(url);
-    this.styled_json(services);
+    const answers = await inquirer.prompt([{
+      type: 'autocomplete',
+      name: 'service_name',
+      message: 'Select service:',
+      source: async (_: any, input: string) => {
+        const params = { q: input };
+        const { data: services } = await this.architect.get('/repositories', { params });
+        return services.map((service: any) => service.name);
+      },
+      when: !args.service_name
+    } as inquirer.Question]);
+
+    const service_name = { ...args, ...answers }.service_name;
+    const { data: service } = await this.architect.get(`/repositories/${service_name}`);
+    this.styled_json(service);
   }
 }

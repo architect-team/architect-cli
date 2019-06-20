@@ -37,18 +37,16 @@ export default class Login extends Command {
 
   async promptOptions() {
     const { flags } = this.parse(Login);
-    if (flags.username && flags.password) {
-      return flags;
-    }
-    return inquirer.prompt([{
+    const answers = inquirer.prompt([{
       type: 'input',
       name: 'username',
-      default: flags.username
+      when: !flags.username
     }, {
       type: 'password',
       name: 'password',
-      default: flags.password
+      when: !flags.password
     }]);
+    return { ...flags, ...answers };
   }
 
   async login(username: string, password: string) {

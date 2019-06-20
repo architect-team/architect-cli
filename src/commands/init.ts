@@ -113,7 +113,7 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'author',
-      default: flags.author || null,
+      default: flags.author,
       filter: input => [input]
     }, {
       type: 'input',
