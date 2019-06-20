@@ -38,9 +38,6 @@ export default class ServiceConfig {
 
   static writeToPath(filepath: string, config_json: object) {
     const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
-    if (!fs.existsSync(config_path)) {
-      throw new MissingConfigFileError(filepath);
-    }
     fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
   }
 

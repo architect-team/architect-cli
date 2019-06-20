@@ -124,17 +124,17 @@ class DockerServiceDependency extends ServiceDependency {
     try {
       await this._load_config(repository_name);
     } catch {
-      await execa.shell(`docker pull ${repository_name}`);
+      await execa('docker', ['pull', repository_name]);
       await this._load_config(repository_name);
     }
   }
 
   async _load_config(repository_name: string) {
-    const config_res = await execa.shell(`docker inspect ${repository_name} --format '{{ index .Config.Labels "architect.json"}}'`);
-    this._config = ServiceConfig.create(JSON.parse(config_res.stdout));
+    const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "architect.json"}}']);
+    this._config = ServiceConfig.create(JSON.parse(stdout));
     if (this.config.proto) {
       // TODO write to label on image?
-      const proto_res = await execa.shell(`docker run --rm ${repository_name} cat ${this.config.proto}`);
+      const proto_res = await execa('docker', ['run', '--rm', repository_name, 'cat', this.config.proto]);
       this._proto = proto_res.stdout;
     }
   }

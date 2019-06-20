@@ -82,21 +82,6 @@ describe('init', () => {
 
     test
       .stdout()
-      .command(['init', '--name', 'test', '--output', os.tmpdir()])
-      .it('should match provided name', ctx => {
-        const config = new ServiceConfig()
-          .setName('test')
-          .setDescription(MOCK_SERVICE_CONFIG.description)
-          .setVersion(MOCK_SERVICE_CONFIG.version)
-          .setKeywords(MOCK_SERVICE_CONFIG.keywords)
-          .setLicense(MOCK_SERVICE_CONFIG.license)
-          .setAuthor(MOCK_SERVICE_CONFIG.author);
-        expect(ctx.stdout).to.contain(INIT_INTRO_TEXT);
-        expect(ctx.stdout).to.contain(JSON.stringify(config, null, 2));
-      });
-
-    test
-      .stdout()
       .command([
         'init',
         '--description', 'test',

@@ -59,7 +59,7 @@ export default class Install extends Command {
       await root_service.load();
       const [service_name, service_version] = args.service_name.split('@');
       if (!service_version) {
-        throw new Error('Specify version ex. service:0.1.0');
+        throw new Error('Specify version ex. service@0.1.0');
       }
 
       // Load/install only the new dependency
@@ -83,7 +83,7 @@ export default class Install extends Command {
   }
 
   get_tasks(service_dependency: ServiceDependency, recursive: boolean, only_load: boolean): Listr.ListrTask[] {
-    let service_name = service_dependency.local ? service_dependency.service_path.match(/([^\/]*)\/*$/)![1] : service_dependency.service_path;
+    let service_name = service_dependency.local ? path.basename(service_dependency.service_path) : service_dependency.service_path;
 
     let tasks: Listr.ListrTask[] = [{
       title: `Loading ${_info(service_name)}`,

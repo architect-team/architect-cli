@@ -75,14 +75,14 @@ export default class Build extends Command {
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     const tag_name = `architect-${service_config.full_name}`;
 
-    await execa.shell([
-      'docker', 'build',
+    await execa('docker', [
+      'build',
       '--compress',
       '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
       '-t', tag_name,
       '-f', dockerfile_path,
-      '--label', `architect.json='${JSON.stringify(service_config)}'`,
+      '--label', `architect.json=${JSON.stringify(service_config)}`,
       service_path
-    ].join(' '));
+    ]);
   }
 }

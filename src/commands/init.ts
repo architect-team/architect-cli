@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as fs from 'fs';
 import * as inquirer from 'inquirer';
 import * as path from 'path';
 
@@ -12,17 +11,12 @@ import { SemvarValidator } from '../common/validation-utils';
 
 const _info = chalk.blue;
 const _success = chalk.green;
-const _error = chalk.red;
 
 export default class Init extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    name: flags.string({
-      char: 'n',
-      default: Init.getDefaultServiceName(),
-    }),
     description: flags.string({
       char: 'd',
       default: '',
@@ -49,7 +43,11 @@ export default class Init extends Command {
     })
   };
 
-  static args = [];
+  static args = [{
+    name: 'name',
+    char: 'n',
+    default: Init.getDefaultServiceName(),
+  }];
 
   static getDefaultServiceName() {
     let defaultName = process.cwd();
@@ -72,25 +70,35 @@ export default class Init extends Command {
       .setAuthor(answers.author)
       .setLicense(answers.license);
 
-    try {
-      const { flags } = this.parse(Init);
-      const savePath = path.join(flags.output || process.cwd(), MANAGED_PATHS.ARCHITECT_JSON);
-      const configJSON = JSON.stringify(config, null, 2);
-      fs.writeFileSync(savePath, configJSON);
-      this.log(_success(`${MANAGED_PATHS.ARCHITECT_JSON} created successfully`));
-      this.log(_success(configJSON));
-    } catch (error) {
-      this.error(_error(`Error creating ${MANAGED_PATHS.ARCHITECT_JSON} file`));
-      this.error(_error(error));
+    const { flags } = this.parse(Init);
+    let savePath = process.cwd();
+    if (flags.output) {
+      savePath = path.resolve(flags.output);
     }
+    ServiceConfig.writeToPath(savePath, config);
+    this.log(_success(`${MANAGED_PATHS.ARCHITECT_JSON} created successfully`));
+    this.log(_success(JSON.stringify(config, null, 2)));
   }
 
   async promptOptions() {
-    const { flags } = this.parse(Init);
+    const { args, flags } = this.parse(Init);
+
+    const user = await this.architect.getUser();
+
+    if (args.name.indexOf(user.username) !== 0) {
+      args.name = `${user.username}/${args.name}`;
+    }
+
     return inquirer.prompt([{
       type: 'input',
       name: 'name',
-      default: flags.name
+      default: args.name,
+      validate: value => {
+        if (value.indexOf(`${user.username}/`) === 0) {
+          return true;
+        }
+        return `Name must be scoped with your username: ${user.username}`;
+      }
     }, {
       type: 'input',
       name: 'version',
@@ -113,7 +121,7 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'author',
-      default: flags.author,
+      default: flags.author || user.username,
       filter: input => [input]
     }, {
       type: 'input',
