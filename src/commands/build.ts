@@ -1,8 +1,8 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as execa from 'execa';
-import * as Listr from 'listr';
-import * as path from 'path';
+import execa from 'execa';
+import Listr from 'listr';
+import path from 'path';
 
 import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
@@ -45,15 +45,12 @@ export default class Build extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Build);
-    let root_service_path = process.cwd();
-    if (args.context) {
-      root_service_path = path.resolve(args.context);
-    }
+    let root_service_path = args.context ? args.context : process.cwd();
 
     if (flags.recursive) {
-      await Install.run(['-p', root_service_path, '-r', '--only_load']);
+      await Install.run(['-p', root_service_path, '-r']);
     } else {
-      await Install.run(['-p', root_service_path, '--only_load']);
+      await Install.run(['-p', root_service_path]);
     }
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);

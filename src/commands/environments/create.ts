@@ -1,7 +1,8 @@
 import { flags } from '@oclif/command';
-import * as fs from 'fs';
-import * as inquirer from 'inquirer';
-import * as Listr from 'listr';
+import fs from 'fs-extra';
+import inquirer from 'inquirer';
+import Listr from 'listr';
+import untildify from 'untildify';
 
 import Command from '../../base';
 
@@ -28,9 +29,9 @@ export default class CreateEnvironment extends Command {
       name: answers.name,
       host: answers.host,
       type: answers.type,
-      client_certificate: fs.readFileSync(answers.client_certificate, 'utf8'),
-      client_key: fs.readFileSync(answers.client_key, 'utf8'),
-      cluster_ca_certificate: fs.readFileSync(answers.cluster_ca_certificate, 'utf8')
+      client_certificate: fs.readFileSync(untildify(answers.client_certificate), 'utf8'),
+      client_key: fs.readFileSync(untildify(answers.client_key), 'utf8'),
+      cluster_ca_certificate: fs.readFileSync(untildify(answers.cluster_ca_certificate), 'utf8')
     };
 
     const tasks = new Listr([
@@ -44,7 +45,7 @@ export default class CreateEnvironment extends Command {
       {
         title: 'Testing Environment',
         task: async context => {
-          await this.architect.get(`/environments/${context.environment.id}/test`);
+          await this.architect.get(`/environments/${context.environment.name}/test`);
         }
       }
     ]);
@@ -55,7 +56,7 @@ export default class CreateEnvironment extends Command {
   async promptOptions() {
     const { args, flags } = this.parse(CreateEnvironment);
 
-    let answers: any = await inquirer.prompt([{
+    const answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'name',
       when: !args.name

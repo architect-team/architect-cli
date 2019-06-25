@@ -1,7 +1,7 @@
 import {expect} from '@oclif/test';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as sinon from 'sinon';
+import fs from 'fs';
+import os from 'os';
+import sinon from 'sinon';
 
 import ServiceConfig, {MissingConfigFileError} from '../../src/common/service-config';
 

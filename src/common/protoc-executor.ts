@@ -1,7 +1,7 @@
-import * as execa from 'execa';
+import execa from 'execa';
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import os from 'os';
+import path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
 import ServiceConfig from './service-config';

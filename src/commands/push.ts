@@ -1,9 +1,9 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as execa from 'execa';
-import * as Listr from 'listr';
-import * as path from 'path';
-import * as url from 'url';
+import execa from 'execa';
+import Listr from 'listr';
+import path from 'path';
+import url from 'url';
 
 import Command from '../base';
 import ServiceConfig from '../common/service-config';
@@ -40,10 +40,7 @@ export default class Push extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args } = this.parse(Push);
-    let root_service_path = process.cwd();
-    if (args.context) {
-      root_service_path = path.resolve(args.context);
-    }
+    let root_service_path = args.context ? args.context : process.cwd();
 
     await Build.run([root_service_path]);
 

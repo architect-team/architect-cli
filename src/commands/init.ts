@@ -1,7 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as inquirer from 'inquirer';
-import * as path from 'path';
+import inquirer from 'inquirer';
+import path from 'path';
 
 import Command from '../base';
 import { INIT_INTRO_TEXT } from '../common/i18n';

@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import inquirer = require('inquirer');
-import * as Listr from 'listr';
+import Listr from 'listr';
 
 import Command from '../base';
 
@@ -14,48 +14,58 @@ export default class Deploy extends Command {
   static flags = {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ char: 'e' }),
+    plan_id: flags.string({ char: 'p' })
   };
 
   async run() {
     const answers = await this.promptOptions();
 
-    let plan: any;
-    const tasks = new Listr([
-      {
-        title: `Planning`,
-        task: async () => {
-          const params = {
-            environment: answers.environment,
-            service_version: answers.service_version,
-          };
-          const { data } = await this.architect.post(`/repositories/${answers.service_name}/plan`, { params });
-          plan = data;
-        }
-      }
-    ]);
-    await tasks.run();
-    this.log(plan.info);
-
-    const confirmation = await inquirer.prompt({
-      type: 'confirm',
-      name: 'apply',
-      message: 'Would you like to apply this plan?'
-    } as inquirer.Question);
-
-    if (confirmation.apply) {
+    if (answers.plan_id) {
+      await this.deploy(answers.environment!, answers.plan_id);
+    } else {
+      let plan: any;
       const tasks = new Listr([
         {
-          title: `Deploying`,
+          title: `Planning`,
           task: async () => {
-            const params = { timestamp: plan.timestamp };
-            await this.architect.post(`/environments/${answers.environment}/deploy`, { params });
+            const params = {
+              environment: answers.environment,
+              service_version: answers.service_version,
+            };
+            const { data } = await this.architect.post(`/repositories/${answers.service_name}/plan`, { params });
+            plan = data;
           }
         }
       ]);
       await tasks.run();
-    } else {
-      this.warn('Canceled deploy');
+      this.log(plan.plan_info);
+      this.log('Plan Id:', plan.plan_id);
+
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'deploy',
+        message: 'Would you like to deploy this plan?'
+      } as inquirer.Question);
+
+      if (confirmation.deploy) {
+        await this.deploy(answers.environment!, plan.plan_id);
+      } else {
+        this.warn('Canceled deploy');
+      }
     }
+  }
+
+  async deploy(environment: string, plan_id: string) {
+    const tasks = new Listr([
+      {
+        title: `Deploying`,
+        task: async () => {
+          const params = { plan_id };
+          await this.architect.post(`/environments/${environment}/deploy`, { params });
+        }
+      }
+    ]);
+    await tasks.run();
   }
 
   async promptOptions() {
@@ -65,7 +75,8 @@ export default class Deploy extends Command {
     let options = {
       service_name,
       service_version,
-      environment: flags.environment
+      environment: flags.environment,
+      plan_id: flags.plan_id
     };
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -79,7 +90,7 @@ export default class Deploy extends Command {
         const { data: services } = await this.architect.get('/repositories', { params });
         return services.map((service: any) => service.name);
       },
-      when: !service_name
+      when: !service_name && !flags.plan_id
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
@@ -88,7 +99,7 @@ export default class Deploy extends Command {
         const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
-      when: !service_version
+      when: !service_version && !flags.plan_id
     }, {
       type: 'autocomplete',
       name: 'environment',

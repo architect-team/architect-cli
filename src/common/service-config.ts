@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
@@ -88,7 +88,7 @@ export default class ServiceConfig {
   }
 
   getNormalizedName() {
-    return ServiceConfig.convertServiceNameToFolderName(this.name);
+    return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
   }
 
   getProtoName() {

@@ -1,9 +1,9 @@
 import { expect } from '@oclif/test';
 import { execSync, spawn, spawnSync } from 'child_process';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import * as readline from 'readline';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import readline from 'readline';
 
 import MANAGED_PATHS from '../src/common/managed-paths';
 import SUPPORTED_LANGUAGES from '../src/common/supported-languages';

@@ -1,4 +1,4 @@
-import * as net from 'net';
+import net from 'net';
 
 namespace PortUtil {
   const AVAILABLE_PORTS = Array.from({ length: 1000 }, (_, k) => k + 50000);

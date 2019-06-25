@@ -1,10 +1,10 @@
-import {expect, test} from '@oclif/test';
-import * as inquirer from 'inquirer';
-import * as os from 'os';
-import * as sinon from 'sinon';
+import { expect, test } from '@oclif/test';
+import inquirer from 'inquirer';
+import os from 'os';
+import sinon from 'sinon';
 
 import Init from '../../src/commands/init';
-import {INIT_INTRO_TEXT} from '../../src/common/i18n';
+import { INIT_INTRO_TEXT } from '../../src/common/i18n';
 import ServiceConfig from '../../src/common/service-config';
 
 interface InitInput {
@@ -47,7 +47,8 @@ describe('init', () => {
   describe('integration', () => {
     beforeEach(() => {
       _sinon.stub(inquirer, 'prompt')
-        .callsFake(function (questions: inquirer.Question[]) {
+        // @ts-ignore
+        .callsFake((questions: any[]) => {
           let mock_config: InitInput = MOCK_SERVICE_CONFIG;
 
           questions.forEach((question: inquirer.Question) => {

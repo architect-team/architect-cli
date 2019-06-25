@@ -1,22 +1,28 @@
 import execa = require('execa');
 import { readFileSync } from 'fs';
-import * as path from 'path';
-import * as url from 'url';
+import path from 'path';
+import url from 'url';
 
 import { AppConfig } from '../app-config';
 
 import ServiceConfig from './service-config';
+import { SemvarValidator } from './validation-utils';
 
 export default abstract class ServiceDependency {
-  static create(app_config: AppConfig, service_path: string, _local = true, _root = true) {
+  static create(app_config: AppConfig, service_path: string, _root = true) {
     if (ServiceDependency._cache[service_path]) {
       return ServiceDependency._cache[service_path];
     }
+
+    const validator = new SemvarValidator();
+    const service_version = service_path.split(':')[service_path.split(':').length - 1];
+    const valid_version = service_version && validator.test(service_version);
+
     let service_dependency;
-    if (_local) {
-      service_dependency = new LocalServiceDependency(app_config, service_path, _root);
-    } else {
+    if (valid_version) {
       service_dependency = new DockerServiceDependency(app_config, service_path, _root);
+    } else {
+      service_dependency = new LocalServiceDependency(app_config, path.resolve(service_path), _root);
     }
 
     ServiceDependency._cache[service_path] = service_dependency;
@@ -64,7 +70,7 @@ export default abstract class ServiceDependency {
       } else {
         dependency_path = `${dependency_name}:${dependency_path}`;
       }
-      service_dependencies.push(ServiceDependency.create(this.app_config, dependency_path, local, false));
+      service_dependencies.push(ServiceDependency.create(this.app_config, dependency_path, false));
     });
     return service_dependencies;
   }

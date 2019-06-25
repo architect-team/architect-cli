@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as path from 'path';
+import path from 'path';
 
 import Command from '../base';
 import ServiceConfig from '../common/service-config';
