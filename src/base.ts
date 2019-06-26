@@ -1,10 +1,10 @@
 import Command from '@oclif/command';
-import * as Config from '@oclif/config';
+import Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
 import axios, { AxiosRequestConfig, Method } from 'axios';
-import * as keytar from 'keytar';
-import * as Listr from 'listr';
-import * as url from 'url';
+import keytar from 'keytar';
+import Listr from 'listr';
+import url from 'url';
 
 import { AppConfig } from './app-config';
 

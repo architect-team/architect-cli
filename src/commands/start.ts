@@ -1,10 +1,10 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { ChildProcess, spawn } from 'child_process';
-import * as Listr from 'listr';
-import * as path from 'path';
-import * as readline from 'readline';
-import * as url from 'url';
+import Listr from 'listr';
+import path from 'path';
+import readline from 'readline';
+import url from 'url';
 
 import Command from '../base';
 import DeploymentConfig from '../common/deployment-config';
@@ -45,12 +45,8 @@ export default class Start extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args } = this.parse(Start);
-    let root_service_path = process.cwd();
-    if (args.context) {
-      root_service_path = path.resolve(args.context);
-    }
-
-    await Install.run(['-p', root_service_path, '-r', '--only_load']);
+    let root_service_path = args.context ? args.context : process.cwd();
+    await Install.run(['-p', root_service_path, '-r']);
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     const tasks: Listr.ListrTask[] = [];
@@ -97,6 +93,7 @@ export default class Start extends Command {
       host,
       port,
       service_path,
+      env_key: key,
       proto_prefix: service_config.getProtoName(),
       process: child_process,
     };
@@ -123,11 +120,20 @@ export default class Start extends Command {
         } else {
           cmd_path = 'docker';
           const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, `${service.service_path}`);
+          const envs: string[] = [];
+          Object.values(this.deployment_config).forEach(deployment_config => {
+            envs.push('--env');
+            const env = deployment_config.env_key;
+            const env_value = JSON.parse(process.env[deployment_config.env_key]!);
+            env_value.host = 'host.docker.internal';
+            envs.push(`${env}=${JSON.stringify(env_value)}`);
+          });
           cmd_args = [
             'run',
             '-p', `${target_port}:8080`,
             '--rm', '--init',
-            '--name', service.config.full_name.replace(/:/g, '-'),
+            ...envs,
+            '--name', service.config.full_name.replace(/:/g, '-').replace(/\//g, '--'),
             repository_name
           ];
         }
@@ -146,6 +152,7 @@ export default class Start extends Command {
           } else {
             if (data.indexOf('Host: ') === 0) {
               host = data.substring(6);
+              this.log(`Running ${host}:${target_port}`);
               this.setServiceEnvironmentDetails(service.config, cmd, host, target_port, service.service_path);
               resolve();
             } else if (data.length > 0 && data.indexOf('Port: ') !== 0) {
@@ -154,12 +161,10 @@ export default class Start extends Command {
           }
         });
 
-        let hadError = false;
         readline.createInterface({
           input: cmd.stderr,
           terminal: false
         }).on('line', data => {
-          hadError = true;
           data = data.trim();
           if (data.length > 0) {
             if (service.config.isScript()) {
@@ -170,43 +175,24 @@ export default class Start extends Command {
           }
         });
 
-        cmd.on('close', () => {
-          if (hadError) {
+        cmd.on('close', code => {
+          if (code === 1) {
             this.log(_error(`Error executing architect-${service.config.language}-launcher`));
-            this.log(_error(`Failed on: ${cmd_path} ${cmd_args.join(' ')}`));
-            this.exit(1);
+            reject(new ServiceLaunchError(service.config.name));
+          } else {
+            resolve();
           }
-          if (!service.config.isScript()) {
-            Object.values(this.deployment_config).forEach(config => config.process.kill());
-            return reject(new ServiceLaunchError(service.config.name));
-          } else if (service.root) {
-            Object.values(this.deployment_config).forEach(config => config.process.kill());
-          }
-
-          resolve();
+          Object.values(this.deployment_config).forEach(config => config.process.kill());
         });
 
         cmd.on('error', error => {
           this.log(_error(`Error: spawning architect-${service.config.language}-launcher`));
           this.log(_error(error.toString()));
-
-          if (!service.config.isScript()) {
-            Object.values(this.deployment_config).forEach(config => config.process.kill());
-            return reject(new ServiceLaunchError(service.config.name));
-          } else if (service.root) {
-            Object.values(this.deployment_config).forEach(config => config.process.kill());
-          }
-
+          Object.values(this.deployment_config).forEach(config => config.process.kill());
           reject(error);
         });
       } catch (error) {
-        if (!service.config.isScript()) {
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-          return reject(new ServiceLaunchError(service.config.name));
-        } else if (service.root) {
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-        }
-
+        Object.values(this.deployment_config).forEach(config => config.process.kill());
         reject(error);
       }
     });

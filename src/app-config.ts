@@ -1,5 +1,5 @@
-import * as dotenv from 'dotenv';
-import * as Joi from 'joi';
+import dotenv from 'dotenv';
+import Joi from 'joi';
 
 const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
   DEBUG: Joi
@@ -14,7 +14,6 @@ const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
     .default('lIpW9fq9IFQBBjTgllhN6EI01TXMhRVm'),
   DEFAULT_REGISTRY_HOST: Joi
     .string()
-    .uri()
     .default('registry.architect.io'),
   API_HOST: Joi
     .string()

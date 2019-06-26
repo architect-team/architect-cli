@@ -1,9 +1,9 @@
 import { flags } from '@oclif/command';
 import { AuthenticationClient } from 'auth0';
 import chalk from 'chalk';
-import { spawnSync } from 'child_process';
-import * as inquirer from 'inquirer';
-import * as keytar from 'keytar';
+import execa from 'execa';
+import inquirer from 'inquirer';
+import keytar from 'keytar';
 
 import Command from '../base';
 
@@ -66,13 +66,9 @@ export default class Login extends Command {
       } else {
         const auth = JSON.stringify(authResult);
         const registry_domain = this.app_config.default_registry_host;
-        const res = spawnSync('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: auth });
-        if (res.status === 0) {
-          await keytar.setPassword('architect.io', username, auth);
-          this.log(_success('Login Succeeded'));
-        } else {
-          this.log(_error(res.stderr.toString()));
-        }
+        await execa('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: auth });
+        await keytar.setPassword('architect.io', username, auth);
+        this.log(_success('Login Succeeded'));
       }
     });
   }

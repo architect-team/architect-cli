@@ -1,7 +1,7 @@
-import * as execa from 'execa';
+import execa from 'execa';
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import os from 'os';
+import path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
 import ServiceConfig from './service-config';
@@ -45,18 +45,17 @@ namespace ProtocExecutor {
     const mount_dirname = '/opt/protoc';
     const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder, dependency.config.proto);
 
-    await execa.shell([
-      'docker', 'run',
+    await execa('docker', [
+      'run',
       '-v', `${target.service_path}:/defs`,
       '-v', `${tmp_dir}:${mount_dirname}`,
-      '--user', process.platform === 'win32' ? '1000:1000' : '$(id -u):$(id -g)',  // TODO figure out correct user for windows
       'architectio/protoc-all',
       '-f', `${mounted_proto_path}`,
       '-i', mount_dirname,
       '-l', target.config.language,
       '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-    ].join(' '));
-    await execa.shell(`rm -rf ${tmp_dir}`);
+    ]);
+    await execa('rm', ['-rf', tmp_dir]);
 
     _postHooks(stub_directory, target.config.language);
   };

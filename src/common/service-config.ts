@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
 import SUPPORTED_LANGUAGES from './supported-languages';
@@ -38,9 +38,6 @@ export default class ServiceConfig {
 
   static writeToPath(filepath: string, config_json: object) {
     const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
-    if (!fs.existsSync(config_path)) {
-      throw new MissingConfigFileError(filepath);
-    }
     fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
   }
 
@@ -91,7 +88,7 @@ export default class ServiceConfig {
   }
 
   getNormalizedName() {
-    return ServiceConfig.convertServiceNameToFolderName(this.name);
+    return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
   }
 
   getProtoName() {

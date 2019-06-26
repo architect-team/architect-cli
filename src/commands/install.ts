@@ -1,7 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import * as Listr from 'listr';
-import * as path from 'path';
+import Listr from 'listr';
+import path from 'path';
 
 import Command from '../base';
 import ProtocExecutor from '../common/protoc-executor';
@@ -22,9 +22,6 @@ export default class Install extends Command {
     recursive: flags.boolean({
       char: 'r',
       description: 'Generate architect dependency files for all services in the dependency tree'
-    }),
-    only_load: flags.boolean({
-      description: 'Skip installing dependencies'
     }),
     verbose: flags.boolean({
       char: 'v',
@@ -49,17 +46,17 @@ export default class Install extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Install);
-    let root_service_path = process.cwd();
-    if (flags.prefix) {
-      root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
-    }
+    let root_service_path = flags.prefix ? flags.prefix : process.cwd();
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     if (args.service_name) {
       await root_service.load();
-      const [service_name, service_version] = args.service_name.split('@');
+      const [service_name, service_version] = args.service_name.split(':');
       if (!service_version) {
         throw new Error('Specify version ex. service:0.1.0');
+      }
+      if (root_service.config.name === service_name) {
+        throw new Error('Cannot install a service inside its own config');
       }
 
       // Load/install only the new dependency
@@ -67,7 +64,7 @@ export default class Install extends Command {
       new_dependencies[service_name] = service_version;
       root_service.config.setDependencies(new_dependencies);
 
-      const tasks = this.get_tasks(root_service, flags.recursive, flags.only_load);
+      const tasks = this.get_tasks(root_service, flags.recursive);
       tasks.push({
         title: 'Updating architect.json',
         task: () => {
@@ -78,12 +75,12 @@ export default class Install extends Command {
       });
       return tasks;
     } else {
-      return this.get_tasks(root_service, flags.recursive, flags.only_load);
+      return this.get_tasks(root_service, flags.recursive);
     }
   }
 
-  get_tasks(service_dependency: ServiceDependency, recursive: boolean, only_load: boolean): Listr.ListrTask[] {
-    let service_name = service_dependency.local ? service_dependency.service_path.match(/([^\/]*)\/*$/)![1] : service_dependency.service_path;
+  get_tasks(service_dependency: ServiceDependency, recursive: boolean): Listr.ListrTask[] {
+    let service_name = service_dependency.local ? path.basename(service_dependency.service_path) : service_dependency.service_path;
 
     let tasks: Listr.ListrTask[] = [{
       title: `Loading ${_info(service_name)}`,
@@ -92,14 +89,14 @@ export default class Install extends Command {
         let sub_tasks: Listr.ListrTask[] = [];
         if (recursive || service_dependency.root) {
           service_dependency.dependencies.forEach(sub_dependency => {
-            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive, only_load));
+            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive));
           });
         }
         return new Listr(sub_tasks);
       }
     }];
 
-    if (!only_load && service_dependency.local && (recursive || service_dependency.root)) {
+    if (service_dependency.local && (recursive || service_dependency.root)) {
       tasks.push({
         title: `Installing dependencies for ${_info(service_name)}`,
         task: async () => {
