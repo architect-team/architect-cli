@@ -3,13 +3,19 @@ import net from 'net';
 namespace PortUtil {
   const AVAILABLE_PORTS = Array.from({ length: 1000 }, (_, k) => k + 50000);
 
-  export const isPortAvailable = async (port: number) => new Promise<boolean>(resolve => {
+  const _isPortAvailable = async (host: string, port: number) => new Promise((resolve, reject) => {
     const tester: net.Server = net.createServer()
-      .once('error', () => resolve(false))
-      .once('listening', () =>
-        tester.once('close', () => resolve(true)).close()
-      )
-      .listen(port, '0.0.0.0');
+      .once('error', err => reject(err))
+      .once('listening', () => tester.once('close', () => resolve()).close())
+      .listen(port, host);
+  });
+
+  export const isPortAvailable = async (port: number) => new Promise<boolean>(resolve => {
+    Promise.all([
+      _isPortAvailable('0.0.0.0', port), // IPv4
+      _isPortAvailable('::', port)]) // IPv6
+      .then(() => resolve(true))
+      .catch(() => resolve(false));
   });
 
   export const getAvailablePort = async () => {

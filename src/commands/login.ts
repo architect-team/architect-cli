@@ -37,7 +37,7 @@ export default class Login extends Command {
 
   async promptOptions() {
     const { flags } = this.parse(Login);
-    const answers = inquirer.prompt([{
+    const answers = await inquirer.prompt([{
       type: 'input',
       name: 'username',
       when: !flags.username
