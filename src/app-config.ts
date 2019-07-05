@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import Joi from 'joi';
+import path from 'path';
 
 const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
   DEBUG: Joi
@@ -44,7 +45,7 @@ export class AppConfig {
 
   constructor() {
     // Load environment params from a .env file if found
-    dotenv.config();
+    dotenv.config({ path: path.resolve(__dirname, '../.env')});
 
     const app_env = validate_config(process.env);
     this.debug = Boolean(app_env.DEBUG);
