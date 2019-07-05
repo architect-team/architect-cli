@@ -8,7 +8,7 @@ import Command from '../../base';
 
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
-  static aliases = ['envs:create'];
+  static aliases = ['envs:create', 'envs:update', 'environments:update'];
 
   static args = [
     { name: 'name', description: 'Environment name' }
@@ -18,8 +18,7 @@ export default class CreateEnvironment extends Command {
     help: flags.help({ char: 'h' }),
     type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
-    client_certificate: flags.string({ description: 'File path of client_certificate' }),
-    client_key: flags.string({ description: 'File path of client_key' }),
+    service_token: flags.string({ description: 'Service token' }),
     cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate' })
   };
 
@@ -29,17 +28,23 @@ export default class CreateEnvironment extends Command {
       name: answers.name,
       host: answers.host,
       type: answers.type,
-      client_certificate: fs.readFileSync(untildify(answers.client_certificate), 'utf8'),
-      client_key: fs.readFileSync(untildify(answers.client_key), 'utf8'),
+      service_token: answers.service_token,
       cluster_ca_certificate: fs.readFileSync(untildify(answers.cluster_ca_certificate), 'utf8')
     };
 
+    const is_update = process.argv[2].indexOf(':update') >= 0;
+
     const tasks = new Listr([
       {
-        title: 'Creating Environment',
+        title: is_update ? 'Updating Environment' : 'Creating Environment',
         task: async context => {
-          const { data: environment } = await this.architect.post('/environments', { data });
-          context.environment = environment;
+          if (is_update) {
+            const { data: environment } = await this.architect.put(`/environments/${data.name}`, { data });
+            context.environment = environment;
+          } else {
+            const { data: environment } = await this.architect.post('/environments', { data });
+            context.environment = environment;
+          }
         }
       },
       {
@@ -66,14 +71,9 @@ export default class CreateEnvironment extends Command {
       when: !flags.host
     }, {
       type: 'input',
-      name: 'client_certificate',
-      message: 'client certificate (path):',
-      when: !flags.client_certificate,
-    }, {
-      type: 'input',
-      name: 'client_key',
-      message: 'client key (path):',
-      when: !flags.client_key,
+      name: 'service_token',
+      message: 'service token:',
+      when: !flags.service_token,
     }, {
       type: 'input',
       name: 'cluster_ca_certificate',
