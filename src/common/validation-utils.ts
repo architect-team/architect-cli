@@ -9,3 +9,6 @@ export class SemvarValidator implements StringValidator {
     ) !== null;
   }
 }
+
+export const EnvironmentNameValidator = new RegExp('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$');
+export const ServiceNameValidator = new RegExp('^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\/[a-z0-9]([-a-z0-9]*[a-z0-9])?)$');

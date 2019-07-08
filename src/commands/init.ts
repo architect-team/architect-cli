@@ -7,7 +7,7 @@ import Command from '../base';
 import { INIT_INTRO_TEXT } from '../common/i18n';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
-import { SemvarValidator } from '../common/validation-utils';
+import { SemvarValidator, ServiceNameValidator } from '../common/validation-utils';
 
 const _info = chalk.blue;
 const _success = chalk.green;
@@ -47,6 +47,7 @@ export default class Init extends Command {
     name: 'name',
     char: 'n',
     default: Init.getDefaultServiceName(),
+    parse: (value: string) => value.toLowerCase()
   }];
 
   static getDefaultServiceName() {
@@ -88,16 +89,23 @@ export default class Init extends Command {
     if (args.name.indexOf(user.username) !== 0) {
       args.name = `${user.username}/${args.name}`;
     }
+    if (args.name && !ServiceNameValidator.test(args.name)) {
+      this.error(`Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
+    }
 
     return inquirer.prompt([{
       type: 'input',
       name: 'name',
       default: args.name,
+      filter: value => value.toLowerCase(),
       validate: value => {
-        if (value.indexOf(`${user.username}/`) === 0) {
-          return true;
+        if (!(value.indexOf(`${user.username}/`) === 0)) {
+          return `Name must be scoped with your username: ${user.username}`;
         }
-        return `Name must be scoped with your username: ${user.username}`;
+        if (!ServiceNameValidator.test(value)) {
+          return `Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`;
+        }
+        return true;
       }
     }, {
       type: 'input',
