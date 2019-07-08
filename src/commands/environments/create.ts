@@ -5,13 +5,14 @@ import Listr from 'listr';
 import untildify from 'untildify';
 
 import Command from '../../base';
+import { EnvironmentNameValidator } from '../../common/validation-utils';
 
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
   static aliases = ['envs:create', 'envs:update', 'environments:update'];
 
   static args = [
-    { name: 'name', description: 'Environment name' }
+    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() }
   ];
 
   static flags = {
@@ -64,7 +65,12 @@ export default class CreateEnvironment extends Command {
     const answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'name',
-      when: !args.name
+      when: !args.name,
+      filter: value => value.toLowerCase(),
+      validate: value => {
+        if (EnvironmentNameValidator.test(value)) return true;
+        return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+      }
     }, {
       type: 'input',
       name: 'host',
