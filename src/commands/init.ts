@@ -46,18 +46,9 @@ export default class Init extends Command {
   static args = [{
     name: 'name',
     char: 'n',
-    default: Init.getDefaultServiceName(),
+    default: path.basename(process.cwd()),
     parse: (value: string) => value.toLowerCase()
   }];
-
-  static getDefaultServiceName() {
-    let defaultName = process.cwd();
-    return defaultName.substr(
-      defaultName.lastIndexOf('/') >= 0
-        ? defaultName.lastIndexOf('/') + 1
-        : 0
-    );
-  }
 
   async run() {
     this.log(_info(INIT_INTRO_TEXT));

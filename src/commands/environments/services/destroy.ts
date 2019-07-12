@@ -1,19 +1,23 @@
 import { flags } from '@oclif/command';
-import inquirer = require('inquirer');
+import chalk from 'chalk';
+import inquirer from 'inquirer';
 import Listr from 'listr';
 
-import Command from '../base';
+import Command from '../../../base';
 
-export default class Deploy extends Command {
-  static description = 'Deploy service to environments';
+const _info = chalk.blue;
+
+export default class DestroyService extends Command {
+  static description = 'Destroy service from an environment';
+  static aliases = ['envs:services:destroy'];
 
   static args = [
-    { name: 'service', description: 'Service name' }
+    { name: 'service', description: 'Service name', required: false }
   ];
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    environment: flags.string({ char: 'e' }),
+    environment: flags.string({ description: 'Environment name' }),
     plan_id: flags.string({ char: 'p' })
   };
 
@@ -26,17 +30,15 @@ export default class Deploy extends Command {
       let plan: any;
       const tasks = new Listr([
         {
-          title: `Planning`,
+          title: `Deleting service ${_info(answers.service)} from environment ${_info(answers.environment)}`,
           task: async () => {
-            const params = {
-              environment: answers.environment,
-              service: `${answers.service_name}:${answers.service_version}`,
-            };
-            const { data } = await this.architect.post(`/environments/${answers.environment}/services`, { params });
+            const params = { service: answers.service };
+            const { data } = await this.architect.delete(`/environments/${answers.environment}/services`, { params });
             plan = data;
           }
-        }
+        },
       ]);
+
       await tasks.run();
       this.log(plan.plan_info);
       this.log('Plan Id:', plan.plan_id);
@@ -69,38 +71,11 @@ export default class Deploy extends Command {
   }
 
   async promptOptions() {
-    const { args, flags } = this.parse(Deploy);
-
-    const [service_name, service_version] = args.service ? args.service.split(':') : [undefined, undefined];
-    let options = {
-      service_name,
-      service_version,
-      environment: flags.environment,
-      plan_id: flags.plan_id
-    };
+    const { args, flags } = this.parse(DestroyService);
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const answers = await inquirer.prompt([{
-      type: 'autocomplete',
-      name: 'service_name',
-      message: 'Select service:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: services } = await this.architect.get('/repositories', { params });
-        return services.map((service: any) => service.name);
-      },
-      when: !service_name && !flags.plan_id
-    } as inquirer.Question, {
-      type: 'list',
-      name: 'service_version',
-      message: 'Select version:',
-      choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_name || service_name}`);
-        return service.tags;
-      },
-      when: !service_version && !flags.plan_id
-    }, {
+    const answers: any = await inquirer.prompt([{
       type: 'autocomplete',
       name: 'environment',
       message: 'Select environment:',
@@ -110,8 +85,29 @@ export default class Deploy extends Command {
         return environments.map((environment: any) => environment.name);
       },
       when: !flags.environment
-    } as inquirer.Question]);
-
-    return { ...options, ...answers };
+    } as inquirer.Question, {
+      type: 'autocomplete',
+      name: 'service',
+      message: 'Select service:',
+      source: async (answers: any, input: string) => {
+        const environment = flags.environment || answers.environment;
+        const params = { q: input };
+        const { data: services } = await this.architect.get(`/environments/${environment}/services`, { params });
+        return services;
+      },
+      when: !args.service
+    } as inquirer.Question, {
+      type: 'input',
+      name: 'destroy',
+      message: 'Are you absolutely sure?\nThis will destroy the service from the environment.\nPlease type in the name of the service to confirm.\n',
+      validate: (value, answers) => {
+        const service = args.service || answers!.service;
+        if (value === service) {
+          return true;
+        }
+        return `Name must match: ${_info(service)}`;
+      }
+    }]);
+    return { ...args, ...flags, ...answers };
   }
 }
