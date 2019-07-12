@@ -1,9 +1,9 @@
 import { expect, test } from '@oclif/test';
 import inquirer from 'inquirer';
 import os from 'os';
+import path from 'path';
 import sinon from 'sinon';
 
-import Init from '../../src/commands/init';
 import { INIT_INTRO_TEXT } from '../../src/common/i18n';
 import ServiceConfig from '../../src/common/service-config';
 
@@ -40,7 +40,7 @@ describe('init', () => {
   describe('unit', () => {
     it('should generate default name from path', () => {
       _sinon.stub(process, 'cwd').returns('/test/path/service-name');
-      expect(Init.getDefaultServiceName()).to.be.eq('service-name');
+      expect(path.basename(process.cwd())).to.be.eq('service-name');
     });
   });
 

@@ -76,7 +76,7 @@ export default class CreateEnvironment extends Command {
     }, {
       type: 'input',
       name: 'namespace',
-      when: !args.namespace,
+      when: !flags.namespace,
       filter: value => value.toLowerCase(),
       validate: value => {
         if (EnvironmentNameValidator.test(value)) return true;

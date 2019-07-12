@@ -2,7 +2,6 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import execa from 'execa';
 import Listr from 'listr';
-import path from 'path';
 import url from 'url';
 
 import Command from '../base';
