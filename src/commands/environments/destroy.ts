@@ -7,9 +7,9 @@ import Command from '../../base';
 
 const _info = chalk.blue;
 
-export default class DeleteEnvironment extends Command {
-  static description = 'Delete environment';
-  static aliases = ['envs:delete'];
+export default class DestroyEnvironment extends Command {
+  static description = 'Destroy environment';
+  static aliases = ['envs:destroy'];
 
   static args = [
     { name: 'environment', description: 'Environment name' }
@@ -34,7 +34,7 @@ export default class DeleteEnvironment extends Command {
   }
 
   async promptOptions() {
-    const { args } = this.parse(DeleteEnvironment);
+    const { args } = this.parse(DestroyEnvironment);
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
@@ -50,8 +50,8 @@ export default class DeleteEnvironment extends Command {
       when: !args.environment
     } as inquirer.Question, {
       type: 'input',
-      name: 'delete',
-      message: 'Are you absolutely sure?\nThis will delete the environment.\nPlease type in the name of the environment to confirm.\n',
+      name: 'destroy',
+      message: 'Are you absolutely sure?\nThis will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
       validate: (value, answers) => {
         const environment = args.environment || answers!.environment;
         if (value === environment) {

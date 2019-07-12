@@ -17,6 +17,7 @@ export default class CreateEnvironment extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
+    namespace: flags.string(),
     type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
     service_token: flags.string({ description: 'Service token' }),
@@ -27,6 +28,7 @@ export default class CreateEnvironment extends Command {
     const answers = await this.promptOptions();
     const data = {
       name: answers.name,
+      namespace: answers.namespace,
       host: answers.host,
       type: answers.type,
       service_token: answers.service_token,
@@ -71,6 +73,16 @@ export default class CreateEnvironment extends Command {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
       }
+    }, {
+      type: 'input',
+      name: 'namespace',
+      when: !args.namespace,
+      filter: value => value.toLowerCase(),
+      validate: value => {
+        if (EnvironmentNameValidator.test(value)) return true;
+        return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+      },
+      default: (answers: any) => answers.name
     }, {
       type: 'input',
       name: 'host',
