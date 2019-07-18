@@ -121,7 +121,14 @@ class ArchitectClient {
       clientId: this.app_config.oauth_client_id
     });
 
-    const access_token = JSON.parse(credentials[0].password).access_token;
+    const {access_token} = await auth0.passwordGrant({
+      realm: 'Username-Password-Authentication',
+      username: credentials[0].account,
+      password: credentials[0].password,
+      scope: 'openid profile'
+    }).catch(() => {
+      throw Error('`architect login` required');
+    });
     const profile = await auth0.getProfile(access_token);
 
     const user = new UserEntity(access_token, profile.nickname);
