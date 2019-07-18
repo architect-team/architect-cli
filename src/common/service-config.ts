@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import MANAGED_PATHS from './managed-paths';
+import ServiceEnv from './service-env';
 import SUPPORTED_LANGUAGES from './supported-languages';
-import { SemvarValidator } from './validation-utils';
+import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -50,6 +51,7 @@ export default class ServiceConfig {
       .setAuthor(configJSON.author)
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
+      .setEnvs(configJSON.envs)
       .setProto(configJSON.proto)
       .setMainFile(configJSON.main)
       .setLanguage(configJSON.language);
@@ -66,6 +68,7 @@ export default class ServiceConfig {
   author: string;
   license: string;
   dependencies: { [s: string]: string };
+  envs: { [s: string]: ServiceEnv } = {};
   proto?: string;
   main: string;
   language: SUPPORTED_LANGUAGES;
@@ -98,7 +101,12 @@ export default class ServiceConfig {
   }
 
   setName(name: string) {
-    this.name = name;
+    name = name.toLowerCase();
+    if (ServiceNameValidator.test(name)) {
+      this.name = name;
+    } else {
+      throw new InvalidConfigFileError(`Invalid name "${name}" in architect.json. Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
+    }
     return this;
   }
 
@@ -106,6 +114,8 @@ export default class ServiceConfig {
     const validator = new SemvarValidator();
     if (validator.test(version)) {
       this.version = version;
+    } else {
+      throw new InvalidConfigFileError(`Invalid version "${version}" in architect.json.`);
     }
     return this;
   }
@@ -134,7 +144,29 @@ export default class ServiceConfig {
   }
 
   setDependencies(dependencies: { [s: string]: string }) {
-    this.dependencies = dependencies;
+    this.dependencies = {};
+    const validator = new SemvarValidator();
+    for (const [dependency, version] of Object.entries(dependencies || {})) {
+      if (!ServiceNameValidator.test(dependency)) {
+        throw new InvalidConfigFileError(`Invalid dependency "${dependency}" in architect.json. Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
+      } else if (!validator.test(version) && version.indexOf('file:') !== 0) {
+        throw new InvalidConfigFileError(`Invalid dependency version "${version}" for "${dependency}" in architect.json.`);
+      } else {
+        this.dependencies[dependency] = version;
+      }
+    }
+    return this;
+  }
+
+  setEnvs(envs: { [s: string]: Partial<ServiceEnv> }) {
+    this.envs = {};
+    for (const [key, env] of Object.entries(envs || {})) {
+      if (EnvNameValidator.test(key)) {
+        this.envs[key] = new ServiceEnv(env);
+      } else {
+        throw new InvalidConfigFileError(`Invalid env "${key}" in architect.json.`);
+      }
+    }
     return this;
   }
 
@@ -162,9 +194,6 @@ export default class ServiceConfig {
 }
 
 export class MissingConfigFileError extends Error {
-  name: string;
-  message: string;
-
   constructor(filepath: string) {
     super();
     this.name = 'missing_config_file';
@@ -173,12 +202,13 @@ export class MissingConfigFileError extends Error {
 }
 
 export class UnsupportedDependencyIdentifierError extends TypeError {
-  name: string;
-  message: string;
-
   constructor(identifier: string) {
     super();
     this.name = 'unsupported_dependency_identifier';
     this.message = `Unsupported dependency identifier format: ${identifier}`;
   }
+}
+
+class InvalidConfigFileError extends Error {
+  name = 'invalid_config_file';
 }
