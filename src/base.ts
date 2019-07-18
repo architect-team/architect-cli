@@ -2,6 +2,7 @@ import Command from '@oclif/command';
 import Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
 import axios, { AxiosRequestConfig, Method } from 'axios';
+import execa = require('execa');
 import keytar from 'keytar';
 import Listr from 'listr';
 import url from 'url';
@@ -110,21 +111,50 @@ class ArchitectClient {
     return this.request('POST', path, options);
   }
 
-  protected async _getUser(): Promise<UserEntity> {
-    const credentials = await keytar.findCredentials('architect.io');
-    if (credentials.length === 0) {
-      throw Error('`architect login` required');
-    }
+  async refreshToken() {
+    const registry_domain = this.app_config.default_registry_host;
 
     const auth0 = new AuthenticationClient({
       domain: this.app_config.oauth_domain,
       clientId: this.app_config.oauth_client_id
     });
 
-    const access_token = JSON.parse(credentials[0].password).access_token;
-    const profile = await auth0.getProfile(access_token);
+    const credentials = await keytar.findCredentials('architect.io');
+    if (credentials.length === 0) {
+      throw Error('`architect login` required');
+    }
 
-    const user = new UserEntity(access_token, profile.nickname);
+    const username = credentials[0].account;
+    const issued_at = new Date().getTime() / 1000;
+    const auth_result = await auth0.passwordGrant({
+      realm: 'Username-Password-Authentication',
+      username,
+      password: credentials[0].password,
+      scope: 'openid profile'
+    }).catch(() => {
+      throw Error('`architect login` required');
+    });
+
+    await execa('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: JSON.stringify(auth_result) });
+
+    const profile = await auth0.getProfile(auth_result.access_token);
+    auth_result.profile = profile;
+    auth_result.issued_at = issued_at;
+    await keytar.setPassword('architect.io/token', username, JSON.stringify(auth_result));
+    return auth_result;
+  }
+
+  protected async _getUser(): Promise<UserEntity> {
+    const credentials = await keytar.findCredentials('architect.io/token');
+    if (credentials.length === 0) {
+      throw Error('`architect login` required');
+    }
+    let auth = JSON.parse(credentials[0].password);
+    if ((auth.issued_at + auth.expires_in) < new Date().getTime() / 1000) {
+      auth = await this.refreshToken();
+    }
+
+    const user = new UserEntity(auth.access_token, auth.profile.nickname);
     if (!user.username) {
       throw Error('`architect login` required');
     }

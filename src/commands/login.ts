@@ -1,7 +1,5 @@
 import { flags } from '@oclif/command';
-import { AuthenticationClient } from 'auth0';
 import chalk from 'chalk';
-import execa from 'execa';
 import inquirer from 'inquirer';
 import keytar from 'keytar';
 
@@ -50,26 +48,12 @@ export default class Login extends Command {
   }
 
   async login(username: string, password: string) {
-    const auth0 = new AuthenticationClient({
-      domain: this.app_config.oauth_domain,
-      clientId: this.app_config.oauth_client_id
-    });
-
-    auth0.passwordGrant({
-      realm: 'Username-Password-Authentication',
-      username,
-      password,
-      scope: 'openid profile'
-    }, async (err, authResult) => {
-      if (err) {
-        this.log(_error(err.message));
-      } else {
-        const auth = JSON.stringify(authResult);
-        const registry_domain = this.app_config.default_registry_host;
-        await execa('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: auth });
-        await keytar.setPassword('architect.io', username, auth);
-        this.log(_success('Login Succeeded'));
-      }
-    });
+    await keytar.setPassword('architect.io', username, password);
+    try {
+      await this.architect.refreshToken();
+      this.log(_success('Login Succeeded'));
+    } catch {
+      this.log(_error('Login Failed'));
+    }
   }
 }
