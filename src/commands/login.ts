@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import execa from 'execa';
 import inquirer from 'inquirer';
 import keytar from 'keytar';
 
@@ -49,9 +48,12 @@ export default class Login extends Command {
   }
 
   async login(username: string, password: string) {
-    const registry_domain = this.app_config.default_registry_host;
-    await execa('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: password });
     await keytar.setPassword('architect.io', username, password);
-    this.log(_success('Login Succeeded'));
+    try {
+      await this.architect.refreshToken();
+      this.log(_success('Login Succeeded'));
+    } catch {
+      this.log(_error('Login Failed'));
+    }
   }
 }
