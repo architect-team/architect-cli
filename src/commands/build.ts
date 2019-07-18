@@ -6,7 +6,6 @@ import path from 'path';
 
 import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
-import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
 
 import Install from './install';
@@ -61,25 +60,23 @@ export default class Build extends Command {
       tasks.push({
         title: `Building docker image for ${_info(dependency.config.full_name)}`,
         task: async () => {
-          await this.buildImage(dependency.service_path, dependency.config);
+          await this.buildImage(dependency);
         }
       });
     });
     return tasks;
   }
 
-  async buildImage(service_path: string, service_config: ServiceConfig) {
+  async buildImage(service: ServiceDependency) {
     const dockerfile_path = path.join(__dirname, '../../Dockerfile');
-    const tag_name = `architect-${service_config.full_name}`;
-
     await execa('docker', [
       'build',
       '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', tag_name,
+      '--build-arg', `SERVICE_LANGUAGE=${service.config.language}`,
+      '-t', service.tag,
       '-f', dockerfile_path,
-      '--label', `architect.json=${JSON.stringify(service_config)}`,
-      service_path
+      '--label', `architect.json=${JSON.stringify(service.config)}`,
+      service.service_path
     ]);
   }
 }

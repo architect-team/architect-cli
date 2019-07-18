@@ -5,7 +5,6 @@ import Listr from 'listr';
 import url from 'url';
 
 import Command from '../base';
-import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
 
 import Build from './build';
@@ -50,16 +49,15 @@ export default class Push extends Command {
         if (root_service.dependencies.some(d => d.local)) {
           throw new Error('Cannot push image with local dependencies');
         } else {
-          return this.pushImage(root_service.config);
+          return this.pushImage(root_service);
         }
       }
     }];
   }
 
-  async pushImage(service_config: ServiceConfig) {
-    const tag_name = `architect-${service_config.full_name}`;
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, service_config.full_name);
-    await execa('docker', ['tag', tag_name, repository_name]);
+  async pushImage(service: ServiceDependency) {
+    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, service.config.full_name);
+    await execa('docker', ['tag', service.tag, repository_name]);
     await execa('docker', ['push', repository_name]);
   }
 }

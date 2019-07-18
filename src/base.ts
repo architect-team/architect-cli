@@ -34,6 +34,7 @@ export default abstract class ArchitectCommand extends Command {
   }
 
   async catch(err: any) {
+    if (err.oclif && err.oclif.exit === 0) return;
     if (err.response && err.response.data) {
       this.styled_json(err.response.data);
     }
