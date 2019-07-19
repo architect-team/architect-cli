@@ -2,6 +2,7 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { ChildProcess, spawn } from 'child_process';
 import dotenv from 'dotenv';
+import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
@@ -38,6 +39,7 @@ export default class Deploy extends Command {
 
   deployment_config: DeploymentConfig = {};
   envs: { [key: string]: string } = {};
+  containers: string[] = [];
 
   async run() {
     const { flags } = this.parse(Deploy);
@@ -97,17 +99,16 @@ export default class Deploy extends Command {
 
     await this.set_envs(root_service);
 
+    process.on('exit', () => {
+      Object.values(this.deployment_config).forEach(config => config.process.kill());
+    });
+
     const tasks: Listr.ListrTask[] = [];
     for (const dependency of root_service.all_dependencies) {
       tasks.push({
         title: `Deploying ${_info(dependency.config.name)}`,
-        task: async () => {
-          const isServiceRunning = await this.isServiceRunning(dependency.config.full_name);
-          if (isServiceRunning) {
-            this.log(`${_info(dependency.config.full_name)} already deployed`);
-            return;
-          }
-          await this.executeLauncher(dependency);
+        task: () => {
+          return this.executeLauncher(dependency);
         }
       });
     }
@@ -132,110 +133,66 @@ export default class Deploy extends Command {
     port: number,
     service_path: string,
   ): void {
-    const key = `ARCHITECT_${service_config.getNormalizedName().toUpperCase()}`;
+    const key = `ARC_${service_config.getNormalizedName().toUpperCase()}`;
     process.env[key] = JSON.stringify({
       host,
       port,
-      proto_prefix: service_config.getProtoName()
+      interface: service_config.interface && service_config.interface.type
     });
     this.deployment_config[service_config.full_name] = {
       host,
       port,
       service_path,
       env_key: key,
-      proto_prefix: service_config.getProtoName(),
       process: child_process,
     };
   }
 
-  async executeLauncher(service: ServiceDependency): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const target_port = await PortUtil.getAvailablePort();
+  async executeLauncher(service: ServiceDependency) {
+    try {
+      const target_port = await PortUtil.getAvailablePort();
 
-        const envs: string[] = [];
+      const envs: string[] = [];
 
-        for (const [key, env] of Object.entries(service.config.envs)) {
-          const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
-          const value = this.envs[scoped_key] || this.envs[key] || env.default;
-          if (value !== undefined) {
-            envs.push('--env');
-            envs.push(`${key}=${value}`);
-          }
-        }
-
-        Object.values(this.deployment_config).forEach(deployment_config => {
+      for (const [key, env] of Object.entries(service.config.envs)) {
+        const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
+        const value = this.envs[scoped_key] || this.envs[key] || env.default;
+        if (value !== undefined) {
           envs.push('--env');
-          const env = deployment_config.env_key;
-          const env_value = JSON.parse(process.env[deployment_config.env_key]!);
-          env_value.host = 'host.docker.internal';
-          envs.push(`${env}=${JSON.stringify(env_value)}`);
-        });
-
-        const cmd_args = [
-          'run',
-          '-p', `${target_port}:8080`,
-          '--rm', '--init',
-          ...envs,
-          service.tag
-        ];
-        const cmd = spawn('docker', cmd_args);
-
-        let host: string;
-        readline.createInterface({
-          input: cmd.stdout,
-          terminal: false
-        }).on('line', data => {
-          data = data.trim();
-          if (service.config.isScript() && data.length > 0) {
-            this.log(_success(data));
-          } else {
-            if (data.indexOf('Host: ') === 0) {
-              host = data.substring(6);
-              this.log(`Running on ${host}:${target_port}`);
-              this.setServiceEnvironmentDetails(service.config, cmd, host, target_port, service.service_path);
-              resolve();
-            } else if (data.length > 0 && data.indexOf('Port: ') !== 0) {
-              this.log(_info(`[${service.config.name}]`), data);
-            }
-          }
-        });
-
-        readline.createInterface({
-          input: cmd.stderr,
-          terminal: false
-        }).on('line', data => {
-          data = data.trim();
-          if (data.length > 0) {
-            if (service.config.isScript()) {
-              this.log(_error(data));
-            } else {
-              this.log(_info(`[${service.config.name}]`), _error(data));
-            }
-          }
-        });
-
-        cmd.on('close', code => {
-          if (code === 1) {
-            this.log(_error(`Error executing architect-${service.config.language}-launcher`));
-            reject(new ServiceLaunchError(service.config.name));
-          } else {
-            resolve();
-          }
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-        });
-
-        cmd.on('error', error => {
-          this.log(_error(`Error: spawning architect-${service.config.language}-launcher`));
-          this.log(_error(error.toString()));
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-          reject(error);
-        });
-      } catch (error) {
-        Object.values(this.deployment_config).forEach(config => config.process.kill());
-        reject(error);
+          envs.push(`${key}=${value}`);
+        }
       }
-    });
+
+      Object.values(this.deployment_config).forEach(deployment_config => {
+        envs.push('--env');
+        const env = deployment_config.env_key;
+        const env_value = JSON.parse(process.env[deployment_config.env_key]!);
+        env_value.host = 'host.docker.internal';
+        envs.push(`${env}=${JSON.stringify(env_value)}`);
+      });
+
+      const cmd_args = [
+        'run',
+        '-p', `${target_port}:8080`,
+        '--rm', '--init',
+        '--name', service.config.full_name.replace(/\//g, '_').replace(/:/g, '_'),
+        '--env', 'HOST=0.0.0.0',
+        '--env', `PORT=8080`,
+        ...envs,
+        service.tag
+      ];
+
+      this.containers.push(service.config.full_name.replace(/\//g, '_').replace(/:/g, '_'));
+
+      const cmd = execa('docker', cmd_args, {stdio: 'inherit'});
+      this.setServiceEnvironmentDetails(service.config, cmd, 'localhost', target_port, service.service_path);
+      cmd.catch(err => {
+        Object.values(this.deployment_config).forEach(config => config.process.kill());
+      });
+    } catch (err) {
+      Object.values(this.deployment_config).forEach(config => config.process.kill());
+      throw err;
+    }
   }
 
   async run_external() {

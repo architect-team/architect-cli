@@ -17,11 +17,10 @@ describe('launchers', () => {
       before(() => {
         script_path = path.join(__dirname, '../node_modules/.bin/', `architect-${language}-launcher`);
         process.env.PYTHONUNBUFFERED = 'true';
-        process.env.ARCHITECT_ADDITION_SERVICE = JSON.stringify({
+        process.env.ARC_ADDITION_SERVICE = JSON.stringify({
           host: '0.0.0.0',
           port: '8080',
-          service_path: path.join(calculator_example_path, './addition-service/'),
-          proto_prefix: 'service'
+          service_path: path.join(calculator_example_path, './addition-service/')
         });
       });
 

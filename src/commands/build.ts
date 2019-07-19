@@ -68,14 +68,13 @@ export default class Build extends Command {
   }
 
   async buildImage(service: ServiceDependency) {
-    const dockerfile_path = path.join(__dirname, '../../Dockerfile');
     await execa('docker', [
       'build',
       '--compress',
       '--build-arg', `SERVICE_LANGUAGE=${service.config.language}`,
       '-t', service.tag,
-      '-f', dockerfile_path,
       '--label', `architect.json=${JSON.stringify(service.config)}`,
+      '--label', `interface_definitions=${JSON.stringify(service.interface_definitions)}`,
       service.service_path
     ]);
   }

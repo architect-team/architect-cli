@@ -16,8 +16,8 @@ namespace ProtocExecutor {
   };
 
   export const execute = async (dependency: ServiceDependency, target: ServiceDependency): Promise<void> => {
-    if (!dependency.config.proto) {
-      throw new Error(`${dependency.config.name} has no .proto file configured.`);
+    if (!dependency.config.interface) {
+      throw new Error(`${dependency.config.name} has no interface configured.`);
     }
     if (!target.local) {
       throw new Error(`${dependency.config.name} is not a local service`);
@@ -39,11 +39,13 @@ namespace ProtocExecutor {
       mkdirSync(tmp_dependency_dir, { recursive: true });
     }
 
-    // TODO regex find all proto files and write
-    writeFileSync(path.join(tmp_dependency_dir, dependency.config.proto), dependency.proto);
+    for (const definition of dependency.config.interface.definitions) {
+      writeFileSync(path.join(tmp_dependency_dir, definition), dependency.interface_definitions[definition]);
+    }
 
     const mount_dirname = '/opt/protoc';
-    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder, dependency.config.proto);
+    // TODO figure out mounting of multiple definitions
+    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder, dependency.config.interface.definitions[0]);
 
     await execa('docker', [
       'run',

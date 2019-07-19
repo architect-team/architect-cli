@@ -52,7 +52,7 @@ export default class ServiceConfig {
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
       .setEnvs(configJSON.envs)
-      .setProto(configJSON.proto)
+      .setInterface(configJSON.interface)
       .setMainFile(configJSON.main)
       .setLanguage(configJSON.language);
   }
@@ -69,7 +69,7 @@ export default class ServiceConfig {
   license: string;
   dependencies: { [s: string]: string };
   envs: { [s: string]: ServiceEnv } = {};
-  proto?: string;
+  interface?: { type: string, definitions: string[] };
   main: string;
   language: SUPPORTED_LANGUAGES;
 
@@ -81,7 +81,6 @@ export default class ServiceConfig {
     this.author = '';
     this.license = 'ISC';
     this.dependencies = {};
-    this.proto = undefined;
     this.main = 'index.js';
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
@@ -92,12 +91,6 @@ export default class ServiceConfig {
 
   getNormalizedName() {
     return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
-  }
-
-  getProtoName() {
-    return this.proto ?
-      this.proto.slice(0, this.proto.lastIndexOf('.')) :
-      undefined;
   }
 
   setName(name: string) {
@@ -170,8 +163,8 @@ export default class ServiceConfig {
     return this;
   }
 
-  setProto(protopath: string) {
-    this.proto = protopath;
+  setInterface(service_interface: { type: string, definitions: string[] }) {
+    this.interface = service_interface;
     return this;
   }
 
@@ -189,7 +182,7 @@ export default class ServiceConfig {
   // architect service that can be called as a dependency or if
   // its simply a script to be called once.
   isScript() {
-    return !this.proto;
+    return !this.interface;
   }
 }
 
