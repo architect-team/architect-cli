@@ -53,6 +53,7 @@ export default class ServiceConfig {
       .setDependencies(configJSON.dependencies)
       .setEnvs(configJSON.envs)
       .setInterface(configJSON.interface)
+      .setDatastores(configJSON.datastores)
       .setMainFile(configJSON.main)
       .setLanguage(configJSON.language);
   }
@@ -70,6 +71,7 @@ export default class ServiceConfig {
   dependencies: { [s: string]: string };
   envs: { [s: string]: ServiceEnv } = {};
   interface?: { type: string, definitions: string[] };
+  datastores: { [key: string]: { type: string, version: string } };
   main: string;
   language: SUPPORTED_LANGUAGES;
 
@@ -81,6 +83,7 @@ export default class ServiceConfig {
     this.author = '';
     this.license = 'ISC';
     this.dependencies = {};
+    this.datastores = {};
     this.main = 'index.js';
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
@@ -165,6 +168,11 @@ export default class ServiceConfig {
 
   setInterface(service_interface: { type: string, definitions: string[] }) {
     this.interface = service_interface;
+    return this;
+  }
+
+  setDatastores(datastores: { [key: string]: { type: string, version: string } }) {
+    this.datastores = datastores || {};
     return this;
   }
 
