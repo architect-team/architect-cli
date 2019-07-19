@@ -102,10 +102,11 @@ export default class Deploy extends Command {
     };
 
     for (const service of root_service.all_dependencies) {
+      const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
       const target_port = await PortUtil.getAvailablePort();
 
       const environment: { [key: string]: string | number | undefined } = {
-        HOST: 'localhost',
+        HOST: service_host,
         PORT: '8080'
       };
 
@@ -152,7 +153,7 @@ export default class Deploy extends Command {
         depends_on.push(dependency_name);
       }
 
-      docker_compose.services[service.config.full_name.replace(/:/g, '_').replace(/\//g, '_')] = {
+      docker_compose.services[service_host] = {
         image: service.tag,
         build: service.service_path,
         ports: [`${target_port}:8080`],
