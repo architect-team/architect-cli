@@ -49,6 +49,7 @@ namespace ProtocExecutor {
 
     await execa('docker', [
       'run',
+      '--rm', '--init',
       '-v', `${target.service_path}:/defs`,
       '-v', `${tmp_dir}:${mount_dirname}`,
       'architectio/protoc-all',

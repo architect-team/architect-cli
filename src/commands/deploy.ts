@@ -109,7 +109,7 @@ export default class Deploy extends Command {
         PORT: '8080'
       };
 
-      const links = [];
+      const depends_on = [];
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
         const service_name = `datastore.${name}`;
 
@@ -123,7 +123,7 @@ export default class Deploy extends Command {
             POSTGRES_PASSWORD: 'todo'
           }
         };
-        links.push(service_name);
+        depends_on.push(service_name);
 
         environment[`ARC_DS_${name.replace('-', '_').toUpperCase()}`] = JSON.stringify({
           host: service_name,
@@ -149,14 +149,14 @@ export default class Deploy extends Command {
           port: 8080,
           interface: dependency.config.interface && dependency.config.interface.type
         });
-        links.push(dependency_name);
+        depends_on.push(dependency_name);
       }
 
       docker_compose.services[service.config.full_name.replace(/:/g, '_').replace(/\//g, '_')] = {
         image: service.tag,
         build: service.service_path,
         ports: [`${target_port}:8080`],
-        links,
+        depends_on,
         environment
       };
     }
