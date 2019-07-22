@@ -2,9 +2,10 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 import execa from 'execa';
-import fs, { writeFile } from 'fs-extra';
+import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
+import path from 'path';
 import untildify from 'untildify';
 
 import Command from '../base';
@@ -158,12 +159,18 @@ export default class Deploy extends Command {
         build: service.service_path,
         ports: [`${target_port}:8080`],
         depends_on,
-        environment
+        environment,
+        command: 'npm run dev',
+        volumes: [
+          `${service.service_path}:/usr/src/app`,
+          '/usr/src/app/node_modules',
+        ]
       };
     }
 
-    const docker_compose_path = 'docker-compose.json';
-    await writeFile(docker_compose_path, JSON.stringify(docker_compose));
+    const docker_compose_path = path.join(root_service_path, '.architect', 'docker-compose.json');
+    await ensureFile(docker_compose_path);
+    await writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
     await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build'], { stdio: 'inherit' });
   }
 
