@@ -5,6 +5,7 @@ import execa from 'execa';
 import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
+import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 
@@ -90,7 +91,6 @@ export default class Deploy extends Command {
     const envs = await this.get_envs();
     this.validate_envs(root_service, envs);
 
-    // TODO tmp dir?
     // TODO set types
     const docker_compose: any = {
       version: '3',
@@ -99,6 +99,7 @@ export default class Deploy extends Command {
     };
 
     const datastore_ports: { [key: string]: number } = {
+      mysql: 3306,
       postgres: 5432
     };
 
@@ -109,17 +110,20 @@ export default class Deploy extends Command {
 
       const environment: { [key: string]: string | number | undefined } = {
         HOST: service_host,
-        PORT: port
+        PORT: port,
+        ARC_CURRENT_SERVICE: service.config.name
       };
 
       const depends_on = [];
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
         const service_name = `datastore.${name}`;
+        const db_port = await PortUtil.getAvailablePort();
 
         // TODO figure out version
         docker_compose.services[service_name] = {
           image: datastore.type,
           restart: 'always',
+          ports: [`${db_port}:${datastore_ports[datastore.type]}`],
           environment: {
             POSTGRES_USER: 'postgres',
             POSTGRES_DB: service.config.name.replace(/-/g, '_'),
@@ -145,14 +149,16 @@ export default class Deploy extends Command {
         }
       }
 
-      for (const dependency of service.dependencies) {
+      for (const dependency of service.dependencies.concat([service])) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
         environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
           host: dependency_name,
           port,
           interface: dependency.config.interface && dependency.config.interface.type
         });
-        depends_on.push(dependency_name);
+        if (service !== dependency) {
+          depends_on.push(dependency_name);
+        }
       }
 
       docker_compose.services[service_host] = {
@@ -169,7 +175,7 @@ export default class Deploy extends Command {
       };
     }
 
-    const docker_compose_path = path.join(root_service_path, '.architect', 'docker-compose.json');
+    const docker_compose_path = path.join(os.homedir(), '.architect', 'docker-compose.json');
     await ensureFile(docker_compose_path);
     await writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
     await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build'], { stdio: 'inherit' });
