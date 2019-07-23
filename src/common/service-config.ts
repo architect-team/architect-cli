@@ -55,7 +55,8 @@ export default class ServiceConfig {
       .setInterface(configJSON.interface)
       .setDatastores(configJSON.datastores)
       .setMainFile(configJSON.main)
-      .setLanguage(configJSON.language);
+      .setLanguage(configJSON.language)
+      .setDebug(configJSON.debug);
   }
 
   static convertServiceNameToFolderName(service_name: string): string {
@@ -74,6 +75,7 @@ export default class ServiceConfig {
   datastores: { [key: string]: { type: string, version: string } };
   main: string;
   language: SUPPORTED_LANGUAGES;
+  debug?: string;
 
   constructor() {
     this.name = '';
@@ -183,6 +185,11 @@ export default class ServiceConfig {
 
   setLanguage(language: SUPPORTED_LANGUAGES) {
     this.language = language;
+    return this;
+  }
+
+  setDebug(debug: string) {
+    this.debug = debug;
     return this;
   }
 

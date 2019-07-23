@@ -104,11 +104,12 @@ export default class Deploy extends Command {
 
     for (const service of root_service.all_dependencies) {
       const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
+      const port = '8080';
       const target_port = await PortUtil.getAvailablePort();
 
       const environment: { [key: string]: string | number | undefined } = {
         HOST: service_host,
-        PORT: '8080'
+        PORT: port
       };
 
       const depends_on = [];
@@ -148,7 +149,7 @@ export default class Deploy extends Command {
         const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
         environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
           host: dependency_name,
-          port: 8080,
+          port,
           interface: dependency.config.interface && dependency.config.interface.type
         });
         depends_on.push(dependency_name);
@@ -157,10 +158,10 @@ export default class Deploy extends Command {
       docker_compose.services[service_host] = {
         image: service.tag,
         build: service.service_path,
-        ports: [`${target_port}:8080`],
+        ports: [`${target_port}:${port}`],
         depends_on,
         environment,
-        command: 'npm run dev',
+        command: service.config.debug,
         volumes: [
           `${service.service_path}:/usr/src/app`,
           '/usr/src/app/node_modules',
