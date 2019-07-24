@@ -16,8 +16,6 @@ import ServiceDependency from '../common/service-dependency';
 import Install from './install';
 
 const _info = chalk.blue;
-const _success = chalk.green;
-const _error = chalk.red;
 
 export default class Deploy extends Command {
   static description = 'Deploy service to environments';
@@ -117,6 +115,7 @@ export default class Deploy extends Command {
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
         const service_name = `datastore.${name}`;
         const db_port = await PortUtil.getAvailablePort();
+        const db_name = `${service.config.slug}_${name}`;
 
         docker_compose.services[service_name] = {
           image: `${datastore.type}:${datastore.version}`,
@@ -124,7 +123,7 @@ export default class Deploy extends Command {
           ports: [`${db_port}:${datastore_ports[datastore.type]}`],
           environment: {
             POSTGRES_USER: 'postgres',
-            POSTGRES_DB: service.config.name.replace(/-/g, '_'),
+            POSTGRES_DB: db_name,
             POSTGRES_PASSWORD: 'todo'
           }
         };
@@ -135,7 +134,8 @@ export default class Deploy extends Command {
           port: datastore_ports[datastore.type],
           interface: datastore.type,
           username: datastore.type,
-          password: 'todo'
+          password: 'todo',
+          name: db_name
         });
       }
 
