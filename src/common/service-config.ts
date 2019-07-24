@@ -94,6 +94,12 @@ export default class ServiceConfig {
     return `${this.name}:${this.version}`;
   }
 
+  get slug() {
+    return this.name
+      .replace(/\//g, '__')
+      .replace(/-/g, '_');
+  }
+
   getNormalizedName() {
     return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
   }
