@@ -100,6 +100,7 @@ export default class Install extends Command {
       tasks.push({
         title: `Installing dependencies for ${_info(service_name)}`,
         task: async () => {
+          await ProtocExecutor.clear(service_dependency);
           const promises = [];
           if (service_dependency.config.interface && service_dependency.config.interface.type === 'grpc') {
             promises.push(ProtocExecutor.execute(service_dependency, service_dependency));

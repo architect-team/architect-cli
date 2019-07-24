@@ -115,7 +115,7 @@ export default class Deploy extends Command {
 
       const depends_on = [];
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
-        const service_name = `datastore.${name}`;
+        const service_name = `datastore.${name}.${datastore.type}.${datastore.version}`;
         const db_port = await PortUtil.getAvailablePort();
 
         docker_compose.services[service_name] = {

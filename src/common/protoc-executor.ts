@@ -1,5 +1,6 @@
 import execa from 'execa';
 import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'fs';
+import { remove } from 'fs-extra';
 import os from 'os';
 import path from 'path';
 
@@ -13,6 +14,11 @@ namespace ProtocExecutor {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
       writeFileSync(path.join(stub_directory, '__init__.py'), '');
     }
+  };
+
+  export const clear = async (target: ServiceDependency) => {
+    const stub_directory = path.join(target.service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
+    return remove(stub_directory);
   };
 
   export const execute = async (dependency: ServiceDependency, target: ServiceDependency): Promise<void> => {
