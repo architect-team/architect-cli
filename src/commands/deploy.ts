@@ -91,7 +91,6 @@ export default class Deploy extends Command {
     const envs = await this.get_envs();
     this.validate_envs(root_service, envs);
 
-    // TODO set types
     const docker_compose: any = {
       version: '3',
       services: {},
@@ -104,7 +103,7 @@ export default class Deploy extends Command {
     };
 
     for (const service of root_service.all_dependencies) {
-      const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
+      const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
       const port = '8080';
       const target_port = await PortUtil.getAvailablePort();
 
@@ -119,9 +118,8 @@ export default class Deploy extends Command {
         const service_name = `datastore.${name}`;
         const db_port = await PortUtil.getAvailablePort();
 
-        // TODO figure out version
         docker_compose.services[service_name] = {
-          image: datastore.type,
+          image: `${datastore.type}:${datastore.version}`,
           restart: 'always',
           ports: [`${db_port}:${datastore_ports[datastore.type]}`],
           environment: {
@@ -134,7 +132,7 @@ export default class Deploy extends Command {
 
         environment[`ARC_DS_${name.replace('-', '_').toUpperCase()}`] = JSON.stringify({
           host: service_name,
-          port: datastore_ports[datastore.type], // TODO port? links instead?
+          port: datastore_ports[datastore.type],
           interface: datastore.type,
           username: datastore.type,
           password: 'todo'
@@ -150,7 +148,7 @@ export default class Deploy extends Command {
       }
 
       for (const dependency of service.dependencies.concat([service])) {
-        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '_');
+        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
         environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
           host: dependency_name,
           port,
@@ -169,8 +167,7 @@ export default class Deploy extends Command {
         environment,
         command: service.config.debug,
         volumes: [
-          `${service.service_path}:/usr/src/app`,
-          '/usr/src/app/node_modules',
+          `${service.service_path}/src:/usr/src/app/src:ro`
         ]
       };
     }
