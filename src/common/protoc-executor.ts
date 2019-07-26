@@ -96,8 +96,7 @@ namespace ProtocExecutor {
     }
 
     const mount_dirname = '/opt/protoc';
-    // TODO figure out mounting of multiple definitions
-    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder, dependency.config.interface.definitions[0]);
+    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder);
 
     await execa('docker', [
       'run',
@@ -105,7 +104,7 @@ namespace ProtocExecutor {
       '-v', `${target.service_path}:/defs`,
       '-v', `${tmp_dir}:${mount_dirname}`,
       'architectio/protoc-all',
-      '-f', `${mounted_proto_path}`,
+      '-d', `${mounted_proto_path}`,
       '-i', mount_dirname,
       '-l', target.config.language,
       '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
