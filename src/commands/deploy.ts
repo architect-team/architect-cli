@@ -249,7 +249,7 @@ export default class Deploy extends Command {
       message: 'Select service:',
       source: async (_: any, input: string) => {
         const params = { q: input };
-        const { data: services } = await this.architect.get('/repositories', { params });
+        const { data: services } = await this.architect.get('/services', { params });
         return services.map((service: any) => service.name);
       },
       when: !service_name && !flags.plan_id
@@ -258,7 +258,7 @@ export default class Deploy extends Command {
       name: 'service_version',
       message: 'Select version:',
       choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_name || service_name}`);
+        const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
       when: !service_version && !flags.plan_id
