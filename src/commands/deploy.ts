@@ -95,9 +95,9 @@ export default class Deploy extends Command {
       volumes: {}
     };
 
-    const datastore_ports: { [key: string]: number } = {
-      mysql: 3306,
-      postgres: 5432
+    const datastore_defaults: { [key: string]: any } = {
+      mysql: { port: 3306, username: 'root', password: '' },
+      postgres: { port: 5432, username: 'postgres', name: 'postgres' }
     };
 
     for (const service of root_service.all_dependencies) {
@@ -113,29 +113,20 @@ export default class Deploy extends Command {
 
       const depends_on = [];
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
-        const service_name = `datastore.${name}.${datastore.type}.${datastore.version}`;
+        const datastore_host = `${service_host}.datastore.${name}.${datastore.type}.${datastore.version}`;
         const db_port = await PortUtil.getAvailablePort();
-        const db_name = `${service.config.slug}_${name}`;
 
-        docker_compose.services[service_name] = {
+        docker_compose.services[datastore_host] = {
           image: `${datastore.type}:${datastore.version}`,
           restart: 'always',
-          ports: [`${db_port}:${datastore_ports[datastore.type]}`],
-          environment: {
-            POSTGRES_USER: 'postgres',
-            POSTGRES_DB: db_name,
-            POSTGRES_PASSWORD: 'todo'
-          }
+          ports: [`${db_port}:${datastore_defaults[datastore.type].port}`],
         };
-        depends_on.push(service_name);
+        depends_on.push(datastore_host);
 
         environment[`ARC_DS_${name.replace('-', '_').toUpperCase()}`] = JSON.stringify({
-          host: service_name,
-          port: datastore_ports[datastore.type],
+          host: datastore_host,
           interface: datastore.type,
-          username: datastore.type,
-          password: 'todo',
-          name: db_name
+          ...datastore_defaults[datastore.type]
         });
       }
 
