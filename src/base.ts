@@ -2,12 +2,12 @@ import Command from '@oclif/command';
 import Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
 import axios, { AxiosRequestConfig, Method } from 'axios';
-import execa = require('execa');
 import keytar from 'keytar';
 import Listr from 'listr';
 import url from 'url';
-
 import { AppConfig } from './app-config';
+import execa = require('execa');
+
 
 export default abstract class ArchitectCommand extends Command {
   static async tasks(this: any, argv?: string[], opts?: Config.LoadOptions): Promise<Listr.ListrTask[]> {
@@ -131,8 +131,6 @@ class ArchitectClient {
       username,
       password: credentials[0].password,
       scope: 'openid profile'
-    }).catch(() => {
-      throw Error('`architect login` required');
     });
 
     await execa('docker', ['login', registry_domain, '-u', username, '--password-stdin'], { input: JSON.stringify(auth_result) });
