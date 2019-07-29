@@ -27,8 +27,8 @@ export default class Deploy extends Command {
   static flags = {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ exclusive: ['local'] }),
-    plan_id: flags.string({ exclusive: ['local'] }),
-    local: flags.boolean({ char: 'l', exclusive: ['environment, plan_id'] }),
+    deployment_id: flags.string({ exclusive: ['local'] }),
+    local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
     env: flags.string({ char: 'e', multiple: true }),
     env_file: flags.string()
   };
@@ -181,10 +181,10 @@ export default class Deploy extends Command {
   async run_external() {
     const answers = await this.promptOptions();
 
-    if (answers.plan_id) {
-      await this.deploy(answers.environment!, answers.plan_id);
+    if (answers.deployment_id) {
+      await this.deploy(answers.deployment_id);
     } else {
-      let plan: any;
+      let deployment: any;
       const tasks = new Listr([
         {
           title: `Planning`,
@@ -192,38 +192,37 @@ export default class Deploy extends Command {
             const envs = await this.get_envs();
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
+              environment: answers.environment,
               envs
             };
-            const { data: res } = await this.architect.post(`/environments/${answers.environment}/services`, { data });
-            plan = res;
+            const { data: res } = await this.architect.post(`/deploy`, { data });
+            deployment = res;
           }
         }
       ]);
       await tasks.run();
-      this.log(plan.plan_info);
-      this.log('Plan Id:', plan.plan_id);
+      this.log('Deployment Id:', deployment.id);
 
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to deploy this plan?'
+        message: 'Would you like to apply this deployment?'
       } as inquirer.Question);
 
       if (confirmation.deploy) {
-        await this.deploy(answers.environment!, plan.plan_id);
+        await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
       }
     }
   }
 
-  async deploy(environment: string, plan_id: string) {
+  async deploy(deployment_id: string) {
     const tasks = new Listr([
       {
         title: `Deploying`,
         task: async () => {
-          const params = { plan_id };
-          await this.architect.post(`/environments/${environment}/deploy`, { params });
+          await this.architect.post(`/deploy/${deployment_id}`);
         }
       }
     ]);
@@ -238,7 +237,7 @@ export default class Deploy extends Command {
       service_name,
       service_version,
       environment: flags.environment,
-      plan_id: flags.plan_id
+      deployment_id: flags.deployment_id
     };
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -252,7 +251,7 @@ export default class Deploy extends Command {
         const { data: services } = await this.architect.get('/services', { params });
         return services.map((service: any) => service.name);
       },
-      when: !service_name && !flags.plan_id
+      when: !service_name && !flags.deployment_id
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
@@ -261,7 +260,7 @@ export default class Deploy extends Command {
         const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
-      when: !service_version && !flags.plan_id
+      when: !service_version && !flags.deployment_id
     }, {
       type: 'autocomplete',
       name: 'environment',
