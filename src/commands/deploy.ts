@@ -123,7 +123,7 @@ export default class Deploy extends Command {
         };
         depends_on.push(datastore_host);
 
-        environment[`ARC_DS_${name.replace('-', '_').toUpperCase()}`] = JSON.stringify({
+        environment[`ARC_DS_${name.replace(/-/g, '_').toUpperCase()}`] = JSON.stringify({
           host: datastore_host,
           interface: datastore.type,
           ...datastore_defaults[datastore.type]

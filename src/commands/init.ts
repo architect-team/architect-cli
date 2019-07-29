@@ -2,12 +2,12 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import path from 'path';
-
 import Command from '../base';
 import { INIT_INTRO_TEXT } from '../common/i18n';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 import { SemvarValidator, ServiceNameValidator } from '../common/validation-utils';
+
 
 const _info = chalk.blue;
 const _success = chalk.green;
@@ -75,9 +75,9 @@ export default class Init extends Command {
   async promptOptions() {
     const { args, flags } = this.parse(Init);
 
-    const user = await this.architect.getUser();
+    const user = await this.architect.getUser().catch(() => null);
 
-    if (args.name.indexOf(user.username) !== 0) {
+    if (user && args.name.indexOf(user.username) !== 0) {
       args.name = `${user.username}/${args.name}`;
     }
     if (args.name && !ServiceNameValidator.test(args.name)) {
@@ -90,7 +90,7 @@ export default class Init extends Command {
       default: args.name,
       filter: value => value.toLowerCase(),
       validate: value => {
-        if (!(value.indexOf(`${user.username}/`) === 0)) {
+        if (user && !(value.indexOf(`${user.username}/`) === 0)) {
           return `Name must be scoped with your username: ${user.username}`;
         }
         if (!ServiceNameValidator.test(value)) {
@@ -120,7 +120,7 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'author',
-      default: flags.author || user.username,
+      default: flags.author || user && user.username,
       filter: input => [input]
     }, {
       type: 'input',
