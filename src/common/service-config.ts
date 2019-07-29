@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-
 import MANAGED_PATHS from './managed-paths';
-import ServiceEnv from './service-env';
+import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
+
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -51,7 +51,7 @@ export default class ServiceConfig {
       .setAuthor(configJSON.author)
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
-      .setEnvs(configJSON.envs)
+      .setParameters(configJSON.parameters)
       .setInterface(configJSON.interface)
       .setDatastores(configJSON.datastores)
       .setMainFile(configJSON.main)
@@ -70,7 +70,7 @@ export default class ServiceConfig {
   author: string;
   license: string;
   dependencies: { [s: string]: string };
-  envs: { [s: string]: ServiceEnv } = {};
+  parameters: { [s: string]: ServiceParameter } = {};
   interface?: { type: string, definitions: string[] };
   datastores: { [key: string]: { type: string, version: string } };
   main: string;
@@ -162,11 +162,11 @@ export default class ServiceConfig {
     return this;
   }
 
-  setEnvs(envs: { [s: string]: Partial<ServiceEnv> }) {
-    this.envs = {};
-    for (const [key, env] of Object.entries(envs || {})) {
+  setParameters(parameters: { [s: string]: Partial<ServiceParameter> }) {
+    this.parameters = {};
+    for (const [key, env] of Object.entries(parameters || {})) {
       if (EnvNameValidator.test(key)) {
-        this.envs[key] = new ServiceEnv(env);
+        this.parameters[key] = new ServiceParameter(env);
       } else {
         throw new InvalidConfigFileError(`Invalid env "${key}" in architect.json.`);
       }

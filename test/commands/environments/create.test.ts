@@ -9,7 +9,7 @@ const environment = {
   cluster_ca_certificate: path.join(__dirname, 'create.test.ts')
 };
 
-describe('envs:create', () => {
+describe('environment:create', () => {
   test
     .nock(process.env.API_HOST!, api => api
       .post('/environments')
@@ -19,7 +19,7 @@ describe('envs:create', () => {
     )
     .stdout()
     .command([
-      'envs:create', environment.name,
+      'environment:create', environment.name,
       '--host', environment.host,
       '--namespace', environment.namespace,
       '--service_token', environment.service_token,

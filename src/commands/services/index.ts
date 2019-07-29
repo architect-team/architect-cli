@@ -1,7 +1,7 @@
 import { flags } from '@oclif/command';
+import Command from '../../base';
 import inquirer = require('inquirer');
 
-import Command from '../../base';
 
 export default class Services extends Command {
   static description = 'Search services';
@@ -40,7 +40,7 @@ export default class Services extends Command {
     }]);
 
     const service_name = { ...args, ...answers }.service_name;
-    const { data: service } = await this.architect.get(`/services/${service_name}/${answers.service_version}`);
+    const { data: service } = await this.architect.get(`/services/${service_name}/versions/${answers.service_version}`);
     this.styled_json(service);
   }
 }

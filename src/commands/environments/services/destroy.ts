@@ -2,14 +2,14 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Listr from 'listr';
-
 import Command from '../../../base';
+
 
 const _info = chalk.blue;
 
 export default class DestroyService extends Command {
   static description = 'Destroy service from an environment';
-  static aliases = ['envs:services:destroy'];
+  static aliases = ['environment:services:destroy'];
 
   static args = [
     { name: 'service', description: 'Service name', required: false }

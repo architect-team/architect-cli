@@ -2,14 +2,14 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Listr from 'listr';
-
 import Command from '../../base';
+
 
 const _info = chalk.blue;
 
 export default class DestroyEnvironment extends Command {
   static description = 'Destroy environment';
-  static aliases = ['envs:destroy'];
+  static aliases = ['environment:destroy'];
 
   static args = [
     { name: 'environment', description: 'Environment name' }

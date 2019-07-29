@@ -1,16 +1,16 @@
 import { flags } from '@oclif/command';
+import Command from '../../../base';
 import inquirer = require('inquirer');
 
-import Command from '../../../base';
 
 export default class Services extends Command {
   static description = 'Search an environments services';
   static aliases = [
     'environments:services:list',
     'environments:services:versions',
-    'envs:services',
-    'envs:services:list',
-    'envs:services:versions'
+    'environment:services',
+    'environment:services:list',
+    'environment:services:versions'
   ];
 
   static args = [

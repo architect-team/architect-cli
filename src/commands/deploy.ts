@@ -8,12 +8,12 @@ import Listr from 'listr';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
-
 import Command from '../base';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
-
 import Install from './install';
+
+
 
 const _info = chalk.blue;
 
@@ -58,10 +58,10 @@ export default class Deploy extends Command {
   validate_envs(root_service: ServiceDependency, envs: { [key: string]: string }) {
     const errors = [];
     for (const dependency of root_service.all_dependencies) {
-      if (Object.keys(dependency.config.envs).length === 0) continue;
+      if (Object.keys(dependency.config.parameters).length === 0) continue;
 
       const missing_envs = [];
-      for (const [key, env] of Object.entries(dependency.config.envs)) {
+      for (const [key, env] of Object.entries(dependency.config.parameters)) {
         if (env.required) {
           const scoped_key = `ARC_${dependency.config.getNormalizedName().toUpperCase()}__${key}`;
           if (!(key in envs) && !(scoped_key in envs)) {
@@ -71,7 +71,7 @@ export default class Deploy extends Command {
       }
 
       if (missing_envs.length) {
-        errors.push(`${_info(dependency.config.full_name)} requires the following envs: ${missing_envs.join(', ')}`);
+        errors.push(`${_info(dependency.config.full_name)} requires the following parameters: ${missing_envs.join(', ')}`);
       }
     }
     if (errors.length) {
@@ -139,7 +139,7 @@ export default class Deploy extends Command {
         });
       }
 
-      for (const [key, env] of Object.entries(service.config.envs)) {
+      for (const [key, env] of Object.entries(service.config.parameters)) {
         const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
         const value = envs[scoped_key] || envs[key] || env.default;
         if (value !== undefined && value !== null) {

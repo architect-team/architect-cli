@@ -3,13 +3,13 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
 import untildify from 'untildify';
-
 import Command from '../../base';
 import { EnvironmentNameValidator } from '../../common/validation-utils';
 
+
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
-  static aliases = ['envs:create', 'envs:update', 'environments:update'];
+  static aliases = ['environment:create', 'environment:update', 'environments:update'];
 
   static args = [
     { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() }
