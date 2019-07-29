@@ -5,7 +5,6 @@ export interface ServiceEnvironment {
   port: number;
   service_path: string;
   env_key: string;
-  proto_prefix?: string;
   process: ChildProcess;
 }
 

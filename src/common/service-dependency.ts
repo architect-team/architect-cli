@@ -36,7 +36,7 @@ export default abstract class ServiceDependency {
   readonly root: boolean;
   local = false;
   protected _config!: ServiceConfig;
-  protected _proto?: string;
+  protected _interface_definitions: {[key: string]: string};
   protected _loaded: boolean;
 
   constructor(app_config: AppConfig, service_path: string, _root: boolean) {
@@ -44,6 +44,7 @@ export default abstract class ServiceDependency {
     this.service_path = service_path;
     this.root = _root;
     this._loaded = false;
+    this._interface_definitions = {};
   }
 
   get config(): ServiceConfig {
@@ -53,11 +54,11 @@ export default abstract class ServiceDependency {
     return this._config;
   }
 
-  get proto(): string | undefined {
+  get interface_definitions(): { [key: string]: string } {
     if (!this._config) {
       throw new Error(`Not loaded ${this.service_path}`);
     }
-    return this._proto;
+    return this._interface_definitions;
   }
 
   get dependencies(): ServiceDependency[] {
@@ -122,8 +123,11 @@ class LocalServiceDependency extends ServiceDependency {
 
   async _load() {
     this._config = ServiceConfig.loadFromPath(this.service_path);
-    if (this.config.proto) {
-      this._proto = readFileSync(path.join(this.service_path, this.config.proto)).toString('utf-8');
+    if (this.config.interface && this.config.interface.definitions) {
+      for (const definition of this.config.interface.definitions) {
+        // TODO async?
+        this._interface_definitions[definition] = readFileSync(path.join(this.service_path, definition)).toString('utf-8');
+      }
     }
   }
 }
@@ -147,10 +151,9 @@ class DockerServiceDependency extends ServiceDependency {
   async _load_config(repository_name: string) {
     const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "architect.json"}}']);
     this._config = ServiceConfig.create(JSON.parse(stdout));
-    if (this.config.proto) {
-      // TODO write to label on image?
-      const proto_res = await execa('docker', ['run', '--rm', repository_name, 'cat', this.config.proto]);
-      this._proto = proto_res.stdout;
+    if (this.config.interface) {
+      const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "interface_definitions"}}']);
+      this._interface_definitions = JSON.parse(stdout);
     }
   }
 }

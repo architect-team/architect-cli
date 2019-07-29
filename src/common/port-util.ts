@@ -2,6 +2,7 @@ import net from 'net';
 
 namespace PortUtil {
   const AVAILABLE_PORTS = Array.from({ length: 1000 }, (_, k) => k + 50000);
+  const seen_ports = new Set();
 
   const _isPortAvailable = async (host: string, port: number) => new Promise((resolve, reject) => {
     const tester: net.Server = net.createServer()
@@ -22,6 +23,7 @@ namespace PortUtil {
     let port;
 
     for (let p of AVAILABLE_PORTS) {
+      if (seen_ports.has(p)) continue;
       const isAvailable = await isPortAvailable(p);
       if (isAvailable) {
         port = p;
@@ -30,6 +32,7 @@ namespace PortUtil {
     }
 
     if (!port) throw new Error('No valid ports available');
+    seen_ports.add(port);
     return port;
   };
 }

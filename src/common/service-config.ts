@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-
 import MANAGED_PATHS from './managed-paths';
-import ServiceEnv from './service-env';
+import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
+
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -51,10 +51,12 @@ export default class ServiceConfig {
       .setAuthor(configJSON.author)
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
-      .setEnvs(configJSON.envs)
-      .setProto(configJSON.proto)
+      .setParameters(configJSON.parameters)
+      .setInterface(configJSON.interface)
+      .setDatastores(configJSON.datastores)
       .setMainFile(configJSON.main)
-      .setLanguage(configJSON.language);
+      .setLanguage(configJSON.language)
+      .setDebug(configJSON.debug);
   }
 
   static convertServiceNameToFolderName(service_name: string): string {
@@ -68,10 +70,12 @@ export default class ServiceConfig {
   author: string;
   license: string;
   dependencies: { [s: string]: string };
-  envs: { [s: string]: ServiceEnv } = {};
-  proto?: string;
+  parameters: { [s: string]: ServiceParameter } = {};
+  interface?: { type: string, definitions: string[] };
+  datastores: { [key: string]: { type: string, version: string } };
   main: string;
   language: SUPPORTED_LANGUAGES;
+  debug?: string;
 
   constructor() {
     this.name = '';
@@ -81,7 +85,7 @@ export default class ServiceConfig {
     this.author = '';
     this.license = 'ISC';
     this.dependencies = {};
-    this.proto = undefined;
+    this.datastores = {};
     this.main = 'index.js';
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
@@ -90,14 +94,14 @@ export default class ServiceConfig {
     return `${this.name}:${this.version}`;
   }
 
-  getNormalizedName() {
-    return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
+  get slug() {
+    return this.name
+      .replace(/\//g, '__')
+      .replace(/-/g, '_');
   }
 
-  getProtoName() {
-    return this.proto ?
-      this.proto.slice(0, this.proto.lastIndexOf('.')) :
-      undefined;
+  getNormalizedName() {
+    return ServiceConfig.convertServiceNameToFolderName(this.name).replace(/\//g, '__');
   }
 
   setName(name: string) {
@@ -158,11 +162,11 @@ export default class ServiceConfig {
     return this;
   }
 
-  setEnvs(envs: { [s: string]: Partial<ServiceEnv> }) {
-    this.envs = {};
-    for (const [key, env] of Object.entries(envs || {})) {
+  setParameters(parameters: { [s: string]: Partial<ServiceParameter> }) {
+    this.parameters = {};
+    for (const [key, env] of Object.entries(parameters || {})) {
       if (EnvNameValidator.test(key)) {
-        this.envs[key] = new ServiceEnv(env);
+        this.parameters[key] = new ServiceParameter(env);
       } else {
         throw new InvalidConfigFileError(`Invalid env "${key}" in architect.json.`);
       }
@@ -170,8 +174,13 @@ export default class ServiceConfig {
     return this;
   }
 
-  setProto(protopath: string) {
-    this.proto = protopath;
+  setInterface(service_interface: { type: string, definitions: string[] }) {
+    this.interface = service_interface;
+    return this;
+  }
+
+  setDatastores(datastores: { [key: string]: { type: string, version: string } }) {
+    this.datastores = datastores || {};
     return this;
   }
 
@@ -185,11 +194,16 @@ export default class ServiceConfig {
     return this;
   }
 
+  setDebug(debug: string) {
+    this.debug = debug;
+    return this;
+  }
+
   // Indicates whether or not this configuration exposes a new
   // architect service that can be called as a dependency or if
   // its simply a script to be called once.
   isScript() {
-    return !this.proto;
+    return !this.interface;
   }
 }
 

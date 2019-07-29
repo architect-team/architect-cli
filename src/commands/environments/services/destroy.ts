@@ -2,14 +2,14 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import Listr from 'listr';
-
 import Command from '../../../base';
+
 
 const _info = chalk.blue;
 
 export default class DestroyService extends Command {
   static description = 'Destroy service from an environment';
-  static aliases = ['envs:services:destroy'];
+  static aliases = ['environment:services:destroy'];
 
   static args = [
     { name: 'service', description: 'Service name', required: false }
@@ -18,52 +18,50 @@ export default class DestroyService extends Command {
   static flags = {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ description: 'Environment name' }),
-    plan_id: flags.string({ char: 'p' })
+    deployment_id: flags.string({ char: 'p' })
   };
 
   async run() {
     const answers = await this.promptOptions();
 
-    if (answers.plan_id) {
-      await this.deploy(answers.environment!, answers.plan_id);
+    if (answers.deployment_id) {
+      await this.deploy(answers.deployment_id);
     } else {
-      let plan: any;
+      let deployment: any;
       const tasks = new Listr([
         {
-          title: `Deleting service ${_info(answers.service)} from environment ${_info(answers.environment)}`,
+          title: `Planning deletion of service ${_info(answers.service)} from environment ${_info(answers.environment)}`,
           task: async () => {
-            const params = { service: answers.service };
-            const { data } = await this.architect.delete(`/environments/${answers.environment}/services`, { params });
-            plan = data;
+            const data = { service: answers.service, environment: answers.environment };
+            const { data: res } = await this.architect.delete('/deploy', { data });
+            deployment = res;
           }
         },
       ]);
 
       await tasks.run();
-      this.log(plan.plan_info);
-      this.log('Plan Id:', plan.plan_id);
+      this.log('Deployment Id:', deployment.id);
 
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to deploy this plan?'
+        message: 'Would you like to apply this deployment?'
       } as inquirer.Question);
 
       if (confirmation.deploy) {
-        await this.deploy(answers.environment!, plan.plan_id);
+        await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
       }
     }
   }
 
-  async deploy(environment: string, plan_id: string) {
+  async deploy(deployment_id: string) {
     const tasks = new Listr([
       {
         title: `Deploying`,
         task: async () => {
-          const params = { plan_id };
-          await this.architect.post(`/environments/${environment}/deploy`, { params });
+          await this.architect.post(`/deploy/${deployment_id}`);
         }
       }
     ]);

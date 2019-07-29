@@ -1,24 +1,21 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { ChildProcess, spawn } from 'child_process';
 import dotenv from 'dotenv';
-import fs from 'fs-extra';
+import execa from 'execa';
+import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
-import readline from 'readline';
+import os from 'os';
+import path from 'path';
 import untildify from 'untildify';
-
 import Command from '../base';
-import DeploymentConfig from '../common/deployment-config';
 import PortUtil from '../common/port-util';
-import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
+import Install from './install';
 
-import Build from './build';
+
 
 const _info = chalk.blue;
-const _success = chalk.green;
-const _error = chalk.red;
 
 export default class Deploy extends Command {
   static description = 'Deploy service to environments';
@@ -30,14 +27,11 @@ export default class Deploy extends Command {
   static flags = {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ exclusive: ['local'] }),
-    plan_id: flags.string({ exclusive: ['local'] }),
-    local: flags.boolean({ char: 'l', exclusive: ['environment, plan_id'] }),
+    deployment_id: flags.string({ exclusive: ['local'] }),
+    local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
     env: flags.string({ char: 'e', multiple: true }),
     env_file: flags.string()
   };
-
-  deployment_config: DeploymentConfig = {};
-  envs: { [key: string]: string } = {};
 
   async run() {
     const { flags } = this.parse(Deploy);
@@ -50,7 +44,7 @@ export default class Deploy extends Command {
 
   async get_envs() {
     const { flags } = this.parse(Deploy);
-    let envs = {};
+    let envs: { [key: string]: string } = {};
     if (flags.env_file) {
       const envs_buffer = await fs.readFile(untildify(flags.env_file));
       envs = { ...envs, ...dotenv.parse(envs_buffer) };
@@ -61,15 +55,13 @@ export default class Deploy extends Command {
     return envs;
   }
 
-  async set_envs(root_service: ServiceDependency) {
-    const envs = await this.get_envs();
-
+  validate_envs(root_service: ServiceDependency, envs: { [key: string]: string }) {
     const errors = [];
     for (const dependency of root_service.all_dependencies) {
-      if (Object.keys(dependency.config.envs).length === 0) continue;
+      if (Object.keys(dependency.config.parameters).length === 0) continue;
 
       const missing_envs = [];
-      for (const [key, env] of Object.entries(dependency.config.envs)) {
+      for (const [key, env] of Object.entries(dependency.config.parameters)) {
         if (env.required) {
           const scoped_key = `ARC_${dependency.config.getNormalizedName().toUpperCase()}__${key}`;
           if (!(key in envs) && !(scoped_key in envs)) {
@@ -79,172 +71,111 @@ export default class Deploy extends Command {
       }
 
       if (missing_envs.length) {
-        errors.push(`${_info(dependency.config.full_name)} requires the following envs: ${missing_envs.join(', ')}`);
+        errors.push(`${_info(dependency.config.full_name)} requires the following parameters: ${missing_envs.join(', ')}`);
       }
     }
     if (errors.length) {
       this.error(errors.join('\n'));
     }
-    this.envs = envs;
   }
 
   async run_local() {
     const { args } = this.parse(Deploy);
     let root_service_path = args.service ? args.service : process.cwd();
-    await Build.run([root_service_path, '-r']);
+    await Install.run(['-p', root_service_path, '-r']);
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
 
-    await this.set_envs(root_service);
+    const envs = await this.get_envs();
+    this.validate_envs(root_service, envs);
 
-    const tasks: Listr.ListrTask[] = [];
-    for (const dependency of root_service.all_dependencies) {
-      tasks.push({
-        title: `Deploying ${_info(dependency.config.name)}`,
-        task: async () => {
-          const isServiceRunning = await this.isServiceRunning(dependency.config.full_name);
-          if (isServiceRunning) {
-            this.log(`${_info(dependency.config.full_name)} already deployed`);
-            return;
-          }
-          await this.executeLauncher(dependency);
-        }
-      });
-    }
-
-    await new Listr(await tasks, { renderer: 'verbose' }).run();
-  }
-
-  async isServiceRunning(service_name: string) {
-    if (Object.keys(this.deployment_config).includes(service_name)) {
-      const instance_details = this.deployment_config[service_name];
-      const port_check = await PortUtil.isPortAvailable(instance_details.port);
-      return !!port_check;
-    }
-
-    return false;
-  }
-
-  setServiceEnvironmentDetails(
-    service_config: ServiceConfig,
-    child_process: ChildProcess,
-    host: string,
-    port: number,
-    service_path: string,
-  ): void {
-    const key = `ARCHITECT_${service_config.getNormalizedName().toUpperCase()}`;
-    process.env[key] = JSON.stringify({
-      host,
-      port,
-      proto_prefix: service_config.getProtoName()
-    });
-    this.deployment_config[service_config.full_name] = {
-      host,
-      port,
-      service_path,
-      env_key: key,
-      proto_prefix: service_config.getProtoName(),
-      process: child_process,
+    const docker_compose: any = {
+      version: '3',
+      services: {},
+      volumes: {}
     };
-  }
 
-  async executeLauncher(service: ServiceDependency): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
-      try {
-        const target_port = await PortUtil.getAvailablePort();
+    const datastore_defaults: { [key: string]: any } = {
+      mysql: { port: 3306, username: 'root', password: '' },
+      postgres: { port: 5432, username: 'postgres', name: 'postgres' }
+    };
 
-        const envs: string[] = [];
+    for (const service of root_service.all_dependencies) {
+      const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
+      const port = '8080';
+      const target_port = await PortUtil.getAvailablePort();
 
-        for (const [key, env] of Object.entries(service.config.envs)) {
-          const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
-          const value = this.envs[scoped_key] || this.envs[key] || env.default;
-          if (value !== undefined) {
-            envs.push('--env');
-            envs.push(`${key}=${value}`);
-          }
-        }
+      const environment: { [key: string]: string | number | undefined } = {
+        HOST: service_host,
+        PORT: port,
+        ARC_CURRENT_SERVICE: service.config.name
+      };
 
-        Object.values(this.deployment_config).forEach(deployment_config => {
-          envs.push('--env');
-          const env = deployment_config.env_key;
-          const env_value = JSON.parse(process.env[deployment_config.env_key]!);
-          env_value.host = 'host.docker.internal';
-          envs.push(`${env}=${JSON.stringify(env_value)}`);
+      const depends_on = [];
+      for (const [name, datastore] of Object.entries(service.config.datastores)) {
+        const datastore_host = `${service_host}.datastore.${name}.${datastore.type}.${datastore.version}`;
+        const db_port = await PortUtil.getAvailablePort();
+
+        docker_compose.services[datastore_host] = {
+          image: `${datastore.type}:${datastore.version}`,
+          restart: 'always',
+          ports: [`${db_port}:${datastore_defaults[datastore.type].port}`],
+        };
+        depends_on.push(datastore_host);
+
+        environment[`ARC_DS_${name.replace('-', '_').toUpperCase()}`] = JSON.stringify({
+          host: datastore_host,
+          interface: datastore.type,
+          ...datastore_defaults[datastore.type]
         });
-
-        const cmd_args = [
-          'run',
-          '-p', `${target_port}:8080`,
-          '--rm', '--init',
-          ...envs,
-          service.tag
-        ];
-        const cmd = spawn('docker', cmd_args);
-
-        let host: string;
-        readline.createInterface({
-          input: cmd.stdout,
-          terminal: false
-        }).on('line', data => {
-          data = data.trim();
-          if (service.config.isScript() && data.length > 0) {
-            this.log(_success(data));
-          } else {
-            if (data.indexOf('Host: ') === 0) {
-              host = data.substring(6);
-              this.log(`Running on ${host}:${target_port}`);
-              this.setServiceEnvironmentDetails(service.config, cmd, host, target_port, service.service_path);
-              resolve();
-            } else if (data.length > 0 && data.indexOf('Port: ') !== 0) {
-              this.log(_info(`[${service.config.name}]`), data);
-            }
-          }
-        });
-
-        readline.createInterface({
-          input: cmd.stderr,
-          terminal: false
-        }).on('line', data => {
-          data = data.trim();
-          if (data.length > 0) {
-            if (service.config.isScript()) {
-              this.log(_error(data));
-            } else {
-              this.log(_info(`[${service.config.name}]`), _error(data));
-            }
-          }
-        });
-
-        cmd.on('close', code => {
-          if (code === 1) {
-            this.log(_error(`Error executing architect-${service.config.language}-launcher`));
-            reject(new ServiceLaunchError(service.config.name));
-          } else {
-            resolve();
-          }
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-        });
-
-        cmd.on('error', error => {
-          this.log(_error(`Error: spawning architect-${service.config.language}-launcher`));
-          this.log(_error(error.toString()));
-          Object.values(this.deployment_config).forEach(config => config.process.kill());
-          reject(error);
-        });
-      } catch (error) {
-        Object.values(this.deployment_config).forEach(config => config.process.kill());
-        reject(error);
       }
-    });
+
+      for (const [key, env] of Object.entries(service.config.parameters)) {
+        const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
+        const value = envs[scoped_key] || envs[key] || env.default;
+        if (value !== undefined && value !== null) {
+          environment[key] = value;
+        }
+      }
+
+      for (const dependency of service.dependencies.concat([service])) {
+        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
+        environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
+          host: dependency_name,
+          port,
+          interface: dependency.config.interface && dependency.config.interface.type
+        });
+        if (service !== dependency) {
+          depends_on.push(dependency_name);
+        }
+      }
+
+      docker_compose.services[service_host] = {
+        image: service.tag,
+        build: service.service_path,
+        ports: [`${target_port}:${port}`],
+        depends_on,
+        environment,
+        command: service.config.debug,
+        volumes: [
+          `${service.service_path}/src:/usr/src/app/src:ro`
+        ]
+      };
+    }
+
+    const docker_compose_path = path.join(os.homedir(), '.architect', 'docker-compose.json');
+    await ensureFile(docker_compose_path);
+    await writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
+    await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build'], { stdio: 'inherit' });
   }
 
   async run_external() {
     const answers = await this.promptOptions();
 
-    if (answers.plan_id) {
-      await this.deploy(answers.environment!, answers.plan_id);
+    if (answers.deployment_id) {
+      await this.deploy(answers.deployment_id);
     } else {
-      let plan: any;
+      let deployment: any;
       const tasks = new Listr([
         {
           title: `Planning`,
@@ -252,38 +183,37 @@ export default class Deploy extends Command {
             const envs = await this.get_envs();
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
+              environment: answers.environment,
               envs
             };
-            const { data: res } = await this.architect.post(`/environments/${answers.environment}/services`, { data });
-            plan = res;
+            const { data: res } = await this.architect.post(`/deploy`, { data });
+            deployment = res;
           }
         }
       ]);
       await tasks.run();
-      this.log(plan.plan_info);
-      this.log('Plan Id:', plan.plan_id);
+      this.log('Deployment Id:', deployment.id);
 
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to deploy this plan?'
+        message: 'Would you like to apply this deployment?'
       } as inquirer.Question);
 
       if (confirmation.deploy) {
-        await this.deploy(answers.environment!, plan.plan_id);
+        await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
       }
     }
   }
 
-  async deploy(environment: string, plan_id: string) {
+  async deploy(deployment_id: string) {
     const tasks = new Listr([
       {
         title: `Deploying`,
         task: async () => {
-          const params = { plan_id };
-          await this.architect.post(`/environments/${environment}/deploy`, { params });
+          await this.architect.post(`/deploy/${deployment_id}`);
         }
       }
     ]);
@@ -298,7 +228,7 @@ export default class Deploy extends Command {
       service_name,
       service_version,
       environment: flags.environment,
-      plan_id: flags.plan_id
+      deployment_id: flags.deployment_id
     };
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -309,19 +239,19 @@ export default class Deploy extends Command {
       message: 'Select service:',
       source: async (_: any, input: string) => {
         const params = { q: input };
-        const { data: services } = await this.architect.get('/repositories', { params });
+        const { data: services } = await this.architect.get('/services', { params });
         return services.map((service: any) => service.name);
       },
-      when: !service_name && !flags.plan_id
+      when: !service_name && !flags.deployment_id
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
       message: 'Select version:',
       choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/repositories/${answers_so_far.service_name || service_name}`);
+        const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
-      when: !service_version && !flags.plan_id
+      when: !service_version && !flags.deployment_id
     }, {
       type: 'autocomplete',
       name: 'environment',
@@ -335,10 +265,5 @@ export default class Deploy extends Command {
     } as inquirer.Question]);
 
     return { ...options, ...answers };
-  }
-}
-class ServiceLaunchError extends Error {
-  constructor(service_name: string) {
-    super(`Failed to start the service: ${service_name}`);
   }
 }

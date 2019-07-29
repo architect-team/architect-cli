@@ -7,14 +7,14 @@ const environment = {
   service_token: 'test',
 };
 
-describe('envs:list', () => {
+describe('environments:list', () => {
   test
     .nock(process.env.API_HOST!, api => api
       .get('/environments')
       .reply(200, [environment])
     )
     .stdout()
-    .command(['envs:list'])
+    .command(['environments:list'])
     .it('list environments', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain(JSON.stringify([environment], null, 2));
