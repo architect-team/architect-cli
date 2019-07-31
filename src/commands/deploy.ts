@@ -108,14 +108,24 @@ export default class Deploy extends Command {
       const port = '8080';
       const target_port = await PortUtil.getAvailablePort();
 
-      const environment: { [key: string]: string | number | undefined } = {
-        HOST: service_host,
-        PORT: port,
-        ARC_CURRENT_SERVICE: service.config.name
-      };
+      const architect: any = {};
 
       const depends_on = [];
-      for (const [name, datastore] of Object.entries(service.config.datastores)) {
+
+      for (const dependency of service.dependencies.concat([service])) {
+        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
+        architect[dependency.config.name] = {
+          host: dependency_name,
+          port,
+          interface: dependency.config.interface && dependency.config.interface.type
+        };
+        if (service !== dependency) {
+          depends_on.push(dependency_name);
+        }
+      }
+
+      architect[service.config.name].datastores = {};
+      for (const [datastore_name, datastore] of Object.entries(service.config.datastores)) {
         const datastore_environment: any = {};
         const datastore_aliases: any = { port: datastore.port };
         for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
@@ -130,7 +140,7 @@ export default class Deploy extends Command {
         if (datastore.host) {
           datastore_host = datastore.host;
         } else {
-          datastore_host = `${service_host}.datastore.${name}.${datastore.image.replace(/:/g, '_')}`;
+          datastore_host = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
           const db_port = await PortUtil.getAvailablePort();
           docker_compose.services[datastore_host] = {
             image: `${datastore.image}`,
@@ -141,28 +151,26 @@ export default class Deploy extends Command {
           depends_on.push(datastore_host);
         }
 
-        environment[`ARC_DS_${name.replace(/-/g, '_').toUpperCase()}`] = JSON.stringify({
+        architect[service.config.name].datastores[datastore_name] = {
           ...datastore_aliases,
           host: datastore_host,
           port: datastore.port
-        });
+        }
       }
 
+      let environment: { [key: string]: string | number | undefined } = {};
       for (const [key, parameter] of Object.entries(service.config.parameters)) {
         environment[key] = parameter.default!;
       }
+      environment = {
+        ...environment,
+        HOST: service_host,
+        PORT: port,
+        ARCHITECT_CURRENT_SERVICE: service.config.name,
+        ARCHITECT: JSON.stringify(architect)
+      };
 
-      for (const dependency of service.dependencies.concat([service])) {
-        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
-        environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
-          host: dependency_name,
-          port,
-          interface: dependency.config.interface && dependency.config.interface.type
-        });
-        if (service !== dependency) {
-          depends_on.push(dependency_name);
-        }
-      }
+      console.log(service.config.name, environment)
 
       docker_compose.services[service_host] = {
         image: service.tag,
