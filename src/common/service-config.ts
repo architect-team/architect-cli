@@ -3,7 +3,7 @@ import path from 'path';
 import MANAGED_PATHS from './managed-paths';
 import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
-import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
+import { EnvironmentNameValidator, EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -181,7 +181,7 @@ export default class ServiceConfig {
   setDatastores(datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } }) {
     this.datastores = datastores || {};
     for (const [ds_key, datastore] of Object.entries(this.datastores)) {
-      if (!EnvNameValidator.test(ds_key)) {
+      if (!EnvironmentNameValidator.test(ds_key)) {
         throw new InvalidConfigFileError(`Invalid datastore name "${ds_key}" in architect.json.`);
       }
       if (!datastore.image) {
