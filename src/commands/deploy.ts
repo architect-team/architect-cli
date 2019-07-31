@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import dotenv from 'dotenv';
 import execa from 'execa';
 import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
@@ -29,8 +28,7 @@ export default class Deploy extends Command {
     environment: flags.string({ exclusive: ['local'] }),
     deployment_id: flags.string({ exclusive: ['local'] }),
     local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
-    env: flags.string({ char: 'e', multiple: true }),
-    env_file: flags.string()
+    config_file: flags.string()
   };
 
   async run() {
@@ -42,21 +40,8 @@ export default class Deploy extends Command {
     }
   }
 
-  async get_envs() {
-    const { flags } = this.parse(Deploy);
-    let envs: { [key: string]: string } = {};
-    if (flags.env_file) {
-      const envs_buffer = await fs.readFile(untildify(flags.env_file));
-      envs = { ...envs, ...dotenv.parse(envs_buffer) };
-    }
-    for (const env of flags.env || []) {
-      envs = { ...envs, ...dotenv.parse(env) };
-    }
-    return envs;
-  }
-
-  validate_parameters(root_service: ServiceDependency, debug_json: any) {
-    const res = { ...debug_json };
+  validate_parameters(root_service: ServiceDependency, config_json: any) {
+    const res = { ...config_json };
     const errors = [];
     for (const service of root_service.all_dependencies) {
       const service_override = res[service.config.full_name] || { parameters: {} };
@@ -70,7 +55,7 @@ export default class Deploy extends Command {
       service_override.datastores = service_override.datastores || {};
       for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
         const datastore_override = service_override.datastores[ds_key] = service_override.datastores[ds_key] || { parameters: {} };
-        for (const [key, parameter] of Object.entries(datastore.parameters)) {
+        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
           if (parameter.default === undefined) {
             datastore_override.parameters[key] = `<${key}>`
             errors.push(`${service.config.full_name}.datastores.${ds_key}.parameters.${key}`);
@@ -92,10 +77,13 @@ export default class Deploy extends Command {
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
 
-    // TODO
-    const debug_json = await fs.readJSON('./architect-debug.json').catch(() => { return {} });
-    root_service.override_configs(debug_json);
-    this.validate_parameters(root_service, debug_json);
+    const { flags } = this.parse(Deploy);
+    let config_json = {};
+    if (flags.config_file) {
+      config_json = await fs.readJSON(untildify(flags.config_file));
+    }
+    root_service.override_configs(config_json);
+    this.validate_parameters(root_service, config_json);
 
     const docker_compose: any = {
       version: '3',
@@ -200,7 +188,7 @@ export default class Deploy extends Command {
         {
           title: `Planning`,
           task: async () => {
-            const envs = await this.get_envs();
+            const envs = {};  // TODO
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
               environment: answers.environment,
