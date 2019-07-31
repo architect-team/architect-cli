@@ -55,27 +55,33 @@ export default class Deploy extends Command {
     return envs;
   }
 
-  validate_envs(root_service: ServiceDependency, envs: { [key: string]: string }) {
+  validate_parameters(root_service: ServiceDependency, debug_json: any) {
+    const res = { ...debug_json };
     const errors = [];
-    for (const dependency of root_service.all_dependencies) {
-      if (Object.keys(dependency.config.parameters).length === 0) continue;
-
-      const missing_envs = [];
-      for (const [key, env] of Object.entries(dependency.config.parameters)) {
-        if (env.required) {
-          const scoped_key = `ARC_${dependency.config.getNormalizedName().toUpperCase()}__${key}`;
-          if (!(key in envs) && !(scoped_key in envs)) {
-            missing_envs.push(key);
-          }
+    for (const service of root_service.all_dependencies) {
+      const service_override = res[service.config.full_name] || { parameters: {} };
+      for (const [key, parameter] of Object.entries(service.config.parameters)) {
+        if (parameter.default === undefined) {
+          service_override.parameters[key] = `<${key}>`
+          errors.push(`${service.config.full_name}.parameters.${key}`);
         }
       }
 
-      if (missing_envs.length) {
-        errors.push(`${_info(dependency.config.full_name)} requires the following parameters: ${missing_envs.join(', ')}`);
+      service_override.datastores = service_override.datastores || {};
+      for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
+        const datastore_override = service_override.datastores[ds_key] = service_override.datastores[ds_key] || { parameters: {} };
+        for (const [key, parameter] of Object.entries(datastore.parameters)) {
+          if (parameter.default === undefined) {
+            datastore_override.parameters[key] = `<${key}>`
+            errors.push(`${service.config.full_name}.datastores.${ds_key}.parameters.${key}`);
+          }
+        }
       }
+      res[service.config.full_name] = service_override;
     }
     if (errors.length) {
-      this.error(errors.join('\n'));
+      this.log(JSON.stringify(res, null, 2));
+      this.error('Missing the following required parameters:\n' + errors.join('\n'));
     }
   }
 
@@ -86,18 +92,15 @@ export default class Deploy extends Command {
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
 
-    const envs = await this.get_envs();
-    this.validate_envs(root_service, envs);
+    // TODO
+    const debug_json = await fs.readJSON('./architect-debug.json').catch(() => { return {} });
+    root_service.override_configs(debug_json);
+    this.validate_parameters(root_service, debug_json);
 
     const docker_compose: any = {
       version: '3',
       services: {},
       volumes: {}
-    };
-
-    const datastore_defaults: { [key: string]: any } = {
-      mysql: { port: 3306, username: 'root', password: '' },
-      postgres: { port: 5432, username: 'postgres', name: 'postgres' }
     };
 
     for (const service of root_service.all_dependencies) {
@@ -113,29 +116,40 @@ export default class Deploy extends Command {
 
       const depends_on = [];
       for (const [name, datastore] of Object.entries(service.config.datastores)) {
-        const datastore_host = `${service_host}.datastore.${name}.${datastore.type}.${datastore.version}`;
-        const db_port = await PortUtil.getAvailablePort();
+        const datastore_environment: any = {};
+        const datastore_aliases: any = { port: datastore.port };
+        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
+          datastore_environment[key] = parameter.default!;
+          datastore_aliases[key] = parameter.default!;
+          if (parameter.alias) {
+            datastore_aliases[parameter.alias] = parameter.default!;
+          }
+        }
 
-        docker_compose.services[datastore_host] = {
-          image: `${datastore.type}:${datastore.version}`,
-          restart: 'always',
-          ports: [`${db_port}:${datastore_defaults[datastore.type].port}`],
-        };
-        depends_on.push(datastore_host);
+        let datastore_host;
+        if (datastore.host) {
+          datastore_host = datastore.host;
+        } else {
+          datastore_host = `${service_host}.datastore.${name}.${datastore.image.replace(/:/g, '_')}`;
+          const db_port = await PortUtil.getAvailablePort();
+          docker_compose.services[datastore_host] = {
+            image: `${datastore.image}`,
+            restart: 'always',
+            ports: [`${db_port}:${datastore.port}`],
+            environment: datastore_environment
+          };
+          depends_on.push(datastore_host);
+        }
 
         environment[`ARC_DS_${name.replace(/-/g, '_').toUpperCase()}`] = JSON.stringify({
+          ...datastore_aliases,
           host: datastore_host,
-          interface: datastore.type,
-          ...datastore_defaults[datastore.type]
+          port: datastore.port
         });
       }
 
-      for (const [key, env] of Object.entries(service.config.parameters)) {
-        const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
-        const value = envs[scoped_key] || envs[key] || env.default;
-        if (value !== undefined && value !== null) {
-          environment[key] = value;
-        }
+      for (const [key, parameter] of Object.entries(service.config.parameters)) {
+        environment[key] = parameter.default!;
       }
 
       for (const dependency of service.dependencies.concat([service])) {

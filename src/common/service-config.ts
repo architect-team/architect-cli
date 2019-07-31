@@ -72,7 +72,7 @@ export default class ServiceConfig {
   dependencies: { [s: string]: string };
   parameters: { [s: string]: ServiceParameter } = {};
   interface?: { type: string, definitions: string[] };
-  datastores: { [key: string]: { type: string, version: string } };
+  datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
   main: string;
   language: SUPPORTED_LANGUAGES;
   debug?: string;
@@ -179,7 +179,7 @@ export default class ServiceConfig {
     return this;
   }
 
-  setDatastores(datastores: { [key: string]: { type: string, version: string } }) {
+  setDatastores(datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } }) {
     this.datastores = datastores || {};
     return this;
   }

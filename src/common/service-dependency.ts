@@ -2,11 +2,11 @@ import execa = require('execa');
 import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
-
 import { AppConfig } from '../app-config';
-
 import ServiceConfig from './service-config';
 import { SemvarValidator } from './validation-utils';
+
+
 
 export default abstract class ServiceDependency {
   static create(app_config: AppConfig, service_path: string, _root = true) {
@@ -36,7 +36,7 @@ export default abstract class ServiceDependency {
   readonly root: boolean;
   local = false;
   protected _config!: ServiceConfig;
-  protected _interface_definitions: {[key: string]: string};
+  protected _interface_definitions: { [key: string]: string };
   protected _loaded: boolean;
 
   constructor(app_config: AppConfig, service_path: string, _root: boolean) {
@@ -100,6 +100,43 @@ export default abstract class ServiceDependency {
       }
     }
     return service_dependencies;
+  }
+
+  override_configs(overrides: any) {
+    for (const service of this.all_dependencies) {
+      const override = overrides[service.config.full_name];
+      if (!override) {
+        continue;
+      }
+      for (const [key, value] of Object.entries(override.parameters || {})) {
+        if (service.config.parameters[key] === undefined) {
+          service.config.parameters[key] = {};
+        }
+        service.config.parameters[key].default = value;
+      }
+
+      for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
+        const datastore_override = override.datastores[ds_key];
+        if (!datastore_override) {
+          continue;
+        }
+        if (datastore_override.host) {
+          datastore.host = datastore_override.host;
+        }
+        if (datastore_override.port) {
+          datastore.port = datastore_override.port;
+        }
+        for (const [key, value] of Object.entries(datastore_override.parameters || {})) {
+          if (!datastore.parameters) {
+            datastore.parameters = {};
+          }
+          if (datastore.parameters[key] === undefined) {
+            datastore.parameters[key] = {};
+          }
+          datastore.parameters[key].default = value;
+        }
+      }
+    }
   }
 
   async load() {
