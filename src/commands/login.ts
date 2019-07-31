@@ -4,7 +4,6 @@ import inquirer from 'inquirer';
 import keytar from 'keytar';
 import Command from '../base';
 
-
 const _error = chalk.red;
 const _success = chalk.green;
 

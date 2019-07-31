@@ -1,5 +1,4 @@
 import { flags } from '@oclif/command';
-import chalk from 'chalk';
 import execa from 'execa';
 import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
@@ -11,10 +10,6 @@ import Command from '../base';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
 import Install from './install';
-
-
-
-const _info = chalk.blue;
 
 export default class Deploy extends Command {
   static description = 'Deploy service to environments';
@@ -47,7 +42,7 @@ export default class Deploy extends Command {
       const service_override = res[service.config.full_name] || { parameters: {} };
       for (const [key, parameter] of Object.entries(service.config.parameters)) {
         if (parameter.default === undefined) {
-          service_override.parameters[key] = `<${key}>`
+          service_override.parameters[key] = `<${key}>`;
           errors.push(`${service.config.full_name}.parameters.${key}`);
         }
       }
@@ -57,7 +52,7 @@ export default class Deploy extends Command {
         const datastore_override = service_override.datastores[ds_key] = service_override.datastores[ds_key] || { parameters: {} };
         for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
           if (parameter.default === undefined) {
-            datastore_override.parameters[key] = `<${key}>`
+            datastore_override.parameters[key] = `<${key}>`;
             errors.push(`${service.config.full_name}.datastores.${ds_key}.parameters.${key}`);
           }
         }
@@ -97,9 +92,7 @@ export default class Deploy extends Command {
       const target_port = await PortUtil.getAvailablePort();
 
       const architect: any = {};
-
       const depends_on = [];
-
       for (const dependency of service.dependencies.concat([service])) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
         architect[dependency.config.name] = {
@@ -143,7 +136,7 @@ export default class Deploy extends Command {
           ...datastore_aliases,
           host: datastore_host,
           port: datastore.port
-        }
+        };
       }
 
       let environment: { [key: string]: string | number | undefined } = {};

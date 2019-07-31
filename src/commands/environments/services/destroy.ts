@@ -4,7 +4,6 @@ import inquirer from 'inquirer';
 import Listr from 'listr';
 import Command from '../../../base';
 
-
 const _info = chalk.blue;
 
 export default class DestroyService extends Command {

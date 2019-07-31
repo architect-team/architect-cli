@@ -2,16 +2,12 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import execa from 'execa';
 import Listr from 'listr';
-import path from 'path';
-
 import Command from '../base';
 import MANAGED_PATHS from '../common/managed-paths';
 import ServiceDependency from '../common/service-dependency';
-
 import Install from './install';
 
 const _info = chalk.blue;
-
 export default class Build extends Command {
   static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
 

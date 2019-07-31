@@ -7,7 +7,6 @@ import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
 
-
 const _info = chalk.blue;
 
 export default class Install extends Command {

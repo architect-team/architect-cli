@@ -4,9 +4,8 @@ import path from 'path';
 import url from 'url';
 import { AppConfig } from '../app-config';
 import ServiceConfig from './service-config';
+import ServiceParameter from './service-parameter';
 import { SemvarValidator } from './validation-utils';
-
-
 
 export default abstract class ServiceDependency {
   static create(app_config: AppConfig, service_path: string, _root = true) {
@@ -109,10 +108,10 @@ export default abstract class ServiceDependency {
         continue;
       }
       for (const [key, value] of Object.entries(override.parameters || {})) {
-        if (service.config.parameters[key] === undefined) {
-          service.config.parameters[key] = {};
+        if (key in service.config.parameters) {
+          service.config.parameters[key] = new ServiceParameter();
         }
-        service.config.parameters[key].default = value;
+        service.config.parameters[key].default = value as string;
       }
 
       for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
@@ -130,10 +129,10 @@ export default abstract class ServiceDependency {
           if (!datastore.parameters) {
             datastore.parameters = {};
           }
-          if (datastore.parameters[key] === undefined) {
-            datastore.parameters[key] = {};
+          if (key in datastore.parameters[key]) {
+            datastore.parameters[key] = new ServiceParameter();
           }
-          datastore.parameters[key].default = value;
+          datastore.parameters[key].default = value as string;
         }
       }
     }

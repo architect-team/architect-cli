@@ -2,7 +2,6 @@ import { flags } from '@oclif/command';
 import Command from '../../base';
 import inquirer = require('inquirer');
 
-
 export default class Services extends Command {
   static description = 'Search services';
   static aliases = ['services:list', 'services:versions'];

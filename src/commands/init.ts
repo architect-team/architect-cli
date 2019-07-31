@@ -8,7 +8,6 @@ import MANAGED_PATHS from '../common/managed-paths';
 import ServiceConfig from '../common/service-config';
 import { SemvarValidator, ServiceNameValidator } from '../common/validation-utils';
 
-
 const _info = chalk.blue;
 const _success = chalk.green;
 

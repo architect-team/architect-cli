@@ -4,7 +4,7 @@ export default class ServiceParameter {
   alias?: string;
   required = true;
 
-  constructor(partial: Partial<ServiceParameter>) {
+  constructor(partial?: Partial<ServiceParameter>) {
     Object.assign(this, partial);
   }
 }

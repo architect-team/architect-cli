@@ -8,7 +8,6 @@ import ServiceConfig from './service-config';
 import ServiceDependency from './service-dependency';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
-
 namespace ProtocExecutor {
   const _postHooks = async (stub_directory: string, target_language: SUPPORTED_LANGUAGES) => {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
@@ -115,6 +114,6 @@ namespace ProtocExecutor {
 
     await _postHooks(stub_directory, target.config.language);
   };
-};
+}
 
 export default ProtocExecutor;

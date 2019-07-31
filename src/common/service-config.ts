@@ -5,7 +5,6 @@ import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
 import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
 
-
 export default class ServiceConfig {
   static _require(path: string) {
     return require(path);
@@ -168,7 +167,7 @@ export default class ServiceConfig {
       if (EnvNameValidator.test(key)) {
         this.parameters[key] = new ServiceParameter(env);
       } else {
-        throw new InvalidConfigFileError(`Invalid env "${key}" in architect.json.`);
+        throw new InvalidConfigFileError(`Invalid parameter "${key}" in architect.json.`);
       }
     }
     return this;
@@ -181,6 +180,22 @@ export default class ServiceConfig {
 
   setDatastores(datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } }) {
     this.datastores = datastores || {};
+    for (const [ds_key, datastore] of Object.entries(this.datastores)) {
+      if (!EnvNameValidator.test(ds_key)) {
+        throw new InvalidConfigFileError(`Invalid datastore name "${ds_key}" in architect.json.`);
+      }
+      if (!datastore.image) {
+        throw new InvalidConfigFileError(`Invalid datastore "${ds_key}" has no image in architect.json.`);
+      }
+      if (!datastore.port) {
+        throw new InvalidConfigFileError(`Invalid datastore "${ds_key}" has no port in architect.json.`);
+      }
+      for (const key of Object.keys(datastore.parameters || {})) {
+        if (!EnvNameValidator.test(key)) {
+          throw new InvalidConfigFileError(`Invalid parameter "${key}" in datastore "${ds_key}" in architect.json.`);
+        }
+      }
+    }
     return this;
   }
 
