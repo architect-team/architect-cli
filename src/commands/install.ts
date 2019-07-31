@@ -2,11 +2,11 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import Listr from 'listr';
 import path from 'path';
-
 import Command from '../base';
 import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
+
 
 const _info = chalk.blue;
 
@@ -79,9 +79,13 @@ export default class Install extends Command {
     }
   }
 
-  get_tasks(service_dependency: ServiceDependency, recursive: boolean): Listr.ListrTask[] {
+  get_tasks(service_dependency: ServiceDependency, recursive: boolean, _seen: Set<ServiceDependency> = new Set()): Listr.ListrTask[] {
+    if (_seen.has(service_dependency)) {
+      return [];
+    } else {
+      _seen.add(service_dependency);
+    }
     let service_name = service_dependency.local ? path.basename(service_dependency.service_path) : service_dependency.service_path;
-
     let tasks: Listr.ListrTask[] = [{
       title: `Loading ${_info(service_name)}`,
       task: async () => {
@@ -89,7 +93,7 @@ export default class Install extends Command {
         let sub_tasks: Listr.ListrTask[] = [];
         if (recursive || service_dependency.root) {
           service_dependency.dependencies.forEach(sub_dependency => {
-            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive));
+            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive, _seen));
           });
         }
         return new Listr(sub_tasks);
