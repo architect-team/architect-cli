@@ -170,8 +170,6 @@ export default class Deploy extends Command {
         ARCHITECT: JSON.stringify(architect)
       };
 
-      console.log(service.config.name, environment)
-
       docker_compose.services[service_host] = {
         image: service.tag,
         build: service.service_path,
