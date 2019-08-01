@@ -1,9 +1,9 @@
-import {expect} from '@oclif/test';
+import { expect } from '@oclif/test';
 import fs from 'fs';
 import os from 'os';
 import sinon from 'sinon';
+import ServiceConfig, { MissingConfigFileError } from '../../src/common/service-config';
 
-import ServiceConfig, {MissingConfigFileError} from '../../src/common/service-config';
 
 describe('ServiceConfig', () => {
   let _sinon: sinon.SinonSandbox;
@@ -33,7 +33,7 @@ describe('ServiceConfig', () => {
       version: '1.1.1',
       keywords: ['test'],
       author: ['Architect'],
-      interface: null,
+      api: null,
       dependencies: {},
       language: 'javascript',
       license: 'Apache'
@@ -46,7 +46,7 @@ describe('ServiceConfig', () => {
     expect(service_config.version).to.eq(mock_config_file.version);
     expect(service_config.keywords).to.eq(mock_config_file.keywords);
     expect(service_config.author).to.eq(mock_config_file.author);
-    expect(service_config.interface).to.eq(mock_config_file.interface);
+    expect(service_config.api).to.eq(mock_config_file.api);
     expect(service_config.dependencies).to.eq(mock_config_file.dependencies);
     expect(service_config.language).to.eq(mock_config_file.language);
     expect(service_config.license).to.eq(mock_config_file.license);

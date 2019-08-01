@@ -56,8 +56,8 @@ namespace ProtocExecutor {
   };
 
   export const execute = async (dependency: ServiceDependency, target: ServiceDependency): Promise<void> => {
-    if (!dependency.config.interface) {
-      throw new Error(`${dependency.config.name} has no interface configured.`);
+    if (!dependency.config.api) {
+      throw new Error(`${dependency.config.name} has no api configured.`);
     }
     if (!target.local) {
       throw new Error(`${dependency.config.name} is not a local service`);
@@ -69,8 +69,8 @@ namespace ProtocExecutor {
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
-    for (const definition of dependency.config.interface!.definitions) {
-      const definition_contents = dependency.interface_definitions[definition];
+    for (const definition of dependency.config.api!.definitions) {
+      const definition_contents = dependency.api_definitions[definition];
       const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
       checksums.push(hash);
     }
@@ -90,8 +90,8 @@ namespace ProtocExecutor {
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
-    for (const definition of dependency.config.interface.definitions) {
-      const definition_contents = dependency.interface_definitions[definition];
+    for (const definition of dependency.config.api.definitions) {
+      const definition_contents = dependency.api_definitions[definition];
       await fs.writeFile(path.join(tmp_dependency_dir, definition), definition_contents);
     }
 

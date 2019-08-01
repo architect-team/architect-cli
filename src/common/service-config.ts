@@ -51,7 +51,7 @@ export default class ServiceConfig {
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
       .setParameters(configJSON.parameters)
-      .setInterface(configJSON.interface)
+      .setApi(configJSON.api)
       .setDatastores(configJSON.datastores)
       .setMainFile(configJSON.main)
       .setLanguage(configJSON.language)
@@ -70,7 +70,7 @@ export default class ServiceConfig {
   license: string;
   dependencies: { [s: string]: string };
   parameters: { [s: string]: ServiceParameter } = {};
-  interface?: { type: string, definitions: string[] };
+  api?: { type: string, definitions: string[] };
   datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
   main: string;
   language: SUPPORTED_LANGUAGES;
@@ -173,8 +173,8 @@ export default class ServiceConfig {
     return this;
   }
 
-  setInterface(service_interface: { type: string, definitions: string[] }) {
-    this.interface = service_interface;
+  setApi(api: { type: string, definitions: string[] }) {
+    this.api = api;
     return this;
   }
 
@@ -218,7 +218,7 @@ export default class ServiceConfig {
   // architect service that can be called as a dependency or if
   // its simply a script to be called once.
   isScript() {
-    return !this.interface;
+    return !this.api;
   }
 }
 

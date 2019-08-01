@@ -70,7 +70,7 @@ export default class Build extends Command {
       '--build-arg', `SERVICE_LANGUAGE=${service.config.language}`,
       '-t', service.tag,
       '--label', `architect.json=${JSON.stringify(service.config)}`,
-      '--label', `interface_definitions=${JSON.stringify(service.interface_definitions)}`,
+      '--label', `api_definitions=${JSON.stringify(service.api_definitions)}`,
       service.service_path
     ]);
   }

@@ -98,7 +98,7 @@ export default class Deploy extends Command {
         architect[dependency.config.name] = {
           host: dependency_name,
           port,
-          interface: dependency.config.interface && dependency.config.interface.type
+          api: dependency.config.api && dependency.config.api.type
         };
         if (service !== dependency) {
           depends_on.push(dependency_name);
