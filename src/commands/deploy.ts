@@ -86,6 +86,35 @@ export default class Deploy extends Command {
       volumes: {}
     };
 
+    const dependencies_map: { [key: string]: ServiceDependency } = {};
+    for (const service of root_service.all_dependencies) {
+      dependencies_map[service.config.name] = service;
+    }
+
+    const subscriptions_map: any = {};
+    const optional_dependencies_map: { [key: string]: ServiceDependency[] } = {};
+    for (const service of root_service.all_dependencies) {
+      if (service.config.subscriptions) {
+        for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
+
+          if (!optional_dependencies_map[service_name]) {
+            optional_dependencies_map[service_name] = [];
+          }
+          optional_dependencies_map[service_name].push(dependencies_map[service.config.name]);
+
+          for (const [event_name, event_config] of Object.entries(events)) {
+            if (!subscriptions_map[service_name]) {
+              subscriptions_map[service_name] = {};
+            }
+            if (!subscriptions_map[service_name][event_name]) {
+              subscriptions_map[service_name][event_name] = {};
+            }
+            subscriptions_map[service_name][event_name][service.config.name] = event_config;
+          }
+        }
+      }
+    }
+
     for (const service of root_service.all_dependencies) {
       const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
       const port = '8080';
@@ -93,14 +122,24 @@ export default class Deploy extends Command {
 
       const architect: any = {};
       const depends_on = [];
-      for (const dependency of service.dependencies.concat([service])) {
+
+      const dependencies: Set<ServiceDependency> = new Set();
+      dependencies.add(service);
+      const optional_dependencies = optional_dependencies_map[service.config.name] || [];
+      for (const dependency of service.dependencies.concat(optional_dependencies)) {
+        dependencies.add(dependency);
+      }
+
+      for (const dependency of dependencies) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
         architect[dependency.config.name] = {
           host: dependency_name,
           port,
           api: dependency.config.api && dependency.config.api.type
         };
-        if (service !== dependency) {
+        if (service === dependency) {
+          architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {}
+        } else if (service.dependencies.indexOf(dependency) >= 0) {
           depends_on.push(dependency_name);
         }
       }
@@ -125,7 +164,6 @@ export default class Deploy extends Command {
           const db_port = await PortUtil.getAvailablePort();
           docker_compose.services[datastore_host] = {
             image: `${datastore.image}`,
-            restart: 'always',
             ports: [`${db_port}:${datastore.port}`],
             environment: datastore_environment
           };

@@ -53,7 +53,8 @@ export default class ServiceConfig {
       .setParameters(configJSON.parameters)
       .setApi(configJSON.api)
       .setDatastores(configJSON.datastores)
-      .setMainFile(configJSON.main)
+      .setNotifications(configJSON.notifications)
+      .setSubscriptions(configJSON.subscriptions)
       .setLanguage(configJSON.language)
       .setDebug(configJSON.debug);
   }
@@ -72,7 +73,8 @@ export default class ServiceConfig {
   parameters: { [s: string]: ServiceParameter } = {};
   api?: { type: string, definitions: string[] };
   datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
-  main: string;
+  notifications?: string[];
+  subscriptions?: object;
   language: SUPPORTED_LANGUAGES;
   debug?: string;
 
@@ -85,7 +87,8 @@ export default class ServiceConfig {
     this.license = 'ISC';
     this.dependencies = {};
     this.datastores = {};
-    this.main = 'index.js';
+    this.notifications = [];
+    this.subscriptions = {};
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
 
@@ -199,8 +202,13 @@ export default class ServiceConfig {
     return this;
   }
 
-  setMainFile(main_file: string) {
-    this.main = main_file;
+  setNotifications(notifications: string[]) {
+    this.notifications = notifications;
+    return this;
+  }
+
+  setSubscriptions(subscriptions: object) {
+    this.subscriptions = subscriptions;
     return this;
   }
 
