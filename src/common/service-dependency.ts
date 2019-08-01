@@ -108,7 +108,7 @@ export default abstract class ServiceDependency {
         continue;
       }
       for (const [key, value] of Object.entries(override.parameters || {})) {
-        if (key in service.config.parameters) {
+        if (!(key in service.config.parameters)) {
           service.config.parameters[key] = new ServiceParameter();
         }
         service.config.parameters[key].default = value as string;
@@ -129,7 +129,7 @@ export default abstract class ServiceDependency {
           if (!datastore.parameters) {
             datastore.parameters = {};
           }
-          if (key in datastore.parameters[key]) {
+          if (!(key in datastore.parameters[key])) {
             datastore.parameters[key] = new ServiceParameter();
           }
           datastore.parameters[key].default = value as string;
