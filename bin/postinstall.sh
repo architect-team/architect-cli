@@ -8,11 +8,8 @@ mkdir -p ${ARCHITECT_PATH}
 export ARCHITECT_PATH=${ARCHITECT_PATH}
 grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
 
-# Pull docker image used to build GRPC clients
-docker pull architectio/protoc-all
-
 # Check to see if GRPC and protoc has been installed
-if ! [[ -x "$(command -v docker)" ]]; then
+if ! [[ $(which docker) && $(docker --version) ]]; then
   echoerr "Docker must be installed"
   exit 1
 fi
