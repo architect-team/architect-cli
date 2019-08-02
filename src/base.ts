@@ -2,12 +2,12 @@ import Command from '@oclif/command';
 import Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
 import axios, { AxiosRequestConfig, Method } from 'axios';
+import execa from 'execa';
 import keytar from 'keytar';
 import Listr from 'listr';
 import url from 'url';
-import { AppConfig } from './app-config';
-import execa = require('execa');
 
+import { AppConfig } from './app-config';
 
 export default abstract class ArchitectCommand extends Command {
   static async tasks(this: any, argv?: string[], opts?: Config.LoadOptions): Promise<Listr.ListrTask[]> {

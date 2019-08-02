@@ -1,6 +1,4 @@
 import { flags } from '@oclif/command';
-import chalk from 'chalk';
-import dotenv from 'dotenv';
 import execa from 'execa';
 import fs, { ensureFile, writeFile } from 'fs-extra';
 import inquirer from 'inquirer';
@@ -12,10 +10,6 @@ import Command from '../base';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
 import Install from './install';
-
-
-
-const _info = chalk.blue;
 
 export default class Deploy extends Command {
   static description = 'Deploy service to environments';
@@ -29,8 +23,7 @@ export default class Deploy extends Command {
     environment: flags.string({ exclusive: ['local'] }),
     deployment_id: flags.string({ exclusive: ['local'] }),
     local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
-    env: flags.string({ char: 'e', multiple: true }),
-    env_file: flags.string()
+    config_file: flags.string()
   };
 
   async run() {
@@ -42,40 +35,33 @@ export default class Deploy extends Command {
     }
   }
 
-  async get_envs() {
-    const { flags } = this.parse(Deploy);
-    let envs: { [key: string]: string } = {};
-    if (flags.env_file) {
-      const envs_buffer = await fs.readFile(untildify(flags.env_file));
-      envs = { ...envs, ...dotenv.parse(envs_buffer) };
-    }
-    for (const env of flags.env || []) {
-      envs = { ...envs, ...dotenv.parse(env) };
-    }
-    return envs;
-  }
-
-  validate_envs(root_service: ServiceDependency, envs: { [key: string]: string }) {
+  validate_parameters(root_service: ServiceDependency, config_json: any) {
+    const res = { ...config_json };
     const errors = [];
-    for (const dependency of root_service.all_dependencies) {
-      if (Object.keys(dependency.config.parameters).length === 0) continue;
-
-      const missing_envs = [];
-      for (const [key, env] of Object.entries(dependency.config.parameters)) {
-        if (env.required) {
-          const scoped_key = `ARC_${dependency.config.getNormalizedName().toUpperCase()}__${key}`;
-          if (!(key in envs) && !(scoped_key in envs)) {
-            missing_envs.push(key);
-          }
+    for (const service of root_service.all_dependencies) {
+      const service_override = res[service.config.full_name] || { parameters: {} };
+      for (const [key, parameter] of Object.entries(service.config.parameters)) {
+        if (parameter.default === undefined) {
+          service_override.parameters[key] = `<${key}>`;
+          errors.push(`${service.config.full_name}.parameters.${key}`);
         }
       }
 
-      if (missing_envs.length) {
-        errors.push(`${_info(dependency.config.full_name)} requires the following parameters: ${missing_envs.join(', ')}`);
+      service_override.datastores = service_override.datastores || {};
+      for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
+        const datastore_override = service_override.datastores[ds_key] = service_override.datastores[ds_key] || { parameters: {} };
+        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
+          if (parameter.default === undefined) {
+            datastore_override.parameters[key] = `<${key}>`;
+            errors.push(`${service.config.full_name}.datastores.${ds_key}.parameters.${key}`);
+          }
+        }
       }
+      res[service.config.full_name] = service_override;
     }
     if (errors.length) {
-      this.error(errors.join('\n'));
+      this.log(JSON.stringify(res, null, 2));
+      this.error('Missing the following required parameters:\n' + errors.join('\n'));
     }
   }
 
@@ -86,8 +72,13 @@ export default class Deploy extends Command {
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
 
-    const envs = await this.get_envs();
-    this.validate_envs(root_service, envs);
+    const { flags } = this.parse(Deploy);
+    let config_json = {};
+    if (flags.config_file) {
+      config_json = await fs.readJSON(untildify(flags.config_file));
+    }
+    root_service.override_configs(config_json);
+    this.validate_parameters(root_service, config_json);
 
     const docker_compose: any = {
       version: '3',
@@ -95,60 +86,108 @@ export default class Deploy extends Command {
       volumes: {}
     };
 
-    const datastore_defaults: { [key: string]: any } = {
-      mysql: { port: 3306, username: 'root', password: '' },
-      postgres: { port: 5432, username: 'postgres', name: 'postgres' }
-    };
+    const dependencies_map: { [key: string]: ServiceDependency } = {};
+    for (const service of root_service.all_dependencies) {
+      dependencies_map[service.config.name] = service;
+    }
+
+    const subscriptions_map: any = {};
+    const optional_dependencies_map: { [key: string]: ServiceDependency[] } = {};
+    for (const service of root_service.all_dependencies) {
+      if (service.config.subscriptions) {
+        for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
+
+          if (!optional_dependencies_map[service_name]) {
+            optional_dependencies_map[service_name] = [];
+          }
+          optional_dependencies_map[service_name].push(dependencies_map[service.config.name]);
+
+          for (const [event_name, event_config] of Object.entries(events)) {
+            if (!subscriptions_map[service_name]) {
+              subscriptions_map[service_name] = {};
+            }
+            if (!subscriptions_map[service_name][event_name]) {
+              subscriptions_map[service_name][event_name] = {};
+            }
+            subscriptions_map[service_name][event_name][service.config.name] = event_config;
+          }
+        }
+      }
+    }
 
     for (const service of root_service.all_dependencies) {
       const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
       const port = '8080';
       const target_port = await PortUtil.getAvailablePort();
 
-      const environment: { [key: string]: string | number | undefined } = {
-        HOST: service_host,
-        PORT: port,
-        ARC_CURRENT_SERVICE: service.config.name
-      };
-
+      const architect: any = {};
       const depends_on = [];
-      for (const [name, datastore] of Object.entries(service.config.datastores)) {
-        const datastore_host = `${service_host}.datastore.${name}.${datastore.type}.${datastore.version}`;
-        const db_port = await PortUtil.getAvailablePort();
 
-        docker_compose.services[datastore_host] = {
-          image: `${datastore.type}:${datastore.version}`,
-          restart: 'always',
-          ports: [`${db_port}:${datastore_defaults[datastore.type].port}`],
-        };
-        depends_on.push(datastore_host);
-
-        environment[`ARC_DS_${name.replace(/-/g, '_').toUpperCase()}`] = JSON.stringify({
-          host: datastore_host,
-          interface: datastore.type,
-          ...datastore_defaults[datastore.type]
-        });
+      const dependencies: Set<ServiceDependency> = new Set();
+      dependencies.add(service);
+      const optional_dependencies = optional_dependencies_map[service.config.name] || [];
+      for (const dependency of service.dependencies.concat(optional_dependencies)) {
+        dependencies.add(dependency);
       }
 
-      for (const [key, env] of Object.entries(service.config.parameters)) {
-        const scoped_key = `ARC_${service.config.getNormalizedName().toUpperCase()}__${key}`;
-        const value = envs[scoped_key] || envs[key] || env.default;
-        if (value !== undefined && value !== null) {
-          environment[key] = value;
-        }
-      }
-
-      for (const dependency of service.dependencies.concat([service])) {
+      for (const dependency of dependencies) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
-        environment[`ARC_${dependency.config.getNormalizedName().toUpperCase()}`] = JSON.stringify({
+        architect[dependency.config.name] = {
           host: dependency_name,
           port,
-          interface: dependency.config.interface && dependency.config.interface.type
-        });
-        if (service !== dependency) {
+          api: dependency.config.api && dependency.config.api.type
+        };
+        if (service === dependency) {
+          architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};
+        } else if (service.dependencies.indexOf(dependency) >= 0) {
           depends_on.push(dependency_name);
         }
       }
+
+      architect[service.config.name].datastores = {};
+      for (const [datastore_name, datastore] of Object.entries(service.config.datastores)) {
+        const datastore_environment: any = {};
+        const datastore_aliases: any = { port: datastore.port };
+        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
+          datastore_environment[key] = parameter.default!;
+          datastore_aliases[key] = parameter.default!;
+          if (parameter.alias) {
+            datastore_aliases[parameter.alias] = parameter.default!;
+          }
+        }
+
+        let datastore_host;
+        if (datastore.host) {
+          datastore_host = datastore.host;
+        } else {
+          datastore_host = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
+          const db_port = await PortUtil.getAvailablePort();
+          docker_compose.services[datastore_host] = {
+            image: `${datastore.image}`,
+            ports: [`${db_port}:${datastore.port}`],
+            environment: datastore_environment
+          };
+          depends_on.push(datastore_host);
+        }
+
+        architect[service.config.name].datastores[datastore_name] = {
+          ...datastore_aliases,
+          host: datastore_host,
+          port: datastore.port
+        };
+      }
+
+      let environment: { [key: string]: string | number | undefined } = {};
+      for (const [key, parameter] of Object.entries(service.config.parameters)) {
+        environment[key] = parameter.default!;
+      }
+      environment = {
+        ...environment,
+        HOST: service_host,
+        PORT: port,
+        ARCHITECT_CURRENT_SERVICE: service.config.name,
+        ARCHITECT: JSON.stringify(architect)
+      };
 
       docker_compose.services[service_host] = {
         image: service.tag,
@@ -180,11 +219,15 @@ export default class Deploy extends Command {
         {
           title: `Planning`,
           task: async () => {
-            const envs = await this.get_envs();
+            const { flags } = this.parse(Deploy);
+            let config_json = {};
+            if (flags.config_file) {
+              config_json = await fs.readJSON(untildify(flags.config_file));
+            }
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
               environment: answers.environment,
-              envs
+              config: config_json
             };
             const { data: res } = await this.architect.post(`/deploy`, { data });
             deployment = res;

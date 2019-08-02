@@ -7,7 +7,6 @@ import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
 import ServiceDependency from '../common/service-dependency';
 
-
 const _info = chalk.blue;
 
 export default class Install extends Command {
@@ -106,11 +105,11 @@ export default class Install extends Command {
         task: async () => {
           const start = new Date();
           const promises = [];
-          if (service_dependency.config.interface && service_dependency.config.interface.type === 'grpc') {
+          if (service_dependency.config.api && service_dependency.config.api.type === 'grpc') {
             promises.push(ProtocExecutor.execute(service_dependency, service_dependency));
           }
           service_dependency.dependencies.forEach(sub_dependency => {
-            if (sub_dependency.config.interface && sub_dependency.config.interface.type === 'grpc') {
+            if (sub_dependency.config.api && sub_dependency.config.api.type === 'grpc') {
               promises.push(ProtocExecutor.execute(sub_dependency, service_dependency));
             }
           });

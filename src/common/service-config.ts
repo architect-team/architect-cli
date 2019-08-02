@@ -3,8 +3,7 @@ import path from 'path';
 import MANAGED_PATHS from './managed-paths';
 import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
-import { EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
-
+import { EnvironmentNameValidator, EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -52,9 +51,10 @@ export default class ServiceConfig {
       .setLicense(configJSON.license)
       .setDependencies(configJSON.dependencies)
       .setParameters(configJSON.parameters)
-      .setInterface(configJSON.interface)
+      .setApi(configJSON.api)
       .setDatastores(configJSON.datastores)
-      .setMainFile(configJSON.main)
+      .setNotifications(configJSON.notifications)
+      .setSubscriptions(configJSON.subscriptions)
       .setLanguage(configJSON.language)
       .setDebug(configJSON.debug);
   }
@@ -71,9 +71,10 @@ export default class ServiceConfig {
   license: string;
   dependencies: { [s: string]: string };
   parameters: { [s: string]: ServiceParameter } = {};
-  interface?: { type: string, definitions: string[] };
-  datastores: { [key: string]: { type: string, version: string } };
-  main: string;
+  api?: { type: string, definitions: string[] };
+  datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
+  notifications?: string[];
+  subscriptions?: object;
   language: SUPPORTED_LANGUAGES;
   debug?: string;
 
@@ -86,7 +87,8 @@ export default class ServiceConfig {
     this.license = 'ISC';
     this.dependencies = {};
     this.datastores = {};
-    this.main = 'index.js';
+    this.notifications = [];
+    this.subscriptions = {};
     this.language = SUPPORTED_LANGUAGES.NODE;
   }
 
@@ -168,24 +170,45 @@ export default class ServiceConfig {
       if (EnvNameValidator.test(key)) {
         this.parameters[key] = new ServiceParameter(env);
       } else {
-        throw new InvalidConfigFileError(`Invalid env "${key}" in architect.json.`);
+        throw new InvalidConfigFileError(`Invalid parameter "${key}" in architect.json.`);
       }
     }
     return this;
   }
 
-  setInterface(service_interface: { type: string, definitions: string[] }) {
-    this.interface = service_interface;
+  setApi(api: { type: string, definitions: string[] }) {
+    this.api = api;
     return this;
   }
 
-  setDatastores(datastores: { [key: string]: { type: string, version: string } }) {
+  setDatastores(datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } }) {
     this.datastores = datastores || {};
+    for (const [ds_key, datastore] of Object.entries(this.datastores)) {
+      if (!EnvironmentNameValidator.test(ds_key)) {
+        throw new InvalidConfigFileError(`Invalid datastore name "${ds_key}" in architect.json.`);
+      }
+      if (!datastore.image) {
+        throw new InvalidConfigFileError(`Invalid datastore "${ds_key}" has no image in architect.json.`);
+      }
+      if (!datastore.port) {
+        throw new InvalidConfigFileError(`Invalid datastore "${ds_key}" has no port in architect.json.`);
+      }
+      for (const key of Object.keys(datastore.parameters || {})) {
+        if (!EnvNameValidator.test(key)) {
+          throw new InvalidConfigFileError(`Invalid parameter "${key}" in datastore "${ds_key}" in architect.json.`);
+        }
+      }
+    }
     return this;
   }
 
-  setMainFile(main_file: string) {
-    this.main = main_file;
+  setNotifications(notifications: string[]) {
+    this.notifications = notifications;
+    return this;
+  }
+
+  setSubscriptions(subscriptions: object) {
+    this.subscriptions = subscriptions;
     return this;
   }
 
@@ -203,7 +226,7 @@ export default class ServiceConfig {
   // architect service that can be called as a dependency or if
   // its simply a script to be called once.
   isScript() {
-    return !this.interface;
+    return !this.api;
   }
 }
 

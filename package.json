@@ -78,7 +78,7 @@
   "repository": "architect-team/architect-cli",
   "scripts": {
     "postpack": "rm -f oclif.manifest.json",
-    "posttest": "tslint -p test -t stylish",
+    "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",

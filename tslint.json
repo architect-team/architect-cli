@@ -9,6 +9,7 @@
     "semicolon": [true, "always"],
     "ter-indent": [false],
     "object-curly-spacing": ["always"],
-    "quotemark": [true, "single"]
+    "quotemark": [true, "single"],
+    "ordered-imports": false
   }
 }

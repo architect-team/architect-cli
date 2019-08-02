@@ -6,7 +6,6 @@ import untildify from 'untildify';
 import Command from '../../base';
 import { EnvironmentNameValidator } from '../../common/validation-utils';
 
-
 export default class CreateEnvironment extends Command {
   static description = 'Create or update environment';
   static aliases = ['environment:create', 'environment:update', 'environments:update'];
