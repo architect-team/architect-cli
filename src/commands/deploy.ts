@@ -138,7 +138,7 @@ export default class Deploy extends Command {
           api: dependency.config.api && dependency.config.api.type
         };
         if (service === dependency) {
-          architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {}
+          architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};
         } else if (service.dependencies.indexOf(dependency) >= 0) {
           depends_on.push(dependency_name);
         }
@@ -219,11 +219,15 @@ export default class Deploy extends Command {
         {
           title: `Planning`,
           task: async () => {
-            const envs = {};  // TODO
+            const { flags } = this.parse(Deploy);
+            let config_json = {};
+            if (flags.config_file) {
+              config_json = await fs.readJSON(untildify(flags.config_file));
+            }
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
               environment: answers.environment,
-              envs
+              config: config_json
             };
             const { data: res } = await this.architect.post(`/deploy`, { data });
             deployment = res;
