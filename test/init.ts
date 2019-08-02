@@ -1,10 +1,9 @@
-import dotenv from 'dotenv';
 import nock from 'nock';
-import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+import { AppConfig } from '../src/app-config';
+const app_config = new AppConfig();
 
 nock.disableNetConnect();
-nock('https://architect.auth0.com')
+nock(`https://${app_config.oauth_domain}`)
       .get('/userinfo')
       .reply(200, { nickname: 'test' });
