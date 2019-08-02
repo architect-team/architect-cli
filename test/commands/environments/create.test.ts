@@ -1,6 +1,9 @@
 import { expect, test } from '@oclif/test';
 import path from 'path';
 
+import { AppConfig } from '../../../src/app-config';
+const app_config = new AppConfig();
+
 const environment = {
   name: 'test',
   host: '0.0.0.0',
@@ -11,7 +14,7 @@ const environment = {
 
 describe('environment:create', () => {
   test
-    .nock(process.env.API_HOST!, api => api
+    .nock(app_config.api_host, api => api
       .post('/environments')
       .reply(200, environment)
       .get(`/environments/${environment.name}/test`)
