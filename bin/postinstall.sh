@@ -9,7 +9,7 @@ export ARCHITECT_PATH=${ARCHITECT_PATH}
 grep -q -x -F "export ARCHITECT_PATH=${ARCHITECT_PATH}" ~/.bashrc || echo "export ARCHITECT_PATH=${ARCHITECT_PATH}" >> ~/.bashrc
 
 # Check to see if GRPC and protoc has been installed
-if ! [[ $(which docker) && $(docker --version) ]]; then
+if ! command -v docker > /dev/null 2>&1; then
   echoerr "Docker must be installed"
   exit 1
 fi

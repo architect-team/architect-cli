@@ -4,7 +4,6 @@ import os from 'os';
 import sinon from 'sinon';
 import ServiceConfig, { MissingConfigFileError } from '../../src/common/service-config';
 
-
 describe('ServiceConfig', () => {
   let _sinon: sinon.SinonSandbox;
 

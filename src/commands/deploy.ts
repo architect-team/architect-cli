@@ -96,7 +96,6 @@ export default class Deploy extends Command {
     for (const service of root_service.all_dependencies) {
       if (service.config.subscriptions) {
         for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
-
           if (!optional_dependencies_map[service_name]) {
             optional_dependencies_map[service_name] = [];
           }
