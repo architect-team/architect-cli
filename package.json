@@ -87,7 +87,6 @@
     "postpack": "rm -f oclif.manifest.json",
     "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
-    "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
