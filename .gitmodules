@@ -1,3 +1,3 @@
-[submodule "test/calculator-example"]
-	path = test/calculator-example
-	url = https://github.com/architect-team/calculator-example.git
+[submodule "test/calculator-sample-project"]
+	path = test/calculator-sample-project
+	url = https://github.com/architect-team/calculator-sample-project.git
