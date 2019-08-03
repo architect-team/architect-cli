@@ -20,7 +20,11 @@ export default class CreateEnvironment extends Command {
     type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
     service_token: flags.string({ description: 'Service token' }),
-    cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate' })
+    cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate' }),
+    verbose: flags.boolean({
+      char: 'v',
+      description: 'Verbose log output'
+    })
   };
 
   async run() {
@@ -36,6 +40,7 @@ export default class CreateEnvironment extends Command {
 
     const is_update = process.argv[2].indexOf(':update') >= 0;
 
+    const renderer = answers.verbose ? 'verbose' : 'default';
     const tasks = new Listr([
       {
         title: is_update ? 'Updating Environment' : 'Creating Environment',
@@ -55,7 +60,7 @@ export default class CreateEnvironment extends Command {
           await this.architect.get(`/environments/${context.environment.name}/test`);
         }
       }
-    ]);
+    ], { renderer });
 
     await tasks.run();
   }
