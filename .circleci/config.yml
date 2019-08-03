@@ -6,16 +6,28 @@ jobs:
       - image: architectio/architect-cli-base:latest
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
-          name: Install Docker
-          command: curl -sSL https://get.docker.com/ | sh
-      - setup_remote_docker
+          name: Install Docker client
+          command: |
+            set -x
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
       - run:
+          name: keytar
+          command: |
+            sudo apt-get update -y
+            sudo apt-get install dbus dbus-x11 libsecret-1-dev -y
+            dbus-launch --sh-syntax
+      - run:
           name: npm install
-          command: rm -rf node_modules && npm install --unsafe-perm=true && npm link . && npm install --unsafe-perm=true
+          command: rm -rf node_modules && npm install --unsafe-perm=true && npm link .
       - run:
           name: run tests
           command: npm test
