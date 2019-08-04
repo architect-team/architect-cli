@@ -6,7 +6,6 @@ import execa from 'execa';
 import keytar from 'keytar';
 import Listr from 'listr';
 import url from 'url';
-
 import { AppConfig } from './app-config';
 
 export default abstract class ArchitectCommand extends Command {
