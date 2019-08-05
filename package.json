@@ -90,7 +90,7 @@
     "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add -A README.md dist",
+    "version": "oclif-dev readme && git add -Af README.md dist",
     "postversion": "git push && git push --tags"
   },
   "types": "lib/index.d.ts"
