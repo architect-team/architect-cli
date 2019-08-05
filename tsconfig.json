@@ -18,7 +18,6 @@
     "composite": true
   },
   "include": [
-    "src/**/*",
-    "test/**/*"
+    "src/**/*"
   ]
 }
