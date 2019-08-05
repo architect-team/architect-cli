@@ -1,7 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import keytar from 'keytar';
 import Command from '../base';
 
 const _error = chalk.red;
@@ -47,12 +46,8 @@ export default class Login extends Command {
   }
 
   async login(username: string, password: string) {
-    for (const credential of await keytar.findCredentials('architect.io')) {
-      await keytar.deletePassword('architect.io', credential.account);
-    }
-    await keytar.setPassword('architect.io', username, password);
     try {
-      await this.architect.refreshToken();
+      await this.architect.login(username, password);
       this.log(_success('Login Succeeded'));
     } catch (err) {
       this.log(_error('Login Failed'));

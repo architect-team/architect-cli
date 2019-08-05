@@ -87,6 +87,21 @@ class ArchitectClient {
     this.app_config = app_config;
   }
 
+  async login(username: string, password: string) {
+    this.logout();
+    await keytar.setPassword('architect.io', username, password);
+    await this.refreshToken();
+  }
+
+  async logout() {
+    for (const credential of await keytar.findCredentials('architect.io')) {
+      await keytar.deletePassword('architect.io', credential.account);
+    }
+    for (const credential of await keytar.findCredentials('architect.io/token')) {
+      await keytar.deletePassword('architect.io/token', credential.account);
+    }
+  }
+
   async getUser(): Promise<UserEntity> {
     if (!this._user) {
       this._user = this._getUser();

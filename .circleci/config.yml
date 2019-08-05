@@ -20,12 +20,6 @@ jobs:
           name: clone submodules
           command: git submodule update --recursive --init
       - run:
-          name: keytar
-          command: |
-            sudo apt-get update -y
-            sudo apt-get install dbus dbus-x11 libsecret-1-dev -y
-            dbus-launch --sh-syntax
-      - run:
           name: npm install
           command: rm -rf node_modules && npm install --unsafe-perm=true && npm link .
       - run:
