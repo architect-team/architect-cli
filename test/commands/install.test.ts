@@ -3,7 +3,6 @@ import { expect, test } from '@oclif/test';
 describe('install', () => {
   test
     .stdout()
-    .timeout(10000)
     .command(['install', '--prefix', './test/calculator-sample-project/addition-service/', '--verbose'])
     .it('installs dependency stubs', ctx => {
       const { stdout } = ctx;
@@ -12,7 +11,6 @@ describe('install', () => {
 
   test
     .stdout()
-    .timeout(15000)
     .command([
       'install',
       '--recursive',

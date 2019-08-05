@@ -4,7 +4,6 @@ import { execSync } from 'child_process';
 describe('build', () => {
   test
     .stdout()
-    .timeout(10000)
     .command(['build', './test/calculator-sample-project/addition-service/', '--verbose'])
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
@@ -15,7 +14,6 @@ describe('build', () => {
 
   test
     .stdout()
-    .timeout(20000)
     .command(['build', '--recursive', './test/calculator-sample-project/subtraction-services/python/grpc/', '--verbose'])
     .it('builds images recursively', ctx => {
       const { stdout } = ctx;
