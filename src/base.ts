@@ -88,7 +88,7 @@ class ArchitectClient {
   }
 
   async login(username: string, password: string) {
-    this.logout();
+    await this.logout();
     await keytar.setPassword('architect.io', username, password);
     await this.refreshToken();
   }

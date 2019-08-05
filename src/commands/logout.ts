@@ -13,6 +13,6 @@ export default class Logout extends Command {
 
   async run() {
     await this.architect.logout();
-    this.log(_success('Removed login credentials'))
+    this.log(_success('Removed login credentials'));
   }
 }
