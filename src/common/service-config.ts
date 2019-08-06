@@ -203,7 +203,7 @@ export default class ServiceConfig {
   }
 
   setNotifications(notifications: string[]) {
-    this.notifications = notifications;
+    this.notifications = notifications || [];
     return this;
   }
 

@@ -129,7 +129,7 @@ export default abstract class ServiceDependency {
           if (!datastore.parameters) {
             datastore.parameters = {};
           }
-          if (!(key in datastore.parameters[key])) {
+          if (!(key in datastore.parameters)) {
             datastore.parameters[key] = new ServiceParameter();
           }
           datastore.parameters[key].default = value as string;

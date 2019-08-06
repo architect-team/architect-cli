@@ -92,6 +92,14 @@ export default class Deploy extends Command {
     }
 
     const subscriptions_map: any = {};
+    for (const service of root_service.all_dependencies) {
+      if (!subscriptions_map[service.config.name]) {
+        subscriptions_map[service.config.name] = {};
+      }
+      for (const event of service.config.notifications) {
+        subscriptions_map[service.config.name][event] = {};
+      }
+    }
     const optional_dependencies_map: { [key: string]: ServiceDependency[] } = {};
     for (const service of root_service.all_dependencies) {
       if (service.config.subscriptions) {
