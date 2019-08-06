@@ -16,8 +16,7 @@ namespace PortUtil {
       _isPortAvailable('0.0.0.0', port) // ipv4
     ])
       .then(() => resolve(true))
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         resolve(false);
       });
   });
