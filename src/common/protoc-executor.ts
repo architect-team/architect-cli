@@ -20,7 +20,9 @@ namespace ProtocExecutor {
     const service_names = target.dependencies.map(dep => dep.config.name).concat([target.config.name]);
     const service_dirs = new Set(service_names.map(dep => ServiceConfig.convertServiceNameToFolderName(dep)));
     const stubs_directory = path.join(target.service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
-    await fs.ensureDir(stubs_directory);
+    if (!await fs.pathExists(stubs_directory)) {
+      return;
+    }
     for (const dir of await fs.readdir(stubs_directory)) {
       const lstat = await fs.lstat(path.join(stubs_directory, dir));
       if (!lstat.isDirectory()) { continue; }
