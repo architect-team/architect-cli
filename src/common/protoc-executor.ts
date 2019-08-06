@@ -20,7 +20,9 @@ namespace ProtocExecutor {
     const service_names = target.dependencies.map(dep => dep.config.name).concat([target.config.name]);
     const service_dirs = new Set(service_names.map(dep => ServiceConfig.convertServiceNameToFolderName(dep)));
     const stubs_directory = path.join(target.service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY);
-    await fs.ensureDir(stubs_directory);
+    if (!await fs.pathExists(stubs_directory)) {
+      return;
+    }
     for (const dir of await fs.readdir(stubs_directory)) {
       const lstat = await fs.lstat(path.join(stubs_directory, dir));
       if (!lstat.isDirectory()) { continue; }
@@ -89,7 +91,7 @@ namespace ProtocExecutor {
     }
 
     try {
-      await execa('docker', [
+      let cmd_config = [
         'run',
         '--rm', '--init',
         '-v', `${target.service_path}:/defs`,
@@ -98,7 +100,13 @@ namespace ProtocExecutor {
         '-d', `/usr/local/include`,
         '-l', target.config.language,
         '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-      ]);
+      ];
+
+      if (process.env.UID) {
+        cmd_config.push('--user', process.env.UID);
+      }
+
+      await execa('docker', cmd_config);
       await fs.writeFile(checksum_path, checksum);
     } finally {
       await fs.remove(tmp_dependency_dir);
