@@ -79,9 +79,7 @@ namespace ProtocExecutor {
     }
 
     const tmp_root = await fs.realpath(os.tmpdir());
-    // Prevent race conditions when building the same service concurrently for different targets
-    const tmp_namespace = `${ServiceConfig.convertServiceNameToFolderName(target.config.name)}__${dependency_folder}`;
-    const tmp_dir = path.join(tmp_root, tmp_namespace);
+    const tmp_dir = path.join(tmp_root, 'architect-grpc');
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
@@ -90,22 +88,21 @@ namespace ProtocExecutor {
       await fs.writeFile(path.join(tmp_dependency_dir, definition), definition_contents);
     }
 
-    const mount_dirname = '/opt/protoc';
-    const mounted_proto_path = path.posix.join(mount_dirname, dependency_folder);
-
-    await execa('docker', [
-      'run',
-      '--rm', '--init',
-      '-v', `${target.service_path}:/defs`,
-      '-v', `${tmp_dir}:${mount_dirname}`,
-      'architectio/protoc-all',
-      '-d', `${mounted_proto_path}`,
-      '-i', mount_dirname,
-      '-l', target.config.language,
-      '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-    ]);
-    await fs.writeFile(checksum_path, checksum);
-    await fs.remove(tmp_dir);
+    try {
+      await execa('docker', [
+        'run',
+        '--rm', '--init',
+        '-v', `${target.service_path}:/defs`,
+        '-v', `${tmp_dir}:/usr/local/include`,
+        'architectio/protoc-all',
+        '-d', `/usr/local/include`,
+        '-l', target.config.language,
+        '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
+      ]);
+      await fs.writeFile(checksum_path, checksum);
+    } finally {
+      await fs.remove(tmp_dependency_dir);
+    }
 
     await _postHooks(stub_directory, target.config.language);
   };
