@@ -89,7 +89,7 @@ namespace ProtocExecutor {
     }
 
     try {
-      await execa('docker', [
+      let cmd_config = [
         'run',
         '--rm', '--init',
         '-v', `${target.service_path}:/defs`,
@@ -98,7 +98,13 @@ namespace ProtocExecutor {
         '-d', `/usr/local/include`,
         '-l', target.config.language,
         '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
-      ]);
+      ];
+
+      if (process.env.UID) {
+        cmd_config.push('--user', process.env.UID);
+      }
+
+      await execa('docker', cmd_config);
       await fs.writeFile(checksum_path, checksum);
     } finally {
       await fs.remove(tmp_dependency_dir);

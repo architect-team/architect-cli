@@ -13,10 +13,13 @@ namespace PortUtil {
 
   export const isPortAvailable = async (port: number) => new Promise<boolean>(resolve => {
     Promise.all([
-      _isPortAvailable('0.0.0.0', port), // IPv4
-      _isPortAvailable('::', port)]) // IPv6
+      _isPortAvailable('0.0.0.0', port) // ipv4
+    ])
       .then(() => resolve(true))
-      .catch(() => resolve(false));
+      .catch((err) => {
+        console.error(err);
+        resolve(false);
+      });
   });
 
   export const getAvailablePort = async () => {
