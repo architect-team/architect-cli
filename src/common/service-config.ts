@@ -73,7 +73,7 @@ export default class ServiceConfig {
   parameters: { [s: string]: ServiceParameter } = {};
   api?: { type: string, definitions: string[] };
   datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
-  notifications?: string[];
+  notifications: string[];
   subscriptions?: object;
   language: SUPPORTED_LANGUAGES;
   debug?: string;
