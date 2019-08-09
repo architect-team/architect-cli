@@ -1,4 +1,5 @@
 import { flags } from '@oclif/command';
+import chalk from 'chalk';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -11,6 +12,8 @@ import { EnvironmentMetadata } from '../common/environment-metadata';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
 import Install from './install';
+
+const _info = chalk.blue;
 
 export default class Deploy extends Command {
   static description = 'Deploy service to environments';
@@ -152,6 +155,7 @@ export default class Deploy extends Command {
     const service_port = async (service_name: string) => {
       if (!(service_name in target_port_map)) {
         target_port_map[service_name] = await PortUtil.getAvailablePort();
+        this.log(_info(service_name), `0.0.0.0:${target_port_map[service_name]}`);
       }
       return target_port_map[service_name];
     };
