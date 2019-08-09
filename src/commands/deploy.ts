@@ -158,7 +158,6 @@ export default class Deploy extends Command {
 
     for (const service of root_service.all_dependencies) {
       const service_host = service.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
-      target_port_map[service.config.name] = await PortUtil.getAvailablePort();
 
       const architect: any = {};
       const depends_on = [];
