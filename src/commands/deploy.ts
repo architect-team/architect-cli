@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import execa from 'execa';
-import fs, { ensureFile, writeFile } from 'fs-extra';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
 import os from 'os';
@@ -148,9 +148,17 @@ export default class Deploy extends Command {
       }
     }
 
+    const target_port_map: any = {};
+    const service_port = async (service_name: string) => {
+      if (!(service_name in target_port_map)) {
+        target_port_map[service_name] = await PortUtil.getAvailablePort();
+      }
+      return target_port_map[service_name];
+    };
+
     for (const service of root_service.all_dependencies) {
       const service_host = service.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
-      const target_port = await PortUtil.getAvailablePort();
+      target_port_map[service.config.name] = await PortUtil.getAvailablePort();
 
       const architect: any = {};
       const depends_on = [];
@@ -165,8 +173,8 @@ export default class Deploy extends Command {
       for (const dependency of dependencies) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
         architect[dependency.config.name] = {
-          host: dependency.config.host || dependency_name,
-          port: dependency.config.port,
+          host: dependency.config.host || 'host.docker.internal',
+          port: dependency.config.port || await service_port(dependency.config.name),
           api: dependency.config.api && dependency.config.api.type
         };
         if (service === dependency) {
@@ -189,23 +197,26 @@ export default class Deploy extends Command {
         }
 
         let datastore_host;
+        let datastore_port;
         if (datastore.host) {
           datastore_host = datastore.host;
+          datastore_port = datastore.port;
         } else {
-          datastore_host = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
-          const db_port = await PortUtil.getAvailablePort();
-          docker_compose.services[datastore_host] = {
+          const datastore_service_name = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
+          datastore_host = 'host.docker.internal';
+          datastore_port = await service_port(datastore_service_name);
+          docker_compose.services[datastore_service_name] = {
             image: `${datastore.image}`,
-            ports: [`${db_port}:${datastore.port}`],
+            ports: [`${datastore_port}:${datastore.port}`],
             environment: datastore_environment
           };
-          depends_on.push(datastore_host);
+          depends_on.push(datastore_service_name);
         }
 
         architect[service.config.name].datastores[datastore_name] = {
           ...datastore_aliases,
           host: datastore_host,
-          port: datastore.port
+          port: datastore_port
         };
       }
 
@@ -224,7 +235,7 @@ export default class Deploy extends Command {
       docker_compose.services[service_host] = {
         image: service.tag,
         build: service.service_path,
-        ports: [`${target_port}:${service.config.port}`],
+        ports: [`${await service_port(service.config.name)}:${service.config.port}`],
         depends_on,
         environment,
         command: service.config.debug,
@@ -235,8 +246,8 @@ export default class Deploy extends Command {
     }
 
     const docker_compose_path = path.join(os.homedir(), '.architect', 'docker-compose.json');
-    await ensureFile(docker_compose_path);
-    await writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
+    await fs.ensureFile(docker_compose_path);
+    await fs.writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
     await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build'], { stdio: 'inherit' });
   }
 
