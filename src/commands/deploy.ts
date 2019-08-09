@@ -173,8 +173,8 @@ export default class Deploy extends Command {
       for (const dependency of dependencies) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
         architect[dependency.config.name] = {
-          host: dependency.config.host || 'host.docker.internal',
-          port: dependency.config.port || await service_port(dependency.config.name),
+          host: 'host.docker.internal',
+          port: await service_port(dependency.config.name),
           api: dependency.config.api && dependency.config.api.type
         };
         if (service === dependency) {
