@@ -18,6 +18,11 @@ export default class Build extends Command {
       default: false,
       description: 'Whether or not to build images for the cited dependencies'
     }),
+    _local: flags.boolean({
+      default: false,
+      hidden: true,
+      description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version'
+    }),
     verbose: flags.boolean({
       char: 'v',
       description: 'Verbose log output'
@@ -64,12 +69,28 @@ export default class Build extends Command {
   }
 
   async buildImage(service: ServiceDependency) {
+    const { flags } = this.parse(Build);
+    const service_config = JSON.parse(JSON.stringify(service.config));
+
+    if (flags._local) {
+      const dependency_map = service.local_dependencies.reduce((map: any, obj) => {
+        map[obj.config.name] = obj;
+        return map;
+      }, {});
+      for (const dependency_name of Object.keys(service_config.dependencies)) {
+        const sub_dependency = dependency_map[dependency_name];
+        if (sub_dependency) {
+          service_config.dependencies[dependency_name] = sub_dependency.config.version;
+        }
+      }
+    }
+
     await execa('docker', [
       'build',
       '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service.config.language}`,
+      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
       '-t', service.tag,
-      '--label', `architect.json=${JSON.stringify(service.config)}`,
+      '--label', `architect.json=${JSON.stringify(service_config)}`,
       '--label', `api_definitions=${JSON.stringify(service.api_definitions)}`,
       service.service_path
     ]);

@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
 import { AppConfig } from '../app-config';
+import { EnvironmentMetadata } from './environment-metadata';
 import ServiceConfig from './service-config';
 import ServiceParameter from './service-parameter';
 import { SemvarValidator } from './validation-utils';
@@ -101,11 +102,17 @@ export default abstract class ServiceDependency {
     return service_dependencies;
   }
 
-  override_configs(overrides: any) {
+  override_configs(overrides: EnvironmentMetadata) {
     for (const service of this.all_dependencies) {
-      const override = overrides[service.config.full_name];
+      const override = overrides.services![service.config.full_name];
       if (!override) {
         continue;
+      }
+      if (override.host) {
+        service.config.host = override.host;
+      }
+      if (override.port) {
+        service.config.port = override.port;
       }
       for (const [key, value] of Object.entries(override.parameters || {})) {
         if (!(key in service.config.parameters)) {
@@ -114,25 +121,27 @@ export default abstract class ServiceDependency {
         service.config.parameters[key].default = value as string;
       }
 
-      for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
-        const datastore_override = override.datastores[ds_key];
-        if (!datastore_override) {
-          continue;
-        }
-        if (datastore_override.host) {
-          datastore.host = datastore_override.host;
-        }
-        if (datastore_override.port) {
-          datastore.port = datastore_override.port;
-        }
-        for (const [key, value] of Object.entries(datastore_override.parameters || {})) {
-          if (!datastore.parameters) {
-            datastore.parameters = {};
+      if (override.datastores) {
+        for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
+          const datastore_override = override.datastores[ds_key];
+          if (!datastore_override) {
+            continue;
           }
-          if (!(key in datastore.parameters)) {
-            datastore.parameters[key] = new ServiceParameter();
+          if (datastore_override.host) {
+            datastore.host = datastore_override.host;
           }
-          datastore.parameters[key].default = value as string;
+          if (datastore_override.port) {
+            datastore.port = datastore_override.port;
+          }
+          for (const [key, value] of Object.entries(datastore_override.parameters || {})) {
+            if (!datastore.parameters) {
+              datastore.parameters = {};
+            }
+            if (!(key in datastore.parameters)) {
+              datastore.parameters[key] = new ServiceParameter();
+            }
+            datastore.parameters[key].default = value as string;
+          }
         }
       }
     }

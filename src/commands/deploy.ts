@@ -7,6 +7,7 @@ import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base';
+import { EnvironmentMetadata } from '../common/environment-metadata';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
 import Install from './install';
@@ -36,10 +37,11 @@ export default class Deploy extends Command {
   }
 
   validate_parameters(root_service: ServiceDependency, config_json: any) {
-    const res = { ...config_json };
+    const res = JSON.parse(JSON.stringify(config_json));
+    res.services = res.services || {};
     const errors = [];
     for (const service of root_service.all_dependencies) {
-      const service_override = res[service.config.full_name] || { parameters: {} };
+      const service_override = res.services[service.config.full_name] || { parameters: {} };
       for (const [key, parameter] of Object.entries(service.config.parameters)) {
         if (parameter.default === undefined) {
           service_override.parameters[key] = `<${key}>`;
@@ -57,12 +59,40 @@ export default class Deploy extends Command {
           }
         }
       }
-      res[service.config.full_name] = service_override;
+      res.services[service.config.full_name] = service_override;
     }
     if (errors.length) {
       this.log(JSON.stringify(res, null, 2));
       this.error('Missing the following required parameters:\n' + errors.join('\n'));
     }
+  }
+
+  async read_parameter(value: string) {
+    if (value.startsWith('file:')) {
+      return fs.readFile(untildify(value.slice('file:'.length)), 'utf-8');
+    } else {
+      return value;
+    }
+  }
+
+  async parse_config() {
+    const { flags } = this.parse(Deploy);
+    let config_json: EnvironmentMetadata = { services: {} };
+    if (flags.config_file) {
+      config_json = await fs.readJSON(untildify(flags.config_file));
+      config_json.services = config_json.services || {};
+      for (const service of Object.values(config_json.services)) {
+        for (const [key, value] of Object.entries(service.parameters || {})) {
+          service.parameters![key] = await this.read_parameter(value);
+        }
+        for (const datastore of Object.values(service.datastores || {})) {
+          for (const [key, value] of Object.entries(datastore.parameters || {})) {
+            datastore.parameters![key] = await this.read_parameter(value);
+          }
+        }
+      }
+    }
+    return config_json;
   }
 
   async run_local() {
@@ -72,11 +102,7 @@ export default class Deploy extends Command {
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
 
-    const { flags } = this.parse(Deploy);
-    let config_json = {};
-    if (flags.config_file) {
-      config_json = await fs.readJSON(untildify(flags.config_file));
-    }
+    const config_json = await this.parse_config();
     root_service.override_configs(config_json);
     this.validate_parameters(root_service, config_json);
 
@@ -123,8 +149,7 @@ export default class Deploy extends Command {
     }
 
     for (const service of root_service.all_dependencies) {
-      const service_host = service.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
-      const port = '8080';
+      const service_host = service.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
       const target_port = await PortUtil.getAvailablePort();
 
       const architect: any = {};
@@ -138,15 +163,15 @@ export default class Deploy extends Command {
       }
 
       for (const dependency of dependencies) {
-        const dependency_name = dependency.config.full_name.replace(/:/g, '_').replace(/\//g, '__');
+        const dependency_name = dependency.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
         architect[dependency.config.name] = {
-          host: dependency_name,
-          port,
+          host: dependency.config.host || dependency_name,
+          port: dependency.config.port,
           api: dependency.config.api && dependency.config.api.type
         };
         if (service === dependency) {
           architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};
-        } else if (service.dependencies.indexOf(dependency) >= 0) {
+        } else if (service.dependencies.indexOf(dependency) >= 0 && !dependency.config.host) {
           depends_on.push(dependency_name);
         }
       }
@@ -191,7 +216,7 @@ export default class Deploy extends Command {
       environment = {
         ...environment,
         HOST: service_host,
-        PORT: port,
+        PORT: service.config.port,
         ARCHITECT_CURRENT_SERVICE: service.config.name,
         ARCHITECT: JSON.stringify(architect)
       };
@@ -199,7 +224,7 @@ export default class Deploy extends Command {
       docker_compose.services[service_host] = {
         image: service.tag,
         build: service.service_path,
-        ports: [`${target_port}:${port}`],
+        ports: [`${target_port}:${service.config.port}`],
         depends_on,
         environment,
         command: service.config.debug,
@@ -226,11 +251,7 @@ export default class Deploy extends Command {
         {
           title: `Planning`,
           task: async () => {
-            const { flags } = this.parse(Deploy);
-            let config_json = {};
-            if (flags.config_file) {
-              config_json = await fs.readJSON(untildify(flags.config_file));
-            }
+            const config_json = await this.parse_config();
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
               environment: answers.environment,
