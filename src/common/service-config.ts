@@ -56,6 +56,7 @@ export default class ServiceConfig {
       .setNotifications(configJSON.notifications)
       .setSubscriptions(configJSON.subscriptions)
       .setLanguage(configJSON.language)
+      .setPort(configJSON.port)
       .setDebug(configJSON.debug);
   }
 
@@ -73,9 +74,11 @@ export default class ServiceConfig {
   parameters: { [s: string]: ServiceParameter } = {};
   api?: { type: string, definitions: string[] };
   datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
-  notifications?: string[];
-  subscriptions?: object;
+  notifications: string[];
+  subscriptions: object;
   language: SUPPORTED_LANGUAGES;
+  host?: string;
+  port: string;
   debug?: string;
 
   constructor() {
@@ -90,6 +93,7 @@ export default class ServiceConfig {
     this.notifications = [];
     this.subscriptions = {};
     this.language = SUPPORTED_LANGUAGES.NODE;
+    this.port = '8080';
   }
 
   get full_name() {
@@ -214,6 +218,11 @@ export default class ServiceConfig {
 
   setLanguage(language: SUPPORTED_LANGUAGES) {
     this.language = language;
+    return this;
+  }
+
+  setPort(port: string) {
+    this.port = port || '8080';
     return this;
   }
 
