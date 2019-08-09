@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command line interface for creating and deploying architect services",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "David Thor @davidthor",
   "bin": {
     "architect": "./bin/run"
@@ -91,7 +91,7 @@
     "postinstall": "sh ./bin/postinstall.sh",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add -Af README.md dist",
-    "postversion": "git push && git push --tags"
+    "postpublish": "git push && git push --tags"
   },
   "types": "lib/index.d.ts"
 }

@@ -8,8 +8,8 @@ describe('build', () => {
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for architect/addition-service');
-      const docker_images = execSync('docker images | grep architect-addition-service');
-      expect(docker_images.toString()).to.contain('architect-addition-service');
+      const docker_images = execSync('docker images | grep architect/addition-service');
+      expect(docker_images.toString()).to.contain('architect/addition-service');
     });
 
   test
@@ -21,7 +21,7 @@ describe('build', () => {
       expect(stdout).to.contain('Building docker image for architect/addition-service');
 
       const docker_images = execSync('docker images | grep architect-');
-      expect(docker_images.toString()).to.contain('architect-subtraction-service');
-      expect(docker_images.toString()).to.contain('architect-addition-service');
+      expect(docker_images.toString()).to.contain('architect/subtraction-service');
+      expect(docker_images.toString()).to.contain('architect/addition-service');
     });
 });
