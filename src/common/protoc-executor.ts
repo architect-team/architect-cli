@@ -60,6 +60,7 @@ namespace ProtocExecutor {
       throw new Error(`${dependency.config.name} is not a local service`);
     }
     const dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.config.name);
+    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.config.name);
 
     // Make the folder to store dependency stubs
     const stub_directory = path.join(target.service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY, dependency_folder);
@@ -81,7 +82,7 @@ namespace ProtocExecutor {
     }
 
     const tmp_root = await fs.realpath(os.tmpdir());
-    const tmp_dir = path.join(tmp_root, 'architect-grpc');
+    const tmp_dir = path.join(tmp_root, 'architect-grpc', `${dependency_folder}_${target_folder}`);
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
@@ -95,9 +96,10 @@ namespace ProtocExecutor {
         'run',
         '--rm', '--init',
         '-v', `${target.service_path}:/defs`,
-        '-v', `${tmp_dir}:/usr/local/include`,
+        '-v', `${tmp_dir}:/protos`,
         'architectio/protoc-all',
-        '-d', `/usr/local/include`,
+        '-i', '/protos',
+        '-d', `/protos`,
         '-l', target.config.language,
         '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
       ];
@@ -109,7 +111,7 @@ namespace ProtocExecutor {
       await execa('docker', cmd_config);
       await fs.writeFile(checksum_path, checksum);
     } finally {
-      await fs.remove(tmp_dependency_dir);
+      await fs.remove(tmp_dir);
     }
 
     await _postHooks(stub_directory, target.config.language);
