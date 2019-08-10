@@ -175,10 +175,20 @@ export default class Deploy extends Command {
 
       for (const dependency of dependencies) {
         const dependency_name = dependency.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
+        const api_type = dependency.config.api && dependency.config.api.type;
+        let dependency_host;
+        if (dependency.config.host) {
+          dependency_host = dependency.config.host;
+        } else if (api_type === 'grpc') {
+          dependency_host = 'host.docker.internal';
+        } else {
+          // tslint:disable-next-line: no-http-string
+          dependency_host = 'http://host.docker.internal';
+        }
         architect[dependency.config.name] = {
-          host: 'host.docker.internal',
-          port: await service_port(dependency.config.name),
-          api: dependency.config.api && dependency.config.api.type
+          host: dependency_host,
+          port: dependency.config.host ? dependency.config.port : await service_port(dependency.config.name),
+          api: api_type
         };
         if (service === dependency) {
           architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};

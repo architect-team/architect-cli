@@ -81,7 +81,7 @@ export default abstract class ServiceDependency {
     let queue: ServiceDependency[] = [this];
     while (queue.length > 0) {
       const service_dependency = queue.shift()!;
-      if (service_dependencies.indexOf(service_dependency) < 0) {
+      if (service_dependencies.indexOf(service_dependency) < 0 && !service_dependency.config.host) {
         service_dependencies.unshift(service_dependency);
         queue = queue.concat(service_dependency.dependencies);
       }
