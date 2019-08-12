@@ -26,7 +26,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.2.1 darwin-x64 node-v11.15.0
+@architect-io/cli/0.2.2 darwin-x64 node-v11.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -93,7 +93,7 @@ OPTIONS
   -v, --verbose    Verbose log output
 ```
 
-_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/build.ts)_
+_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/build.ts)_
 
 ## `architect commands`
 
@@ -130,7 +130,7 @@ OPTIONS
   --environment=environment
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/deploy.ts)_
 
 ## `architect environments [ENVIRONMENT]`
 
@@ -152,7 +152,7 @@ ALIASES
   $ architect environment:list
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/environments/index.ts)_
 
 ## `architect environments:create [NAME]`
 
@@ -180,7 +180,7 @@ ALIASES
   $ architect environments:update
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -200,7 +200,7 @@ ALIASES
   $ architect environment:destroy
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/environments/destroy.ts)_
 
 ## `architect environments:services [ENVIRONMENT]`
 
@@ -224,7 +224,7 @@ ALIASES
   $ architect environment:services:versions
 ```
 
-_See code: [src/commands/environments/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/environments/services/index.ts)_
+_See code: [src/commands/environments/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/environments/services/index.ts)_
 
 ## `architect environments:services:destroy [SERVICE]`
 
@@ -246,7 +246,7 @@ ALIASES
   $ architect environment:services:destroy
 ```
 
-_See code: [src/commands/environments/services/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/environments/services/destroy.ts)_
+_See code: [src/commands/environments/services/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/environments/services/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -282,7 +282,7 @@ OPTIONS
   -v, --version=version          [default: 0.1.0]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/init.ts)_
 
 ## `architect install [SERVICE_NAME]`
 
@@ -302,7 +302,7 @@ OPTIONS
   -v, --verbose        Verbose log output
 ```
 
-_See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/install.ts)_
+_See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/install.ts)_
 
 ## `architect login`
 
@@ -318,7 +318,7 @@ OPTIONS
   -u, --username=username  Username
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -332,7 +332,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/logout.ts)_
 
 ## `architect push [CONTEXT]`
 
@@ -351,7 +351,7 @@ OPTIONS
   -v, --verbose    Verbose log output
 ```
 
-_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/push.ts)_
+_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/push.ts)_
 
 ## `architect services [SERVICE_NAME]`
 
@@ -372,7 +372,7 @@ ALIASES
   $ architect services:versions
 ```
 
-_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/services/index.ts)_
+_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/services/index.ts)_
 
 ## `architect uninstall SERVICE_NAME`
 
@@ -387,7 +387,7 @@ OPTIONS
   -p, --prefix=prefix  Path prefix indicating where the install command should execute from
 ```
 
-_See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/uninstall.ts)_
+_See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.2.2/src/commands/uninstall.ts)_
 <!-- commandsstop -->
 
 # Special Thanks
