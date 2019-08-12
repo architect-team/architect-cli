@@ -26,7 +26,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.2.1 darwin-x64 node-v10.15.0
+@architect-io/cli/0.2.1 darwin-x64 node-v11.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -346,8 +346,9 @@ ARGUMENTS
   CONTEXT  Path to the service to build
 
 OPTIONS
-  -h, --help     show CLI help
-  -v, --verbose  Verbose log output
+  -h, --help       show CLI help
+  -r, --recursive  Whether or not to build images for the cited dependencies
+  -v, --verbose    Verbose log output
 ```
 
 _See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.2.1/src/commands/push.ts)_
