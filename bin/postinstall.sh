@@ -1,7 +1,5 @@
 #!/bin/sh
 
-echoerr() { echo "$@" 1>&2; }
-
 # Setup Architect home directory
 ARCHITECT_PATH=$HOME/.architect
 mkdir -p ${ARCHITECT_PATH}
