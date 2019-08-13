@@ -7,11 +7,6 @@ if ! command -v docker > /dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v docker-compose > /dev/null 2>&1; then
-  echoerr "Docker compose must be installed"
-  exit 1
-fi
-
 case "$(uname -s)" in
   Linux)
     sudo apt-get update -y
