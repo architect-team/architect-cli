@@ -50,9 +50,10 @@ export default class Install extends Command {
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     if (args.service_name) {
       await root_service.load();
-      const [service_name, service_version] = args.service_name.split(':');
+      let [service_name, service_version] = args.service_name.split(':');
       if (!service_version) {
-        throw new Error('Specify version ex. service:0.1.0');
+        const { data: service } = await this.architect.get(`/services/${service_name}`);
+        service_version = service.tags.sort((a: string, b: string) => b.localeCompare(a, undefined, { numeric: true }))[0];
       }
       if (root_service.config.name === service_name) {
         throw new Error('Cannot install a service inside its own config');
@@ -67,9 +68,9 @@ export default class Install extends Command {
       tasks.push({
         title: 'Updating architect.json',
         task: () => {
-          const config_json = ServiceConfig.loadJSONFromPath(root_service_path);
+          const config_json = ServiceConfig.loadJSONFromPath(root_service.service_path);
           config_json.dependencies[service_name] = service_version;
-          ServiceConfig.writeToPath(root_service_path, config_json);
+          ServiceConfig.writeToPath(root_service.service_path, config_json);
         }
       });
       return tasks;
