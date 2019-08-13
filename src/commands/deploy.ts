@@ -9,6 +9,7 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base';
 import { EnvironmentMetadata } from '../common/environment-metadata';
+import MANAGED_PATHS from '../common/managed-paths';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
 import Install from './install';
@@ -263,7 +264,7 @@ export default class Deploy extends Command {
       }
     }
 
-    const docker_compose_path = path.join(os.homedir(), '.architect', 'docker-compose.json');
+    const docker_compose_path = path.join(os.homedir(), MANAGED_PATHS.HIDDEN, 'docker-compose.json');
     await fs.ensureFile(docker_compose_path);
     await fs.writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
     await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build'], { stdio: 'inherit' });

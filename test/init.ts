@@ -1,6 +1,6 @@
-import keytar from 'keytar';
 import nock from 'nock';
 import { AppConfig } from '../src/app-config';
+import credentials from '../src/common/credentials';
 
 const app_config = new AppConfig();
 
@@ -14,7 +14,10 @@ nock(`https://${app_config.oauth_domain}`)
   .post('/oauth/token')
   .reply(200, nock_token);
 
-keytar.deletePassword = async () => true;
-keytar.setPassword = async () => undefined;
-keytar.findCredentials = async () => [{ account: 'test', password: JSON.stringify({ ...nock_token, profile: nock_profile }) }];
-exports = keytar;
+credentials.deletePassword = async () => undefined;
+credentials.setPassword = async () => undefined;
+credentials.findCredential = async () => {
+  return { account: 'test', password: JSON.stringify({ ...nock_token, profile: nock_profile }) };
+};
+
+exports = credentials;

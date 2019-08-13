@@ -3,10 +3,10 @@ import Config from '@oclif/config';
 import { AuthenticationClient } from 'auth0';
 import axios, { AxiosRequestConfig, Method } from 'axios';
 import execa from 'execa';
-import keytar from 'keytar';
 import Listr from 'listr';
 import url from 'url';
 import { AppConfig } from './app-config';
+import credentials from './common/credentials';
 
 export default abstract class ArchitectCommand extends Command {
   static async tasks(this: any, argv?: string[], opts?: Config.LoadOptions): Promise<Listr.ListrTask[]> {
@@ -89,17 +89,13 @@ class ArchitectClient {
 
   async login(username: string, password: string) {
     await this.logout();
-    await keytar.setPassword('architect.io', username, password);
+    await credentials.setPassword('architect.io', username, password);
     await this.refreshToken();
   }
 
   async logout() {
-    for (const credential of await keytar.findCredentials('architect.io')) {
-      await keytar.deletePassword('architect.io', credential.account);
-    }
-    for (const credential of await keytar.findCredentials('architect.io/token')) {
-      await keytar.deletePassword('architect.io/token', credential.account);
-    }
+    await credentials.deletePassword('architect.io');
+    await credentials.deletePassword('architect.io/token');
   }
 
   async getUser(): Promise<UserEntity> {
@@ -133,17 +129,17 @@ class ArchitectClient {
       clientId: this.app_config.oauth_client_id
     });
 
-    const credentials = await keytar.findCredentials('architect.io');
-    if (credentials.length === 0) {
+    const credential = await credentials.findCredential('architect.io');
+    if (!credential) {
       throw Error('`architect login` required');
     }
 
-    const username = credentials[0].account;
+    const username = credential.account;
     const issued_at = new Date().getTime() / 1000;
     const auth_result = await auth0.passwordGrant({
       realm: 'Username-Password-Authentication',
       username,
-      password: credentials[0].password,
+      password: credential.password,
       scope: 'openid profile'
     });
 
@@ -152,16 +148,16 @@ class ArchitectClient {
     const profile = await auth0.getProfile(auth_result.access_token);
     auth_result.profile = profile;
     auth_result.issued_at = issued_at;
-    await keytar.setPassword('architect.io/token', username, JSON.stringify(auth_result));
+    await credentials.setPassword('architect.io/token', username, JSON.stringify(auth_result));
     return auth_result;
   }
 
   protected async _getUser(): Promise<UserEntity> {
-    const credentials = await keytar.findCredentials('architect.io/token');
-    if (credentials.length === 0) {
+    const credential = await credentials.findCredential('architect.io/token');
+    if (!credential) {
       throw Error('`architect login` required');
     }
-    let auth = JSON.parse(credentials[0].password);
+    let auth = JSON.parse(credential.password);
     if ((auth.issued_at + auth.expires_in) < new Date().getTime() / 1000) {
       auth = await this.refreshToken();
     }
