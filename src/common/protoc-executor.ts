@@ -92,11 +92,16 @@ namespace ProtocExecutor {
     }
 
     const userInfo = os.userInfo();
+    let user_flag: string[] = [];
+    // uid/gid are -1 on windows
+    if (userInfo.uid >= 0 && userInfo.gid >= 0) {
+      user_flag = ['--user', `${userInfo.uid}:${userInfo.gid}`];
+    }
     try {
       let cmd_config = [
         'run',
         '--rm', '--init',
-        '--user', `${userInfo.uid}:${userInfo.gid}`,
+        ...user_flag,
         '-v', `${target.service_path}:/defs`,
         '-v', `${tmp_dir}:/protos`,
         'architectio/protoc-all',
