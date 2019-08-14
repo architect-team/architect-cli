@@ -17,7 +17,8 @@ export default class Login extends Command {
     }),
     password: flags.string({
       char: 'p',
-      description: 'Password'
+      description: 'Password',
+      env: 'ARCHITECT_PASSWORD'
     })
   };
 
