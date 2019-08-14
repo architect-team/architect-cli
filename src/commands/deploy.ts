@@ -28,8 +28,9 @@ export default class Deploy extends Command {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ exclusive: ['local'] }),
     deployment_id: flags.string({ exclusive: ['local'] }),
-    local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
-    config_file: flags.string()
+    auto_approve: flags.boolean({ exclusive: ['local'] }),
+    config_file: flags.string(),
+    local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id', 'auto_approve'] }),
   };
 
   async run() {
@@ -291,10 +292,11 @@ export default class Deploy extends Command {
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to apply this deployment?'
+        message: 'Would you like to apply this deployment?',
+        when: !answers.auto_approve
       } as inquirer.Question);
 
-      if (confirmation.deploy) {
+      if (confirmation.deploy || answers.auto_approve) {
         await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
@@ -322,6 +324,7 @@ export default class Deploy extends Command {
       service_name,
       service_version,
       environment: flags.environment,
+      auto_approve: flags.auto_approve,
       deployment_id: flags.deployment_id
     };
 
