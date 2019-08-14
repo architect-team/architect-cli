@@ -33,7 +33,7 @@ jobs:
           command: |
             architect login
             architect push test/calculator-sample-project/addition-service
-            architect deploy architect/addition-service:0.2.0 --environment dev
+            architect deploy architect/addition-service:0.2.0 --environment test
       - run:
           name: run tests
           command: npm test
