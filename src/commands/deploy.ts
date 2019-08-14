@@ -9,6 +9,7 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base';
 import { EnvironmentMetadata } from '../common/environment-metadata';
+import { readIfFile } from '../common/file-util';
 import MANAGED_PATHS from '../common/managed-paths';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
@@ -71,14 +72,6 @@ export default class Deploy extends Command {
     }
   }
 
-  async read_parameter(value: string) {
-    if (value.startsWith('file:')) {
-      return fs.readFile(untildify(value.slice('file:'.length)), 'utf-8');
-    } else {
-      return value;
-    }
-  }
-
   async parse_config() {
     const { flags } = this.parse(Deploy);
     let config_json: EnvironmentMetadata = { services: {} };
@@ -87,11 +80,11 @@ export default class Deploy extends Command {
       config_json.services = config_json.services || {};
       for (const service of Object.values(config_json.services)) {
         for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await this.read_parameter(value);
+          service.parameters![key] = await readIfFile(value);
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
-            datastore.parameters![key] = await this.read_parameter(value);
+            datastore.parameters![key] = await readIfFile(value);
           }
         }
       }
