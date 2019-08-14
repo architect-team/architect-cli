@@ -104,8 +104,9 @@ namespace ProtocExecutor {
         '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
       ];
 
-      if (process.env.UID) {
-        cmd_config.push('--user', process.env.UID);
+      const userId = process.env.UID || os.userInfo().username;
+      if (userId) {
+        cmd_config.push('--user', userId);
       }
 
       await execa('docker', cmd_config);
