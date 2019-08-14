@@ -13,7 +13,8 @@ export default class Login extends Command {
     help: flags.help({ char: 'h' }),
     username: flags.string({
       char: 'u',
-      description: 'Username'
+      description: 'Username',
+      env: 'ARCHITECT_USERNAME'
     }),
     password: flags.string({
       char: 'p',
