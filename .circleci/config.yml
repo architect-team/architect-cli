@@ -24,9 +24,18 @@ jobs:
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
       - run:
           name: npm install
-          command: rm -rf node_modules && npm install --unsafe-perm=true && npm link .
+          command: npm install --unsafe-perm=true
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - run:
+          name: npm link
+          command: npm link .
       - run:
           name: architect deploy
           # TODO auto login?
