@@ -91,10 +91,12 @@ namespace ProtocExecutor {
       await fs.writeFile(path.join(tmp_dependency_dir, definition), definition_contents);
     }
 
+    const userInfo = os.userInfo();
     try {
       let cmd_config = [
         'run',
         '--rm', '--init',
+        '--user', `${userInfo.uid}:${userInfo.gid}`,
         '-v', `${target.service_path}:/defs`,
         '-v', `${tmp_dir}:/protos`,
         'architectio/protoc-all',
@@ -103,11 +105,6 @@ namespace ProtocExecutor {
         '-l', target.config.language,
         '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
       ];
-
-      const userId = process.env.UID || os.userInfo().username;
-      if (userId) {
-        cmd_config.push('--user', userId);
-      }
 
       await execa('docker', cmd_config);
       await fs.writeFile(checksum_path, checksum);
