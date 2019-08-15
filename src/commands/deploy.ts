@@ -129,9 +129,10 @@ export default class Deploy extends Command {
 
         if (!subscriptions_map[service.config.name]) {
           subscriptions_map[service.config.name] = {};
-        }
-        for (const event of service.config.notifications) {
-          subscriptions_map[service.config.name][event] = {};
+
+          for (const event of service.config.notifications) {
+            subscriptions_map[service.config.name][event] = {};
+          }
         }
 
         if (service.config.subscriptions) {
