@@ -22,8 +22,10 @@ const setPassword = async (service: string, account: string, password: string): 
   if (keytar) {
     keytar.setPassword(service, account, password);
   } else {
-    // tslint:disable-next-line: no-console
-    console.warn(`Storing password as plain text in ${config_path}`);
+    if (service.indexOf('/token') < 0) {
+      // tslint:disable-next-line: no-console
+      console.warn(`Storing password as plain text in ${config_path}`);
+    }
     const config = await getConfig();
     config.auths[service] = { account, password };
     await fs.writeJSON(config_path, config, { replacer: null, spaces: 2 });

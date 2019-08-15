@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 describe('build', () => {
   test
     .stdout()
-    .command(['build', './test/calculator-sample-project/addition-service/', '--verbose'])
+    .command(['build', './test/calculator-sample-project/addition-service/'])
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for architect/addition-service');
@@ -14,7 +14,7 @@ describe('build', () => {
 
   test
     .stdout()
-    .command(['build', '--recursive', './test/calculator-sample-project/subtraction-services/python/grpc/', '--verbose'])
+    .command(['build', '--recursive', './test/calculator-sample-project/subtraction-services/python/grpc/'])
     .it('builds images recursively', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for architect/subtraction-service');

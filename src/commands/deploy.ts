@@ -9,6 +9,7 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base';
 import { EnvironmentMetadata } from '../common/environment-metadata';
+import { readIfFile } from '../common/file-util';
 import MANAGED_PATHS from '../common/managed-paths';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
@@ -27,6 +28,7 @@ export default class Deploy extends Command {
     help: flags.help({ char: 'h' }),
     environment: flags.string({ exclusive: ['local'] }),
     deployment_id: flags.string({ exclusive: ['local'] }),
+    auto_approve: flags.boolean({ exclusive: ['local'] }),
     local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
     services: flags.string({ char: 's', exclusive: ['environment, deployment_id'], multiple: true }),
     config_file: flags.string()
@@ -72,14 +74,6 @@ export default class Deploy extends Command {
     }
   }
 
-  async read_parameter(value: string) {
-    if (value.startsWith('file:')) {
-      return fs.readFile(untildify(value.slice('file:'.length)), 'utf-8');
-    } else {
-      return value;
-    }
-  }
-
   async parse_config() {
     const { flags } = this.parse(Deploy);
     let config_json: EnvironmentMetadata = { services: {} };
@@ -88,11 +82,11 @@ export default class Deploy extends Command {
       config_json.services = config_json.services || {};
       for (const service of Object.values(config_json.services)) {
         for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await this.read_parameter(value);
+          service.parameters![key] = await readIfFile(value);
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
-            datastore.parameters![key] = await this.read_parameter(value);
+            datastore.parameters![key] = await readIfFile(value);
           }
         }
       }
@@ -302,10 +296,11 @@ export default class Deploy extends Command {
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to apply this deployment?'
+        message: 'Would you like to apply this deployment?',
+        when: !answers.auto_approve
       } as inquirer.Question);
 
-      if (confirmation.deploy) {
+      if (confirmation.deploy || answers.auto_approve) {
         await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
@@ -333,6 +328,7 @@ export default class Deploy extends Command {
       service_name,
       service_version,
       environment: flags.environment,
+      auto_approve: flags.auto_approve,
       deployment_id: flags.deployment_id
     };
 

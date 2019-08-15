@@ -1,9 +1,8 @@
 import { flags } from '@oclif/command';
-import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
-import untildify from 'untildify';
 import Command from '../../base';
+import { readIfFile } from '../../common/file-util';
 import { EnvironmentNameValidator } from '../../common/validation-utils';
 
 export default class CreateEnvironment extends Command {
@@ -19,8 +18,8 @@ export default class CreateEnvironment extends Command {
     namespace: flags.string(),
     type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
-    service_token: flags.string({ description: 'Service token' }),
-    cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate' }),
+    service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
+    cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate', env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE' }),
     verbose: flags.boolean({
       char: 'v',
       description: 'Verbose log output'
@@ -34,8 +33,8 @@ export default class CreateEnvironment extends Command {
       namespace: answers.namespace,
       host: answers.host,
       type: answers.type,
-      service_token: answers.service_token,
-      cluster_ca_certificate: fs.readFileSync(untildify(answers.cluster_ca_certificate), 'utf8')
+      service_token: await readIfFile(answers.service_token),
+      cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate)
     };
 
     const is_update = process.argv[2].indexOf(':update') >= 0;
@@ -52,12 +51,6 @@ export default class CreateEnvironment extends Command {
             const { data: environment } = await this.architect.post('/environments', { data });
             context.environment = environment;
           }
-        }
-      },
-      {
-        title: 'Testing Environment',
-        task: async context => {
-          await this.architect.get(`/environments/${context.environment.name}/test`);
         }
       }
     ], { renderer });
@@ -99,7 +92,7 @@ export default class CreateEnvironment extends Command {
     }, {
       type: 'input',
       name: 'cluster_ca_certificate',
-      message: 'cluster certificate (path):',
+      message: 'cluster certificate:',
       when: !flags.cluster_ca_certificate,
     }]);
     return { ...args, ...flags, ...answers };

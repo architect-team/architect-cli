@@ -1,7 +1,7 @@
 import { expect, test } from '@oclif/test';
 import path from 'path';
-
 import { AppConfig } from '../../../src/app-config';
+
 const app_config = new AppConfig();
 
 const environment = {
@@ -17,8 +17,6 @@ describe('environment:create', () => {
     .nock(app_config.api_host, api => api
       .post('/environments')
       .reply(200, environment)
-      .get(`/environments/${environment.name}/test`)
-      .reply(200, [])
     )
     .stdout()
     .command([
@@ -26,12 +24,10 @@ describe('environment:create', () => {
       '--host', environment.host,
       '--namespace', environment.namespace,
       '--service_token', environment.service_token,
-      '--cluster_ca_certificate', environment.cluster_ca_certificate,
-      '--verbose'
+      '--cluster_ca_certificate', environment.cluster_ca_certificate
     ])
     .it('create environment', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Creating Environment');
-      expect(stdout).to.contain('Testing Environment');
     });
 });
