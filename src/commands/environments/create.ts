@@ -15,7 +15,7 @@ export default class CreateEnvironment extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    namespace: flags.string({ env: 'NAMESPACE' }),
+    namespace: flags.string(),
     type: flags.string({ options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string(),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
