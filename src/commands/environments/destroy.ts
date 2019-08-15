@@ -15,6 +15,7 @@ export default class DestroyEnvironment extends Command {
   ];
 
   static flags = {
+    force: flags.boolean({ char: 'f' }),
     help: flags.help({ char: 'h' }),
   };
 
@@ -24,7 +25,11 @@ export default class DestroyEnvironment extends Command {
       {
         title: `Deleting environment ${_info(answers.environment)}`,
         task: async () => {
-          return this.architect.delete(`/environments/${answers.environment}`);
+          if (answers.force) {
+            return this.architect.delete(`/environments/${answers.environment}?force=1`);
+          } else {
+            return this.architect.delete(`/environments/${answers.environment}`);
+          }
         }
       },
     ]);
@@ -33,7 +38,7 @@ export default class DestroyEnvironment extends Command {
   }
 
   async promptOptions() {
-    const { args } = this.parse(DestroyEnvironment);
+    const { args, flags } = this.parse(DestroyEnvironment);
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
@@ -59,6 +64,6 @@ export default class DestroyEnvironment extends Command {
         return `Name must match: ${_info(environment)}`;
       }
     }]);
-    return { ...args, ...answers };
+    return { ...args, ...flags, ...answers };
   }
 }

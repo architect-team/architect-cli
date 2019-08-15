@@ -92,7 +92,7 @@ export default class CreateEnvironment extends Command {
     }, {
       type: 'input',
       name: 'cluster_ca_certificate',
-      message: 'cluster certificate (path):',
+      message: 'cluster certificate:',
       when: !flags.cluster_ca_certificate,
     }]);
     return { ...args, ...flags, ...answers };
