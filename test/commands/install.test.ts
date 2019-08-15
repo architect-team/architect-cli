@@ -3,7 +3,7 @@ import { expect, test } from '@oclif/test';
 describe('install', () => {
   test
     .stdout()
-    .command(['install', '--prefix', './test/calculator-sample-project/addition-service/', '--verbose'])
+    .command(['install', '--prefix', './test/calculator-sample-project/addition-service/'])
     .it('installs dependency stubs', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Installing dependencies for addition-service');
@@ -14,8 +14,7 @@ describe('install', () => {
     .command([
       'install',
       '--recursive',
-      '--prefix', './test/calculator-sample-project/test-script/',
-      '--verbose'
+      '--prefix', './test/calculator-sample-project/test-script/'
     ])
     .it('installs dependencies recursively', ctx => {
       const { stdout } = ctx;

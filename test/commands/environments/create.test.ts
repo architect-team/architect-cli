@@ -24,8 +24,7 @@ describe('environment:create', () => {
       '--host', environment.host,
       '--namespace', environment.namespace,
       '--service_token', environment.service_token,
-      '--cluster_ca_certificate', environment.cluster_ca_certificate,
-      '--verbose'
+      '--cluster_ca_certificate', environment.cluster_ca_certificate
     ])
     .it('create environment', ctx => {
       const { stdout } = ctx;
