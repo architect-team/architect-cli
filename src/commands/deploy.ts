@@ -28,6 +28,7 @@ export default class Deploy extends Command {
     environment: flags.string({ exclusive: ['local'] }),
     deployment_id: flags.string({ exclusive: ['local'] }),
     local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
+    services: flags.string({ char: 's', exclusive: ['environment, deployment_id'], multiple: true }),
     config_file: flags.string()
   };
 
@@ -100,15 +101,7 @@ export default class Deploy extends Command {
   }
 
   async run_local() {
-    const { args } = this.parse(Deploy);
-    let root_service_path = args.service ? args.service : process.cwd();
-    await Install.run(['-p', root_service_path, '-r']);
-
-    const root_service = ServiceDependency.create(this.app_config, root_service_path);
-
-    const config_json = await this.parse_config();
-    root_service.override_configs(config_json);
-    this.validate_parameters(root_service, config_json);
+    const { args, flags } = this.parse(Deploy);
 
     const docker_compose: any = {
       version: '3',
@@ -116,37 +109,47 @@ export default class Deploy extends Command {
       volumes: {}
     };
 
+    const service_paths = flags.services || [
+      args.service ? args.service : process.cwd()
+    ];
+
     const dependencies_map: { [key: string]: ServiceDependency } = {};
-    for (const service of root_service.all_dependencies) {
-      dependencies_map[service.config.name] = service;
-    }
-
     const subscriptions_map: any = {};
-    for (const service of root_service.all_dependencies) {
-      if (!subscriptions_map[service.config.name]) {
-        subscriptions_map[service.config.name] = {};
-      }
-      for (const event of service.config.notifications) {
-        subscriptions_map[service.config.name][event] = {};
-      }
-    }
     const optional_dependencies_map: { [key: string]: ServiceDependency[] } = {};
-    for (const service of root_service.all_dependencies) {
-      if (service.config.subscriptions) {
-        for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
-          if (!optional_dependencies_map[service_name]) {
-            optional_dependencies_map[service_name] = [];
-          }
-          optional_dependencies_map[service_name].push(dependencies_map[service.config.name]);
 
-          for (const [event_name, event_config] of Object.entries(events)) {
-            if (!subscriptions_map[service_name]) {
-              subscriptions_map[service_name] = {};
+    for (const svc_path of service_paths) {
+      await Install.run(['-p', svc_path, '-r']);
+      const svc = ServiceDependency.create(this.app_config, svc_path);
+      const config_json = await this.parse_config();
+      svc.override_configs(config_json);
+      this.validate_parameters(svc, config_json);
+
+      for (const service of svc.all_dependencies) {
+        dependencies_map[service.config.name] = service;
+
+        if (!subscriptions_map[service.config.name]) {
+          subscriptions_map[service.config.name] = {};
+        }
+        for (const event of service.config.notifications) {
+          subscriptions_map[service.config.name][event] = {};
+        }
+
+        if (service.config.subscriptions) {
+          for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
+            if (!optional_dependencies_map[service_name]) {
+              optional_dependencies_map[service_name] = [];
             }
-            if (!subscriptions_map[service_name][event_name]) {
-              subscriptions_map[service_name][event_name] = {};
+            optional_dependencies_map[service_name].push(dependencies_map[service.config.name]);
+
+            for (const [event_name, event_config] of Object.entries(events)) {
+              if (!subscriptions_map[service_name]) {
+                subscriptions_map[service_name] = {};
+              }
+              if (!subscriptions_map[service_name][event_name]) {
+                subscriptions_map[service_name][event_name] = {};
+              }
+              subscriptions_map[service_name][event_name][service.config.name] = event_config;
             }
-            subscriptions_map[service_name][event_name][service.config.name] = event_config;
           }
         }
       }
@@ -161,7 +164,7 @@ export default class Deploy extends Command {
       return target_port_map[service_name];
     };
 
-    for (const service of root_service.all_dependencies) {
+    for (const service of Object.values(dependencies_map)) {
       const service_host = service.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
 
       const architect: any = {};
