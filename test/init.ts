@@ -2,7 +2,8 @@ import nock from 'nock';
 import { AppConfig } from '../src/app-config';
 import credentials from '../src/common/credentials';
 
-process.stdout.isTTY = undefined;
+const disableTTY = require('../src/common/tty');
+disableTTY();
 
 const app_config = new AppConfig();
 
