@@ -11,6 +11,7 @@ const disableTTY = () => {
         throw new Error(`${prompt.name} is required`);
       }
     }
+    return {};
   };
   inquirer.prompt.registerPrompt = function () { };
 };
