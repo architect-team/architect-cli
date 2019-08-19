@@ -1,7 +1,21 @@
 #!/usr/bin/env node
 
 const isCI = require('is-ci');
-process.stdout.isTTY = !isCI && process.stdout.isTTY;
+if (isCI) {
+    process.stdout.isTTY = undefined;
+    const inquirer = require('inquirer');
+    inquirer.prompt = async function (prompts) {
+        if (!Array.isArray(prompts)) {
+            prompts = [prompts];
+        }
+        for (const prompt of prompts) {
+            if (prompt.when) {
+                throw new Error(`${prompt.name} is required`);
+            }
+        }
+    };
+    inquirer.prompt.registerPrompt = function () { };
+}
 require('@oclif/command').run()
     .then(require('@oclif/command/flush'))
     .catch(require('@oclif/errors/handle'));

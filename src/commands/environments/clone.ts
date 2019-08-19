@@ -50,7 +50,8 @@ export default class CloneEnvironment extends Command {
       when: !args.environment
     } as inquirer.Question, {
       type: 'input',
-      name: 'New name',
+      name: 'name',
+      message: 'New name',
       when: !flags.name,
       filter: value => value.toLowerCase(),
       validate: value => {
@@ -59,7 +60,8 @@ export default class CloneEnvironment extends Command {
       }
     }, {
       type: 'input',
-      name: 'New namespace',
+      name: 'namespace',
+      message: 'New namespace',
       when: !flags.namespace,
       filter: value => value.toLowerCase(),
       validate: value => {
