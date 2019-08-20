@@ -179,14 +179,14 @@ export default class Deploy extends Command {
         if (dependency.config.host) {
           dependency_host = dependency.config.host;
         } else if (api_type === 'grpc') {
-          dependency_host = 'host.docker.internal';
+          dependency_host = dependency_name;
         } else {
           // tslint:disable-next-line: no-http-string
-          dependency_host = 'http://host.docker.internal';
+          dependency_host = `http://${dependency_name}`;
         }
         architect[dependency.config.name] = {
           host: dependency_host,
-          port: dependency.config.host ? dependency.config.port : await service_port(dependency.config.name),
+          port: dependency.config.port,
           api: api_type
         };
         if (service === dependency) {
@@ -209,17 +209,14 @@ export default class Deploy extends Command {
         }
 
         let datastore_host;
-        let datastore_port;
         if (datastore.host) {
           datastore_host = datastore.host;
-          datastore_port = datastore.port;
         } else {
           const datastore_service_name = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
-          datastore_host = 'host.docker.internal';
-          datastore_port = await service_port(datastore_service_name);
+          datastore_host = datastore_service_name;
           docker_compose.services[datastore_service_name] = {
             image: `${datastore.image}`,
-            ports: [`${datastore_port}:${datastore.port}`],
+            ports: [`${await service_port(datastore_service_name)}:${datastore.port}`],
             environment: datastore_environment
           };
           depends_on.push(datastore_service_name);
@@ -228,7 +225,7 @@ export default class Deploy extends Command {
         architect[service.config.name].datastores[datastore_name] = {
           ...datastore_aliases,
           host: datastore_host,
-          port: datastore_port
+          port: datastore.port
         };
       }
 
