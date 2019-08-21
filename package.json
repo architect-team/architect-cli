@@ -92,7 +92,7 @@
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
+    "test": "nyc --extension .ts mocha --exit --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add -Af README.md dist",
     "postpublish": "git push && git push --tags"
   },
