@@ -5,7 +5,7 @@ const spawn = child_process.spawn;
 
 describe('deploy', () => {
   test
-    .timeout(1000 * 60 * 5)
+    .timeout(1000 * 60 * 3)
     .stdout()
     // child_process stdio:inherit doesn't get captured by stubbed stdout()
     .stub(child_process, 'spawn', (a: any, b: any, c: any) => {

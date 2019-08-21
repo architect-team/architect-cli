@@ -245,21 +245,27 @@ export default class Deploy extends Command {
         image: service.tag,
         ports: [`${await service_port(service.config.name)}:${service.config.port}`],
         depends_on,
-        environment,
-        command: service.config.debug
+        environment
       };
       if (service.local) {
-        const volumes = [];
-        const src_path = path.join(service.service_path, 'src');
-        if (await fs.pathExists(src_path)) {
-          volumes.push(`${src_path}:/usr/src/app/src:ro`);
-        }
-
         docker_compose.services[service_host] = {
           ...docker_compose.services[service_host],
-          build: service.service_path,
-          volumes,
+          build: service.service_path
         };
+
+        if (process.stdout.isTTY) {
+          const volumes = [];
+          const src_path = path.join(service.service_path, 'src');
+          if (await fs.pathExists(src_path)) {
+            volumes.push(`${src_path}:/usr/src/app/src:ro`);
+          }
+
+          docker_compose.services[service_host] = {
+            ...docker_compose.services[service_host],
+            volumes,
+            command: service.config.debug
+          };
+        }
       }
     }
 
