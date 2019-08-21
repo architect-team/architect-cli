@@ -43,12 +43,11 @@ jobs:
           name: npm link
           command: npm link .
       - run:
+          name: run tests
+          command: npm test
+      - run:
           name: architect deploy
-          # TODO auto login?
           command: |
             architect login
             architect push test/calculator-sample-project/addition-service
             architect deploy architect/addition-service:0.2.0 --environment test --auto_approve
-      - run:
-          name: run tests
-          command: npm test
