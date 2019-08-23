@@ -15,6 +15,7 @@ export default class DestroyEnvironment extends Command {
   ];
 
   static flags = {
+    auto_approve: flags.boolean(),
     force: flags.boolean({ char: 'f' }),
     help: flags.help({ char: 'h' }),
   };
@@ -62,7 +63,8 @@ export default class DestroyEnvironment extends Command {
           return true;
         }
         return `Name must match: ${_info(environment)}`;
-      }
+      },
+      when: !flags.auto_approve
     }]);
     return { ...args, ...flags, ...answers };
   }

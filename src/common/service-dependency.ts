@@ -156,14 +156,22 @@ export default abstract class ServiceDependency {
   }
 
   abstract async _load(): Promise<void>;
-  abstract get tag(): string;
+  abstract tag(tag?: string): string;
+
+  display_tag(tag?: string): string {
+    return this.tag(tag).split('/').splice(1).join('/');
+  }
 }
 
 class LocalServiceDependency extends ServiceDependency {
   local = true;
 
-  get tag() {
-    return `architect-${this.config.full_name}`;
+  tag(tag?: string) {
+    if (tag) {
+      return `${this.app_config.default_registry_host}/${this.config.name}:${tag}`;
+    } else {
+      return `${this.app_config.default_registry_host}/${this.config.full_name}`;
+    }
   }
 
   async _load() {
@@ -178,7 +186,7 @@ class LocalServiceDependency extends ServiceDependency {
 }
 
 class DockerServiceDependency extends ServiceDependency {
-  get tag() {
+  tag() {
     return url.resolve(`${this.app_config.default_registry_host}/`, `${this.config.full_name}`);
   }
 

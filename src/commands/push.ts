@@ -2,7 +2,6 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import execa from 'execa';
 import Listr from 'listr';
-import url from 'url';
 import Command from '../base';
 import ServiceDependency from '../common/service-dependency';
 import Build from './build';
@@ -14,10 +13,16 @@ export default class Push extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
+    tag: flags.string({
+      char: 't',
+      description: 'Tag for the architect image',
+      exclusive: ['recursive']
+    }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
-      description: 'Whether or not to build images for the cited dependencies'
+      description: 'Whether or not to build images for the cited dependencies',
+      exclusive: ['tag']
     }),
     _local: flags.boolean({
       default: false,
@@ -51,6 +56,7 @@ export default class Push extends Command {
     const build_args = [root_service_path];
     if (flags.recursive) build_args.push('-r');
     if (flags._local) build_args.push('--_local');
+    if (flags.tag) { build_args.push('--tag'); build_args.push(flags.tag); }
     await Build.run(build_args);
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
@@ -58,7 +64,7 @@ export default class Push extends Command {
     const tasks = [];
     for (const dependency of dependencies) {
       tasks.push({
-        title: `Pushing docker image for ${_info(`${dependency.config.full_name}`)}`,
+        title: `Pushing docker image for ${_info(`${dependency.display_tag(flags.tag)}`)}`,
         task: async () => {
           if (!flags._local && dependency.dependencies.some(d => d.local)) {
             throw new Error('Cannot push image with local dependencies');
@@ -72,8 +78,7 @@ export default class Push extends Command {
   }
 
   async pushImage(service: ServiceDependency) {
-    const repository_name = url.resolve(`${this.app_config.default_registry_host}/`, service.config.full_name);
-    await execa('docker', ['tag', service.tag, repository_name]);
-    await execa('docker', ['push', repository_name]);
+    const { flags } = this.parse(Push);
+    await execa('docker', ['push', service.tag(flags.tag)]);
   }
 }
