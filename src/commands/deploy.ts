@@ -242,7 +242,7 @@ export default class Deploy extends Command {
       };
 
       docker_compose.services[service_host] = {
-        image: service.tag,
+        image: service.tag(),
         ports: [`${await service_port(service.config.name)}:${service.config.port}`],
         depends_on,
         environment

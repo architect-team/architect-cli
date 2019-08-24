@@ -45,9 +45,18 @@ jobs:
       - run:
           name: run tests
           command: npm test
+          environment:
+            TEST_OUTPUT: 1
       - run:
           name: architect deploy
           command: |
+            TAG=clici-$CIRCLE_BUILD_NUM
+            ENV=test-$TAG
+            SERVICE=architect/addition-service:$TAG
+
             architect login
-            architect push test/calculator-sample-project/addition-service
-            architect deploy architect/addition-service:0.2.0 --environment test --auto_approve
+            architect push test/calculator-sample-project/addition-service --tag $TAG
+            architect environment:clone test --name $ENV --namespace $ENV
+            architect deploy $SERVICE --environment $ENV --auto_approve
+            architect environment:services:destroy $ENV --service $SERVICE --auto_approve
+            architect environment:destroy $ENV --auto_approve

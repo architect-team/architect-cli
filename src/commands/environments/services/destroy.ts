@@ -11,12 +11,13 @@ export default class DestroyService extends Command {
   static aliases = ['environment:services:destroy'];
 
   static args = [
-    { name: 'service', description: 'Service name', required: false }
+    { name: 'environment', description: 'Environment name', required: false }
   ];
 
   static flags = {
     help: flags.help({ char: 'h' }),
-    environment: flags.string({ description: 'Environment name' }),
+    service: flags.string({ char: 's', description: 'Service name' }),
+    auto_approve: flags.boolean(),
     deployment_id: flags.string({ char: 'p' })
   };
 
@@ -44,10 +45,11 @@ export default class DestroyService extends Command {
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
-        message: 'Would you like to apply this deployment?'
+        message: 'Would you like to apply this deployment?',
+        when: !answers.auto_approve
       } as inquirer.Question);
 
-      if (confirmation.deploy) {
+      if (confirmation.deploy || answers.auto_approve) {
         await this.deploy(deployment.id);
       } else {
         this.warn('Canceled deploy');
@@ -81,29 +83,30 @@ export default class DestroyService extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !flags.environment
+      when: !args.environment
     } as inquirer.Question, {
       type: 'autocomplete',
       name: 'service',
       message: 'Select service:',
       source: async (answers: any, input: string) => {
-        const environment = flags.environment || answers.environment;
+        const environment = args.environment || answers.environment;
         const params = { q: input };
         const { data: services } = await this.architect.get(`/environments/${environment}/services`, { params });
         return services;
       },
-      when: !args.service
+      when: !flags.service
     } as inquirer.Question, {
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure?\nThis will destroy the service from the environment.\nPlease type in the name of the service to confirm.\n',
       validate: (value, answers) => {
-        const service = args.service || answers!.service;
+        const service = flags.service || answers!.service;
         if (value === service) {
           return true;
         }
         return `Name must match: ${_info(service)}`;
-      }
+      },
+      when: !flags.auto_approve
     }]);
     return { ...args, ...flags, ...answers };
   }

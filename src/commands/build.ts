@@ -13,10 +13,16 @@ export default class Build extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
+    tag: flags.string({
+      char: 't',
+      description: 'Tag for the architect image',
+      exclusive: ['recursive']
+    }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
-      description: 'Whether or not to build images for the cited dependencies'
+      description: 'Whether or not to build images for the cited dependencies',
+      exclusive: ['tag']
     }),
     _local: flags.boolean({
       default: false,
@@ -59,7 +65,7 @@ export default class Build extends Command {
 
     dependencies.forEach(dependency => {
       tasks.push({
-        title: `Building docker image for ${_info(dependency.config.full_name)}`,
+        title: `Building docker image for ${_info(dependency.display_tag(flags.tag))}`,
         task: async () => {
           await this.buildImage(dependency);
         }
@@ -89,7 +95,7 @@ export default class Build extends Command {
       'build',
       '--compress',
       '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', service.tag,
+      '-t', service.tag(flags.tag),
       '--label', `architect.json=${JSON.stringify(service_config)}`,
       '--label', `api_definitions=${JSON.stringify(service.api_definitions)}`,
       service.service_path

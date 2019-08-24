@@ -20,7 +20,7 @@ describe('build', () => {
       expect(stdout).to.contain('Building docker image for architect/subtraction-service');
       expect(stdout).to.contain('Building docker image for architect/addition-service');
 
-      const docker_images = execSync('docker images | grep architect-');
+      const docker_images = execSync('docker images | grep architect/');
       expect(docker_images.toString()).to.contain('architect/subtraction-service');
       expect(docker_images.toString()).to.contain('architect/addition-service');
     });
