@@ -34,7 +34,7 @@ export default class CreateEnvironment extends Command {
       type: answers.type,
       service_token: await readIfFile(answers.service_token),
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config ? await fs.readJSON(untildify((answers.config))) : undefined
+      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined
     };
 
     const tasks = new Listr([
