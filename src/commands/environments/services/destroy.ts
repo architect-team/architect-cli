@@ -32,8 +32,7 @@ export default class DestroyService extends Command {
         {
           title: `Planning deletion of service ${_info(answers.service)} from environment ${_info(answers.environment)}`,
           task: async () => {
-            const data = { service: answers.service, environment: answers.environment };
-            const { data: res } = await this.architect.delete('/deploy', { data });
+            const { data: res } = await this.architect.delete(`environments/${answers.environment}/services/${encodeURIComponent(answers.service)}`);
             deployment = res;
           }
         },
@@ -92,7 +91,7 @@ export default class DestroyService extends Command {
         const environment = args.environment || answers.environment;
         const params = { q: input };
         const { data: services } = await this.architect.get(`/environments/${environment}/services`, { params });
-        return services;
+        return services.map((service: any) => `${service.name}:${service.tag}`);
       },
       when: !flags.service
     } as inquirer.Question, {
