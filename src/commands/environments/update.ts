@@ -1,6 +1,8 @@
 import { flags } from '@oclif/command';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import Listr from 'listr';
+import untildify from 'untildify';
 import Command from '../../base';
 import { readIfFile } from '../../common/file-util';
 import { EnvironmentNameValidator } from '../../common/validation-utils';
@@ -27,7 +29,7 @@ export default class UpdateEnvironment extends Command {
       host: answers.host,
       service_token: await readIfFile(answers.service_token),
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: await readIfFile(answers.config)
+      config: answers.config ? await fs.readJSON(untildify((answers.config))) : undefined
     };
 
     const tasks = new Listr([
