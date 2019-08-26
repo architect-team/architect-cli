@@ -32,7 +32,7 @@ export default class DestroyService extends Command {
         {
           title: `Planning deletion of service ${_info(answers.service)} from environment ${_info(answers.environment)}`,
           task: async () => {
-            const { data: res } = await this.architect.delete(`environments/${answers.environment}/services/${answers.service}`);
+            const { data: res } = await this.architect.delete(`environments/${answers.environment}/services/${encodeURI(answers.service)}`);
             deployment = res;
           }
         },
