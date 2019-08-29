@@ -250,14 +250,17 @@ export default class Deploy extends Command {
       if (service.local) {
         docker_compose.services[service_host] = {
           ...docker_compose.services[service_host],
-          build: service.service_path
+          build: {
+            context: service.service_path,
+            args: ['ARCHITECT_DEBUG=1']
+          }
         };
 
         if (process.stdout.isTTY) {
           const volumes = [];
           const src_path = path.join(service.service_path, 'src');
           if (await fs.pathExists(src_path)) {
-            volumes.push(`${src_path}:/usr/src/app/src:ro`);
+            volumes.push(`${src_path}:/usr/src/app/src`);
           }
 
           docker_compose.services[service_host] = {
