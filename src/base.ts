@@ -29,6 +29,11 @@ export default abstract class ArchitectCommand extends Command {
 
     if (!ArchitectCommand.architect) {
       ArchitectCommand.architect = new ArchitectClient(this.app_config);
+      try {
+        await ArchitectCommand.architect.getToken();
+      } catch {
+        // Try to refresh token if expired
+      }
     }
     this.architect = ArchitectCommand.architect;
   }
@@ -152,16 +157,23 @@ class ArchitectClient {
     return auth_result;
   }
 
-  protected async _getUser(): Promise<UserEntity> {
+  async getToken() {
     const credential = await credentials.findCredential('architect.io/token');
     if (!credential) {
-      throw Error('`architect login` required');
+      return;
     }
     let auth = JSON.parse(credential.password);
     if ((auth.issued_at + auth.expires_in) < new Date().getTime() / 1000) {
       auth = await this.refreshToken();
     }
+    return auth;
+  }
 
+  protected async _getUser(): Promise<UserEntity> {
+    const auth = await this.getToken();
+    if (!auth) {
+      throw Error('`architect login` required');
+    }
     const user = new UserEntity(auth.access_token, auth.profile.nickname);
     if (!user.username) {
       throw Error('`architect login` required');
