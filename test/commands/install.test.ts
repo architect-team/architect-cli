@@ -3,10 +3,10 @@ import { expect, test } from '@oclif/test';
 describe('install', () => {
   test
     .stdout()
-    .command(['install', '--prefix', './test/calculator-sample-project/addition-service/'])
+    .command(['install', '--prefix', './test/calculator-sample-project/addition-service/grpc/'])
     .it('installs dependency stubs', ctx => {
       const { stdout } = ctx;
-      expect(stdout).to.contain('Installing dependencies for addition-service');
+      expect(stdout).to.contain('Installing dependencies for architect/addition-service');
     });
 
   test
@@ -14,13 +14,12 @@ describe('install', () => {
     .command([
       'install',
       '--recursive',
-      '--prefix', './test/calculator-sample-project/test-script/'
+      '--prefix', './test/calculator-sample-project/division-service/'
     ])
     .it('installs dependencies recursively', ctx => {
       const { stdout } = ctx;
-      expect(stdout).to.contain('Installing dependencies for test-script');
-      expect(stdout).to.contain('Installing dependencies for division-service');
-      expect(stdout).to.contain('Installing dependencies for rest');
-      expect(stdout).to.contain('Installing dependencies for addition-service');
+      expect(stdout).to.contain('Installing dependencies for architect/division-service');
+      expect(stdout).to.contain('Installing dependencies for architect/subtraction-service');
+      expect(stdout).to.contain('Installing dependencies for architect/addition-service');
     });
 });

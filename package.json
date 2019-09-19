@@ -27,6 +27,7 @@
     "inquirer-autocomplete-prompt": "^1.0.1",
     "is-ci": "^2.0.0",
     "joi": "^14.3.1",
+    "js-yaml": "^3.13.1",
     "listr": "^0.14.3",
     "oclif": "^1.13.4",
     "protocol-buffers": "^4.1.0",
@@ -46,6 +47,7 @@
     "@types/fs-extra": "^7.0.0",
     "@types/inquirer": "0.0.43",
     "@types/joi": "^14.3.3",
+    "@types/js-yaml": "^3.12.1",
     "@types/listr": "^0.14.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.14.10",
@@ -87,14 +89,13 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
-    "postpack": "rm -f oclif.manifest.json",
-    "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
-    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",
+    "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
     "test": "nyc --extension .ts mocha --exit --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add -Af README.md dist",
-    "postpublish": "git push && git push --tags"
+    "build": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "version": "npm run build && git add -Af README.md",
+    "postversion": "git push && git push --tags"
   },
   "types": "lib/index.d.ts"
 }

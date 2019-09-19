@@ -40,10 +40,12 @@ USAGE
 * [`architect commands`](#architect-commands)
 * [`architect deploy [SERVICE]`](#architect-deploy-service)
 * [`architect environments [ENVIRONMENT]`](#architect-environments-environment)
+* [`architect environments:clone [ENVIRONMENT]`](#architect-environmentsclone-environment)
 * [`architect environments:create [NAME]`](#architect-environmentscreate-name)
 * [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
 * [`architect environments:services [ENVIRONMENT]`](#architect-environmentsservices-environment)
-* [`architect environments:services:destroy [SERVICE]`](#architect-environmentsservicesdestroy-service)
+* [`architect environments:services:destroy [ENVIRONMENT]`](#architect-environmentsservicesdestroy-environment)
+* [`architect environments:update [NAME]`](#architect-environmentsupdate-name)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
@@ -90,6 +92,7 @@ ARGUMENTS
 OPTIONS
   -h, --help       show CLI help
   -r, --recursive  Whether or not to build images for the cited dependencies
+  -t, --tag=tag    Tag for the architect image
   -v, --verbose    Verbose log output
 ```
 
@@ -156,9 +159,31 @@ ALIASES
 
 _See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/index.ts)_
 
+## `architect environments:clone [ENVIRONMENT]`
+
+Clone environment
+
+```
+USAGE
+  $ architect environments:clone [ENVIRONMENT]
+
+ARGUMENTS
+  ENVIRONMENT  Environment name
+
+OPTIONS
+  -h, --help             show CLI help
+  --name=name
+  --namespace=namespace
+
+ALIASES
+  $ architect environment:clone
+```
+
+_See code: [src/commands/environments/clone.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/clone.ts)_
+
 ## `architect environments:create [NAME]`
 
-Create or update environment
+Create environment
 
 ```
 USAGE
@@ -168,18 +193,17 @@ ARGUMENTS
   NAME  Environment name
 
 OPTIONS
+  -c, --config_file=config_file
   -h, --help                                       show CLI help
-  -v, --verbose                                    Verbose log output
+  -h, --host=host
+  -k, --kubeconfig=kubeconfig                      [default: ~/.kube/config]
+  -n, --namespace=namespace
+  -t, --type=kubernetes                            [default: kubernetes]
   --cluster_ca_certificate=cluster_ca_certificate  File path of cluster_ca_certificate
-  --host=host
-  --namespace=namespace
   --service_token=service_token                    Service token
-  --type=kubernetes                                [default: kubernetes]
 
 ALIASES
   $ architect environment:create
-  $ architect environment:update
-  $ architect environments:update
 ```
 
 _See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/create.ts)_
@@ -197,7 +221,8 @@ ARGUMENTS
 
 OPTIONS
   -f, --force
-  -h, --help   show CLI help
+  -h, --help      show CLI help
+  --auto_approve
 
 ALIASES
   $ architect environment:destroy
@@ -229,27 +254,52 @@ ALIASES
 
 _See code: [src/commands/environments/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/services/index.ts)_
 
-## `architect environments:services:destroy [SERVICE]`
+## `architect environments:services:destroy [ENVIRONMENT]`
 
 Destroy service from an environment
 
 ```
 USAGE
-  $ architect environments:services:destroy [SERVICE]
+  $ architect environments:services:destroy [ENVIRONMENT]
 
 ARGUMENTS
-  SERVICE  Service name
+  ENVIRONMENT  Environment name
 
 OPTIONS
   -h, --help                         show CLI help
   -p, --deployment_id=deployment_id
-  --environment=environment          Environment name
+  -s, --service=service              Service name
+  --auto_approve
 
 ALIASES
   $ architect environment:services:destroy
 ```
 
 _See code: [src/commands/environments/services/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/services/destroy.ts)_
+
+## `architect environments:update [NAME]`
+
+Update environment
+
+```
+USAGE
+  $ architect environments:update [NAME]
+
+ARGUMENTS
+  NAME  Environment name
+
+OPTIONS
+  -h, --help                                       show CLI help
+  --cluster_ca_certificate=cluster_ca_certificate  File path of cluster_ca_certificate
+  --config_file=config_file
+  --host=host
+  --service_token=service_token                    Service token
+
+ALIASES
+  $ architect environment:update
+```
+
+_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.2.4/src/commands/environments/update.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -351,6 +401,7 @@ ARGUMENTS
 OPTIONS
   -h, --help       show CLI help
   -r, --recursive  Whether or not to build images for the cited dependencies
+  -t, --tag=tag    Tag for the architect image
   -v, --verbose    Verbose log output
 ```
 

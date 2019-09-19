@@ -1,7 +1,7 @@
 version: 2
 
 jobs:
-  build:
+  test:
     docker:
       - image: architectio/architect-cli-base:latest
         environment:
@@ -30,6 +30,33 @@ jobs:
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
+      - run:
+          name: npm link
+          command: npm link .
+      - run:
+          name: run tests
+          command: npm test
+          environment:
+            TEST_OUTPUT: "1"
+      - run:
+          name: architect deploy
+          command: |
+            TAG=clici-$CIRCLE_BUILD_NUM
+            ENV=test-$TAG
+            SERVICE=architect/addition-service:$TAG
+
+            architect login
+            architect push test/calculator-sample-project/addition-service/grpc --tag $TAG
+            architect environment:clone test --name $ENV --namespace $ENV
+            architect deploy $SERVICE --environment $ENV --auto_approve
+            architect environment:services:destroy $ENV --service $SERVICE --auto_approve
+            architect environment:destroy $ENV --auto_approve
+
+  build:
+    working_directory: ~/cli
+    docker:
+      - image: architectio/architect-cli-base:latest
+    steps:
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
@@ -39,24 +66,55 @@ jobs:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
-      - run:
-          name: npm link
-          command: npm link .
-      - run:
-          name: run tests
-          command: npm test
-          environment:
-            TEST_OUTPUT: 1
-      - run:
-          name: architect deploy
-          command: |
-            TAG=clici-$CIRCLE_BUILD_NUM
-            ENV=test-$TAG
-            SERVICE=architect/addition-service:$TAG
+      - run: npm run build
+      - persist_to_workspace:
+          root: ~/cli
+          paths:
+            - bin
+            - lib
+            - npm-shrinkwrap.json
+            - oclif.manifest.json
+            - package.json
+            - package-lock.json
+            - README.md
 
-            architect login
-            architect push test/calculator-sample-project/addition-service --tag $TAG
-            architect environment:clone test --name $ENV --namespace $ENV
-            architect deploy $SERVICE --environment $ENV --auto_approve
-            architect environment:services:destroy $ENV --service $SERVICE --auto_approve
-            architect environment:destroy $ENV --auto_approve
+  publish:
+    working_directory: ~/cli
+    docker:
+      - image: node:12
+    steps:
+      - attach_workspace:
+          at: ~/cli
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/sdk/.npmrc
+      - run:
+          name: Publish package
+          command: npm publish --access public
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test:
+          filters:
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+  deploy:
+    jobs:
+      - test:
+          context: Architect Cloud
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - build:
+          requires:
+            - test
+      - publish:
+          context: NPM Packaging
+          requires:
+            - build
