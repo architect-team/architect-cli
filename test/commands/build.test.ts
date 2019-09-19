@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 describe('build', () => {
   test
     .stdout()
-    .command(['build', './test/calculator-sample-project/addition-service/'])
+    .command(['build', './test/calculator-sample-project/addition-service/grpc/'])
     .it('builds docker image', ctx => {
       const { stdout } = ctx;
       expect(stdout).to.contain('Building docker image for architect/addition-service');

@@ -1,7 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import Listr from 'listr';
-import path from 'path';
 import Command from '../base';
 import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
@@ -64,7 +63,7 @@ export default class Install extends Command {
       new_dependencies[service_name] = service_version;
       root_service.config.setDependencies(new_dependencies);
 
-      const tasks = this.get_tasks(root_service, flags.recursive);
+      const tasks = await this.get_tasks(root_service, flags.recursive);
       tasks.push({
         title: 'Updating architect.json',
         task: () => {
@@ -79,22 +78,22 @@ export default class Install extends Command {
     }
   }
 
-  get_tasks(service_dependency: ServiceDependency, recursive: boolean, _seen: Set<ServiceDependency> = new Set()): Listr.ListrTask[] {
+  async get_tasks(service_dependency: ServiceDependency, recursive: boolean, _seen: Set<ServiceDependency> = new Set()): Promise<Listr.ListrTask[]> {
     if (_seen.has(service_dependency)) {
       return [];
     } else {
       _seen.add(service_dependency);
     }
-    let service_name = service_dependency.local ? path.basename(service_dependency.service_path) : service_dependency.service_path;
+    await service_dependency.load();
+    let service_name = service_dependency.config.name;
     let tasks: Listr.ListrTask[] = [{
       title: `Loading ${_info(service_name)}`,
       task: async () => {
-        await service_dependency.load();
         let sub_tasks: Listr.ListrTask[] = [];
         if (recursive || service_dependency.root) {
-          service_dependency.dependencies.forEach(sub_dependency => {
-            sub_tasks = sub_tasks.concat(this.get_tasks(sub_dependency, recursive, _seen));
-          });
+          await Promise.all(service_dependency.dependencies.map(async sub_dependency => {
+            sub_tasks = sub_tasks.concat(await this.get_tasks(sub_dependency, recursive, _seen));
+          }));
         }
         return new Listr(sub_tasks);
       }
