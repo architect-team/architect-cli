@@ -141,9 +141,14 @@ export default class CreateEnvironment extends Command {
         task: async (listr_ctx: any) => {
           // Retrieve cluster host and ca certificate
           const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === answers.context.context.cluster);
-          const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
+          let cluster_ca_certificate: string;
+          if (cluster.cluster.hasOwnProperty('certificate-authority-data')) {
+            const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
+            cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
+          } else {
+            cluster_ca_certificate = await fs.readFile(untildify(cluster.cluster['certificate-authority']), 'utf-8');
+          }
           const cluster_host = cluster.cluster.server;
-          const cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
 
           // Retrieve service account token
           let saRes = await execa('kubectl', [
