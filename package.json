@@ -89,14 +89,13 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
-    "postpack": "rm -f oclif.manifest.json",
-    "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
-    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "preinstall": "sh ./bin/preinstall.sh",
     "postinstall": "sh ./bin/postinstall.sh",
+    "pretest": "tslint -p tsconfig.json -c tslint.json -t stylish",
     "test": "nyc --extension .ts mocha --exit --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add -Af README.md dist",
-    "postpublish": "git push && git push --tags"
+    "build": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "version": "npm run build && git add -Af README.md",
+    "postversion": "git push && git push --tags"
   },
   "types": "lib/index.d.ts"
 }
