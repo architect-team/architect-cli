@@ -57,6 +57,7 @@ jobs:
     docker:
       - image: architectio/architect-cli-base:latest
     steps:
+      - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
