@@ -56,6 +56,14 @@ export default class CreateEnvironment extends Command {
       throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
     }
 
+    const set_kubeconfig = ['--kubeconfig', untildify(flags.kubeconfig)];
+
+    // Get original kubernetes current-context
+    const { stdout: original_kubecontext } = await execa('kubectl', [
+      ...set_kubeconfig,
+      'config', 'current-context',
+    ]);
+
     // Prompt user for required inputs
     const answers: any = await inquirer.prompt([
       {
@@ -75,7 +83,17 @@ export default class CreateEnvironment extends Command {
         name: 'context',
         message: 'Which kube context points to your cluster?',
         choices: kubeconfig.contexts.map((ctx: any) => ctx.name),
-        filter: value => kubeconfig.contexts.find((ctx: any) => ctx.name === value),
+        filter: async value => {
+          // Set the context to the one the user selected
+          await execa('kubectl', [
+            ...set_kubeconfig,
+            'config', 'set',
+            'current-context', value,
+          ]);
+
+          // Set the context value to the matching object from the kubeconfig
+          return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
+        },
       },
       {
         type: 'input',
@@ -84,10 +102,27 @@ export default class CreateEnvironment extends Command {
         default: 'architect',
       },
       {
+        when: async (answers: any) => {
+          try {
+            await execa('kubectl', [
+              ...set_kubeconfig,
+              'get', 'sa', answers.service_account_name,
+              '-o', 'json'
+            ]);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        type: 'confirm',
+        name: 'use_existing_sa',
+        message: 'A service account with that name already exists. Would you like to use it for this environment?',
+      },
+      {
+        when: answers => !flags.namespace && answers.use_existing_sa !== false,
         type: 'input',
         name: 'namespace',
         message: 'What namespace should the environment deploy resources to?',
-        when: !flags.namespace,
         filter: value => value.toLowerCase(),
         validate: value => {
           if (EnvironmentNameValidator.test(value)) return true;
@@ -97,26 +132,48 @@ export default class CreateEnvironment extends Command {
       },
     ]);
 
-    const set_kubeconfig = ['--kubeconfig', untildify(flags.kubeconfig)];
+    if (answers.use_existing_sa === false) {
+      throw new Error('Please select another service account name');
+    }
+
+    // Make sure the existing SA uses cluster-admin role binding
+    if (answers.use_existing_sa) {
+      const { stdout } = await execa('kubectl', [
+        ...set_kubeconfig,
+        'get', 'clusterrolebinding',
+        '-o', 'json',
+      ]);
+      const clusterrolebindings = JSON.parse(stdout);
+      const sa_binding = clusterrolebindings.items.find(
+        (rolebinding: any) =>
+          rolebinding.subjects &&
+          rolebinding.subjects.length > 0 &&
+          rolebinding.subjects.find(
+            (subject: any) =>
+              subject.kind === 'ServiceAccount' &&
+              subject.name === answers.service_account_name
+          )
+      );
+
+      if (!sa_binding) {
+        await execa('kubectl', [
+          ...set_kubeconfig,
+          'create',
+          'clusterrolebinding',
+          `${answers.service_account_name}-cluster-admin`,
+          '--clusterrole',
+          'cluster-admin',
+          '--serviceaccount',
+          `default:${answers.service_account_name}`,
+        ]);
+      }
+    }
 
     return [
       {
         title: 'Creating the service account',
-        task: async (listr_ctx: any) => {
-          // Retrieve the original kubernetes context so we can reset it later
-          const { stdout: original_context } = await execa('kubectl', [
-            ...set_kubeconfig,
-            'config', 'current-context',
-          ]);
-          listr_ctx.original_kubecontext = original_context;
-
-          // Set the context to the one the user selected
-          await execa('kubectl', [
-            ...set_kubeconfig,
-            'config', 'set',
-            'current-context', answers.context.name,
-          ]);
-
+        skip: () => answers.use_existing_sa === true,
+        task: async () => {
           // Create the service account
           await execa('kubectl', [
             ...set_kubeconfig,
@@ -165,13 +222,6 @@ export default class CreateEnvironment extends Command {
           const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
           const service_token = sa_token_buffer.toString('utf-8');
 
-          // Reset the kube context to its original value now that we're done
-          execa('kubectl', [
-            ...set_kubeconfig,
-            'config', 'set',
-            'current-context', listr_ctx.original_kubecontext,
-          ]);
-
           // Create the environment
           // tslint:disable-next-line:no-console
           listr_ctx.environment = await this.createArchitectEnvironment({
@@ -184,6 +234,15 @@ export default class CreateEnvironment extends Command {
             cluster_ca_certificate,
           });
         },
+      },
+      {
+        title: 'Resetting kubernetes current-context',
+        task: async () =>
+          execa('kubectl', [
+            ...set_kubeconfig,
+            'config', 'set',
+            'current-context', original_kubecontext,
+          ]),
       },
     ];
   }
