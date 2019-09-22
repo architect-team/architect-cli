@@ -114,7 +114,13 @@ workflows:
       - build:
           requires:
             - test
+          filters:
+            tags:
+              only: /^v.*/
       - publish:
           context: NPM Packaging
           requires:
             - build
+          filters:
+            tags:
+              only: /^v.*/
