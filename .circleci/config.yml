@@ -104,7 +104,7 @@ jobs:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/sdk/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
