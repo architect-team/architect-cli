@@ -8,7 +8,7 @@ disableTTY();
 const app_config = new AppConfig();
 
 const nock_token = { access_token: 'test' };
-const nock_profile = { nickname: 'test' };
+const nock_profile = { username: 'test' };
 
 nock.disableNetConnect();
 nock(`https://${app_config.oauth_domain}`)
