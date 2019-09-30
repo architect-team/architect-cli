@@ -12,7 +12,7 @@ const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
     .default('architect.auth0.com'),
   OAUTH_CLIENT_ID: Joi
     .string()
-    .default('lIpW9fq9IFQBBjTgllhN6EI01TXMhRVm'),
+    .default('079Kw3UOB5d2P6yZlyczP9jMNNq8ixds'),
   DEFAULT_REGISTRY_HOST: Joi
     .string()
     .default('registry.architect.io'),

@@ -57,6 +57,23 @@ jobs:
     docker:
       - image: architectio/architect-cli-base:latest
     steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install Docker client
+          command: |
+            set -x
+            VER="18.06.3-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
+      - run:
+          name: Install Docker Compose
+          command: |
+            curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+            chmod +x ~/docker-compose
+            sudo mv ~/docker-compose /usr/local/bin/docker-compose
       - restore_cache:
           key: dependency-cache-{{ checksum "package.json" }}
       - run:
@@ -87,7 +104,7 @@ jobs:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/sdk/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
@@ -114,7 +131,13 @@ workflows:
       - build:
           requires:
             - test
+          filters:
+            tags:
+              only: /^v.*/
       - publish:
           context: NPM Packaging
           requires:
             - build
+          filters:
+            tags:
+              only: /^v.*/
