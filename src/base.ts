@@ -174,7 +174,7 @@ class ArchitectClient {
     if (!auth) {
       throw Error('`architect login` required');
     }
-    const user = new UserEntity(auth.access_token, auth.profile.username);
+    const user = new UserEntity(auth.access_token, auth.profile['https://architect.io/username']);
     if (!user.username) {
       throw Error('`architect login` required');
     }

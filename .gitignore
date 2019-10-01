@@ -10,3 +10,4 @@ architect_services
 oclif.manifest.json
 *.env
 .DS_Store
+tsconfig.tsbuildinfo
