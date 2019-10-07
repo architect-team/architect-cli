@@ -283,6 +283,7 @@ export default class Deploy extends Command {
     const answers = await this.promptOptions();
 
     if (answers.deployment_id) {
+      await this.poll(answers.deployment_id, 'pending');
       await this.deploy(answers.deployment_id);
     } else {
       let deployment: any;
@@ -298,6 +299,8 @@ export default class Deploy extends Command {
             };
             const { data: res } = await this.architect.post(`/deploy`, { data });
             deployment = res;
+
+            await this.poll(deployment.id, 'pending');
           },
         },
       ]);
@@ -319,12 +322,31 @@ export default class Deploy extends Command {
     }
   }
 
+  async poll(deployment_id: string, match_status: string) {
+    return new Promise((resolve, reject) => {
+      let poll_count = 0;
+      const poll = setInterval(async () => {
+        const { data: deployment } = await this.architect.get(`/deploy/${deployment_id}`);
+        if (deployment.status.includes('failed') || poll_count > 100) {
+          clearInterval(poll);
+          reject(new Error('Deployment failed'));
+        }
+        if (deployment.status === match_status) {
+          clearInterval(poll);
+          resolve(deployment);
+        }
+        poll_count += 1;
+      }, 3000);
+    });
+  }
+
   async deploy(deployment_id: string) {
     const tasks = new Listr([
       {
         title: `Deploying`,
         task: async () => {
           await this.architect.post(`/deploy/${deployment_id}`);
+          await this.poll(deployment_id, 'applied');
         },
       },
     ]);
@@ -373,7 +395,7 @@ export default class Deploy extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !flags.environment,
+      when: !flags.environment && !flags.deployment_id,
     } as inquirer.Question]);
 
     return { ...options, ...answers };
