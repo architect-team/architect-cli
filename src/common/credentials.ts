@@ -44,7 +44,7 @@ const deletePassword = async (service: string): Promise<void> => {
   }
 };
 
-const findCredential = async (service: string): Promise<{ account: string, password: string }> => {
+const findCredential = async (service: string): Promise<{ account: string; password: string }> => {
   if (keytar) {
     const credentials = await keytar.findCredentials(service);
     return credentials.length ? credentials[0] : null;

@@ -11,14 +11,14 @@ export default class DestroyService extends Command {
   static aliases = ['environment:services:destroy'];
 
   static args = [
-    { name: 'environment', description: 'Environment name', required: false }
+    { name: 'environment', description: 'Environment name', required: false },
   ];
 
   static flags = {
     help: flags.help({ char: 'h' }),
     service: flags.string({ char: 's', description: 'Service name' }),
     auto_approve: flags.boolean(),
-    deployment_id: flags.string({ char: 'p' })
+    deployment_id: flags.string({ char: 'p' }),
   };
 
   async run() {
@@ -34,7 +34,7 @@ export default class DestroyService extends Command {
           task: async () => {
             const { data: res } = await this.architect.delete(`environments/${answers.environment}/services/${encodeURIComponent(answers.service)}`);
             deployment = res;
-          }
+          },
         },
       ]);
 
@@ -45,7 +45,7 @@ export default class DestroyService extends Command {
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply this deployment?',
-        when: !answers.auto_approve
+        when: !answers.auto_approve,
       } as inquirer.Question);
 
       if (confirmation.deploy || answers.auto_approve) {
@@ -62,8 +62,8 @@ export default class DestroyService extends Command {
         title: `Deploying`,
         task: async () => {
           await this.architect.post(`/deploy/${deployment_id}`);
-        }
-      }
+        },
+      },
     ]);
     await tasks.run();
   }
@@ -82,7 +82,7 @@ export default class DestroyService extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !args.environment
+      when: !args.environment,
     } as inquirer.Question, {
       type: 'autocomplete',
       name: 'service',
@@ -93,7 +93,7 @@ export default class DestroyService extends Command {
         const { data: services } = await this.architect.get(`/environments/${environment}/services`, { params });
         return services.map((service: any) => `${service.name}:${service.tag}`);
       },
-      when: !flags.service
+      when: !flags.service,
     } as inquirer.Question, {
       type: 'input',
       name: 'destroy',
@@ -105,7 +105,7 @@ export default class DestroyService extends Command {
         }
         return `Name must match: ${_info(service)}`;
       },
-      when: !flags.auto_approve
+      when: !flags.auto_approve,
     }]);
     return { ...args, ...flags, ...answers };
   }

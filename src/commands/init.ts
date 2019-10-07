@@ -22,38 +22,38 @@ export default class Init extends Command {
     }),
     version: flags.string({
       char: 'v',
-      default: '0.1.0'
+      default: '0.1.0',
     }),
     keywords: flags.string({
       char: 'k',
-      default: ''
+      default: '',
     }),
     author: flags.string({
-      char: 'a'
+      char: 'a',
     }),
     license: flags.string({
       char: 'l',
-      default: 'MIT'
+      default: 'MIT',
     }),
     output: flags.string({
       char: 'o',
       description: 'Directory to write file to',
       hidden: true,
-    })
+    }),
   };
 
   static args = [{
     name: 'name',
     char: 'n',
     default: path.basename(process.cwd()),
-    parse: (value: string) => value.toLowerCase()
+    parse: (value: string) => value.toLowerCase(),
   }];
 
   async run() {
     this.log(_info(INIT_INTRO_TEXT));
     const answers: any = await this.promptOptions();
 
-    let config = (new ServiceConfig())
+    const config = (new ServiceConfig())
       .setName(answers.name)
       .setVersion(answers.version)
       .setDescription(answers.description)
@@ -96,7 +96,7 @@ export default class Init extends Command {
           return `Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`;
         }
         return true;
-      }
+      },
     }, {
       type: 'input',
       name: 'version',
@@ -105,7 +105,7 @@ export default class Init extends Command {
         const validator = new SemvarValidator();
         if (validator.test(value)) return true;
         return 'Version numbers must use semantic versioning (semvar)';
-      }
+      },
     }, {
       type: 'input',
       name: 'description',
@@ -115,16 +115,16 @@ export default class Init extends Command {
       name: 'keywords',
       message: 'keywords (comma-separated):',
       default: flags.keywords,
-      filter: input => input.split(',').map(string => string.trim())
+      filter: input => input.split(',').map(string => string.trim()),
     }, {
       type: 'input',
       name: 'author',
       default: flags.author || user && user.username,
-      filter: input => [input]
+      filter: input => [input],
     }, {
       type: 'input',
       name: 'license',
-      default: flags.license
+      default: flags.license,
     }]);
   }
 }

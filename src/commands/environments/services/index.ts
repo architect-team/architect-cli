@@ -9,11 +9,11 @@ export default class Services extends Command {
     'environments:services:versions',
     'environment:services',
     'environment:services:list',
-    'environment:services:versions'
+    'environment:services:versions',
   ];
 
   static args = [
-    { name: 'environment', description: 'Environment name', required: false }
+    { name: 'environment', description: 'Environment name', required: false },
   ];
 
   static flags = {
@@ -33,7 +33,7 @@ export default class Services extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !args.environment
+      when: !args.environment,
     } as inquirer.Question]);
 
     const environment_name = { ...args, ...answers }.environment;

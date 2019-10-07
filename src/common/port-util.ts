@@ -13,7 +13,7 @@ namespace PortUtil {
 
   export const isPortAvailable = async (port: number) => new Promise<boolean>(resolve => {
     Promise.all([
-      _isPortAvailable('0.0.0.0', port) // ipv4
+      _isPortAvailable('0.0.0.0', port), // ipv4
     ])
       .then(() => resolve(true))
       .catch(() => {
@@ -24,7 +24,7 @@ namespace PortUtil {
   export const getAvailablePort = async () => {
     let port;
 
-    for (let p of AVAILABLE_PORTS) {
+    for (const p of AVAILABLE_PORTS) {
       if (seen_ports.has(p)) continue;
       const isAvailable = await isPortAvailable(p);
       if (isAvailable) {

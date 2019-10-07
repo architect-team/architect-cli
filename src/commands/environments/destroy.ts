@@ -11,7 +11,7 @@ export default class DestroyEnvironment extends Command {
   static aliases = ['environment:destroy'];
 
   static args = [
-    { name: 'environment', description: 'Environment name' }
+    { name: 'environment', description: 'Environment name' },
   ];
 
   static flags = {
@@ -31,7 +31,7 @@ export default class DestroyEnvironment extends Command {
           } else {
             return this.architect.delete(`/environments/${answers.environment}`);
           }
-        }
+        },
       },
     ]);
 
@@ -52,7 +52,7 @@ export default class DestroyEnvironment extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !args.environment
+      when: !args.environment,
     } as inquirer.Question, {
       type: 'input',
       name: 'destroy',
@@ -64,7 +64,7 @@ export default class DestroyEnvironment extends Command {
         }
         return `Name must match: ${_info(environment)}`;
       },
-      when: !flags.auto_approve
+      when: !flags.auto_approve,
     }]);
     return { ...args, ...flags, ...answers };
   }

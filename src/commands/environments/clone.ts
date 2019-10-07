@@ -13,7 +13,7 @@ export default class CloneEnvironment extends Command {
   static aliases = ['environment:clone'];
 
   static args = [
-    { name: 'environment', description: 'Environment name', parse: (value: string) => value.toLowerCase() }
+    { name: 'environment', description: 'Environment name', parse: (value: string) => value.toLowerCase() },
   ];
 
   static flags = {
@@ -28,7 +28,7 @@ export default class CloneEnvironment extends Command {
     cli.action.start(`Cloning environment ${_info(answers.environment)}`);
     const data = {
       name: answers.name,
-      namespace: answers.namespace
+      namespace: answers.namespace,
     };
     await this.architect.post(`/environments/${answers.environment}/clone`, { data });
     cli.action.stop(_success('Cloned'));
@@ -47,7 +47,7 @@ export default class CloneEnvironment extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !args.environment
+      when: !args.environment,
     } as inquirer.Question, {
       type: 'input',
       name: 'name',
@@ -57,7 +57,7 @@ export default class CloneEnvironment extends Command {
       validate: value => {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-      }
+      },
     }, {
       type: 'input',
       name: 'namespace',
@@ -68,7 +68,7 @@ export default class CloneEnvironment extends Command {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
       },
-      default: (answers: any) => answers.name
+      default: (answers: any) => answers.name,
     }]);
     return { ...args, ...flags, ...answers };
   }

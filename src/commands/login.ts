@@ -14,13 +14,13 @@ export default class Login extends Command {
     username: flags.string({
       char: 'u',
       description: 'Username',
-      env: 'ARCHITECT_USERNAME'
+      env: 'ARCHITECT_USERNAME',
     }),
     password: flags.string({
       char: 'p',
       description: 'Password',
-      env: 'ARCHITECT_PASSWORD'
-    })
+      env: 'ARCHITECT_PASSWORD',
+    }),
   };
 
   async run() {
@@ -38,11 +38,11 @@ export default class Login extends Command {
     const answers = await inquirer.prompt([{
       type: 'input',
       name: 'username',
-      when: !flags.username
+      when: !flags.username,
     }, {
       type: 'password',
       name: 'password',
-      when: !flags.password
+      when: !flags.password,
     }]);
     return { ...flags, ...answers };
   }

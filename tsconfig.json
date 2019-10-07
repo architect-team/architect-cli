@@ -1,12 +1,6 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "paths": {
-      "*": [
-        "node_modules/*",
-        "types/*"
-      ]
-    },
     "declaration": true,
     "importHelpers": true,
     "esModuleInterop": true,
