@@ -15,24 +15,24 @@ export default class Install extends Command {
     help: flags.help({ char: 'h' }),
     prefix: flags.string({
       char: 'p',
-      description: 'Path prefix indicating where the install command should execute from'
+      description: 'Path prefix indicating where the install command should execute from',
     }),
     recursive: flags.boolean({
       char: 'r',
-      description: 'Generate architect dependency files for all services in the dependency tree'
+      description: 'Generate architect dependency files for all services in the dependency tree',
     }),
     verbose: flags.boolean({
       char: 'v',
-      description: 'Verbose log output'
-    })
+      description: 'Verbose log output',
+    }),
   };
 
   static args = [
     {
       name: 'service_name',
       description: 'Remote service dependency',
-      required: false
-    }
+      required: false,
+    },
   ];
 
   async run() {
@@ -44,14 +44,16 @@ export default class Install extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Install);
-    let root_service_path = flags.prefix ? flags.prefix : process.cwd();
+    const root_service_path = flags.prefix ? flags.prefix : process.cwd();
 
     const root_service = ServiceDependency.create(this.app_config, root_service_path);
     if (args.service_name) {
       await root_service.load();
+      // eslint-disable-next-line prefer-const
       let [service_name, service_version] = args.service_name.split(':');
       if (!service_version) {
         const { data: service } = await this.architect.get(`/services/${service_name}`);
+        // eslint-disable-next-line require-atomic-updates
         service_version = service.tags.sort((a: string, b: string) => b.localeCompare(a, undefined, { numeric: true }))[0];
       }
       if (root_service.config.name === service_name) {
@@ -70,7 +72,7 @@ export default class Install extends Command {
           const config_json = ServiceConfig.loadJSONFromPath(root_service.service_path);
           config_json.dependencies[service_name] = service_version;
           ServiceConfig.writeToPath(root_service.service_path, config_json);
-        }
+        },
       });
       return tasks;
     } else {
@@ -85,18 +87,19 @@ export default class Install extends Command {
       _seen.add(service_dependency);
     }
     await service_dependency.load();
-    let service_name = service_dependency.config.name;
-    let tasks: Listr.ListrTask[] = [{
+    const service_name = service_dependency.config.name;
+    const tasks: Listr.ListrTask[] = [{
       title: `Loading ${_info(service_name)}`,
       task: async () => {
         let sub_tasks: Listr.ListrTask[] = [];
         if (recursive || service_dependency.root) {
           await Promise.all(service_dependency.dependencies.map(async sub_dependency => {
+            // eslint-disable-next-line require-atomic-updates
             sub_tasks = sub_tasks.concat(await this.get_tasks(sub_dependency, recursive, _seen));
           }));
         }
         return new Listr(sub_tasks);
-      }
+      },
     }];
 
     if (service_dependency.local && (recursive || service_dependency.root)) {
@@ -114,7 +117,7 @@ export default class Install extends Command {
           });
           await Promise.all(promises);
           await ProtocExecutor.clear(service_dependency);
-        }
+        },
       });
     }
 

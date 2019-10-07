@@ -19,7 +19,7 @@ const CONFIG_SCHEMA: Joi.ObjectSchema = Joi.object({
   API_HOST: Joi
     .string()
     .uri()
-    .default('https://api.architect.io')
+    .default('https://api.architect.io'),
 });
 
 const validate_config = (

@@ -7,7 +7,7 @@ export default class Services extends Command {
   static aliases = ['services:list', 'services:versions'];
 
   static args = [
-    { name: 'service_name', description: 'Service name', required: false }
+    { name: 'service_name', description: 'Service name', required: false },
   ];
 
   static flags = {
@@ -27,7 +27,7 @@ export default class Services extends Command {
         const { data: services } = await this.architect.get('/services', { params });
         return services.map((service: any) => service.name);
       },
-      when: !args.service_name
+      when: !args.service_name,
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
@@ -35,7 +35,7 @@ export default class Services extends Command {
       choices: async (answers_so_far: any) => {
         const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || args.service_name}`);
         return service.tags;
-      }
+      },
     }]);
 
     const service_name = { ...args, ...answers }.service_name;

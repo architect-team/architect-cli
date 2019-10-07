@@ -6,11 +6,11 @@ export default class Environments extends Command {
   static aliases = ['environments:list', 'environment', 'environment:list'];
 
   static args = [
-    { name: 'environment', description: 'Environment name' }
+    { name: 'environment', description: 'Environment name' },
   ];
 
   static flags = {
-    help: flags.help({ char: 'h' })
+    help: flags.help({ char: 'h' }),
   };
 
   async run() {

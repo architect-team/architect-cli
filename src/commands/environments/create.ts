@@ -1,10 +1,10 @@
 import { flags } from '@oclif/command';
-import fs from 'fs-extra';
-import path from 'path';
 import execa from 'execa';
-import yaml from 'js-yaml';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import yaml from 'js-yaml';
 import Listr from 'listr';
+import path from 'path';
 import untildify from 'untildify';
 import Command from '../../base';
 import { readIfFile } from '../../common/file-util';
@@ -25,7 +25,7 @@ export default class CreateEnvironment extends Command {
   static aliases = ['environment:create'];
 
   static args = [
-    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() }
+    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() },
   ];
 
   static flags = {
@@ -36,7 +36,7 @@ export default class CreateEnvironment extends Command {
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_certificate', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
     cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate', env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE' }),
-    config_file: flags.string({ char: 'c' })
+    config_file: flags.string({ char: 'c' }),
   };
 
   async genKubernetesTasks(): Promise<ReadonlyArray<Listr.ListrTask>> {
@@ -107,7 +107,7 @@ export default class CreateEnvironment extends Command {
             await execa('kubectl', [
               ...set_kubeconfig,
               'get', 'sa', answers.service_account_name,
-              '-o', 'json'
+              '-o', 'json',
             ]);
             return true;
           } catch {
@@ -199,7 +199,7 @@ export default class CreateEnvironment extends Command {
           // Retrieve cluster host and ca certificate
           const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === answers.context.context.cluster);
           let cluster_ca_certificate: string;
-          if (cluster.cluster.hasOwnProperty('certificate-authority-data')) {
+          if ('certificate-authority-data' in cluster.cluster) {
             const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
             cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
           } else {
@@ -208,13 +208,13 @@ export default class CreateEnvironment extends Command {
           const cluster_host = cluster.cluster.server;
 
           // Retrieve service account token
-          let saRes = await execa('kubectl', [
+          const saRes = await execa('kubectl', [
             ...set_kubeconfig,
             'get', 'sa', answers.service_account_name,
             '-o', 'json',
           ]);
           const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
-          let secret_res = await execa('kubectl', [
+          const secret_res = await execa('kubectl', [
             ...set_kubeconfig,
             'get', 'secrets', sa_secret_name,
             '-o', 'json',
@@ -256,7 +256,7 @@ export default class CreateEnvironment extends Command {
       type: answers.type,
       service_token: await readIfFile(answers.service_token),
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined
+      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
     };
 
     return [
@@ -264,8 +264,8 @@ export default class CreateEnvironment extends Command {
         title: 'Creating Environment',
         task: async listr_ctx => {
           listr_ctx.environment = await this.createArchitectEnvironment(data);
-        }
-      }
+        },
+      },
     ];
   }
 
@@ -294,7 +294,7 @@ export default class CreateEnvironment extends Command {
       validate: value => {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-      }
+      },
     }, {
       type: 'input',
       name: 'namespace',
@@ -304,11 +304,11 @@ export default class CreateEnvironment extends Command {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
       },
-      default: (answers: any) => answers.name
+      default: (answers: any) => answers.name,
     }, {
       type: 'input',
       name: 'host',
-      when: !flags.host
+      when: !flags.host,
     }, {
       type: 'input',
       name: 'service_token',

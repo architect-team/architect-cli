@@ -8,7 +8,7 @@ export default class Logout extends Command {
   static description = 'Logout of the Architect registry';
 
   static flags = {
-    help: flags.help({ char: 'h' })
+    help: flags.help({ char: 'h' }),
   };
 
   async run() {

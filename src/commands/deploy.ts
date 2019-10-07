@@ -21,7 +21,7 @@ export default class Deploy extends Command {
   static description = 'Deploy service to environments';
 
   static args = [
-    { name: 'service', description: 'Service name' }
+    { name: 'service', description: 'Service name' },
   ];
 
   static flags = {
@@ -31,7 +31,7 @@ export default class Deploy extends Command {
     auto_approve: flags.boolean({ exclusive: ['local'] }),
     local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
     services: flags.string({ char: 's', exclusive: ['environment, deployment_id'], multiple: true }),
-    config_file: flags.string()
+    config_file: flags.string(),
   };
 
   async run() {
@@ -100,11 +100,11 @@ export default class Deploy extends Command {
     const docker_compose: any = {
       version: '3',
       services: {},
-      volumes: {}
+      volumes: {},
     };
 
     const service_paths = flags.services || [
-      args.service ? args.service : process.cwd()
+      args.service ? args.service : process.cwd(),
     ];
 
     const dependencies_map: { [key: string]: ServiceDependency } = {};
@@ -153,6 +153,7 @@ export default class Deploy extends Command {
     const target_port_map: any = {};
     const service_port = async (service_name: string) => {
       if (!(service_name in target_port_map)) {
+        // eslint-disable-next-line require-atomic-updates
         target_port_map[service_name] = await PortUtil.getAvailablePort();
         this.log(_info(service_name), `0.0.0.0:${target_port_map[service_name]}`);
       }
@@ -187,7 +188,7 @@ export default class Deploy extends Command {
         architect[dependency.config.name] = {
           host: dependency_host,
           port: dependency.config.port,
-          api: api_type
+          api: api_type,
         };
         if (service === dependency) {
           architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};
@@ -217,7 +218,7 @@ export default class Deploy extends Command {
           docker_compose.services[datastore_service_name] = {
             image: `${datastore.image}`,
             ports: [`${await service_port(datastore_service_name)}:${datastore.port}`],
-            environment: datastore_environment
+            environment: datastore_environment,
           };
           depends_on.push(datastore_service_name);
         }
@@ -225,7 +226,7 @@ export default class Deploy extends Command {
         architect[service.config.name].datastores[datastore_name] = {
           ...datastore_aliases,
           host: datastore_host,
-          port: datastore.port
+          port: datastore.port,
         };
       }
 
@@ -238,22 +239,22 @@ export default class Deploy extends Command {
         HOST: service_host,
         PORT: service.config.port,
         ARCHITECT_CURRENT_SERVICE: service.config.name,
-        ARCHITECT: JSON.stringify(architect)
+        ARCHITECT: JSON.stringify(architect),
       };
 
       docker_compose.services[service_host] = {
         image: service.tag(),
         ports: [`${await service_port(service.config.name)}:${service.config.port}`],
         depends_on,
-        environment
+        environment,
       };
       if (service.local) {
         docker_compose.services[service_host] = {
           ...docker_compose.services[service_host],
           build: {
             context: service.service_path,
-            args: ['ARCHITECT_DEBUG=1']
-          }
+            args: ['ARCHITECT_DEBUG=1'],
+          },
         };
 
         if (process.stdout.isTTY) {
@@ -266,7 +267,7 @@ export default class Deploy extends Command {
           docker_compose.services[service_host] = {
             ...docker_compose.services[service_host],
             volumes,
-            command: service.config.debug
+            command: service.config.debug,
           };
         }
       }
@@ -293,12 +294,12 @@ export default class Deploy extends Command {
             const data = {
               service: `${answers.service_name}:${answers.service_version}`,
               environment: answers.environment,
-              config: config_json
+              config: config_json,
             };
             const { data: res } = await this.architect.post(`/deploy`, { data });
             deployment = res;
-          }
-        }
+          },
+        },
       ]);
       await tasks.run();
       this.log('Deployment Id:', deployment.id);
@@ -307,7 +308,7 @@ export default class Deploy extends Command {
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply this deployment?',
-        when: !answers.auto_approve
+        when: !answers.auto_approve,
       } as inquirer.Question);
 
       if (confirmation.deploy || answers.auto_approve) {
@@ -324,8 +325,8 @@ export default class Deploy extends Command {
         title: `Deploying`,
         task: async () => {
           await this.architect.post(`/deploy/${deployment_id}`);
-        }
-      }
+        },
+      },
     ]);
     await tasks.run();
   }
@@ -334,12 +335,12 @@ export default class Deploy extends Command {
     const { args, flags } = this.parse(Deploy);
 
     const [service_name, service_version] = args.service ? args.service.split(':') : [undefined, undefined];
-    let options = {
+    const options = {
       service_name,
       service_version,
       environment: flags.environment,
       auto_approve: flags.auto_approve,
-      deployment_id: flags.deployment_id
+      deployment_id: flags.deployment_id,
     };
 
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
@@ -353,7 +354,7 @@ export default class Deploy extends Command {
         const { data: services } = await this.architect.get('/services', { params });
         return services.map((service: any) => service.name);
       },
-      when: !service_name && !flags.deployment_id
+      when: !service_name && !flags.deployment_id,
     } as inquirer.Question, {
       type: 'list',
       name: 'service_version',
@@ -362,7 +363,7 @@ export default class Deploy extends Command {
         const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || service_name}`);
         return service.tags;
       },
-      when: !service_version && !flags.deployment_id
+      when: !service_version && !flags.deployment_id,
     }, {
       type: 'autocomplete',
       name: 'environment',
@@ -372,7 +373,7 @@ export default class Deploy extends Command {
         const { data: environments } = await this.architect.get('/environments', { params });
         return environments.map((environment: any) => environment.name);
       },
-      when: !flags.environment
+      when: !flags.environment,
     } as inquirer.Question]);
 
     return { ...options, ...answers };

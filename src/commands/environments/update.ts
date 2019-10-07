@@ -12,7 +12,7 @@ export default class UpdateEnvironment extends Command {
   static aliases = ['environment:update'];
 
   static args = [
-    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() }
+    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() },
   ];
 
   static flags = {
@@ -20,7 +20,7 @@ export default class UpdateEnvironment extends Command {
     host: flags.string(),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
     cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate', env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE' }),
-    config_file: flags.string()
+    config_file: flags.string(),
   };
 
   async run() {
@@ -29,7 +29,7 @@ export default class UpdateEnvironment extends Command {
       host: answers.host,
       service_token: await readIfFile(answers.service_token),
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined
+      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
     };
 
     const tasks = new Listr([
@@ -38,8 +38,8 @@ export default class UpdateEnvironment extends Command {
         task: async context => {
           const { data: environment } = await this.architect.put(`/environments/${answers.name}`, { data });
           context.environment = environment;
-        }
-      }
+        },
+      },
     ]);
 
     await tasks.run();
@@ -56,7 +56,7 @@ export default class UpdateEnvironment extends Command {
       validate: value => {
         if (EnvironmentNameValidator.test(value)) return true;
         return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-      }
+      },
     }]);
     return { ...args, ...flags, ...answers };
   }

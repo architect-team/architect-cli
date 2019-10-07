@@ -14,15 +14,15 @@ export default class Uninstall extends Command {
     help: flags.help({ char: 'h' }),
     prefix: flags.string({
       char: 'p',
-      description: 'Path prefix indicating where the install command should execute from'
-    })
+      description: 'Path prefix indicating where the install command should execute from',
+    }),
   };
 
   static args = [
     {
       name: 'service_name',
-      required: true
-    }
+      required: true,
+    },
   ];
 
   async run() {

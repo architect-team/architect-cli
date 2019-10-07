@@ -72,8 +72,8 @@ export default class ServiceConfig {
   license: string;
   dependencies: { [s: string]: string };
   parameters: { [s: string]: ServiceParameter } = {};
-  api?: { type: string, definitions: string[] };
-  datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } };
+  api?: { type: string; definitions: string[] };
+  datastores: { [key: string]: { image: string; port: string; parameters: { [key: string]: ServiceParameter }; host?: string } };
   notifications: string[];
   subscriptions: object;
   language: SUPPORTED_LANGUAGES;
@@ -180,12 +180,12 @@ export default class ServiceConfig {
     return this;
   }
 
-  setApi(api: { type: string, definitions: string[] }) {
+  setApi(api: { type: string; definitions: string[] }) {
     this.api = api;
     return this;
   }
 
-  setDatastores(datastores: { [key: string]: { image: string, port: string, parameters: { [key: string]: ServiceParameter }, host?: string } }) {
+  setDatastores(datastores: { [key: string]: { image: string; port: string; parameters: { [key: string]: ServiceParameter }; host?: string } }) {
     this.datastores = datastores || {};
     for (const [ds_key, datastore] of Object.entries(this.datastores)) {
       if (!EnvironmentNameValidator.test(ds_key)) {

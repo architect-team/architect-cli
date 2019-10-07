@@ -98,7 +98,7 @@ namespace ProtocExecutor {
       user_flag = ['--user', `${userInfo.uid}:${userInfo.gid}`];
     }
     try {
-      let cmd_config = [
+      const cmd_config = [
         'run',
         '--rm', '--init',
         ...user_flag,
@@ -108,7 +108,7 @@ namespace ProtocExecutor {
         '-i', '/protos',
         '-d', `/protos`,
         '-l', target.config.language,
-        '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY
+        '-o', MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY,
       ];
 
       await execa('docker', cmd_config);

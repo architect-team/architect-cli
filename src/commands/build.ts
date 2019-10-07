@@ -16,30 +16,30 @@ export default class Build extends Command {
     tag: flags.string({
       char: 't',
       description: 'Tag for the architect image',
-      exclusive: ['recursive']
+      exclusive: ['recursive'],
     }),
     recursive: flags.boolean({
       char: 'r',
       default: false,
       description: 'Whether or not to build images for the cited dependencies',
-      exclusive: ['tag']
+      exclusive: ['tag'],
     }),
     _local: flags.boolean({
       default: false,
       hidden: true,
-      description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version'
+      description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version',
     }),
     verbose: flags.boolean({
       char: 'v',
-      description: 'Verbose log output'
-    })
+      description: 'Verbose log output',
+    }),
   };
 
   static args = [
     {
       name: 'context',
-      description: 'Path to the service to build'
-    }
+      description: 'Path to the service to build',
+    },
   ];
 
   async run() {
@@ -51,7 +51,7 @@ export default class Build extends Command {
 
   async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Build);
-    let root_service_path = args.context ? args.context : process.cwd();
+    const root_service_path = args.context ? args.context : process.cwd();
 
     if (flags.recursive) {
       await Install.run(['-p', root_service_path, '-r']);
@@ -68,7 +68,7 @@ export default class Build extends Command {
         title: `Building docker image for ${_info(dependency.display_tag(flags.tag))}`,
         task: async () => {
           await this.buildImage(dependency);
-        }
+        },
       });
     });
     return tasks;
@@ -98,7 +98,7 @@ export default class Build extends Command {
       '-t', service.tag(flags.tag),
       '--label', `architect.json=${JSON.stringify(service_config)}`,
       '--label', `api_definitions=${JSON.stringify(service.api_definitions)}`,
-      service.service_path
+      service.service_path,
     ]);
   }
 }
