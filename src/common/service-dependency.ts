@@ -83,9 +83,6 @@ export default abstract class ServiceDependency {
       let queue: ServiceDependency[] = [this];
       while (queue.length > 0) {
         const service_dependency = queue.shift()!;
-        // if (!service_dependency._loaded) {
-        //   await service_dependency.load(); // service_dependency.config getter would explode if not loaded. this might need to be awaited for the docker version
-        // }
         if (service_dependencies.indexOf(service_dependency) < 0 && !service_dependency.config.host) {
           service_dependencies.unshift(service_dependency);
           queue = queue.concat(service_dependency.dependencies);
