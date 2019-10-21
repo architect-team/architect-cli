@@ -43,11 +43,11 @@ export default class Deploy extends Command {
     }
   }
 
-  validate_parameters(root_service: ServiceDependency, config_json: any) {
+  async validate_parameters(root_service: ServiceDependency, config_json: any) {
     const res = JSON.parse(JSON.stringify(config_json));
     res.services = res.services || {};
     const errors = [];
-    for (const service of root_service.all_dependencies) {
+    for (const service of await root_service.all_dependencies) {
       const service_override = res.services[service.config.full_name] || { parameters: {} };
       for (const [key, parameter] of Object.entries(service.config.parameters)) {
         if (parameter.default === undefined) {
@@ -115,10 +115,10 @@ export default class Deploy extends Command {
       await Install.run(['-p', svc_path, '-r']);
       const svc = ServiceDependency.create(this.app_config, svc_path);
       const config_json = await this.parse_config();
-      svc.override_configs(config_json);
-      this.validate_parameters(svc, config_json);
+      await svc.override_configs(config_json);
+      await this.validate_parameters(svc, config_json);
 
-      for (const service of svc.all_dependencies) {
+      for (const service of await svc.all_dependencies) {
         dependencies_map[service.config.name] = service;
 
         if (!subscriptions_map[service.config.name]) {

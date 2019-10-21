@@ -24,6 +24,7 @@ export default abstract class ServiceDependency {
     } else {
       service_dependency = new LocalServiceDependency(app_config, path.resolve(service_path), _root);
     }
+    service_dependency.load();
 
     ServiceDependency._cache[service_path] = service_dependency;
     return service_dependency;
@@ -76,17 +77,22 @@ export default abstract class ServiceDependency {
     return service_dependencies;
   }
 
-  get all_dependencies(): ServiceDependency[] {
-    const service_dependencies: ServiceDependency[] = [];
-    let queue: ServiceDependency[] = [this];
-    while (queue.length > 0) {
-      const service_dependency = queue.shift()!;
-      if (service_dependencies.indexOf(service_dependency) < 0 && !service_dependency.config.host) {
-        service_dependencies.unshift(service_dependency);
-        queue = queue.concat(service_dependency.dependencies);
+  get all_dependencies(): Promise<ServiceDependency[]> {
+    return (async () => {
+      const service_dependencies: ServiceDependency[] = [];
+      let queue: ServiceDependency[] = [this];
+      while (queue.length > 0) {
+        const service_dependency = queue.shift()!;
+        // if (!service_dependency._loaded) {
+        //   await service_dependency.load(); // service_dependency.config getter would explode if not loaded. this might need to be awaited for the docker version
+        // }
+        if (service_dependencies.indexOf(service_dependency) < 0 && !service_dependency.config.host) {
+          service_dependencies.unshift(service_dependency);
+          queue = queue.concat(service_dependency.dependencies);
+        }
       }
-    }
-    return service_dependencies;
+      return service_dependencies;
+    })();
   }
 
   get local_dependencies(): ServiceDependency[] {
@@ -102,8 +108,8 @@ export default abstract class ServiceDependency {
     return service_dependencies;
   }
 
-  override_configs(overrides: EnvironmentMetadata) {
-    for (const service of this.all_dependencies) {
+  async override_configs(overrides: EnvironmentMetadata) {
+    for (const service of await this.all_dependencies) {
       const override = overrides.services![service.config.full_name];
       if (!override) {
         continue;
