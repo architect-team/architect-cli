@@ -107,6 +107,9 @@ jobs:
       - attach_workspace:
           at: ~/cli
       - run:
+          name: npm install
+          command: npm install
+      - run:
           name: test install
           command: |
             cd test/calculator-sample-project/division-service/
