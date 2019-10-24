@@ -52,7 +52,6 @@ export default class Init extends Command {
   async run() {
     this.log(_info(INIT_INTRO_TEXT));
     const answers: any = await this.promptOptions();
-
     const config = (new ServiceConfig())
       .setName(answers.name)
       .setVersion(answers.version)
@@ -97,6 +96,7 @@ export default class Init extends Command {
         }
         return true;
       },
+      when: !args.name
     }, {
       type: 'input',
       name: 'version',
@@ -106,25 +106,30 @@ export default class Init extends Command {
         if (validator.test(value)) return true;
         return 'Version numbers must use semantic versioning (semvar)';
       },
+      when: !flags.version
     }, {
       type: 'input',
       name: 'description',
       default: flags.description,
+      when: !flags.description
     }, {
       type: 'input',
       name: 'keywords',
       message: 'keywords (comma-separated):',
       default: flags.keywords,
+      when: !flags.keywords,
       filter: input => input.split(',').map(string => string.trim()),
     }, {
       type: 'input',
       name: 'author',
       default: flags.author || user && user.username,
+      when: !flags.author,
       filter: input => [input],
     }, {
       type: 'input',
       name: 'license',
       default: flags.license,
+      when: !flags.license,
     }]);
   }
 }
