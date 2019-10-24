@@ -17,7 +17,7 @@ interface InitInput {
 }
 
 const MOCK_SERVICE_CONFIG: InitInput = {
-  name: 'test/architect-cli',
+  name: 'test-service',
   version: '0.1.0',
   description: 'Test description',
   keywords: ['test', 'this'],
@@ -48,7 +48,7 @@ describe('init', () => {
 
     test
       .stdout()
-      .command(['init', '--output', os.tmpdir()])
+      .command(['init', MOCK_SERVICE_CONFIG.name, '--output', os.tmpdir()])
       .it('should match default values', ctx => {
         const config = new ServiceConfig()
           .setName(MOCK_SERVICE_CONFIG.name)
@@ -64,6 +64,7 @@ describe('init', () => {
       .stdout()
       .command([
         'init',
+        MOCK_SERVICE_CONFIG.name,
         '--description', 'test',
         '--version', '1.2.3',
         '--keywords', 'test,this',
