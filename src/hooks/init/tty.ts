@@ -12,15 +12,20 @@ const hook: Hook<'init'> = async function (options) {
         prompts = [prompts];
       }
       for (const prompt of prompts) {
-        if (prompt.when && prompt.default == undefined) {
+        if (prompt.when !== false && prompt.default == undefined) {
           throw new Error(`${prompt.name} is required`);
         }
       }
-      return prompts.reduce((d: any, p: any) => { d[p.name] = p.default; return d; }, {});
+      return prompts.reduce((d: any, prompt: any) => {
+        if ((prompt.when == undefined || prompt.when === true) && prompt.default != undefined) {
+          d[prompt.name] = prompt.default;
+        }
+        return d;
+      }, {});
     };
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     inquirer.prompt.registerPrompt = function () { };
   }
-}
+};
 
 export default hook;
