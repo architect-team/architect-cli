@@ -104,6 +104,9 @@ jobs:
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
+      - run:
+          name: remove src dir
+          command: rm -rf ./src/
       - attach_workspace:
           at: ~/cli
       - run:
