@@ -21,7 +21,7 @@ const MOCK_SERVICE_CONFIG: InitInput = {
   version: '0.1.0',
   description: 'Test description',
   keywords: ['test', 'this'],
-  author: 'Architect',
+  author: 'test',
   license: 'MIT'
 };
 
@@ -45,38 +45,17 @@ describe('init', () => {
   });
 
   describe('integration', () => {
-    beforeEach(() => {
-      _sinon.stub(inquirer, 'prompt')
-        // @ts-ignore
-        .callsFake((questions: any[]) => {
-          let mock_config: InitInput = MOCK_SERVICE_CONFIG;
-
-          questions.forEach((question: inquirer.Question) => {
-            if (
-              question.hasOwnProperty('default') &&
-              question.name !== undefined &&
-              Object.keys(mock_config).includes(question.name)
-            ) {
-              // @ts-ignore
-              mock_config[question.name] = question.default;
-            }
-          });
-
-          return mock_config;
-        });
-    });
 
     test
       .stdout()
-      .command(['init', '--output', os.tmpdir()])
+      .command(['init', MOCK_SERVICE_CONFIG.name, '--output', os.tmpdir()])
       .it('should match default values', ctx => {
         const config = new ServiceConfig()
           .setName(MOCK_SERVICE_CONFIG.name)
-          .setDescription(MOCK_SERVICE_CONFIG.description)
           .setVersion(MOCK_SERVICE_CONFIG.version)
-          .setKeywords(MOCK_SERVICE_CONFIG.keywords)
-          .setLicense(MOCK_SERVICE_CONFIG.license)
-          .setAuthor(MOCK_SERVICE_CONFIG.author);
+          .setAuthor(MOCK_SERVICE_CONFIG.author)
+          .setKeywords('')
+          .setLicense(MOCK_SERVICE_CONFIG.license);
         expect(ctx.stdout).to.contain(INIT_INTRO_TEXT);
         expect(ctx.stdout).to.contain(JSON.stringify(config, null, 2));
       });
@@ -85,6 +64,7 @@ describe('init', () => {
       .stdout()
       .command([
         'init',
+        MOCK_SERVICE_CONFIG.name,
         '--description', 'test',
         '--version', '1.2.3',
         '--keywords', 'test,this',

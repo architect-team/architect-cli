@@ -1,11 +1,5 @@
 #!/usr/bin/env node
 
-const isCI = require('is-ci');
-if (isCI) {
-    const disableTTY = require('../src/common/tty');
-    disableTTY();
-}
-
 require('@oclif/command').run()
     .then(require('@oclif/command/flush'))
     .catch(require('@oclif/errors/handle'));

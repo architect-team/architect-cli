@@ -52,7 +52,6 @@ export default class Init extends Command {
   async run() {
     this.log(_info(INIT_INTRO_TEXT));
     const answers: any = await this.promptOptions();
-
     const config = (new ServiceConfig())
       .setName(answers.name)
       .setVersion(answers.version)
@@ -96,7 +95,7 @@ export default class Init extends Command {
           return `Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`;
         }
         return true;
-      },
+      }
     }, {
       type: 'input',
       name: 'version',
@@ -109,7 +108,7 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'description',
-      default: flags.description,
+      default: flags.description
     }, {
       type: 'input',
       name: 'keywords',
@@ -124,7 +123,7 @@ export default class Init extends Command {
     }, {
       type: 'input',
       name: 'license',
-      default: flags.license,
+      default: flags.license
     }]);
   }
 }
