@@ -3,7 +3,27 @@ import path from 'path';
 import MANAGED_PATHS from './managed-paths';
 import ServiceParameter from './service-parameter';
 import SUPPORTED_LANGUAGES from './supported-languages';
-import { EnvironmentNameValidator, EnvNameValidator, SemvarValidator, ServiceNameValidator } from './validation-utils';
+import { EnvironmentNameValidator, EnvNameValidator, ServiceNameValidator } from './validation-utils';
+
+export class MissingConfigFileError extends Error {
+  constructor(filepath: string) {
+    super();
+    this.name = 'missing_config_file';
+    this.message = `No config file found at ${filepath}`;
+  }
+}
+
+export class UnsupportedDependencyIdentifierError extends TypeError {
+  constructor(identifier: string) {
+    super();
+    this.name = 'unsupported_dependency_identifier';
+    this.message = `Unsupported dependency identifier format: ${identifier}`;
+  }
+}
+
+class InvalidConfigFileError extends Error {
+  name = 'invalid_config_file';
+}
 
 export default class ServiceConfig {
   static _require(path: string) {
@@ -121,12 +141,7 @@ export default class ServiceConfig {
   }
 
   setVersion(version: string) {
-    const validator = new SemvarValidator();
-    if (validator.test(version)) {
-      this.version = version;
-    } else {
-      throw new InvalidConfigFileError(`Invalid version "${version}" in architect.json.`);
-    }
+    this.version = version;
     return this;
   }
 
@@ -155,12 +170,9 @@ export default class ServiceConfig {
 
   setDependencies(dependencies: { [s: string]: string }) {
     this.dependencies = {};
-    const validator = new SemvarValidator();
     for (const [dependency, version] of Object.entries(dependencies || {})) {
       if (!ServiceNameValidator.test(dependency)) {
         throw new InvalidConfigFileError(`Invalid dependency "${dependency}" in architect.json. Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
-      } else if (!validator.test(version) && version.indexOf('file:') !== 0) {
-        throw new InvalidConfigFileError(`Invalid dependency version "${version}" for "${dependency}" in architect.json.`);
       } else {
         this.dependencies[dependency] = version;
       }
@@ -237,24 +249,4 @@ export default class ServiceConfig {
   isScript() {
     return !this.api;
   }
-}
-
-export class MissingConfigFileError extends Error {
-  constructor(filepath: string) {
-    super();
-    this.name = 'missing_config_file';
-    this.message = `No config file found at ${filepath}`;
-  }
-}
-
-export class UnsupportedDependencyIdentifierError extends TypeError {
-  constructor(identifier: string) {
-    super();
-    this.name = 'unsupported_dependency_identifier';
-    this.message = `Unsupported dependency identifier format: ${identifier}`;
-  }
-}
-
-class InvalidConfigFileError extends Error {
-  name = 'invalid_config_file';
 }

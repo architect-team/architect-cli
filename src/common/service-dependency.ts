@@ -6,7 +6,6 @@ import { AppConfig } from '../app-config';
 import { EnvironmentMetadata } from './environment-metadata';
 import ServiceConfig from './service-config';
 import ServiceParameter from './service-parameter';
-import { SemvarValidator } from './validation-utils';
 
 export default abstract class ServiceDependency {
   static create(app_config: AppConfig, service_path: string, _root = true) {
@@ -14,15 +13,11 @@ export default abstract class ServiceDependency {
       return ServiceDependency._cache[service_path];
     }
 
-    const validator = new SemvarValidator();
-    const service_version = service_path.split(':')[service_path.split(':').length - 1];
-    const valid_version = service_version && validator.test(service_version);
-
     let service_dependency;
-    if (valid_version) {
-      service_dependency = new DockerServiceDependency(app_config, service_path, _root);
-    } else {
+    if (_root || service_path.indexOf('file:') === 0) {
       service_dependency = new LocalServiceDependency(app_config, path.resolve(service_path), _root);
+    } else {
+      service_dependency = new DockerServiceDependency(app_config, service_path, _root);
     }
 
     ServiceDependency._cache[service_path] = service_dependency;
@@ -187,12 +182,12 @@ class LocalServiceDependency extends ServiceDependency {
 
 class DockerServiceDependency extends ServiceDependency {
   tag() {
-    return url.resolve(`${this.app_config.default_registry_host}/`, `${this.config.full_name}`);
+    return url.resolve(`${this.app_config.default_registry_host}/`, `${this.service_path}`);
   }
 
   async _load() {
     const default_registry_host = this.app_config.default_registry_host;
-    const repository_name = url.resolve(`${default_registry_host}/`, this.service_path);
+    const repository_name = `${default_registry_host}/${this.service_path}`;
     try {
       await this._load_config(repository_name);
     } catch {
