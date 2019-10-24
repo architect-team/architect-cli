@@ -110,7 +110,7 @@ jobs:
           name: test install
           command: |
             cd test/calculator-sample-project/division-service/
-            npx architect install -r
+            ../../../bin/run install -r
 
   publish:
     working_directory: ~/cli
