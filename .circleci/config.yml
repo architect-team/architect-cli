@@ -95,6 +95,23 @@ jobs:
             - package-lock.json
             - README.md
 
+  release_test:
+    working_directory: ~/cli
+    docker:
+      - image: node:12
+    steps:
+      - checkout
+      - run:
+          name: clone submodules
+          command: git submodule update --recursive --init
+      - attach_workspace:
+          at: ~/cli
+      - run:
+          name: test install
+          command: |
+            cd test/calculator-sample-project/division-service/
+            npx architect install -r
+
   publish:
     working_directory: ~/cli
     docker:
@@ -119,6 +136,18 @@ workflows:
               ignore: /.*/
             branches:
               only: /.*/
+      - build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /.*/
+      - release_test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: /.*/
   deploy:
     jobs:
       - test:
@@ -134,10 +163,16 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+      - release_test:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v.*/
       - publish:
           context: NPM Packaging
           requires:
-            - build
+            - release_test
           filters:
             tags:
               only: /^v.*/
