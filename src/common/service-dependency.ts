@@ -14,7 +14,10 @@ export default abstract class ServiceDependency {
     }
 
     let service_dependency;
-    if (_root || service_path.indexOf('file:') === 0) {
+    if (_root || service_path.startsWith('file:')) {
+      service_path = service_path.startsWith('file:')
+        ? service_path.slice(5)
+        : service_path;
       service_dependency = new LocalServiceDependency(app_config, path.resolve(service_path), _root);
     } else {
       service_dependency = new DockerServiceDependency(app_config, service_path, _root);
@@ -66,7 +69,7 @@ export default abstract class ServiceDependency {
       } else {
         dependency_path = `${dependency_name}:${dependency_path}`;
       }
-      service_dependencies.push(ServiceDependency.create(this.app_config, dependency_path, false));
+      service_dependencies.push(ServiceDependency.create(this.app_config, `file:${dependency_path}`, false));
     });
     return service_dependencies;
   }
@@ -182,7 +185,7 @@ class LocalServiceDependency extends ServiceDependency {
 
 class DockerServiceDependency extends ServiceDependency {
   tag() {
-    return url.resolve(`${this.app_config.default_registry_host}/`, `${this.service_path}`);
+    return `${this.app_config.default_registry_host}/${this.service_path}`;
   }
 
   async _load() {

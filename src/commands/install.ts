@@ -46,7 +46,7 @@ export default class Install extends Command {
     const { args, flags } = this.parse(Install);
     const root_service_path = flags.prefix ? flags.prefix : process.cwd();
 
-    const root_service = ServiceDependency.create(this.app_config, root_service_path);
+    const root_service = ServiceDependency.create(this.app_config, `file:${root_service_path}`);
     if (args.service_name) {
       await root_service.load();
       // eslint-disable-next-line prefer-const
@@ -115,10 +115,12 @@ export default class Install extends Command {
           if (service_dependency.config.api && service_dependency.config.api.type === 'grpc') {
             promises.push(ProtocExecutor.execute(service_dependency, service_dependency));
           }
-          service_dependency.dependencies.forEach(sub_dependency => {
+          service_dependency.dependencies.map(async sub_dependency => {
+            await sub_dependency.load();
             if (sub_dependency.config.api && sub_dependency.config.api.type === 'grpc') {
               promises.push(ProtocExecutor.execute(sub_dependency, service_dependency));
             }
+            return sub_dependency;
           });
           await Promise.all(promises);
           await ProtocExecutor.clear(service_dependency);
