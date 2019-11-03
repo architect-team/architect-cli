@@ -23,7 +23,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         ARCHITECT_CURRENT_SERVICE: node.name,
         ARCHITECT: JSON.stringify({
           [node.name]: {
-            host: `http://${node.normalized_ref}`,
+            host: `${node.normalized_ref}`,
             port: node.target_port,
             api: node.api_type,
             datastores: {},
@@ -67,13 +67,13 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       const datastore_key = edge.to.name.slice(edge.from.name.length + 1);
       service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
         host: edge.to.normalized_ref,
-        port: edge.to.expose_port,
+        port: edge.to.target_port,
         ...edge.to.parameters,
       };
     } else {
       service.environment.ARCHITECT[edge.to.name] = {
-        host: `http://${edge.to.normalized_ref}`,
-        port: edge.to.expose_port,
+        host: `${edge.to.normalized_ref}`,
+        port: edge.to.target_port,
         api: edge.to.api_type,
       };
     }
