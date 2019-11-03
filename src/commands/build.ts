@@ -1,104 +1,100 @@
-import { flags } from '@oclif/command';
-import chalk from 'chalk';
+import {flags} from '@oclif/command';
 import execa from 'execa';
-import Listr from 'listr';
-import Command from '../base';
-import MANAGED_PATHS from '../common/managed-paths';
-import ServiceDependency from '../common/service-dependency';
-import Install from './install';
+import path from 'path';
+import chalk from 'chalk';
+import fs from 'fs';
+import Command from '../base-command';
+import ServiceConfig from '../common/service-config';
 
-const _info = chalk.blue;
+declare const process: NodeJS.Process;
+
 export default class Build extends Command {
-  static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
+  static description = 'Build an Architect-ready Docker image for a service';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
+    service: flags.string({
+      char: 's',
+      description: 'Path to a service to build',
+      multiple: true,
+    }),
     tag: flags.string({
       char: 't',
-      description: 'Tag for the architect image',
-      exclusive: ['recursive'],
+      description: 'Tag to give to the new Docker image(s)',
+      default: 'latest',
     }),
     recursive: flags.boolean({
+      default: false,
       char: 'r',
-      default: false,
-      description: 'Whether or not to build images for the cited dependencies',
-      exclusive: ['tag'],
-    }),
-    _local: flags.boolean({
-      default: false,
-      hidden: true,
-      description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version',
-    }),
-    verbose: flags.boolean({
-      char: 'v',
-      description: 'Verbose log output',
+      description: 'Build this image as well as images for all its dependencies',
     }),
   };
 
-  static args = [
-    {
-      name: 'context',
-      description: 'Path to the service to build',
-    },
-  ];
+  private getServiceApiDefinitionContents(servicePath: string, serviceConfig: ServiceConfig) {
+    const definitionsContents: { [filename: string]: string } = {};
 
-  async run() {
-    const { flags } = this.parse(Build);
-    const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
-    await tasks.run();
-  }
-
-  async tasks(): Promise<Listr.ListrTask[]> {
-    const { args, flags } = this.parse(Build);
-    const root_service_path = args.context ? args.context : process.cwd();
-
-    if (flags.recursive) {
-      await Install.run(['-p', root_service_path, '-r']);
-    } else {
-      await Install.run(['-p', root_service_path]);
+    if (
+      serviceConfig.api &&
+      serviceConfig.api.definitions
+    ) {
+      for (const filepath of serviceConfig.api.definitions) {
+        definitionsContents[filepath] = fs.readFileSync(path.join(servicePath, filepath)).toString('utf-8');
+      }
     }
 
-    const root_service = ServiceDependency.create(this.app_config, root_service_path);
-    const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
-    const tasks: Listr.ListrTask[] = [];
-
-    dependencies.forEach(dependency => {
-      tasks.push({
-        title: `Building docker image for ${_info(dependency.display_tag(flags.tag))}`,
-        task: async () => {
-          await this.buildImage(dependency);
-        },
-      });
-    });
-    return tasks;
+    return definitionsContents;
   }
 
-  async buildImage(service: ServiceDependency) {
+  private async buildImage(servicePath: string, prior_paths: string[] = []) {
     const { flags } = this.parse(Build);
-    const service_config = JSON.parse(JSON.stringify(service.config));
 
-    if (flags._local) {
-      const dependency_map = service.local_dependencies.reduce((map: any, obj) => {
-        map[obj.config.name] = obj;
-        return map;
-      }, {});
-      for (const dependency_name of Object.keys(service_config.dependencies)) {
-        const sub_dependency = dependency_map[dependency_name];
-        if (sub_dependency) {
-          service_config.dependencies[dependency_name] = sub_dependency.config.version;
+    const config = this.getServiceConfig(servicePath);
+    const tag = flags.tag || 'latest';
+    if (flags.recursive && config.dependencies) {
+      for (const serviceRef of Object.values(config.dependencies)) {
+        // If the dependency is local, build it first
+        if (serviceRef.startsWith('file:')) {
+          const dependency_path = path.join(servicePath, serviceRef.slice('file:'.length));
+
+          // If we've already built the image, ignore
+          if (!prior_paths.includes(dependency_path)) {
+            prior_paths.push(dependency_path);
+            await this.buildImage(dependency_path, prior_paths);
+          }
         }
       }
     }
 
-    await execa('docker', [
+    // TODO: Replace with config reference
+    const imageTag = `${this.app.config.registry_host}/${config.name}:${tag}`;
+    this.log(chalk.blue(`Building docker image for ${config.name}`));
+    const cmd = execa('docker', [
       'build',
       '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${service_config.language}`,
-      '-t', service.tag(flags.tag),
-      '--label', `architect.json=${JSON.stringify(service_config)}`,
-      '--label', `api_definitions=${JSON.stringify(service.api_definitions)}`,
-      service.service_path,
+      '--build-arg', `SERVICE_LANGUAGE=${config.language}`,
+      '-t', imageTag,
+      '--label', `architect.json=${JSON.stringify(config)}`,
+      '--label', `api_definitions=${JSON.stringify(this.getServiceApiDefinitionContents(servicePath, config))}`,
+      servicePath,
     ]);
+    cmd.stdout.pipe(process.stdout);
+    await cmd;
+    this.log(chalk.green(`${config.name}:${tag} build succeeded`));
+    return prior_paths;
+  }
+
+  async run() {
+    const { flags } = this.parse(Build);
+    const services = flags.service;
+
+    if (services.length === 0) {
+      services.push(process.cwd());
+    }
+
+    let service_paths: string[] = [];
+    for (let svcPath of services) {
+      svcPath = path.resolve(svcPath);
+      service_paths.concat(await this.buildImage(svcPath, service_paths));
+    }
   }
 }

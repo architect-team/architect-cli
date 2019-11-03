@@ -1,403 +1,225 @@
-import { flags } from '@oclif/command';
-import chalk from 'chalk';
-import execa from 'execa';
-import fs from 'fs-extra';
-import inquirer from 'inquirer';
-import Listr from 'listr';
-import os from 'os';
 import path from 'path';
+import fs from 'fs-extra';
+import os from 'os';
 import untildify from 'untildify';
-import Command from '../base';
-import { EnvironmentMetadata } from '../common/environment-metadata';
-import { readIfFile } from '../common/file-util';
-import MANAGED_PATHS from '../common/managed-paths';
-import PortUtil from '../common/port-util';
-import ServiceDependency from '../common/service-dependency';
-import Install from './install';
+import Command from '../base-command';
+import { flags } from '@oclif/command';
+import DependencyManager from '../common/dependency-manager';
+import execa from 'execa';
+import chalk from 'chalk';
+import { LocalDependencyNode } from '../common/dependency-manager/node/local';
+import ServiceConfig from '../common/service-config';
+import { RemoteDependencyNode } from '../common/dependency-manager/node/remote';
+import EnvironmentConfigV1 from '../common/environment-config/v1';
+import EnvironmentConfig from '../common/environment-config';
+import { plainToClass } from 'class-transformer';
+import MissingRequiredParamError from '../common/errors/missing-required-param';
+import ServiceParameterConfig from '../common/service-config/parameter';
+import DockerComposeTemplate from '../common/docker-compose/template';
+import * as DockerCompose from '../common/docker-compose';
 
-const _info = chalk.blue;
+declare const process: NodeJS.Process;
 
 export default class Deploy extends Command {
-  static description = 'Deploy service to environments';
-
-  static args = [
-    { name: 'service', description: 'Service name' },
-  ];
+  static description = 'Create a deploy job on Architect Cloud or run stacks locally';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-    environment: flags.string({ exclusive: ['local'] }),
-    deployment_id: flags.string({ exclusive: ['local'] }),
-    auto_approve: flags.boolean({ exclusive: ['local'] }),
-    local: flags.boolean({ char: 'l', exclusive: ['environment, deployment_id'] }),
-    services: flags.string({ char: 's', exclusive: ['environment, deployment_id'], multiple: true }),
-    config_file: flags.string(),
+    ...Command.flags,
+    local: flags.boolean({
+      char: 'l',
+      description: 'Deploy the stack locally instead of via Architect Cloud',
+    }),
+    config: flags.string({
+      char: 'c',
+      description: 'Path to an environment config file for the environment',
+    }),
+    services: flags.string({
+      char: 's',
+      description: 'Paths to services to deploy',
+      multiple: true,
+    }),
   };
 
-  async run() {
+  private async runCompose(compose: DockerComposeTemplate) {
+    const file_path = path.join(
+      os.tmpdir(),
+      `architect-deployment-${Date.now().toString()}.json`,
+    );
+    await fs.ensureFile(file_path);
+    await fs.writeJSON(file_path, compose, { spaces: 2 });
+    this.log(`Wrote docker-compose file to: ${file_path}`);
+    // this.log(chalk.green(JSON.stringify(compose, null, 2)));
+    await execa('docker-compose', ['-f', file_path, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
+  }
+
+  private validateParams(
+    ref_name: string,
+    parameters: { [s: string]: ServiceParameterConfig },
+    env_params: { [s: string]: string },
+  ): { [key: string]: string } {
+    return Object.keys(parameters)
+      .reduce((params: { [s: string]: string }, key: string) => {
+        const service_param = parameters[key];
+        if (service_param.isRequired() && !env_params[key]) {
+          throw new MissingRequiredParamError(key, service_param, ref_name);
+        }
+
+        let val = env_params[key] || service_param.default || '';
+        if (typeof val !== 'string') {
+          val = val.toString();
+        }
+
+        if (val.startsWith('file:')) {
+          val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
+        }
+        params[key] = val;
+        if (service_param.alias) {
+          params[service_param.alias] = val;
+        }
+        return params;
+      }, {});
+  }
+
+  private async addDatastoreNodes(
+    parent_node: LocalDependencyNode | RemoteDependencyNode,
+    parent_config: ServiceConfig,
+    dependency_manager: DependencyManager,
+  ): Promise<DependencyManager> {
     const { flags } = this.parse(Deploy);
-    if (flags.local) {
-      await this.run_local();
-    } else {
-      await this.run_external();
+
+    // Load environment config
+    let env_config: EnvironmentConfig = new EnvironmentConfigV1();
+    if (flags.config) {
+      const config_payload = await fs.readJSON(path.resolve(flags.config));
+      env_config = plainToClass(EnvironmentConfigV1, config_payload);
     }
+
+    for (const [ds_name, ds_config] of Object.entries(parent_config.datastores)) {
+      const docker_config = ds_config.getDockerConfig();
+      const dep_node = await RemoteDependencyNode.create({
+        name: `${parent_config.name}.${ds_name}`,
+        tag: 'local',
+        image: docker_config.image,
+        target_port: docker_config.target_port,
+        parameters: this.validateParams(
+          `${parent_config.name} - [datastore] ${ds_name}`,
+          parent_config.datastores[ds_name].parameters || {},
+          env_config.getDatastoreParameters(parent_config.name, ds_name),
+        ),
+      });
+      dep_node.isDatastore = true;
+      dependency_manager.addNode(dep_node);
+      dependency_manager.addDependency(parent_node, dep_node);
+    }
+
+    return dependency_manager;
   }
 
-  validate_parameters(root_service: ServiceDependency, config_json: any) {
-    const res = JSON.parse(JSON.stringify(config_json));
-    res.services = res.services || {};
-    const errors = [];
-    for (const service of root_service.all_dependencies) {
-      const service_override = res.services[service.config.full_name] || { parameters: {} };
-      for (const [key, parameter] of Object.entries(service.config.parameters)) {
-        if (parameter.default === undefined) {
-          service_override.parameters[key] = `<${key}>`;
-          errors.push(`${service.config.full_name}.parameters.${key}`);
-        }
-      }
-
-      service_override.datastores = service_override.datastores || {};
-      for (const [ds_key, datastore] of Object.entries(service.config.datastores)) {
-        const datastore_override = service_override.datastores[ds_key] = service_override.datastores[ds_key] || { parameters: {} };
-        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
-          if (parameter.default === undefined) {
-            datastore_override.parameters[key] = `<${key}>`;
-            errors.push(`${service.config.full_name}.datastores.${ds_key}.parameters.${key}`);
-          }
-        }
-      }
-      res.services[service.config.full_name] = service_override;
-    }
-    if (errors.length) {
-      this.log(JSON.stringify(res, null, 2));
-      this.error('Missing the following required parameters:\n' + errors.join('\n'));
-    }
-  }
-
-  async parse_config() {
+  private async addDependencyNodes(
+    parent_node: LocalDependencyNode | RemoteDependencyNode,
+    parent_config: ServiceConfig,
+    dependency_manager: DependencyManager,
+  ): Promise<DependencyManager> {
     const { flags } = this.parse(Deploy);
-    let config_json: EnvironmentMetadata = { services: {} };
-    if (flags.config_file) {
-      config_json = await fs.readJSON(untildify(flags.config_file));
-      config_json.services = config_json.services || {};
-      for (const service of Object.values(config_json.services)) {
-        for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await readIfFile(value);
-        }
-        for (const datastore of Object.values(service.datastores || {})) {
-          for (const [key, value] of Object.entries(datastore.parameters || {})) {
-            datastore.parameters![key] = await readIfFile(value);
+
+    // Load environment config
+    let env_config: EnvironmentConfig = new EnvironmentConfigV1();
+    if (flags.config) {
+      const config_payload = await fs.readJSON(path.resolve(flags.config));
+      env_config = plainToClass(EnvironmentConfigV1, config_payload);
+    }
+
+    if (parent_node instanceof LocalDependencyNode) {
+      for (const [dep_name, dep_id] of Object.entries(parent_config.getDependencies())) {
+        if (dep_id.startsWith('file:')) {
+          const dep_path = path.join(parent_node.service_path, dep_id.slice('file:'.length));
+          const dep_config = this.getServiceConfig(dep_path);
+          const dep_node = await LocalDependencyNode.create({
+            service_path: dep_path,
+            name: dep_name,
+            tag: 'local',
+            target_port: 8080,
+            api_type: dep_config.api ? dep_config.api.type : undefined,
+            subscriptions: dep_config.subscriptions,
+            parameters: this.validateParams(
+              dep_config.name,
+              dep_config.parameters,
+              env_config.getServiceParameters(dep_config.name),
+            ),
+          });
+          if (dep_config.debug) {
+            dep_node.command = dep_config.debug;
           }
+          dependency_manager.addNode(dep_node);
+          dependency_manager.addDependency(parent_node, dep_node);
+          await this.addDependencyNodes(dep_node, dep_config, dependency_manager);
+          await this.addDatastoreNodes(dep_node, dep_config, dependency_manager);
         }
       }
     }
-    return config_json;
+
+    return dependency_manager;
   }
 
-  async run_local() {
-    const { args, flags } = this.parse(Deploy);
+  private async runLocal() {
+    const { flags } = this.parse(Deploy);
 
-    const docker_compose: any = {
-      version: '3',
-      services: {},
-      volumes: {},
-    };
+    const service_paths = flags.services || [process.cwd()];
+    const dependencies = new DependencyManager();
 
-    const service_paths = flags.services || [
-      args.service ? args.service : process.cwd(),
-    ];
-
-    const dependencies_map: { [key: string]: ServiceDependency } = {};
-    const subscriptions_map: any = {};
-    const optional_dependencies_map: { [key: string]: ServiceDependency[] } = {};
-
-    for (const svc_path of service_paths) {
-      await Install.run(['-p', svc_path, '-r']);
-      const svc = ServiceDependency.create(this.app_config, svc_path);
-      const config_json = await this.parse_config();
-      svc.override_configs(config_json);
-      this.validate_parameters(svc, config_json);
-
-      for (const service of svc.all_dependencies) {
-        dependencies_map[service.config.name] = service;
-
-        if (!subscriptions_map[service.config.name]) {
-          subscriptions_map[service.config.name] = {};
-
-          for (const event of service.config.notifications) {
-            subscriptions_map[service.config.name][event] = {};
-          }
-        }
-
-        if (service.config.subscriptions) {
-          for (const [service_name, events] of Object.entries(service.config.subscriptions)) {
-            if (!optional_dependencies_map[service_name]) {
-              optional_dependencies_map[service_name] = [];
-            }
-            optional_dependencies_map[service_name].push(dependencies_map[service.config.name]);
-
-            for (const [event_name, event_config] of Object.entries(events)) {
-              if (!subscriptions_map[service_name]) {
-                subscriptions_map[service_name] = {};
-              }
-              if (!subscriptions_map[service_name][event_name]) {
-                subscriptions_map[service_name][event_name] = {};
-              }
-              subscriptions_map[service_name][event_name][service.config.name] = event_config;
-            }
-          }
-        }
-      }
+    // Load environment config
+    let env_config: EnvironmentConfig = new EnvironmentConfigV1();
+    if (flags.config) {
+      const config_payload = await fs.readJSON(path.resolve(flags.config));
+      env_config = plainToClass(EnvironmentConfigV1, config_payload);
     }
 
-    const target_port_map: any = {};
-    const service_port = async (service_name: string) => {
-      if (!(service_name in target_port_map)) {
-        // eslint-disable-next-line require-atomic-updates
-        target_port_map[service_name] = await PortUtil.getAvailablePort();
-        this.log(_info(service_name), `0.0.0.0:${target_port_map[service_name]}`);
+    // Create graph nodes for all specified services and then add nodes
+    // and edges for their dependencies
+    for (let svc_path of service_paths) {
+      svc_path = path.resolve(svc_path);
+      const config = this.getServiceConfig(svc_path);
+      const dep = await LocalDependencyNode.create({
+        service_path: svc_path,
+        name: config.name,
+        tag: 'local',
+        target_port: 8080,
+        api_type: config.api ? config.api.type : undefined,
+        subscriptions: config.subscriptions,
+        parameters: this.validateParams(
+          config.name,
+          config.parameters,
+          env_config.getServiceParameters(config.name)),
+      });
+      if (config.debug) {
+        dep.command = config.debug;
       }
-      return target_port_map[service_name];
-    };
-
-    for (const service of Object.values(dependencies_map)) {
-      const service_host = service.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
-
-      const architect: any = {};
-      const depends_on = [];
-
-      const dependencies: Set<ServiceDependency> = new Set();
-      dependencies.add(service);
-      const optional_dependencies = optional_dependencies_map[service.config.name] || [];
-      for (const dependency of service.dependencies.concat(optional_dependencies)) {
-        dependencies.add(dependency);
-      }
-
-      for (const dependency of dependencies) {
-        const dependency_name = dependency.config.full_name.replace(/:/g, '-').replace(/\//g, '--');
-        const api_type = dependency.config.api && dependency.config.api.type;
-        let dependency_host;
-        if (dependency.config.host) {
-          dependency_host = dependency.config.host;
-        } else if (api_type === 'grpc') {
-          dependency_host = dependency_name;
-        } else {
-          // tslint:disable-next-line: no-http-string
-          dependency_host = `http://${dependency_name}`;
-        }
-        architect[dependency.config.name] = {
-          host: dependency_host,
-          port: dependency.config.port,
-          api: api_type,
-        };
-        if (service === dependency) {
-          architect[dependency.config.name].subscriptions = subscriptions_map[dependency.config.name] || {};
-        } else if (service.dependencies.indexOf(dependency) >= 0 && !dependency.config.host) {
-          depends_on.push(dependency_name);
-        }
-      }
-
-      architect[service.config.name].datastores = {};
-      for (const [datastore_name, datastore] of Object.entries(service.config.datastores)) {
-        const datastore_environment: any = {};
-        const datastore_aliases: any = { port: datastore.port };
-        for (const [key, parameter] of Object.entries(datastore.parameters || {})) {
-          datastore_environment[key] = parameter.default!;
-          datastore_aliases[key] = parameter.default!;
-          if (parameter.alias) {
-            datastore_aliases[parameter.alias] = parameter.default!;
-          }
-        }
-
-        let datastore_host;
-        if (datastore.host) {
-          datastore_host = datastore.host;
-        } else {
-          const datastore_service_name = `${service_host}.datastore.${datastore_name}.${datastore.image.replace(/:/g, '_')}`;
-          datastore_host = datastore_service_name;
-          docker_compose.services[datastore_service_name] = {
-            image: `${datastore.image}`,
-            ports: [`${await service_port(datastore_service_name)}:${datastore.port}`],
-            environment: datastore_environment,
-          };
-          depends_on.push(datastore_service_name);
-        }
-
-        architect[service.config.name].datastores[datastore_name] = {
-          ...datastore_aliases,
-          host: datastore_host,
-          port: datastore.port,
-        };
-      }
-
-      let environment: { [key: string]: string | number | undefined } = {};
-      for (const [key, parameter] of Object.entries(service.config.parameters)) {
-        environment[key] = parameter.default!;
-      }
-      environment = {
-        ...environment,
-        HOST: service_host,
-        PORT: service.config.port,
-        ARCHITECT_CURRENT_SERVICE: service.config.name,
-        ARCHITECT: JSON.stringify(architect),
-      };
-
-      docker_compose.services[service_host] = {
-        image: service.tag(),
-        ports: [`${await service_port(service.config.name)}:${service.config.port}`],
-        depends_on,
-        environment,
-      };
-      if (service.local) {
-        docker_compose.services[service_host] = {
-          ...docker_compose.services[service_host],
-          build: {
-            context: service.service_path,
-            args: ['ARCHITECT_DEBUG=1'],
-          },
-        };
-
-        if (process.stdout.isTTY) {
-          const volumes = [];
-          const src_path = path.join(service.service_path, 'src');
-          if (await fs.pathExists(src_path)) {
-            volumes.push(`${src_path}:/usr/src/app/src`);
-          }
-
-          docker_compose.services[service_host] = {
-            ...docker_compose.services[service_host],
-            volumes,
-            command: service.config.debug,
-          };
-        }
-      }
+      dependencies.addNode(dep);
+      await this.addDependencyNodes(dep, config, dependencies);
+      await this.addDatastoreNodes(dep, config, dependencies);
     }
 
-    const docker_compose_path = path.join(os.homedir(), MANAGED_PATHS.HIDDEN, 'docker-compose.json');
-    await fs.ensureFile(docker_compose_path);
-    await fs.writeFile(docker_compose_path, JSON.stringify(docker_compose, null, 2));
-    await execa('docker-compose', ['-f', docker_compose_path, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
-  }
-
-  async run_external() {
-    const answers = await this.promptOptions();
-
-    if (answers.deployment_id) {
-      await this.poll(answers.deployment_id, 'pending');
-      await this.deploy(answers.deployment_id);
-    } else {
-      let deployment: any;
-      const tasks = new Listr([
-        {
-          title: `Planning`,
-          task: async () => {
-            const config_json = await this.parse_config();
-            const data = {
-              service: `${answers.service_name}:${answers.service_version}`,
-              environment: answers.environment,
-              config: config_json,
-            };
-            const { data: res } = await this.architect.post(`/deploy`, { data });
-            deployment = res;
-
-            await this.poll(deployment.id, 'pending');
-          },
-        },
-      ]);
-      await tasks.run();
-      this.log('Deployment Id:', deployment.id);
-
-      const confirmation = await inquirer.prompt({
-        type: 'confirm',
-        name: 'deploy',
-        message: 'Would you like to apply this deployment?',
-        when: !answers.auto_approve,
-      } as inquirer.Question);
-
-      if (confirmation.deploy || answers.auto_approve) {
-        await this.deploy(deployment.id);
-      } else {
-        this.warn('Canceled deploy');
+    // Loop back through the nodes and create edges for event/subscriber relationships
+    dependencies.nodes.forEach(node => {
+      for (const publisher_name of Object.keys(node.subscriptions)) {
+        const publisher_ref = Array.from(dependencies.nodes.keys())
+          .find(key => key.split(':')[0] === publisher_name);
+        if (publisher_ref) {
+          const publisher = dependencies.nodes.get(publisher_ref)!;
+          dependencies.addSubscription(publisher, node);
+        }
       }
-    }
-  }
-
-  async poll(deployment_id: string, match_status: string) {
-    return new Promise((resolve, reject) => {
-      let poll_count = 0;
-      const poll = setInterval(async () => {
-        const { data: deployment } = await this.architect.get(`/deploy/${deployment_id}`);
-        if (deployment.status.includes('failed') || poll_count > 100) {
-          clearInterval(poll);
-          reject(new Error('Deployment failed'));
-        }
-        if (deployment.status === match_status) {
-          clearInterval(poll);
-          resolve(deployment);
-        }
-        poll_count += 1;
-      }, 3000);
     });
+
+    const compose = DockerCompose.generate(dependencies);
+    await this.runCompose(compose);
   }
 
-  async deploy(deployment_id: string) {
-    const tasks = new Listr([
-      {
-        title: `Deploying`,
-        task: async () => {
-          await this.architect.post(`/deploy/${deployment_id}`);
-          await this.poll(deployment_id, 'applied');
-        },
-      },
-    ]);
-    await tasks.run();
-  }
+  async run() {
+    const {flags} = this.parse(Deploy);
 
-  async promptOptions() {
-    const { args, flags } = this.parse(Deploy);
-
-    const [service_name, service_version] = args.service ? args.service.split(':') : [undefined, undefined];
-    const options = {
-      service_name,
-      service_version,
-      environment: flags.environment,
-      auto_approve: flags.auto_approve,
-      deployment_id: flags.deployment_id,
-    };
-
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-
-    const answers = await inquirer.prompt([{
-      type: 'autocomplete',
-      name: 'service_name',
-      message: 'Select service:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: services } = await this.architect.get('/services', { params });
-        return services.map((service: any) => service.name);
-      },
-      when: !service_name && !flags.deployment_id,
-    } as inquirer.Question, {
-      type: 'list',
-      name: 'service_version',
-      message: 'Select version:',
-      choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || service_name}`);
-        return service.tags;
-      },
-      when: !service_version && !flags.deployment_id,
-    }, {
-      type: 'autocomplete',
-      name: 'environment',
-      message: 'Select environment:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: environments } = await this.architect.get('/environments', { params });
-        return environments.map((environment: any) => environment.name);
-      },
-      when: !flags.environment && !flags.deployment_id,
-    } as inquirer.Question]);
-
-    return { ...options, ...answers };
+    if (flags.local) {
+      await this.runLocal();
+    }
   }
 }

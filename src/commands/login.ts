@@ -1,16 +1,13 @@
+import Command from '../base-command';
 import { flags } from '@oclif/command';
+import inquirer = require('inquirer');
 import chalk from 'chalk';
-import inquirer from 'inquirer';
-import Command from '../base';
-
-const _error = chalk.red;
-const _success = chalk.green;
 
 export default class Login extends Command {
-  static description = 'Log in to a Architect registry';
+  static description = 'Login to the Architect Cloud platform';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
     username: flags.string({
       char: 'u',
       description: 'Username',
@@ -24,36 +21,29 @@ export default class Login extends Command {
   };
 
   async run() {
-    this.log('Login with your Architect ID to push and pull images from Architect Hub.');
-    const answers: any = await this.promptOptions();
-    try {
-      await this.login(answers.username, answers.password);
-    } catch (err) {
-      this.error(_error(err.message));
-    }
-  }
+    const {flags} = this.parse(Login);
 
-  async promptOptions() {
-    const { flags } = this.parse(Login);
-    const answers = await inquirer.prompt([{
-      type: 'input',
-      name: 'username',
-      when: !flags.username,
-    }, {
-      type: 'password',
-      name: 'password',
-      when: !flags.password,
-    }]);
-    return { ...flags, ...answers };
-  }
+    let answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'username',
+        default: flags.username,
+        when: !flags.username,
+      },
+      {
+        type: 'password',
+        name: 'password',
+        default: flags.password,
+        when: !flags.password,
+      },
+    ]);
 
-  async login(username: string, password: string) {
-    try {
-      await this.architect.login(username, password);
-      this.log(_success('Login Succeeded'));
-    } catch (err) {
-      this.log(_error('Login Failed'));
-      throw err;
-    }
+    answers = {
+      ...flags,
+      ...answers,
+    };
+
+    await this.app.auth.login(answers.username, answers.password);
+    this.log(chalk.green('Login successful'));
   }
 }
