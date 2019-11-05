@@ -38,18 +38,27 @@ export default class Deploy extends Command {
       description: 'Paths to services to deploy',
       multiple: true,
     }),
+    compose_file: flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: path.join(
+        os.tmpdir(),
+        `architect-deployment-${Date.now().toString()}.json`,
+      ),
+    }),
   };
 
   private async runCompose(compose: DockerComposeTemplate) {
-    const file_path = path.join(
-      os.tmpdir(),
-      `architect-deployment-${Date.now().toString()}.json`,
-    );
-    await fs.ensureFile(file_path);
-    await fs.writeJSON(file_path, compose, { spaces: 2 });
-    this.log(`Wrote docker-compose file to: ${file_path}`);
+    const { flags } = this.parse(Deploy);
+    Object.keys(compose.services).forEach(svc_name => {
+      const exposed_port = compose.services[svc_name].ports[0].split(':')[0];
+      this.log(`${chalk.blue(`0.0.0.0:${exposed_port}`)} => ${svc_name}`);
+    });
+    await fs.ensureFile(flags.compose_file);
+    await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
+    this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
     // this.log(chalk.green(JSON.stringify(compose, null, 2)));
-    await execa('docker-compose', ['-f', file_path, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
+    await execa('docker-compose', ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
   }
 
   private validateParams(
