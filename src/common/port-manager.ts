@@ -24,7 +24,7 @@ export default class PortManager {
   }
 
   static async getAvailablePort() {
-    let port: number;
+    let port: number = 0;
 
     for (const p of PORT_RANGE) {
       if (PortManager.tested_ports.has(p)) continue;

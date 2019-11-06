@@ -8,7 +8,7 @@ import { AuthenticationClient } from 'auth0';
 import LoginRequiredError from '../common/errors/login-required';
 
 export default class AppService {
-  config_file: string;
+  config_file: string = '';
   config: AppConfig;
   auth: AuthClient;
   private _api: AxiosInstance;
@@ -20,12 +20,13 @@ export default class AppService {
   }
 
   constructor(config_dir: string) {
-    this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    if (fs.existsSync(this.config_file)) {
-      const payload = JSON.parse(fs.readFileSync(this.config_file, 'utf-8'));
-      this.config = new AppConfig(payload);
-    } else {
-      this.config = new AppConfig();
+    this.config = new AppConfig();
+    if (config_dir) {
+      this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+      if (fs.existsSync(this.config_file)) {
+        const payload = JSON.parse(fs.readFileSync(this.config_file, 'utf-8'));
+        this.config = new AppConfig(payload);
+      }
     }
 
     this.auth = new AuthClient(config_dir, new AuthenticationClient({

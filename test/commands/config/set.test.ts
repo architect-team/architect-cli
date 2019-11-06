@@ -1,17 +1,17 @@
-import {expect, test} from '@oclif/test'
+import {expect, test} from '@oclif/test';
+import { execSync } from 'child_process';
 
-describe('config:set', () => {
+describe('config:set', function() {
+  const fields: { [key: string]: string } = {
+    registry_host: 'registry.architect.test',
+    api_host: 'https://api.architect.test',
+    log_level: 'debug',
+  };
+
   test
     .stdout()
-    .command(['config:set'])
-    .it('runs hello', ctx => {
-      expect(ctx.stdout).to.contain('hello world')
-    })
-
-  test
-    .stdout()
-    .command(['config:set', '--name', 'jeff'])
-    .it('runs hello --name jeff', ctx => {
-      expect(ctx.stdout).to.contain('hello jeff')
-    })
+    .command(['config:set', 'fake_param', 'fake_value'])
+    .it('rejects invalid param', ctx => {
+      console.log(ctx);
+    });
 })

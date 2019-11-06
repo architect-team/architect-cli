@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "experimentalDecorators": true,
     "declaration": true,
     "importHelpers": true,
@@ -11,7 +12,7 @@
     "target": "es2017",
     "composite": true
   },
-  "include": [
-    "src/**/*"
+  "exclude": [
+    "./test/"
   ]
 }

@@ -45,6 +45,12 @@ export default class Build extends Command {
     return definitionsContents;
   }
 
+  async docker(args: string[]) {
+    const cmd = execa('docker', args);
+    cmd.stdout.pipe(process.stdout);
+    await cmd;
+  }
+
   private async buildImage(servicePath: string, prior_paths: string[] = []) {
     const { flags } = this.parse(Build);
 
@@ -68,7 +74,7 @@ export default class Build extends Command {
     // TODO: Replace with config reference
     const imageTag = `${this.app.config.registry_host}/${config.name}:${tag}`;
     this.log(chalk.blue(`Building docker image for ${config.name}`));
-    const cmd = execa('docker', [
+    await this.docker([
       'build',
       '--compress',
       '--build-arg', `SERVICE_LANGUAGE=${config.language}`,
@@ -77,8 +83,6 @@ export default class Build extends Command {
       '--label', `api_definitions=${JSON.stringify(this.getServiceApiDefinitionContents(servicePath, config))}`,
       servicePath,
     ]);
-    cmd.stdout.pipe(process.stdout);
-    await cmd;
     this.log(chalk.green(`${config.name}:${tag} build succeeded`));
     return prior_paths;
   }

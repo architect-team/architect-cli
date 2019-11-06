@@ -1,8 +1,14 @@
 {
   "extends": "../tsconfig",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "sourceMap": true,
+    "rootDir": "..",
   },
+  "include": [
+    "**/*",
+    "../src/**/*"
+  ],
   "references": [
     {"path": ".."}
   ]

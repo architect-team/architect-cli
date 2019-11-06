@@ -7,7 +7,7 @@ import { Transform } from 'class-transformer';
 import { Dict, Default } from '../utils/transform';
 
 export default class ServiceConfig {
-  name: string;
+  name: string = '';
   description?: string;
   keywords?: string[];
   dependencies: { [s: string]: string } = {};
