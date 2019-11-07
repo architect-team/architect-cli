@@ -1,5 +1,5 @@
 export default class AppConfig {
-  log_level: 'info' | 'debug';
+  log_level: 'info' | 'debug' | 'test';
   registry_host: string;
   api_host: string;
   oauth_domain: string;

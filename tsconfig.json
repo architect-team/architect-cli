@@ -12,7 +12,7 @@
     "target": "es2017",
     "composite": true
   },
-  "exclude": [
-    "./test/"
+  "include": [
+    "./src/**/*"
   ]
 }

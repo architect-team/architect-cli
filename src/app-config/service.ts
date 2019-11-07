@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs-extra';
 import axios, { AxiosInstance } from 'axios';
 import AppConfig from './config';
 import ARCHITECTPATHS from '../paths';
@@ -24,7 +24,7 @@ export default class AppService {
     if (config_dir) {
       this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
       if (fs.existsSync(this.config_file)) {
-        const payload = JSON.parse(fs.readFileSync(this.config_file, 'utf-8'));
+        const payload = fs.readJSONSync(this.config_file);
         this.config = new AppConfig(payload);
       }
     }
