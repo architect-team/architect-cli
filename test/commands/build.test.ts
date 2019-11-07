@@ -10,6 +10,8 @@ import { plainToClass } from 'class-transformer';
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
 
+const architect = path.join(__dirname, '../../bin/run');
+
 const testBuildArgs = (service_path: string, service_config: ServiceConfig, build_args: string[], expected_tag = 'latest') => {
   expect(build_args[0]).to.equal('build');
   build_args = build_args.slice(1);
@@ -56,13 +58,13 @@ describe('build', function() {
 
   before(function() {
     // Set a predictable registry_host
-    original_registry_host = execSync(`npx architect config:get registry_host`).toString();
-    execSync(`npx architect config:set registry_host ${REGISTRY_HOST}`);
+    original_registry_host = execSync(`${architect} config:get registry_host`).toString();
+    execSync(`${architect} config:set registry_host ${REGISTRY_HOST}`);
   });
 
   after(function() {
     // Restory registry_host
-    execSync(`npx architect config:set registry_host ${original_registry_host}`);
+    execSync(`${architect} config:set registry_host ${original_registry_host}`);
   });
 
   beforeEach(function() {
