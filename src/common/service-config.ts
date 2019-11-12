@@ -80,6 +80,7 @@ export default class ServiceConfig {
   host?: string;
   port: string;
   debug?: string;
+  replicas?: number;
 
   constructor() {
     this.name = '';
@@ -94,6 +95,7 @@ export default class ServiceConfig {
     this.subscriptions = {};
     this.language = SUPPORTED_LANGUAGES.NODE;
     this.port = '8080';
+    this.replicas = 1;
   }
 
   get full_name() {

@@ -76,13 +76,14 @@ export default class Deploy extends Command {
 
   async parse_config() {
     const { flags } = this.parse(Deploy);
-    let config_json: EnvironmentMetadata = { services: {} };
+    let config_json: EnvironmentMetadata = { services: {}, vaults: {} };
     if (flags.config_file) {
       config_json = await fs.readJSON(untildify(flags.config_file));
+      const vaults = config_json.vaults || {};
       config_json.services = config_json.services || {};
       for (const service of Object.values(config_json.services)) {
         for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await readIfFile(value);
+          service.parameters![key] = await readIfFile(value, vaults);
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
@@ -90,6 +91,7 @@ export default class Deploy extends Command {
           }
         }
       }
+      // config_json.vaults = config_json.vaults || {}; // TODO: do we need this?
     }
     return config_json;
   }
