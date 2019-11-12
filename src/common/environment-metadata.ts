@@ -1,5 +1,6 @@
 export interface EnvironmentMetadata {
   services?: { [key: string]: ServiceMetadata };
+  vaults?: { [key: string]: VaultMetadata };
 }
 
 interface ServiceMetadata {
