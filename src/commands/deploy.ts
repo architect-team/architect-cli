@@ -13,6 +13,7 @@ import { readIfFile } from '../common/file-util';
 import MANAGED_PATHS from '../common/managed-paths';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
+import { readVaultParam } from '../common/vault-utils';
 import Install from './install';
 
 const _info = chalk.blue;
@@ -76,14 +77,17 @@ export default class Deploy extends Command {
 
   async parse_config() {
     const { flags } = this.parse(Deploy);
-    let config_json: EnvironmentMetadata = { services: {}, vaults: {} };
+    let config_json: EnvironmentMetadata = { services: {} };
     if (flags.config_file) {
       config_json = await fs.readJSON(untildify(flags.config_file));
-      const vaults = config_json.vaults || {};
       config_json.services = config_json.services || {};
       for (const service of Object.values(config_json.services)) {
         for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await readIfFile(value, vaults);
+          if (typeof value === 'string') {
+            service.parameters![key] = await readIfFile(value);
+          } else {
+            service.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+          }
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
@@ -91,7 +95,6 @@ export default class Deploy extends Command {
           }
         }
       }
-      // config_json.vaults = config_json.vaults || {}; // TODO: do we need this?
     }
     return config_json;
   }

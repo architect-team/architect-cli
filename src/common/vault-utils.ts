@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as https from 'https';
 import { VaultMetadata } from './environment-metadata';
 
-export const getVaultParameter = async (param_value: any, vaults: { [key: string]: VaultMetadata }): Promise<string> => {
+export const readVaultParam = async (param_value: any, vaults: { [key: string]: VaultMetadata }): Promise<string> => {
   const vault = vaults[param_value.valueFrom.vault];
   const vault_client = axios.create({
     baseURL: vault.host,
@@ -13,6 +13,7 @@ export const getVaultParameter = async (param_value: any, vaults: { [key: string
       rejectUnauthorized: false
     })
   });
+
   const param_start = param_value.valueFrom.key.lastIndexOf('/');
   const key = param_value.valueFrom.key.substr(0, param_start);
   const param_name = param_value.valueFrom.key.substr(param_start + 1);

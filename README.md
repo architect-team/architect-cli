@@ -359,7 +359,7 @@ _See code: [src/commands/install.ts](https://github.com/architect-team/architect
 
 ## `architect login`
 
-Log in to a Architect registry
+Log in to an Architect registry
 
 ```
 USAGE

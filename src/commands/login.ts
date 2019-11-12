@@ -7,7 +7,7 @@ const _error = chalk.red;
 const _success = chalk.green;
 
 export default class Login extends Command {
-  static description = 'Log in to a Architect registry';
+  static description = 'Log in to an Architect registry';
 
   static flags = {
     help: flags.help({ char: 'h' }),
