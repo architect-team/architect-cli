@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import fs from 'fs-extra';
 import ServiceConfig from '../../src/common/service-config';
 import Build from '../../src/commands/build';
-import { execSync } from 'child_process';
 import { plainToClass } from 'class-transformer';
 import AppConfig from '../../src/app-config/config';
 import ARCHITECTPATHS from '../../src/paths';
@@ -13,8 +12,6 @@ import AppService from '../../src/app-config/service';
 
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
-
-const architect = path.join(__dirname, '../../bin/run');
 
 const testBuildArgs = (service_path: string, service_config: ServiceConfig, build_args: string[], expected_tag = 'latest') => {
   expect(build_args[0]).to.equal('build');
