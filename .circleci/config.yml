@@ -118,7 +118,7 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - release:
+      - publish:
           context: NPM Packaging
           requires:
             - build
