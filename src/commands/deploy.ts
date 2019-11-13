@@ -13,6 +13,7 @@ import { readIfFile } from '../common/file-util';
 import MANAGED_PATHS from '../common/managed-paths';
 import PortUtil from '../common/port-util';
 import ServiceDependency from '../common/service-dependency';
+import { readVaultParam } from '../common/vault-utils';
 import Install from './install';
 
 const _info = chalk.blue;
@@ -82,11 +83,19 @@ export default class Deploy extends Command {
       config_json.services = config_json.services || {};
       for (const service of Object.values(config_json.services)) {
         for (const [key, value] of Object.entries(service.parameters || {})) {
-          service.parameters![key] = await readIfFile(value);
+          if (typeof value === 'string') {
+            service.parameters![key] = await readIfFile(value);
+          } else {
+            service.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+          }
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
-            datastore.parameters![key] = await readIfFile(value);
+            if (typeof value === 'string') {
+              datastore.parameters![key] = await readIfFile(value);
+            } else {
+              datastore.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+            }
           }
         }
       }
