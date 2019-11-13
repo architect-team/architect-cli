@@ -41,11 +41,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          <<: *cache_config
+          keys: *cache_config
       - run: npm install
       - run: npm run lint
   cache:
-    <<: *test
+    executor: release
     steps:
       - checkout
       - run: npm install
@@ -60,7 +60,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          <<: *cache_config
+          keys: *cache_config
       - run: npm install
       - run: npm run build
       - persist_to_workspace:
@@ -96,11 +96,14 @@ workflows:
             branches:
               only: /.*/
       - test-node-latest:
-          <<: *branches_only
+          filters:
+            <<: *branches_only
       - test-node-12:
-          <<: *branches_only
+          filters:
+            <<: *branches_only
       - test-node-10:
-          <<: *branches_only
+          filters:
+            <<: *branches_only
       - cache:
           requires:
             - lint
