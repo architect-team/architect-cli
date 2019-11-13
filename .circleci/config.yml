@@ -1,5 +1,12 @@
 version: 2
 
+aliases:
+  - &restore_cache
+    restore_cache:
+      keys:
+        - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
+        - v1-npm-{{checksum ".circleci/config.yml"}}
+
 jobs:
   test-node-latest: &test
     docker:
@@ -10,10 +17,7 @@ jobs:
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
-      - restore_cache: &restore_cache
-          keys:
-            - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
-            - v1-npm-{{checksum ".circleci/config.yml"}}
+      - *restore_cache
       - run:
           name: Install dependencies
           command: npm install
@@ -36,7 +40,7 @@ jobs:
       - image: node:latest
     steps:
       - checkout
-      <<: *restore_cache
+      - *restore_cache
       - run: npm install
       - run: npm run lint
   cache:
@@ -56,7 +60,7 @@ jobs:
       - image: node:latest
     steps:
       - checkout
-      <<: *restore_cache
+      - *restore_cache
       - run:
           name: Install dependencies
           command: npm install --production
