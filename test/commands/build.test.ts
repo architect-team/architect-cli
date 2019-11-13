@@ -55,7 +55,14 @@ describe('build', function() {
   let tmp_dir = os.tmpdir();
   let spy: sinon.SinonSpy;
 
-  before(function() {
+  beforeEach(function() {
+    // Fake the docker build command
+    spy = sinon.fake.returns(null);
+    sinon.replace(Build.prototype, 'docker', spy);
+
+    // Stub the logger
+    sinon.replace(Build.prototype, 'log', sinon.stub());
+
     // Stub the registry_host
     const config = new AppConfig({
       registry_host: REGISTRY_HOST,
@@ -66,22 +73,12 @@ describe('build', function() {
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
-  after(function() {
-    fs.removeSync(path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME));
-  });
-
-  beforeEach(function() {
-    // Fake the docker build command
-    spy = sinon.fake.returns(null);
-    sinon.replace(Build.prototype, 'docker', spy);
-
-    // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
-  });
-
   afterEach(function() {
     // Restore stubs
     sinon.restore();
+
+    // Remove the registry_host stub
+    fs.removeSync(path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME));
   });
 
   it('builds docker image', async () => {
