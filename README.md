@@ -39,7 +39,8 @@ USAGE
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
-* [`architect uninstall [FILE]`](#architect-uninstall-file)
+* [`architect services [FILE]`](#architect-services-file)
+* [`architect uninstall [DEPENDENCY_NAME]`](#architect-uninstall-dependency_name)
 
 ## `architect build`
 
@@ -124,7 +125,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573663602369.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573673186149.j
                                    son] Path where the compose file should be written to
 
   -s, --services=services          Paths to services to deploy
@@ -223,18 +224,36 @@ OPTIONS
 
 _See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/logout.ts)_
 
-## `architect uninstall [FILE]`
+## `architect services [FILE]`
 
 describe the command here
 
 ```
 USAGE
-  $ architect uninstall [FILE]
+  $ architect services [FILE]
 
 OPTIONS
   -f, --force
   -h, --help       show CLI help
   -n, --name=name  name to print
+```
+
+_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/services/index.ts)_
+
+## `architect uninstall [DEPENDENCY_NAME]`
+
+Uninstall a dependency from the current service
+
+```
+USAGE
+  $ architect uninstall [DEPENDENCY_NAME]
+
+ARGUMENTS
+  DEPENDENCY_NAME  Name of the dependency to remove
+
+OPTIONS
+  -h, --help             show CLI help
+  -s, --service=service  Path to service root
 ```
 
 _See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/uninstall.ts)_

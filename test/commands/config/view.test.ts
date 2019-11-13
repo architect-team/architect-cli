@@ -15,13 +15,13 @@ describe('config:view', () => {
   });
 
   it('expects results table', async () => {
-    const config = new AppConfig({
+    const config = new AppConfig('', {
       registry_host: 'registry.config.test',
       api_host: 'https://registry.config.test',
       log_level: 'test',
     });
     const table = new Table({ head: ['Name', 'Value'] });
-    for (const entry of Object.entries(config)) {
+    for (const entry of Object.entries(config.toJSON())) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       table.push(entry);

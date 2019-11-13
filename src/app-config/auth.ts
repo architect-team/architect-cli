@@ -2,6 +2,7 @@ import { AuthenticationClient } from 'auth0';
 import CredentialManager from './credentials';
 import LoginRequiredError from '../common/errors/login-required';
 import execa from 'execa';
+import AppConfig from './config';
 
 const CREDENTIAL_PREFIX = 'architect.io';
 
@@ -14,12 +15,14 @@ interface AuthResults {
 }
 
 export default class AuthClient {
+  config: AppConfig;
   credentials: CredentialManager;
   auth0: AuthenticationClient;
   auth_results?: AuthResults;
 
-  constructor(config_dir: string, auth0: AuthenticationClient) {
-    this.credentials = new CredentialManager(config_dir);
+  constructor(config: AppConfig, auth0: AuthenticationClient) {
+    this.config = config;
+    this.credentials = new CredentialManager(config);
     this.auth0 = auth0;
   }
 
@@ -66,7 +69,7 @@ export default class AuthClient {
 
     try {
       await execa('docker', [
-        'login',
+        'login', this.config.registry_host,
         '-u', credential.account,
         '--password-stdin',
       ], {
@@ -79,6 +82,7 @@ export default class AuthClient {
       await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
       return this.auth_results;
     } catch (error) {
+      console.error(error);
       return undefined;
     }
   }

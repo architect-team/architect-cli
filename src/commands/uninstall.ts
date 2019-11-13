@@ -2,14 +2,6 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import Command from '../base-command';
 
-class MissingDependencyError extends Error {
-  constructor() {
-    super();
-    this.name = 'missing_dependency';
-    this.message = 'No dependency name provided';
-  }
-}
-
 export default class Uninstall extends Command {
   static description = 'Uninstall a dependency from the current service';
 
@@ -24,15 +16,11 @@ export default class Uninstall extends Command {
   static args = [{
     name: 'dependency_name',
     description: 'Name of the dependency to remove',
+    required: true,
   }];
 
   async run() {
     const {flags, args} = this.parse(Uninstall);
-
-    if (!args.dependency_name) {
-      throw new MissingDependencyError();
-    }
-
     let service_path = process.cwd();
     if (flags.service) {
       service_path = flags.service;

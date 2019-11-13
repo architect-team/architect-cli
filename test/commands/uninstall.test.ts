@@ -1,4 +1,4 @@
-import {expect, test} from '@oclif/test';
+import {expect} from '@oclif/test';
 import Uninstall from '../../src/commands/uninstall';
 import sinon from 'sinon';
 import os from 'os';
@@ -13,7 +13,7 @@ describe('uninstall', () => {
 
   beforeEach(function() {
     // Stub the log_level
-    const config = new AppConfig({
+    const config = new AppConfig('', {
       log_level: 'debug',
     });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
@@ -35,8 +35,7 @@ describe('uninstall', () => {
       await Uninstall.run([]);
       expect(false, 'no error thrown').to.equal(true);
     } catch (err) {
-      expect(err.name).to.equal('missing_dependency');
-      expect(err.message).to.equal('No dependency name provided');
+      expect(err.message).to.equal('Missing 1 required arg:\ndependency_name  Name of the dependency to remove\nSee more help with --help');
     }
   });
 

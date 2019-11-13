@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs-extra';
+import AppConfig from './config';
 
 const CREDENTIALS_FILENAME = 'creds.json';
 
@@ -14,8 +15,8 @@ export default class CredentialManager {
   private keytar: any;
   private keychainWarningIssued = false;
 
-  constructor(config_dir: string) {
-    this.credentials_file = path.join(config_dir, CREDENTIALS_FILENAME);
+  constructor(config: AppConfig) {
+    this.credentials_file = path.join(config.getConfigDir(), CREDENTIALS_FILENAME);
     fs.ensureFileSync(this.credentials_file);
     this.credentials = fs.readJSONSync(this.credentials_file, { throws: false }) || {};
 

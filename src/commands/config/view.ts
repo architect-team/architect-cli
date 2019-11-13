@@ -12,7 +12,7 @@ export default class ConfigView extends Command {
   async run() {
     const table = new Table({ head: ['Name', 'Value'] });
 
-    for (const entry of Object.entries(this.app.config)) {
+    for (const entry of Object.entries(this.app.config.toJSON())) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       table.push(entry);
