@@ -16,13 +16,25 @@ describe('deploy', () => {
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
     expect(compose_spy.calledOnce).to.equal(true);
 
-    const input_tpl = compose_spy.firstCall.args[0];
-    expect(input_tpl.version).to.equal(expected_compose.version);
-    for (const key of Object.keys(input_tpl.services)) {
+    expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
+    for (const key of Object.keys(compose_spy.firstCall.args[0].services)) {
       expect(Object.keys(expected_compose.services)).to.include(key);
 
-      const input = input_tpl.services[key] as DockerService;
+      const input = compose_spy.firstCall.args[0].services[key] as DockerService;
       const expected = expected_compose.services[key];
+
+      // Overwrite expected paths with full directories
+      if (expected.build) {
+        expected.build.context = path.join(__dirname, '../../', expected.build.context);
+      }
+
+      if (expected.volumes) {
+        expected.volumes = expected.volumes.map(volume => {
+          const [host, target] = volume.split(':');
+          return `${path.join(__dirname, '../../', host)}:${target}`;
+        });
+      }
+
       expect(expected.ports).to.have.members(input.ports);
       expect(expected.image).to.equal(input.image);
       expect(expected.depends_on).to.have.members(input.depends_on);

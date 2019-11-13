@@ -8,10 +8,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Pull submodules
-          command: |
-            git submodule init
-            git submodule update
+          name: clone submodules
+          command: command: git submodule update --recursive --init
       - restore_cache: &restore_cache
           keys:
             - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
