@@ -33,11 +33,13 @@ USAGE
 * [`architect config:get OPTION`](#architect-configget-option)
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
-* [`architect deploy [FILE]`](#architect-deploy-file)
+* [`architect deploy`](#architect-deploy)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
 * [`architect login`](#architect-login)
+* [`architect logout`](#architect-logout)
+* [`architect uninstall [FILE]`](#architect-uninstall-file)
 
 ## `architect build`
 
@@ -108,18 +110,24 @@ ALIASES
 
 _See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/config/view.ts)_
 
-## `architect deploy [FILE]`
+## `architect deploy`
 
-describe the command here
+Create a deploy job on Architect Cloud or run stacks locally
 
 ```
 USAGE
-  $ architect deploy [FILE]
+  $ architect deploy
 
 OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
+  -c, --config=config              Path to an environment config file for the environment
+  -h, --help                       show CLI help
+  -l, --local                      Deploy the stack locally instead of via Architect Cloud
+
+  -o, --compose_file=compose_file  [default:
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573663602369.j
+                                   son] Path where the compose file should be written to
+
+  -s, --services=services          Paths to services to deploy
 ```
 
 _See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/deploy.ts)_
@@ -200,4 +208,34 @@ OPTIONS
 ```
 
 _See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/login.ts)_
+
+## `architect logout`
+
+Logout from the Architect registry
+
+```
+USAGE
+  $ architect logout
+
+OPTIONS
+  -h, --help  show CLI help
+```
+
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/logout.ts)_
+
+## `architect uninstall [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect uninstall [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/uninstall.ts)_
 <!-- commandsstop -->
