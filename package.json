@@ -74,6 +74,7 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
+    "build": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "lint": "eslint --ext .ts,.js .",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
