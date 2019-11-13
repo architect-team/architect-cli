@@ -8,16 +8,17 @@
     "sourceMap": true,
     "module": "commonjs",
     "outDir": "lib",
-    "baseUrl": "./src",
+    "rootDir": "src",
     "strict": true,
     "resolveJsonModule": true,
-    "target": "es2018",
+    "target": "es2017",
     "composite": true
   },
   "include": [
     "./src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "test"
   ]
 }

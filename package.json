@@ -42,7 +42,7 @@
     "mock-spawn": "^0.2.6",
     "nyc": "^13.3.0",
     "sinon": "^7.5.0",
-    "ts-node": "^8.4.1",
+    "ts-node": "^8.5.0",
     "typescript": "^3.6.4"
   },
   "optionalDependencies": {
@@ -73,9 +73,10 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
+    "build": "tsc -b",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/commands/**/*.test.ts\"",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"

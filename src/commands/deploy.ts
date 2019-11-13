@@ -48,7 +48,7 @@ export default class Deploy extends Command {
     }),
   };
 
-  private async runCompose(compose: DockerComposeTemplate) {
+  async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
     Object.keys(compose.services).forEach(svc_name => {
       const exposed_port = compose.services[svc_name].ports[0].split(':')[0];

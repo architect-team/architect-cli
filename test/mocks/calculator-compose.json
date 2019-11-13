@@ -1,0 +1,93 @@
+{
+  "version": "3",
+  "services": {
+    "architect.division-service.local": {
+      "ports": [
+        "50000:8080"
+      ],
+      "depends_on": [
+        "architect.subtraction-service.local"
+      ],
+      "environment": {
+        "HOST": "architect.division-service.local",
+        "PORT": 8080,
+        "ARCHITECT_CURRENT_SERVICE": "architect/division-service",
+        "ARCHITECT": "{\"architect/division-service\":{\"host\":\"http://architect.division-service.local\",\"port\":8080,\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":8080,\"api\":\"rest\"}}"
+      },
+      "build": {
+        "context": "/Users/davidthor/Workspaces/Architect/architect-cli/test/calculator/division-service",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "npm run debug",
+      "volumes": [
+        "/Users/davidthor/Workspaces/Architect/architect-cli/test/calculator/division-service/src:/usr/src/app/src"
+      ]
+    },
+    "architect.subtraction-service.local": {
+      "ports": [
+        "50001:8080"
+      ],
+      "depends_on": [
+        "architect.addition-service.local",
+        "architect.subtraction-service.primary.local"
+      ],
+      "environment": {
+        "HOST": "architect.subtraction-service.local",
+        "PORT": 8080,
+        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service",
+        "ARCHITECT": "{\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":8080,\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.subtraction-service.primary.local\",\"port\":5432,\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"subtraction_service\",\"name\":\"subtraction_service\"}},\"subscriptions\":{}},\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":8080,\"api\":\"rest\"}}"
+      },
+      "build": {
+        "context": "/Users/davidthor/Workspaces/Architect/architect-cli/test/calculator/subtraction-services/go/rest/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "sh -c 'go run main.go'"
+    },
+    "architect.addition-service.local": {
+      "ports": [
+        "50002:8080"
+      ],
+      "depends_on": [],
+      "environment": {
+        "HOST": "architect.addition-service.local",
+        "PORT": 8080,
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service",
+        "ARCHITECT": "{\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":8080,\"api\":\"rest\",\"datastores\":{},\"subscriptions\":{}}}"
+      },
+      "build": {
+        "context": "/Users/davidthor/Workspaces/Architect/architect-cli/test/calculator/addition-service/rest/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "npm run dev",
+      "volumes": [
+        "/Users/davidthor/Workspaces/Architect/architect-cli/test/calculator/addition-service/rest/src:/usr/src/app/src"
+      ]
+    },
+    "architect.subtraction-service.primary.local": {
+      "ports": [
+        "50003:5432"
+      ],
+      "depends_on": [],
+      "environment": {
+        "HOST": "architect.subtraction-service.primary.local",
+        "PORT": 5432,
+        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service.primary",
+        "ARCHITECT": "{\"architect/subtraction-service.primary\":{\"host\":\"http://architect.subtraction-service.primary.local\",\"port\":5432,\"datastores\":{},\"subscriptions\":{}}}",
+        "POSTGRES_USER": "postgres",
+        "username": "postgres",
+        "POSTGRES_PASSWORD": "architect",
+        "password": "architect",
+        "POSTGRES_DB": "subtraction_service",
+        "name": "subtraction_service"
+      },
+      "image": "postgres:10"
+    }
+  },
+  "volumes": {}
+}

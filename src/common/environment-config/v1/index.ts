@@ -41,11 +41,7 @@ export default class EnvironmentConfigV1 extends EnvironmentConfig {
 
   getDatastoreParameters(service_ref: string, datastore_name: string): { [key: string]: string } {
     const ref = Object.keys(this.services).find(key => key.startsWith(service_ref));
-    if (!ref) {
-      throw new Error(`Invalid service reference: ${service_ref}`);
-    }
-
-    if (Object.keys(this.services[ref].datastores).hasOwnProperty(datastore_name)) {
+    if (ref && Object.keys(this.services[ref].datastores).hasOwnProperty(datastore_name)) {
       return this.services[ref].datastores[datastore_name].parameters;
     }
 

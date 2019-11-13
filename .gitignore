@@ -5,6 +5,7 @@
 /lib
 /tmp
 node_modules
+.test
 .idea
 architect_services
 oclif.manifest.json

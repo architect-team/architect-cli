@@ -1,14 +1,11 @@
 import {expect} from '@oclif/test';
 import sinon from 'sinon';
 import fs from 'fs-extra';
-import AppService from '../../../src/app-config/service';
 import ConfigSet from '../../../src/commands/config/set';
 import AppConfig from '../../../src/app-config/config';
 import InvalidConfigOption from '../../../src/common/errors/invalid-config-option';
 
 describe('config:set', function() {
-  this.timeout(25000);
-
   afterEach(function() {
     sinon.restore();
   });
@@ -19,6 +16,7 @@ describe('config:set', function() {
 
     const fake_option = 'invalid_option';
     const expected_error = new InvalidConfigOption(fake_option);
+
     await ConfigSet.run([fake_option, 'test-value']);
     expect(spy.calledOnce).to.equal(true);
     expect(spy.firstCall.args[0].name).to.equal(expected_error.name);

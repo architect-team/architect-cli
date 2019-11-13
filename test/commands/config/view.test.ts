@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import os from 'os';
 import fs from 'fs-extra';
 import path from 'path';
-import {expect, test} from '@oclif/test';
+import {expect} from '@oclif/test';
 import ARCHITECTPATHS from '../../../src/paths';
 import AppConfig from '../../../src/app-config/config';
 import AppService from '../../../src/app-config/service';

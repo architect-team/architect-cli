@@ -15,7 +15,7 @@ export default class AppService {
 
   static async create(config_dir: string): Promise<AppService> {
     const service = new AppService(config_dir);
-    await service.auth.refreshToken();
+    await service.auth.init();
     return service;
   }
 

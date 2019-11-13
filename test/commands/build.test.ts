@@ -51,8 +51,6 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
 };
 
 describe('build', function() {
-  this.timeout(15000);
-
   let original_registry_host: string;
   let spy: sinon.SinonSpy;
 
@@ -124,23 +122,4 @@ describe('build', function() {
       testBuildArgs(service_path, service_config, call.args[0]);
     }
   });
-
-  // test
-  //   .stdout()
-  //   .command(['build', '-s', './test/calculator/division-service', '-r'])
-  //   .timeout(30000)
-  //   .it('builds images recursively', ctx => {
-  //     expect(ctx.stdout).to.contain('Building docker image for architect/addition-service');
-  //     expect(ctx.stdout).to.contain('Building docker image for architect/subtraction-service');
-  //     expect(ctx.stdout).to.contain('Building docker image for architect/division-service');
-
-  //     const addition_image = execSync(`docker images ${REGISTRY_HOST}/architect/addition-service:latest`);
-  //     expect(addition_image.toString()).to.contain(`${REGISTRY_HOST}/architect/addition-service`);
-
-  //     const subtraction_image = execSync(`docker images ${REGISTRY_HOST}/architect/subtraction-service:latest`);
-  //     expect(subtraction_image.toString()).to.contain(`${REGISTRY_HOST}/architect/addition-service`);
-
-  //     const division_image = execSync(`docker images ${REGISTRY_HOST}/architect/division-service:latest`);
-  //     expect(division_image.toString()).to.contain(`${REGISTRY_HOST}/architect/division-service`);
-  //   });
 });

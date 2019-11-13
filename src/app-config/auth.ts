@@ -23,6 +23,13 @@ export default class AuthClient {
     this.auth0 = auth0;
   }
 
+  async init() {
+    const token = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+    if (token) {
+      this.auth_results = JSON.parse(token.password) as AuthResults;
+    }
+  }
+
   async login(username: string, password: string) {
     await this.logout();
     await this.credentials.set(CREDENTIAL_PREFIX, username, password);

@@ -9,8 +9,6 @@ import AppService from '../../../src/app-config/service';
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('config:get', function() {
-  this.timeout(30000);
-
   afterEach(function() {
     sinon.restore();
   })
