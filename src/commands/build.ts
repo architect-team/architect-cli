@@ -95,7 +95,7 @@ export default class Build extends Command {
       services.push(process.cwd());
     }
 
-    let service_paths: string[] = [];
+    const service_paths: string[] = [];
     for (let svcPath of services) {
       svcPath = path.resolve(svcPath);
       service_paths.concat(await this.buildImage(svcPath, service_paths));

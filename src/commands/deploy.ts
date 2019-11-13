@@ -214,8 +214,9 @@ export default class Deploy extends Command {
         const publisher_ref = Array.from(dependencies.nodes.keys())
           .find(key => key.split(':')[0] === publisher_name);
         if (publisher_ref) {
-          const publisher = dependencies.nodes.get(publisher_ref)!;
-          dependencies.addSubscription(publisher, node);
+          const publisher = dependencies.nodes.get(publisher_ref);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dependencies.addSubscription(publisher!, node);
         }
       }
     });

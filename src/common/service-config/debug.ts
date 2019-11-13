@@ -1,5 +1,5 @@
 export default class ServiceDebugConfig {
-  command: string = '';
-  container_workdir: string = '';
+  command = '';
+  container_workdir = '';
   host_volumes: string[] = [];
 }

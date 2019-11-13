@@ -16,6 +16,7 @@ module.exports = {
     'no-undef': [0],
     'comma-dangle': [1, 'always-multiline'],
     'semi': 'off',
+    'no-prototype-builtins': [0],
     'space-before-function-paren': ['error', { 'anonymous': 'always', 'named': 'never', 'asyncArrow': 'always' }],
 
     '@typescript-eslint/camelcase': [0],
@@ -25,7 +26,6 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': [1],
     '@typescript-eslint/no-var-requires': [0],
     '@typescript-eslint/no-namespace': [1],
-
     '@typescript-eslint/semi': ['warn', 'always'],
   }
 }

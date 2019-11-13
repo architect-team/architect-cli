@@ -37,13 +37,14 @@
     "chai": "^4.2.0",
     "chalk": "^2.4.2",
     "eslint": "^6.5.1",
+    "eslint-plugin-oclif": "^0.1.0",
     "globby": "^10.0.1",
     "mocha": "^5.2.0",
     "mock-spawn": "^0.2.6",
     "nyc": "^13.3.0",
     "sinon": "^7.5.0",
     "ts-node": "^8.5.0",
-    "typescript": "^3.6.4"
+    "typescript": "^3.7.2"
   },
   "optionalDependencies": {
     "keytar": "^4.13.0"
@@ -73,10 +74,10 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
-    "build": "tsc -b",
+    "lint": "eslint --ext .ts,.js .",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"

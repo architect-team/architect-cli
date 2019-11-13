@@ -8,7 +8,7 @@ import { AuthenticationClient } from 'auth0';
 import LoginRequiredError from '../common/errors/login-required';
 
 export default class AppService {
-  config_file: string = '';
+  config_file = '';
   config: AppConfig;
   auth: AuthClient;
   private _api: AxiosInstance;
@@ -67,8 +67,9 @@ export default class AppService {
             this._api.defaults.headers = {
               Authorization: `${new_token.token_type} ${new_token.access_token}`,
             };
-            err.config.headers.Authorization = this._api.defaults.headers;
-            return this._api.request(err.config);
+            const error_config = err.config;
+            error_config.headers.Authorization = this._api.defaults.headers;
+            return this._api.request(error_config);
           }
 
           // eslint-disable-next-line no-undef

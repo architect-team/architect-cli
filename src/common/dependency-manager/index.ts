@@ -10,6 +10,7 @@ export default class DependencyManager {
 
   addNode(service: LocalDependencyNode | RemoteDependencyNode): LocalDependencyNode | RemoteDependencyNode {
     if (this.nodes.has(service.ref)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return this.nodes.get(service.ref)!;
     }
 

@@ -31,7 +31,9 @@ export default class Install extends Command {
 
   private async installSingle(service_id: string) {
     const service_dir = process.cwd();
-    let [service_name, service_tag] = service_id.split(':');
+    const parts = service_id.split(':');
+    const service_name = parts[0];
+    let service_tag = parts[1];
     const config = this.getServiceConfig(service_dir);
 
     if (config.name === service_name) {
