@@ -1,4 +1,5 @@
-import {expect, test} from '@oclif/test';
+import {expect} from '@oclif/test';
+import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import fs from 'fs-extra';
@@ -6,6 +7,9 @@ import ServiceConfig from '../../src/common/service-config';
 import Build from '../../src/commands/build';
 import { execSync } from 'child_process';
 import { plainToClass } from 'class-transformer';
+import AppConfig from '../../src/app-config/config';
+import ARCHITECTPATHS from '../../src/paths';
+import AppService from '../../src/app-config/service';
 
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
@@ -51,24 +55,30 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
 };
 
 describe('build', function() {
-  let original_registry_host: string;
+  let tmp_dir = os.tmpdir();
   let spy: sinon.SinonSpy;
 
   before(function() {
-    // Set a predictable registry_host
-    original_registry_host = execSync(`${architect} config:get registry_host`).toString();
-    execSync(`${architect} config:set registry_host ${REGISTRY_HOST}`);
+    // Stub the registry_host
+    const config = new AppConfig({
+      registry_host: REGISTRY_HOST,
+    });
+    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+    fs.writeJSONSync(tmp_config_file, config);
+    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
+    sinon.replace(AppService, 'create', app_config_stub);
   });
 
   after(function() {
-    // Restory registry_host
-    execSync(`${architect} config:set registry_host ${original_registry_host}`);
+    fs.removeSync(path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME));
   });
 
   beforeEach(function() {
     // Fake the docker build command
     spy = sinon.fake.returns(null);
     sinon.replace(Build.prototype, 'docker', spy);
+
+    // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
   });
 
