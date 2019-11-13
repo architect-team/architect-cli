@@ -91,7 +91,11 @@ export default class Deploy extends Command {
         }
         for (const datastore of Object.values(service.datastores || {})) {
           for (const [key, value] of Object.entries(datastore.parameters || {})) {
-            datastore.parameters![key] = await readIfFile(value);
+            if (typeof value === 'string') {
+              datastore.parameters![key] = await readIfFile(value);
+            } else {
+              datastore.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+            }
           }
         }
       }
