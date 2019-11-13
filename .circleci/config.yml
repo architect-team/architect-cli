@@ -1,56 +1,124 @@
----
-version: 2
+version: 2.1
+
+executors:
+  release:
+    working_directory: ~/cli
+    docker:
+      - image: node:12
+
 jobs:
-  node-latest: &test
+  test-node-latest: &test
     docker:
       - image: node:latest
     working_directory: ~/cli
     steps:
       - checkout
-      - restore_cache: &restore_cache
-          keys:
+      - run:
+          name: clone submodules
+          command: git submodule update --recursive --init
+      - restore_cache:
+          keys: &cache_config
             - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
             - v1-npm-{{checksum ".circleci/config.yml"}}
       - run:
           name: Install dependencies
-          command: yarn
+          command: npm install
       - run: ./bin/run --version
       - run: ./bin/run --help
       - run:
           name: Testing
           command: npm test
-  node-12:
+  test-node-12:
     <<: *test
     docker:
       - image: node:12
-  node-10:
+  test-node-10:
     <<: *test
     docker:
       - image: node:10
-  cache:
-    <<: *test
+  lint:
+    executor: release
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: yarn
+      - restore_cache:
+          keys: *cache_config
+      - run: npm install
+      - run: npm run lint
+  cache:
+    executor: release
+    steps:
+      - checkout
+      - run: npm install
       - save_cache:
           key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
           paths:
             - ~/cli/node_modules
             - ~/.npm
             - /usr/local/lib/node_modules
+  build:
+    executor: release
+    steps:
+      - checkout
+      - restore_cache:
+          keys: *cache_config
+      - run: npm install
+      - run: npm run build
+      - persist_to_workspace:
+          root: ~/cli
+          paths:
+            - bin
+            - lib
+            - npm-shrinkwrap.json
+            - oclif.manifest.json
+            - package.json
+            - package-lock.json
+            - README.md
+  publish:
+    executor: release
+    steps:
+      - attach_workspace:
+          at: ~/cli
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+      - run:
+          name: Publish package
+          command: npm publish --access public
 
 workflows:
   version: 2
-  "architect-cli":
+  test:
     jobs:
-      - node-latest
-      - node-12
-      - node-10
+      - lint:
+          filters: &branches_only
+            tags:
+              ignore: /.*/
+            branches:
+              only: /.*/
+      - test-node-latest:
+          filters:
+            <<: *branches_only
+      - test-node-12:
+          filters:
+            <<: *branches_only
+      - test-node-10:
+          filters:
+            <<: *branches_only
       - cache:
+          requires:
+            - lint
+            - test-node-latest
+            - test-node-12
+            - test-node-10
+  release:
+    jobs:
+      - build:
           filters:
             tags:
               only: /^v.*/
             branches:
               ignore: /.*/
+      - publish:
+          context: NPM Packaging
+          requires:
+            - build

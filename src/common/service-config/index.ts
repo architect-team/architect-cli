@@ -2,12 +2,11 @@ import ServiceParameterConfig from './parameter';
 import ServiceApiConfig from './api';
 import ServiceDatastoreConfig from './datastore';
 import ServiceSubscriptions from './subscriptions';
-import ServiceDebugConfig from './debug';
 import { Transform } from 'class-transformer';
 import { Dict, Default } from '../utils/transform';
 
 export default class ServiceConfig {
-  name: string;
+  name = '';
   description?: string;
   keywords?: string[];
   dependencies: { [s: string]: string } = {};

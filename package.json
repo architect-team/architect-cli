@@ -31,16 +31,20 @@
     "@types/inquirer": "^6.5.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.17.0",
+    "@types/sinon": "^7.5.0",
     "@typescript-eslint/eslint-plugin": "^2.5.0",
     "@typescript-eslint/parser": "^2.5.0",
     "chai": "^4.2.0",
     "chalk": "^2.4.2",
     "eslint": "^6.5.1",
+    "eslint-plugin-oclif": "^0.1.0",
     "globby": "^10.0.1",
     "mocha": "^5.2.0",
+    "mock-spawn": "^0.2.6",
     "nyc": "^13.3.0",
-    "ts-node": "^8.4.1",
-    "typescript": "^3.6.4"
+    "sinon": "^7.5.0",
+    "ts-node": "^8.5.0",
+    "typescript": "^3.7.2"
   },
   "optionalDependencies": {
     "keytar": "^4.13.0"
@@ -70,6 +74,8 @@
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
+    "build": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "lint": "eslint --ext .ts,.js .",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",

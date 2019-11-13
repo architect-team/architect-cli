@@ -1,5 +1,5 @@
 import path from 'path';
-import fs from 'fs';
+import fs from 'fs-extra';
 import axios, { AxiosInstance } from 'axios';
 import AppConfig from './config';
 import ARCHITECTPATHS from '../paths';
@@ -8,24 +8,25 @@ import { AuthenticationClient } from 'auth0';
 import LoginRequiredError from '../common/errors/login-required';
 
 export default class AppService {
-  config_file: string;
+  config_file = '';
   config: AppConfig;
   auth: AuthClient;
   private _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
     const service = new AppService(config_dir);
-    await service.auth.refreshToken();
+    await service.auth.init();
     return service;
   }
 
   constructor(config_dir: string) {
-    this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    if (fs.existsSync(this.config_file)) {
-      const payload = JSON.parse(fs.readFileSync(this.config_file, 'utf-8'));
-      this.config = new AppConfig(payload);
-    } else {
-      this.config = new AppConfig();
+    this.config = new AppConfig();
+    if (config_dir) {
+      this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+      if (fs.existsSync(this.config_file)) {
+        const payload = fs.readJSONSync(this.config_file);
+        this.config = new AppConfig(payload);
+      }
     }
 
     this.auth = new AuthClient(config_dir, new AuthenticationClient({
@@ -66,8 +67,9 @@ export default class AppService {
             this._api.defaults.headers = {
               Authorization: `${new_token.token_type} ${new_token.access_token}`,
             };
-            err.config.headers.Authorization = this._api.defaults.headers;
-            return this._api.request(err.config);
+            const error_config = err.config;
+            error_config.headers.Authorization = this._api.defaults.headers;
+            return this._api.request(error_config);
           }
 
           // eslint-disable-next-line no-undef

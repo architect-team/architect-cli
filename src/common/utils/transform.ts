@@ -1,4 +1,4 @@
-import { plainToClass, Transform } from 'class-transformer'
+import { plainToClass, Transform } from 'class-transformer';
 
 /**
  * Used in conjunction with the @Transform annotation from the 'class-transformer'
@@ -7,7 +7,8 @@ import { plainToClass, Transform } from 'class-transformer'
 export const Dict = (typeFunction: any, options?: { key?: string }) =>
   (dict: any) => {
     const classType = typeFunction();
-    for (let [key, value] of Object.entries(dict)) {
+    for (const key of Object.keys(dict)) {
+      let value = dict[key];
       if (options && options.key && typeof value === 'string') {
         const new_value: any = {};
         new_value[options.key] = value;

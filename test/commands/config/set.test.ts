@@ -1,17 +1,46 @@
-import {expect, test} from '@oclif/test'
+import {expect} from '@oclif/test';
+import sinon from 'sinon';
+import fs from 'fs-extra';
+import ConfigSet from '../../../src/commands/config/set';
+import AppConfig from '../../../src/app-config/config';
+import InvalidConfigOption from '../../../src/common/errors/invalid-config-option';
 
-describe('config:set', () => {
-  test
-    .stdout()
-    .command(['config:set'])
-    .it('runs hello', ctx => {
-      expect(ctx.stdout).to.contain('hello world')
-    })
+describe('config:set', function() {
+  afterEach(function() {
+    sinon.restore();
+  });
 
-  test
-    .stdout()
-    .command(['config:set', '--name', 'jeff'])
-    .it('runs hello --name jeff', ctx => {
-      expect(ctx.stdout).to.contain('hello jeff')
-    })
+  it('should fail for bad key', async () => {
+    const spy = sinon.fake.returns(null);
+    sinon.replace(ConfigSet.prototype, 'catch', spy);
+
+    const fake_option = 'invalid_option';
+    const expected_error = new InvalidConfigOption(fake_option);
+
+    await ConfigSet.run([fake_option, 'test-value']);
+    expect(spy.calledOnce).to.equal(true);
+    expect(spy.firstCall.args[0].name).to.equal(expected_error.name);
+    expect(spy.firstCall.args[0].message).to.equal(expected_error.message);
+  });
+
+  it('should save config changes', async () => {
+    const config = new AppConfig({
+      api_host: 'https://api.architect.test',
+      registry_host: 'registry.architect.test',
+      log_level: 'test',
+    });
+
+    for (const key of Object.keys(config)) {
+      const logStub = sinon.fake.returns(null);
+      const saveSpy = sinon.fake.returns(null);
+      sinon.replace(fs, 'writeFileSync', saveSpy);
+      sinon.replace(ConfigSet.prototype, 'log', logStub);
+
+      await ConfigSet.run([key, config[key]]);
+      expect(saveSpy.calledOnce).to.equal(true);
+      expect(JSON.parse(saveSpy.firstCall.args[1])[key]).to.equal(config[key]);
+
+      sinon.restore();
+    }
+  });
 })

@@ -48,7 +48,7 @@ export default class Deploy extends Command {
     }),
   };
 
-  private async runCompose(compose: DockerComposeTemplate) {
+  async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
     Object.keys(compose.services).forEach(svc_name => {
       const exposed_port = compose.services[svc_name].ports[0].split(':')[0];
@@ -214,8 +214,9 @@ export default class Deploy extends Command {
         const publisher_ref = Array.from(dependencies.nodes.keys())
           .find(key => key.split(':')[0] === publisher_name);
         if (publisher_ref) {
-          const publisher = dependencies.nodes.get(publisher_ref)!;
-          dependencies.addSubscription(publisher, node);
+          const publisher = dependencies.nodes.get(publisher_ref);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          dependencies.addSubscription(publisher!, node);
         }
       }
     });
