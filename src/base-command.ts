@@ -27,7 +27,7 @@ export default abstract class extends Command {
     return JSON.stringify(obj, null, 2);
   }
 
-  protected getServiceConfig(servicePath: string): ServiceConfig {
+  getServiceConfig(servicePath: string): ServiceConfig {
     const configPath = path.join(servicePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
     if (!fs.existsSync(configPath)) {
       throw new MissingConfigFileError(configPath);
@@ -36,7 +36,7 @@ export default abstract class extends Command {
     return plainToClass(ServiceConfig, configPayload);
   }
 
-  protected saveServiceConfig(servicePath: string, config: ServiceConfig) {
+  saveServiceConfig(servicePath: string, config: ServiceConfig) {
     const configPath = path.join(servicePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
     fs.writeJSONSync(configPath, config, {
       spaces: 2,
