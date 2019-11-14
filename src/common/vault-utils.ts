@@ -1,17 +1,18 @@
 import axios from 'axios';
 import * as https from 'https';
 import { VaultMetadata } from './environment-metadata';
+import { readIfFile } from './file-util';
 
 export const readVaultParam = async (param_value: any, vaults: { [key: string]: VaultMetadata }): Promise<string> => {
   const vault = vaults[param_value.valueFrom.vault];
   const vault_client = axios.create({
     baseURL: vault.host,
     headers: {
-      'X-Vault-Token': vault.access_token,
+      'X-Vault-Token': await readIfFile(vault.access_token),
     },
     httpsAgent: new https.Agent({
-      rejectUnauthorized: false
-    })
+      rejectUnauthorized: false,
+    }),
   });
 
   const param_start = param_value.valueFrom.key.lastIndexOf('/');
@@ -23,4 +24,4 @@ export const readVaultParam = async (param_value: any, vaults: { [key: string]: 
   } catch (err) {
     throw new Error(`Error retrieving secret ${param_value.valueFrom.key}\n${err}`);
   }
-}
+};
