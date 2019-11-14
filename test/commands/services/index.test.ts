@@ -1,40 +1,65 @@
 import {expect} from '@oclif/test';
-import nock from 'nock';
-import Service from '../../../src/commands/services';
+import sinon from 'sinon';
+import moxios from 'moxios';
+import Services from '../../../src/commands/services';
 
 describe('services', () => {
-  before(function() {
-    nock.recorder.rec({
-      dont_print: true,
-      output_objects: true,
-    });
-    nock.disableNetConnect();
-    nock('https://api.architect.io')
-      .get('/services?q=')
-      .reply(200, []);
-  });
-
-  after(function() {
-    nock.enableNetConnect();
-  });
-
   beforeEach(function() {
-    nock.recorder.clear();
+    sinon.replace(Services.prototype, 'log', sinon.stub());
+    moxios.install();
   });
 
-  it('lists all services', async () => {
-    await Service.run([]);
-    const recorded_calls = nock.recorder.play();
-    expect(recorded_calls.length).to.equal(1);
-    console.log((recorded_calls[0] as nock.Definition));
-    expect((recorded_calls[0] as nock.Definition).path).to.equal('/services?q=');
+  afterEach(function() {
+    moxios.uninstall();
+    sinon.restore();
   });
 
-  it('supports search queries', async () => {
+  it('lists all services', done => {
+    moxios.stubRequest('/services', {
+      status: 200,
+      response: [],
+    });
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent();
+      request.respondWith({
+        status: 200,
+        response: [
+          { name: 'test/service', updated_at: 'test', created_at: 'test' },
+        ],
+      });
+
+      expect(request.url).to.match(/.*\/services\?q=/);
+      done();
+    });
+
+    Services.run([]);
+  });
+
+  it('supports search queries', done => {
     const search_term = 'architect';
-    await Service.run([search_term]);
-    const recorded_calls = nock.recorder.play();
-    expect(recorded_calls.length).to.equal(1);
-    expect((recorded_calls[0] as nock.Definition).path).to.equal(`/services?q=${search_term}`);
+
+    moxios.stubRequest('/services', {
+      status: 200,
+      response: [],
+    });
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent();
+      request.respondWith({
+        status: 200,
+        response: [
+          { name: `${search_term}/service`, updated_at: 'test', created_at: 'test' },
+        ],
+      });
+
+      const match = request.url.match(/.*\/services\?q=(.*)/);
+      expect(match).not.to.equal(null);
+      expect(match!.length).to.be.greaterThan(1);
+      expect(match![1]).to.equal(search_term);
+      done();
+    });
+
+    Services.run([search_term]);
   });
 });
