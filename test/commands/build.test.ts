@@ -64,7 +64,7 @@ describe('build', function() {
     sinon.replace(Build.prototype, 'log', sinon.stub());
 
     // Stub the registry_host
-    const config = new AppConfig({
+    const config = new AppConfig(__dirname, {
       registry_host: REGISTRY_HOST,
     });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);

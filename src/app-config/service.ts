@@ -8,10 +8,9 @@ import { AuthenticationClient } from 'auth0';
 import LoginRequiredError from '../common/errors/login-required';
 
 export default class AppService {
-  config_file = '';
   config: AppConfig;
   auth: AuthClient;
-  private _api: AxiosInstance;
+  _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
     const service = new AppService(config_dir);
@@ -20,16 +19,16 @@ export default class AppService {
   }
 
   constructor(config_dir: string) {
-    this.config = new AppConfig();
+    this.config = new AppConfig(config_dir);
     if (config_dir) {
-      this.config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-      if (fs.existsSync(this.config_file)) {
-        const payload = fs.readJSONSync(this.config_file);
-        this.config = new AppConfig(payload);
+      const config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+      if (fs.existsSync(config_file)) {
+        const payload = fs.readJSONSync(config_file);
+        this.config = new AppConfig(config_dir, payload);
       }
     }
 
-    this.auth = new AuthClient(config_dir, new AuthenticationClient({
+    this.auth = new AuthClient(this.config, new AuthenticationClient({
       domain: this.config.oauth_domain,
       clientId: this.config.oauth_client_id,
     }));
@@ -39,7 +38,7 @@ export default class AppService {
   }
 
   saveConfig() {
-    fs.writeFileSync(this.config_file, JSON.stringify(this.config, null, 2));
+    this.config.save();
   }
 
   get api(): AxiosInstance {

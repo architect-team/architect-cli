@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
+import AppConfig from '../../app-config/config';
 
 export default class ConfigGet extends Command {
   static description = 'Get the value of a CLI config option';
@@ -21,7 +22,7 @@ export default class ConfigGet extends Command {
       throw new InvalidConfigOption(args.option);
     }
 
-    const value = this.app.config[args.option];
+    const value = this.app.config[args.option as keyof AppConfig];
     if (typeof value === 'string') {
       this.log(value);
     }

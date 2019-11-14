@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
+import AppConfig from '../../app-config/config';
 
 export default class ConfigSet extends Command {
   static description = 'Set a new value for a CLI configuration option';
@@ -25,7 +26,7 @@ export default class ConfigSet extends Command {
       throw new InvalidConfigOption(args.option);
     }
 
-    this.app.config[args.option] = args.value;
+    this.app.config[args.option as keyof AppConfig] = args.value;
     this.app.saveConfig();
     this.log(`Successfully updated ${args.option} to ${args.value}`);
   }
