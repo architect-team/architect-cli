@@ -34,13 +34,14 @@ USAGE
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
 * [`architect deploy`](#architect-deploy)
+* [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
-* [`architect services [FILE]`](#architect-services-file)
-* [`architect uninstall [DEPENDENCY_NAME]`](#architect-uninstall-dependency_name)
+* [`architect services [QUERY]`](#architect-services-query)
+* [`architect uninstall DEPENDENCY_NAME`](#architect-uninstall-dependency_name)
 
 ## `architect build`
 
@@ -125,13 +126,38 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573673186149.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573849904853.j
                                    son] Path where the compose file should be written to
 
   -s, --services=services          Paths to services to deploy
 ```
 
 _See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/deploy.ts)_
+
+## `architect environments [QUERY]`
+
+List environments you have access to
+
+```
+USAGE
+  $ architect environments [QUERY]
+
+ARGUMENTS
+  QUERY  Search term used to filter the results
+
+OPTIONS
+  -h, --help  show CLI help
+
+ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
+  $ architect environments:list
+  $ architect envs:list
+  $ architect env:list
+```
+
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/index.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -224,29 +250,34 @@ OPTIONS
 
 _See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/logout.ts)_
 
-## `architect services [FILE]`
+## `architect services [QUERY]`
 
-describe the command here
+Search for services on Architect Cloud
 
 ```
 USAGE
-  $ architect services [FILE]
+  $ architect services [QUERY]
+
+ARGUMENTS
+  QUERY  Search query used to filter results
 
 OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
+  -h, --help  show CLI help
+
+ALIASES
+  $ architect services
+  $ architect services:search
 ```
 
 _See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/services/index.ts)_
 
-## `architect uninstall [DEPENDENCY_NAME]`
+## `architect uninstall DEPENDENCY_NAME`
 
 Uninstall a dependency from the current service
 
 ```
 USAGE
-  $ architect uninstall [DEPENDENCY_NAME]
+  $ architect uninstall DEPENDENCY_NAME
 
 ARGUMENTS
   DEPENDENCY_NAME  Name of the dependency to remove
