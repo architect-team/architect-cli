@@ -36,6 +36,8 @@ USAGE
 * [`architect deploy`](#architect-deploy)
 * [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [NAME]`](#architect-environmentscreate-name)
+* [`architect environments:destroy NAME`](#architect-environmentsdestroy-name)
+* [`architect environments:update [FILE]`](#architect-environmentsupdate-file)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
@@ -127,7 +129,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574101648345.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574110945933.j
                                    son] Path where the compose file should be written to
 
   -s, --services=services          Paths to services to deploy
@@ -188,6 +190,46 @@ ALIASES
 ```
 
 _See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/create.ts)_
+
+## `architect environments:destroy NAME`
+
+Destroy an environment
+
+```
+USAGE
+  $ architect environments:destroy NAME
+
+ARGUMENTS
+  NAME  Name of the environment to destroy
+
+OPTIONS
+  -a, --auto_approve  Automatically apply the changes without reviewing the diff
+  -f, --force         Force the deletion even if the environment is not empty
+  -h, --help          show CLI help
+
+ALIASES
+  $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
+```
+
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/destroy.ts)_
+
+## `architect environments:update [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect environments:update [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/update.ts)_
 
 ## `architect help [COMMAND]`
 

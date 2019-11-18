@@ -1,9 +1,20 @@
+import path from 'path';
+import fs from 'fs-extra';
 import ServiceParameterConfig from './parameter';
 import ServiceApiConfig from './api';
 import ServiceDatastoreConfig from './datastore';
 import ServiceSubscriptions from './subscriptions';
-import { Transform } from 'class-transformer';
+import { Transform, plainToClass } from 'class-transformer';
 import { Dict, Default } from '../utils/transform';
+import ARCHITECTPATHS from '../../paths';
+
+class MissingConfigFileError extends Error {
+  constructor(filepath: string) {
+    super();
+    this.name = 'missing_config_file';
+    this.message = `No config file found at ${filepath}`;
+  }
+}
 
 export default class ServiceConfig {
   name = '';
@@ -23,6 +34,22 @@ export default class ServiceConfig {
 
   constructor(partial?: Partial<ServiceConfig>) {
     Object.assign(this, partial);
+  }
+
+  static loadFromPath(service_path: string) {
+    const config_path = path.join(service_path, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+    if (!fs.existsSync(config_path)) {
+      throw new MissingConfigFileError(config_path);
+    }
+    const configPayload = fs.readJSONSync(config_path) as object;
+    return plainToClass(ServiceConfig, configPayload);
+  }
+
+  static saveToPath(service_path: string, config: ServiceConfig) {
+    const configPath = path.join(service_path, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+    fs.writeJSONSync(configPath, config, {
+      spaces: 2,
+    });
   }
 
   getDependencies(): { [s: string]: string } {

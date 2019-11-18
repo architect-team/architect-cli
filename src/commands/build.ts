@@ -54,7 +54,7 @@ export default class Build extends Command {
   private async buildImage(servicePath: string, prior_paths: string[] = []) {
     const { flags } = this.parse(Build);
 
-    const config = this.getServiceConfig(servicePath);
+    const config = ServiceConfig.loadFromPath(servicePath);
     const tag = flags.tag || 'latest';
     if (flags.recursive && config.dependencies) {
       for (const serviceRef of Object.values(config.dependencies)) {
