@@ -5,8 +5,7 @@ import url from 'url';
 import { AppConfig } from '../app-config/config';
 import { EnvironmentMetadata } from './environment-metadata';
 import ServiceConfig from './service-config';
-import ServiceParameter from './service-parameter';
-import { SemvarValidator } from './validation-utils';
+import { SemvarValidator } from './utils/validation';
 
 export default abstract class ServiceDependency {
   static create(app_config: AppConfig, service_path: string, _root = true) {
@@ -203,7 +202,7 @@ class DockerServiceDependency extends ServiceDependency {
 
   async _load_config(repository_name: string) {
     const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "architect.json"}}']);
-    this._config = ServiceConfig.create(JSON.parse(stdout));
+    this._config = new ServiceConfig(JSON.parse(stdout));
     if (this.config.api) {
       const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "api_definitions"}}']);
       this._api_definitions = JSON.parse(stdout);
