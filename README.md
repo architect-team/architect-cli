@@ -35,6 +35,7 @@ USAGE
 * [`architect config:view`](#architect-configview)
 * [`architect deploy`](#architect-deploy)
 * [`architect environments [QUERY]`](#architect-environments-query)
+* [`architect environments:create [NAME]`](#architect-environmentscreate-name)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
@@ -126,7 +127,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1573849904853.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574101648345.j
                                    son] Path where the compose file should be written to
 
   -s, --services=services          Paths to services to deploy
@@ -158,6 +159,35 @@ ALIASES
 ```
 
 _See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/index.ts)_
+
+## `architect environments:create [NAME]`
+
+Register a new environment with Architect Cloud
+
+```
+USAGE
+  $ architect environments:create [NAME]
+
+ARGUMENTS
+  NAME  Name to give the environment
+
+OPTIONS
+  -c, --config_file=config_file
+  -h, --help                                       show CLI help
+  -h, --host=host
+  -k, --kubeconfig=kubeconfig                      [default: ~/.kube/config]
+  -n, --namespace=namespace
+  -t, --type=kubernetes                            [default: kubernetes]
+  --cluster_ca_certificate=cluster_ca_certificate  File path of cluster_ca_certificate
+  --service_token=service_token                    Service token
+
+ALIASES
+  $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
+```
+
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/create.ts)_
 
 ## `architect help [COMMAND]`
 

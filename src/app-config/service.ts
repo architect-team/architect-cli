@@ -51,7 +51,7 @@ export default class AppService {
       const unauthorized_interceptor = this._api.interceptors.response.use(
         res => res,
         async err => {
-          if (err.response.status === 401) {
+          if (err?.response?.status === 401) {
             // Don't repeat the 401 check on a loop
             this._api.interceptors.response.eject(unauthorized_interceptor);
 
@@ -67,7 +67,7 @@ export default class AppService {
               Authorization: `${new_token.token_type} ${new_token.access_token}`,
             };
             const error_config = err.config;
-            error_config.headers.Authorization = this._api.defaults.headers;
+            error_config.headers.Authorization = this._api.defaults.headers.common.Authorization;
             return this._api.request(error_config);
           }
 
