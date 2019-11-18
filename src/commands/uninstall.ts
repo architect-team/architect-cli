@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import Command from '../base-command';
+import ServiceConfig from '../common/service-config';
 
 export default class Uninstall extends Command {
   static description = 'Uninstall a dependency from the current service';
@@ -26,10 +27,10 @@ export default class Uninstall extends Command {
       service_path = flags.service;
     }
 
-    const config = this.getServiceConfig(service_path);
+    const config = ServiceConfig.loadFromPath(service_path);
     if (Object.keys(config.dependencies).includes(args.dependency_name)) {
       delete config.dependencies[args.dependency_name];
-      this.saveServiceConfig(service_path, config);
+      ServiceConfig.saveToPath(service_path, config);
       this.log(chalk.green(`Successfully uninstalled ${args.dependency_name} from ${config.name}`));
     } else {
       this.log(`${config.name} does not have ${args.dependency_name} as a dependency. Skipping.`);

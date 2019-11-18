@@ -7,6 +7,7 @@ import path from 'path';
 import AppConfig from '../../src/app-config/config';
 import ARCHITECTPATHS from '../../src/paths';
 import AppService from '../../src/app-config/service';
+import ServiceConfig from '../../src/common/service-config';
 
 describe('uninstall', () => {
   let tmp_dir = os.tmpdir();
@@ -65,7 +66,7 @@ describe('uninstall', () => {
 
     // Spy on the call to save the service config
     const save_spy = sinon.fake.returns(null);
-    sinon.replace(Uninstall.prototype, 'saveServiceConfig', save_spy);
+    sinon.replace(ServiceConfig, 'saveToPath', save_spy);
 
     const subtraction_service = path.join(__dirname, '../calculator/subtraction-services/node/rest');
     const subtraction_config = fs.readJSONSync(path.join(subtraction_service, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME));

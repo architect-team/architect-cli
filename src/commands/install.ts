@@ -1,6 +1,7 @@
 import Command from '../base-command';
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import ServiceConfig from '../common/service-config';
 
 declare const process: NodeJS.Process;
 
@@ -34,7 +35,7 @@ export default class Install extends Command {
     const parts = service_id.split(':');
     const service_name = parts[0];
     let service_tag = parts[1];
-    const config = this.getServiceConfig(service_dir);
+    const config = ServiceConfig.loadFromPath(service_dir);
 
     if (config.name === service_name) {
       throw new Error('Services cannot depend on themselves');
@@ -55,7 +56,7 @@ export default class Install extends Command {
     }
 
     config.dependencies[service_name] = service_tag;
-    this.saveServiceConfig(service_dir, config);
+    ServiceConfig.saveToPath(service_dir, config);
     this.log(chalk.green(`${service_name}:${service_tag} installed successfully`));
   }
 
