@@ -49,6 +49,11 @@ export default class ServiceConfig {
     });
   }
 
+  static writeToPath(filepath: string, config_json: object) {
+    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
+  }
+
   getDependencies(): { [s: string]: string } {
     return this.dependencies || {};
   }
@@ -67,6 +72,10 @@ export default class ServiceConfig {
 
   get full_name() {
     return `${this.name}:${this.version}`;
+  }
+
+  static convertServiceNameToFolderName(service_name: string): string {
+    return service_name.replace(/-/g, '_');
   }
 
   static loadJSONFromPath(filepath: string): any {

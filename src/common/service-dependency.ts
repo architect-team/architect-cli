@@ -2,9 +2,10 @@ import execa = require('execa');
 import { readFileSync } from 'fs';
 import path from 'path';
 import url from 'url';
-import { AppConfig } from '../app-config/config';
+import AppConfig from '../app-config/config';
 import { EnvironmentMetadata } from './environment-metadata';
 import ServiceConfig from './service-config';
+import ServiceParameterConfig from './service-config/parameter';
 import { SemvarValidator } from './utils/validation';
 
 export default abstract class ServiceDependency {
@@ -115,7 +116,7 @@ export default abstract class ServiceDependency {
       }
       for (const [key, value] of Object.entries(override.parameters || {})) {
         if (!(key in service.config.parameters)) {
-          service.config.parameters[key] = new ServiceParameter();
+          service.config.parameters[key] = new ServiceParameterConfig();
         }
         service.config.parameters[key].default = value as string;
       }
@@ -137,7 +138,7 @@ export default abstract class ServiceDependency {
               datastore.parameters = {};
             }
             if (!(key in datastore.parameters)) {
-              datastore.parameters[key] = new ServiceParameter();
+              datastore.parameters[key] = new ServiceParameterConfig();
             }
             datastore.parameters[key].default = value as string;
           }
@@ -186,7 +187,7 @@ class LocalServiceDependency extends ServiceDependency {
 
 class DockerServiceDependency extends ServiceDependency {
   tag() {
-    return url.resolve(`${this.app_config.default_registry_host}/`, `${this.config.full_name}`);
+    return url.resolve(`${this.app_config.registry_host}/`, `${this.config.full_name}`);
   }
 
   async _load() {

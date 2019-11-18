@@ -10,7 +10,7 @@ import ServiceDependency from './service-dependency';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
-  const _postHooks = async (stub_directory: string, target_language: SUPPORTED_LANGUAGES) => {
+  const _postHooks = async (stub_directory: string, target_language?: string) => {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
       await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
       await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
@@ -33,7 +33,7 @@ namespace ProtocExecutor {
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
-    for (const definition of dependency.config.api!.definitions) {
+    for (const definition of dependency.config.api!.definitions || []) {
       const definition_contents = dependency.api_definitions[definition];
       const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
       checksums.push(hash);
@@ -52,7 +52,7 @@ namespace ProtocExecutor {
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
-    for (const definition of dependency.config.api.definitions) {
+    for (const definition of dependency.config.api.definitions || []) {
       const definition_contents = dependency.api_definitions[definition];
       await fs.outputFile(path.join(tmp_dependency_dir, definition), definition_contents);
     }
