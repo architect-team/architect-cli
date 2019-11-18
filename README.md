@@ -37,6 +37,7 @@ USAGE
 * [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [NAME]`](#architect-environmentscreate-name)
 * [`architect environments:destroy NAME`](#architect-environmentsdestroy-name)
+* [`architect environments:update [FILE]`](#architect-environmentsupdate-file)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
@@ -128,7 +129,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574110894662.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574110945933.j
                                    son] Path where the compose file should be written to
 
   -s, --services=services          Paths to services to deploy
@@ -213,6 +214,22 @@ ALIASES
 ```
 
 _See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/destroy.ts)_
+
+## `architect environments:update [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect environments:update [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/update.ts)_
 
 ## `architect help [COMMAND]`
 
