@@ -1,24 +1,28 @@
-import path from 'path';
+import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import { plainToClass } from 'class-transformer';
+import execa from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
+import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import { flags } from '@oclif/command';
 import DependencyManager from '../common/dependency-manager';
-import execa from 'execa';
-import chalk from 'chalk';
 import { LocalDependencyNode } from '../common/dependency-manager/node/local';
-import ServiceConfig from '../common/service-config';
 import { RemoteDependencyNode } from '../common/dependency-manager/node/remote';
-import EnvironmentConfigV1 from '../common/environment-config/v1';
-import EnvironmentConfig from '../common/environment-config';
-import { plainToClass } from 'class-transformer';
-import MissingRequiredParamError from '../common/errors/missing-required-param';
-import ServiceParameterConfig from '../common/service-config/parameter';
-import DockerComposeTemplate from '../common/docker-compose/template';
 import * as DockerCompose from '../common/docker-compose';
+import DockerComposeTemplate from '../common/docker-compose/template';
+import EnvironmentConfig from '../common/environment-config';
+import EnvironmentConfigV1 from '../common/environment-config/v1';
+import { EnvironmentMetadata } from '../common/environment-metadata';
+import MissingRequiredParamError from '../common/errors/missing-required-param';
+import ServiceConfig from '../common/service-config';
+import ServiceParameterConfig from '../common/service-config/parameter';
+import { readIfFile } from '../common/utils/file';
+import { readVaultParam } from '../common/vault-utils';
 
 declare const process: NodeJS.Process;
+const _info = chalk.blue;
 
 export default class Deploy extends Command {
   static description = 'Create a deploy job on Architect Cloud or run stacks locally';
@@ -81,12 +85,40 @@ export default class Deploy extends Command {
         if (val.startsWith('file:')) {
           val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
-        params[key] = val;
+        params[key] = val.toString();
         if (service_param.alias) {
-          params[service_param.alias] = val;
+          params[service_param.alias] = val.toString();
         }
         return params;
       }, {});
+  }
+
+  async parse_config() {
+    const { flags } = this.parse(Deploy);
+    let config_json: EnvironmentMetadata = { services: {} };
+    if (flags.config_file) {
+      config_json = await fs.readJSON(untildify(flags.config_file));
+      config_json.services = config_json.services || {};
+      for (const service of Object.values(config_json.services)) {
+        for (const [key, value] of Object.entries(service.parameters || {})) {
+          if (typeof value === 'string') {
+            service.parameters![key] = await readIfFile(value);
+          } else {
+            service.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+          }
+        }
+        for (const datastore of Object.values(service.datastores || {})) {
+          for (const [key, value] of Object.entries(datastore.parameters || {})) {
+            if (typeof value === 'string') {
+              datastore.parameters![key] = await readIfFile(value);
+            } else {
+              datastore.parameters![key] = await readVaultParam(value, config_json.vaults || {});
+            }
+          }
+        }
+      }
+    }
+    return config_json;
   }
 
   private async addDatastoreNodes(
@@ -226,7 +258,7 @@ export default class Deploy extends Command {
   }
 
   async run() {
-    const {flags} = this.parse(Deploy);
+    const { flags } = this.parse(Deploy);
 
     if (flags.local) {
       await this.runLocal();
