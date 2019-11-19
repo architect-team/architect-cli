@@ -8,6 +8,8 @@ export interface NodeOptions {
   parameters?: { [key: string]: string };
   subscriptions?: ServiceSubscriptions;
   api_type?: string;
+  api_definitions?: string[];
+  language?: string;
 }
 
 export interface PrivateNodeOptions extends NodeOptions {
@@ -23,18 +25,22 @@ export default abstract class DependencyNode {
   parameters: { [key: string]: string };
   subscriptions: ServiceSubscriptions;
   api_type?: string;
+  api_definitions?: string[];
+  language?: string;
   isDatastore: boolean;
 
   constructor(options: PrivateNodeOptions) {
-    this.name           = options.name;
-    this.tag            = options.tag;
-    this.parameters     = options.parameters || {};
-    this.subscriptions  = options.subscriptions || {};
-    this.host           = options.host || '0.0.0.0';
-    this.target_port    = options.target_port;
-    this.expose_port    = options.expose_port;
-    this.api_type       = options.api_type;
-    this.isDatastore   = false;
+    this.name = options.name;
+    this.tag = options.tag;
+    this.parameters = options.parameters || {};
+    this.subscriptions = options.subscriptions || {};
+    this.host = options.host || '0.0.0.0';
+    this.target_port = options.target_port;
+    this.expose_port = options.expose_port;
+    this.api_type = options.api_type;
+    this.api_definitions = options.api_definitions;
+    this.language = options.language;
+    this.isDatastore = false;
   }
 
   get normalized_ref() {

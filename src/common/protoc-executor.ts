@@ -5,8 +5,8 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import ARCHITECTPATHS from '../paths';
+import { LocalDependencyNode } from './dependency-manager/node/local';
 import ServiceConfig from './service-config';
-import ServiceDependency from './service-dependency';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
@@ -18,25 +18,27 @@ namespace ProtocExecutor {
     }
   };
 
-  export const execute = async (dependency: ServiceDependency, target: ServiceDependency, error_logger: any): Promise<void> => {
-    if (!dependency.config.api) {
-      throw new Error(`${dependency.config.name} has no api configured.`);
+  export const execute = async (dependency: LocalDependencyNode, target: LocalDependencyNode): Promise<void> => {
+    if (!dependency.api_type) {
+      throw new Error(`${dependency.name} has no api configured.`);
     }
-    if (!target.local) {
-      throw new Error(`${dependency.config.name} is not a local service`);
-    }
-    const dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.config.name);
-    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.config.name);
+    // if (!target.local) { // TODO: replace
+    //   throw new Error(`${dependency.name} is not a local service`);
+    // }
+    const dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name);
+    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
 
     // Make the folder to store dependency stubs
     const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
-    for (const definition of dependency.config.api!.definitions || []) {
-      const definition_contents = dependency.api_definitions[definition];
-      const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
-      checksums.push(hash);
+    if (dependency.api_definitions) {
+      for (const definition of dependency.api_definitions) {
+        const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
+        const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
+        checksums.push(hash);
+      }
     }
 
     const checksum_path = path.join(stub_directory, 'checksum');
@@ -52,27 +54,27 @@ namespace ProtocExecutor {
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
-    for (const definition of dependency.config.api.definitions || []) {
-      const definition_contents = dependency.api_definitions[definition];
-      await fs.outputFile(path.join(tmp_dependency_dir, definition), definition_contents);
+    if (dependency.api_definitions) {
+      for (const definition of dependency.api_definitions) {
+        const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
+        await fs.outputFile(path.join(tmp_dependency_dir, definition), definition_contents);
+      }
     }
 
     try {
-      await createGrpcDefinitions(target, stub_directory, tmp_dependency_dir, error_logger);
+      await createGrpcDefinitions(target, stub_directory, tmp_dependency_dir);
       await fs.writeFile(checksum_path, checksum);
     } finally {
       await fs.remove(tmp_dir);
     }
 
-    await _postHooks(stub_directory, target.config.language);
+    await _postHooks(stub_directory, target.language);
   };
 
-  const createGrpcDefinitions = (service: ServiceDependency, write_path: string, target_service_path: string, error_logger: any) => {
-    const config = service.config;
-
-    if (config && config.api && config.api.definitions) {
-      const service_definitions = config.api.definitions;
-      const current_service_language = config.language;
+  const createGrpcDefinitions = (service: LocalDependencyNode, write_path: string, target_service_path: string) => {
+    if (service.api_type && service.api_definitions) {
+      const service_definitions = service.api_definitions;
+      const current_service_language = service.language;
 
       if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
         try {
@@ -107,10 +109,10 @@ namespace ProtocExecutor {
           ${proto_path}`);
         }
       } else {
-        error_logger.log(chalk.yellow(current_service_language ? `The CLI doesn't currently support ${current_service_language}` : 'Please add a service language'), { exit: true });
+        console.log(chalk.yellow(current_service_language ? `The CLI doesn't currently support ${current_service_language}` : 'Please add a service language'), { exit: true });
       }
     } else {
-      error_logger.log(chalk.red('grpc service definitions not found'), { exit: true });
+      console.log(chalk.red('grpc service definitions not found'), { exit: true });
     }
   }
 }

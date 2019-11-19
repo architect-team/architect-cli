@@ -47,22 +47,25 @@ export default class Push extends Command {
     if (flags.tag) { build_args.push('-t'); build_args.push(flags.tag); }
     await Build.run(build_args);
 
-    const dependencies = await genFromLocalPaths([process.cwd()]);
+    const dependencies = await genFromLocalPaths([process.cwd()], undefined, flags.recursive);
     const tasks: Promise<void>[] = [];
     dependencies.nodes.forEach(dependency => {
       if (!dependency.isDatastore || (!dependency.isDatastore && (dependency as LocalDependencyNode).service_path)) {
-        tasks.push(this.pushImage(dependency));
+        tasks.push(
+          (async () => {
+            await this.pushImage(dependency);
+            console.log(chalk.green(`Successfully pushed Docker image for ${dependency.name}`));
+          })());
       }
     });
     await Promise.all(tasks);
   }
 
-  async pushImage(service: DependencyNode) {
+  async pushImage(service: DependencyNode): Promise<void> {
     const { flags } = this.parse(Push);
     const tag = flags.tag || 'latest';
     const full_tag = `${this.app.config.registry_host}/${service.name}:${tag}`;
     console.log(chalk.blue(`Pushing Docker image for ${full_tag}`));
-    await execa('docker', ['push', full_tag]);
-    console.log(chalk.green(`${full_tag} push to registry succeeded`));
+    return execa('docker', ['push', full_tag]);
   }
 }

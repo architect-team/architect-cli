@@ -80,6 +80,8 @@ const addDependencyNodes = async (
           tag: 'local',
           target_port: 8080,
           api_type: dep_config.api ? dep_config.api.type : undefined,
+          api_definitions: dep_config.api ? dep_config.api.definitions : undefined,
+          language: dep_config.language,
           subscriptions: dep_config.subscriptions,
           parameters: validateParams(
             dep_config.name,
@@ -119,6 +121,8 @@ export const genFromLocalPaths = async (
       tag: 'local',
       target_port: 8080,
       api_type: config.api ? config.api.type : undefined,
+      api_definitions: config.api ? config.api.definitions : undefined,
+      language: config.language,
       subscriptions: config.subscriptions,
       parameters: validateParams(
         config.name,

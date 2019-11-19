@@ -1,9 +1,9 @@
-import path from 'path';
 import fs from 'fs-extra';
+import path from 'path';
 import DependencyManager from '../dependency-manager';
-import DockerComposeTemplate from './template';
-import { LocalDependencyNode } from '../dependency-manager/node/local';
 import SubscriptionEdge from '../dependency-manager/edge/subscription';
+import { LocalDependencyNode } from '../dependency-manager/node/local';
+import DockerComposeTemplate from './template';
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
