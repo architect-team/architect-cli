@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import MANAGED_PATHS from './managed-paths';
+import ARCHITECTPATHS from '../paths';
 import ServiceConfig from './service-config';
 import ServiceDependency from './service-dependency';
 import SUPPORTED_LANGUAGES from './supported-languages';
@@ -29,7 +29,7 @@ namespace ProtocExecutor {
     const target_folder = ServiceConfig.convertServiceNameToFolderName(target.config.name);
 
     // Make the folder to store dependency stubs
-    const stub_directory = path.join(target.service_path, MANAGED_PATHS.DEPENDENCY_STUBS_DIRECTORY, dependency_folder);
+    const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
@@ -78,7 +78,7 @@ namespace ProtocExecutor {
         try {
           execSync('which grpc_tools_node_protoc');
         } catch (err) {
-          execSync('npm install -g grpc-tools', { stdio: 'ignore' });
+          execSync('npm install -g grpc-tools');
         }
 
         for (const definition of service_definitions) {
@@ -94,7 +94,7 @@ namespace ProtocExecutor {
         try {
           execSync('python3 -c "import grpc_tools"');
         } catch (err) {
-          execSync('pip3 install grpcio-tools', { stdio: 'ignore' });
+          execSync('pip3 install grpcio-tools');
         }
 
         for (const definition of service_definitions) {

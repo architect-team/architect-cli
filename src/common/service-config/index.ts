@@ -2,7 +2,6 @@ import { plainToClass, Transform } from 'class-transformer';
 import fs from 'fs-extra';
 import path from 'path';
 import ARCHITECTPATHS from '../../paths';
-import MANAGED_PATHS from '../managed-paths';
 import { Default, Dict } from '../utils/transform';
 import { SemvarValidator, ServiceNameValidator } from '../utils/validation';
 import ServiceApiConfig from './api';
@@ -50,7 +49,7 @@ export default class ServiceConfig {
   }
 
   static writeToPath(filepath: string, config_json: object) {
-    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    const config_path = path.join(filepath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
     fs.writeFileSync(config_path, JSON.stringify(config_json, null, 2));
   }
 
@@ -79,7 +78,7 @@ export default class ServiceConfig {
   }
 
   static loadJSONFromPath(filepath: string): any {
-    const config_path = path.join(filepath, MANAGED_PATHS.ARCHITECT_JSON);
+    const config_path = path.join(filepath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
     if (!fs.existsSync(config_path)) {
       throw new MissingConfigFileError(filepath);
     }

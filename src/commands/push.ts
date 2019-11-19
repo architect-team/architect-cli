@@ -80,6 +80,6 @@ export default class Push extends Command {
 
   async pushImage(service: ServiceDependency) {
     const { flags } = this.parse(Push);
-    await execa('docker', ['push', service.tag(flags.tag || 'latest')], { stdio: 'ignore' });
+    await execa('docker', ['push', service.tag(flags.tag || 'latest')]);
   }
 }
