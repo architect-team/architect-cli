@@ -1,12 +1,11 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import execa from 'execa';
-import Listr from 'listr';
 import Command from '../base-command';
-import ServiceDependency from '../common/service-dependency';
+import DependencyNode from '../common/dependency-manager/node';
+import { LocalDependencyNode } from '../common/dependency-manager/node/local';
+import { genFromLocalPaths } from '../common/utils/dependency';
 import Build from './build';
-
-const _info = chalk.blue;
 
 export default class Push extends Command {
   static description = 'Push service(s) to a registry';
@@ -29,10 +28,6 @@ export default class Push extends Command {
       hidden: true,
       description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version',
     }),
-    verbose: flags.boolean({
-      char: 'v',
-      description: 'Verbose log output',
-    }),
   };
 
   static args = [
@@ -43,13 +38,6 @@ export default class Push extends Command {
   ];
 
   async run() {
-    const { flags } = this.parse(Push);
-    const renderer = flags.verbose ? 'verbose' : 'default';
-    const tasks = new Listr(await this.tasks(), { concurrent: 2, renderer });
-    await tasks.run();
-  }
-
-  async tasks(): Promise<Listr.ListrTask[]> {
     const { args, flags } = this.parse(Push);
     const root_service_path = args.context ? args.context : process.cwd();
 
@@ -59,27 +47,22 @@ export default class Push extends Command {
     if (flags.tag) { build_args.push('-t'); build_args.push(flags.tag); }
     await Build.run(build_args);
 
-    const root_service = ServiceDependency.create(this.app.config, root_service_path);
-    const dependencies = flags.recursive ? root_service.local_dependencies : [root_service];
-    const tasks = [];
-    for (const dependency of dependencies) {
-      await dependency.load();
-      tasks.push({
-        title: `Pushing docker image for ${_info(`${dependency.display_tag(flags.tag)}`)}`,
-        task: async () => {
-          if (!flags._local && dependency.dependencies.some(d => d.local)) {
-            throw new Error('Cannot push image with local dependencies');
-          } else {
-            return this.pushImage(dependency);
-          }
-        },
-      });
-    }
-    return tasks;
+    const dependencies = await genFromLocalPaths([process.cwd()]);
+    const tasks: Promise<void>[] = [];
+    dependencies.nodes.forEach(dependency => {
+      if (!dependency.isDatastore || (!dependency.isDatastore && (dependency as LocalDependencyNode).service_path)) {
+        tasks.push(this.pushImage(dependency));
+      }
+    });
+    await Promise.all(tasks);
   }
 
-  async pushImage(service: ServiceDependency) {
+  async pushImage(service: DependencyNode) {
     const { flags } = this.parse(Push);
-    await execa('docker', ['push', service.tag(flags.tag || 'latest')]);
+    const tag = flags.tag || 'latest';
+    const full_tag = `${this.app.config.registry_host}/${service.name}:${tag}`;
+    console.log(chalk.blue(`Pushing Docker image for ${full_tag}`));
+    await execa('docker', ['push', full_tag]);
+    console.log(chalk.green(`${full_tag} push to registry succeeded`));
   }
 }

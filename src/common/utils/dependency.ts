@@ -1,13 +1,14 @@
-import path from 'path';
 import fs from 'fs-extra';
+import path from 'path';
 import untildify from 'untildify';
 import DependencyManager from '../dependency-manager';
-import EnvironmentConfig from '../environment-config';
 import { LocalDependencyNode } from '../dependency-manager/node/local';
+import { RemoteDependencyNode } from '../dependency-manager/node/remote';
+import EnvironmentConfig from '../environment-config';
+import EnvironmentConfigV1 from '../environment-config/v1';
+import MissingRequiredParamError from '../errors/missing-required-param';
 import ServiceConfig from '../service-config';
 import ServiceParameterConfig from '../service-config/parameter';
-import MissingRequiredParamError from '../errors/missing-required-param';
-import { RemoteDependencyNode } from '../dependency-manager/node/remote';
 
 const validateParams = (
   ref_name: string,
@@ -102,7 +103,7 @@ const addDependencyNodes = async (
 
 export const genFromLocalPaths = async (
   service_paths: string[],
-  env_config: EnvironmentConfig,
+  env_config?: EnvironmentConfig,
   recursive = true,
 ): Promise<DependencyManager> => {
   const dependencies = new DependencyManager();
@@ -122,7 +123,7 @@ export const genFromLocalPaths = async (
       parameters: validateParams(
         config.name,
         config.parameters,
-        env_config.getServiceParameters(config.name)),
+        env_config ? env_config.getServiceParameters(config.name) : {}),
     });
     if (config.debug) {
       dep.command = config.debug;
@@ -130,8 +131,8 @@ export const genFromLocalPaths = async (
     dependencies.addNode(dep);
 
     if (recursive) {
-      await addDependencyNodes(dep, config, dependencies, env_config);
-      await addDatastoreNodes(dep, config, dependencies, env_config);
+      await addDependencyNodes(dep, config, dependencies, env_config || new EnvironmentConfigV1());
+      await addDatastoreNodes(dep, config, dependencies, env_config || new EnvironmentConfigV1());
     }
   }
 
