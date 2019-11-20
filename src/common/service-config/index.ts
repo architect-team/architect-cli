@@ -104,7 +104,7 @@ export default class ServiceConfig {
     for (const [dependency, version] of Object.entries(dependencies || {})) {
       if (!ServiceNameValidator.test(dependency)) {
         throw new InvalidConfigFileError(`Invalid dependency "${dependency}" in architect.json. Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
-      } else if (!validator.test(version) && version.indexOf('file:') !== 0) {
+      } else if (!validator.test(version) && version.indexOf('file:') !== 0 && version !== 'latest') {
         throw new InvalidConfigFileError(`Invalid dependency version "${version}" for "${dependency}" in architect.json.`);
       } else {
         this.dependencies[dependency] = version;

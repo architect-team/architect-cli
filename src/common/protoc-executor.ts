@@ -10,12 +10,42 @@ import ServiceConfig from './service-config';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
-  const _postHooks = async (stub_directory: string, target_language?: string) => {
-    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
-      await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
-      await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
-      await fs.writeFile(path.join(stub_directory, '__init__.py'), '');
+  export const execute_remote = async (api_definitions: object, service_name: string, target: LocalDependencyNode) => {
+    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
+
+    const dependency_folder = service_name;
+    const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
+    const checksums = [];
+    if (api_definitions) {
+      for (const definition_contents of Object.values(api_definitions)) {
+        const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
+        checksums.push(hash);
+      }
     }
+    const checksum_path = path.join(stub_directory, 'checksum');
+    const checksum = checksums.join('\n');
+    const old_checksum = await fs.readFile(checksum_path, 'utf-8').catch(() => null);
+    if (checksum === old_checksum) {
+      await fs.writeFile(checksum_path, checksum);
+      return;
+    }
+
+    const tmp_root = await fs.realpath(os.tmpdir());
+    const tmp_dir = path.join(tmp_root, 'architect-grpc', `${dependency_folder}_${target_folder}`);
+    const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
+    await fs.ensureDir(tmp_dependency_dir);
+
+    for (const [definition_path, definition_contents] of Object.entries(api_definitions)) {
+      await fs.outputFile(path.join(tmp_dependency_dir, definition_path), definition_contents);
+    }
+
+    try {
+      await createGrpcDefinitions(target, stub_directory, tmp_dependency_dir);
+      await fs.writeFile(checksum_path, checksum);
+    } finally {
+      await fs.remove(tmp_dir);
+    }
+    await _postHooks(stub_directory, target.language);
   };
 
   export const execute = async (dependency: LocalDependencyNode, target: LocalDependencyNode) => {
@@ -115,6 +145,14 @@ namespace ProtocExecutor {
       console.log(chalk.red('grpc service definitions not found'), { exit: true });
     }
   }
+
+  const _postHooks = async (stub_directory: string, target_language?: string) => {
+    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
+      await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
+      await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
+      await fs.writeFile(path.join(stub_directory, '__init__.py'), '');
+    }
+  };
 }
 
 export default ProtocExecutor;
