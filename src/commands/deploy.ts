@@ -10,7 +10,7 @@ import EnvironmentConfig from '../common/environment-config';
 import { plainToClass } from 'class-transformer';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as DockerCompose from '../common/docker-compose';
-import { genFromLocalPaths } from '../common/utils/dependency';
+import generateGraphFromPaths from '../common/local-graph/generator';
 
 declare const process: NodeJS.Process;
 
@@ -67,7 +67,7 @@ export default class Deploy extends Command {
       env_config = plainToClass(EnvironmentConfigV1, config_payload);
     }
 
-    const dependencies = await genFromLocalPaths(service_paths, env_config);
+    const dependencies = await generateGraphFromPaths(service_paths, env_config, this.app.api);
     const compose = DockerCompose.generate(dependencies);
     await this.runCompose(compose);
   }
