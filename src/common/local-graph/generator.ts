@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import untildify from 'untildify';
 import DependencyGraph, { ServiceNode, DependencyNode, DatastoreNode } from '../../dependency-graph/src';
-import EnvironmentConfig from '../environment-config';
+import EnvironmentConfig from '../../dependency-manager/src/environment-config';
 import LocalServiceNode from '../local-graph/nodes/local-service';
 import ServiceConfig from '../service-config';
 import ServiceParameterConfig from '../service-config/parameter';

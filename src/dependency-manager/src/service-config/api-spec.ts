@@ -1,4 +1,4 @@
-export default interface ServiceApiConfig {
+export default interface ServiceApiSpec {
   type: string;
   definitions?: string[];
 }

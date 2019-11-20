@@ -2,11 +2,11 @@ import path from 'path';
 import fs from 'fs-extra';
 import untildify from 'untildify';
 import DependencyManager from '../dependency-manager';
-import EnvironmentConfig from '../environment-config';
+import EnvironmentConfig from '../../dependency-manager/src/environment-config';
 import { LocalDependencyNode } from '../dependency-manager/node/local';
 import ServiceConfig from '../service-config';
 import ServiceParameterConfig from '../service-config/parameter';
-import MissingRequiredParamError from '../errors/missing-required-param';
+import MissingRequiredParamError from '../../dependency-manager/src/missing-required-param-error';
 import { RemoteDependencyNode } from '../dependency-manager/node/remote';
 
 const validateParams = (

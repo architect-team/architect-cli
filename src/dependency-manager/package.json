@@ -18,7 +18,9 @@
     "node": ">=8.0.0"
   },
   "homepage": "https://github.com/architect-team/architect-cli",
-  "dependencies": {},
+  "dependencies": {
+    "fs-extra": "^8.1.0"
+  },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b"

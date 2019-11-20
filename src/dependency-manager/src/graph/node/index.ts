@@ -7,7 +7,7 @@ export interface DependencyNodeOptions {
     target: string | number;
     expose: string | number;
   };
-  parameters?: { [key: string]: string };
+  parameters?: { [key: string]: string | number };
 }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
@@ -15,7 +15,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   tag: string;
   host: string;
   ports: { target: string | number; expose: string | number };
-  parameters: { [key: string]: string };
+  parameters: { [key: string]: string | number };
   image?: string;
 
   protected constructor(options: DependencyNodeOptions) {

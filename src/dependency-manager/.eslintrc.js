@@ -18,6 +18,7 @@ module.exports = {
     'semi': 'off',
     'no-prototype-builtins': [0],
     'space-before-function-paren': ['error', { 'anonymous': 'always', 'named': 'never', 'asyncArrow': 'always' }],
+    'prefer-const': [1],
 
     '@typescript-eslint/camelcase': [0],
     '@typescript-eslint/explicit-function-return-type': [0],
