@@ -50,53 +50,46 @@ export default class Install extends Command {
     const root_service = (await genFromLocalPaths([process.cwd()])).nodes.values().next().value; // TODO: error checking
 
     if (args.service_name) {
-      // load and install ONLY the new dependency
       // eslint-disable-next-line prefer-const
       let [service_name, service_version] = args.service_name.split(':');
-      if (!service_version) {
+      if (!service_version) { // TODO: also check if the api is defined as grpc here
         // TODO: fail?
       }
-      const { data: service } = await this.app.api.get(`/services/${service_name}`);
-      // eslint-disable-next-line require-atomic-updates
-      service_version = service.tags.sort((a: string, b: string) => b.localeCompare(a, undefined, { numeric: true }))[0];
+      const { data: service } = await this.app.api.get(`/services/${service_name}/versions/${service_version}`);
 
       if (root_service.name === service_name) {
         throw new Error('Cannot install a service inside its own config');
       }
 
-      // Load/install only the new dependency
       const new_dependencies: { [s: string]: string } = {};
       new_dependencies[service_name] = service_version; // TODO: check if it's already installed, and warn?
       const config = ServiceConfig.loadFromPath(root_service_path);
-      const all_dependencies = Object.assign({}, config.dependencies, new_dependencies)
+      const all_dependencies = Object.assign({}, config.dependencies, new_dependencies);
       config.setDependencies(all_dependencies);
-      await this.installRemoteDefinitions(root_service, `${service_name}:${service_version}`); // TODO: -r for single remote services?
+      const api_definitions_contents = await this.get_remote_definitions(args.service_name);
+
+      ProtocExecutor.execute(root_service, undefined, { api_definitions_contents, service_name });
+
       ServiceConfig.saveToPath(root_service_path, config);
     } else {
-      await this.installTasks(root_service, flags.recursive);
+      await this.installServices(root_service, flags.recursive);
     }
   }
 
-  // tag specified, non recursive
-  async installRemoteDefinitions(service_dependency: LocalDependencyNode, remote_service_version: string) {
-    const remote_service_definitions = await this.get_config(remote_service_version);
-    ProtocExecutor.execute_remote(remote_service_definitions, remote_service_version.split(':')[0], service_dependency);
-  }
-
-  async get_config(remote_service_version: string) {
+  async get_remote_definitions(remote_service_version: string) {
     const repository_name = url.resolve(`${this.app.config.registry_host}/`, `${remote_service_version}`);
 
     let config;
     try {
-      config = await this._load_config(repository_name);
+      config = await this.load_service_config(repository_name);
     } catch {
       await execa('docker', ['pull', repository_name]);
-      config = await this._load_config(repository_name);
+      config = await this.load_service_config(repository_name);
     }
     return config;
   }
 
-  async _load_config(repository_name: string) {
+  async load_service_config(repository_name: string) {
     const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "architect.json"}}']);
     const config = JSON.parse(stdout);
     if (config.api) {
@@ -105,35 +98,25 @@ export default class Install extends Command {
     }
   }
 
-  async installTasks(service_dependency: LocalDependencyNode, recursive: boolean) {
+  async installServices(service_dependency: LocalDependencyNode, recursive: boolean) { // TODO: logging and success/error
     const dependencies = await genFromLocalPaths([process.cwd()], undefined, true);
 
-    if (recursive) {
-      const service_dependencies = [service_dependency];
-      while (service_dependencies.length) { // check to see if pair has been generated already to avoid circular dependencies
+    const service_dependencies = [service_dependency];
+    const _seen = [];
+    while (service_dependencies.length) {
+      const target_dependency = service_dependencies.pop();
+      _seen.push(target_dependency!.name);
 
-        const target_dependency = service_dependencies.pop();
-        if (!target_dependency) { return; }
-        await ProtocExecutor.execute((target_dependency as LocalDependencyNode), target_dependency);
-        console.log(`${target_dependency.name} | ${target_dependency.name}`)
-        const directDependencies = dependencies.getNodeDependencies(target_dependency);
-        for (const dependency of directDependencies) {
-          // generate for target service and dependencies, then push dependencies
-          if (!dependency.isDatastore) {
-            await ProtocExecutor.execute((dependency as LocalDependencyNode), target_dependency);
-            console.log(`${target_dependency.name} | ${dependency.name}`)
+      await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalDependencyNode));
+
+      const directDependencies = dependencies.getNodeDependencies(target_dependency!);
+      for (const dependency of directDependencies) {
+        if (!dependency.isDatastore) {
+          await ProtocExecutor.execute(target_dependency!, (dependency as LocalDependencyNode));
+          if (recursive && !_seen.includes(dependency.name)) {
             service_dependencies.push(dependency as LocalDependencyNode);
           }
         }
-      }
-
-    } else { // without -r
-
-      // non-recursive, without specific tag on command line
-      await ProtocExecutor.execute((service_dependency as LocalDependencyNode), service_dependency);
-      const directDependencies = dependencies.getNodeDependencies(service_dependency);
-      for (const direct_dependency of directDependencies) {
-        await ProtocExecutor.execute((direct_dependency as LocalDependencyNode), service_dependency);
       }
     }
   }

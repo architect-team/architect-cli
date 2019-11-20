@@ -10,52 +10,18 @@ import ServiceConfig from './service-config';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
-  export const execute_remote = async (api_definitions: object, service_name: string, target: LocalDependencyNode) => {
-    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
 
-    const dependency_folder = service_name;
-    const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
-    const checksums = [];
-    if (api_definitions) {
-      for (const definition_contents of Object.values(api_definitions)) {
-        const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
-        checksums.push(hash);
-      }
-    }
-    const checksum_path = path.join(stub_directory, 'checksum');
-    const checksum = checksums.join('\n');
-    const old_checksum = await fs.readFile(checksum_path, 'utf-8').catch(() => null);
-    if (checksum === old_checksum) {
-      await fs.writeFile(checksum_path, checksum);
-      return;
-    }
-
-    const tmp_root = await fs.realpath(os.tmpdir());
-    const tmp_dir = path.join(tmp_root, 'architect-grpc', `${dependency_folder}_${target_folder}`);
-    const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
-    await fs.ensureDir(tmp_dependency_dir);
-
-    for (const [definition_path, definition_contents] of Object.entries(api_definitions)) {
-      await fs.outputFile(path.join(tmp_dependency_dir, definition_path), definition_contents);
-    }
-
-    try {
-      await createGrpcDefinitions(target, stub_directory, tmp_dependency_dir);
-      await fs.writeFile(checksum_path, checksum);
-    } finally {
-      await fs.remove(tmp_dir);
-    }
-    await _postHooks(stub_directory, target.language);
-  };
-
-  export const execute = async (dependency: LocalDependencyNode, target: LocalDependencyNode) => {
-    if (!dependency.api_type) {
+  export const execute = async (target: LocalDependencyNode, dependency?: LocalDependencyNode, remote_dependency_details?: any) => {
+    if (dependency && !dependency.api_type) {
       throw new Error(`${dependency.name} has no api configured.`);
     }
-    // if (!target.local) { // TODO: replace
-    //   throw new Error(`${dependency.name} is not a local service`);
-    // }
-    const dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name);
+
+    let dependency_folder;
+    if (dependency) {
+      dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name);
+    } else if (remote_dependency_details) {
+      dependency_folder = remote_dependency_details.service_name;
+    }
     const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
 
     // Make the folder to store dependency stubs
@@ -63,10 +29,15 @@ namespace ProtocExecutor {
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
-    if (dependency.api_definitions) {
+    if (dependency && dependency.api_definitions) {
       for (const definition of dependency.api_definitions) {
         const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
         const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
+        checksums.push(hash);
+      }
+    } else if (remote_dependency_details && remote_dependency_details.api_definitions_contents) {
+      for (const definition_contents of Object.values(remote_dependency_details.api_definitions_contents)) {
+        const hash = crypto.createHash('md5').update((definition_contents as string)).digest('hex');
         checksums.push(hash);
       }
     }
@@ -84,10 +55,14 @@ namespace ProtocExecutor {
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
-    if (dependency.api_definitions) {
+    if (dependency && dependency.api_definitions) {
       for (const definition of dependency.api_definitions) {
         const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
         await fs.outputFile(path.join(tmp_dependency_dir, definition), definition_contents);
+      }
+    } else if (remote_dependency_details && remote_dependency_details.api_definitions_contents) {
+      for (const [definition_path, definition_contents] of Object.entries(remote_dependency_details.api_definitions_contents)) {
+        await fs.outputFile(path.join(tmp_dependency_dir, definition_path), definition_contents);
       }
     }
 
