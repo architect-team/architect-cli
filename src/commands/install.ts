@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import cli from 'cli-ux';
 import execa from 'execa';
 import url from 'url';
 import Command from '../base-command';
@@ -9,7 +10,6 @@ import ServiceConfig from '../common/service-config';
 import { genFromLocalPaths } from '../common/utils/dependency';
 
 declare const process: NodeJS.Process;
-const _info = chalk.blue;
 
 export default class Install extends Command {
   static description = 'Install services and generate the corresponding client libraries';
@@ -53,24 +53,29 @@ export default class Install extends Command {
       // eslint-disable-next-line prefer-const
       let [service_name, service_version] = args.service_name.split(':');
       if (!service_version) { // TODO: also check if the api is defined as grpc here
-        // TODO: fail?
+        throw new Error(`Please specify a version for ${service_name}`);
       }
-      const { data: service } = await this.app.api.get(`/services/${service_name}/versions/${service_version}`);
-
       if (root_service.name === service_name) {
         throw new Error('Cannot install a service inside its own config');
       }
 
       const new_dependencies: { [s: string]: string } = {};
-      new_dependencies[service_name] = service_version; // TODO: check if it's already installed, and warn?
+      if (new_dependencies[service_name]) {
+        throw new Error(`A version of ${service_name} is already installed.`);
+      }
+
+      cli.action.start(chalk.blue(`Installing ${args.service_name} as dependency of ${root_service.name}`), undefined, { stdout: true });
+      new_dependencies[service_name] = service_version;
       const config = ServiceConfig.loadFromPath(root_service_path);
       const all_dependencies = Object.assign({}, config.dependencies, new_dependencies);
       config.setDependencies(all_dependencies);
       const api_definitions_contents = await this.get_remote_definitions(args.service_name);
-
-      ProtocExecutor.execute(root_service, undefined, { api_definitions_contents, service_name });
-
+      if (!api_definitions_contents) {
+        throw new Error(`No api definitions found for ${service_name}`);
+      }
+      await ProtocExecutor.execute(root_service, undefined, { api_definitions_contents, service_name });
       ServiceConfig.saveToPath(root_service_path, config);
+      cli.action.stop(chalk.green(`${args.service_name} installed`));
     } else {
       await this.installServices(root_service, flags.recursive);
     }
@@ -98,7 +103,7 @@ export default class Install extends Command {
     }
   }
 
-  async installServices(service_dependency: LocalDependencyNode, recursive: boolean) { // TODO: logging and success/error
+  async installServices(service_dependency: LocalDependencyNode, recursive: boolean) {
     const dependencies = await genFromLocalPaths([process.cwd()], undefined, true);
 
     const service_dependencies = [service_dependency];
@@ -112,7 +117,9 @@ export default class Install extends Command {
       const directDependencies = dependencies.getNodeDependencies(target_dependency!);
       for (const dependency of directDependencies) {
         if (!dependency.isDatastore) {
+          cli.action.start(chalk.blue(`Installing ${dependency.name} as dependency of ${target_dependency!.name}`), undefined, { stdout: true });
           await ProtocExecutor.execute(target_dependency!, (dependency as LocalDependencyNode));
+          cli.action.stop(chalk.green(`${dependency.name} installed`));
           if (recursive && !_seen.includes(dependency.name)) {
             service_dependencies.push(dependency as LocalDependencyNode);
           }
