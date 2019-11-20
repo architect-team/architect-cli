@@ -18,7 +18,7 @@ namespace ProtocExecutor {
     }
   };
 
-  export const execute = async (dependency: LocalDependencyNode, target: LocalDependencyNode): Promise<void> => {
+  export const execute = async (dependency: LocalDependencyNode, target: LocalDependencyNode) => {
     if (!dependency.api_type) {
       throw new Error(`${dependency.name} has no api configured.`);
     }
