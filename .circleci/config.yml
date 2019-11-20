@@ -80,7 +80,7 @@ jobs:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
@@ -94,6 +94,9 @@ jobs:
       - run:
           name: Build library
           command: npm run build --prefix ./src/dependency-graph
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish library
           command: npm publish ./src/dependency-graph
@@ -124,6 +127,9 @@ workflows:
             - test-node-12
             - test-node-10
       - publish_graph_lib:
+          context: Github Packaging
+          requires:
+            - cache
           filters:
             branches:
               only: master
