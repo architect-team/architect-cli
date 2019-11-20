@@ -40,7 +40,18 @@ describe('deploy', () => {
       expect(expected.depends_on).to.have.members(input.depends_on);
       expect(expected.build).to.eql(input.build);
       expect(expected.command).to.equal(input.command);
-      expect(expected.environment).to.eql(input.environment);
+      expect(input.environment).not.to.be.undefined;
+
+      // Test env variables
+      for (const [key, value] of Object.entries(expected.environment || {})) {
+        if (key === 'ARCHITECT') {
+          const architect_input = JSON.parse(input.environment![key]);
+          const architect_expected = JSON.parse(value);
+          expect(architect_expected).to.eql(architect_input);
+        } else {
+          expect(value).to.equal(input.environment![key]);
+        }
+      }
     }
   });
 });

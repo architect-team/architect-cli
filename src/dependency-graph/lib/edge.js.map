@@ -1,0 +1,1 @@
+{"version":3,"file":"edge.js","sourceRoot":"","sources":["../src/edge.ts"],"names":[],"mappings":";;AAIA,MAAqB,cAAc;IAKjC,YAAY,IAAoB,EAAE,EAAkB,EAAE,OAAkB,YAAY;QAClF,IAAI,CAAC,IAAI,GAAG,IAAI,CAAC;QACjB,IAAI,CAAC,EAAE,GAAG,EAAE,CAAC;QACb,IAAI,CAAC,IAAI,GAAG,IAAI,CAAC;IACnB,CAAC;CACF;AAVD,iCAUC"}
