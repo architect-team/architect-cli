@@ -5,13 +5,13 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import ARCHITECTPATHS from '../paths';
-import { LocalDependencyNode } from './dependency-manager/node/local';
+import LocalServiceNode from './local-graph/nodes/local-service';
 import ServiceConfig from './service-config';
 import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
 
-  export const execute = async (target: LocalDependencyNode, dependency?: LocalDependencyNode, remote_dependency_details?: any) => {
+  export const execute = async (target: LocalServiceNode, dependency?: LocalServiceNode, remote_dependency_details?: any) => {
     if (dependency && !dependency.api_type) {
       throw new Error(`${dependency.name} has no api configured.`);
     }
@@ -76,7 +76,7 @@ namespace ProtocExecutor {
     await _postHooks(stub_directory, target.language);
   };
 
-  const createGrpcDefinitions = (service: LocalDependencyNode, write_path: string, target_service_path: string) => {
+  const createGrpcDefinitions = (service: LocalServiceNode, write_path: string, target_service_path: string) => {
     if (service.api_type && service.api_definitions) {
       const service_definitions = service.api_definitions;
       const current_service_language = service.language;

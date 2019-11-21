@@ -4,10 +4,12 @@ import cli from 'cli-ux';
 import execa from 'execa';
 import url from 'url';
 import Command from '../base-command';
-import { LocalDependencyNode } from '../common/dependency-manager/node/local';
+import EnvironmentConfigV1 from '../common/environment-config/v1';
+import generateGraphFromPaths from '../common/local-graph/generator';
+import LocalServiceNode from '../common/local-graph/nodes/local-service';
 import ProtocExecutor from '../common/protoc-executor';
 import ServiceConfig from '../common/service-config';
-import { genFromLocalPaths } from '../common/utils/dependency';
+import DependencyGraph, { DatastoreNode } from '../dependency-graph/src';
 
 declare const process: NodeJS.Process;
 
@@ -47,7 +49,8 @@ export default class Install extends Command {
   async tasks() {
     const { args, flags } = this.parse(Install);
     const root_service_path = flags.prefix ? flags.prefix : process.cwd();
-    const root_service = (await genFromLocalPaths([process.cwd()])).nodes.values().next().value; // TODO: error checking
+    const dependency_graph = await generateGraphFromPaths([process.cwd()], new EnvironmentConfigV1(), this.app.api);
+    const root_service = Array.from(dependency_graph.nodes.values())[0]; // TODO: error checking
 
     if (args.service_name) {
       // eslint-disable-next-line prefer-const
@@ -77,7 +80,7 @@ export default class Install extends Command {
       ServiceConfig.saveToPath(root_service_path, config);
       cli.action.stop(chalk.green(`${args.service_name} installed`));
     } else {
-      await this.installServices(root_service, flags.recursive);
+      await this.installServices((root_service as LocalServiceNode), dependency_graph, flags.recursive);
     }
   }
 
@@ -103,25 +106,23 @@ export default class Install extends Command {
     }
   }
 
-  async installServices(service_dependency: LocalDependencyNode, recursive: boolean) {
-    const dependencies = await genFromLocalPaths([process.cwd()], undefined, true);
-
-    const service_dependencies = [service_dependency];
+  async installServices(root_dependency: LocalServiceNode, all_dependencies: DependencyGraph, recursive: boolean) {
+    const service_dependencies = [root_dependency];
     const _seen = [];
     while (service_dependencies.length) {
       const target_dependency = service_dependencies.pop();
       _seen.push(target_dependency!.name);
 
-      await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalDependencyNode));
+      await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalServiceNode));
 
-      const directDependencies = dependencies.getNodeDependencies(target_dependency!);
+      const directDependencies = all_dependencies.getNodeDependencies(target_dependency!);
       for (const dependency of directDependencies) {
-        if (!dependency.isDatastore) {
+        if (!(dependency instanceof DatastoreNode)) {
           cli.action.start(chalk.blue(`Installing ${dependency.name} as dependency of ${target_dependency!.name}`), undefined, { stdout: true });
-          await ProtocExecutor.execute(target_dependency!, (dependency as LocalDependencyNode));
+          await ProtocExecutor.execute(target_dependency!, (dependency as LocalServiceNode));
           cli.action.stop(chalk.green(`${dependency.name} installed`));
           if (recursive && !_seen.includes(dependency.name)) {
-            service_dependencies.push(dependency as LocalDependencyNode);
+            service_dependencies.push(dependency as LocalServiceNode);
           }
         }
       }

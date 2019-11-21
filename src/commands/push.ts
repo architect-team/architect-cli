@@ -7,9 +7,6 @@ import EnvironmentConfigV1 from '../common/environment-config/v1';
 import generateGraphFromPaths from '../common/local-graph/generator';
 import LocalServiceNode from '../common/local-graph/nodes/local-service';
 import { DatastoreNode, DependencyNode } from '../dependency-graph/src';
-// import DependencyNode from '../common/dependency-manager/node';
-//import { LocalDependencyNode } from '../common/dependency-manager/node/local';
-// import { genFromLocalPaths } from '../common/utils/dependency';
 import Build from './build';
 
 export default class Push extends Command {
