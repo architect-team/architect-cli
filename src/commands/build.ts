@@ -4,7 +4,7 @@ import path from 'path';
 import chalk from 'chalk';
 import fs from 'fs';
 import Command from '../base-command';
-import ServiceConfig from '../common/service-config';
+import { ServiceConfig, ServiceConfigBuilder } from '../dependency-manager/src';
 
 declare const process: NodeJS.Process;
 
@@ -33,11 +33,9 @@ export default class Build extends Command {
   private getServiceApiDefinitionContents(servicePath: string, serviceConfig: ServiceConfig) {
     const definitionsContents: { [filename: string]: string } = {};
 
-    if (
-      serviceConfig.api &&
-      serviceConfig.api.definitions
-    ) {
-      for (const filepath of serviceConfig.api.definitions) {
+    const spec = serviceConfig.getApiSpec();
+    if (spec?.definitions) {
+      for (const filepath of spec.definitions) {
         definitionsContents[filepath] = fs.readFileSync(path.join(servicePath, filepath)).toString('utf-8');
       }
     }
@@ -54,10 +52,10 @@ export default class Build extends Command {
   private async buildImage(servicePath: string, prior_paths: string[] = []) {
     const { flags } = this.parse(Build);
 
-    const config = ServiceConfig.loadFromPath(servicePath);
+    const config = ServiceConfigBuilder.buildFromPath(servicePath);
     const tag = flags.tag || 'latest';
-    if (flags.recursive && config.dependencies) {
-      for (const serviceRef of Object.values(config.dependencies)) {
+    if (flags.recursive && config.getDependencies()) {
+      for (const serviceRef of Object.values(config.getDependencies())) {
         // If the dependency is local, build it first
         if (serviceRef.startsWith('file:')) {
           const dependency_path = path.join(servicePath, serviceRef.slice('file:'.length));
@@ -72,18 +70,18 @@ export default class Build extends Command {
     }
 
     // TODO: Replace with config reference
-    const imageTag = `${this.app.config.registry_host}/${config.name}:${tag}`;
-    this.log(chalk.blue(`Building docker image for ${config.name}`));
+    const imageTag = `${this.app.config.registry_host}/${config.getName()}:${tag}`;
+    this.log(chalk.blue(`Building docker image for ${config.getName()}`));
     await this.docker([
       'build',
       '--compress',
-      '--build-arg', `SERVICE_LANGUAGE=${config.language}`,
+      '--build-arg', `SERVICE_LANGUAGE=${config.getLanguage()}`,
       '-t', imageTag,
       '--label', `architect.json=${JSON.stringify(config)}`,
       '--label', `api_definitions=${JSON.stringify(this.getServiceApiDefinitionContents(servicePath, config))}`,
       servicePath,
     ]);
-    this.log(chalk.green(`${config.name}:${tag} build succeeded`));
+    this.log(chalk.green(`${config.getName()}:${tag} build succeeded`));
     return prior_paths;
   }
 

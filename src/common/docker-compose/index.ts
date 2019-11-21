@@ -1,10 +1,10 @@
 import path from 'path';
 import fs from 'fs-extra';
 import DockerComposeTemplate from './template';
-import LocalServiceNode from '../local-graph/nodes/local-service';
-import DependencyGraph, { ServiceNode, DatastoreNode } from '../../dependency-graph/src';
+import { LocalServiceNode } from '../dependency-manager/local-service-node';
+import DependencyManager, { ServiceNode, DatastoreNode } from '../../dependency-manager/src';
 
-export const generate = (dependency_graph: DependencyGraph): DockerComposeTemplate => {
+export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -12,7 +12,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
   };
 
   // Enrich base service details
-  dependency_graph.nodes.forEach(node => {
+  dependency_manager.graph.nodes.forEach(node => {
     compose.services[node.normalized_ref] = {
       ports: [`${node.ports.expose}:${node.ports.target}`],
       depends_on: [],
@@ -62,7 +62,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
   });
 
   // Enrich service relationships
-  dependency_graph.edges.forEach(edge => {
+  dependency_manager.graph.edges.forEach(edge => {
     // Parse the ARCHITECT param
     const service = compose.services[edge.from.normalized_ref];
     service.environment = service.environment || {};
@@ -70,7 +70,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
 
     // Handle datastore credential enrichment to callers
     if (edge.to instanceof DatastoreNode) {
-      const datastore_key = edge.to.name.slice(edge.from.name.length + 1);
+      const datastore_key = edge.to.name.slice(edge.from.normalized_ref.length + 1);
       service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
         host: edge.to.normalized_ref,
         port: edge.to.ports.target,

@@ -3,9 +3,8 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import fs from 'fs-extra';
-import ServiceConfig from '../../src/common/service-config';
+import { ServiceConfig, ServiceConfigBuilder } from '../../src/dependency-manager/src';
 import Build from '../../src/commands/build';
-import { plainToClass } from 'class-transformer';
 import AppConfig from '../../src/app-config/config';
 import ARCHITECTPATHS from '../../src/paths';
 import AppService from '../../src/app-config/service';
@@ -23,22 +22,22 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
   for (let i = 0; i < build_args.length; i++) {
     switch (build_args[i]) {
       case '--build-arg':
-        expect(build_args[i + 1]).to.equal(`SERVICE_LANGUAGE=${service_config.language}`);
+        expect(build_args[i + 1]).to.equal(`SERVICE_LANGUAGE=${service_config.getLanguage()}`);
         i++;
         break;
       case '-t':
       case '--tag':
-        expect(build_args[i + 1]).to.equal(`${REGISTRY_HOST}/${service_config.name}:${expected_tag}`);
+        expect(build_args[i + 1]).to.equal(`${REGISTRY_HOST}/${service_config.getName()}:${expected_tag}`);
         i++;
         break;
       case '--label':
         expect(build_args[i + 1]).to.satisfy((val: string) => val.startsWith('architect.json=') || val.startsWith('api_definitions='));
         if (build_args[i + 1].startsWith('architect.json')) {
           const val = JSON.parse(build_args[i + 1].slice('architect.json='.length));
-          expect(service_config.name).to.equal(val.name);
+          expect(service_config.getName()).to.equal(val.name);
         } else {
           const val = JSON.parse(build_args[i + 1].slice('api_definitions='.length));
-          if (service_config.api && service_config.api.type.toLowerCase() === 'grpc') {
+          if (service_config.getApiSpec() && service_config.getApiSpec().type.toLowerCase() === 'grpc') {
             // TODO: test gRPC api_definitions
           } else {
             expect(Object.keys(val).length).to.equal(0);
@@ -83,8 +82,7 @@ describe('build', function() {
 
   it('builds docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/rest');
-    let service_config = fs.readJsonSync(path.join(service_path, 'architect.json'));
-    service_config = plainToClass(ServiceConfig, service_config);
+    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     // expect(stdout).to.contain('Building docker image for architect/addition-service');
@@ -94,8 +92,7 @@ describe('build', function() {
 
   it('builds gRPC docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc');
-    let service_config = fs.readJsonSync(path.join(service_path, 'architect.json'));
-    service_config = plainToClass(ServiceConfig, service_config);
+    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     // expect(stdout).to.contain('Building docker image for architect/addition-service');
@@ -105,8 +102,7 @@ describe('build', function() {
 
   it('builds docker image w/ specific tag', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc');
-    let service_config = fs.readJsonSync(path.join(service_path, 'architect.json'));
-    service_config = plainToClass(ServiceConfig, service_config);
+    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path, '-t', TEST_TAG]);
 
     // expect(stdout).to.contain('Building docker image for architect/addition-service');
@@ -121,8 +117,7 @@ describe('build', function() {
     expect(spy.callCount).to.equal(3);
     for (const call of spy.getCalls()) {
       const service_path = call.args[0][call.args[0].length - 1];
-      let service_config = fs.readJsonSync(path.join(service_path, 'architect.json'));
-      service_config = plainToClass(ServiceConfig, service_config);
+      const service_config = ServiceConfigBuilder.buildFromPath(service_path);
       testBuildArgs(service_path, service_config, call.args[0]);
     }
   });

@@ -1,6 +1,6 @@
 import path from 'path';
 
-import DependencyManager, { DependencyNode, ServiceConfig, ServiceConfigV1, ServiceConfigBuilder } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
 import PortManager from '../port-manager';
 import { LocalServiceNode } from './local-service-node';
 
@@ -10,6 +10,33 @@ export default class LocalDependencyManager extends DependencyManager {
    */
   protected async getServicePort(): Promise<number> {
     return PortManager.getAvailablePort();
+  }
+
+  async loadLocalService(service_path: string): Promise<[DependencyNode, ServiceConfig]> {
+    const config = ServiceConfigBuilder.buildFromPath(service_path);
+    const node = new LocalServiceNode({
+      service_path: service_path,
+      name: config.getName(),
+      tag: 'local',
+      ports: {
+        target: 8080,
+        expose: await this.getServicePort(),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      api: config.getApiSpec(),
+      subscriptions: config.getSubscriptions(),
+      parameters: this.getParamValues(
+        `${config.getName()}:local`,
+        config.getParameters(),
+      ),
+    });
+
+    if (config.getDebugOptions()) {
+      node.command = config.getDebugOptions()?.command;
+    }
+
+    this.graph.addNode(node);
+    return [node, config];
   }
 
   /**
@@ -23,26 +50,7 @@ export default class LocalDependencyManager extends DependencyManager {
       if (dep_id.startsWith('file:')) {
         const local_parent = parent_node as LocalServiceNode;
         const dep_path = path.join(local_parent.service_path, dep_id.slice('file:'.length));
-        dep_config = ServiceConfigBuilder.buildFromPath(dep_path);
-        dep_node = new LocalServiceNode({
-          service_path: dep_path,
-          name: dep_name,
-          tag: 'local',
-          ports: {
-            target: 8080,
-            expose: await this.getServicePort(),
-          },
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          api: dep_config.getApiSpec(),
-          subscriptions: dep_config.subscriptions,
-          parameters: this.getParamValues(
-            `${dep_config.getName()}:${tag.tag}`,
-            dep_config.getParameters(),
-          ),
-        });
-        if (dep_config.debug) {
-          (dep_node as LocalServiceNode).command = dep_config.debug;
-        }
+        [dep_node, dep_config] = await this.loadLocalService(dep_path);
       } else {
         [dep_node, dep_config] = await this.loadService(dep_name, dep_id);
       }

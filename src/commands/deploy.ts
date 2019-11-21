@@ -1,16 +1,15 @@
 import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
-import Command from '../base-command';
 import { flags } from '@oclif/command';
 import execa from 'execa';
 import chalk from 'chalk';
-import EnvironmentConfigV1 from '../common/environment-config/v1';
-import EnvironmentConfig from '../common/environment-config';
-import { plainToClass } from 'class-transformer';
+
+import Command from '../base-command';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as DockerCompose from '../common/docker-compose';
-import generateGraphFromPaths from '../common/local-graph/generator';
+import { EnvironmentConfigBuilder, EnvironmentConfig } from '../dependency-manager/src';
+import LocalDependencyManager from '../common/dependency-manager/local-manager';
 
 declare const process: NodeJS.Process;
 
@@ -61,14 +60,18 @@ export default class Deploy extends Command {
     const service_paths = flags.services || [process.cwd()];
 
     // Load environment config
-    let env_config: EnvironmentConfig = new EnvironmentConfigV1();
+    let env_config: EnvironmentConfig = EnvironmentConfigBuilder.buildFromJSON({});
     if (flags.config) {
-      const config_payload = await fs.readJSON(path.resolve(flags.config));
-      env_config = plainToClass(EnvironmentConfigV1, config_payload);
+      env_config = EnvironmentConfigBuilder.buildFromPath(path.resolve(flags.config));
     }
 
-    const dependencies = await generateGraphFromPaths(service_paths, env_config, this.app.api);
-    const compose = DockerCompose.generate(dependencies);
+    const dependency_manager = new LocalDependencyManager(this.app.api, env_config);
+    for (let svc_path of service_paths) {
+      svc_path = path.resolve(svc_path);
+      const [node, config] = await dependency_manager.loadLocalService(svc_path);
+      await dependency_manager.loadDependencies(node, config);
+    }
+    const compose = DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
 

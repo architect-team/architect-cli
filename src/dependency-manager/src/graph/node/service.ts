@@ -1,14 +1,8 @@
 import { DependencyNodeOptions, DependencyNode } from '.';
+import { ServiceEventSubscriptions } from '../../service-config/base';
 
 export interface ServiceNodeOptions {
-  subscriptions?: {
-    [service_name: string]: {
-      [event_name: string]: {
-        uri: string;
-        headers?: { [key: string]: string };
-      };
-    };
-  };
+  subscriptions?: ServiceEventSubscriptions;
   api: {
     type: string;
     definitions?: string[];
@@ -16,7 +10,7 @@ export interface ServiceNodeOptions {
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
-  subscriptions: { [service_name: string]: { [event_name: string]: { uri: string; headers?: { [key: string]: string } | undefined } } };
+  subscriptions: ServiceEventSubscriptions;
   api: { type: string; definitions?: string[] | undefined };
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {

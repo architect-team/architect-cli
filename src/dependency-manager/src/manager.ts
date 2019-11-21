@@ -1,17 +1,15 @@
 import fs from 'fs-extra';
 import untildify from 'untildify';
 import { AxiosInstance } from 'axios';
-import { plainToClass } from 'class-transformer';
 
 import DependencyGraph from './graph';
-import EnvironmentConfig from './environment-config';
-import ServiceParameter from './service-config/parameter';
+import { EnvironmentConfig } from './environment-config/base';
 import MissingRequiredParamError from './missing-required-param-error';
-import { ServiceConfigV1 } from './service-config/v1';
 import { ServiceNode } from './graph/node/service';
 import { DependencyNode } from './graph/node';
-import { ServiceConfig } from './service-config';
+import { ServiceConfig, ServiceParameter } from './service-config/base';
 import { DatastoreNode } from './graph/node/datastore';
+import { ServiceConfigBuilder } from './service-config/builder';
 
 export default class DependencyManager {
   api: AxiosInstance;
@@ -27,7 +25,7 @@ export default class DependencyManager {
    * Parse the parameter values by comparing defaults for a service to
    * values in the environment configuration.
    */
-  private getParamValues(
+  protected getParamValues(
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
@@ -40,11 +38,11 @@ export default class DependencyManager {
     return Object.keys(parameters).reduce(
       (params: { [s: string]: string | number }, key: string) => {
         const service_param = parameters[key];
-        if (service_param.isRequired() && !env_params[key]) {
-          throw new MissingRequiredParamError(key, service_param.getDescription(), service_ref);
+        if (service_param.required && !env_params[key]) {
+          throw new MissingRequiredParamError(key, service_param.description, service_ref);
         }
 
-        let val = env_params[key] || service_param.getDefaultValue() || '';
+        let val = env_params[key] || service_param.default || '';
         if (typeof val !== 'string') {
           val = val.toString();
         }
@@ -53,7 +51,7 @@ export default class DependencyManager {
           val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
         params[key] = val;
-        service_param.getAliases().forEach(alias => {
+        service_param.aliases.forEach(alias => {
           params[alias] = val;
         });
         return params;
@@ -73,19 +71,18 @@ export default class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode, parent_config: ServiceConfig) {
     for (const [ds_name, ds_config] of Object.entries(parent_config.getDatastores())) {
-      const docker_config = ds_config.getDockerConfig();
-      const image_parts = docker_config.image.split(':');
+      const image_parts = ds_config.docker.image.split(':');
       const dep_node = new DatastoreNode({
-        name: `${parent_config.getName()}.${ds_name}`,
-        image: docker_config.image,
+        name: `${parent_node.name}.${parent_node.tag}.${ds_name}`,
+        image: ds_config.docker.image,
         tag: image_parts[image_parts.length - 1],
         ports: {
-          target: docker_config.target_port,
+          target: ds_config.docker.target_port,
           expose: await this.getServicePort(),
         },
         parameters: this.getParamValues(
           `${parent_config.getName()}:${parent_node.tag}`,
-          parent_config.getParameters(),
+          ds_config.parameters,
           ds_name,
         ),
       });
@@ -102,7 +99,7 @@ export default class DependencyManager {
     const { data: service } = await this.api.get(`/services/${service_name}`);
     const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
 
-    const config = plainToClass(ServiceConfigV1, tag.config as ServiceConfigV1);
+    const config = ServiceConfigBuilder.buildFromJSON(tag.config);
     const node = new ServiceNode({
       name: tag.name,
       tag: tag.tag,
@@ -113,9 +110,9 @@ export default class DependencyManager {
       },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       api: config.getApiSpec(),
-      subscriptions: config.subscriptions,
+      subscriptions: config.getSubscriptions(),
       parameters: this.getParamValues(
-        `${config.name}:${tag.tag}`,
+        `${config.getName()}:${tag.tag}`,
         config.getParameters(),
       ),
     });

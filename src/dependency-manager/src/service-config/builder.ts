@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { plainToClass } from 'class-transformer';
 import { ServiceConfigV1 } from './v1';
-import { ServiceConfig } from '.';
+import { ServiceConfig } from './base';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {
@@ -21,7 +21,11 @@ export class ServiceConfigBuilder {
       throw new MissingConfigFileError(config_path);
     }
     const configPayload = fs.readJSONSync(config_path) as object;
-    return plainToClass(ServiceConfigV1, configPayload);
+    return ServiceConfigBuilder.buildFromJSON(configPayload);
+  }
+
+  static buildFromJSON(obj: object): ServiceConfig {
+    return plainToClass(ServiceConfigV1, obj);
   }
 
   static saveToPath(service_path: string, config: ServiceConfig) {
