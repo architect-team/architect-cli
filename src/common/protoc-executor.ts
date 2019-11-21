@@ -11,6 +11,59 @@ import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
 
+  const _postHooks = async (stub_directory: string, target_language?: string) => {
+    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
+      await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
+      await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
+      await fs.writeFile(path.join(stub_directory, '__init__.py'), '');
+    }
+  };
+
+  const createGrpcDefinitions = (service: LocalServiceNode, write_path: string, target_service_path: string) => {
+    if (service.api.type && service.api.definitions) {
+      const service_definitions = service.api.definitions;
+      const current_service_language = service.language;
+
+      if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
+        try {
+          execSync('which grpc_tools_node_protoc');
+        } catch (err) {
+          execSync('npm install -g grpc-tools');
+        }
+
+        for (const definition of service_definitions) {
+          const proto_path = path.join(target_service_path, definition);
+          fs.ensureDirSync(write_path);
+          execSync(`grpc_tools_node_protoc \
+            -I ${target_service_path} \
+            --js_out=import_style=commonjs,binary:${write_path} \
+            --grpc_out=${write_path} \
+            ${proto_path}`);
+        }
+      } else if (current_service_language === SUPPORTED_LANGUAGES.PYTHON) {
+        try {
+          execSync('python3 -c "import grpc_tools"');
+        } catch (err) {
+          execSync('pip3 install grpcio-tools');
+        }
+
+        for (const definition of service_definitions) {
+          const proto_path = path.join(target_service_path, definition);
+          fs.ensureDirSync(write_path);
+          execSync(`python3 -m grpc_tools.protoc \
+          -I ${target_service_path} \
+          --python_out=${write_path} \
+          --grpc_python_out=${write_path} \
+          ${proto_path}`);
+        }
+      } else {
+        console.log(chalk.yellow(current_service_language ? `The CLI doesn't currently support ${current_service_language}` : 'Please add a service language'), { exit: true });
+      }
+    } else {
+      console.log(chalk.red('grpc service definitions not found'), { exit: true });
+    }
+  };
+
   export const execute = async (target: LocalServiceNode, dependency?: LocalServiceNode, remote_dependency_details?: any) => {
     if (dependency && !dependency.api.type) {
       throw new Error(`${dependency.name} has no api configured.`);
@@ -74,59 +127,6 @@ namespace ProtocExecutor {
     }
 
     await _postHooks(stub_directory, target.language);
-  };
-
-  const createGrpcDefinitions = (service: LocalServiceNode, write_path: string, target_service_path: string) => {
-    if (service.api.type && service.api.definitions) {
-      const service_definitions = service.api.definitions;
-      const current_service_language = service.language;
-
-      if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
-        try {
-          execSync('which grpc_tools_node_protoc');
-        } catch (err) {
-          execSync('npm install -g grpc-tools');
-        }
-
-        for (const definition of service_definitions) {
-          const proto_path = path.join(target_service_path, definition);
-          fs.ensureDirSync(write_path);
-          execSync(`grpc_tools_node_protoc \
-            -I ${target_service_path} \
-            --js_out=import_style=commonjs,binary:${write_path} \
-            --grpc_out=${write_path} \
-            ${proto_path}`);
-        }
-      } else if (current_service_language === SUPPORTED_LANGUAGES.PYTHON) {
-        try {
-          execSync('python3 -c "import grpc_tools"');
-        } catch (err) {
-          execSync('pip3 install grpcio-tools');
-        }
-
-        for (const definition of service_definitions) {
-          const proto_path = path.join(target_service_path, definition);
-          fs.ensureDirSync(write_path);
-          execSync(`python3 -m grpc_tools.protoc \
-          -I ${target_service_path} \
-          --python_out=${write_path} \
-          --grpc_python_out=${write_path} \
-          ${proto_path}`);
-        }
-      } else {
-        console.log(chalk.yellow(current_service_language ? `The CLI doesn't currently support ${current_service_language}` : 'Please add a service language'), { exit: true });
-      }
-    } else {
-      console.log(chalk.red('grpc service definitions not found'), { exit: true });
-    }
-  }
-
-  const _postHooks = async (stub_directory: string, target_language?: string) => {
-    if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
-      await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
-      await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
-      await fs.writeFile(path.join(stub_directory, '__init__.py'), '');
-    }
   };
 }
 

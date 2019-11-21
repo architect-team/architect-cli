@@ -67,7 +67,7 @@ export default class Push extends Command {
             cli.action.stop(chalk.green(`Successfully pushed Docker image for ${dependency.name}`));
           })());
       }
-    };
+    }
     await Promise.all(tasks);
   }
 
