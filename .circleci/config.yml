@@ -55,7 +55,7 @@ jobs:
             - ~/cli/node_modules
             - ~/.npm
             - /usr/local/lib/node_modules
-  build:
+  build_cli:
     executor: release
     steps:
       - checkout
@@ -73,17 +73,33 @@ jobs:
             - package.json
             - package-lock.json
             - README.md
-  publish:
+  publish_cli:
     executor: release
     steps:
       - attach_workspace:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
+  publish_graph_lib:
+    executor: release
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm i --prefix ./src/dependency-graph
+      - run:
+          name: Build library
+          command: npm run build --prefix ./src/dependency-graph
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+      - run:
+          name: Publish library
+          command: npm publish ./src/dependency-graph
 
 workflows:
   version: 2
@@ -110,15 +126,22 @@ workflows:
             - test-node-latest
             - test-node-12
             - test-node-10
-  release:
+      - publish_graph_lib:
+          context: Github Packaging
+          requires:
+            - cache
+          filters:
+            branches:
+              only: master
+  release_cli:
     jobs:
-      - build:
+      - build_cli:
           filters:
             tags:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - publish:
+      - publish_cli:
           context: NPM Packaging
           requires:
-            - build
+            - build_cli

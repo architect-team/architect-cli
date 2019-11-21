@@ -1,11 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager from '../dependency-manager';
-import SubscriptionEdge from '../dependency-manager/edge/subscription';
-import { LocalDependencyNode } from '../dependency-manager/node/local';
+import DependencyGraph, { DatastoreNode, ServiceNode } from '../../dependency-graph/src';
+import LocalServiceNode from '../local-graph/nodes/local-service';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
+export const generate = (dependency_graph: DependencyGraph): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -13,28 +12,35 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
   };
 
   // Enrich base service details
-  dependency_manager.nodes.forEach(node => {
+  dependency_graph.nodes.forEach(node => {
     compose.services[node.normalized_ref] = {
-      ports: [`${node.expose_port}:${node.target_port}`],
+      ports: [`${node.ports.expose}:${node.ports.target}`],
       depends_on: [],
       environment: {
         HOST: node.normalized_ref,
-        PORT: node.target_port,
-        ARCHITECT_CURRENT_SERVICE: node.name,
+        PORT: node.ports.target,
         ARCHITECT: JSON.stringify({
           [node.name]: {
             host: `http://${node.normalized_ref}`,
-            port: node.target_port,
-            api: node.api_type,
+            port: node.ports.target,
             datastores: {},
             subscriptions: {},
           },
         }),
+        ARCHITECT_CURRENT_SERVICE: node.name,
         ...node.parameters,
       },
     };
 
-    if (node instanceof LocalDependencyNode) {
+    if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const ARCHITECT = JSON.parse(compose.services[node.normalized_ref].environment!.ARCHITECT);
+      ARCHITECT[node.name].api = node.api.type;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
+    }
+
+    if (node instanceof LocalServiceNode) {
       // Setup build context
       compose.services[node.normalized_ref].build = {
         context: node.service_path,
@@ -56,34 +62,35 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
   });
 
   // Enrich service relationships
-  dependency_manager.edges.forEach(edge => {
+  dependency_graph.edges.forEach(edge => {
     // Parse the ARCHITECT param
     const service = compose.services[edge.from.normalized_ref];
     service.environment = service.environment || {};
     service.environment.ARCHITECT = service.environment.ARCHITECT ? JSON.parse(service.environment.ARCHITECT) : {};
 
     // Handle datastore credential enrichment to callers
-    if (edge.to.isDatastore) {
+    if (edge.to instanceof DatastoreNode) {
       const datastore_key = edge.to.name.slice(edge.from.name.length + 1);
       service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
         host: edge.to.normalized_ref,
-        port: edge.to.target_port,
+        port: edge.to.ports.target,
         ...edge.to.parameters,
       };
-    } else {
+    } else if (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode) {
       service.environment.ARCHITECT[edge.to.name] = {
         host: `http://${edge.to.normalized_ref}`,
-        port: edge.to.target_port,
-        api: edge.to.api_type,
+        port: edge.to.ports.target,
+        api: edge.to.api.type,
       };
     }
 
     // Parse subscription logic
-    if (edge instanceof SubscriptionEdge) {
+    if (edge.type === 'notification' && (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode)) {
+      const to = edge.to as ServiceNode;
       service.environment.ARCHITECT[edge.from.name].subscriptions =
-        Object.keys(edge.to.subscriptions).reduce((subscriptions, publisher_name) => {
-          Object.keys(edge.to.subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [publisher_name]: edge.to.subscriptions[event_name] };
+        Object.keys(to.subscriptions).reduce((subscriptions, publisher_name) => {
+          Object.keys(to.subscriptions[publisher_name]).forEach(event_name => {
+            subscriptions[event_name] = { [publisher_name]: to.subscriptions[event_name] };
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);
