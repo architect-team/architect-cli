@@ -110,22 +110,28 @@ export default class Install extends Command {
     const service_dependencies = [root_dependency];
     const _seen = [];
     while (service_dependencies.length) {
-      const target_dependency = service_dependencies.pop();
+      const target_dependency = service_dependencies.pop() as LocalServiceNode;
       _seen.push(target_dependency!.name);
 
-      cli.action.start(chalk.blue(`Installing ${target_dependency!.name}`), undefined, { stdout: true });
-      await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalServiceNode));
-      cli.action.stop(chalk.green(`${target_dependency!.name} installed`));
+      console.log(target_dependency!.name)
+      if (target_dependency.api && target_dependency.api.type === 'grpc') {
+        cli.action.start(chalk.blue(`Installing ${target_dependency!.name}`), undefined, { stdout: true });
+        await ProtocExecutor.execute(target_dependency!, target_dependency);
+        cli.action.stop(chalk.green(`${target_dependency!.name} installed`));
+      }
 
       const directDependencies = dependency_graph.getNodeDependencies(target_dependency!);
       for (const dependency of directDependencies) {
-        if (!(dependency instanceof DatastoreNode)) {
+        const local_dependency = dependency as LocalServiceNode;
+
+        console.log(dependency!.name)
+        if (!(dependency instanceof DatastoreNode) && local_dependency.api && local_dependency.api.type === 'grpc') { // check if the service is a grpc service first
           cli.action.start(chalk.blue(`Installing ${dependency.name} as dependency of ${target_dependency!.name}`), undefined, { stdout: true });
-          await ProtocExecutor.execute(target_dependency!, (dependency as LocalServiceNode));
+          await ProtocExecutor.execute(target_dependency!, local_dependency);
           cli.action.stop(chalk.green(`${dependency.name} installed`));
-          if (recursive && !_seen.includes(dependency.name)) {
-            service_dependencies.push(dependency as LocalServiceNode);
-          }
+        }
+        if (recursive && !_seen.includes(dependency.name)) {
+          service_dependencies.push(local_dependency);
         }
       }
     }

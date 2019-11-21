@@ -14,7 +14,6 @@ namespace ProtocExecutor {
   const _postHooks = async (stub_directory: string, target_language?: string) => {
     if (target_language === SUPPORTED_LANGUAGES.PYTHON) {
       await fs.writeFile(path.join(`${stub_directory}/../`, '__init__.py'), '');
-      await fs.writeFile(path.join(`${stub_directory}/../../`, '__init__.py'), '');
       await fs.writeFile(path.join(stub_directory, '__init__.py'), '');
     }
   };
@@ -71,11 +70,11 @@ namespace ProtocExecutor {
 
     let dependency_folder;
     if (dependency) {
-      dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name);
+      dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name.split('/')[dependency.name.split('/').length - 1]);
     } else if (remote_dependency_details) {
-      dependency_folder = remote_dependency_details.service_name;
+      dependency_folder = remote_dependency_details.service_name.split('/')[remote_dependency_details.service_name.split('/').length - 1];
     }
-    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
+    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name.split('/')[target.name.split('/').length - 1]);
 
     // Make the folder to store dependency stubs
     const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
