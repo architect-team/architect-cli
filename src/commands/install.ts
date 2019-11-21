@@ -2,7 +2,6 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import cli from 'cli-ux';
 import execa from 'execa';
-import url from 'url';
 import Command from '../base-command';
 import EnvironmentConfigV1 from '../common/environment-config/v1';
 import generateGraphFromPaths from '../common/local-graph/generator';
@@ -43,27 +42,25 @@ export default class Install extends Command {
   };
 
   async run() {
-    await this.tasks();
-  }
-
-  async tasks() {
     const { args, flags } = this.parse(Install);
     const root_service_path = flags.prefix ? flags.prefix : process.cwd();
-    const dependency_graph = await generateGraphFromPaths([process.cwd()], new EnvironmentConfigV1(), this.app.api);
-    const root_service = Array.from(dependency_graph.nodes.values())[0];
+    const root_dependency_graph = await generateGraphFromPaths([root_service_path], new EnvironmentConfigV1(), this.app.api, false);
+    const all_dependencies_graph = await generateGraphFromPaths([root_service_path], new EnvironmentConfigV1(), this.app.api);
+    const root_service = Array.from(root_dependency_graph.nodes.values())[0];
 
     if (args.service_name) {
       // eslint-disable-next-line prefer-const
       let [service_name, service_version] = args.service_name.split(':');
       if (!service_version) {
-        throw new Error(`Please specify a version for ${service_name}`);
+        service_version = 'latest';
       }
       if (root_service.name === service_name) {
         throw new Error('Cannot install a service inside its own config');
       }
+      const full_service_name = `${service_name}:${service_version}`;
 
       const new_dependencies: { [s: string]: string } = {};
-      if (new_dependencies[service_name]) {
+      if (Array.from(all_dependencies_graph.getNodeDependencies(root_service)).filter(node => node.name.split(':')[0] === service_name).length) {
         throw new Error(`A version of ${service_name} is already installed.`);
       }
 
@@ -72,7 +69,7 @@ export default class Install extends Command {
       const config = ServiceConfig.loadFromPath(root_service_path);
       const all_dependencies = Object.assign({}, config.dependencies, new_dependencies);
       config.setDependencies(all_dependencies);
-      const api_definitions_contents = await this.get_remote_definitions(args.service_name);
+      const api_definitions_contents = await this.get_remote_definitions(full_service_name);
       if (!api_definitions_contents) {
         throw new Error(`No api definitions found for ${service_name}`);
       }
@@ -80,12 +77,15 @@ export default class Install extends Command {
       ServiceConfig.saveToPath(root_service_path, config);
       cli.action.stop(chalk.green(`${args.service_name} installed`));
     } else {
-      await this.installServices((root_service as LocalServiceNode), dependency_graph, flags.recursive);
+      await this.installServices((root_service as LocalServiceNode), all_dependencies_graph, flags.recursive);
     }
   }
 
   async get_remote_definitions(remote_service_version: string) {
-    const repository_name = url.resolve(`${this.app.config.registry_host}/`, `${remote_service_version}`);
+    const [service_name, tag] = remote_service_version.split(':');
+    const { data: service } = await this.app.api.get(`/services/${service_name}`);
+    const repository_url = service.url.replace(/(^\w+:|^)\/\//, ''); // strips the protocol from the URL
+    const repository_name = `${repository_url}:${tag}`;
 
     let config;
     try {
@@ -106,7 +106,7 @@ export default class Install extends Command {
     }
   }
 
-  async installServices(root_dependency: LocalServiceNode, all_dependencies: DependencyGraph, recursive: boolean) {
+  async installServices(root_dependency: LocalServiceNode, dependency_graph: DependencyGraph, recursive: boolean) {
     const service_dependencies = [root_dependency];
     const _seen = [];
     while (service_dependencies.length) {
@@ -117,7 +117,7 @@ export default class Install extends Command {
       await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalServiceNode));
       cli.action.stop(chalk.green(`${target_dependency!.name} installed`));
 
-      const directDependencies = all_dependencies.getNodeDependencies(target_dependency!);
+      const directDependencies = dependency_graph.getNodeDependencies(target_dependency!);
       for (const dependency of directDependencies) {
         if (!(dependency instanceof DatastoreNode)) {
           cli.action.start(chalk.blue(`Installing ${dependency.name} as dependency of ${target_dependency!.name}`), undefined, { stdout: true });

@@ -25,7 +25,6 @@ export default class ServiceConfig {
   subscriptions?: ServiceSubscriptions;
   debug?: string;
   host?: string;
-  version?: string;
   port?: string;
 
   constructor(partial?: Partial<ServiceConfig>) {
@@ -67,10 +66,6 @@ export default class ServiceConfig {
           .every(key => this.datastores[key].isValid())
       )
     );
-  }
-
-  get full_name() {
-    return `${this.name}:${this.version}`;
   }
 
   static convertServiceNameToFolderName(service_name: string): string {
