@@ -7,10 +7,10 @@ import DependencyGraph from './graph';
 import EnvironmentConfig from './environment-config';
 import ServiceParameter from './service-config/parameter';
 import MissingRequiredParamError from './missing-required-param-error';
-import ServiceConfigV1 from './service-config/v1';
+import { ServiceConfigV1 } from './service-config/v1';
 import { ServiceNode } from './graph/node/service';
 import { DependencyNode } from './graph/node';
-import ServiceConfig from './service-config';
+import { ServiceConfig } from './service-config';
 import { DatastoreNode } from './graph/node/datastore';
 
 export default class DependencyManager {

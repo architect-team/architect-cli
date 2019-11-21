@@ -1,4 +1,4 @@
-import { DependencyNodeOptions, ServiceNodeOptions, DependencyNode } from '../../../dependency-graph/src';
+import { DependencyNodeOptions, ServiceNodeOptions, DependencyNode } from '../../../dependency-manager/src';
 
 interface LocalServiceNodeOptions extends ServiceNodeOptions {
   service_path: string;
