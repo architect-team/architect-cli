@@ -1,15 +1,15 @@
-import path from 'path';
-import fs from 'fs-extra';
-import untildify from 'untildify';
-import DependencyGraph, { ServiceNode, DependencyNode, DatastoreNode } from '../../dependency-graph/src';
-import EnvironmentConfig from '../environment-config';
-import LocalServiceNode from '../local-graph/nodes/local-service';
-import ServiceConfig from '../service-config';
-import ServiceParameterConfig from '../service-config/parameter';
-import MissingRequiredParamError from '../errors/missing-required-param';
-import PortManager from '../port-manager';
 import { AxiosInstance } from 'axios';
 import { plainToClass } from 'class-transformer';
+import fs from 'fs-extra';
+import path from 'path';
+import untildify from 'untildify';
+import DependencyGraph, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-graph/src';
+import EnvironmentConfig from '../environment-config';
+import MissingRequiredParamError from '../errors/missing-required-param';
+import LocalServiceNode from '../local-graph/nodes/local-service';
+import PortManager from '../port-manager';
+import ServiceConfig from '../service-config';
+import ServiceParameterConfig from '../service-config/parameter';
 
 const validateParams = (
   ref_name: string,
@@ -98,6 +98,7 @@ const addDependencyNodes = async (
           dep_config.parameters,
           env_config.getServiceParameters(dep_config.name),
         ),
+        language: dep_config.language
       });
       if (dep_config.debug) {
         (dep_node as LocalServiceNode).command = dep_config.debug;
@@ -122,6 +123,7 @@ const addDependencyNodes = async (
           dep_config.parameters,
           env_config.getServiceParameters(dep_config.name),
         ),
+        language: dep_config.language
       });
     }
 
@@ -159,12 +161,14 @@ const generate = async (
       api: {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         type: config.api!.type,
+        definitions: config.api && config.api.definitions ? config.api.definitions : []
       },
       subscriptions: config.subscriptions || {},
       parameters: validateParams(
         config.name,
         config.parameters,
         env_config.getServiceParameters(config.name)),
+      language: config.language
     });
     if (config.debug) {
       dep.command = config.debug;

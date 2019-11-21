@@ -50,12 +50,12 @@ export default class Install extends Command {
     const { args, flags } = this.parse(Install);
     const root_service_path = flags.prefix ? flags.prefix : process.cwd();
     const dependency_graph = await generateGraphFromPaths([process.cwd()], new EnvironmentConfigV1(), this.app.api);
-    const root_service = Array.from(dependency_graph.nodes.values())[0]; // TODO: error checking
+    const root_service = Array.from(dependency_graph.nodes.values())[0];
 
     if (args.service_name) {
       // eslint-disable-next-line prefer-const
       let [service_name, service_version] = args.service_name.split(':');
-      if (!service_version) { // TODO: also check if the api is defined as grpc here
+      if (!service_version) {
         throw new Error(`Please specify a version for ${service_name}`);
       }
       if (root_service.name === service_name) {
@@ -76,7 +76,7 @@ export default class Install extends Command {
       if (!api_definitions_contents) {
         throw new Error(`No api definitions found for ${service_name}`);
       }
-      await ProtocExecutor.execute(root_service, undefined, { api_definitions_contents, service_name });
+      await ProtocExecutor.execute((root_service as LocalServiceNode), undefined, { api_definitions_contents, service_name });
       ServiceConfig.saveToPath(root_service_path, config);
       cli.action.stop(chalk.green(`${args.service_name} installed`));
     } else {
@@ -113,7 +113,9 @@ export default class Install extends Command {
       const target_dependency = service_dependencies.pop();
       _seen.push(target_dependency!.name);
 
+      cli.action.start(chalk.blue(`Installing ${target_dependency!.name}`), undefined, { stdout: true });
       await ProtocExecutor.execute(target_dependency!, (target_dependency as LocalServiceNode));
+      cli.action.stop(chalk.green(`${target_dependency!.name} installed`));
 
       const directDependencies = all_dependencies.getNodeDependencies(target_dependency!);
       for (const dependency of directDependencies) {

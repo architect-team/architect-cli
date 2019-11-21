@@ -12,7 +12,7 @@ import SUPPORTED_LANGUAGES from './supported-languages';
 namespace ProtocExecutor {
 
   export const execute = async (target: LocalServiceNode, dependency?: LocalServiceNode, remote_dependency_details?: any) => {
-    if (dependency && !dependency.api_type) {
+    if (dependency && !dependency.api.type) {
       throw new Error(`${dependency.name} has no api configured.`);
     }
 
@@ -29,8 +29,8 @@ namespace ProtocExecutor {
     await fs.ensureDir(stub_directory);
 
     const checksums = [];
-    if (dependency && dependency.api_definitions) {
-      for (const definition of dependency.api_definitions) {
+    if (dependency && dependency.api.definitions) {
+      for (const definition of dependency.api.definitions) {
         const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
         const hash = crypto.createHash('md5').update(definition_contents).digest('hex');
         checksums.push(hash);
@@ -55,8 +55,8 @@ namespace ProtocExecutor {
     const tmp_dependency_dir = path.join(tmp_dir, dependency_folder);
     await fs.ensureDir(tmp_dependency_dir);
 
-    if (dependency && dependency.api_definitions) {
-      for (const definition of dependency.api_definitions) {
+    if (dependency && dependency.api.definitions) {
+      for (const definition of dependency.api.definitions) {
         const definition_contents = fs.readFileSync(path.join(dependency.service_path, definition));
         await fs.outputFile(path.join(tmp_dependency_dir, definition), definition_contents);
       }
@@ -77,8 +77,8 @@ namespace ProtocExecutor {
   };
 
   const createGrpcDefinitions = (service: LocalServiceNode, write_path: string, target_service_path: string) => {
-    if (service.api_type && service.api_definitions) {
-      const service_definitions = service.api_definitions;
+    if (service.api.type && service.api.definitions) {
+      const service_definitions = service.api.definitions;
       const current_service_language = service.language;
 
       if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
