@@ -1,10 +1,15 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { cli } from 'cli-ux';
 import execa from 'execa';
 import Command from '../base-command';
-import DependencyNode from '../common/dependency-manager/node';
-import { LocalDependencyNode } from '../common/dependency-manager/node/local';
-import { genFromLocalPaths } from '../common/utils/dependency';
+import EnvironmentConfigV1 from '../common/environment-config/v1';
+import generateGraphFromPaths from '../common/local-graph/generator';
+import LocalServiceNode from '../common/local-graph/nodes/local-service';
+import { DatastoreNode, DependencyNode } from '../dependency-graph/src';
+// import DependencyNode from '../common/dependency-manager/node';
+//import { LocalDependencyNode } from '../common/dependency-manager/node/local';
+// import { genFromLocalPaths } from '../common/utils/dependency';
 import Build from './build';
 
 export default class Push extends Command {
@@ -47,25 +52,33 @@ export default class Push extends Command {
     if (flags.tag) { build_args.push('-t'); build_args.push(flags.tag); }
     await Build.run(build_args);
 
-    const dependencies = await genFromLocalPaths([process.cwd()], undefined, flags.recursive);
+    const dependencies = await generateGraphFromPaths([process.cwd()], new EnvironmentConfigV1(), this.app.api);
+    const dependencyArray = Array.from(dependencies.nodes.values());
+    const dependencies_to_push = flags.recursive ? dependencyArray : [dependencyArray[0]];
+
+    const local_service_nodes = dependencyArray.filter(node => node instanceof LocalServiceNode);
+    if (local_service_nodes.length > 1) { //current service is a LocalServiceDependency
+      throw new Error('Cannot push image with local dependencies');
+    }
+
     const tasks: Promise<void>[] = [];
-    dependencies.nodes.forEach(dependency => {
-      if (!dependency.isDatastore || (!dependency.isDatastore && (dependency as LocalDependencyNode).service_path)) {
+    for (const dependency of dependencies_to_push) {
+      if (!(dependency instanceof DatastoreNode)) {
         tasks.push(
           (async () => {
             await this.pushImage(dependency);
-            console.log(chalk.green(`Successfully pushed Docker image for ${dependency.name}`));
+            cli.action.stop(chalk.green(`Successfully pushed Docker image for ${dependency.name}`));
           })());
       }
-    });
+    };
     await Promise.all(tasks);
   }
 
-  async pushImage(service: DependencyNode): Promise<void> {
+  async pushImage(service: DependencyNode) {
     const { flags } = this.parse(Push);
     const tag = flags.tag || 'latest';
     const full_tag = `${this.app.config.registry_host}/${service.name}:${tag}`;
-    console.log(chalk.blue(`Pushing Docker image for ${full_tag}`));
+    cli.action.start(chalk.blue(`Pushing Docker image for ${full_tag}`));
     return execa('docker', ['push', full_tag]);
   }
 }
