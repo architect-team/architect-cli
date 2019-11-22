@@ -18,12 +18,11 @@ namespace ProtocExecutor {
     }
   };
 
-  const createGrpcDefinitions = (write_path: string, target_service_path: string, service?: LocalServiceNode, remote_dependency_details?: any) => {
+  const createGrpcDefinitions = (write_path: string, target_service_path: string, service_language?: string, service?: LocalServiceNode, remote_dependency_details?: any) => {
     const service_definitions = service ? service.api.definitions : remote_dependency_details.api_definitions_contents;
-    const current_service_language = service ? service.language : remote_dependency_details.language;
 
     if (service_definitions) {
-      if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
+      if (service_language === SUPPORTED_LANGUAGES.NODE) {
         try {
           execSync('which grpc_tools_node_protoc');
         } catch (err) {
@@ -39,7 +38,7 @@ namespace ProtocExecutor {
             --grpc_out=${write_path} \
             ${proto_path}`);
         }
-      } else if (current_service_language === SUPPORTED_LANGUAGES.PYTHON) {
+      } else if (service_language === SUPPORTED_LANGUAGES.PYTHON) {
         try {
           execSync('python3 -c "import grpc_tools"');
         } catch (err) {
@@ -56,7 +55,7 @@ namespace ProtocExecutor {
           ${proto_path}`);
         }
       } else {
-        console.log(chalk.yellow(current_service_language ? `The CLI doesn't currently support ${current_service_language}` : 'Please add a service language'), { exit: true });
+        console.log(chalk.yellow(service_language ? `The CLI doesn't currently support ${service_language}` : 'Please add a service language'), { exit: true });
       }
     } else {
       console.log(chalk.red('grpc service definitions not found'), { exit: true });
@@ -120,9 +119,9 @@ namespace ProtocExecutor {
 
     try {
       if (dependency) {
-        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, dependency);
+        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, target.language, dependency);
       } else {
-        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, undefined, remote_dependency_details);
+        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, target.language, undefined, remote_dependency_details);
       }
       await fs.writeFile(checksum_path, checksum);
     } finally {
