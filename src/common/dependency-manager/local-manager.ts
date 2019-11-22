@@ -6,7 +6,7 @@ import { LocalServiceNode } from './local-service-node';
 import { AxiosInstance } from 'axios';
 
 export default class LocalDependencyManager extends DependencyManager {
-  static async createFromPath(api: AxiosInstance, env_config_path: string): Promise<DependencyManager> {
+  static async createFromPath(api: AxiosInstance, env_config_path: string): Promise<LocalDependencyManager> {
     const env_config = EnvironmentConfigBuilder.buildFromPath(env_config_path);
     const dependency_manager = new LocalDependencyManager(api, env_config);
 
@@ -66,7 +66,7 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadDependencies(parent_node: DependencyNode, parent_config: ServiceConfig) {
+  async loadDependencies(parent_node: DependencyNode, parent_config: ServiceConfig, recursive = true) {
     for (const [dep_name, dep_id] of Object.entries(parent_config.getDependencies())) {
       let dep_node: DependencyNode;
       let dep_config: ServiceConfig;
@@ -81,8 +81,10 @@ export default class LocalDependencyManager extends DependencyManager {
 
       dep_node = this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
-      await this.loadDependencies(dep_node, dep_config);
-      await this.loadDatastores(dep_node, dep_config);
+      if (recursive) {
+        await this.loadDependencies(dep_node, dep_config);
+        await this.loadDatastores(dep_node, dep_config);
+      }
     }
   }
 }

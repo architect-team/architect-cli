@@ -71,6 +71,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dependencies || {};
   }
 
+  addDependency(name: string, tag: string) {
+    this.dependencies[name] = tag;
+  }
+
   removeDependency(dependency_name: string) {
     delete this.dependencies[dependency_name];
   }

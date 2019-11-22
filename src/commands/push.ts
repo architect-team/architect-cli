@@ -1,15 +1,18 @@
-import {flags} from '@oclif/command';
+import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import { cli } from 'cli-ux';
 import path from 'path';
-import Command from '../base-command';
-import { EnvironmentConfigBuilder } from '../dependency-manager/src';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import untildify from 'untildify';
-import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
-import MissingBuildContextError from '../common/errors/missing-build-context';
-import { buildImage } from '../common/utils/docker';
 
-export default class Build extends Command {
-  static description = 'Build an Architect-ready Docker image for a service';
+import Command from '../base-command';
+import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import { EnvironmentConfigBuilder } from '../dependency-manager/src';
+import MissingBuildContextError from '../common/errors/missing-build-context';
+import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
+import { buildImage, pushImage } from '../common/utils/docker';
+
+export default class Push extends Command {
+  static description = 'Push service(s) to a registry';
 
   static flags = {
     ...Command.flags,
@@ -32,7 +35,7 @@ export default class Build extends Command {
   };
 
   async run() {
-    const { flags } = this.parse(Build);
+    const { flags } = this.parse(Push);
 
     let dependency_manager = new LocalDependencyManager(this.app.api, EnvironmentConfigBuilder.buildFromJSON({}));
     if (flags.environment) {
@@ -49,7 +52,10 @@ export default class Build extends Command {
 
     dependency_manager.graph.nodes.forEach(async (node) => {
       if (node instanceof LocalServiceNode) {
-        await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
+        const tag = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
+        cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
+        await pushImage(tag);
+        cli.action.stop(chalk.green(`Successfully pushed Docker image for ${node.name}`));
       }
     });
   }

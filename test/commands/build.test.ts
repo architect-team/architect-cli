@@ -3,11 +3,13 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import fs from 'fs-extra';
+
 import { ServiceConfig, ServiceConfigBuilder } from '../../src/dependency-manager/src';
 import Build from '../../src/commands/build';
 import AppConfig from '../../src/app-config/config';
 import ARCHITECTPATHS from '../../src/paths';
 import AppService from '../../src/app-config/service';
+import * as DockerUtil from '../../src/common/utils/docker';
 
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
@@ -57,7 +59,7 @@ describe('build', function() {
   beforeEach(function() {
     // Fake the docker build command
     spy = sinon.fake.returns(null);
-    sinon.replace(Build.prototype, 'docker', spy);
+    sinon.replace(DockerUtil, 'docker', spy);
 
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
@@ -110,9 +112,9 @@ describe('build', function() {
     testBuildArgs(service_path, service_config, spy.getCall(0).args[0], TEST_TAG);
   });
 
-  it('builds images recursively', async () => {
-    const root_service_path = path.join(__dirname, '../calculator/division-service');
-    await Build.run(['-s', root_service_path, '-r']);
+  it('builds local images from environment config', async () => {
+    const env_config_path = path.join(__dirname, '../calculator/arc.env.json');
+    await Build.run(['-e', env_config_path]);
 
     expect(spy.callCount).to.equal(3);
     for (const call of spy.getCalls()) {

@@ -72,7 +72,7 @@ export default class Deploy extends Command {
   }
 
   async run() {
-    const {flags} = this.parse(Deploy);
+    const { flags } = this.parse(Deploy);
 
     if (flags.local) {
       await this.runLocal();

@@ -1,5 +1,5 @@
-import path from 'path';
 import fs from 'fs-extra';
+import path from 'path';
 import DockerComposeTemplate from './template';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DependencyManager, { ServiceNode, DatastoreNode } from '../../dependency-manager/src';
