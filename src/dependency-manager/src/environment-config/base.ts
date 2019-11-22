@@ -1,4 +1,29 @@
+export interface DebugConfig {
+  path: string;
+}
+
+interface EnvironmentParameters {
+  [key: string]: string | number;
+}
+
+interface ServiceDatastore {
+  host?: string;
+  port?: string | number;
+  parameters: EnvironmentParameters;
+}
+
+export interface EnvironmentService {
+  host?: string;
+  port?: string | number;
+  parameters: EnvironmentParameters;
+  datastores: {
+    [key: string]: ServiceDatastore;
+  };
+  debug?: {
+    path: string;
+  };
+}
+
 export abstract class EnvironmentConfig {
-  abstract getServiceParameters(service_ref: string): { [key: string]: string };
-  abstract getDatastoreParameters(service_ref: string, datastore_name: string): { [key: string]: string };
+  abstract getServices(): { [key: string]: EnvironmentService };
 }

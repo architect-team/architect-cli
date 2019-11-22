@@ -21,6 +21,19 @@ export default class DependencyManager {
     this.environment = environment_config;
   }
 
+  static async create(api: AxiosInstance, env_config: EnvironmentConfig): Promise<DependencyManager> {
+    const dependency_manager = new DependencyManager(api, env_config);
+
+    for (const ref of Object.keys(env_config.getServices())) {
+      const [name, tag] = ref.split(':');
+      const [svc_node, svc_cfg] = await dependency_manager.loadService(name, tag);
+      await dependency_manager.loadDependencies(svc_node, svc_cfg);
+      await dependency_manager.loadDatastores(svc_node, svc_cfg);
+    }
+
+    return dependency_manager;
+  }
+
   /**
    * Parse the parameter values by comparing defaults for a service to
    * values in the environment configuration.
@@ -30,9 +43,13 @@ export default class DependencyManager {
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
   ): { [key: string]: string | number } {
-    let env_params = this.environment.getServiceParameters(service_ref);
-    if (datastore_key) {
-      env_params = this.environment.getDatastoreParameters(service_ref, datastore_key);
+    let services = this.environment.getServices();
+
+    let env_params: { [key: string]: string | number } = {};
+    if (services[service_ref] && datastore_key && services[service_ref].datastores[datastore_key]) {
+      env_params = services[service_ref].datastores[datastore_key].parameters;
+    } else if (services[service_ref]) {
+      env_params = services[service_ref].parameters;
     }
 
     return Object.keys(parameters).reduce(

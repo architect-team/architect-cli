@@ -4,14 +4,20 @@ import os from 'os';
 import { flags } from '@oclif/command';
 import execa from 'execa';
 import chalk from 'chalk';
+import untildify from 'untildify';
 
 import Command from '../base-command';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import * as DockerCompose from '../common/docker-compose';
-import { EnvironmentConfigBuilder, EnvironmentConfig } from '../dependency-manager/src';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 
-declare const process: NodeJS.Process;
+class EnvConfigRequiredError extends Error {
+  constructor() {
+    super();
+    this.name = 'environment_config_required';
+    this.message = 'An environment configuration is required';
+  }
+}
 
 export default class Deploy extends Command {
   static description = 'Create a deploy job on Architect Cloud or run stacks locally';
@@ -22,15 +28,6 @@ export default class Deploy extends Command {
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
     }),
-    config: flags.string({
-      char: 'c',
-      description: 'Path to an environment config file for the environment',
-    }),
-    services: flags.string({
-      char: 's',
-      description: 'Paths to services to deploy',
-      multiple: true,
-    }),
     compose_file: flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
@@ -40,6 +37,11 @@ export default class Deploy extends Command {
       ),
     }),
   };
+
+  static args = [{
+    name: 'environment_config',
+    description: 'Path to an Architect environment config file',
+  }];
 
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
@@ -55,22 +57,16 @@ export default class Deploy extends Command {
   }
 
   private async runLocal() {
-    const { flags } = this.parse(Deploy);
+    const { args } = this.parse(Deploy);
 
-    const service_paths = flags.services || [process.cwd()];
-
-    // Load environment config
-    let env_config: EnvironmentConfig = EnvironmentConfigBuilder.buildFromJSON({});
-    if (flags.config) {
-      env_config = EnvironmentConfigBuilder.buildFromPath(path.resolve(flags.config));
+    if (!args.environment_config) {
+      throw new EnvConfigRequiredError();
     }
 
-    const dependency_manager = new LocalDependencyManager(this.app.api, env_config);
-    for (let svc_path of service_paths) {
-      svc_path = path.resolve(svc_path);
-      const [node, config] = await dependency_manager.loadLocalService(svc_path);
-      await dependency_manager.loadDependencies(node, config);
-    }
+    const dependency_manager = await LocalDependencyManager.createFromPath(
+      this.app.api,
+      path.resolve(untildify(args.environment_config)),
+    );
     const compose = DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
