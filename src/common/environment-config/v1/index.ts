@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { Dict, Default } from '../../utils/transform';
+import { Default, Dict } from '../../utils/transform';
 import EnvironmentConfig from '../index';
 
 export class EnvironmentDatastoreConfig {

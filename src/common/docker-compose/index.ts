@@ -1,8 +1,8 @@
-import path from 'path';
 import fs from 'fs-extra';
-import DockerComposeTemplate from './template';
+import path from 'path';
+import DependencyGraph, { DatastoreNode, ServiceNode } from '../../dependency-graph/src';
 import LocalServiceNode from '../local-graph/nodes/local-service';
-import DependencyGraph, { ServiceNode, DatastoreNode } from '../../dependency-graph/src';
+import DockerComposeTemplate from './template';
 
 export const generate = (dependency_graph: DependencyGraph): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {

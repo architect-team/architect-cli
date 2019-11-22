@@ -19,11 +19,11 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   image?: string;
 
   protected constructor(options: DependencyNodeOptions) {
-    this.name       = options.name;
-    this.ports      = options.ports;
-    this.image      = options.image;
-    this.host       = options.host || '0.0.0.0';
-    this.tag        = options.tag || 'latest';
+    this.name = options.name;
+    this.ports = options.ports;
+    this.image = options.image;
+    this.host = options.host || '0.0.0.0';
+    this.tag = options.tag || 'latest';
     this.parameters = options.parameters || {};
   }
 

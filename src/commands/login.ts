@@ -1,7 +1,7 @@
-import Command from '../base-command';
 import { flags } from '@oclif/command';
-import inquirer = require('inquirer');
 import chalk from 'chalk';
+import Command from '../base-command';
+import inquirer = require('inquirer');
 
 export default class Login extends Command {
   static description = 'Login to the Architect Cloud platform';
@@ -21,7 +21,7 @@ export default class Login extends Command {
   };
 
   async run() {
-    const {flags} = this.parse(Login);
+    const { flags } = this.parse(Login);
 
     let answers = await inquirer.prompt([
       {

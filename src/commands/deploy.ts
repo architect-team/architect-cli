@@ -1,15 +1,15 @@
-import path from 'path';
+import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import { plainToClass } from 'class-transformer';
+import execa from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
+import path from 'path';
 import Command from '../base-command';
-import { flags } from '@oclif/command';
-import execa from 'execa';
-import chalk from 'chalk';
-import EnvironmentConfigV1 from '../common/environment-config/v1';
-import EnvironmentConfig from '../common/environment-config';
-import { plainToClass } from 'class-transformer';
-import DockerComposeTemplate from '../common/docker-compose/template';
 import * as DockerCompose from '../common/docker-compose';
+import DockerComposeTemplate from '../common/docker-compose/template';
+import EnvironmentConfig from '../common/environment-config';
+import EnvironmentConfigV1 from '../common/environment-config/v1';
 import generateGraphFromPaths from '../common/local-graph/generator';
 
 declare const process: NodeJS.Process;
@@ -73,7 +73,7 @@ export default class Deploy extends Command {
   }
 
   async run() {
-    const {flags} = this.parse(Deploy);
+    const { flags } = this.parse(Deploy);
 
     if (flags.local) {
       await this.runLocal();
