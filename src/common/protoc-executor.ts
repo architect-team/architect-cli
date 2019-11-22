@@ -18,11 +18,11 @@ namespace ProtocExecutor {
     }
   };
 
-  const createGrpcDefinitions = (service: LocalServiceNode, write_path: string, target_service_path: string) => {
-    if (service.api.type && service.api.definitions) {
-      const service_definitions = service.api.definitions;
-      const current_service_language = service.language;
+  const createGrpcDefinitions = (write_path: string, target_service_path: string, service?: LocalServiceNode, remote_dependency_details?: any) => {
+    const service_definitions = service ? service.api.definitions : remote_dependency_details.api_definitions_contents;
+    const current_service_language = service ? service.language : remote_dependency_details.language;
 
+    if (service_definitions) {
       if (current_service_language === SUPPORTED_LANGUAGES.NODE) {
         try {
           execSync('which grpc_tools_node_protoc');
@@ -70,11 +70,11 @@ namespace ProtocExecutor {
 
     let dependency_folder;
     if (dependency) {
-      dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name.split('/')[dependency.name.split('/').length - 1]);
+      dependency_folder = ServiceConfig.convertServiceNameToFolderName(dependency.name);
     } else if (remote_dependency_details) {
-      dependency_folder = remote_dependency_details.service_name.split('/')[remote_dependency_details.service_name.split('/').length - 1];
+      dependency_folder = remote_dependency_details.service_name;
     }
-    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name.split('/')[target.name.split('/').length - 1]);
+    const target_folder = ServiceConfig.convertServiceNameToFolderName(target.name);
 
     // Make the folder to store dependency stubs
     const stub_directory = path.join(target.service_path, ARCHITECTPATHS.CODEGEN_DIR, dependency_folder);
@@ -119,7 +119,11 @@ namespace ProtocExecutor {
     }
 
     try {
-      await createGrpcDefinitions(target, stub_directory, tmp_dependency_dir);
+      if (dependency) {
+        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, dependency);
+      } else {
+        await createGrpcDefinitions(stub_directory, tmp_dependency_dir, undefined, remote_dependency_details);
+      }
       await fs.writeFile(checksum_path, checksum);
     } finally {
       await fs.remove(tmp_dir);

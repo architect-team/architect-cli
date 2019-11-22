@@ -69,11 +69,15 @@ export default class Install extends Command {
       const config = ServiceConfig.loadFromPath(root_service_path);
       const all_dependencies = Object.assign({}, config.dependencies, new_dependencies);
       config.setDependencies(all_dependencies);
-      const api_definitions_contents = await this.get_remote_definitions(full_service_name);
+      const api_definitions_contents = await this.get_remote_definitions(full_service_name, 'api_definitions');
       if (!api_definitions_contents) {
         throw new Error(`No api definitions found for ${service_name}`);
       }
-      await ProtocExecutor.execute((root_service as LocalServiceNode), undefined, { api_definitions_contents, service_name });
+      await ProtocExecutor.execute((root_service as LocalServiceNode), undefined, {
+        api_definitions_contents,
+        service_name,
+        language: (await this.get_remote_definitions(full_service_name, 'architect.json')).language
+      });
       ServiceConfig.saveToPath(root_service_path, config);
       cli.action.stop(chalk.green(`${args.service_name} installed`));
     } else {
@@ -81,7 +85,7 @@ export default class Install extends Command {
     }
   }
 
-  async get_remote_definitions(remote_service_version: string) {
+  async get_remote_definitions(remote_service_version: string, docker_label: string) {
     const [service_name, tag] = remote_service_version.split(':');
     const { data: service } = await this.app.api.get(`/services/${service_name}`);
     const repository_url = service.url.replace(/(^\w+:|^)\/\//, ''); // strips the protocol from the URL
@@ -89,21 +93,17 @@ export default class Install extends Command {
 
     let config;
     try {
-      config = await this.load_service_config(repository_name);
+      config = await this.load_service_config(repository_name, docker_label);
     } catch {
       await execa('docker', ['pull', repository_name]);
-      config = await this.load_service_config(repository_name);
+      config = await this.load_service_config(repository_name, docker_label);
     }
     return config;
   }
 
-  async load_service_config(repository_name: string) {
-    const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "architect.json"}}']);
-    const config = JSON.parse(stdout);
-    if (config.api) {
-      const { stdout } = await execa('docker', ['inspect', repository_name, '--format', '{{ index .Config.Labels "api_definitions"}}']);
-      return JSON.parse(stdout);
-    }
+  async load_service_config(repository_name: string, docker_label: string) {
+    const { stdout } = await execa('docker', ['inspect', repository_name, '--format', `{{ index .Config.Labels "${docker_label}"}}`]);
+    return JSON.parse(stdout);
   }
 
   async installServices(root_dependency: LocalServiceNode, dependency_graph: DependencyGraph, recursive: boolean) {
@@ -113,7 +113,6 @@ export default class Install extends Command {
       const target_dependency = service_dependencies.pop() as LocalServiceNode;
       _seen.push(target_dependency!.name);
 
-      console.log(target_dependency!.name)
       if (target_dependency.api && target_dependency.api.type === 'grpc') {
         cli.action.start(chalk.blue(`Installing ${target_dependency!.name}`), undefined, { stdout: true });
         await ProtocExecutor.execute(target_dependency!, target_dependency);
@@ -124,8 +123,7 @@ export default class Install extends Command {
       for (const dependency of directDependencies) {
         const local_dependency = dependency as LocalServiceNode;
 
-        console.log(dependency!.name)
-        if (!(dependency instanceof DatastoreNode) && local_dependency.api && local_dependency.api.type === 'grpc') { // check if the service is a grpc service first
+        if (!(dependency instanceof DatastoreNode) && local_dependency.api && local_dependency.api.type === 'grpc') {
           cli.action.start(chalk.blue(`Installing ${dependency.name} as dependency of ${target_dependency!.name}`), undefined, { stdout: true });
           await ProtocExecutor.execute(target_dependency!, local_dependency);
           cli.action.stop(chalk.green(`${dependency.name} installed`));
