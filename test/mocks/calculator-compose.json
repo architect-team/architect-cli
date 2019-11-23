@@ -37,7 +37,7 @@
         "HOST": "architect.subtraction-service.local",
         "PORT": "8080",
         "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service",
-        "ARCHITECT": "{\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":8080,\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.subtraction-service.primary.local\",\"port\":5432,\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"subtraction_service\",\"name\":\"subtraction_service\"}},\"subscriptions\":{}},\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":\"8080\",\"api\":\"rest\"}}"
+        "ARCHITECT": "{\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.subtraction-service.primary.local\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"subtraction_service\",\"name\":\"subtraction_service\"}},\"subscriptions\":{}},\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":\"8080\",\"api\":\"rest\"}}"
       },
       "build": {
         "context": "/test/calculator/subtraction-services/go/rest/",
