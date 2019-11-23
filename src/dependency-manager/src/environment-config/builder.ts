@@ -1,5 +1,5 @@
-import fs from 'fs-extra';
 import { plainToClass } from 'class-transformer';
+import fs from 'fs-extra';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -20,7 +20,7 @@ export class EnvironmentConfigBuilder {
     return EnvironmentConfigBuilder.buildFromJSON(configPayload);
   }
 
-  static buildFromJSON(obj: object) {
+  static buildFromJSON(obj: object): EnvironmentConfig {
     return plainToClass(EnvironmentConfigV1, obj);
   }
 

@@ -1,15 +1,15 @@
+import { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import untildify from 'untildify';
-import { AxiosInstance } from 'axios';
-
-import DependencyGraph from './graph';
 import { EnvironmentConfig } from './environment-config/base';
-import MissingRequiredParamError from './missing-required-param-error';
-import { ServiceNode } from './graph/node/service';
+import DependencyGraph from './graph';
 import { DependencyNode } from './graph/node';
-import { ServiceConfig, ServiceParameter } from './service-config/base';
 import { DatastoreNode } from './graph/node/datastore';
+import { ServiceNode } from './graph/node/service';
+import MissingRequiredParamError from './missing-required-param-error';
+import { ServiceConfig, ServiceParameter } from './service-config/base';
 import { ServiceConfigBuilder } from './service-config/builder';
+
 
 export default class DependencyManager {
   api: AxiosInstance;
@@ -43,7 +43,7 @@ export default class DependencyManager {
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
   ): { [key: string]: string | number } {
-    let services = this.environment.getServices();
+    const services = this.environment.getServices();
 
     let env_params: { [key: string]: string | number } = {};
     if (services[service_ref] && datastore_key && services[service_ref].datastores[datastore_key]) {
@@ -117,7 +117,7 @@ export default class DependencyManager {
     const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
 
     const config = ServiceConfigBuilder.buildFromJSON(tag.config);
-    const node = new ServiceNode({
+    let node = new ServiceNode({
       name: tag.name,
       tag: tag.tag,
       image: service.url.replace(/(^\w+:|^)\/\//, ''),
@@ -134,7 +134,7 @@ export default class DependencyManager {
       ),
     });
 
-    this.graph.addNode(node);
+    node = this.graph.addNode(node) as ServiceNode;
     return [node, config];
   }
 

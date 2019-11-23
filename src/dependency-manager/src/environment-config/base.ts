@@ -26,4 +26,10 @@ export interface EnvironmentService {
 
 export abstract class EnvironmentConfig {
   abstract getServices(): { [key: string]: EnvironmentService };
+
+  getServiceDetails(key: string): EnvironmentService | undefined {
+    const services = this.getServices();
+    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
+    return ref ? services[ref] : undefined;
+  }
 }

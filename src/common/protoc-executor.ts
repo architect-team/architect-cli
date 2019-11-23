@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-namespace */
+
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import crypto from 'crypto';
@@ -5,8 +7,8 @@ import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import ARCHITECTPATHS from '../paths';
-import SUPPORTED_LANGUAGES from './supported-languages';
 import { LocalServiceNode } from './dependency-manager/local-service-node';
+import SUPPORTED_LANGUAGES from './supported-languages';
 
 namespace ProtocExecutor {
 
