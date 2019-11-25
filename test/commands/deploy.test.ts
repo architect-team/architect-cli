@@ -1,11 +1,16 @@
-import {expect, test} from '@oclif/test';
-import sinon from 'sinon';
-import path from 'path';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
+import path from 'path';
+import sinon from 'sinon';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
+import PortManager from '../../src/common/port-manager';
 
 describe('deploy', () => {
+  before(() => {
+    PortManager.tested_ports = new Set();
+  });
+
   it('generates compose locally', async () => {
     const compose_spy = sinon.fake.resolves(null);
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);

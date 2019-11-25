@@ -6,7 +6,6 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage } from '../common/utils/docker';
-import { EnvironmentConfigBuilder } from '../dependency-manager/src';
 
 export default class Build extends Command {
   static description = 'Build an Architect-ready Docker image for a service';
@@ -34,7 +33,7 @@ export default class Build extends Command {
   async run() {
     const { flags } = this.parse(Build);
 
-    let dependency_manager = new LocalDependencyManager(this.app.api, EnvironmentConfigBuilder.buildFromJSON({}));
+    let dependency_manager = new LocalDependencyManager(this.app.api);
     if (flags.environment) {
       const config_path = path.resolve(untildify(flags.environment));
       dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);

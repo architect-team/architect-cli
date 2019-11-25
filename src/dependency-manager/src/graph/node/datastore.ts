@@ -23,6 +23,6 @@ export class DatastoreNode extends DependencyNode {
    * @override
    */
   get ref() {
-    return `${super.ref}.${this.name}`;
+    return `${super.ref}.${this.key}`;
   }
 }

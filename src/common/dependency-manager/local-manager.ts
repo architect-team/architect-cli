@@ -33,12 +33,12 @@ export default class LocalDependencyManager extends DependencyManager {
         svc_node = await dependency_manager.loadService(name, tag);
       }
 
-      dependency_resolvers.push(dependency_manager.loadDependencies(svc_node));
-      dependency_resolvers.push(dependency_manager.loadDatastores(svc_node));
+      await dependency_manager.loadDatastores(svc_node);
+      dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
     }
 
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
-    await Promise.all(dependency_resolvers);
+    await Promise.all(dependency_resolvers.map(fn => fn()));
     return dependency_manager;
   }
 
@@ -51,7 +51,13 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadLocalService(service_path: string): Promise<DependencyNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
-    const node = new LocalServiceNode({
+
+    if (this.graph.nodes.has(`${config.getName()}:latest`)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return this.graph.nodes.get(`${config.getName()}:latest`)!;
+    }
+
+    let node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
       tag: 'latest',
@@ -72,7 +78,8 @@ export default class LocalDependencyManager extends DependencyManager {
       node.command = config.getDebugOptions()?.command;
     }
 
-    return this.graph.addNode(node);
+    node = this.graph.addNode(node) as LocalServiceNode;
+    return node;
   }
 
   /**
@@ -91,15 +98,14 @@ export default class LocalDependencyManager extends DependencyManager {
         dep_node = await this.loadService(dep_name, dep_id);
       }
 
-      dep_node = this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
       if (recursive) {
-        dependency_resolvers.push(this.loadDependencies(dep_node));
-        dependency_resolvers.push(this.loadDatastores(dep_node));
+        await this.loadDatastores(dep_node);
+        dependency_resolvers.push(() => this.loadDependencies(dep_node));
       }
     }
 
-    await Promise.all(dependency_resolvers);
+    await Promise.all(dependency_resolvers.map(fn => fn()));
   }
 
   /**

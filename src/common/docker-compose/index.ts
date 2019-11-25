@@ -1,8 +1,8 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DockerComposeTemplate from './template';
+import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
-import DependencyManager, { ServiceNode, DatastoreNode } from '../../dependency-manager/src';
+import DockerComposeTemplate from './template';
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -70,8 +70,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
     // Handle datastore credential enrichment to callers
     if (edge.to instanceof DatastoreNode) {
-      const datastore_key = edge.to.name.slice(edge.from.normalized_ref.length + 1);
-      service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
+      service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
         host: edge.to.normalized_ref,
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,

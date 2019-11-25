@@ -97,14 +97,17 @@ export default abstract class DependencyManager {
    * dependencies and datastores
    */
   async loadDependencies(parent_node: DependencyNode) {
+    const dependency_promises = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       // eslint-disable-next-line prefer-const
       let dep_node = await this.loadService(dep_name, dep_id);
       dep_node = this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
-      await this.loadDependencies(dep_node);
       await this.loadDatastores(dep_node);
+      dependency_promises.push(() => this.loadDependencies(dep_node));
     }
+
+    await Promise.all(dependency_promises.map(fn => fn()));
   }
 
   /**
