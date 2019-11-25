@@ -1,7 +1,7 @@
-import 'reflect-metadata';
 import Command, { flags } from '@oclif/command';
-import AppService from './app-config/service';
 import chalk from 'chalk';
+import 'reflect-metadata';
+import AppService from './app-config/service';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {
@@ -13,6 +13,7 @@ class MissingConfigFileError extends Error {
 
 export default abstract class extends Command {
   app!: AppService;
+  accounts?: any;
 
   static flags = {
     help: flags.help({ char: 'h' }),
@@ -39,5 +40,12 @@ export default abstract class extends Command {
     } else {
       this.error(chalk.red(err.message || err));
     }
+  }
+
+  async get_accounts() {
+    if (!this.accounts) {
+      this.accounts = (await this.app.api.get('/accounts')).data;
+    }
+    return this.accounts;
   }
 }

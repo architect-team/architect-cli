@@ -1,11 +1,11 @@
-import path from 'path';
-import fs from 'fs-extra';
+import { AuthenticationClient } from 'auth0';
 import axios, { AxiosInstance } from 'axios';
-import AppConfig from './config';
+import fs from 'fs-extra';
+import path from 'path';
+import LoginRequiredError from '../common/errors/login-required';
 import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
-import { AuthenticationClient } from 'auth0';
-import LoginRequiredError from '../common/errors/login-required';
+import AppConfig from './config';
 
 export default class AppService {
   config: AppConfig;
@@ -51,7 +51,7 @@ export default class AppService {
       const unauthorized_interceptor = this._api.interceptors.response.use(
         res => res,
         async err => {
-          if (err?.response?.status === 401) {
+          if (err ?.response ?.status === 401) {
             // Don't repeat the 401 check on a loop
             this._api.interceptors.response.eject(unauthorized_interceptor);
 

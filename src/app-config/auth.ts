@@ -1,8 +1,8 @@
 import { AuthenticationClient } from 'auth0';
-import CredentialManager from './credentials';
-import LoginRequiredError from '../common/errors/login-required';
 import execa from 'execa';
+import LoginRequiredError from '../common/errors/login-required';
 import AppConfig from './config';
+import CredentialManager from './credentials';
 
 const CREDENTIAL_PREFIX = 'architect.io';
 
@@ -82,7 +82,6 @@ export default class AuthClient {
       await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
       return this.auth_results;
     } catch (error) {
-      console.error(error);
       return undefined;
     }
   }

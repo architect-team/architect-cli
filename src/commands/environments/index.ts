@@ -15,7 +15,7 @@ export default class Environments extends Command {
   }];
 
   async run() {
-    const {args} = this.parse(Environments);
+    const { args } = this.parse(Environments);
 
     const { data: results } = await this.app.api.get(`/environments?q=${args.query || ''}`);
 
