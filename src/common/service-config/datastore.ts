@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { Dict, Default } from '../utils/transform';
+import { Default, Dict } from '../utils/transform';
 import ServiceParameterConfig from './parameter';
 
 interface DockerConfig {
@@ -22,7 +22,7 @@ export default class ServiceDatastoreConfig {
 
   getDockerConfig(): DockerConfig {
     if (this.image) {
-      if (!this.port){
+      if (!this.port) {
         throw new Error('Missing datastore port which is required for docker provisioning');
       }
       return {

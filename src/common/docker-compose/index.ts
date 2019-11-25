@@ -18,11 +18,11 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
       depends_on: [],
       environment: {
         HOST: node.normalized_ref,
-        PORT: node.ports.target,
+        PORT: node.ports.target.toString(),
         ARCHITECT: JSON.stringify({
           [node.name]: {
             host: `http://${node.normalized_ref}`,
-            port: node.ports.target,
+            port: node.ports.target.toString(),
             datastores: {},
             subscriptions: {},
           },
@@ -73,13 +73,13 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
       const datastore_key = edge.to.name.slice(edge.from.name.length + 1);
       service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
         host: edge.to.normalized_ref,
-        port: edge.to.ports.target,
+        port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
     } else if (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode) {
       service.environment.ARCHITECT[edge.to.name] = {
-        host: `http://${edge.to.normalized_ref}`,
-        port: edge.to.ports.target,
+        host: edge.to.api.type === 'grpc' ? edge.to.normalized_ref : `http://${edge.to.normalized_ref}`,
+        port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };
     }
