@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
@@ -8,15 +9,10 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
-import MissingBuildContextError from '../common/errors/missing-build-context';
+import MissingContextError from '../common/errors/missing-build-context';
 import { getServiceApiDefinitionContents, parseImageLabel } from '../common/utils/docker';
-import { DependencyNode, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
+import { DependencyNode, ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
-
-interface ServiceDetails {
-  config: ServiceConfig;
-  node: DependencyNode;
-}
 
 export default class Install extends Command {
   static description = 'Install services and generate the corresponding client libraries';
@@ -42,8 +38,8 @@ export default class Install extends Command {
     }),
   };
 
-  private async genGrpcStubs(source_config: ServiceConfig, source_node: LocalServiceNode, target_dirname: string, definitions_contents: { [filename: string]: string }) {
-    const write_path = path.join(source_node.service_path, ARCHITECTPATHS.CODEGEN_DIR);
+  private async genGrpcStubs(node: LocalServiceNode, target_dirname: string, definitions_contents: { [filename: string]: string }) {
+    const write_path = path.join(node.service_path, ARCHITECTPATHS.CODEGEN_DIR);
 
     // Load definitions to file system
     const tmp_stub_directory = path.join(os.tmpdir(), target_dirname);
@@ -51,7 +47,7 @@ export default class Install extends Command {
     fs.ensureDir(tmp_stub_directory);
     await fs.ensureDir(stub_directory);
 
-    switch (source_config.getLanguage()) {
+    switch (node.service_config.getLanguage()) {
       case 'node':
         try {
           await execa('which', ['grpc_tools_node_protoc']);
@@ -63,12 +59,14 @@ export default class Install extends Command {
           const proto_path = path.join(tmp_stub_directory, filename);
           await fs.outputFile(proto_path, definitions_contents[filename]);
           await execa('grpc_tools_node_protoc', [
-            '-I', path.dirname(filename),
-            `--js_out=import_style=commonjs,binary:${write_path}`,
-            `--grpc_out=${write_path}`,
+            '-I', tmp_stub_directory,
+            `--js_out=import_style=commonjs,binary:${stub_directory}`,
+            `--grpc_out=${stub_directory}`,
             proto_path,
           ]);
         }
+
+        fs.removeSync(tmp_stub_directory);
         break;
 
       case 'python':
@@ -83,40 +81,46 @@ export default class Install extends Command {
           await fs.outputFile(proto_path, definitions_contents[filename]);
           await execa('python3', [
             '-m', 'grpc_tools.protoc',
-            '-I', path.dirname(filename),
+            '-I', tmp_stub_directory,
             `--python_out=${write_path}`,
             `--grpc_python_out=${write_path}`,
             proto_path,
           ]);
         }
+
+        fs.removeSync(tmp_stub_directory);
         break;
 
       default:
-        throw new Error(`The CLI doesn't currently support GRPC for ${source_config.getLanguage()}`);
+        throw new Error(`The CLI doesn't currently support GRPC for ${node.service_config.getLanguage()}`);
     }
   }
 
-  private async genClientCode(source: LocalServiceNode, target: ServiceDetails) {
+  private async genClientCode(source: LocalServiceNode, target: DependencyNode) {
     let target_api_definitions: { [filename: string]: string } = {};
 
-    if (target.node instanceof ServiceNode) {
-      target_api_definitions = await parseImageLabel(target.node.image!, 'api_definitions');
-    } else if (target.node instanceof LocalServiceNode) {
-      target_api_definitions = getServiceApiDefinitionContents(target.node.service_path, target.config);
+    if (target instanceof ServiceNode) {
+      target_api_definitions = await parseImageLabel(target.image!, 'api_definitions');
+    } else if (target instanceof LocalServiceNode) {
+      target_api_definitions = getServiceApiDefinitionContents(target.service_path, target.service_config);
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
       const source_config = ServiceConfigBuilder.buildFromPath(source.service_path);
 
-      switch (target.config!.getApiSpec().type) {
+      switch (target.service_config!.getApiSpec().type) {
         case 'grpc':
-          return this.genGrpcStubs(source_config, source, target.config.getName().replace(/-/g, '_'), target_api_definitions);
+          return this.genGrpcStubs(source, target.name.replace(/-/g, '_'), target_api_definitions);
       }
     }
   }
 
   async run() {
     const { args, flags } = this.parse(Install);
+
+    if (!args.service_ref && !flags.environment && !flags.services) {
+      throw new MissingContextError();
+    }
 
     let dependency_manager = new LocalDependencyManager(this.app.api);
     if (flags.environment) {
@@ -125,50 +129,60 @@ export default class Install extends Command {
     } else if (flags.services) {
       for (let service_path of flags.services) {
         service_path = path.resolve(untildify(service_path));
-        const [node, config] = await dependency_manager.loadLocalService(service_path);
-        await dependency_manager.loadDependencies(node, config, false);
+        const node = await dependency_manager.loadLocalService(service_path);
+
+        if (!args.service_ref) {
+          await dependency_manager.loadDependencies(node, false);
+        }
       }
-    } else if (!args.service_ref) {
-      throw new MissingBuildContextError();
+    } else {
+      // Use current path as service context
+      const node = await dependency_manager.loadLocalService(process.cwd());
+
+      if (!args.service_ref) {
+        await dependency_manager.loadDependencies(node, false);
+      }
     }
 
-    console.log(dependency_manager.graph);
-    console.log('');
-
-    dependency_manager.graph.nodes.forEach(async node => {
+    for (const node of dependency_manager.graph.nodes.values()) {
+      // Dependencies can only be installed on local nodes
       if (node instanceof LocalServiceNode) {
-        this.log(`Installing dependencies for ${node.name}`);
+        this.log(chalk.blue(`Installing dependencies for ${node.name}`));
         const config = ServiceConfigBuilder.buildFromPath(node.service_path);
-        const dependencies = dependency_manager.graph.getNodeDependencies(node);
 
         // Install a single new dependency
         if (args.service_ref) {
           if (args.service_ref.includes(node.name)) {
             throw new Error('A service cannot be a dependency for itself');
-          } else if (dependencies.find(dep => args.service_ref.includes(dep.name))) {
+          } else if (Object.keys(config.getDependencies()).find(dep_name => args.service_ref.includes(dep_name))) {
             this.warn(`${args.service_ref.split(':')[0]} is already installed for ${node.name}. Skipping.`);
             return;
           }
 
           // eslint-disable-next-line prefer-const
-          let [service_name, service_tag] = args.service_name.split(':');
+          let [service_name, service_tag] = args.service_ref.split(':');
           if (!service_tag) {
             service_tag = 'latest';
           }
 
+          cli.action.start(chalk.grey(`-- Installing ${service_name} as dependency of ${config.getName()}`), undefined, { stdout: true });
           config.addDependency(service_name, service_tag);
           ServiceConfigBuilder.saveToPath(node.service_path, config);
-          const [dep_node, dep_config] = await dependency_manager.loadService(service_name, service_tag);
-          this.genClientCode(node, { node: dep_node, config: dep_config });
+          const dep_node = await dependency_manager.loadService(service_name, service_tag);
+          this.genClientCode(node, dep_node);
+          cli.action.stop(chalk.grey('done'));
         } else {
-          for (const dependency of dependencies) {
-            const [dep_node, dep_config] = await dependency_manager.loadService(dependency.name, dependency.tag);
-            this.log(chalk.blue(`Installing ${dep_config.getName()} as dependency of ${config.getName()}`));
-            await this.genClientCode(node, { node: dep_node, config: dep_config });
-            this.log(chalk.green(`${dep_config.getName()} installed`));
+          const dependencies = dependency_manager.graph.getNodeDependencies(node);
+          dependencies.push(node);
+          for (const dep_node of dependencies) {
+            if (dep_node instanceof ServiceNode || dep_node instanceof LocalServiceNode) {
+              cli.action.start(chalk.grey(`-- Generating client code for ${dep_node.name}`), undefined, { stdout: true });
+              await this.genClientCode(node, dep_node);
+              cli.action.stop(chalk.grey('done'));
+            }
           }
         }
       }
-    });
+    }
   }
 }

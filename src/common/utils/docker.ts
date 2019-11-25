@@ -1,8 +1,8 @@
 import execa from 'execa';
-import path from 'path';
 import fs from 'fs-extra';
+import path from 'path';
+import { ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
 
-import { ServiceConfigBuilder, ServiceConfig } from '../../dependency-manager/src';
 
 export const docker = async (args: string[], opts = { stdout: true }) => {
   const cmd = execa('docker', args);
@@ -15,14 +15,14 @@ export const docker = async (args: string[], opts = { stdout: true }) => {
 export const getServiceApiDefinitionContents = (service_path: string, service_config: ServiceConfig) => {
   const definitionsContents: { [filename: string]: string } = {};
 
-    const spec = service_config.getApiSpec();
-    if (spec.definitions) {
-      for (const filepath of spec.definitions) {
-        definitionsContents[filepath] = fs.readFileSync(path.join(service_path, filepath)).toString('utf-8');
-      }
+  const spec = service_config.getApiSpec();
+  if (spec.definitions) {
+    for (const filepath of spec.definitions) {
+      definitionsContents[filepath] = fs.readFileSync(path.join(service_path, filepath)).toString('utf-8');
     }
+  }
 
-    return definitionsContents;
+  return definitionsContents;
 };
 
 export const buildImage = async (service_path: string, registry_host: string, tag_name = 'latest') => {
@@ -57,4 +57,4 @@ export const parseImageLabel = async (image_ref: string, label_name: string) => 
 
   const { stdout } = await docker(['inspect', image_ref, '--format', `{{ index .Config.Labels "${label_name}"}}`], { stdout: false });
   return JSON.parse(stdout);
-}
+};

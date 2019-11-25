@@ -1,37 +1,20 @@
-import { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import untildify from 'untildify';
 import { EnvironmentConfig } from './environment-config/base';
+import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
-import { ServiceNode } from './graph/node/service';
 import MissingRequiredParamError from './missing-required-param-error';
-import { ServiceConfig, ServiceParameter } from './service-config/base';
-import { ServiceConfigBuilder } from './service-config/builder';
+import { ServiceParameter } from './service-config/base';
 
 
-export default class DependencyManager {
-  api: AxiosInstance;
+export default abstract class DependencyManager {
   graph: DependencyGraph = new DependencyGraph();
   environment: EnvironmentConfig;
 
-  constructor(api: AxiosInstance, environment_config: EnvironmentConfig) {
-    this.api = api;
-    this.environment = environment_config;
-  }
-
-  static async create(api: AxiosInstance, env_config: EnvironmentConfig): Promise<DependencyManager> {
-    const dependency_manager = new DependencyManager(api, env_config);
-
-    for (const ref of Object.keys(env_config.getServices())) {
-      const [name, tag] = ref.split(':');
-      const [svc_node, svc_cfg] = await dependency_manager.loadService(name, tag);
-      await dependency_manager.loadDependencies(svc_node, svc_cfg);
-      await dependency_manager.loadDatastores(svc_node, svc_cfg);
-    }
-
-    return dependency_manager;
+  constructor(environment_config?: EnvironmentConfig) {
+    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
   }
 
   /**
@@ -46,7 +29,7 @@ export default class DependencyManager {
     const services = this.environment.getServices();
 
     let env_params: { [key: string]: string | number } = {};
-    if (services[service_ref] && datastore_key && services[service_ref].datastores[datastore_key]) {
+    if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
       env_params = services[service_ref].datastores[datastore_key].parameters;
     } else if (services[service_ref]) {
       env_params = services[service_ref].parameters;
@@ -86,11 +69,12 @@ export default class DependencyManager {
   /**
    * Similar to `loadDependencies()`, but iterates over the datastores instead
    */
-  protected async loadDatastores(parent_node: DependencyNode, parent_config: ServiceConfig) {
-    for (const [ds_name, ds_config] of Object.entries(parent_config.getDatastores())) {
+  protected async loadDatastores(parent_node: DependencyNode) {
+    for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
       const image_parts = ds_config.docker.image.split(':');
       const dep_node = new DatastoreNode({
-        name: `${parent_node.name}.${parent_node.tag}.${ds_name}`,
+        key: ds_name,
+        service_config: parent_node.service_config,
         image: ds_config.docker.image,
         tag: image_parts[image_parts.length - 1],
         ports: {
@@ -98,7 +82,7 @@ export default class DependencyManager {
           expose: await this.getServicePort(),
         },
         parameters: this.getParamValues(
-          `${parent_config.getName()}:${parent_node.tag}`,
+          parent_node.ref,
           ds_config.parameters,
           ds_name,
         ),
@@ -109,47 +93,23 @@ export default class DependencyManager {
   }
 
   /**
-   * Queries the API to create a node and config object for a service based on
-   * its name and tag
-   */
-  async loadService(service_name: string, service_tag: string): Promise<[DependencyNode, ServiceConfig]> {
-    const { data: service } = await this.api.get(`/services/${service_name}`);
-    const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
-
-    const config = ServiceConfigBuilder.buildFromJSON(tag.config);
-    let node = new ServiceNode({
-      name: tag.name,
-      tag: tag.tag,
-      image: service.url.replace(/(^\w+:|^)\/\//, ''),
-      ports: {
-        target: 8080,
-        expose: await this.getServicePort(),
-      },
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      api: config.getApiSpec(),
-      subscriptions: config.getSubscriptions(),
-      parameters: this.getParamValues(
-        `${config.getName()}:${tag.tag}`,
-        config.getParameters(),
-      ),
-    });
-
-    node = this.graph.addNode(node) as ServiceNode;
-    return [node, config];
-  }
-
-  /**
    * Load the dependency graph with nodes and edges associated with a services
    * dependencies and datastores
    */
-  async loadDependencies(parent_node: DependencyNode, parent_config: ServiceConfig) {
-    for (const [dep_name, dep_id] of Object.entries(parent_config.getDependencies())) {
+  async loadDependencies(parent_node: DependencyNode) {
+    for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       // eslint-disable-next-line prefer-const
-      let [dep_node, dep_config] = await this.loadService(dep_name, dep_id);
+      let dep_node = await this.loadService(dep_name, dep_id);
       dep_node = this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
-      await this.loadDependencies(dep_node, dep_config);
-      await this.loadDatastores(dep_node, dep_config);
+      await this.loadDependencies(dep_node);
+      await this.loadDatastores(dep_node);
     }
   }
+
+  /**
+   * Queries the API to create a node and config object for a service based on
+   * its name and tag
+   */
+  abstract async loadService(service_name: string, service_tag: string): Promise<DependencyNode>;
 }

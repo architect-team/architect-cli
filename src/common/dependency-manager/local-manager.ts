@@ -1,18 +1,20 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import PortManager from '../port-manager';
 import { LocalServiceNode } from './local-service-node';
 
 
 export default class LocalDependencyManager extends DependencyManager {
+  api: AxiosInstance;
   config_path: string;
 
   constructor(api: AxiosInstance, config_path?: string) {
     const env_config = config_path
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
-    super(api, env_config);
+    super(env_config);
+    this.api = api;
     this.config_path = config_path || '';
   }
 
@@ -22,18 +24,17 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
       let svc_node: DependencyNode;
-      let svc_cfg: ServiceConfig;
 
       if (env_svc_cfg.debug) {
         const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
-        [svc_node, svc_cfg] = await dependency_manager.loadLocalService(svc_path);
+        svc_node = await dependency_manager.loadLocalService(svc_path);
       } else {
         const [name, tag] = ref.split(':');
-        [svc_node, svc_cfg] = await dependency_manager.loadService(name, tag);
+        svc_node = await dependency_manager.loadService(name, tag);
       }
 
-      dependency_resolvers.push(dependency_manager.loadDependencies(svc_node, svc_cfg));
-      dependency_resolvers.push(dependency_manager.loadDatastores(svc_node, svc_cfg));
+      dependency_resolvers.push(dependency_manager.loadDependencies(svc_node));
+      dependency_resolvers.push(dependency_manager.loadDatastores(svc_node));
     }
 
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
@@ -48,12 +49,12 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortManager.getAvailablePort();
   }
 
-  async loadLocalService(service_path: string): Promise<[DependencyNode, ServiceConfig]> {
+  async loadLocalService(service_path: string): Promise<DependencyNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
-    let node = new LocalServiceNode({
+    const node = new LocalServiceNode({
       service_path: service_path,
-      name: config.getName(),
-      tag: 'local',
+      service_config: config,
+      tag: 'latest',
       ports: {
         target: 8080,
         expose: await this.getServicePort(),
@@ -62,7 +63,7 @@ export default class LocalDependencyManager extends DependencyManager {
       api: config.getApiSpec(),
       subscriptions: config.getSubscriptions(),
       parameters: this.getParamValues(
-        `${config.getName()}:local`,
+        `${config.getName()}:latest`,
         config.getParameters(),
       ),
     });
@@ -71,35 +72,61 @@ export default class LocalDependencyManager extends DependencyManager {
       node.command = config.getDebugOptions()?.command;
     }
 
-    node = this.graph.addNode(node) as LocalServiceNode;
-    return [node, config];
+    return this.graph.addNode(node);
   }
 
   /**
    * @override
    */
-  async loadDependencies(parent_node: DependencyNode, parent_config: ServiceConfig, recursive = true) {
+  async loadDependencies(parent_node: DependencyNode, recursive = true) {
     const dependency_resolvers = [];
-    for (const [dep_name, dep_id] of Object.entries(parent_config.getDependencies())) {
+    for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       let dep_node: DependencyNode;
-      let dep_config: ServiceConfig;
 
       const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
       if (env_services && env_services.debug) {
         const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
-        [dep_node, dep_config] = await this.loadLocalService(svc_path);
+        dep_node = await this.loadLocalService(svc_path);
       } else {
-        [dep_node, dep_config] = await this.loadService(dep_name, dep_id);
+        dep_node = await this.loadService(dep_name, dep_id);
       }
 
       dep_node = this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
       if (recursive) {
-        dependency_resolvers.push(this.loadDependencies(dep_node, dep_config));
-        dependency_resolvers.push(this.loadDatastores(dep_node, dep_config));
+        dependency_resolvers.push(this.loadDependencies(dep_node));
+        dependency_resolvers.push(this.loadDatastores(dep_node));
       }
     }
 
     await Promise.all(dependency_resolvers);
+  }
+
+  /**
+   * @override
+   */
+  async loadService(service_name: string, service_tag: string): Promise<DependencyNode> {
+    const { data: service } = await this.api.get(`/services/${service_name}`);
+    const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
+
+    const config = ServiceConfigBuilder.buildFromJSON(tag.config);
+    const node = new ServiceNode({
+      service_config: config,
+      tag: tag.tag,
+      image: service.url.replace(/(^\w+:|^)\/\//, ''),
+      ports: {
+        target: 8080,
+        expose: await this.getServicePort(),
+      },
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      api: config.getApiSpec(),
+      subscriptions: config.getSubscriptions(),
+      parameters: this.getParamValues(
+        `${config.getName()}:${tag.tag}`,
+        config.getParameters(),
+      ),
+    });
+
+    return this.graph.addNode(node);
   }
 }

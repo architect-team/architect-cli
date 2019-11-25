@@ -1,11 +1,11 @@
-import path from 'path';
-import fs from 'fs-extra';
+import { AuthenticationClient } from 'auth0';
 import axios, { AxiosInstance } from 'axios';
-import AppConfig from './config';
+import fs from 'fs-extra';
+import path from 'path';
+import LoginRequiredError from '../common/errors/login-required';
 import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
-import { AuthenticationClient } from 'auth0';
-import LoginRequiredError from '../common/errors/login-required';
+import AppConfig from './config';
 
 export default class AppService {
   config: AppConfig;
@@ -71,8 +71,7 @@ export default class AppService {
             return this._api.request(error_config);
           }
 
-          // eslint-disable-next-line no-undef
-          return Promise.reject(new LoginRequiredError());
+          throw err;
         }
       );
     }
