@@ -3,14 +3,6 @@ import chalk from 'chalk';
 import 'reflect-metadata';
 import AppService from './app-config/service';
 
-class MissingConfigFileError extends Error {
-  constructor(filepath: string) {
-    super();
-    this.name = 'missing_config_file';
-    this.message = `No config file found at ${filepath}`;
-  }
-}
-
 export default abstract class extends Command {
   app!: AppService;
   accounts?: any;

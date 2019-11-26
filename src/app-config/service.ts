@@ -71,8 +71,7 @@ export default class AppService {
             return this._api.request(error_config);
           }
 
-          // eslint-disable-next-line no-undef
-          return Promise.reject(new LoginRequiredError());
+          throw err;
         }
       );
     }

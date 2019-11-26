@@ -1,18 +1,23 @@
-import { flags } from '@oclif/command';
-import chalk from 'chalk';
-import { plainToClass } from 'class-transformer';
-import execa from 'execa';
+import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
-import path from 'path';
-import Command from '../base-command';
-import * as DockerCompose from '../common/docker-compose';
-import DockerComposeTemplate from '../common/docker-compose/template';
-import EnvironmentConfig from '../common/environment-config';
-import EnvironmentConfigV1 from '../common/environment-config/v1';
-import generateGraphFromPaths from '../common/local-graph/generator';
+import { flags } from '@oclif/command';
+import execa from 'execa';
+import chalk from 'chalk';
+import untildify from 'untildify';
 
-declare const process: NodeJS.Process;
+import Command from '../base-command';
+import DockerComposeTemplate from '../common/docker-compose/template';
+import * as DockerCompose from '../common/docker-compose';
+import LocalDependencyManager from '../common/dependency-manager/local-manager';
+
+class EnvConfigRequiredError extends Error {
+  constructor() {
+    super();
+    this.name = 'environment_config_required';
+    this.message = 'An environment configuration is required';
+  }
+}
 
 export default class Deploy extends Command {
   static description = 'Create a deploy job on Architect Cloud or run stacks locally';
@@ -23,15 +28,6 @@ export default class Deploy extends Command {
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
     }),
-    config: flags.string({
-      char: 'c',
-      description: 'Path to an environment config file for the environment',
-    }),
-    services: flags.string({
-      char: 's',
-      description: 'Paths to services to deploy',
-      multiple: true,
-    }),
     compose_file: flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
@@ -41,6 +37,11 @@ export default class Deploy extends Command {
       ),
     }),
   };
+
+  static args = [{
+    name: 'environment_config',
+    description: 'Path to an Architect environment config file',
+  }];
 
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
@@ -56,19 +57,17 @@ export default class Deploy extends Command {
   }
 
   private async runLocal() {
-    const { flags } = this.parse(Deploy);
+    const { args } = this.parse(Deploy);
 
-    const service_paths = flags.services || [process.cwd()];
-
-    // Load environment config
-    let env_config: EnvironmentConfig = new EnvironmentConfigV1();
-    if (flags.config) {
-      const config_payload = await fs.readJSON(path.resolve(flags.config));
-      env_config = plainToClass(EnvironmentConfigV1, config_payload);
+    if (!args.environment_config) {
+      throw new EnvConfigRequiredError();
     }
 
-    const dependencies = await generateGraphFromPaths(service_paths, env_config, this.app.api);
-    const compose = DockerCompose.generate(dependencies);
+    const dependency_manager = await LocalDependencyManager.createFromPath(
+      this.app.api,
+      path.resolve(untildify(args.environment_config)),
+    );
+    const compose = DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
 

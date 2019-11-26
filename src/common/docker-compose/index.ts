@@ -1,10 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyGraph, { DatastoreNode, ServiceNode } from '../../dependency-graph/src';
-import LocalServiceNode from '../local-graph/nodes/local-service';
+import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_graph: DependencyGraph): DockerComposeTemplate => {
+export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -12,7 +12,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
   };
 
   // Enrich base service details
-  dependency_graph.nodes.forEach(node => {
+  dependency_manager.graph.nodes.forEach(node => {
     compose.services[node.normalized_ref] = {
       ports: [`${node.ports.expose}:${node.ports.target}`],
       depends_on: [],
@@ -21,7 +21,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
         PORT: node.ports.target.toString(),
         ARCHITECT: JSON.stringify({
           [node.name]: {
-            host: `http://${node.normalized_ref}`,
+            host: `${node.protocol}${node.normalized_ref}`,
             port: node.ports.target.toString(),
             datastores: {},
             subscriptions: {},
@@ -62,7 +62,7 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
   });
 
   // Enrich service relationships
-  dependency_graph.edges.forEach(edge => {
+  dependency_manager.graph.edges.forEach(edge => {
     // Parse the ARCHITECT param
     const service = compose.services[edge.from.normalized_ref];
     service.environment = service.environment || {};
@@ -70,15 +70,14 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
 
     // Handle datastore credential enrichment to callers
     if (edge.to instanceof DatastoreNode) {
-      const datastore_key = edge.to.name.slice(edge.from.name.length + 1);
-      service.environment.ARCHITECT[edge.from.name].datastores[datastore_key] = {
-        host: edge.to.normalized_ref,
+      service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
+        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
     } else if (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode) {
       service.environment.ARCHITECT[edge.to.name] = {
-        host: edge.to.api.type === 'grpc' ? edge.to.normalized_ref : `http://${edge.to.normalized_ref}`,
+        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
         port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };
@@ -87,10 +86,11 @@ export const generate = (dependency_graph: DependencyGraph): DockerComposeTempla
     // Parse subscription logic
     if (edge.type === 'notification' && (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode)) {
       const to = edge.to as ServiceNode;
+      const to_subscriptions = to.service_config.getSubscriptions();
       service.environment.ARCHITECT[edge.from.name].subscriptions =
-        Object.keys(to.subscriptions).reduce((subscriptions, publisher_name) => {
-          Object.keys(to.subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [publisher_name]: to.subscriptions[event_name] };
+        Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
+          Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
+            subscriptions[event_name] = { [publisher_name]: to_subscriptions[event_name] };
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);

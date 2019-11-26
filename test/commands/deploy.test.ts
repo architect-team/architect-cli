@@ -1,27 +1,32 @@
-import {expect, test} from '@oclif/test';
-import sinon from 'sinon';
-import path from 'path';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
+import path from 'path';
+import sinon from 'sinon';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
+import PortUtil from '../../src/common/utils/port';
 
 describe('deploy', () => {
+  before(() => {
+    PortUtil.tested_ports = new Set();
+  });
+
   it('generates compose locally', async () => {
     const compose_spy = sinon.fake.resolves(null);
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
 
-    const division_service_path = path.join(__dirname, '../calculator/division-service');
-    await Deploy.run(['-l', '-s', division_service_path]);
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    await Deploy.run(['-l', calculator_env_config_path]);
 
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
     expect(compose_spy.calledOnce).to.equal(true);
 
     expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
-    for (const key of Object.keys(compose_spy.firstCall.args[0].services)) {
-      expect(Object.keys(expected_compose.services)).to.include(key);
+    for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
+      expect(Object.keys(expected_compose.services)).to.include(svc_key);
 
-      const input = compose_spy.firstCall.args[0].services[key] as DockerService;
-      const expected = expected_compose.services[key];
+      const input = compose_spy.firstCall.args[0].services[svc_key] as DockerService;
+      const expected = expected_compose.services[svc_key];
 
       // Overwrite expected paths with full directories
       if (expected.build) {

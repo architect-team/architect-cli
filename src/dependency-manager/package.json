@@ -1,0 +1,37 @@
+{
+  "name": "@architect-io/dependency-manager",
+  "description": "Graphing library for managing complex, service-oriented applications",
+  "author": {
+    "name": "Architect.io",
+    "url": "https://architect.io"
+  },
+  "version": "0.1.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "repository": {
+    "type": "git",
+    "directory": "src/dependency-graph",
+    "url": "ssh://git@github.com/architect-team/architect-cli.git"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "homepage": "https://github.com/architect-team/architect-cli",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "fs-extra": "^8.1.0",
+    "untildify": "^4.0.0"
+  },
+  "scripts": {
+    "lint": "eslint --ext .ts,.js .",
+    "build": "rm -rf lib && tsc -b"
+  },
+  "main": "lib/index.js",
+  "files": [
+    "./lib",
+    "README.md",
+    "/npm-shrinkwrap.json"
+  ],
+  "types": "lib/index.d.ts"
+}

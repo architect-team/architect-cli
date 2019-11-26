@@ -1,71 +1,61 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
-import execa from 'execa';
+import path from 'path';
+import untildify from 'untildify';
 import Command from '../base-command';
-import EnvironmentConfigV1 from '../common/environment-config/v1';
-import generateGraphFromPaths from '../common/local-graph/generator';
-import LocalServiceNode from '../common/local-graph/nodes/local-service';
-import { DatastoreNode } from '../dependency-graph/src';
-import Build from './build';
+import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
+import MissingContextError from '../common/errors/missing-build-context';
+import { buildImage, pushImage } from '../common/utils/docker';
+
 
 export default class Push extends Command {
   static description = 'Push service(s) to a registry';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
+    services: flags.string({
+      char: 's',
+      description: 'Path to a service to build',
+      exclusive: ['environment'],
+      multiple: true,
+    }),
+    environment: flags.string({
+      char: 'e',
+      description: 'Path to an environment config including local services to build',
+      exclusive: ['service'],
+    }),
     tag: flags.string({
       char: 't',
-      description: 'Tag for the architect image',
-      exclusive: ['recursive'],
-    }),
-    recursive: flags.boolean({
-      char: 'r',
-      default: false,
-      description: 'Whether or not to build images for the cited dependencies',
-      exclusive: ['tag'],
-    }),
-    _local: flags.boolean({
-      default: false,
-      hidden: true,
-      description: 'Debug flag to build service and replace local dependencies (file:) with the appropriate version',
+      description: 'Tag to give to the new Docker image(s)',
+      default: 'latest',
     }),
   };
 
-  static args = [
-    {
-      name: 'context',
-      description: 'Path to the service to build',
-    },
-  ];
-
   async run() {
-    const { args, flags } = this.parse(Push);
-    const root_service_path = args.context ? args.context : process.cwd();
+    const { flags } = this.parse(Push);
 
-    const build_args = ['-s', root_service_path];
-    if (flags.recursive) build_args.push('-r');
-    if (flags._local) build_args.push('--_local');
-    if (flags.tag) { build_args.push('-t'); build_args.push(flags.tag); }
-    await Build.run(build_args);
-
-    const dependencies = await generateGraphFromPaths([process.cwd()], new EnvironmentConfigV1(), this.app.api);
-    const dependencyArray = Array.from(dependencies.nodes.values());
-    const dependencies_to_push = flags.recursive ? dependencyArray : [dependencyArray[0]];
-
-    const local_service_nodes = dependencyArray.filter(node => node instanceof LocalServiceNode);
-    if (local_service_nodes.length > 1) { //current service is a LocalServiceNode
-      throw new Error('Cannot push image with local dependencies');
-    }
-
-    for (const dependency of dependencies_to_push) {
-      if (!(dependency instanceof DatastoreNode)) {
-        const tag = flags.tag || 'latest';
-        const full_tag = `${this.app.config.registry_host}/${dependency.name}:${tag}`;
-        cli.action.start(chalk.blue(`Pushing Docker image for ${full_tag}`));
-        await execa('docker', ['push', full_tag]);
-        cli.action.stop(chalk.green(`Successfully pushed Docker image for ${dependency.name}`));
+    let dependency_manager = new LocalDependencyManager(this.app.api);
+    if (flags.environment) {
+      const config_path = path.resolve(untildify(flags.environment));
+      dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);
+    } else if (flags.services) {
+      for (let service_path of flags.services) {
+        service_path = path.resolve(untildify(service_path));
+        await dependency_manager.loadLocalService(service_path);
       }
+    } else {
+      throw new MissingContextError();
     }
+
+    dependency_manager.graph.nodes.forEach(async (node) => {
+      if (node instanceof LocalServiceNode) {
+        const tag = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
+        cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
+        await pushImage(tag);
+        cli.action.stop(chalk.green(`Successfully pushed Docker image for ${node.name}`));
+      }
+    });
   }
 }

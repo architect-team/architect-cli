@@ -1,21 +1,21 @@
 {
   "version": "3",
   "services": {
-    "architect.division-service.local": {
+    "architect.division-service-grpc.latest": {
       "ports": [
         "50000:8080"
       ],
       "depends_on": [
-        "architect.subtraction-service.local"
+        "architect.subtraction-service-rest.latest"
       ],
       "environment": {
-        "HOST": "architect.division-service.local",
+        "HOST": "architect.division-service-grpc.latest",
         "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/division-service",
-        "ARCHITECT": "{\"architect/division-service\":{\"host\":\"http://architect.division-service.local\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":\"8080\",\"api\":\"rest\"}}"
+        "ARCHITECT_CURRENT_SERVICE": "architect/division-service-grpc",
+        "ARCHITECT": "{\"architect/division-service-grpc\":{\"host\":\"architect.division-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
       },
       "build": {
-        "context": "/test/calculator/division-service",
+        "context": "/test/calculator/division-service/",
         "args": [
           "ARCHITECT_DEBUG=1"
         ]
@@ -25,19 +25,18 @@
         "/test/calculator/division-service/src:/usr/src/app/src"
       ]
     },
-    "architect.subtraction-service.local": {
+    "architect.subtraction-service-rest.latest": {
       "ports": [
         "50001:8080"
       ],
       "depends_on": [
-        "architect.addition-service.local",
-        "architect.subtraction-service.primary.local"
+        "architect.addition-service-rest.latest"
       ],
       "environment": {
-        "HOST": "architect.subtraction-service.local",
+        "HOST": "architect.subtraction-service-rest.latest",
         "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service",
-        "ARCHITECT": "{\"architect/subtraction-service\":{\"host\":\"http://architect.subtraction-service.local\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.subtraction-service.primary.local\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"subtraction_service\",\"name\":\"subtraction_service\"}},\"subscriptions\":{}},\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":\"8080\",\"api\":\"rest\"}}"
+        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service-rest",
+        "ARCHITECT": "{\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{},\"subscriptions\":{}},\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
       },
       "build": {
         "context": "/test/calculator/subtraction-services/go/rest/",
@@ -47,16 +46,18 @@
       },
       "command": "sh -c 'go run main.go'"
     },
-    "architect.addition-service.local": {
+    "architect.addition-service-rest.latest": {
       "ports": [
         "50002:8080"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "architect.addition-service-rest.latest.primary"
+      ],
       "environment": {
-        "HOST": "architect.addition-service.local",
+        "HOST": "architect.addition-service-rest.latest",
         "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service",
-        "ARCHITECT": "{\"architect/addition-service\":{\"host\":\"http://architect.addition-service.local\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{},\"subscriptions\":{}}}"
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest",
+        "ARCHITECT": "{\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASS\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"addition_service\",\"name\":\"addition_service\"}},\"subscriptions\":{}}}"
       },
       "build": {
         "context": "/test/calculator/addition-service/rest/",
@@ -69,22 +70,22 @@
         "/test/calculator/addition-service/rest/src:/usr/src/app/src"
       ]
     },
-    "architect.subtraction-service.primary.local": {
+    "architect.addition-service-rest.latest.primary": {
       "ports": [
         "50003:5432"
       ],
       "depends_on": [],
       "environment": {
-        "HOST": "architect.subtraction-service.primary.local",
+        "HOST": "architect.addition-service-rest.latest.primary",
         "PORT": "5432",
-        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service.primary",
-        "ARCHITECT": "{\"architect/subtraction-service.primary\":{\"host\":\"http://architect.subtraction-service.primary.local\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest.primary",
+        "ARCHITECT": "{\"architect/addition-service-rest.primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
         "POSTGRES_USER": "postgres",
         "username": "postgres",
-        "POSTGRES_PASSWORD": "architect",
+        "POSTGRES_PASS": "architect",
         "password": "architect",
-        "POSTGRES_DB": "subtraction_service",
-        "name": "subtraction_service"
+        "POSTGRES_DB": "addition_service",
+        "name": "addition_service"
       },
       "image": "postgres:10"
     }
