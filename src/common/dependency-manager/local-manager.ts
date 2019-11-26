@@ -1,7 +1,7 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
-import PortUtil from '../utils/port-manager';
+import PortUtil from '../utils/port';
 import { LocalServiceNode } from './local-service-node';
 
 

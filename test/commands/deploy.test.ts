@@ -4,11 +4,11 @@ import path from 'path';
 import sinon from 'sinon';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
-import PortManager from '../../src/common/port-manager';
+import PortUtil from '../../src/common/utils/port';
 
 describe('deploy', () => {
   before(() => {
-    PortManager.tested_ports = new Set();
+    PortUtil.tested_ports = new Set();
   });
 
   it('generates compose locally', async () => {
