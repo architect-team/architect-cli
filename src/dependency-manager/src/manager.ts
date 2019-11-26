@@ -71,12 +71,11 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      const image_parts = ds_config.docker.image.split(':');
       const dep_node = new DatastoreNode({
         key: ds_name,
         service_config: parent_node.service_config,
         image: ds_config.docker.image,
-        tag: image_parts[image_parts.length - 1],
+        tag: parent_node.tag,
         ports: {
           target: ds_config.docker.target_port,
           expose: await this.getServicePort(),

@@ -23,4 +23,8 @@ export class LocalServiceNode extends DependencyNode implements LocalServiceNode
     this.subscriptions = options.subscriptions || {};
     this.api = options.api;
   }
+
+  get protocol() {
+    return this.api.type === 'grpc' ? '' : 'http://';
+  }
 }

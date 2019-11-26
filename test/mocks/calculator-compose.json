@@ -30,14 +30,13 @@
         "50001:8080"
       ],
       "depends_on": [
-        "architect.addition-service.latest",
-        "architect.subtraction-service-grpc.latest.primary"
+        "architect.addition-service-grpc.latest"
       ],
       "environment": {
         "HOST": "architect.subtraction-service-grpc.latest",
         "PORT": "8080",
         "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service-grpc",
-        "ARCHITECT": "{\"architect/subtraction-service-grpc\":{\"host\":\"architect.subtraction-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{\"primary\":{\"host\":\"architect.subtraction-service-grpc.primary.latest\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"subtraction_service\",\"name\":\"subtraction_service\"}},\"subscriptions\":{}},\"architect/addition-service\":{\"host\":\"architect.addition-service.latest\",\"port\":\"8080\",\"api\":\"grpc\"}}"
+        "ARCHITECT": "{\"architect/subtraction-service-grpc\":{\"host\":\"architect.subtraction-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/addition-service-grpc\":{\"host\":\"architect.addition-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\"}}"
       },
       "build": {
         "context": "/test/calculator/subtraction-services/node/grpc/",
@@ -45,18 +44,20 @@
           "ARCHITECT_DEBUG=1"
         ]
       },
-      "command": "sh -c 'go run main.go'"
+      "command": "npm run dev"
     },
-    "architect.addition-service.latest": {
+    "architect.addition-service-grpc.latest": {
       "ports": [
         "50002:8080"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "architect.addition-service-grpc.latest.primary"
+      ],
       "environment": {
         "HOST": "architect.addition-service-grpc.latest",
         "PORT": "8080",
         "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-grpc",
-        "ARCHITECT": "{\"architect/addition-service\":{\"host\":\"architect.addition-service.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}}}"
+        "ARCHITECT": "{\"architect/addition-service-grpc\":{\"host\":\"architect.addition-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{\"primary\":{\"host\":\"architect.addition-service-grpc.latest.primary\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASS\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"addition_service\",\"name\":\"addition_service\"}},\"subscriptions\":{}}}"
       },
       "build": {
         "context": "/test/calculator/addition-service/grpc/",
@@ -75,13 +76,13 @@
       ],
       "depends_on": [],
       "environment": {
-        "HOST": "architect.addition-service.primary.latest",
+        "HOST": "architect.addition-service-grpc.latest.primary",
         "PORT": "5432",
-        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service.primary",
-        "ARCHITECT": "{\"architect/addition-service.primary\":{\"host\":\"architect.addition-service-grpc.primary.latest\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-grpc.primary",
+        "ARCHITECT": "{\"architect/addition-service-grpc.primary\":{\"host\":\"architect.addition-service-grpc.latest.primary\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
         "POSTGRES_USER": "postgres",
         "username": "postgres",
-        "POSTGRES_PASSWORD": "architect",
+        "POSTGRES_PASS": "architect",
         "password": "architect",
         "POSTGRES_DB": "addition_service",
         "name": "addition_service"

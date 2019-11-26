@@ -1,4 +1,4 @@
-import { DependencyNodeOptions, DependencyNode } from '.';
+import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceEventSubscriptions } from '../../service-config/base';
 
 export interface ServiceNodeOptions {
@@ -20,5 +20,12 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     this.subscriptions = options.subscriptions || {};
     this.api = options.api;
     this.language = options.language;
+  }
+
+  /**
+   * @override
+   */
+  get protocol() {
+    return this.api.type === 'grpc' ? '' : 'http://';
   }
 }

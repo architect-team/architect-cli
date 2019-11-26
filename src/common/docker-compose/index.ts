@@ -21,7 +21,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         PORT: node.ports.target.toString(),
         ARCHITECT: JSON.stringify({
           [node.name]: {
-            host: `http://${node.normalized_ref}`,
+            host: `${node.protocol}${node.normalized_ref}`,
             port: node.ports.target.toString(),
             datastores: {},
             subscriptions: {},
@@ -71,13 +71,13 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     // Handle datastore credential enrichment to callers
     if (edge.to instanceof DatastoreNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
-        host: edge.to.normalized_ref,
+        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
     } else if (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode) {
       service.environment.ARCHITECT[edge.to.name] = {
-        host: edge.to.api.type === 'grpc' ? edge.to.normalized_ref : `http://${edge.to.normalized_ref}`,
+        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
         port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };

@@ -46,4 +46,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   equals(node: DependencyNode) {
     return this.ref === node.ref;
   }
+
+  get protocol() {
+    return '';
+  }
 }

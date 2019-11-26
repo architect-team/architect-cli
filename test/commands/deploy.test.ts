@@ -22,11 +22,11 @@ describe('deploy', () => {
     expect(compose_spy.calledOnce).to.equal(true);
 
     expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
-    for (const key of Object.keys(compose_spy.firstCall.args[0].services)) {
-      expect(Object.keys(expected_compose.services)).to.include(key);
+    for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
+      expect(Object.keys(expected_compose.services)).to.include(svc_key);
 
-      const input = compose_spy.firstCall.args[0].services[key] as DockerService;
-      const expected = expected_compose.services[key];
+      const input = compose_spy.firstCall.args[0].services[svc_key] as DockerService;
+      const expected = expected_compose.services[svc_key];
 
       // Overwrite expected paths with full directories
       if (expected.build) {
