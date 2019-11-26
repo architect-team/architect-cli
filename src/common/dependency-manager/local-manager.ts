@@ -1,7 +1,7 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
-import PortManager from '../port-manager';
+import PortUtil from '../utils/port-manager';
 import { LocalServiceNode } from './local-service-node';
 
 
@@ -46,7 +46,7 @@ export default class LocalDependencyManager extends DependencyManager {
    * @override
    */
   protected async getServicePort(): Promise<number> {
-    return PortManager.getAvailablePort();
+    return PortUtil.getAvailablePort();
   }
 
   async loadLocalService(service_path: string): Promise<DependencyNode> {
@@ -68,7 +68,7 @@ export default class LocalDependencyManager extends DependencyManager {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       api: config.getApiSpec(),
       subscriptions: config.getSubscriptions(),
-      parameters: this.getParamValues(
+      parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
       ),
@@ -127,7 +127,7 @@ export default class LocalDependencyManager extends DependencyManager {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       api: config.getApiSpec(),
       subscriptions: config.getSubscriptions(),
-      parameters: this.getParamValues(
+      parameters: await this.getParamValues(
         `${config.getName()}:${tag.tag}`,
         config.getParameters(),
       ),

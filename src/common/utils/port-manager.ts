@@ -10,7 +10,7 @@ const _isPortAvailable = async (host: string, port: number) => new Promise((reso
     .listen(port, host);
 });
 
-export default class PortManager {
+export default class PortUtil {
   // eslint-disable-next-line no-undef
   static tested_ports = new Set();
 
@@ -27,8 +27,8 @@ export default class PortManager {
     let port = 0;
 
     for (const p of PORT_RANGE) {
-      if (PortManager.tested_ports.has(p)) continue;
-      const isAvailable = await PortManager.isPortAvailable(p);
+      if (PortUtil.tested_ports.has(p)) continue;
+      const isAvailable = await PortUtil.isPortAvailable(p);
       if (isAvailable) {
         port = p;
         break;
@@ -36,7 +36,7 @@ export default class PortManager {
     }
 
     if (!port) throw new Error('No ports available in configured range (50000 -> 51000)');
-    PortManager.tested_ports.add(port);
+    PortUtil.tested_ports.add(port);
     return port;
   }
 }

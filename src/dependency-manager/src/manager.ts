@@ -1,4 +1,6 @@
+import axios from 'axios';
 import fs from 'fs-extra';
+import * as https from 'https';
 import untildify from 'untildify';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
@@ -7,7 +9,15 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
+import { readIfFile } from './utils/file';
 
+
+interface VaultParameter {
+  valueFrom: {
+    vault: string;
+    key: string;
+  };
+}
 
 export default abstract class DependencyManager {
   graph: DependencyGraph = new DependencyGraph();
@@ -21,28 +31,60 @@ export default abstract class DependencyManager {
    * Parse the parameter values by comparing defaults for a service to
    * values in the environment configuration.
    */
-  protected getParamValues(
+  protected async getParamValues(
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
-  ): { [key: string]: string | number } {
+  ): Promise<{ [key: string]: string | number }> {
     const services = this.environment.getServices();
 
-    let env_params: { [key: string]: string | number } = {};
+    let raw_params: { [key: string]: string | number | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
-      env_params = services[service_ref].datastores[datastore_key].parameters;
+      raw_params = services[service_ref].datastores[datastore_key].parameters;
     } else if (services[service_ref]) {
-      env_params = services[service_ref].parameters;
+      raw_params = services[service_ref].parameters;
+    }
+
+    // Enrich vault parameters
+    const env_params = new Map<string, string | number>();
+    for (const [key, data] of Object.entries(raw_params)) {
+      if (typeof data !== 'object') {
+        env_params.set(key, data);
+        continue;
+      }
+
+      const param = data as VaultParameter;
+      const vaults = this.environment.getVaults();
+      const param_vault = vaults[param.valueFrom.vault];
+      const vault_client = axios.create({
+        baseURL: param_vault.host,
+        headers: {
+          'X-Vault-Token': readIfFile(param_vault.access_token),
+        },
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false,
+        }),
+      });
+
+      const param_start = param.valueFrom.key.lastIndexOf('/');
+      const param_key = param.valueFrom.key.substr(0, param_start);
+      const param_name = param.valueFrom.key.substr(param_start + 1);
+      try {
+        const res = await vault_client.get(`v1/${param_key}/data/${param_name}`);
+        return res.data.data.data[param_name];
+      } catch (err) {
+        throw new Error(`Error retrieving secret ${data.valueFrom.key}`);
+      }
     }
 
     return Object.keys(parameters).reduce(
       (params: { [s: string]: string | number }, key: string) => {
         const service_param = parameters[key];
-        if (service_param.required && !env_params[key]) {
+        if (service_param.required && !env_params.has(key)) {
           throw new MissingRequiredParamError(key, service_param.description, service_ref);
         }
 
-        let val = env_params[key] || service_param.default || '';
+        let val = env_params.get(key) || service_param.default || '';
         if (typeof val !== 'string') {
           val = val.toString();
         }
@@ -80,7 +122,7 @@ export default abstract class DependencyManager {
           target: ds_config.docker.target_port,
           expose: await this.getServicePort(),
         },
-        parameters: this.getParamValues(
+        parameters: await this.getParamValues(
           parent_node.ref,
           ds_config.parameters,
           ds_name,

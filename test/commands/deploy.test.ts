@@ -15,7 +15,7 @@ describe('deploy', () => {
     const compose_spy = sinon.fake.resolves(null);
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
 
-    const calculator_env_config_path = path.join(__dirname, '../calculator/arc.env.json');
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
     await Deploy.run(['-l', calculator_env_config_path]);
 
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;

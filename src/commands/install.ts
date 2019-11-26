@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import cli from 'cli-ux';
+import crypto from 'crypto';
 import execa from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
@@ -39,13 +40,23 @@ export default class Install extends Command {
   };
 
   private async genGrpcStubs(node: LocalServiceNode, target_dirname: string, definitions_contents: { [filename: string]: string }) {
-    const write_path = path.join(node.service_path, ARCHITECTPATHS.CODEGEN_DIR);
+    const output_directory = path.join(node.service_path, ARCHITECTPATHS.CODEGEN_DIR);
+
+    // Evaluate checksum
+    const checksum_file = path.join(output_directory, target_dirname, 'checksum');
+    const old_checksum_contents = await fs.readFile(checksum_file, 'utf-8').catch(() => undefined);
+    const new_checksum_contents = Object.keys(definitions_contents).map(filename =>
+      crypto.createHash('md5').update(definitions_contents[filename]).digest('hex')
+    ).join('\n');
+    if (new_checksum_contents === old_checksum_contents) {
+      return;
+    }
 
     // Load definitions to file system
-    const tmp_stub_directory = path.join(os.tmpdir(), target_dirname);
-    const stub_directory = path.join(write_path, target_dirname);
-    fs.ensureDir(tmp_stub_directory);
-    await fs.ensureDir(stub_directory);
+    const tmp_stub_root = path.join(os.tmpdir(), 'architect-grpc');
+    const tmp_stub_directory = path.join(tmp_stub_root, target_dirname);
+    await fs.ensureDir(tmp_stub_directory);
+    await fs.ensureDir(output_directory);
 
     switch (node.service_config.getLanguage()) {
       case 'node':
@@ -57,11 +68,11 @@ export default class Install extends Command {
 
         for (const filename of Object.keys(definitions_contents)) {
           const proto_path = path.join(tmp_stub_directory, filename);
-          await fs.outputFile(proto_path, definitions_contents[filename]);
+          await fs.writeFile(proto_path, definitions_contents[filename]);
           await execa('grpc_tools_node_protoc', [
-            '-I', tmp_stub_directory,
-            `--js_out=import_style=commonjs,binary:${stub_directory}`,
-            `--grpc_out=${stub_directory}`,
+            '-I', tmp_stub_root,
+            `--js_out=import_style=commonjs,binary:${output_directory}`,
+            `--grpc_out=${output_directory}`,
             proto_path,
           ]);
         }
@@ -70,9 +81,9 @@ export default class Install extends Command {
         break;
 
       case 'python':
-        try {
-          await execa('python3', ['-c', '"import grpc_tools"']);
-        } catch (err) {
+        // eslint-disable-next-line no-case-declarations
+        const { stderr } = await execa('python3', ['-c', '"import grpc_tools"']);
+        if (stderr) {
           await execa('pip3', ['install', 'grpcio-tools']);
         }
 
@@ -81,19 +92,27 @@ export default class Install extends Command {
           await fs.outputFile(proto_path, definitions_contents[filename]);
           await execa('python3', [
             '-m', 'grpc_tools.protoc',
-            '-I', tmp_stub_directory,
-            `--python_out=${write_path}`,
-            `--grpc_python_out=${write_path}`,
+            '-I', tmp_stub_root,
+            `--python_out=${output_directory}`,
+            `--grpc_python_out=${output_directory}`,
             proto_path,
           ]);
         }
 
         fs.removeSync(tmp_stub_directory);
+
+        fs.writeFileSync(path.join(output_directory, '__init__.py'), '');
+        target_dirname.split('/').forEach((_, index) => {
+          const joiner = Array(index).fill('..').join('/');
+          fs.writeFileSync(path.join(output_directory, target_dirname, joiner, '__init__.py'), '');
+        });
         break;
 
       default:
         throw new Error(`The CLI doesn't currently support GRPC for ${node.service_config.getLanguage()}`);
     }
+
+    fs.writeFileSync(checksum_file, new_checksum_contents);
   }
 
   private async genClientCode(source: LocalServiceNode, target: DependencyNode) {
@@ -106,8 +125,6 @@ export default class Install extends Command {
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
-      const source_config = ServiceConfigBuilder.buildFromPath(source.service_path);
-
       switch (target.service_config!.getApiSpec().type) {
         case 'grpc':
           return this.genGrpcStubs(source, target.name.replace(/-/g, '_'), target_api_definitions);
