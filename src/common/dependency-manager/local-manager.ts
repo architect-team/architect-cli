@@ -68,7 +68,6 @@ export default class LocalDependencyManager extends DependencyManager {
       },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       api: config.getApiSpec(),
-      subscriptions: config.getSubscriptions(),
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
@@ -127,7 +126,6 @@ export default class LocalDependencyManager extends DependencyManager {
       },
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       api: config.getApiSpec(),
-      subscriptions: config.getSubscriptions(),
       parameters: await this.getParamValues(
         `${config.getName()}:${tag.tag}`,
         config.getParameters(),
