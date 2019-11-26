@@ -16,14 +16,14 @@ export default class DependencyGraph {
     return service;
   }
 
-  addEdge(from: DependencyNode, to: DependencyNode) {
+  addEdge(from: DependencyNode, to: DependencyNode, type: 'dependency' | 'notification' = 'dependency') {
     // Ensure the nodes exist in the pool
     from = this.addNode(from);
     to = this.addNode(to);
 
     const edgeIndex = this.edges.findIndex(edge => edge.from.equals(from) && edge.to.equals(to));
     if (edgeIndex < 0) {
-      const edge = new DependencyEdge(from, to);
+      const edge = new DependencyEdge(from, to, type);
       this.edges.push(edge);
     }
 

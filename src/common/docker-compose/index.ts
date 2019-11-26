@@ -86,10 +86,11 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     // Parse subscription logic
     if (edge.type === 'notification' && (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode)) {
       const to = edge.to as ServiceNode;
+      const to_subscriptions = to.service_config.getSubscriptions();
       service.environment.ARCHITECT[edge.from.name].subscriptions =
-        Object.keys(to.subscriptions).reduce((subscriptions, publisher_name) => {
-          Object.keys(to.subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [publisher_name]: to.subscriptions[event_name] };
+        Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
+          Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
+            subscriptions[event_name] = { [publisher_name]: to_subscriptions[event_name] };
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);

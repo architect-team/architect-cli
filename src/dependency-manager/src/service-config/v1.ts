@@ -1,4 +1,4 @@
-import { ServiceConfig, ServiceApiSpec, ServiceParameter, ServiceDatastore, ServiceDebugOptions, ServiceEventSubscriptions } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventSubscriptions, ServiceParameter } from './base';
 
 interface ServiceSubscriptionsV1 {
   [service_name: string]: {
@@ -117,6 +117,10 @@ export class ServiceConfigV1 extends ServiceConfig {
       .reduce((res: ServiceEventSubscriptions, service_name: string) => {
         const events = this.subscriptions[service_name];
         Object.keys(events).forEach(event_name => {
+          if (!res[service_name]) {
+            res[service_name] = {};
+          }
+
           res[service_name][event_name] = {
             type: 'rest',
             data: {

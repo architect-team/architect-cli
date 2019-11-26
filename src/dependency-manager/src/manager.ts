@@ -28,6 +28,23 @@ export default abstract class DependencyManager {
   }
 
   /**
+   * Loop through the nodes and enrich the graph with edges between notifiers and subscribers
+   */
+  protected loadSubscriptions() {
+    for (const node of this.graph.nodes.values()) {
+      for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
+        const ref = Array.from(this.graph.nodes.keys()).find(key => key.startsWith(svc_name));
+
+        if (ref && this.graph.nodes.has(ref)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const source = this.graph.nodes.get(ref)!;
+          this.graph.addEdge(source, node, 'notification');
+        }
+      }
+    }
+  }
+
+  /**
    * Parse the parameter values by comparing defaults for a service to
    * values in the environment configuration.
    */
@@ -40,9 +57,9 @@ export default abstract class DependencyManager {
 
     let raw_params: { [key: string]: string | number | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
-      raw_params = services[service_ref].datastores[datastore_key].parameters;
+      raw_params = services[service_ref].datastores[datastore_key].parameters || {};
     } else if (services[service_ref]) {
-      raw_params = services[service_ref].parameters;
+      raw_params = services[service_ref].parameters || {};
     }
 
     // Enrich vault parameters
@@ -71,7 +88,7 @@ export default abstract class DependencyManager {
       const param_name = param.valueFrom.key.substr(param_start + 1);
       try {
         const res = await vault_client.get(`v1/${param_key}/data/${param_name}`);
-        return res.data.data.data[param_name];
+        env_params.set(key, res.data.data.data[param_name]);
       } catch (err) {
         throw new Error(`Error retrieving secret ${data.valueFrom.key}`);
       }
