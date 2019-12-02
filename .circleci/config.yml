@@ -80,7 +80,7 @@ jobs:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
@@ -97,7 +97,7 @@ jobs:
           command: npm run build
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish library
           command: npm publish
