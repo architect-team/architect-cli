@@ -1,39 +1,39 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import path from 'path';
-
-import Command from '../base';
-import ServiceConfig from '../common/service-config';
-
-const _info = chalk.blue;
+import Command from '../base-command';
+import { ServiceConfigBuilder } from '../dependency-manager/src';
 
 export default class Uninstall extends Command {
-  static description = 'Uninstall dependencies of the current service';
+  static description = 'Uninstall a dependency from the current service';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-    prefix: flags.string({
-      char: 'p',
-      description: 'Path prefix indicating where the install command should execute from',
+    ...Command.flags,
+    service: flags.string({
+      char: 's',
+      description: 'Path to service root',
     }),
   };
 
-  static args = [
-    {
-      name: 'service_name',
-      required: true,
-    },
-  ];
+  static args = [{
+    name: 'dependency_name',
+    description: 'Name of the dependency to remove',
+    required: true,
+  }];
 
   async run() {
-    const { args, flags } = this.parse(Uninstall);
-    let root_service_path = process.cwd();
-    if (flags.prefix) {
-      root_service_path = path.isAbsolute(flags.prefix) ? flags.prefix : path.join(root_service_path, flags.prefix);
+    const {flags, args} = this.parse(Uninstall);
+    let service_path = process.cwd();
+    if (flags.service) {
+      service_path = flags.service;
     }
-    const config_json = ServiceConfig.loadJSONFromPath(root_service_path);
-    delete config_json.dependencies[args.service_name];
-    ServiceConfig.writeToPath(root_service_path, config_json);
-    this.log(`Uninstalled ${_info(args.service_name)}`);
+
+    const config = ServiceConfigBuilder.buildFromPath(service_path);
+    if (Object.keys(config.getDependencies()).includes(args.dependency_name)) {
+      config.removeDependency(args.dependency_name);
+      ServiceConfigBuilder.saveToPath(service_path, config);
+      this.log(chalk.green(`Successfully uninstalled ${args.dependency_name} from ${config.getName()}`));
+    } else {
+      this.log(`${config.getName()} does not have ${args.dependency_name} as a dependency. Skipping.`);
+    }
   }
 }

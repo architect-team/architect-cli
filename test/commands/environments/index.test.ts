@@ -1,25 +1,51 @@
-import { expect, test } from '@oclif/test';
+import {expect} from '@oclif/test';
+import sinon from 'sinon';
+import moxios from 'moxios';
+import Environments from '../../../src/commands/environments';
 
-import { AppConfig } from '../../../src/app-config';
-const app_config = new AppConfig();
+describe('environments', () => {
+  beforeEach(function() {
+    sinon.replace(Environments.prototype, 'log', sinon.stub());
+    moxios.install();
+  });
 
-const environment = {
-  name: 'test',
-  host: '0.0.0.0',
-  namespace: 'test',
-  service_token: 'test',
-};
+  afterEach(function() {
+    moxios.uninstall();
+    sinon.restore();
+  });
 
-describe('environments:list', () => {
-  test
-    .nock(app_config.api_host, api => api
-      .get('/environments')
-      .reply(200, [environment])
-    )
-    .stdout()
-    .command(['environments:list'])
-    .it('list environments', ctx => {
-      const { stdout } = ctx;
-      expect(stdout).to.contain(JSON.stringify([environment], null, 2));
+  it('lists all environments', done => {
+    moxios.stubRequest('/environments', {
+      status: 200,
+      response: [],
     });
-});
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent();
+      expect(request.url).to.match(/.*\/environments\?q=/);
+      done();
+    });
+
+    Environments.run([]);
+  });
+
+  it('supports search queries', done => {
+    const search_term = 'architect';
+
+    moxios.stubRequest('/environments', {
+      status: 200,
+      response: [],
+    });
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent();
+      const match = request.url.match(/.*\/environments\?q=(.*)/);
+      expect(match).not.to.equal(null);
+      expect(match!.length).to.be.greaterThan(1);
+      expect(match![1]).to.equal(search_term);
+      done();
+    });
+
+    Environments.run([search_term]);
+  });
+})

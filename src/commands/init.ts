@@ -1,44 +1,41 @@
-import { flags } from '@oclif/command';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
+import {flags} from '@oclif/command';
 import path from 'path';
-import Command from '../base';
-import { INIT_INTRO_TEXT } from '../common/i18n';
-import MANAGED_PATHS from '../common/managed-paths';
-import ServiceConfig from '../common/service-config';
-import { SemvarValidator, ServiceNameValidator } from '../common/validation-utils';
+import fs from 'fs';
+import inquirer from 'inquirer';
+import { ServiceConfig, ServiceConfigBuilder } from '../dependency-manager/src';
+import ARCHITECTPATHS from '../paths';
+import Command from '../base-command';
 
-const _info = chalk.blue;
-const _success = chalk.green;
+declare const process: NodeJS.Process;
 
 export default class Init extends Command {
-  static description = `Create an ${MANAGED_PATHS.ARCHITECT_JSON} file for a service`;
+  static description = 'Generate an Architect service configuration file';
+
+  static examples = [
+    `$ architect hello
+? name: architect/test-service
+? description: Test service
+? keywords (comma-separated): test,microservice
+? author: architect`,
+  ];
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
     description: flags.string({
       char: 'd',
-      default: '',
-    }),
-    version: flags.string({
-      char: 'v',
-      default: '0.1.0',
+      description: 'Written description of the service and its function',
     }),
     keywords: flags.string({
       char: 'k',
-      default: '',
+      description: 'Comma-separated list of keywords used to discover the service',
     }),
-    author: flags.string({
-      char: 'a',
-    }),
-    license: flags.string({
+    language: flags.string({
       char: 'l',
-      default: 'MIT',
+      description: 'The language the service is written in',
     }),
     output: flags.string({
       char: 'o',
-      description: 'Directory to write file to',
-      hidden: true,
+      description: 'Directory to write config file to',
     }),
   };
 
@@ -49,81 +46,70 @@ export default class Init extends Command {
     parse: (value: string) => value.toLowerCase(),
   }];
 
-  async run() {
-    this.log(_info(INIT_INTRO_TEXT));
-    const answers: any = await this.promptOptions();
-    const config = (new ServiceConfig())
-      .setName(answers.name)
-      .setVersion(answers.version)
-      .setDescription(answers.description)
-      .setKeywords(answers.keywords)
-      .setAuthor(answers.author)
-      .setLicense(answers.license);
+  private async promptQuestions(): Promise<ServiceConfig> {
+    const { args, flags } = this.parse(Init);
 
+    let answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        default: args.name,
+        filter: value => value.toLowerCase(),
+        validate: (val: string) => {
+          const parts = val.split('/');
+          if (parts.length < 2) {
+            return `Service names must include a namespace citing the account owner (e.g. my-org/${val})`;
+          } else if (parts.length > 2) {
+            return 'Service names can only include one "/" to split the name from the namespace';
+          }
+
+          return true;
+        },
+      },
+      {
+        type: 'input',
+        name: 'description',
+        default: flags.description,
+        when: !flags.description,
+      },
+      {
+        type: 'input',
+        name: 'keywords',
+        message: 'keywords (comma-separated)',
+        default: flags.keywords,
+        filter: input => input.split(',').map((s: string) => s.trim()),
+        when: !flags.keywords,
+      },
+      {
+        type: 'input',
+        name: 'language',
+        default: flags.language,
+        when: !flags.language,
+      },
+    ]);
+
+    answers = {
+      ...answers,
+      ...flags,
+    };
+
+    return ServiceConfigBuilder.buildFromJSON(answers);
+  }
+
+  async run() {
     const { flags } = this.parse(Init);
+
+    const config = await this.promptQuestions();
+
     let savePath = process.cwd();
     if (flags.output) {
       savePath = path.resolve(flags.output);
     }
-    ServiceConfig.writeToPath(savePath, config);
-    this.log(_success(`${MANAGED_PATHS.ARCHITECT_JSON} created successfully`));
-    this.log(_success(JSON.stringify(config, null, 2)));
-  }
+    savePath = path.join(savePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+    const configJson = JSON.stringify(config, null, 2);
+    fs.writeFileSync(savePath, configJson);
 
-  async promptOptions() {
-    const { args, flags } = this.parse(Init);
-
-    const user = await this.architect.getUser().catch(() => null);
-
-    if (user && args.name.indexOf(user.username) !== 0) {
-      args.name = `${user.username}/${args.name}`;
-    }
-    if (args.name && !ServiceNameValidator.test(args.name)) {
-      this.error(`Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`);
-    }
-
-    return inquirer.prompt([{
-      type: 'input',
-      name: 'name',
-      default: args.name,
-      filter: value => value.toLowerCase(),
-      validate: value => {
-        if (user && !(value.indexOf(`${user.username}/`) === 0)) {
-          return `Name must be scoped with your username: ${user.username}`;
-        }
-        if (!ServiceNameValidator.test(value)) {
-          return `Name must consist of lower case alphanumeric characters, '-' or '/', and must start and end with an alphanumeric character`;
-        }
-        return true;
-      }
-    }, {
-      type: 'input',
-      name: 'version',
-      default: flags.version,
-      validate: value => {
-        const validator = new SemvarValidator();
-        if (validator.test(value)) return true;
-        return 'Version numbers must use semantic versioning (semvar)';
-      },
-    }, {
-      type: 'input',
-      name: 'description',
-      default: flags.description
-    }, {
-      type: 'input',
-      name: 'keywords',
-      message: 'keywords (comma-separated):',
-      default: flags.keywords,
-      filter: input => input.split(',').map(string => string.trim()),
-    }, {
-      type: 'input',
-      name: 'author',
-      default: flags.author || user && user.username,
-      filter: input => [input],
-    }, {
-      type: 'input',
-      name: 'license',
-      default: flags.license
-    }]);
+    this.log(`Service configuration created successfully:`);
+    this.log(configJson);
   }
 }

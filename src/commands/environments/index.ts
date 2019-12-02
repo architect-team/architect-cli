@@ -1,27 +1,31 @@
-import { flags } from '@oclif/command';
-import Command from '../../base';
+import Table from 'cli-table3';
+import Command from '../../base-command';
 
 export default class Environments extends Command {
-  static description = 'List, create, or delete environments';
-  static aliases = ['environments:list', 'environment', 'environment:list'];
-
-  static args = [
-    { name: 'environment', description: 'Environment name' },
-  ];
+  static aliases = ['environments', 'envs', 'env', 'environments:list', 'envs:list', 'env:list'];
+  static description = 'List environments you have access to';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
   };
+
+  static args = [{
+    name: 'query',
+    description: 'Search term used to filter the results',
+  }];
 
   async run() {
     const { args } = this.parse(Environments);
 
-    if (args.environment) {
-      const { data: environment } = await this.architect.get(`/environments/${args.environment}`);
-      this.styled_json(environment);
-    } else {
-      const { data: environments } = await this.architect.get('/environments');
-      this.styled_json(environments);
+    const { data: results } = await this.app.api.get(`/environments?q=${args.query || ''}`);
+
+    const table = new Table({ head: ['Name', 'Account', 'Created', 'Updated'] });
+    for (const row of results) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      table.push([row.name, row.namespace, row.created_at, row.updated_at]);
     }
+
+    this.log(table.toString());
   }
 }

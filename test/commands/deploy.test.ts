@@ -1,31 +1,62 @@
-import { expect, test } from '@oclif/test';
-import child_process from 'child_process';
-
-const spawn = child_process.spawn;
+import { expect } from '@oclif/test';
+import fs from 'fs-extra';
+import path from 'path';
+import sinon from 'sinon';
+import Deploy from '../../src/commands/deploy';
+import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
+import PortUtil from '../../src/common/utils/port';
 
 describe('deploy', () => {
-  test
-    .timeout(1000 * 60 * 3)
-    .stdout()
-    // child_process stdio:inherit doesn't get captured by stubbed stdout()
-    .stub(child_process, 'spawn', (a: any, b: any, c: any) => {
-      if (c) {
-        c.stdio = 'pipe';
+  before(() => {
+    PortUtil.tested_ports = new Set();
+  });
+
+  it('generates compose locally', async () => {
+    const compose_spy = sinon.fake.resolves(null);
+    sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
+
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    await Deploy.run(['-l', calculator_env_config_path]);
+
+    const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
+    expect(compose_spy.calledOnce).to.equal(true);
+
+    expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
+    for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
+      expect(Object.keys(expected_compose.services)).to.include(svc_key);
+
+      const input = compose_spy.firstCall.args[0].services[svc_key] as DockerService;
+      const expected = expected_compose.services[svc_key];
+
+      // Overwrite expected paths with full directories
+      if (expected.build) {
+        expected.build.context = path.join(__dirname, '../../', expected.build.context);
       }
-      const s = spawn(a, b, c);
-      const readline = require('readline');
-      const rl = readline.createInterface({
-        input: s.stdout
-      });
-      rl.on('line', (line: any) => {
-        // tslint:disable-next-line: no-console
-        console.log(line);
-      });
-      return s;
-    })
-    .command(['deploy', '--local', './test/calculator-sample-project/test-script/'])
-    .it('deploy local test-service', (ctx: any) => {
-      const { stdout } = ctx;
-      expect(stdout).to.contain('| 10');
-    });
+
+      if (expected.volumes) {
+        expected.volumes = expected.volumes.map(volume => {
+          const [host, target] = volume.split(':');
+          return `${path.join(__dirname, '../../', host)}:${target}`;
+        });
+      }
+
+      expect(expected.ports).to.have.members(input.ports);
+      expect(expected.image).to.equal(input.image);
+      expect(expected.depends_on).to.have.members(input.depends_on);
+      expect(expected.build).to.eql(input.build);
+      expect(expected.command).to.equal(input.command);
+      expect(input.environment).not.to.be.undefined;
+
+      // Test env variables
+      for (const [key, value] of Object.entries(expected.environment || {})) {
+        if (key === 'ARCHITECT') {
+          const architect_input = JSON.parse(input.environment![key]);
+          const architect_expected = JSON.parse(value);
+          expect(architect_expected).to.eql(architect_input);
+        } else {
+          expect(value).to.equal(input.environment![key]);
+        }
+      }
+    }
+  });
 });

@@ -1,32 +1,26 @@
-Architect CLI
-=========
+architect-cli
+=============
 
-### [View Documentation](https://docs.architect.io/)
+Command-line interface for Architect.io
 
-[![License](https://img.shields.io/circleci/project/github/architect-team/architect-cli.svg)](https://circleci.com/gh/architect-team/architect-cli/tree/master)
-[![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/@architect-io/cli)
-[![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
-
-Command line interface for creating and deploying architect services.
+[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+[![Version](https://img.shields.io/npm/v/architect-cli.svg)](https://npmjs.org/package/architect-cli)
+[![CircleCI](https://circleci.com/gh/architect-team/architect-cli/tree/master.svg?style=shield)](https://circleci.com/gh/architect-team/architect-cli/tree/master)
+[![Downloads/week](https://img.shields.io/npm/dw/architect-cli.svg)](https://npmjs.org/package/architect-cli)
+[![License](https://img.shields.io/npm/l/architect-cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
 
 <!-- toc -->
-* [Requirements](#requirements)
 * [Usage](#usage)
 * [Commands](#commands)
-* [Special Thanks](#special-thanks)
 <!-- tocstop -->
-
-# Requirements
-* Node >= v8.x
-
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @architect-io/cli
+$ npm install -g architect-cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.3.3 darwin-x64 node-v11.15.0
+architect-cli/0.3.3 darwin-x64 node-v11.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -35,162 +29,149 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
-* [`architect build [CONTEXT]`](#architect-build-context)
-* [`architect commands`](#architect-commands)
-* [`architect deploy [SERVICE]`](#architect-deploy-service)
-* [`architect environments [ENVIRONMENT]`](#architect-environments-environment)
-* [`architect environments:clone [ENVIRONMENT]`](#architect-environmentsclone-environment)
+* [`architect build`](#architect-build)
+* [`architect config:get OPTION`](#architect-configget-option)
+* [`architect config:set OPTION VALUE`](#architect-configset-option-value)
+* [`architect config:view`](#architect-configview)
+* [`architect deploy`](#architect-deploy)
+* [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [NAME]`](#architect-environmentscreate-name)
-* [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
-* [`architect environments:services [ENVIRONMENT]`](#architect-environmentsservices-environment)
-* [`architect environments:services:destroy [ENVIRONMENT]`](#architect-environmentsservicesdestroy-environment)
-* [`architect environments:update [NAME]`](#architect-environmentsupdate-name)
+* [`architect environments:destroy NAME`](#architect-environmentsdestroy-name)
+* [`architect environments:update [FILE]`](#architect-environmentsupdate-file)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_NAME]`](#architect-install-service_name)
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
-* [`architect push [CONTEXT]`](#architect-push-context)
-* [`architect services [SERVICE_NAME]`](#architect-services-service_name)
-* [`architect uninstall SERVICE_NAME`](#architect-uninstall-service_name)
+* [`architect services [QUERY]`](#architect-services-query)
+* [`architect uninstall DEPENDENCY_NAME`](#architect-uninstall-dependency_name)
 
-## `architect autocomplete [SHELL]`
+## `architect build`
 
-display autocomplete installation instructions
-
-```
-USAGE
-  $ architect autocomplete [SHELL]
-
-ARGUMENTS
-  SHELL  shell type
-
-OPTIONS
-  -r, --refresh-cache  Refresh cache (ignores displaying instructions)
-
-EXAMPLES
-  $ architect autocomplete
-  $ architect autocomplete bash
-  $ architect autocomplete zsh
-  $ architect autocomplete --refresh-cache
-```
-
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v0.1.3/src/commands/autocomplete/index.ts)_
-
-## `architect build [CONTEXT]`
-
-Create an architect.json file for a service
+Build an Architect-ready Docker image for a service
 
 ```
 USAGE
-  $ architect build [CONTEXT]
-
-ARGUMENTS
-  CONTEXT  Path to the service to build
+  $ architect build
 
 OPTIONS
-  -h, --help       show CLI help
-  -r, --recursive  Whether or not to build images for the cited dependencies
-  -t, --tag=tag    Tag for the architect image
-  -v, --verbose    Verbose log output
+  -h, --help             show CLI help
+  -r, --recursive        Build this image as well as images for all its dependencies
+  -s, --service=service  Path to a service to build
+  -t, --tag=tag          [default: latest] Tag to give to the new Docker image(s)
 ```
 
 _See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/build.ts)_
 
-## `architect commands`
+## `architect config:get OPTION`
 
-list all the commands
+Get the value of a CLI config option
 
 ```
 USAGE
-  $ architect commands
+  $ architect config:get OPTION
+
+ARGUMENTS
+  OPTION  Name of a config option
 
 OPTIONS
   -h, --help  show CLI help
-  -j, --json  output in json format
-  --hidden    also show hidden commands
 ```
 
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v1.2.2/src/commands/commands.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/config/get.ts)_
 
-## `architect deploy [SERVICE]`
+## `architect config:set OPTION VALUE`
 
-Deploy service to environments
+Set a new value for a CLI configuration option
 
 ```
 USAGE
-  $ architect deploy [SERVICE]
+  $ architect config:set OPTION VALUE
 
 ARGUMENTS
-  SERVICE  Service name
+  OPTION  Name of a config option
+  VALUE   New value to assign to a config option
 
 OPTIONS
-  -h, --help                     show CLI help
-  -l, --local
-  -s, --services=services
-  --auto_approve
-  --config_file=config_file
-  --deployment_id=deployment_id
-  --environment=environment
+  -h, --help  show CLI help
+```
+
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/config/set.ts)_
+
+## `architect config:view`
+
+View all the CLI configuration settings
+
+```
+USAGE
+  $ architect config:view
+
+OPTIONS
+  -h, --help  show CLI help
+
+ALIASES
+  $ architect config
+```
+
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/config/view.ts)_
+
+## `architect deploy`
+
+Create a deploy job on Architect Cloud or run stacks locally
+
+```
+USAGE
+  $ architect deploy
+
+OPTIONS
+  -c, --config=config              Path to an environment config file for the environment
+  -h, --help                       show CLI help
+  -l, --local                      Deploy the stack locally instead of via Architect Cloud
+
+  -o, --compose_file=compose_file  [default:
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1574110945933.j
+                                   son] Path where the compose file should be written to
+
+  -s, --services=services          Paths to services to deploy
 ```
 
 _See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/deploy.ts)_
 
-## `architect environments [ENVIRONMENT]`
+## `architect environments [QUERY]`
 
-List, create, or delete environments
+List environments you have access to
 
 ```
 USAGE
-  $ architect environments [ENVIRONMENT]
+  $ architect environments [QUERY]
 
 ARGUMENTS
-  ENVIRONMENT  Environment name
+  QUERY  Search term used to filter the results
 
 OPTIONS
   -h, --help  show CLI help
 
 ALIASES
+  $ architect environments
+  $ architect envs
+  $ architect env
   $ architect environments:list
-  $ architect environment
-  $ architect environment:list
+  $ architect envs:list
+  $ architect env:list
 ```
 
 _See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/index.ts)_
 
-## `architect environments:clone [ENVIRONMENT]`
-
-Clone environment
-
-```
-USAGE
-  $ architect environments:clone [ENVIRONMENT]
-
-ARGUMENTS
-  ENVIRONMENT  Environment name
-
-OPTIONS
-  -h, --help             show CLI help
-  --name=name
-  --namespace=namespace
-
-ALIASES
-  $ architect environment:clone
-```
-
-_See code: [src/commands/environments/clone.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/clone.ts)_
-
 ## `architect environments:create [NAME]`
 
-Create environment
+Register a new environment with Architect Cloud
 
 ```
 USAGE
   $ architect environments:create [NAME]
 
 ARGUMENTS
-  NAME  Environment name
+  NAME  Name to give the environment
 
 OPTIONS
   -c, --config_file=config_file
@@ -204,99 +185,48 @@ OPTIONS
 
 ALIASES
   $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
 ```
 
 _See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/create.ts)_
 
-## `architect environments:destroy [ENVIRONMENT]`
+## `architect environments:destroy NAME`
 
-Destroy environment
+Destroy an environment
 
 ```
 USAGE
-  $ architect environments:destroy [ENVIRONMENT]
+  $ architect environments:destroy NAME
 
 ARGUMENTS
-  ENVIRONMENT  Environment name
+  NAME  Name of the environment to destroy
 
 OPTIONS
-  -f, --force
-  -h, --help      show CLI help
-  --auto_approve
+  -a, --auto_approve  Automatically apply the changes without reviewing the diff
+  -f, --force         Force the deletion even if the environment is not empty
+  -h, --help          show CLI help
 
 ALIASES
   $ architect environment:destroy
+  $ architect envs:destroy
+  $ architect env:destroy
 ```
 
 _See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/destroy.ts)_
 
-## `architect environments:services [ENVIRONMENT]`
+## `architect environments:update [FILE]`
 
-Search an environments services
-
-```
-USAGE
-  $ architect environments:services [ENVIRONMENT]
-
-ARGUMENTS
-  ENVIRONMENT  Environment name
-
-OPTIONS
-  -h, --help  show CLI help
-
-ALIASES
-  $ architect environments:services:list
-  $ architect environments:services:versions
-  $ architect environment:services
-  $ architect environment:services:list
-  $ architect environment:services:versions
-```
-
-_See code: [src/commands/environments/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/services/index.ts)_
-
-## `architect environments:services:destroy [ENVIRONMENT]`
-
-Destroy service from an environment
+describe the command here
 
 ```
 USAGE
-  $ architect environments:services:destroy [ENVIRONMENT]
-
-ARGUMENTS
-  ENVIRONMENT  Environment name
+  $ architect environments:update [FILE]
 
 OPTIONS
-  -h, --help                         show CLI help
-  -p, --deployment_id=deployment_id
-  -s, --service=service              Service name
-  --auto_approve
-
-ALIASES
-  $ architect environment:services:destroy
-```
-
-_See code: [src/commands/environments/services/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/services/destroy.ts)_
-
-## `architect environments:update [NAME]`
-
-Update environment
-
-```
-USAGE
-  $ architect environments:update [NAME]
-
-ARGUMENTS
-  NAME  Environment name
-
-OPTIONS
-  -h, --help                                       show CLI help
-  --cluster_ca_certificate=cluster_ca_certificate  File path of cluster_ca_certificate
-  --config_file=config_file
-  --host=host
-  --service_token=service_token                    Service token
-
-ALIASES
-  $ architect environment:update
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
 ```
 
 _See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/environments/update.ts)_
@@ -316,50 +246,55 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.0/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.1/src/commands/help.ts)_
 
 ## `architect init [NAME]`
 
-Create an architect.json file for a service
+Generate an Architect service configuration file
 
 ```
 USAGE
   $ architect init [NAME]
 
 OPTIONS
-  -a, --author=author
-  -d, --description=description
+  -d, --description=description  Written description of the service and its function
   -h, --help                     show CLI help
-  -k, --keywords=keywords
-  -l, --license=license          [default: MIT]
-  -v, --version=version          [default: 0.1.0]
+  -k, --keywords=keywords        Comma-separated list of keywords used to discover the service
+  -l, --language=language        The language the service is written in
+  -o, --output=output            Directory to write config file to
+
+EXAMPLE
+  $ architect hello
+  ? name: architect/test-service
+  ? description: Test service
+  ? keywords (comma-separated): test,microservice
+  ? author: architect
 ```
 
 _See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/init.ts)_
 
 ## `architect install [SERVICE_NAME]`
 
-Install dependencies of the current service
+Install services and their generate the corresponding client libraries
 
 ```
 USAGE
   $ architect install [SERVICE_NAME]
 
 ARGUMENTS
-  SERVICE_NAME  Remote service dependency
+  SERVICE_NAME  Name of or path to the service to install
 
 OPTIONS
-  -h, --help           show CLI help
-  -p, --prefix=prefix  Path prefix indicating where the install command should execute from
-  -r, --recursive      Generate architect dependency files for all services in the dependency tree
-  -v, --verbose        Verbose log output
+  -h, --help             show CLI help
+  -r, --recursive        Recursively generates required client code for downstream dependencies
+  -s, --service=service  Path to services to generate client code for
 ```
 
 _See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/install.ts)_
 
 ## `architect login`
 
-Log in to an Architect registry
+Login to the Architect Cloud platform
 
 ```
 USAGE
@@ -375,7 +310,7 @@ _See code: [src/commands/login.ts](https://github.com/architect-team/architect-c
 
 ## `architect logout`
 
-Logout of the Architect registry
+Logout from the Architect registry
 
 ```
 USAGE
@@ -387,62 +322,42 @@ OPTIONS
 
 _See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/logout.ts)_
 
-## `architect push [CONTEXT]`
+## `architect services [QUERY]`
 
-Push service(s) to a registry
-
-```
-USAGE
-  $ architect push [CONTEXT]
-
-ARGUMENTS
-  CONTEXT  Path to the service to build
-
-OPTIONS
-  -h, --help       show CLI help
-  -r, --recursive  Whether or not to build images for the cited dependencies
-  -t, --tag=tag    Tag for the architect image
-  -v, --verbose    Verbose log output
-```
-
-_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/push.ts)_
-
-## `architect services [SERVICE_NAME]`
-
-Search services
+Search for services on Architect Cloud
 
 ```
 USAGE
-  $ architect services [SERVICE_NAME]
+  $ architect services [QUERY]
 
 ARGUMENTS
-  SERVICE_NAME  Service name
+  QUERY  Search query used to filter results
 
 OPTIONS
   -h, --help  show CLI help
 
 ALIASES
-  $ architect services:list
-  $ architect services:versions
+  $ architect services
+  $ architect services:search
 ```
 
 _See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/services/index.ts)_
 
-## `architect uninstall SERVICE_NAME`
+## `architect uninstall DEPENDENCY_NAME`
 
-Uninstall dependencies of the current service
+Uninstall a dependency from the current service
 
 ```
 USAGE
-  $ architect uninstall SERVICE_NAME
+  $ architect uninstall DEPENDENCY_NAME
+
+ARGUMENTS
+  DEPENDENCY_NAME  Name of the dependency to remove
 
 OPTIONS
-  -h, --help           show CLI help
-  -p, --prefix=prefix  Path prefix indicating where the install command should execute from
+  -h, --help             show CLI help
+  -s, --service=service  Path to service root
 ```
 
 _See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.3/src/commands/uninstall.ts)_
 <!-- commandsstop -->
-
-# Special Thanks
-* [namely/docker-protoc](https://github.com/namely/docker-protoc) - excellent, compact container for generating GRPC clients for all languages

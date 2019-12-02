@@ -1,88 +1,67 @@
-version: 2
+version: 2.1
+
+executors:
+  release:
+    working_directory: ~/cli
+    docker:
+      - image: node:12
 
 jobs:
-  test:
+  test-node-latest: &test
     docker:
-      - image: architectio/architect-cli-base:latest
-        environment:
-          API_HOST: $API_HOST
-          DEFAULT_REGISTRY_HOST: $DEFAULT_REGISTRY_HOST
-          ARCHITECT_USERNAME: $ARCHITECT_USERNAME
-          ARCHITECT_PASSWORD: $ARCHITECT_PASSWORD
+      - image: node:latest
+    working_directory: ~/cli
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
-      - run:
-          name: Install Docker client
-          command: |
-            set -x
-            VER="18.06.3-ce"
-            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            mv /tmp/docker/* /usr/bin
-      - run:
-          name: Install Docker Compose
-          command: |
-            curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-            chmod +x ~/docker-compose
-            sudo mv ~/docker-compose /usr/local/bin/docker-compose
       - run:
           name: clone submodules
           command: git submodule update --recursive --init
+      - restore_cache:
+          keys: &cache_config
+            - v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
+            - v1-npm-{{checksum ".circleci/config.yml"}}
       - run:
-          name: npm link
-          command: npm link .
+          name: Install dependencies
+          command: npm install
+      - run: ./bin/run --version
+      - run: ./bin/run --help
       - run:
-          name: run tests
+          name: Testing
           command: npm test
-          environment:
-            TEST_OUTPUT: "1"
-      - run:
-          name: architect deploy
-          command: |
-            TAG=clici-$CIRCLE_BUILD_NUM
-            ENV=test-$TAG
-            SERVICE=architect/addition-service:$TAG
-
-            architect login
-            architect push test/calculator-sample-project/addition-service/grpc --tag $TAG
-            architect environment:clone test --name $ENV --namespace $ENV
-            architect deploy $SERVICE --environment $ENV --auto_approve
-            architect environment:services:destroy $ENV --service $SERVICE --auto_approve
-            architect environment:destroy $ENV --auto_approve
-
-  build:
-    working_directory: ~/cli
+  test-node-12:
+    <<: *test
     docker:
-      - image: architectio/architect-cli-base:latest
+      - image: node:12
+  test-node-10:
+    <<: *test
+    docker:
+      - image: node:10
+  lint:
+    executor: release
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
-      - run:
-          name: Install Docker client
-          command: |
-            set -x
-            VER="18.06.3-ce"
-            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            mv /tmp/docker/* /usr/bin
-      - run:
-          name: Install Docker Compose
-          command: |
-            curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-            chmod +x ~/docker-compose
-            sudo mv ~/docker-compose /usr/local/bin/docker-compose
       - restore_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
-      - run:
-          name: npm install
-          command: npm install --unsafe-perm=true
+          keys: *cache_config
+      - run: npm install
+      - run: npm run lint
+  cache:
+    executor: release
+    steps:
+      - checkout
+      - run: npm install
       - save_cache:
-          key: dependency-cache-{{ checksum "package.json" }}
+          key: v1-npm-{{checksum ".circleci/config.yml"}}-{{checksum "package-lock.json"}}
           paths:
-            - node_modules
+            - ~/cli/node_modules
+            - ~/.npm
+            - /usr/local/lib/node_modules
+  build_cli:
+    executor: release
+    steps:
+      - checkout
+      - restore_cache:
+          keys: *cache_config
+      - run: npm install
       - run: npm run build
       - persist_to_workspace:
           root: ~/cli
@@ -94,91 +73,75 @@ jobs:
             - package.json
             - package-lock.json
             - README.md
-
-  release_test:
-    working_directory: ~/cli
-    docker:
-      - image: node:12
-    steps:
-      - checkout
-      - run:
-          name: clone submodules
-          command: git submodule update --recursive --init
-      - run:
-          name: remove src dir
-          command: rm -rf ./src/
-      - attach_workspace:
-          at: ~/cli
-      - run:
-          name: npm install
-          command: npm install
-      - run:
-          name: test install
-          command: |
-            cd test/calculator-sample-project/division-service/
-            ../../../bin/run install -r
-
-  publish:
-    working_directory: ~/cli
-    docker:
-      - image: node:12
+  publish_cli:
+    executor: release
     steps:
       - attach_workspace:
           at: ~/cli
       - run:
           name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
       - run:
           name: Publish package
           command: npm publish --access public
+  publish_graph_lib:
+    executor: release
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm i --prefix ./src/dependency-graph
+      - run:
+          name: Build library
+          command: npm run build --prefix ./src/dependency-graph
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+      - run:
+          name: Publish library
+          command: npm publish ./src/dependency-graph
 
 workflows:
   version: 2
   test:
     jobs:
-      - test:
-          filters:
+      - lint:
+          filters: &branches_only
             tags:
               ignore: /.*/
             branches:
               only: /.*/
-      - build:
+      - test-node-latest:
+          filters:
+            <<: *branches_only
+      - test-node-12:
+          filters:
+            <<: *branches_only
+      - test-node-10:
+          filters:
+            <<: *branches_only
+      - cache:
           requires:
-            - test
+            - lint
+            - test-node-latest
+            - test-node-12
+            - test-node-10
+      - publish_graph_lib:
+          context: Github Packaging
+          requires:
+            - cache
           filters:
             branches:
-              only: /.*/
-      - release_test:
-          requires:
-            - build
-          filters:
-            branches:
-              only: /.*/
-  deploy:
+              only: master
+  release_cli:
     jobs:
-      - test:
-          context: Architect Cloud
+      - build_cli:
           filters:
             tags:
               only: /^v.*/
             branches:
               ignore: /.*/
-      - build:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^v.*/
-      - release_test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /^v.*/
-      - publish:
+      - publish_cli:
           context: NPM Packaging
           requires:
-            - release_test
-          filters:
-            tags:
-              only: /^v.*/
+            - build_cli

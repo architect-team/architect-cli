@@ -1,18 +1,13 @@
-import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import Command from '../base';
-
-const _success = chalk.green;
+import Command from '../base-command';
 
 export default class Logout extends Command {
-  static description = 'Logout of the Architect registry';
+  static description = 'Logout from the Architect registry';
 
-  static flags = {
-    help: flags.help({ char: 'h' }),
-  };
+  static flags = { ...Command.flags };
 
   async run() {
-    await this.architect.logout();
-    this.log(_success('Removed login credentials'));
+    await this.app.auth.logout();
+    this.log(chalk.green('Logout successful'));
   }
 }

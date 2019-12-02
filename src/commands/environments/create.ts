@@ -1,14 +1,14 @@
 import { flags } from '@oclif/command';
+import { cli } from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import yaml from 'js-yaml';
-import Listr from 'listr';
 import path from 'path';
 import untildify from 'untildify';
-import Command from '../../base';
-import { readIfFile } from '../../common/file-util';
-import { EnvironmentNameValidator } from '../../common/validation-utils';
+import Command from '../../base-command';
+import { readIfFile } from '../../common/utils/file';
+import { EnvironmentNameValidator } from '../../common/utils/validation';
 
 interface CreateEnvironmentInput {
   name: string;
@@ -20,16 +20,18 @@ interface CreateEnvironmentInput {
   config: string;
 }
 
-export default class CreateEnvironment extends Command {
-  static description = 'Create environment';
-  static aliases = ['environment:create'];
+export default class EnvironmentCreate extends Command {
+  static aliases = ['environment:create', 'envs:create', 'env:create'];
+  static description = 'Register a new environment with Architect Cloud';
 
-  static args = [
-    { name: 'name', description: 'Environment name', parse: (value: string) => value.toLowerCase() },
-  ];
+  static args = [{
+    name: 'name',
+    description: 'Name to give the environment',
+    parse: (value: string) => value.toLowerCase(),
+  }];
 
   static flags = {
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
     namespace: flags.string({ char: 'n' }),
     type: flags.string({ char: 't', options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string({ char: 'h' }),
@@ -37,10 +39,38 @@ export default class CreateEnvironment extends Command {
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
     cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate', env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE' }),
     config_file: flags.string({ char: 'c' }),
+    account: flags.string({ char: 'a' }),
   };
 
-  async genKubernetesTasks(): Promise<ReadonlyArray<Listr.ListrTask>> {
-    const { args, flags } = this.parse(CreateEnvironment);
+  private async createArchitectEnvironment(data: CreateEnvironmentInput, account_id: string): Promise<any> {
+    const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
+    return environment;
+  }
+
+  private async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string) {
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path];
+
+    // Create the service account
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create', 'sa', sa_name,
+    ]);
+
+    // Bind the service account to the cluster-admin role
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'create',
+      'clusterrolebinding',
+      `${sa_name}-cluster-admin`,
+      '--clusterrole',
+      'cluster-admin',
+      '--serviceaccount',
+      `default:${sa_name}`,
+    ]);
+  }
+
+  private async runKubernetes() {
+    const { args, flags } = this.parse(EnvironmentCreate);
 
     let kubeconfig: any;
     try {
@@ -130,6 +160,12 @@ export default class CreateEnvironment extends Command {
         },
         default: args.name || '',
       },
+      {
+        type: 'list',
+        name: 'account',
+        message: 'Which Architect account would you like to create this environment for?',
+        choices: (await this.get_accounts()).map((a: any) => { return { name: a.name, value: a.id } }),
+      },
     ]);
 
     if (answers.use_existing_sa === false) {
@@ -169,124 +205,67 @@ export default class CreateEnvironment extends Command {
       }
     }
 
-    return [
-      {
-        title: 'Creating the service account',
-        skip: () => answers.use_existing_sa === true,
-        task: async () => {
-          // Create the service account
-          await execa('kubectl', [
-            ...set_kubeconfig,
-            'create', 'sa', answers.service_account_name,
-          ]);
-
-          // Bind the service account to the cluster-admin role
-          await execa('kubectl', [
-            ...set_kubeconfig,
-            'create',
-            'clusterrolebinding',
-            `${answers.service_account_name}-cluster-admin`,
-            '--clusterrole',
-            'cluster-admin',
-            '--serviceaccount',
-            `default:${answers.service_account_name}`,
-          ]);
-        },
-      },
-      {
-        title: 'Creating new Architect environment',
-        task: async (listr_ctx: any) => {
-          // Retrieve cluster host and ca certificate
-          const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === answers.context.context.cluster);
-          let cluster_ca_certificate: string;
-          if ('certificate-authority-data' in cluster.cluster) {
-            const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
-            cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
-          } else {
-            cluster_ca_certificate = await fs.readFile(untildify(cluster.cluster['certificate-authority']), 'utf-8');
-          }
-          const cluster_host = cluster.cluster.server;
-
-          // Retrieve service account token
-          const saRes = await execa('kubectl', [
-            ...set_kubeconfig,
-            'get', 'sa', answers.service_account_name,
-            '-o', 'json',
-          ]);
-          const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
-          const secret_res = await execa('kubectl', [
-            ...set_kubeconfig,
-            'get', 'secrets', sa_secret_name,
-            '-o', 'json',
-          ]);
-          const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
-          const service_token = sa_token_buffer.toString('utf-8');
-
-          // Create the environment
-          // tslint:disable-next-line:no-console
-          listr_ctx.environment = await this.createArchitectEnvironment({
-            name: args.name || answers.name,
-            namespace: flags.namespace || answers.namespace,
-            type: flags.type!,
-            config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
-            host: cluster_host,
-            service_token,
-            cluster_ca_certificate,
-          });
-        },
-      },
-      {
-        title: 'Resetting kubernetes current-context',
-        task: async () =>
-          execa('kubectl', [
-            ...set_kubeconfig,
-            'config', 'set',
-            'current-context', original_kubecontext,
-          ]),
-      },
-    ];
-  }
-
-  async genGenericTasks(): Promise<ReadonlyArray<Listr.ListrTask>> {
-    const answers = await this.promptOptions();
-    const data: CreateEnvironmentInput = {
-      name: answers.name,
-      namespace: answers.namespace,
-      host: answers.host,
-      type: answers.type,
-      service_token: await readIfFile(answers.service_token),
-      cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
-    };
-
-    return [
-      {
-        title: 'Creating Environment',
-        task: async listr_ctx => {
-          listr_ctx.environment = await this.createArchitectEnvironment(data);
-        },
-      },
-    ];
-  }
-
-  async run() {
-    const { flags } = this.parse(CreateEnvironment);
-
-    // If no host, look for kubecontext
-    let tasks = new Listr();
-    if (flags.type === 'kubernetes' && flags.kubeconfig && !flags.host) {
-      tasks = new Listr(await this.genKubernetesTasks());
-    } else {
-      tasks = new Listr(await this.genGenericTasks());
+    if (!answers.use_existing_sa) {
+      cli.action.start('Creating the service account');
+      await this.createKubernetesServiceAccount(untildify(flags.kubeconfig), answers.service_account_name);
+      cli.action.stop();
     }
 
-    await tasks.run({});
+    cli.action.start('Registering environment with Architect');
+
+    // Retrieve cluster host and ca certificate
+    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === answers.context.context.cluster);
+    let cluster_ca_certificate: string;
+    if ('certificate-authority-data' in cluster.cluster) {
+      const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
+      cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
+    } else {
+      cluster_ca_certificate = await fs.readFile(untildify(cluster.cluster['certificate-authority']), 'utf-8');
+    }
+    const cluster_host = cluster.cluster.server;
+
+    // Retrieve service account token
+    const saRes = await execa('kubectl', [
+      ...set_kubeconfig,
+      'get', 'sa', answers.service_account_name,
+      '-o', 'json',
+    ]);
+    const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
+    const secret_res = await execa('kubectl', [
+      ...set_kubeconfig,
+      'get', 'secrets', sa_secret_name,
+      '-o', 'json',
+    ]);
+    const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
+    const service_token = sa_token_buffer.toString('utf-8');
+
+    const environment = await this.createArchitectEnvironment({
+      name: args.name || answers.name,
+      namespace: flags.namespace || answers.namespace,
+      type: flags.type!,
+      config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
+      host: cluster_host,
+      service_token,
+      cluster_ca_certificate,
+    }, answers.account);
+
+    cli.action.stop();
+
+    cli.action.start('Registering environment with Architect');
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'config', 'set',
+      'current-context', original_kubecontext,
+    ]);
+    cli.action.stop();
+
+    return environment;
   }
 
-  async promptOptions() {
-    const { args, flags } = this.parse(CreateEnvironment);
+  private async runGeneric() {
+    const { args, flags } = this.parse(EnvironmentCreate);
 
-    const answers: any = await inquirer.prompt([{
+    let answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'name',
       when: !args.name,
@@ -319,12 +298,36 @@ export default class CreateEnvironment extends Command {
       name: 'cluster_ca_certificate',
       message: 'cluster certificate:',
       when: !flags.cluster_ca_certificate,
+    }, {
+      type: 'input',
+      name: 'account',
+      message: 'Architect account',
+      when: !flags.account,
     }]);
-    return { ...args, ...flags, ...answers };
+
+    answers = { ...args, ...flags, ...answers };
+
+    return this.createArchitectEnvironment({
+      name: answers.name,
+      namespace: answers.namespace,
+      host: answers.host,
+      type: answers.type,
+      service_token: await readIfFile(answers.service_token),
+      cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
+      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
+    }, answers.account);
   }
 
-  private async createArchitectEnvironment(data: CreateEnvironmentInput): Promise<any> {
-    const { data: environment } = await this.architect.post('/environments', { data });
-    return environment;
+  async run() {
+    const { args, flags } = this.parse(EnvironmentCreate);
+
+    let environment;
+    if (flags.type === 'kubernetes' && flags.kubeconfig && !flags.host) {
+      environment = await this.runKubernetes();
+    } else {
+      environment = await this.runGeneric();
+    }
+
+    this.log(environment);
   }
 }

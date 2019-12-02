@@ -1,0 +1,19 @@
+{
+  "services": {
+    "architect/division-service-grpc": {
+      "debug": {
+        "path": "../calculator/division-service/"
+      }
+    },
+    "architect/subtraction-service-rest": {
+      "debug": {
+        "path": "../calculator/subtraction-services/go/rest/"
+      }
+    },
+    "architect/addition-service-rest": {
+      "debug": {
+        "path": "../calculator/addition-service/rest/"
+      }
+    }
+  }
+}

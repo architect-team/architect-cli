@@ -1,71 +1,68 @@
-import { flags } from '@oclif/command';
-import chalk from 'chalk';
+import {flags} from '@oclif/command';
 import inquirer from 'inquirer';
-import Listr from 'listr';
-import Command from '../../base';
+import chalk from 'chalk';
+import Command from '../../base-command';
 
-const _info = chalk.blue;
-
-export default class DestroyEnvironment extends Command {
-  static description = 'Destroy environment';
-  static aliases = ['environment:destroy'];
-
-  static args = [
-    { name: 'environment', description: 'Environment name' },
-  ];
+export default class EnvironmentDestroy extends Command {
+  static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy'];
+  static description = 'Destroy an environment';
 
   static flags = {
-    auto_approve: flags.boolean(),
-    force: flags.boolean({ char: 'f' }),
-    help: flags.help({ char: 'h' }),
+    ...Command.flags,
+    auto_approve: flags.boolean({
+      description: 'Automatically apply the changes without reviewing the diff',
+      char: 'a',
+      default: false,
+    }),
+    force: flags.boolean({
+      description: 'Force the deletion even if the environment is not empty',
+      char: 'f',
+      default: false,
+    }),
   };
 
+  static args = [{
+    name: 'name',
+    description: 'Name of the environment to destroy',
+    required: true,
+  }];
+
   async run() {
-    const answers = await this.promptOptions();
-    const tasks = new Listr([
+    const {args, flags} = this.parse(EnvironmentDestroy);
+
+    let answers: any = await inquirer.prompt([
       {
-        title: `Deleting environment ${_info(answers.environment)}`,
-        task: async () => {
-          if (answers.force) {
-            return this.architect.delete(`/environments/${answers.environment}?force=1`);
-          } else {
-            return this.architect.delete(`/environments/${answers.environment}`);
-          }
+        type: 'autocomplete',
+        name: 'environment',
+        message: 'Select environment:',
+        source: async (_: any, input: string) => {
+          const params = { q: input };
+          const { data: environments } = await this.app.api.get('/environments', { params });
+          return environments.map((environment: any) => environment.name);
         },
+        when: !args.environment,
+      },
+      {
+        type: 'input',
+        name: 'destroy',
+        message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
+        validate: (value, answers: any) => {
+          const environment = args.environment || answers.environment;
+          if (value === environment) {
+            return true;
+          }
+          return `Name must match: ${chalk.blue(environment)}`;
+        },
+        when: !flags.auto_approve,
       },
     ]);
 
-    await tasks.run();
-  }
-
-  async promptOptions() {
-    const { args, flags } = this.parse(DestroyEnvironment);
-
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-
-    const answers: any = await inquirer.prompt([{
-      type: 'autocomplete',
-      name: 'environment',
-      message: 'Select environment:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: environments } = await this.architect.get('/environments', { params });
-        return environments.map((environment: any) => environment.name);
+    answers = { ...args, ...flags, ...answers };
+    await this.app.api.delete(`/environments/${answers.environment}`, {
+      params: {
+        force: answers.force ? 1 : 0,
       },
-      when: !args.environment,
-    } as inquirer.Question, {
-      type: 'input',
-      name: 'destroy',
-      message: 'Are you absolutely sure?\nThis will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
-      validate: (value, answers) => {
-        const environment = args.environment || answers!.environment;
-        if (value === environment) {
-          return true;
-        }
-        return `Name must match: ${_info(environment)}`;
-      },
-      when: !flags.auto_approve,
-    }]);
-    return { ...args, ...flags, ...answers };
+    });
+    this.log(chalk.green('Environment destroy'));
   }
 }

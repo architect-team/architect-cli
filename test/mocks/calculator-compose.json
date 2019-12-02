@@ -1,0 +1,94 @@
+{
+  "version": "3",
+  "services": {
+    "architect.division-service-grpc.latest": {
+      "ports": [
+        "50000:8080"
+      ],
+      "depends_on": [
+        "architect.subtraction-service-rest.latest"
+      ],
+      "environment": {
+        "HOST": "architect.division-service-grpc.latest",
+        "PORT": "8080",
+        "ARCHITECT_CURRENT_SERVICE": "architect/division-service-grpc",
+        "ARCHITECT": "{\"architect/division-service-grpc\":{\"host\":\"architect.division-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
+      },
+      "build": {
+        "context": "/test/calculator/division-service/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "npm run debug",
+      "volumes": [
+        "/test/calculator/division-service/src:/usr/src/app/src"
+      ]
+    },
+    "architect.subtraction-service-rest.latest": {
+      "ports": [
+        "50001:8080"
+      ],
+      "depends_on": [
+        "architect.addition-service-rest.latest"
+      ],
+      "environment": {
+        "HOST": "architect.subtraction-service-rest.latest",
+        "PORT": "8080",
+        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service-rest",
+        "ARCHITECT": "{\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{},\"subscriptions\":{}},\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
+      },
+      "build": {
+        "context": "/test/calculator/subtraction-services/go/rest/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "sh -c 'go run main.go'"
+    },
+    "architect.addition-service-rest.latest": {
+      "ports": [
+        "50002:8080"
+      ],
+      "depends_on": [
+        "architect.addition-service-rest.latest.primary"
+      ],
+      "environment": {
+        "HOST": "architect.addition-service-rest.latest",
+        "PORT": "8080",
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest",
+        "ARCHITECT": "{\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASS\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"addition_service\",\"name\":\"addition_service\"}},\"subscriptions\":{}}}"
+      },
+      "build": {
+        "context": "/test/calculator/addition-service/rest/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ]
+      },
+      "command": "npm run dev",
+      "volumes": [
+        "/test/calculator/addition-service/rest/src:/usr/src/app/src"
+      ]
+    },
+    "architect.addition-service-rest.latest.primary": {
+      "ports": [
+        "50003:5432"
+      ],
+      "depends_on": [],
+      "environment": {
+        "HOST": "architect.addition-service-rest.latest.primary",
+        "PORT": "5432",
+        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest.primary",
+        "ARCHITECT": "{\"architect/addition-service-rest.primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
+        "POSTGRES_USER": "postgres",
+        "username": "postgres",
+        "POSTGRES_PASS": "architect",
+        "password": "architect",
+        "POSTGRES_DB": "addition_service",
+        "name": "addition_service"
+      },
+      "image": "postgres:10"
+    }
+  },
+  "volumes": {}
+}

@@ -1,45 +1,32 @@
-import { flags } from '@oclif/command';
-import Command from '../../base';
-import inquirer = require('inquirer');
+import Table from 'cli-table3';
+import Command from '../../base-command';
 
 export default class Services extends Command {
-  static description = 'Search services';
-  static aliases = ['services:list', 'services:versions'];
-
-  static args = [
-    { name: 'service_name', description: 'Service name', required: false },
-  ];
+  static aliases = ['services', 'services:search'];
+  static description = 'Search for services on Architect Cloud';
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-  };
+    ...Command.flags,
+  }
+
+  static args = [{
+    name: 'query',
+    description: 'Search query used to filter results',
+    required: false,
+  }];
 
   async run() {
-    const { args } = this.parse(Services);
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+    const {args} = this.parse(Services);
 
-    const answers = await inquirer.prompt([{
-      type: 'autocomplete',
-      name: 'service_name',
-      message: 'Select service:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: services } = await this.architect.get('/services', { params });
-        return services.map((service: any) => service.name);
-      },
-      when: !args.service_name,
-    } as inquirer.Question, {
-      type: 'list',
-      name: 'service_version',
-      message: 'Select version:',
-      choices: async (answers_so_far: any) => {
-        const { data: service } = await this.architect.get(`/services/${answers_so_far.service_name || args.service_name}`);
-        return service.tags;
-      },
-    }]);
+    const { data: results } = await this.app.api.get(`/services?q=${args.query || ''}`);
 
-    const service_name = { ...args, ...answers }.service_name;
-    const { data: service } = await this.architect.get(`/services/${service_name}/versions/${answers.service_version}`);
-    this.styled_json(service);
+    const table = new Table({ head: ['Name', 'Created', 'Updated'] });
+    for (const row of results) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      table.push([row.name, row.created_at, row.updated_at]);
+    }
+
+    this.log(table.toString());
   }
 }
