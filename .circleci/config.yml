@@ -93,13 +93,13 @@ jobs:
           command: cd ./src/dependency-manager/ && npm install && cd ../../
       - run:
           name: Build library
-          command: npm run build ./src/dependency-manager/
+          command: cd ./src/dependency-manager/ && npm run build && cd ../../
       - run:
           name: Authenticate with registry
           command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
       - run:
           name: Publish library
-          command: npm publish ./src/dependency-manager/
+          command: cd ./src/dependency-manager/ && npm publish && cd ../../
 
 workflows:
   version: 2
