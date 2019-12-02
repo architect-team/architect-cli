@@ -88,19 +88,18 @@ jobs:
     executor: release
     steps:
       - checkout
-      - run: cd ./src/dependency-manager
       - run:
           name: Install dependencies
-          command: npm install
+          command: cd ./src/dependency-manager/ && npm install && cd ../../
       - run:
           name: Build library
-          command: npm run build
+          command: npm run build ./src/dependency-manager/
       - run:
           name: Authenticate with registry
-          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/.npmrc
+          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
       - run:
           name: Publish library
-          command: npm publish
+          command: npm publish ./src/dependency-manager/
 
 workflows:
   version: 2
