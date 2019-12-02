@@ -1,8 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
+
+const isLocalDatastore = (node: DependencyNode) => {
+  return (node instanceof DatastoreNode && (node as DatastoreNode).host);
+};
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -13,24 +17,27 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
   // Enrich base service details
   dependency_manager.graph.nodes.forEach(node => {
-    compose.services[node.normalized_ref] = {
-      ports: [`${node.ports.expose}:${node.ports.target}`],
-      depends_on: [],
-      environment: {
-        HOST: node.normalized_ref,
-        PORT: node.ports.target.toString(),
-        ARCHITECT: JSON.stringify({
-          [node.name]: {
-            host: `${node.protocol}${node.normalized_ref}`,
-            port: node.ports.target.toString(),
-            datastores: {},
-            subscriptions: {},
-          },
-        }),
-        ARCHITECT_CURRENT_SERVICE: node.name,
-        ...node.parameters,
-      },
-    };
+
+    if (!isLocalDatastore(node)) {
+      compose.services[node.normalized_ref] = {
+        ports: [`${node.ports.expose}:${node.ports.target}`],
+        depends_on: [],
+        environment: {
+          HOST: node.normalized_ref,
+          PORT: node.ports.target.toString(),
+          ARCHITECT: JSON.stringify({
+            [node.name]: {
+              host: `${node.protocol}${node.normalized_ref}`,
+              port: node.ports.target.toString(),
+              datastores: {},
+              subscriptions: {},
+            },
+          }),
+          ARCHITECT_CURRENT_SERVICE: node.name,
+          ...node.parameters,
+        },
+      };
+    }
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -57,7 +64,9 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
       }
     } else {
-      compose.services[node.normalized_ref].image = node.image;
+      if (!isLocalDatastore(node)) {
+        compose.services[node.normalized_ref].image = node.image;
+      }
     }
   });
 
@@ -71,7 +80,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     // Handle datastore credential enrichment to callers
     if (edge.to instanceof DatastoreNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
-        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
+        host: !isLocalDatastore(edge.to) ? `${edge.to.protocol}${edge.to.normalized_ref}` : edge.to.host,
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
@@ -95,7 +104,9 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);
     } else {
-      compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
+      if (!isLocalDatastore(edge.to)) {
+        compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
+      }
     }
 
     // Re-encode the ARCHITECT param

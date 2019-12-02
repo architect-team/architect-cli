@@ -130,14 +130,22 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
+      const image_or_host: { [key: string]: string } = {};
+      const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
+      if (environment_service_config && environment_service_config.datastores && environment_service_config.datastores[ds_name] && environment_service_config.datastores[ds_name].host !== undefined) {
+        image_or_host['host'] = environment_service_config.datastores[ds_name].host;
+      } else {
+        image_or_host['image'] = ds_config.docker.image;
+      }
+
       const dep_node = new DatastoreNode({
+        ...image_or_host,
         key: ds_name,
         service_config: parent_node.service_config,
-        image: ds_config.docker.image,
         tag: parent_node.tag,
         ports: {
           target: ds_config.docker.target_port,
-          expose: await this.getServicePort(),
+          expose: image_or_host['image'] ? await this.getServicePort() : ds_config.docker.target_port,
         },
         parameters: await this.getParamValues(
           parent_node.ref,

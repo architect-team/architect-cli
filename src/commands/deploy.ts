@@ -1,15 +1,15 @@
-import path from 'path';
+import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import execa from 'execa';
 import fs from 'fs-extra';
 import os from 'os';
-import { flags } from '@oclif/command';
-import execa from 'execa';
-import chalk from 'chalk';
+import path from 'path';
 import untildify from 'untildify';
-
 import Command from '../base-command';
-import DockerComposeTemplate from '../common/docker-compose/template';
-import * as DockerCompose from '../common/docker-compose';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import * as DockerCompose from '../common/docker-compose';
+import DockerComposeTemplate from '../common/docker-compose/template';
+
 
 class EnvConfigRequiredError extends Error {
   constructor() {
