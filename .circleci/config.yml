@@ -98,8 +98,11 @@ jobs:
           name: Authenticate with registry
           command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
       - run:
+          name: Tag release candidate
+          command: cd ./src/dependency-manager/ && npm version prerelease --git-tag-version=false --preid=rc && cd ../../
+      - run:
           name: Publish library
-          command: cd ./src/dependency-manager/ && npm publish --tag latest && cd ../../
+          command: cd ./src/dependency-manager/ && npm publish && cd ../../
 
 workflows:
   version: 2
