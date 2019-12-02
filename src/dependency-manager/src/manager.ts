@@ -133,7 +133,7 @@ export default abstract class DependencyManager {
       const image_or_host: { [key: string]: string } = {};
       const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
       if (environment_service_config ?.datastores[ds_name] ?.host) {
-        image_or_host['host'] = environment_service_config.datastores[ds_name].host;
+        image_or_host['host'] = environment_service_config.datastores[ds_name].host!;
       } else {
         image_or_host['image'] = ds_config.docker.image;
       }
