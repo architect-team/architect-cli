@@ -33,5 +33,8 @@
     "README.md",
     "/npm-shrinkwrap.json"
   ],
-  "types": "lib/index.d.ts"
+  "types": "lib/index.d.ts",
+  "devDependencies": {
+    "typescript": "^3.7.2"
+  }
 }
