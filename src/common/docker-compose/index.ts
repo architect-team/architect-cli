@@ -5,7 +5,7 @@ import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
 const isLocalDatastore = (node: DependencyNode) => {
-  return (node instanceof DatastoreNode && (node as DatastoreNode).host);
+  return (node instanceof DatastoreNode && (node as DatastoreNode).host !== '0.0.0.0');
 };
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
