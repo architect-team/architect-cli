@@ -112,9 +112,9 @@ jobs:
       - run:
           name: Commit version bump
           command: |
-            git config user.name "CircleCI"
-            git config user.email "bot@architect.io"
-            git add package.json package-lock.json
+            git config --global user.name "CircleCI"
+            git config --global user.email "bot@architect.io"
+            git add ./src/dependency-manager/package.json ./src/dependency-manager/package-lock.json
             git commit -m "[CircleCI] cut new release candidate"
             git push origin master
       - run:
