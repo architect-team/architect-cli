@@ -60,10 +60,8 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       if (fs.pathExistsSync(src_path)) {
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
       }
-    } else {
-      if (!(node instanceof ExternalNode)) {
-        compose.services[node.normalized_ref].image = node.image;
-      }
+    } else if (!(node instanceof ExternalNode)) {
+      compose.services[node.normalized_ref].image = node.image;
     }
   });
 
@@ -106,10 +104,8 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);
-    } else {
-      if (!(edge.to instanceof ExternalNode)) {
-        compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
-      }
+    } else if (!(edge.to instanceof ExternalNode)) {
+      compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
     }
 
     // Re-encode the ARCHITECT param

@@ -145,11 +145,13 @@ export default abstract class DependencyManager {
       let dep_node;
 
       if (environment_service_config?.datastores[ds_name]?.host) {
+        const external_port = environment_service_config?.datastores[ds_name]?.port || ds_config.docker.target_port;
         dep_node = new ExternalNode({
           ...dep_node_config,
           host: environment_service_config.datastores[ds_name].host!,
           ports: {
-            target: ds_config.docker.target_port,
+            target: external_port,
+            expose: external_port,
           },
         });
       } else {

@@ -6,7 +6,7 @@ export interface DependencyNodeOptions {
   host?: string;
   ports: {
     target: string | number;
-    expose?: string | number;
+    expose: string | number;
   };
   service_config: ServiceConfig;
   parameters?: { [key: string]: string | number };
@@ -15,7 +15,7 @@ export interface DependencyNodeOptions {
 export abstract class DependencyNode implements DependencyNodeOptions {
   tag: string;
   host: string;
-  ports: { target: string | number; expose?: string | number };
+  ports: { target: string | number; expose: string | number };
   service_config: ServiceConfig;
   parameters: { [key: string]: string | number };
   image?: string;
