@@ -7,6 +7,7 @@ import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
+import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import { readIfFile } from './utils/file';
@@ -130,29 +131,42 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      const image_or_host: { [key: string]: string } = {};
+      let dep_node;
       const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
-      if (environment_service_config ?.datastores[ds_name] ?.host) {
-        image_or_host['host'] = environment_service_config.datastores[ds_name].host!;
+      if (environment_service_config?.datastores[ds_name]?.host) {
+        dep_node = new ExternalNode({
+          host: environment_service_config.datastores[ds_name].host!,
+          key: ds_name,
+          service_config: parent_node.service_config,
+          tag: parent_node.tag,
+          ports: {
+            target: ds_config.docker.target_port,
+            expose: ds_config.docker.target_port,
+          },
+          parameters: await this.getParamValues(
+            parent_node.ref,
+            ds_config.parameters,
+            ds_name,
+          ),
+        });
       } else {
-        image_or_host['image'] = ds_config.docker.image;
+        dep_node = new DatastoreNode({
+          image: ds_config.docker.image,
+          key: ds_name,
+          service_config: parent_node.service_config,
+          tag: parent_node.tag,
+          ports: {
+            target: ds_config.docker.target_port,
+            expose: await this.getServicePort(),
+          },
+          parameters: await this.getParamValues(
+            parent_node.ref,
+            ds_config.parameters,
+            ds_name,
+          ),
+        });
       }
 
-      const dep_node = new DatastoreNode({
-        ...image_or_host,
-        key: ds_name,
-        service_config: parent_node.service_config,
-        tag: parent_node.tag,
-        ports: {
-          target: ds_config.docker.target_port,
-          expose: image_or_host['image'] ? await this.getServicePort() : ds_config.docker.target_port,
-        },
-        parameters: await this.getParamValues(
-          parent_node.ref,
-          ds_config.parameters,
-          ds_name,
-        ),
-      });
       this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
     }

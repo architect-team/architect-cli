@@ -75,7 +75,7 @@ export default class LocalDependencyManager extends DependencyManager {
     });
 
     if (config.getDebugOptions()) {
-      node.command = config.getDebugOptions() ?.command;
+      node.command = config.getDebugOptions()?.command;
     }
 
     node = this.graph.addNode(node) as LocalServiceNode;
