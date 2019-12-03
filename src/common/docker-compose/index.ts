@@ -1,8 +1,27 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DatastoreNode, DependencyNode, EnvironmentConfig, ServiceNode } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
+
+const inject_params = (target_node: DependencyNode, data_node: DependencyNode, env_config: EnvironmentConfig) => {
+  const param_prefix = `$ARC_${data_node.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${data_node.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
+  const host_param_placeholder = `${param_prefix}_HOST`;
+  const port_param_placeholder = `${param_prefix}_PORT`;
+  const injected_params: { [key: string]: string | number } = {};
+  for (const [name, value] of Object.entries(target_node.parameters)) {
+    if (value === host_param_placeholder) {
+      injected_params[name] = `${data_node.protocol}${data_node.normalized_ref}`;
+    } else if (value === port_param_placeholder) {
+      injected_params[name] = data_node.ports.target.toString()
+    } else if (value.toString().startsWith('$') && target_node.normalized_ref === data_node.normalized_ref) {
+      const env_params = env_config.getServices()[`${target_node.name}:${target_node.tag}`].parameters;
+      const placeholder_param_name = value.toString().substr(1);
+      injected_params[name] = env_params[placeholder_param_name];
+    }
+  }
+  return injected_params;
+}
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -13,18 +32,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
   // Enrich base service details
   dependency_manager.graph.nodes.forEach(node => {
-    const param_prefix = `$ARC_${node.name.replace('-', '_').replace('/', '_').replace('.', '_').toUpperCase()}_${node.tag.replace('.', '_').toUpperCase()}`;
-    const host_param_placeholder = `${param_prefix}_HOST`;
-    const port_param_placeholder = `${param_prefix}_PORT`; // how do we match these to other services?
-    const injected_params: { [key: string]: string } = {};
-    for (const [name, value] of Object.entries(node.parameters)) {
-      if (value === host_param_placeholder) {
-        injected_params[name] = `${node.protocol}${node.normalized_ref}`;
-      } else if (value === port_param_placeholder) {
-        injected_params[name] = node.ports.target.toString()
-      }
-    }
-
     compose.services[node.normalized_ref] = {
       ports: [`${node.ports.expose}:${node.ports.target}`],
       depends_on: [],
@@ -41,10 +48,9 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         }),
         ARCHITECT_CURRENT_SERVICE: node.name,
         ...node.parameters,
-        ...injected_params,
+        ...inject_params(node, node, dependency_manager.environment),
       },
     };
-    //console.log(compose.services[node.normalized_ref])
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -95,22 +101,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };
-
-      // check if param matches edge name for host or port
-      // service.environment[checked host or port]
-      const param_prefix = `$ARC_${edge.to.name.replace('-', '_').replace('/', '_').replace('.', '_').toUpperCase()}_${edge.to.tag.replace('.', '_').toUpperCase()}`;
-      const host_param_placeholder = `${param_prefix}_HOST`;
-      const port_param_placeholder = `${param_prefix}_PORT`; // how do we match these to other services?
-      const injected_params: { [key: string]: string } = {};
-      for (const [name, value] of Object.entries(edge.to.parameters)) {
-        if (value === host_param_placeholder) {
-          injected_params[name] = `${edge.to.protocol}${edge.to.normalized_ref}`;
-        } else if (value === port_param_placeholder) {
-          injected_params[name] = edge.to.ports.target.toString()
-        }
-      }
-      console.log(injected_params)
-
+      service.environment = Object.assign({}, service.environment, inject_params(edge.from, edge.to, dependency_manager.environment));
     }
 
     // Parse subscription logic
