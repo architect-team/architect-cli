@@ -115,7 +115,7 @@ jobs:
             git config --global user.name "CircleCI"
             git config --global user.email "bot@architect.io"
             git add ./src/dependency-manager/package.json ./src/dependency-manager/package-lock.json
-            git commit -m "[CircleCI] cut new release candidate"
+            git commit -m "[skip ci] cut new release candidate"
             git push origin master
       - run:
           name: Publish library
