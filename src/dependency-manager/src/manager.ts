@@ -131,39 +131,35 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      let dep_node;
+      let dep_node_config = {
+        key: ds_name,
+        service_config: parent_node.service_config,
+        tag: parent_node.tag,
+        parameters: await this.getParamValues(
+          parent_node.ref,
+          ds_config.parameters,
+          ds_name,
+        ),
+      };
       const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
+      let dep_node;
+
       if (environment_service_config?.datastores[ds_name]?.host) {
         dep_node = new ExternalNode({
+          ...dep_node_config,
           host: environment_service_config.datastores[ds_name].host!,
-          key: ds_name,
-          service_config: parent_node.service_config,
-          tag: parent_node.tag,
           ports: {
             target: ds_config.docker.target_port,
-            expose: ds_config.docker.target_port,
           },
-          parameters: await this.getParamValues(
-            parent_node.ref,
-            ds_config.parameters,
-            ds_name,
-          ),
         });
       } else {
         dep_node = new DatastoreNode({
+          ...dep_node_config,
           image: ds_config.docker.image,
-          key: ds_name,
-          service_config: parent_node.service_config,
-          tag: parent_node.tag,
           ports: {
             target: ds_config.docker.target_port,
             expose: await this.getServicePort(),
           },
-          parameters: await this.getParamValues(
-            parent_node.ref,
-            ds_config.parameters,
-            ds_name,
-          ),
         });
       }
 
