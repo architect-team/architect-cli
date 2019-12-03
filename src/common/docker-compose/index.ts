@@ -1,24 +1,26 @@
 import fs from 'fs-extra';
+import _ from 'lodash';
 import path from 'path';
-import DependencyManager, { DatastoreNode, DependencyNode, EnvironmentConfig, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-const inject_params = (target_node: DependencyNode, data_node: DependencyNode, env_config: EnvironmentConfig) => {
+const inject_params = (environment: { [key: string]: string | number }, data_node: DependencyNode, ) => {
   const param_prefix = `$ARC_${data_node.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${data_node.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
   const host_param_placeholder = `${param_prefix}_HOST`;
   const port_param_placeholder = `${param_prefix}_PORT`;
   const injected_params: { [key: string]: string | number } = {};
-  for (const [name, value] of Object.entries(target_node.parameters)) {
-    if (value === host_param_placeholder) {
-      injected_params[name] = `${data_node.protocol}${data_node.normalized_ref}`;
-    } else if (value === port_param_placeholder) {
-      injected_params[name] = data_node.ports.target.toString()
-    } else if (value.toString().startsWith('$') && target_node.normalized_ref === data_node.normalized_ref) {
-      const env_params = env_config.getServices()[`${target_node.name}:${target_node.tag}`].parameters;
-      const placeholder_param_name = value.toString().substr(1);
-      injected_params[name] = env_params[placeholder_param_name];
+  for (const [name, value] of Object.entries(environment)) {
+    let newValue = value;
+    if (newValue.toString().indexOf(host_param_placeholder) > -1) {
+      const regex = new RegExp(_.escapeRegExp(host_param_placeholder), 'g');
+      newValue = newValue.toString().replace(regex, `${data_node.protocol}${data_node.normalized_ref}`);
     }
+    if (newValue.toString().indexOf(port_param_placeholder) > -1) {
+      const regex = new RegExp(_.escapeRegExp(port_param_placeholder), 'g');
+      newValue = newValue.toString().replace(regex, data_node.ports.target.toString());
+    }
+    injected_params[name] = newValue;
   }
   return injected_params;
 }
@@ -48,9 +50,11 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         }),
         ARCHITECT_CURRENT_SERVICE: node.name,
         ...node.parameters,
-        ...inject_params(node, node, dependency_manager.environment),
       },
     };
+
+    const current_environment = compose.services[node.normalized_ref].environment || {};
+    compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment, node));
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -101,7 +105,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };
-      service.environment = Object.assign({}, service.environment, inject_params(edge.from, edge.to, dependency_manager.environment));
+      service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to));
     }
 
     // Parse subscription logic
