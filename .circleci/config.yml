@@ -96,7 +96,7 @@ jobs:
           command: cd ./src/dependency-manager/ && npm run build && cd ../../
       - run:
           name: Authenticate with registry
-          command: echo "//npm.pkg.github.com/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
       - run:
           name: Tag release candidate
           command: cd ./src/dependency-manager/ && npm version prerelease --git-tag-version=false --preid=rc && cd ../../
@@ -130,7 +130,7 @@ workflows:
             - test-node-12
             - test-node-10
       - publish_graph_lib:
-          context: Github Packaging
+          context: NPM Packaging
           requires:
             - cache
           filters:
