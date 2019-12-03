@@ -102,7 +102,7 @@ jobs:
           command: cd ./src/dependency-manager/ && npm version prerelease --git-tag-version=false --preid=rc && cd ../../
       - run:
           name: Publish library
-          command: cd ./src/dependency-manager/ && npm publish && cd ../../
+          command: cd ./src/dependency-manager/ && npm publish --access public && cd ../../
 
 workflows:
   version: 2
