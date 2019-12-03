@@ -36,8 +36,17 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   vaults: VaultMap = {};
 
   getServices(): { [key: string]: EnvironmentService } {
-    // This seems silly now, but it's important in case we ever make breaking
-    // config changes
+    // Ensure that default, empty objects are populated for necessary service components
+    for (const service_ref of Object.keys(this.services)) {
+      if (!this.services[service_ref].datastores) {
+        this.services[service_ref].datastores = {};
+      }
+
+      if (!this.services[service_ref].parameters) {
+        this.services[service_ref].parameters = {};
+      }
+    }
+
     return this.services;
   }
 

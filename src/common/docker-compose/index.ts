@@ -100,7 +100,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       service.environment.ARCHITECT[edge.from.name].subscriptions =
         Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
           Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [publisher_name]: to_subscriptions[event_name] };
+            subscriptions[event_name] = { [publisher_name]: to_subscriptions[publisher_name][event_name] };
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);
