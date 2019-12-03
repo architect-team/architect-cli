@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import _ from 'lodash';
 import path from 'path';
 import DependencyManager, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
+import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
@@ -34,27 +35,30 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
   // Enrich base service details
   dependency_manager.graph.nodes.forEach(node => {
-    compose.services[node.normalized_ref] = {
-      ports: [`${node.ports.expose}:${node.ports.target}`],
-      depends_on: [],
-      environment: {
-        HOST: node.normalized_ref,
-        PORT: node.ports.target.toString(),
-        ARCHITECT: JSON.stringify({
-          [node.name]: {
-            host: `${node.protocol}${node.normalized_ref}`,
-            port: node.ports.target.toString(),
-            datastores: {},
-            subscriptions: {},
-          },
-        }),
-        ARCHITECT_CURRENT_SERVICE: node.name,
-        ...node.parameters,
-      },
-    };
 
-    const current_environment = compose.services[node.normalized_ref].environment || {};
-    compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment, node));
+    if (!(node instanceof ExternalNode)) {
+      compose.services[node.normalized_ref] = {
+        ports: [`${node.ports.expose}:${node.ports.target}`],
+        depends_on: [],
+        environment: {
+          HOST: node.normalized_ref,
+          PORT: node.ports.target.toString(),
+          ARCHITECT: JSON.stringify({
+            [node.name]: {
+              host: `${node.protocol}${node.normalized_ref}`,
+              port: node.ports.target.toString(),
+              datastores: {},
+              subscriptions: {},
+            },
+          }),
+          ARCHITECT_CURRENT_SERVICE: node.name,
+          ...node.parameters,
+        },
+      };
+
+      const current_environment = compose.services[node.normalized_ref].environment || {};
+      compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment, node));
+    }
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -80,7 +84,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       if (fs.pathExistsSync(src_path)) {
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
       }
-    } else {
+    } else if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref].image = node.image;
     }
   });
@@ -96,6 +100,12 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     if (edge.to instanceof DatastoreNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
         host: `${edge.to.protocol}${edge.to.normalized_ref}`,
+        port: edge.to.ports.target.toString(),
+        ...edge.to.parameters,
+      };
+    } else if (edge.to instanceof ExternalNode) {
+      service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
+        host: edge.to.host,
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
@@ -115,11 +125,11 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       service.environment.ARCHITECT[edge.from.name].subscriptions =
         Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
           Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [publisher_name]: to_subscriptions[event_name] };
+            subscriptions[event_name] = { [to.service_config.getName()]: to_subscriptions[publisher_name][event_name].data };
           });
           return subscriptions;
         }, service.environment.ARCHITECT[edge.from.name].subscriptions);
-    } else {
+    } else if (!(edge.to instanceof ExternalNode)) {
       compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
     }
 

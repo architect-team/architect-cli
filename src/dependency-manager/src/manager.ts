@@ -7,6 +7,7 @@ import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
+import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import { readIfFile } from './utils/file';
@@ -130,21 +131,40 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      const dep_node = new DatastoreNode({
+      let dep_node_config = {
         key: ds_name,
         service_config: parent_node.service_config,
-        image: ds_config.docker.image,
         tag: parent_node.tag,
-        ports: {
-          target: ds_config.docker.target_port,
-          expose: await this.getServicePort(),
-        },
         parameters: await this.getParamValues(
           parent_node.ref,
           ds_config.parameters,
           ds_name,
         ),
-      });
+      };
+      const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
+      let dep_node;
+
+      if (environment_service_config?.datastores[ds_name]?.host) {
+        const external_port = environment_service_config?.datastores[ds_name]?.port || ds_config.docker.target_port;
+        dep_node = new ExternalNode({
+          ...dep_node_config,
+          host: environment_service_config.datastores[ds_name].host!,
+          ports: {
+            target: external_port,
+            expose: external_port,
+          },
+        });
+      } else {
+        dep_node = new DatastoreNode({
+          ...dep_node_config,
+          image: ds_config.docker.image,
+          ports: {
+            target: ds_config.docker.target_port,
+            expose: await this.getServicePort(),
+          },
+        });
+      }
+
       this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
     }

@@ -10,8 +10,7 @@ interface AuthResults {
   access_token: string;
   token_type: string;
   expires_in: number;
-  issued_at?: number;
-  profile?: any;
+  issued_at: number;
 }
 
 export default class AuthClient {
@@ -30,26 +29,26 @@ export default class AuthClient {
     const token = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
     if (token) {
       this.auth_results = JSON.parse(token.password) as AuthResults;
+      const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
+      // Refresh the token if its expired to force a docker login
+      if (expires_at < (new Date().getTime() / 1000)) {
+        await this.refreshToken().catch(() => undefined);
+      }
     }
   }
 
   async login(username: string, password: string) {
     await this.logout();
     await this.credentials.set(CREDENTIAL_PREFIX, username, password);
-    await this.refreshToken();
+    const new_token = await this.refreshToken();
+    if (!new_token) {
+      throw new Error('Login failed');
+    }
   }
 
   async logout() {
     await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
-  }
-
-  async getToken() {
-    if (!this.auth_results) {
-      await this.refreshToken();
-    }
-
-    return this.auth_results;
   }
 
   async refreshToken() {
@@ -58,16 +57,24 @@ export default class AuthClient {
       throw new LoginRequiredError();
     }
 
-    this.auth_results = await this.auth0.passwordGrant({
+    const auth0_results = await this.auth0.passwordGrant({
       realm: 'Username-Password-Authentication',
       username: credential.account,
       password: credential.password,
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      scope: 'openid profile email',
+      scope: 'openid email',
     }) as AuthResults;
 
     try {
+      // Windows credential manager password max length is 256 chars
+      this.auth_results = {
+        access_token: auth0_results.access_token,
+        token_type: auth0_results.token_type,
+        expires_in: auth0_results.expires_in,
+        issued_at: new Date().getTime() / 1000,
+      };
+
       await execa('docker', [
         'login', this.config.registry_host,
         '-u', credential.account,
@@ -76,9 +83,6 @@ export default class AuthClient {
         input: JSON.stringify(this.auth_results),
       });
 
-      const profile = await this.auth0.getProfile(this.auth_results.access_token);
-      this.auth_results.profile = profile;
-      this.auth_results.issued_at = new Date().getTime() / 1000;
       await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
       return this.auth_results;
     } catch (error) {
