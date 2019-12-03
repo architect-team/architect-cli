@@ -90,16 +90,31 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: cd ./src/dependency-manager/ && npm install && cd ../../
+          command: |
+            cd ./src/dependency-manager/
+            npm install
+            cd ../../
       - run:
           name: Build library
-          command: cd ./src/dependency-manager/ && npm run build && cd ../../
+          command: |
+            cd ./src/dependency-manager/
+            npm run build
+            cd ../../
       - run:
           name: Authenticate with registry
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/cli/src/dependency-manager/.npmrc
       - run:
           name: Tag release candidate
-          command: cd ./src/dependency-manager/ && npm version prerelease --git-tag-version=false --preid=rc && cd ../../
+          command: |
+            cd ./src/dependency-manager/
+            npm version prerelease --git-tag-version=false --preid=rc
+            cd ../../
+      - run:
+          name: Commit version bump
+          command: |
+            git add package.json package-lock.json
+            git commit -m "[CircleCI] cut new release candidate"
+            git push origin master
       - run:
           name: Publish library
           command: cd ./src/dependency-manager/ && npm publish --access public && cd ../../
