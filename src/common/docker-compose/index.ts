@@ -1,5 +1,4 @@
 import fs from 'fs-extra';
-import _ from 'lodash';
 import path from 'path';
 import DependencyManager, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
@@ -14,11 +13,11 @@ const inject_params = (environment: { [key: string]: string | number }, data_nod
   for (const [name, value] of Object.entries(environment)) {
     let newValue = value;
     if (newValue.toString().indexOf(host_param_placeholder) > -1) {
-      const regex = new RegExp(_.escapeRegExp(host_param_placeholder), 'g');
+      const regex = new RegExp(`\\${host_param_placeholder}`, 'g');
       newValue = newValue.toString().replace(regex, `${data_node.protocol}${data_node.normalized_ref}`);
     }
     if (newValue.toString().indexOf(port_param_placeholder) > -1) {
-      const regex = new RegExp(_.escapeRegExp(port_param_placeholder), 'g');
+      const regex = new RegExp(`\\${port_param_placeholder}`, 'g');
       newValue = newValue.toString().replace(regex, data_node.ports.target.toString());
     }
     injected_params[name] = newValue;
