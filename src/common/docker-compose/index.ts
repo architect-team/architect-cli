@@ -5,22 +5,10 @@ import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-const inject_params = (environment: { [key: string]: string | number }, data_node: DependencyNode, parent_node?: DependencyNode) => {
-  let host_param_placeholder;
-  let port_param_placeholder;
-  if (data_node instanceof DatastoreNode && parent_node) {
-    const parent_node_prefix = `${parent_node!.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${parent_node!.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
-    const datastore_node_suffix = data_node.key.replace(/[^\w\s]/gi, '_').toUpperCase();
-    host_param_placeholder = `$ARC_${parent_node_prefix}_${datastore_node_suffix}_HOST`;
-    port_param_placeholder = `$ARC_${parent_node_prefix}_${datastore_node_suffix}_PORT`;
-  } else if (data_node instanceof ServiceNode || data_node instanceof LocalServiceNode) {
-    const param_prefix = `$ARC_${data_node.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${data_node.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
-    host_param_placeholder = `${param_prefix}_HOST`;
-    port_param_placeholder = `${param_prefix}_PORT`;
-  } else {
-    return {};
-  }
-
+const inject_params = (environment: { [key: string]: string | number }, data_node: DependencyNode) => {
+  const param_prefix = `$ARC_${data_node.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${data_node.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
+  const host_param_placeholder = `${param_prefix}_HOST`;
+  const port_param_placeholder = `${param_prefix}_PORT`;
   const injected_params: { [key: string]: string | number } = {};
   for (const [name, value] of Object.entries(environment)) {
     let newValue = value;
@@ -113,7 +101,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
-      service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to, edge.from));
+      service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to));
     } else if (edge.to instanceof ExternalNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
         host: edge.to.host,
