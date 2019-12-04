@@ -114,7 +114,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         ...edge.to.parameters,
       };
       service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to, edge.from));
-    } else if (edge.to instanceof ExternalNode) { // TODO: also do this for external nodes?
+    } else if (edge.to instanceof ExternalNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
         host: edge.to.host,
         port: edge.to.ports.target.toString(),
