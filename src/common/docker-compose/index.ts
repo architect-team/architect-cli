@@ -61,7 +61,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}.HOST`.replace(/\./g, '_')] = node.normalized_ref;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}.PORT`.replace(/\./g, '_')] = node.ports.target.toString();
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
-        if (param_value.default instanceof Object && param_value.default ?.valueFrom) {
+        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default ?.valueFrom) {
           const param_target_service_name = param_value.default.valueFrom.dependency;
           const param_target_datastore_name = param_value.default.valueFrom.datastore;
           if (param_target_service_name) {
@@ -69,11 +69,8 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
             env_params_to_expand[`${node.normalized_ref.toUpperCase()}.${param_name}`.replace(/\./g, '_')] =
               param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}.`).replace(/\./g, '_');
           } else if (param_target_datastore_name) {
-            // TODO
-
-            // console.log('here')
-            // console.log(`${node.normalized_ref}.${param_target_datastore_name}`.replace(/\./g, '_'))
-            // console.log(param_value.default.valueFrom.value)
+            env_params_to_expand[`${node.normalized_ref}.${param_target_datastore_name}.${param_name}`.toUpperCase().replace(/\./g, '_')] =
+              param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}.`.toUpperCase()).replace(/\./g, '_');
           }
         }
       }
@@ -111,20 +108,36 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
   });
 
   // dotenv expand here once we have params from
-  console.log(env_params_to_expand)
+  //console.log(env_params_to_expand)
   const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
   console.log(expanded_params)
-  for (const [service_name, service] of Object.entries(compose.services)) {
+  //for (const service_name of Object.keys(compose.services)) {
+  dependency_manager.graph.nodes.forEach(node => {
+    const service_name = node.normalized_ref;
     const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
+
+    // TODO: filter, map, then remove datastore params first, as service params are their prefixes
+    const service_datastore_edges = dependency_manager.graph.edges.filter(edge => edge.from.normalized_ref === service_name && edge.to instanceof DatastoreNode);
+    // map datastore params
+    for (const edge of service_datastore_edges) {
+      const datastore_prefix = `${service_prefix}_${(edge.to as DatastoreNode).key}`.toUpperCase();
+      const service_datastore_params = Object.entries(expanded_params || {})
+        .filter(([key, _]) => key.startsWith(datastore_prefix));
+      for (const [param_name, param_value] of service_datastore_params) {
+        compose.services[service_name].environment![param_name.replace(`${datastore_prefix}_`, '')] = param_value;
+      } // TODO remove duplicates in leftover params after exiting this part (PRIMARY_REDIS_ADDR, PRIMARY_HOST, PRIMARY_PORT)
+    }
+
+    // map service params
     const service_params = Object.entries(expanded_params || {})
-      .filter(([key, value]) => key.startsWith(service_prefix));
+      .filter(([key, _]) => key.startsWith(service_prefix));
 
     for (const [param_name, param_value] of service_params) {
       compose.services[service_name].environment![param_name.replace(`${service_prefix}_`, '')] = param_value;
     }
-  }
+  });
 
-  //console.log(compose.services)
+  console.log(compose.services)
 
   // Enrich service relationships
   dependency_manager.graph.edges.forEach(edge => {
