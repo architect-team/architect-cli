@@ -5,7 +5,7 @@ interface RestSubscriptionData {
 
 export interface ServiceParameter {
   description: string;
-  default?: string | number;
+  default?: any;
   aliases: string[];
   required: boolean;
 }
