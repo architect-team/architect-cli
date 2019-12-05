@@ -97,13 +97,13 @@ export class ServiceConfigV1 extends ServiceConfig {
               image: ds_config.image,
               target_port: ds_config.port,
             },
-            parameters: this.normalizeParameters(ds_config.parameters),
+            parameters: this.normalizeParameters(ds_config.parameters || {}),
           };
           return res;
         } else if (ds_config.docker) {
           res[key] = {
             docker: ds_config.docker,
-            parameters: this.normalizeParameters(ds_config.parameters),
+            parameters: this.normalizeParameters(ds_config.parameters || {}),
           };
           return res;
         }
