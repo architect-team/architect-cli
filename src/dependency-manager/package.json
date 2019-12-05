@@ -29,7 +29,7 @@
   },
   "main": "lib/index.js",
   "files": [
-    "./lib",
+    "/lib",
     "README.md",
     "/npm-shrinkwrap.json"
   ],
