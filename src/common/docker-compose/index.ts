@@ -132,7 +132,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: edge.to.ports.target.toString(),
         ...edge.to.parameters,
       };
-      //service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to));
     } else if (edge.to instanceof ExternalNode) {
       service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
         host: edge.to.host,
@@ -145,7 +144,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: edge.to.ports.target.toString(),
         api: edge.to.api.type,
       };
-      //service.environment = Object.assign({}, service.environment, inject_params(service.environment, edge.to));
     }
 
     // Parse subscription logic
