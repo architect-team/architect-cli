@@ -42,7 +42,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/\./g, '_')] = param_value;
       }
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
-        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default ?.valueFrom) {
+        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default?.valueFrom) {
           const param_target_service_name = param_value.default.valueFrom.dependency;
           const param_target_datastore_name = param_value.default.valueFrom.datastore;
           if (param_target_service_name) {
