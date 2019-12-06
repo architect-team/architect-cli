@@ -6,26 +6,6 @@ import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-// const inject_params = (environment: { [key: string]: string | number }, data_node: DependencyNode) => {
-//   const param_prefix = `$ARC_${data_node.name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${data_node.tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
-//   const host_param_placeholder = `${param_prefix}_HOST`;
-//   const port_param_placeholder = `${param_prefix}_PORT`;
-//   const injected_params: { [key: string]: string | number } = {};
-//   for (const [name, value] of Object.entries(environment)) {
-//     let newValue = value;
-//     if (newValue.toString().indexOf(host_param_placeholder) > -1) {
-//       const regex = new RegExp(`\\${host_param_placeholder}`, 'g');
-//       newValue = newValue.toString().replace(regex, `${data_node.protocol}${data_node.normalized_ref}`);
-//     }
-//     if (newValue.toString().indexOf(port_param_placeholder) > -1) {
-//       const regex = new RegExp(`\\${port_param_placeholder}`, 'g');
-//       newValue = newValue.toString().replace(regex, data_node.ports.target.toString());
-//     }
-//     injected_params[name] = newValue;
-//   }
-//   return injected_params;
-// }
-
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
@@ -65,12 +45,19 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           const param_target_service_name = param_value.default.valueFrom.dependency;
           const param_target_datastore_name = param_value.default.valueFrom.datastore;
           if (param_target_service_name) {
-            const param_target_service = dependency_manager.graph.nodes.get(param_target_service_name)!;
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}.${param_name}`.replace(/\./g, '_')] =
-              param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}.`).replace(/\./g, '_');
+            const param_target_service = dependency_manager.graph.nodes.get(param_target_service_name);
+            if (!param_target_service) {
+              throw new Error(`Service ${param_target_service_name} not found for config of ${node.name}`);
+            }
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/\./g, '_')] =
+              param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/\./g, '_');
           } else if (param_target_datastore_name) {
-            env_params_to_expand[`${node.normalized_ref}.${param_target_datastore_name}.${param_name}`.toUpperCase().replace(/\./g, '_')] =
-              param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}.`.toUpperCase()).replace(/\./g, '_');
+            const param_target_datastore = dependency_manager.graph.edges.filter(edge => edge.from.name === node.name && (edge.to as DatastoreNode).key === param_target_datastore_name);
+            if (!param_target_datastore.length) {
+              throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.name}`);
+            }
+            env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/\./g, '_')] =
+              param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/\./g, '_');
           }
         }
       }
@@ -83,7 +70,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       ARCHITECT[node.name].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
-      //compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment || {}, node));
     }
 
     if (node instanceof LocalServiceNode) {
@@ -107,25 +93,20 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     }
   });
 
-  // dotenv expand here once we have params from
-  //console.log(env_params_to_expand)
   const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
-  console.log(expanded_params)
-  //for (const service_name of Object.keys(compose.services)) {
   dependency_manager.graph.nodes.forEach(node => {
     const service_name = node.normalized_ref;
     const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
 
-    // TODO: filter, map, then remove datastore params first, as service params are their prefixes
-    const service_datastore_edges = dependency_manager.graph.edges.filter(edge => edge.from.normalized_ref === service_name && edge.to instanceof DatastoreNode);
     // map datastore params
+    const service_datastore_edges = dependency_manager.graph.edges.filter(edge => edge.from.normalized_ref === service_name && edge.to instanceof DatastoreNode);
     for (const edge of service_datastore_edges) {
-      const datastore_prefix = `${service_prefix}_${(edge.to as DatastoreNode).key}`.toUpperCase();
+      const datastore_prefix = `${(edge.to as DatastoreNode).key}_${service_prefix}`.toUpperCase();
       const service_datastore_params = Object.entries(expanded_params || {})
         .filter(([key, _]) => key.startsWith(datastore_prefix));
       for (const [param_name, param_value] of service_datastore_params) {
         compose.services[service_name].environment![param_name.replace(`${datastore_prefix}_`, '')] = param_value;
-      } // TODO remove duplicates in leftover params after exiting this part (PRIMARY_REDIS_ADDR, PRIMARY_HOST, PRIMARY_PORT)
+      }
     }
 
     // map service params
@@ -136,8 +117,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       compose.services[service_name].environment![param_name.replace(`${service_prefix}_`, '')] = param_value;
     }
   });
-
-  console.log(compose.services)
 
   // Enrich service relationships
   dependency_manager.graph.edges.forEach(edge => {
