@@ -36,7 +36,7 @@ export default class EnvironmentDestroy extends Command {
   async run() {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
-    let fetched_account: any;
+    let prompted_account: any;
     let answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'account_name',
@@ -47,8 +47,8 @@ export default class EnvironmentDestroy extends Command {
           return 'You must select an account';
         }
         try {
-          fetched_account = (await this.app.api.get(`/accounts/${value}`)).data;
-          if (fetched_account) {
+          prompted_account = (await this.app.api.get(`/accounts/${value}`)).data;
+          if (prompted_account) {
             return true;
           }
         } catch (err) {
@@ -57,10 +57,11 @@ export default class EnvironmentDestroy extends Command {
       },
     }]);
 
-    if (!fetched_account) {
+    let account;
+    if (!prompted_account) {
       const selected_account_name = answers.account_name || args.account_name;
       try {
-        fetched_account = (await this.app.api.get(`/accounts/${selected_account_name}`)).data;
+        account = (await this.app.api.get(`/accounts/${selected_account_name}`)).data;
       } catch (err) {
         throw new Error(`You do not have access to the account ${selected_account_name}`);
       }
@@ -82,7 +83,7 @@ export default class EnvironmentDestroy extends Command {
 
     cli.action.start(chalk.green('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
-    const { data: account_environment } = await this.app.api.get(`/accounts/${fetched_account.id}/environments/${answers.environment}`);
+    const { data: account_environment } = await this.app.api.get(`/accounts/${(account || prompted_account).id}/environments/${answers.environment}`);
     await this.app.api.delete(`/environments/${account_environment.id}`, {
       params: {
         force: answers.force ? 1 : 0,
