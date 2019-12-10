@@ -25,7 +25,8 @@ export default class EnvironmentDestroy extends Command {
   static args = [{
     name: 'environment',
     description: 'Name of the environment to destroy',
-    required: false,
+    required: true,
+    parse: (value: string) => value.toLowerCase(),
   }, {
     name: 'account_name',
     description: 'Account that the environment belongs to',
@@ -35,33 +36,41 @@ export default class EnvironmentDestroy extends Command {
   async run() {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
+    let fetched_account: any;
     let answers: any = await inquirer.prompt([{
       type: 'input',
       name: 'account_name',
       message: 'What account does the environment belong to?',
       when: !args.account_name,
+      validate: async (value: any, answers: any) => {
+        if (!value) {
+          return 'You must select an account';
+        }
+        try {
+          fetched_account = (await this.app.api.get(`/accounts/${value}`)).data;
+          if (fetched_account) {
+            return true;
+          }
+        } catch (err) {
+          return `You do not have access to the account: ${chalk.blue(value)}`;
+        }
+      },
     }]);
 
-    const { data: fetched_account } = await this.app.api.get(`/accounts/${answers.account_name || args.account_name.split('=')[1]}`);
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+    if (!fetched_account) {
+      const selected_account_name = answers.account_name || args.account_name;
+      try {
+        fetched_account = (await this.app.api.get(`/accounts/${selected_account_name}`)).data;
+      } catch (err) {
+        throw new Error(`You do not have access to the account ${selected_account_name}`);
+      }
+    }
     answers = Object.assign({}, answers, await inquirer.prompt([{
-      type: 'autocomplete',
-      name: 'environment',
-      message: 'Select environment:',
-      source: async (_: any, input: string) => {
-        const params = { q: input };
-        const { data: environments } = await this.app.api.get(`/accounts/${fetched_account.id}/environments`, { params });
-        return environments.map((environment: any) => environment.name);
-      },
-      when: !args.environment,
-    },
-    {
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
       validate: (value: any, answers: any) => {
-        const arg = args.environment ? args.environment.split('=')[1] : null;
-        const environment = arg || answers.environment;
+        const environment = args.environment || answers.environment;
         if (value === environment) {
           answers.environment = environment;
           return true;
