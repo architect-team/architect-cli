@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import Command from '../../base-command';
 
@@ -70,6 +71,7 @@ export default class EnvironmentDestroy extends Command {
       when: !flags.auto_approve,
     }]));
 
+    cli.action.start(chalk.green('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${fetched_account.id}/environments/${answers.environment}`);
     await this.app.api.delete(`/environments/${account_environment.id}`, {
@@ -77,6 +79,6 @@ export default class EnvironmentDestroy extends Command {
         force: answers.force ? 1 : 0,
       },
     });
-    this.log(chalk.green('Environment destroyed'));
+    cli.action.stop(chalk.green('Environment destroyed'));
   }
 }

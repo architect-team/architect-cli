@@ -30,6 +30,8 @@ export default class EnvironmentCreate extends Command {
     parse: (value: string) => value.toLowerCase(),
   }];
 
+  // TODO: add account to create the environment for
+
   static flags = {
     ...Command.flags,
     namespace: flags.string({ char: 'n' }),
@@ -306,7 +308,6 @@ export default class EnvironmentCreate extends Command {
     }]);
 
     answers = { ...args, ...flags, ...answers };
-
     return this.createArchitectEnvironment({
       name: answers.name,
       namespace: answers.namespace,

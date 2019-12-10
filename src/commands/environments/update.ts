@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { cli } from 'cli-ux';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import untildify from 'untildify';
@@ -64,6 +65,7 @@ export default class EnvironmentUpdate extends Command {
       when: !args.environment,
     }]));
 
+    cli.action.start(chalk.green('Updating environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${fetched_account.id}/environments/${answers.environment}`);
     await this.app.api.put(`/environments/${account_environment.id}`, {
@@ -72,7 +74,6 @@ export default class EnvironmentUpdate extends Command {
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
       config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
     });
-
-    this.log(chalk.green('Environment updated successfully'));
+    cli.action.stop(chalk.green('Environment updated successfully'));
   }
 }

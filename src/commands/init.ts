@@ -1,10 +1,10 @@
-import {flags} from '@oclif/command';
-import path from 'path';
+import { flags } from '@oclif/command';
 import fs from 'fs';
 import inquirer from 'inquirer';
+import path from 'path';
+import Command from '../base-command';
 import { ServiceConfig, ServiceConfigBuilder } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
-import Command from '../base-command';
 
 declare const process: NodeJS.Process;
 
@@ -58,7 +58,7 @@ export default class Init extends Command {
         validate: (val: string) => {
           const parts = val.split('/');
           if (parts.length < 2) {
-            return `Service names must include a namespace citing the account owner (e.g. my-org/${val})`;
+            return `Service names must include a namespace citing the account (e.g. my-org/${val} or my-account-name/${val})`;
           } else if (parts.length > 2) {
             return 'Service names can only include one "/" to split the name from the namespace';
           }
