@@ -2,7 +2,6 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import fs from 'fs-extra';
-import inquirer from 'inquirer';
 import untildify from 'untildify';
 import Command from '../../base-command';
 import { readIfFile } from '../../common/utils/file';
@@ -31,53 +30,26 @@ export default class EnvironmentUpdate extends Command {
   };
 
   static args = [{
-    name: 'environment',
+    name: 'namespaced_environment',
     description: 'Name of the environment to update',
     required: true,
     parse: (value: string) => value.toLowerCase(),
-  }, {
-    name: 'account_name',
-    description: 'Account that the environment belongs to',
-    required: false
   }];
 
   async run() {
     const { args, flags } = this.parse(EnvironmentUpdate)
 
-    let prompted_account: any;
-    let answers: any = await inquirer.prompt([{
-      type: 'input',
-      name: 'account_name',
-      message: 'What account does the environment belong to?',
-      when: !args.account_name,
-      validate: async (value: any, answers: any) => {
-        if (!value) {
-          return 'You must select an account';
-        }
-        try {
-          prompted_account = (await this.app.api.get(`/accounts/${value}`)).data;
-          if (prompted_account) {
-            return true;
-          }
-        } catch (err) {
-          return `You do not have access to the account: ${chalk.blue(value)}`;
-        }
-      },
-    }]);
-
+    const [account_name, env_name] = args.namespaced_environment.split('/');
     let account;
-    if (!prompted_account) {
-      const selected_account_name = answers.account_name || args.account_name;
-      try {
-        account = (await this.app.api.get(`/accounts/${selected_account_name}`)).data;
-      } catch (err) {
-        throw new Error(`You do not have access to the account ${selected_account_name}`);
-      }
+    try {
+      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    } catch (err) {
+      throw new Error(`The account ${account_name} does not exist.`);
     }
 
     cli.action.start(chalk.green('Updating environment'));
-    answers = { ...args, ...flags, ...answers };
-    const { data: account_environment } = await this.app.api.get(`/accounts/${(account || prompted_account).id}/environments/${answers.environment}`);
+    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
+    const answers = { ...args, ...flags };
     await this.app.api.put(`/environments/${account_environment.id}`, {
       host: answers.host,
       service_token: await readIfFile(answers.service_token),

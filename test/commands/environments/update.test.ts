@@ -40,7 +40,7 @@ describe('environment:update', () => {
       await EnvironmentUpdate.run([]);
       expect(true, 'no error thrown').to.equal(false);
     } catch (err) {
-      expect(err.message).to.equal('Missing 1 required arg:\nenvironment  Name of the environment to destroy\nSee more help with --help');
+      expect(err.message).to.equal('Missing 1 required arg:\nnamespaced_environment  Name of the environment to destroy\nSee more help with --help');
     }
   });
 

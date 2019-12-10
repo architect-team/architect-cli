@@ -23,67 +23,39 @@ export default class EnvironmentDestroy extends Command {
   };
 
   static args = [{
-    name: 'environment',
+    name: 'namespaced_environment',
     description: 'Name of the environment to destroy',
     required: true,
     parse: (value: string) => value.toLowerCase(),
-  }, {
-    name: 'account_name',
-    description: 'Account that the environment belongs to',
-    required: false
   }];
 
   async run() {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
-    let prompted_account: any;
-    let answers: any = await inquirer.prompt([{
-      type: 'input',
-      name: 'account_name',
-      message: 'What account does the environment belong to?',
-      when: !args.account_name,
-      validate: async (value: any, answers: any) => {
-        if (!value) {
-          return 'You must select an account';
-        }
-        try {
-          prompted_account = (await this.app.api.get(`/accounts/${value}`)).data;
-          if (prompted_account) {
-            return true;
-          }
-        } catch (err) {
-          return `You do not have access to the account: ${chalk.blue(value)}`;
-        }
-      },
-    }]);
-
+    const [account_name, env_name] = args.namespaced_environment.split('/');
     let account;
-    if (!prompted_account) {
-      const selected_account_name = answers.account_name || args.account_name;
-      try {
-        account = (await this.app.api.get(`/accounts/${selected_account_name}`)).data;
-      } catch (err) {
-        throw new Error(`You do not have access to the account ${selected_account_name}`);
-      }
+    try {
+      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    } catch (err) {
+      throw new Error(`The account ${account_name} does not exist.`);
     }
-    answers = Object.assign({}, answers, await inquirer.prompt([{
+
+    let answers = await inquirer.prompt([{
       type: 'input',
       name: 'destroy',
       message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
       validate: (value: any, answers: any) => {
-        const environment = args.environment || answers.environment;
-        if (value === environment) {
-          answers.environment = environment;
+        if (value === env_name) {
           return true;
         }
-        return `Name must match: ${chalk.blue(environment)}`;
+        return `Name must match: ${chalk.blue(env_name)}`;
       },
       when: !flags.auto_approve,
-    }]));
+    }]);
 
     cli.action.start(chalk.green('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
-    const { data: account_environment } = await this.app.api.get(`/accounts/${(account || prompted_account).id}/environments/${answers.environment}`);
+    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
     await this.app.api.delete(`/environments/${account_environment.id}`, {
       params: {
         force: answers.force ? 1 : 0,
