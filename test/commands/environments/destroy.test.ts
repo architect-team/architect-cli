@@ -1,18 +1,18 @@
-import {expect} from '@oclif/test';
+import { expect } from '@oclif/test';
+import fs from 'fs-extra';
+import moxios from 'moxios';
 import os from 'os';
 import path from 'path';
-import fs from 'fs-extra';
 import sinon from 'sinon';
-import moxios from 'moxios';
-import EnvironmentDestroy from '../../../src/commands/environments/destroy';
 import AppConfig from '../../../src/app-config/config';
-import ARCHITECTPATHS from '../../../src/paths';
 import AppService from '../../../src/app-config/service';
+import EnvironmentDestroy from '../../../src/commands/environments/destroy';
+import ARCHITECTPATHS from '../../../src/paths';
 
 describe('environment:destroy', () => {
   let tmp_dir = os.tmpdir();
 
-  beforeEach(function() {
+  beforeEach(function () {
     // Stub the log_level
     const config = new AppConfig('', {
       log_level: 'debug',
@@ -26,7 +26,7 @@ describe('environment:destroy', () => {
     moxios.install();
   });
 
-  afterEach(function() {
+  afterEach(function () {
     // Restore stubs
     sinon.restore();
     moxios.uninstall();
@@ -40,7 +40,7 @@ describe('environment:destroy', () => {
       await EnvironmentDestroy.run([]);
       expect(true, 'no error thrown').to.equal(false);
     } catch (err) {
-      expect(err.message).to.equal('Missing 1 required arg:\nname  Name of the environment to destroy\nSee more help with --help');
+      expect(err.message).to.equal('Missing 1 required arg:\nenvironment  Name of the environment to destroy\nSee more help with --help');
     }
   });
 
