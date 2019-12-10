@@ -39,10 +39,10 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       };
 
       for (const [param_name, param_value] of Object.entries(compose.services[node.normalized_ref].environment || {})) {
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[\.-]/g, '_')] = param_value;
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
       }
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
-        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default?.valueFrom) {
+        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default ?.valueFrom) {
           const param_target_service_name = param_value.default.valueFrom.dependency;
           const param_target_datastore_name = param_value.default.valueFrom.datastore;
           if (param_target_service_name) {
@@ -50,15 +50,15 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
             if (!param_target_service) {
               throw new Error(`Service ${param_target_service_name} not found for config of ${node.name}`);
             }
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[\.-]/g, '_')] =
-              param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[\.-]/g, '_');
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+              param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
           } else if (param_target_datastore_name) {
             const param_target_datastore = dependency_manager.graph.edges.filter(edge => edge.from.name === node.name && (edge.to as DatastoreNode).key === param_target_datastore_name);
             if (!param_target_datastore.length) {
               throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.name}`);
             }
-            env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[\.-]/g, '_')] =
-              param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/[\.-]/g, '_');
+            env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
+              param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/[.-]/g, '_');
           }
         }
       }
