@@ -12,7 +12,7 @@ export default class LocalDependencyGraph extends DependencyGraph {
         { value: LocalServiceNode, name: "local" },
         { value: DatastoreNode, name: "datastore" },
         { value: ExternalNode, name: "external" },
-        { value: ServiceNode, name: "external" },
+        { value: ServiceNode, name: "service" },
       ],
     },
   })
