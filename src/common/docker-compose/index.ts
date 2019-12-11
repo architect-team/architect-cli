@@ -42,7 +42,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
       }
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
-        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default ?.valueFrom) {
+        if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default?.valueFrom) {
           const param_target_service_name = param_value.default.valueFrom.dependency;
           const param_target_datastore_name = param_value.default.valueFrom.datastore;
           if (param_target_service_name) {
@@ -119,7 +119,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
     for (const [param_name, param_value] of service_params) {
       const real_param_name = param_name.replace(`${service_prefix}_`, '');
-      if (!written_env_keys.find(key => key === real_param_name)) {
+      if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
         compose.services[service_name].environment![real_param_name] = param_value;
       }
     }
