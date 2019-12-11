@@ -63,15 +63,13 @@ export default class LocalDependencyManager extends DependencyManager {
         } else if (typeof param_value === 'object' && datastoreValueFromParam.valueFrom?.datastore) { // param from datastore
           const datastore = dependency_manager.graph.nodes.get(`${node.name}:${node.tag}.${datastoreValueFromParam.valueFrom.datastore}`);
           if (!datastore) {
-            throw new Error(`Dependency ${valueFromParam.valueFrom.dependency} does not exist.`);
+            throw new Error(`Datastore ${datastoreValueFromParam.valueFrom.datastore} does not exist.`);
           }
           node.parameters[param_name] = param_value.valueFrom.value.replace(/\$HOST/g, datastore.normalized_ref);
           node.parameters[param_name] = node.parameters[param_name].toString().replace(/\$PORT/g, datastore.ports.target.toString());
         }
       }
-      console.log(node.parameters)
     });
-
 
     return dependency_manager;
   }
