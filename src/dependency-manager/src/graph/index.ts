@@ -48,18 +48,11 @@ export default abstract class DependencyGraph {
     return this.__nodes_map;
   }
 
-  getEdgesWithNodes() {
-    const edges = [];
-    for (const edge of this.edges) {
-      edges.push({
-        ...edge,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        from: this.nodes_map.get(edge.from)!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        to: this.nodes_map.get(edge.to)!,
-      });
-    }
-    return edges;
+  getNodeByRef(ref: string): DependencyNode {
+    const node = this.nodes_map.get(ref);
+    if (!node)
+      throw new Error(`Node not found for ref: ${ref}`);
+    return node;
   }
 
   getNodeDependencies(node: DependencyNode): DependencyNode[] {
@@ -67,8 +60,7 @@ export default abstract class DependencyGraph {
 
     for (const edge of this.edges) {
       if (edge.from === node.ref) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        nodes.set(edge.to, this.nodes_map.get(edge.to)!);
+        nodes.set(edge.to, this.getNodeByRef(edge.to));
       }
     }
 
