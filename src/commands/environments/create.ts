@@ -306,7 +306,6 @@ export default class EnvironmentCreate extends Command {
     }]);
 
     answers = { ...args, ...flags, ...answers };
-
     return this.createArchitectEnvironment({
       name: answers.name,
       namespace: answers.namespace,

@@ -53,7 +53,11 @@ export default class Push extends Command {
       if (node instanceof LocalServiceNode) {
         const tag = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
         cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
-        await pushImage(tag);
+        try {
+          await pushImage(tag);
+        } catch (err) {
+          cli.action.stop(chalk.red(`Push failed for image ${node.name}`));
+        }
         cli.action.stop(chalk.green(`Successfully pushed Docker image for ${node.name}`));
       }
     });
