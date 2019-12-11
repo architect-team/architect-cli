@@ -12,8 +12,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     volumes: {},
   };
 
-  const env_params_to_expand: { [key: string]: string } = {};
-
   // Enrich base service details
   dependency_manager.graph.nodes.forEach(node => {
 
