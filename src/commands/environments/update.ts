@@ -1,10 +1,9 @@
-import {flags} from '@oclif/command';
-import Command from '../../base-command';
-import untildify from 'untildify';
-import inquirer from 'inquirer';
-import fs from 'fs-extra';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { EnvironmentNameValidator } from '../../common/utils/validation';
+import { cli } from 'cli-ux';
+import fs from 'fs-extra';
+import untildify from 'untildify';
+import Command from '../../base-command';
 import { readIfFile } from '../../common/utils/file';
 
 export default class EnvironmentUpdate extends Command {
@@ -31,35 +30,32 @@ export default class EnvironmentUpdate extends Command {
   };
 
   static args = [{
-    name: 'name',
+    name: 'namespaced_environment',
     description: 'Name of the environment to update',
+    required: true,
     parse: (value: string) => value.toLowerCase(),
   }];
 
   async run() {
-    const {args, flags} = this.parse(EnvironmentUpdate)
+    const { args, flags } = this.parse(EnvironmentUpdate)
 
-    let answers: any = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'name',
-        when: !args.name,
-        filter: value => value.toLowerCase(),
-        validate: value => {
-          if (EnvironmentNameValidator.test(value)) return true;
-          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-        },
-      }
-    ]);
-    answers = { ...args, ...flags, ...answers };
+    const [account_name, env_name] = args.namespaced_environment.split('/');
+    let account;
+    try {
+      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    } catch (err) {
+      throw new Error(`The account ${account_name} does not exist.`);
+    }
 
-    await this.app.api.put(`/environments/${answers.name}`, {
+    cli.action.start(chalk.green('Updating environment'));
+    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
+    const answers = { ...args, ...flags };
+    await this.app.api.put(`/environments/${account_environment.id}`, {
       host: answers.host,
       service_token: await readIfFile(answers.service_token),
       cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
       config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
     });
-
-    this.log(chalk.green('Environment updated successfully'));
+    cli.action.stop(chalk.green('Environment updated successfully'));
   }
 }

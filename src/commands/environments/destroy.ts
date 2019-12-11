@@ -1,6 +1,7 @@
-import {flags} from '@oclif/command';
-import inquirer from 'inquirer';
+import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { cli } from 'cli-ux';
+import inquirer from 'inquirer';
 import Command from '../../base-command';
 
 export default class EnvironmentDestroy extends Command {
@@ -22,47 +23,44 @@ export default class EnvironmentDestroy extends Command {
   };
 
   static args = [{
-    name: 'name',
+    name: 'namespaced_environment',
     description: 'Name of the environment to destroy',
     required: true,
+    parse: (value: string) => value.toLowerCase(),
   }];
 
   async run() {
-    const {args, flags} = this.parse(EnvironmentDestroy);
+    const { args, flags } = this.parse(EnvironmentDestroy);
 
-    let answers: any = await inquirer.prompt([
-      {
-        type: 'autocomplete',
-        name: 'environment',
-        message: 'Select environment:',
-        source: async (_: any, input: string) => {
-          const params = { q: input };
-          const { data: environments } = await this.app.api.get('/environments', { params });
-          return environments.map((environment: any) => environment.name);
-        },
-        when: !args.environment,
-      },
-      {
-        type: 'input',
-        name: 'destroy',
-        message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
-        validate: (value, answers: any) => {
-          const environment = args.environment || answers.environment;
-          if (value === environment) {
-            return true;
-          }
-          return `Name must match: ${chalk.blue(environment)}`;
-        },
-        when: !flags.auto_approve,
-      },
-    ]);
+    const [account_name, env_name] = args.namespaced_environment.split('/');
+    let account;
+    try {
+      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    } catch (err) {
+      throw new Error(`The account ${account_name} does not exist.`);
+    }
 
+    let answers = await inquirer.prompt([{
+      type: 'input',
+      name: 'destroy',
+      message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
+      validate: (value: any, answers: any) => {
+        if (value === env_name) {
+          return true;
+        }
+        return `Name must match: ${chalk.blue(env_name)}`;
+      },
+      when: !flags.auto_approve,
+    }]);
+
+    cli.action.start(chalk.green('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
-    await this.app.api.delete(`/environments/${answers.environment}`, {
+    const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
+    await this.app.api.delete(`/environments/${account_environment.id}`, {
       params: {
         force: answers.force ? 1 : 0,
       },
     });
-    this.log(chalk.green('Environment destroy'));
+    cli.action.stop(chalk.green('Environment destroyed'));
   }
 }
