@@ -5,11 +5,11 @@ interface DatastoreNodeOptions {
 }
 
 export class DatastoreNode extends DependencyNode {
-  key: string;
+  __type = 'datastore';
+  key!: string;
 
   constructor(options: DependencyNodeOptions & DatastoreNodeOptions) {
     super(options);
-    this.key = options.key;
   }
 
   /**

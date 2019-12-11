@@ -23,7 +23,7 @@ const inject_params = (environment: { [key: string]: string | number }, data_nod
     injected_params[name] = newValue;
   }
   return injected_params;
-}
+};
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -33,8 +33,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
   };
 
   // Enrich base service details
-  dependency_manager.graph.nodes.forEach(node => {
-
+  for (const node of dependency_manager.graph.nodes) {
     if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref] = {
         ports: [`${node.ports.expose}:${node.ports.target}`],
@@ -85,10 +84,10 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     } else if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref].image = node.image;
     }
-  });
+  }
 
   // Enrich service relationships
-  dependency_manager.graph.edges.forEach(edge => {
+  for (const edge of dependency_manager.graph.getEdgesWithNodes()) {
     // Parse the ARCHITECT param
     const service = compose.services[edge.from.normalized_ref];
     service.environment = service.environment || {};
@@ -135,7 +134,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     // Re-encode the ARCHITECT param
     service.environment.ARCHITECT = JSON.stringify(service.environment.ARCHITECT || {});
     compose.services[edge.from.normalized_ref] = service;
-  });
+  }
 
   return compose;
 };

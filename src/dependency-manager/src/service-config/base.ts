@@ -13,7 +13,7 @@ export interface ServiceParameter {
 export interface ServiceDatastore {
   docker: {
     image: string;
-    target_port: string | number;
+    target_port: number;
   };
   parameters: {
     [key: string]: ServiceParameter;

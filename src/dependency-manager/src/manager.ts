@@ -21,7 +21,7 @@ interface VaultParameter {
 }
 
 export default abstract class DependencyManager {
-  graph: DependencyGraph = new DependencyGraph();
+  abstract graph: DependencyGraph;
   environment: EnvironmentConfig;
 
   constructor(environment_config?: EnvironmentConfig) {
@@ -32,13 +32,13 @@ export default abstract class DependencyManager {
    * Loop through the nodes and enrich the graph with edges between notifiers and subscribers
    */
   protected loadSubscriptions() {
-    for (const node of this.graph.nodes.values()) {
+    for (const node of this.graph.nodes) {
       for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
-        const ref = Array.from(this.graph.nodes.keys()).find(key => key.startsWith(svc_name));
+        const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
-        if (ref && this.graph.nodes.has(ref)) {
+        if (ref && this.graph.nodes_map.has(ref)) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const source = this.graph.nodes.get(ref)!;
+          const source = this.graph.nodes_map.get(ref)!;
           this.graph.addEdge(source, node, 'notification');
         }
       }
@@ -131,7 +131,7 @@ export default abstract class DependencyManager {
    */
   protected async loadDatastores(parent_node: DependencyNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      let dep_node_config = {
+      const dep_node_config = {
         key: ds_name,
         service_config: parent_node.service_config,
         tag: parent_node.tag,
