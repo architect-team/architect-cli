@@ -36,31 +36,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           ...node.parameters,
         },
       };
-
-      // for (const [param_name, param_value] of Object.entries(compose.services[node.normalized_ref].environment || {})) {
-      //   env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
-      // }
-      // for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
-      //   if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default?.valueFrom) {
-      //     const param_target_service_name = param_value.default.valueFrom.dependency;
-      //     const param_target_datastore_name = param_value.default.valueFrom.datastore;
-      //     if (param_target_service_name) {
-      //       const param_target_service = dependency_manager.graph.nodes.get(param_target_service_name);
-      //       if (!param_target_service) {
-      //         throw new Error(`Service ${param_target_service_name} not found for config of ${node.name}`);
-      //       }
-      //       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-      //         param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
-      //     } else if (param_target_datastore_name) {
-      //       const param_target_datastore = dependency_manager.graph.edges.filter(edge => edge.from.name === node.name && (edge.to as DatastoreNode).key === param_target_datastore_name);
-      //       if (!param_target_datastore.length) {
-      //         throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.name}`);
-      //       }
-      //       env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
-      //         param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/[.-]/g, '_');
-      //     }
-      //   }
-      // }
     }
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
@@ -92,37 +67,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       compose.services[node.normalized_ref].image = node.image;
     }
   });
-
-  // const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
-  // dependency_manager.graph.nodes.forEach(node => {
-  //   const service_name = node.normalized_ref;
-  //   const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
-  //   const written_env_keys = [];
-
-  //   // map datastore params
-  //   const service_datastore_edges = dependency_manager.graph.edges.filter(edge => edge.from.normalized_ref === service_name && edge.to instanceof DatastoreNode);
-  //   for (const edge of service_datastore_edges) {
-  //     const datastore_prefix = `${(edge.to as DatastoreNode).key}_${service_prefix}`.toUpperCase();
-  //     const service_datastore_params = Object.entries(expanded_params || {})
-  //       .filter(([key, _]) => key.startsWith(datastore_prefix));
-  //     for (const [param_name, param_value] of service_datastore_params) {
-  //       const real_param_name = param_name.replace(`${datastore_prefix}_`, '');
-  //       compose.services[service_name].environment![real_param_name] = param_value;
-  //       written_env_keys.push(param_name.replace(`${datastore_prefix}_`, ''));
-  //     }
-  //   }
-
-  //   // map service params
-  //   const service_params = Object.entries(expanded_params || {})
-  //     .filter(([key, _]) => key.startsWith(service_prefix));
-
-  //   for (const [param_name, param_value] of service_params) {
-  //     const real_param_name = param_name.replace(`${service_prefix}_`, '');
-  //     if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
-  //       compose.services[service_name].environment![real_param_name] = param_value;
-  //     }
-  //   }
-  // });
 
   // Enrich service relationships
   dependency_manager.graph.edges.forEach(edge => {
