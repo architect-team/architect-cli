@@ -1,3 +1,4 @@
+import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
 import { ServiceConfig } from '../../service-config/base';
 
 export interface DependencyNodeOptions {
@@ -9,7 +10,7 @@ export interface DependencyNodeOptions {
     expose: string | number;
   };
   service_config: ServiceConfig;
-  parameters?: { [key: string]: string | number };
+  parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
@@ -17,7 +18,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   host: string;
   ports: { target: string | number; expose: string | number };
   service_config: ServiceConfig;
-  parameters: { [key: string]: string | number };
+  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
   image?: string;
 
   protected constructor(options: DependencyNodeOptions) {

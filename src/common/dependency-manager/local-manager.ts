@@ -1,6 +1,7 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import { DatastoreValueFromParameter, ValueFromParameter } from '../../dependency-manager/src/manager';
 import PortUtil from '../utils/port';
 import { LocalServiceNode } from './local-service-node';
 
@@ -40,6 +41,38 @@ export default class LocalDependencyManager extends DependencyManager {
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
+
+    // find param that has valuefrom as key
+    // recurse to dependencies from this.graph to find an actual value that isn't valuefrom, and set to env_params
+
+    //console.log(dependency_manager.graph.nodes)
+    dependency_manager.graph.nodes.forEach(node => {
+      for (const [param_name, param_value] of Object.entries(node.parameters)) {
+        const valueFromParam = param_value as ValueFromParameter;
+        const datastoreValueFromParam = param_value as DatastoreValueFromParameter;
+        if (typeof param_value === 'string' && param_value.indexOf('$') > -1) { // param from current service
+          node.parameters[param_name] = param_value.replace(/\$HOST/g, node.normalized_ref);
+          node.parameters[param_name] = node.parameters[param_name].toString().replace(/\$PORT/g, node.ports.target.toString());
+        } else if (typeof param_value === 'object' && valueFromParam.valueFrom?.dependency) { // param from a parent service
+          const dependency = dependency_manager.graph.nodes.get(valueFromParam.valueFrom.dependency);
+          if (!dependency) {
+            throw new Error(`Dependency ${valueFromParam.valueFrom.dependency} does not exist.`);
+          }
+          node.parameters[param_name] = param_value.valueFrom.value.replace(/\$HOST/g, dependency.normalized_ref);
+          node.parameters[param_name] = node.parameters[param_name].toString().replace(/\$PORT/g, dependency.ports.target.toString());
+        } else if (typeof param_value === 'object' && datastoreValueFromParam.valueFrom?.datastore) { // param from datastore
+          const datastore = dependency_manager.graph.nodes.get(`${node.name}:${node.tag}.${datastoreValueFromParam.valueFrom.datastore}`);
+          if (!datastore) {
+            throw new Error(`Dependency ${valueFromParam.valueFrom.dependency} does not exist.`);
+          }
+          node.parameters[param_name] = param_value.valueFrom.value.replace(/\$HOST/g, datastore.normalized_ref);
+          node.parameters[param_name] = node.parameters[param_name].toString().replace(/\$PORT/g, datastore.ports.target.toString());
+        }
+      }
+      console.log(node.parameters)
+    });
+
+
     return dependency_manager;
   }
 

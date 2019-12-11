@@ -20,6 +20,20 @@ interface VaultParameter {
   };
 }
 
+export interface ValueFromParameter {
+  valueFrom: {
+    dependency: string;
+    value: string;
+  }
+}
+
+export interface DatastoreValueFromParameter {
+  valueFrom: {
+    datastore: string;
+    value: string;
+  }
+}
+
 export default abstract class DependencyManager {
   graph: DependencyGraph = new DependencyGraph();
   environment: EnvironmentConfig;
@@ -53,7 +67,7 @@ export default abstract class DependencyManager {
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
-  ): Promise<{ [key: string]: string | number }> {
+  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
 
     let raw_params: { [key: string]: string | number | VaultParameter } = {};
@@ -96,18 +110,18 @@ export default abstract class DependencyManager {
     }
 
     return Object.keys(parameters).reduce(
-      (params: { [s: string]: string | number }, key: string) => {
+      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
         if (service_param.required && !env_params.has(key)) {
           throw new MissingRequiredParamError(key, service_param.description, service_ref);
         }
 
         let val = env_params.get(key) || service_param.default || '';
-        if (typeof val !== 'string') {
+        if (typeof val === 'number') {
           val = val.toString();
         }
 
-        if (val.startsWith('file:')) {
+        if (typeof val === 'string' && val.startsWith('file:')) {
           val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
         params[key] = val;
