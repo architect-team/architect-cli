@@ -8,7 +8,7 @@ interface EnvironmentParameters {
 
 interface ServiceDatastore {
   host?: string;
-  port?: string | number;
+  port?: number;
   parameters: EnvironmentParameters;
 }
 
@@ -21,7 +21,7 @@ export interface EnvironmentVault {
 
 export interface EnvironmentService {
   host?: string;
-  port?: string | number;
+  port?: number;
   parameters: EnvironmentParameters;
   datastores: {
     [key: string]: ServiceDatastore;
@@ -32,6 +32,7 @@ export interface EnvironmentService {
 }
 
 export abstract class EnvironmentConfig {
+  abstract version: string;
   abstract getVaults(): { [key: string]: EnvironmentVault };
   abstract getServices(): { [key: string]: EnvironmentService };
 

@@ -49,7 +49,7 @@ export default class Push extends Command {
       throw new MissingContextError();
     }
 
-    dependency_manager.graph.nodes.forEach(async (node) => {
+    for (const node of dependency_manager.graph.nodes) {
       if (node instanceof LocalServiceNode) {
         const tag = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
         cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
@@ -60,6 +60,6 @@ export default class Push extends Command {
         }
         cli.action.stop(chalk.green(`Successfully pushed Docker image for ${node.name}`));
       }
-    });
+    }
   }
 }

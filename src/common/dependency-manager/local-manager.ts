@@ -2,10 +2,12 @@ import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import PortUtil from '../utils/port';
+import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
 
 
 export default class LocalDependencyManager extends DependencyManager {
+  graph: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
 
@@ -14,6 +16,7 @@ export default class LocalDependencyManager extends DependencyManager {
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
     super(env_config);
+    this.graph = new LocalDependencyGraph(env_config.version);
     this.api = api;
     this.config_path = config_path || '';
   }
@@ -53,12 +56,12 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<DependencyNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
 
-    if (this.graph.nodes.has(`${config.getName()}:latest`)) {
+    if (this.graph.nodes_map.has(`${config.getName()}:latest`)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return this.graph.nodes.get(`${config.getName()}:latest`)!;
+      return this.graph.nodes_map.get(`${config.getName()}:latest`)!;
     }
 
-    let node = new LocalServiceNode({
+    const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
       tag: 'latest',
@@ -78,8 +81,7 @@ export default class LocalDependencyManager extends DependencyManager {
       node.command = config.getDebugOptions()?.command;
     }
 
-    node = this.graph.addNode(node) as LocalServiceNode;
-    return node;
+    return this.graph.addNode(node);
   }
 
   /**

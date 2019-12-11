@@ -161,7 +161,7 @@ export default class Install extends Command {
       }
     }
 
-    for (const node of dependency_manager.graph.nodes.values()) {
+    for (const node of dependency_manager.graph.nodes) {
       // Dependencies can only be installed on local nodes
       if (node instanceof LocalServiceNode) {
         this.log(chalk.blue(`Installing dependencies for ${node.name}`));
