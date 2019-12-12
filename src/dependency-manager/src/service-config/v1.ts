@@ -35,6 +35,7 @@ interface ApiSpecV1 {
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
+  __version = '1.0.0';
   name = '';
   description?: string;
   keywords?: string[];

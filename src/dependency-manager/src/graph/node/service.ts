@@ -17,11 +17,12 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   tag = 'latest';
   @Type(() => ServiceConfig, {
     discriminator: {
-      property: "version",
+      property: '__version',
       subTypes: [
-        { value: ServiceConfigV1, name: "1.0.0" },
+        { value: ServiceConfigV1, name: '1.0.0' },
       ],
     },
+    keepDiscriminatorProperty: true,
   })
   service_config!: ServiceConfig;
 

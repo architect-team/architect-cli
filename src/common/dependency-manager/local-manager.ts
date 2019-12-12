@@ -16,7 +16,7 @@ export default class LocalDependencyManager extends DependencyManager {
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
     super(env_config);
-    this.graph = new LocalDependencyGraph(env_config.version);
+    this.graph = new LocalDependencyGraph(env_config.__version);
     this.api = api;
     this.config_path = config_path || '';
   }

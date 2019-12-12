@@ -7,14 +7,15 @@ import { LocalServiceNode } from './local-service-node';
 export default class LocalDependencyGraph extends DependencyGraph {
   @Type(() => DependencyNode, {
     discriminator: {
-      property: "__type",
+      property: '__type',
       subTypes: [
-        { value: LocalServiceNode, name: "local" },
-        { value: DatastoreNode, name: "datastore" },
-        { value: ExternalNode, name: "external" },
-        { value: ServiceNode, name: "service" },
+        { value: LocalServiceNode, name: 'local' },
+        { value: DatastoreNode, name: 'datastore' },
+        { value: ExternalNode, name: 'external' },
+        { value: ServiceNode, name: 'service' },
       ],
     },
+    keepDiscriminatorProperty: true,
   })
   nodes: DependencyNode[] = [];
 }
