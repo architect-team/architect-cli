@@ -34,7 +34,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         },
       };
     }
-    console.log('****************looking')
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       const current_environment = compose.services[node.normalized_ref].environment;
@@ -68,8 +67,8 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
   // Enrich service relationships
   for (const edge of dependency_manager.graph.edges) {
-    const node_from = dependency_manager.graph.getNodeByRef(edge.from.normalized_ref);
-    const node_to = dependency_manager.graph.getNodeByRef(edge.to.normalized_ref);
+    const node_from = dependency_manager.graph.getNodeByRef(edge.from);
+    const node_to = dependency_manager.graph.getNodeByRef(edge.to);
 
     // Parse the ARCHITECT param
     const service = compose.services[node_from.normalized_ref];

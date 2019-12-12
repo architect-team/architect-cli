@@ -24,14 +24,14 @@ export interface ValueFromParameter {
   valueFrom: {
     dependency: string;
     value: string;
-  }
+  };
 }
 
 export interface DatastoreValueFromParameter {
   valueFrom: {
     datastore: string;
     value: string;
-  }
+  };
 }
 
 export default abstract class DependencyManager {

@@ -63,9 +63,9 @@ export default class LocalDependencyManager extends DependencyManager {
       const written_env_keys = [];
 
       // map datastore params
-      const service_datastore_edges = dependency_manager.graph.edges.filter(edge => edge.from.normalized_ref === service_name && edge.to instanceof DatastoreNode);
-      for (const edge of service_datastore_edges) {
-        const datastore_prefix = `${(edge.to as DatastoreNode).key}_${service_prefix}`.toUpperCase();
+      const node_datastores = dependency_manager.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
+      for (const datastore of node_datastores) {
+        const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
         const service_datastore_params = Object.entries(expanded_params || {})
           .filter(([key, _]) => key.startsWith(datastore_prefix));
         for (const [param_name, param_value] of service_datastore_params) {
@@ -85,7 +85,7 @@ export default class LocalDependencyManager extends DependencyManager {
           node.parameters[real_param_name] = param_value;
         }
       }
-    };
+    }
   }
 
   static async createFromPath(api: AxiosInstance, env_config_path: string): Promise<LocalDependencyManager> {
