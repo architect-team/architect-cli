@@ -35,6 +35,10 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       .replace(/\//g, '.');
   }
 
+  get env_ref() {
+    return this.ref.split(':')[0];
+  }
+
   abstract get ref(): string;
 
   get protocol() {

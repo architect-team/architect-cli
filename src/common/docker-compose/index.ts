@@ -50,14 +50,14 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           HOST: node.normalized_ref,
           PORT: node.ports.target.toString(),
           ARCHITECT: JSON.stringify({
-            [node.ref]: {
+            [node.env_ref]: {
               host: `${node.protocol}${node.normalized_ref}`,
               port: node.ports.target.toString(),
               datastores: {},
               subscriptions: {},
             },
           }),
-          ARCHITECT_CURRENT_SERVICE: node.ref,
+          ARCHITECT_CURRENT_SERVICE: node.env_ref,
           ...node.parameters,
         },
       };
@@ -67,7 +67,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       const current_environment = compose.services[node.normalized_ref].environment;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const ARCHITECT = JSON.parse(current_environment!.ARCHITECT);
-      ARCHITECT[node.ref].api = node.api.type;
+      ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
       compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment || {}, node));
@@ -106,20 +106,20 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
     // Handle datastore credential enrichment to callers
     if (node_to instanceof DatastoreNode) {
-      service.environment.ARCHITECT[node_from.ref].datastores[node_to.key] = {
+      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
         port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
       service.environment = Object.assign({}, service.environment, inject_params(service.environment, node_to));
     } else if (node_to instanceof ExternalNode) {
-      service.environment.ARCHITECT[node_from.ref].datastores[node_to.key] = {
+      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: node_to.host,
         port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ServiceNode) {
-      service.environment.ARCHITECT[node_to.ref] = {
+      service.environment.ARCHITECT[node_to.env_ref] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
         port: node_to.ports.target.toString(),
         api: node_to.api.type,
@@ -131,13 +131,13 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     if (edge.type === 'notification' && node_to instanceof ServiceNode) {
       const to = node_to as ServiceNode;
       const to_subscriptions = to.service_config.getSubscriptions();
-      service.environment.ARCHITECT[node_from.ref].subscriptions =
+      service.environment.ARCHITECT[node_from.env_ref].subscriptions =
         Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
           Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
             subscriptions[event_name] = { [to.service_config.getName()]: to_subscriptions[publisher_name][event_name].data };
           });
           return subscriptions;
-        }, service.environment.ARCHITECT[node_from.ref].subscriptions);
+        }, service.environment.ARCHITECT[node_from.env_ref].subscriptions);
     } else if (!(node_to instanceof ExternalNode)) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }
