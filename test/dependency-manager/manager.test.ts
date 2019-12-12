@@ -7,6 +7,7 @@ import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
+import { ServiceConfigV1 } from '../../src/dependency-manager/src/service-config/v1';
 
 describe('manager', function () {
 
@@ -30,5 +31,6 @@ describe('manager', function () {
     expect(graph.nodes).lengthOf(4);
     expect(graph.nodes[0]).instanceOf(LocalServiceNode);
     expect(graph.edges).lengthOf(3);
+    expect((graph.nodes[0] as LocalServiceNode).service_config).instanceOf(ServiceConfigV1);
   });
 });

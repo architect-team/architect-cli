@@ -32,7 +32,7 @@ export interface EnvironmentService {
 }
 
 export abstract class EnvironmentConfig {
-  abstract version: string;
+  abstract __version: string;
   abstract getVaults(): { [key: string]: EnvironmentVault };
   abstract getServices(): { [key: string]: EnvironmentService };
 

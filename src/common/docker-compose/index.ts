@@ -22,24 +22,24 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
           HOST: node.normalized_ref,
           PORT: node.ports.target.toString(),
           ARCHITECT: JSON.stringify({
-            [node.name]: {
+            [node.env_ref]: {
               host: `${node.protocol}${node.normalized_ref}`,
               port: node.ports.target.toString(),
               datastores: {},
               subscriptions: {},
             },
           }),
-          ARCHITECT_CURRENT_SERVICE: node.name,
+          ARCHITECT_CURRENT_SERVICE: node.env_ref,
           ...node.parameters,
         },
       };
     }
 
-    if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
+    if (node instanceof ServiceNode) {
       const current_environment = compose.services[node.normalized_ref].environment;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const ARCHITECT = JSON.parse(current_environment!.ARCHITECT);
-      ARCHITECT[node.name].api = node.api.type;
+      ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
     }
@@ -60,7 +60,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       if (fs.pathExistsSync(src_path)) {
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
       }
-    } else if (!(node instanceof ExternalNode)) {
+    } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref].image = node.image;
     }
   }
@@ -77,19 +77,19 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
 
     // Handle datastore credential enrichment to callers
     if (node_to instanceof DatastoreNode) {
-      service.environment.ARCHITECT[node_from.name].datastores[node_to.key] = {
+      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
         port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ExternalNode) {
-      service.environment.ARCHITECT[node_from.name].datastores[node_to.key] = {
+      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: node_to.host,
         port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
-    } else if (node_to instanceof ServiceNode || node_to instanceof LocalServiceNode) {
-      service.environment.ARCHITECT[node_to.name] = {
+    } else if (node_to instanceof ServiceNode) {
+      service.environment.ARCHITECT[node_to.env_ref] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
         port: node_to.ports.target.toString(),
         api: node_to.api.type,
@@ -97,16 +97,16 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     }
 
     // Parse subscription logic
-    if (edge.type === 'notification' && (node_to instanceof ServiceNode || node_to instanceof LocalServiceNode)) {
+    if (edge.type === 'notification' && node_to instanceof ServiceNode) {
       const to = node_to as ServiceNode;
       const to_subscriptions = to.service_config.getSubscriptions();
-      service.environment.ARCHITECT[node_from.name].subscriptions =
+      service.environment.ARCHITECT[node_from.env_ref].subscriptions =
         Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
           Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
             subscriptions[event_name] = { [to.service_config.getName()]: to_subscriptions[publisher_name][event_name].data };
           });
           return subscriptions;
-        }, service.environment.ARCHITECT[node_from.name].subscriptions);
+        }, service.environment.ARCHITECT[node_from.env_ref].subscriptions);
     } else if (!(node_to instanceof ExternalNode)) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }

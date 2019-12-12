@@ -12,7 +12,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { getServiceApiDefinitionContents, parseImageLabel } from '../common/utils/docker';
-import { DependencyNode, ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
+import { ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
 
 export default class Install extends Command {
@@ -115,19 +115,19 @@ export default class Install extends Command {
     fs.writeFileSync(checksum_file, new_checksum_contents);
   }
 
-  private async genClientCode(source: LocalServiceNode, target: DependencyNode) {
+  private async genClientCode(source: LocalServiceNode, target: ServiceNode) {
     let target_api_definitions: { [filename: string]: string } = {};
 
-    if (target instanceof ServiceNode) {
-      target_api_definitions = await parseImageLabel(target.image!, 'api_definitions');
-    } else if (target instanceof LocalServiceNode) {
+    if (target instanceof LocalServiceNode) {
       target_api_definitions = getServiceApiDefinitionContents(target.service_path, target.service_config);
+    } else {
+      target_api_definitions = await parseImageLabel(target.image, 'api_definitions');
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
-      switch (target.service_config!.getApiSpec().type) {
+      switch (target.api.type) {
         case 'grpc':
-          return this.genGrpcStubs(source, target.name.replace(/-/g, '_'), target_api_definitions);
+          return this.genGrpcStubs(source, target.env_ref.replace(/-/g, '_'), target_api_definitions);
       }
     }
   }
@@ -164,15 +164,15 @@ export default class Install extends Command {
     for (const node of dependency_manager.graph.nodes) {
       // Dependencies can only be installed on local nodes
       if (node instanceof LocalServiceNode) {
-        this.log(chalk.blue(`Installing dependencies for ${node.name}`));
+        this.log(chalk.blue(`Installing dependencies for ${node.ref}`));
         const config = ServiceConfigBuilder.buildFromPath(node.service_path);
 
         // Install a single new dependency
         if (args.service_ref) {
-          if (args.service_ref.includes(node.name)) {
+          if (args.service_ref.includes(node.ref)) {
             throw new Error('A service cannot be a dependency for itself');
           } else if (Object.keys(config.getDependencies()).find(dep_name => args.service_ref.includes(dep_name))) {
-            this.warn(`${args.service_ref.split(':')[0]} is already installed for ${node.name}. Skipping.`);
+            this.warn(`${args.service_ref.split(':')[0]} is already installed for ${node.ref}. Skipping.`);
             return;
           }
 
@@ -192,8 +192,8 @@ export default class Install extends Command {
           const dependencies = dependency_manager.graph.getNodeDependencies(node);
           dependencies.push(node);
           for (const dep_node of dependencies) {
-            if (dep_node instanceof ServiceNode || dep_node instanceof LocalServiceNode) {
-              cli.action.start(chalk.grey(`-- Generating client code for ${dep_node.name}`), undefined, { stdout: true });
+            if (dep_node instanceof ServiceNode) {
+              cli.action.start(chalk.grey(`-- Generating client code for ${dep_node.ref}`), undefined, { stdout: true });
               await this.genClientCode(node, dep_node);
               cli.action.stop(chalk.grey('done'));
             }

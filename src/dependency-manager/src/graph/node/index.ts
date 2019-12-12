@@ -1,16 +1,13 @@
+import { Type } from 'class-transformer';
 import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
-import { ServiceConfig } from '../../service-config/base';
 
 export interface DependencyNodeOptions {
-  image?: string;
-  tag?: string;
   host?: string;
   ports: {
     target: number;
     expose: number;
   };
-  service_config: ServiceConfig;
-  parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
+  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
 class DependencyState {
@@ -21,12 +18,10 @@ class DependencyState {
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-  tag = 'latest';
   host = '0.0.0.0';
   ports!: { target: number; expose: number };
-  service_config!: ServiceConfig;
   parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
-  image?: string;
+  @Type(() => DependencyState)
   state?: DependencyState;
 
   protected constructor(options: DependencyNodeOptions) {
@@ -35,19 +30,14 @@ export abstract class DependencyNode implements DependencyNodeOptions {
     }
   }
 
-  get name() {
-    return this.service_config.getName();
-  }
-
   get normalized_ref() {
     return this.ref
       .replace(/:/g, '.')
       .replace(/\//g, '.');
   }
 
-  get ref() {
-    return `${this.service_config.getName()}:${this.tag}`;
-  }
+  abstract get env_ref(): string;
+  abstract get ref(): string;
 
   get protocol() {
     return '';
