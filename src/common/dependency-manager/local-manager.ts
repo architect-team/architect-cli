@@ -58,31 +58,33 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
     for (const node of dependency_manager.graph.nodes) {
-      const service_name = node.normalized_ref;
-      const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
-      const written_env_keys = [];
+      if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
+        const service_name = node.normalized_ref;
+        const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
+        const written_env_keys = [];
 
-      // map datastore params
-      const node_datastores = dependency_manager.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
-      for (const datastore of node_datastores) {
-        const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
-        const service_datastore_params = Object.entries(expanded_params || {})
-          .filter(([key, _]) => key.startsWith(datastore_prefix));
-        for (const [param_name, param_value] of service_datastore_params) {
-          const real_param_name = param_name.replace(`${datastore_prefix}_`, '');
-          node.parameters[real_param_name] = param_value;
-          written_env_keys.push(param_name.replace(`${datastore_prefix}_`, ''));
+        // map datastore params
+        const node_datastores = dependency_manager.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
+        for (const datastore of node_datastores) {
+          const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
+          const service_datastore_params = Object.entries(expanded_params || {})
+            .filter(([key, _]) => key.startsWith(datastore_prefix));
+          for (const [param_name, param_value] of service_datastore_params) {
+            const real_param_name = param_name.replace(`${datastore_prefix}_`, '');
+            node.parameters[real_param_name] = param_value;
+            written_env_keys.push(param_name.replace(`${datastore_prefix}_`, ''));
+          }
         }
-      }
 
-      // map service params
-      const service_params = Object.entries(expanded_params || {})
-        .filter(([key, _]) => key.startsWith(service_prefix));
+        // map service params
+        const service_params = Object.entries(expanded_params || {})
+          .filter(([key, _]) => key.startsWith(service_prefix));
 
-      for (const [param_name, param_value] of service_params) {
-        const real_param_name = param_name.replace(`${service_prefix}_`, '');
-        if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
-          node.parameters[real_param_name] = param_value;
+        for (const [param_name, param_value] of service_params) {
+          const real_param_name = param_name.replace(`${service_prefix}_`, '');
+          if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
+            node.parameters[real_param_name] = param_value;
+          }
         }
       }
     }
