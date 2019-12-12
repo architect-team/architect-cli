@@ -1,25 +1,16 @@
-import { DependencyNode, DependencyNodeOptions } from '../../dependency-manager/src';
+import { DependencyNodeOptions, ServiceNode, ServiceNodeOptions } from '../../dependency-manager/src';
 
 interface LocalServiceNodeOptions {
   service_path: string;
   command?: string;
-  api: {
-    type: string;
-    definitions?: string[];
-  };
 }
 
-export class LocalServiceNode extends DependencyNode implements LocalServiceNodeOptions {
+export class LocalServiceNode extends ServiceNode implements LocalServiceNodeOptions {
   __type = 'local';
   service_path!: string;
   command?: string;
-  api!: { type: string; definitions?: string[] };
 
-  constructor(options: LocalServiceNodeOptions & DependencyNodeOptions) {
+  constructor(options: LocalServiceNodeOptions & ServiceNodeOptions & DependencyNodeOptions) {
     super(options);
-  }
-
-  get protocol() {
-    return this.api.type === 'grpc' ? '' : 'http://';
   }
 }

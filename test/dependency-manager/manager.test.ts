@@ -31,6 +31,6 @@ describe('manager', function () {
     expect(graph.nodes).lengthOf(4);
     expect(graph.nodes[0]).instanceOf(LocalServiceNode);
     expect(graph.edges).lengthOf(3);
-    expect(graph.nodes[0].service_config).instanceOf(ServiceConfigV1);
+    expect((graph.nodes[0] as LocalServiceNode).service_config).instanceOf(ServiceConfigV1);
   });
 });

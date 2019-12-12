@@ -2,10 +2,10 @@ import axios from 'axios';
 import fs from 'fs-extra';
 import * as https from 'https';
 import untildify from 'untildify';
+import { ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
-import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
@@ -33,13 +33,15 @@ export default abstract class DependencyManager {
    */
   protected loadSubscriptions() {
     for (const node of this.graph.nodes) {
-      for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
-        const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
+      if (node instanceof ServiceNode) {
+        for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
+          const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
-        if (ref && this.graph.nodes_map.has(ref)) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const source = this.graph.nodes_map.get(ref)!;
-          this.graph.addEdge(source, node, 'notification');
+          if (ref && this.graph.nodes_map.has(ref)) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const source = this.graph.nodes_map.get(ref)!;
+            this.graph.addEdge(source, node, 'notification');
+          }
         }
       }
     }
@@ -129,19 +131,18 @@ export default abstract class DependencyManager {
   /**
    * Similar to `loadDependencies()`, but iterates over the datastores instead
    */
-  protected async loadDatastores(parent_node: DependencyNode) {
+  protected async loadDatastores(parent_node: ServiceNode) {
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
       const dep_node_config = {
+        parent_ref: parent_node.ref,
         key: ds_name,
-        service_config: parent_node.service_config,
-        tag: parent_node.tag,
         parameters: await this.getParamValues(
           parent_node.ref,
           ds_config.parameters,
           ds_name,
         ),
       };
-      const environment_service_config = this.environment.getServices()[`${parent_node.name}:${parent_node.tag}`];
+      const environment_service_config = this.environment.getServices()[parent_node.ref];
       let dep_node;
 
       if (environment_service_config?.datastores[ds_name]?.host) {
@@ -174,12 +175,11 @@ export default abstract class DependencyManager {
    * Load the dependency graph with nodes and edges associated with a services
    * dependencies and datastores
    */
-  async loadDependencies(parent_node: DependencyNode) {
+  async loadDependencies(parent_node: ServiceNode) {
     const dependency_promises = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      // eslint-disable-next-line prefer-const
-      let dep_node = await this.loadService(dep_name, dep_id);
-      dep_node = this.graph.addNode(dep_node);
+      const dep_node = await this.loadService(dep_name, dep_id);
+      this.graph.addNode(dep_node);
       this.graph.addEdge(parent_node, dep_node);
       await this.loadDatastores(dep_node);
       dependency_promises.push(() => this.loadDependencies(dep_node));
@@ -192,5 +192,5 @@ export default abstract class DependencyManager {
    * Queries the API to create a node and config object for a service based on
    * its name and tag
    */
-  abstract async loadService(service_name: string, service_tag: string): Promise<DependencyNode>;
+  abstract async loadService(service_name: string, service_tag: string): Promise<ServiceNode>;
 }
