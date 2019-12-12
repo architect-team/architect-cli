@@ -223,4 +223,32 @@ export default class LocalDependencyManager extends DependencyManager {
 
     return this.graph.addNode(node);
   }
+
+  validateNodeDependencies(node: DependencyNode) {
+    const dependencies = node.service_config.getDependencies();
+    const dependency_names = Object.entries(dependencies).map(([name, tag]) => `${name}:${tag}`);
+    const datastore_names = Object.keys(node.service_config.getDatastores());
+    const parameter_dependencies: Set<string> = new Set();
+    const datastore_dependencies: Set<string> = new Set();
+
+    for (const param_value of Object.values(node.parameters)) {
+      const valueFromParameter = param_value as ValueFromParameter;
+      const datastoreParameter = param_value as DatastoreValueFromParameter;
+      if (valueFromParameter.valueFrom.dependency) {
+        parameter_dependencies.add(valueFromParameter.valueFrom.dependency);
+      } else if (datastoreParameter.valueFrom.datastore) {
+        datastore_dependencies.add(datastoreParameter.valueFrom.datastore);
+      }
+    }
+    for (const dependency of parameter_dependencies) {
+      if (!dependency_names.includes(dependency)) {
+        throw new Error(`Invalid parameter/dependency relationship(s) for service ${node.name}`);
+      }
+    }
+    for (const datastore of datastore_dependencies) {
+      if (!datastore_names.includes(datastore)) {
+        throw new Error(`Invalid parameter/datastore relationship(s) for service ${node.name}`);
+      }
+    }
+  }
 }
