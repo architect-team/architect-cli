@@ -69,6 +69,12 @@ export default class LocalDependencyManager extends DependencyManager {
           const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
           const service_datastore_params = Object.entries(expanded_params || {})
             .filter(([key, _]) => key.startsWith(datastore_prefix));
+
+          // reverse order params by length in order to avoid key collisions
+          service_datastore_params.sort((pair1: [string, string], pair2: [string, string]) => {
+            return pair2[0].length - pair1[0].length;
+          });
+
           for (const [param_name, param_value] of service_datastore_params) {
             const real_param_name = param_name.replace(`${datastore_prefix}_`, '');
             node.parameters[real_param_name] = param_value;
@@ -79,6 +85,11 @@ export default class LocalDependencyManager extends DependencyManager {
         // map service params
         const service_params = Object.entries(expanded_params || {})
           .filter(([key, _]) => key.startsWith(service_prefix));
+
+        // reverse order params by length in order to avoid key collisions
+        service_params.sort((pair1: [string, string], pair2: [string, string]) => {
+          return pair2[0].length - pair1[0].length;
+        });
 
         for (const [param_name, param_value] of service_params) {
           const real_param_name = param_name.replace(`${service_prefix}_`, '');
