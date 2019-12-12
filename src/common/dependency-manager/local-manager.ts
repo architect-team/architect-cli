@@ -30,7 +30,12 @@ export default class LocalDependencyManager extends DependencyManager {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) {
         if (typeof param_value === 'string') {
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
+          if (param_value.indexOf('$') > -1) {
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
+          } else {
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
+          }
         }
       }
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
