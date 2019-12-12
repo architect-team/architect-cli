@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -26,7 +26,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
-      let svc_node: DependencyNode;
+      let svc_node: ServiceNode;
 
       if (env_svc_cfg.debug) {
         const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
@@ -53,24 +53,23 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort();
   }
 
-  async loadLocalService(service_path: string): Promise<DependencyNode> {
+  async loadLocalService(service_path: string): Promise<ServiceNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
 
     if (this.graph.nodes_map.has(`${config.getName()}:latest`)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return this.graph.nodes_map.get(`${config.getName()}:latest`)!;
+      return this.graph.nodes_map.get(`${config.getName()}:latest`)! as ServiceNode;
     }
 
     const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
+      image: '',
       tag: 'latest',
       ports: {
         target: 8080,
         expose: await this.getServicePort(),
       },
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      api: config.getApiSpec(),
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
@@ -81,16 +80,17 @@ export default class LocalDependencyManager extends DependencyManager {
       node.command = config.getDebugOptions()?.command;
     }
 
-    return this.graph.addNode(node);
+    this.graph.addNode(node);
+    return node;
   }
 
   /**
    * @override
    */
-  async loadDependencies(parent_node: DependencyNode, recursive = true) {
+  async loadDependencies(parent_node: ServiceNode, recursive = true) {
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      let dep_node: DependencyNode;
+      let dep_node: ServiceNode;
 
       const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
       if (env_services && env_services.debug) {
@@ -113,7 +113,7 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadService(service_name: string, service_tag: string): Promise<DependencyNode> {
+  async loadService(service_name: string, service_tag: string): Promise<ServiceNode> {
     const { data: service } = await this.api.get(`/services/${service_name}`);
     const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
 
@@ -126,14 +126,12 @@ export default class LocalDependencyManager extends DependencyManager {
         target: 8080,
         expose: await this.getServicePort(),
       },
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      api: config.getApiSpec(),
       parameters: await this.getParamValues(
         `${config.getName()}:${tag.tag}`,
         config.getParameters(),
       ),
     });
-
-    return this.graph.addNode(node);
+    this.graph.addNode(node);
+    return node;
   }
 }
