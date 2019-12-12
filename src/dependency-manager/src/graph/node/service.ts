@@ -29,6 +29,10 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     super(options);
   }
 
+  get env_ref() {
+    return this.ref.split(':')[0];
+  }
+
   get ref() {
     return `${this.service_config.getName()}:${this.tag}`;
   }

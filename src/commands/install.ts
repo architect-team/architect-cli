@@ -121,13 +121,13 @@ export default class Install extends Command {
     if (target instanceof LocalServiceNode) {
       target_api_definitions = getServiceApiDefinitionContents(target.service_path, target.service_config);
     } else {
-      target_api_definitions = await parseImageLabel(target.image!, 'api_definitions');
+      target_api_definitions = await parseImageLabel(target.image, 'api_definitions');
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
-      switch (target.service_config!.getApiSpec().type) {
+      switch (target.api.type) {
         case 'grpc':
-          return this.genGrpcStubs(source, target.ref.replace(/-/g, '_'), target_api_definitions);
+          return this.genGrpcStubs(source, target.env_ref.replace(/-/g, '_'), target_api_definitions);
       }
     }
   }

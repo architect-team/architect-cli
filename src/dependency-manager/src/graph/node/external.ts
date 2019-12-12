@@ -14,6 +14,10 @@ export class ExternalNode extends DependencyNode {
     super(options);
   }
 
+  get env_ref() {
+    return `${this.parent_ref.split(':')[0]}.${this.key}`;
+  }
+
   get ref() {
     return `${this.parent_ref}.${this.key}`;
   }
