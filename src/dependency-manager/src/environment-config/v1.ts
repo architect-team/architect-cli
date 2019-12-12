@@ -32,7 +32,7 @@ interface ServiceMap {
 }
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
-  version = '1.0.0';
+  __version = '1.0.0';
   services: ServiceMap = {};
   vaults: VaultMap = {};
 

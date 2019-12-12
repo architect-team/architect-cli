@@ -39,6 +39,7 @@ export interface ServiceDebugOptions {
 }
 
 export abstract class ServiceConfig {
+  abstract __version: string;
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getDependencies(): { [s: string]: string };
