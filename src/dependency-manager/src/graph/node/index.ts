@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import { ServiceConfig } from '../../service-config/base';
+import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface DependencyNodeOptions {
   image?: string;
@@ -20,12 +22,21 @@ class DependencyState {
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
+  image!: string;
   tag = 'latest';
   host = '0.0.0.0';
   ports!: { target: number; expose: number };
+  @Type(() => ServiceConfig, {
+    discriminator: {
+      property: "version",
+      subTypes: [
+        { value: ServiceConfigV1, name: "1.0.0" },
+      ],
+    },
+  })
   service_config!: ServiceConfig;
   parameters: { [key: string]: string | number } = {};
-  image?: string;
+  @Type(() => DependencyState)
   state?: DependencyState;
 
   protected constructor(options: DependencyNodeOptions) {
