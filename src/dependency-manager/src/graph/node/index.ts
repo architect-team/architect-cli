@@ -6,28 +6,33 @@ export interface DependencyNodeOptions {
   tag?: string;
   host?: string;
   ports: {
-    target: string | number;
-    expose: string | number;
+    target: number;
+    expose: number;
   };
   service_config: ServiceConfig;
   parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
+class DependencyState {
+  action: ('create' | 'delete' | 'update' | 'no-op') = 'no-op';
+  applied_at?: Date;
+  failed_at?: Date;
+}
+
 export abstract class DependencyNode implements DependencyNodeOptions {
-  tag: string;
-  host: string;
-  ports: { target: string | number; expose: string | number };
-  service_config: ServiceConfig;
-  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
+  abstract __type: string;
+  tag = 'latest';
+  host = '0.0.0.0';
+  ports!: { target: number; expose: number };
+  service_config!: ServiceConfig;
+  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
   image?: string;
+  state?: DependencyState;
 
   protected constructor(options: DependencyNodeOptions) {
-    this.ports = options.ports;
-    this.image = options.image;
-    this.host = options.host || '0.0.0.0';
-    this.tag = options.tag || 'latest';
-    this.parameters = options.parameters || {};
-    this.service_config = options.service_config;
+    if (options) {
+      Object.assign(this, options);
+    }
   }
 
   get name() {
@@ -42,10 +47,6 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   get ref() {
     return `${this.service_config.getName()}:${this.tag}`;
-  }
-
-  equals(node: DependencyNode) {
-    return this.ref === node.ref;
   }
 
   get protocol() {

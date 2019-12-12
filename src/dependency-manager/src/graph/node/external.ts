@@ -5,11 +5,11 @@ interface ExternalNodeOptions {
 }
 
 export class ExternalNode extends DependencyNode {
-  key: string;
+  __type = 'external';
+  key!: string;
 
   constructor(options: DependencyNodeOptions & ExternalNodeOptions) {
     super(options);
-    this.key = options.key;
   }
 
   /**

@@ -2,11 +2,14 @@ import { AxiosInstance } from 'axios';
 import dotenvExpand from 'dotenv-expand';
 import path from 'path';
 import DependencyManager, { DatastoreNode, DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import { DatastoreValueFromParameter, ValueFromParameter } from '../../dependency-manager/src/manager';
 import PortUtil from '../utils/port';
+import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
 
 
 export default class LocalDependencyManager extends DependencyManager {
+  graph: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
 
@@ -15,13 +18,14 @@ export default class LocalDependencyManager extends DependencyManager {
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
     super(env_config);
+    this.graph = new LocalDependencyGraph(env_config.version);
     this.api = api;
     this.config_path = config_path || '';
   }
 
   protected static loadParameters(dependency_manager: DependencyManager) {
     const env_params_to_expand: { [key: string]: string } = {};
-    dependency_manager.graph.nodes.forEach(node => {
+    for (const node of dependency_manager.graph.nodes) {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) {
@@ -31,18 +35,18 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) {
         if ((node instanceof LocalServiceNode || node instanceof ServiceNode) && param_value.default instanceof Object && param_value.default?.valueFrom) {
-          const param_target_service_name = param_value.default.valueFrom.dependency;
-          const param_target_datastore_name = param_value.default.valueFrom.datastore;
+          const param_target_service_name = (param_value.default as ValueFromParameter).valueFrom.dependency;
+          const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
           if (param_target_service_name) {
-            const param_target_service = dependency_manager.graph.nodes.get(param_target_service_name);
+            const param_target_service = dependency_manager.graph.getNodeByRef(param_target_service_name);
             if (!param_target_service) {
               throw new Error(`Service ${param_target_service_name} not found for config of ${node.name}`);
             }
             env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
               param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
           } else if (param_target_datastore_name) {
-            const param_target_datastore = dependency_manager.graph.edges.filter(edge => edge.from.name === node.name && (edge.to as DatastoreNode).key === param_target_datastore_name);
-            if (!param_target_datastore.length) {
+            const param_target_datastore = dependency_manager.graph.getNodeByRef(`${node.name}:${node.tag}.${param_target_datastore_name}`);
+            if (!param_target_datastore) {
               throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.name}`);
             }
             env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
@@ -50,10 +54,10 @@ export default class LocalDependencyManager extends DependencyManager {
           }
         }
       }
-    });
+    }
 
     const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
-    dependency_manager.graph.nodes.forEach(node => {
+    for (const node of dependency_manager.graph.nodes) {
       const service_name = node.normalized_ref;
       const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
       const written_env_keys = [];
@@ -81,7 +85,7 @@ export default class LocalDependencyManager extends DependencyManager {
           node.parameters[real_param_name] = param_value;
         }
       }
-    });
+    };
   }
 
   static async createFromPath(api: AxiosInstance, env_config_path: string): Promise<LocalDependencyManager> {
@@ -121,12 +125,12 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<DependencyNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
 
-    if (this.graph.nodes.has(`${config.getName()}:latest`)) {
+    if (this.graph.nodes_map.has(`${config.getName()}:latest`)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return this.graph.nodes.get(`${config.getName()}:latest`)!;
+      return this.graph.nodes_map.get(`${config.getName()}:latest`)!;
     }
 
-    let node = new LocalServiceNode({
+    const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
       tag: 'latest',
@@ -146,8 +150,7 @@ export default class LocalDependencyManager extends DependencyManager {
       node.command = config.getDebugOptions()?.command;
     }
 
-    node = this.graph.addNode(node) as LocalServiceNode;
-    return node;
+    return this.graph.addNode(node);
   }
 
   /**

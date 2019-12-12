@@ -11,11 +11,11 @@ interface ServiceSubscriptionsV1 {
 
 interface ServiceDatastoreV1 {
   host?: string;
-  port?: string | number;
+  port?: number;
   image?: string;
   docker?: {
     image: string;
-    target_port: string | number;
+    target_port: number;
   };
   parameters: {
     [key: string]: ServiceParameterV1;

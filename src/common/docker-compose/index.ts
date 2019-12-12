@@ -13,8 +13,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
   };
 
   // Enrich base service details
-  dependency_manager.graph.nodes.forEach(node => {
-
+  for (const node of dependency_manager.graph.nodes) {
     if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref] = {
         ports: [`${node.ports.expose}:${node.ports.target}`],
@@ -35,6 +34,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         },
       };
     }
+    console.log('****************looking')
 
     if (node instanceof ServiceNode || node instanceof LocalServiceNode) {
       const current_environment = compose.services[node.normalized_ref].environment;
@@ -64,55 +64,58 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     } else if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref].image = node.image;
     }
-  });
+  }
 
   // Enrich service relationships
-  dependency_manager.graph.edges.forEach(edge => {
+  for (const edge of dependency_manager.graph.edges) {
+    const node_from = dependency_manager.graph.getNodeByRef(edge.from.normalized_ref);
+    const node_to = dependency_manager.graph.getNodeByRef(edge.to.normalized_ref);
+
     // Parse the ARCHITECT param
-    const service = compose.services[edge.from.normalized_ref];
+    const service = compose.services[node_from.normalized_ref];
     service.environment = service.environment || {};
     service.environment.ARCHITECT = service.environment.ARCHITECT ? JSON.parse(service.environment.ARCHITECT) : {};
 
     // Handle datastore credential enrichment to callers
-    if (edge.to instanceof DatastoreNode) {
-      service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
-        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
-        port: edge.to.ports.target.toString(),
-        ...edge.to.parameters,
+    if (node_to instanceof DatastoreNode) {
+      service.environment.ARCHITECT[node_from.name].datastores[node_to.key] = {
+        host: `${node_to.protocol}${node_to.normalized_ref}`,
+        port: node_to.ports.target.toString(),
+        ...node_to.parameters,
       };
-    } else if (edge.to instanceof ExternalNode) {
-      service.environment.ARCHITECT[edge.from.name].datastores[edge.to.key] = {
-        host: edge.to.host,
-        port: edge.to.ports.target.toString(),
-        ...edge.to.parameters,
+    } else if (node_to instanceof ExternalNode) {
+      service.environment.ARCHITECT[node_from.name].datastores[node_to.key] = {
+        host: node_to.host,
+        port: node_to.ports.target.toString(),
+        ...node_to.parameters,
       };
-    } else if (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode) {
-      service.environment.ARCHITECT[edge.to.name] = {
-        host: `${edge.to.protocol}${edge.to.normalized_ref}`,
-        port: edge.to.ports.target.toString(),
-        api: edge.to.api.type,
+    } else if (node_to instanceof ServiceNode || node_to instanceof LocalServiceNode) {
+      service.environment.ARCHITECT[node_to.name] = {
+        host: `${node_to.protocol}${node_to.normalized_ref}`,
+        port: node_to.ports.target.toString(),
+        api: node_to.api.type,
       };
     }
 
     // Parse subscription logic
-    if (edge.type === 'notification' && (edge.to instanceof ServiceNode || edge.to instanceof LocalServiceNode)) {
-      const to = edge.to as ServiceNode;
+    if (edge.type === 'notification' && (node_to instanceof ServiceNode || node_to instanceof LocalServiceNode)) {
+      const to = node_to as ServiceNode;
       const to_subscriptions = to.service_config.getSubscriptions();
-      service.environment.ARCHITECT[edge.from.name].subscriptions =
+      service.environment.ARCHITECT[node_from.name].subscriptions =
         Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
           Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
             subscriptions[event_name] = { [to.service_config.getName()]: to_subscriptions[publisher_name][event_name].data };
           });
           return subscriptions;
-        }, service.environment.ARCHITECT[edge.from.name].subscriptions);
-    } else if (!(edge.to instanceof ExternalNode)) {
-      compose.services[edge.from.normalized_ref].depends_on.push(edge.to.normalized_ref);
+        }, service.environment.ARCHITECT[node_from.name].subscriptions);
+    } else if (!(node_to instanceof ExternalNode)) {
+      compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }
 
     // Re-encode the ARCHITECT param
     service.environment.ARCHITECT = JSON.stringify(service.environment.ARCHITECT || {});
-    compose.services[edge.from.normalized_ref] = service;
-  });
+    compose.services[node_from.normalized_ref] = service;
+  }
 
   return compose;
 };
