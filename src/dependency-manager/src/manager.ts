@@ -9,7 +9,7 @@ import DependencyGraph from './graph';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
-import { ServiceParameter, ParameterDefault, ServiceConfig } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import { readIfFile } from './utils/file';
 import { DependencyNode } from './graph/node';
 
