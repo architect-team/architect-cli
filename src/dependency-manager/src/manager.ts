@@ -129,6 +129,11 @@ export default abstract class DependencyManager {
             const regex = new RegExp(`(.?\${?${dep_key}}?)`, 'g');
             val = val.replace(regex, dep_val.toString());
           }
+
+          // Replace host and port as needed
+          val = val
+            .replace(new RegExp(`(.?\${?HOST?)`, 'g'), dep_node.host)
+            .replace(new RegExp(`(.?\${?PORT?)`, 'g'), dep_node.ports.expose.toString());
         } else if (service_param.default) {
           val = service_param.default;
         }
