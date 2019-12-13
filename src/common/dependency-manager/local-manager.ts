@@ -46,14 +46,16 @@ export default class LocalDependencyManager extends DependencyManager {
             const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
             if (param_target_service_name) {
               const param_target_service = dependency_manager.graph.getNodeByRef(param_target_service_name);
-              if (!param_target_service) {
+              const node_dependency_refs = node.service_config.getDependencies();
+              if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
               env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
                 param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
             } else if (param_target_datastore_name) {
               const param_target_datastore = dependency_manager.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
-              if (!param_target_datastore) {
+              const datastore_names = Object.keys(node.service_config.getDatastores());
+              if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
               }
               env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
@@ -131,9 +133,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
-    console.log('loading params')
     this.loadParameters(dependency_manager);
-    console.log('loaded')
     return dependency_manager;
   }
 
@@ -224,33 +224,5 @@ export default class LocalDependencyManager extends DependencyManager {
     });
     this.graph.addNode(node);
     return node;
-  }
-
-  validateNodeDependencies(node: ServiceNode) {
-    const dependencies = node.service_config.getDependencies();
-    const dependency_names = Object.entries(dependencies).map(([name, tag]) => `${name}:${tag}`);
-    const datastore_names = Object.keys(node.service_config.getDatastores());
-    const parameter_dependencies: Set<string> = new Set();
-    const datastore_dependencies: Set<string> = new Set();
-
-    for (const param_value of Object.values(node.parameters)) {
-      const valueFromParameter = param_value as ValueFromParameter;
-      const datastoreParameter = param_value as DatastoreValueFromParameter;
-      if (valueFromParameter.valueFrom.dependency) {
-        parameter_dependencies.add(valueFromParameter.valueFrom.dependency);
-      } else if (datastoreParameter.valueFrom.datastore) {
-        datastore_dependencies.add(datastoreParameter.valueFrom.datastore);
-      }
-    }
-    for (const dependency of parameter_dependencies) {
-      if (!dependency_names.includes(dependency)) {
-        throw new Error(`Invalid parameter/dependency relationship(s) for service ${node.ref}`);
-      }
-    }
-    for (const datastore of datastore_dependencies) {
-      if (!datastore_names.includes(datastore)) {
-        throw new Error(`Invalid parameter/datastore relationship(s) for service ${node.ref}`);
-      }
-    }
   }
 }
