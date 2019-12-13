@@ -22,9 +22,23 @@ interface ServiceDatastoreV1 {
   };
 }
 
+interface ParameterFromDependencyV1 {
+  dependency: string;
+  value: string;
+}
+
+interface ParameterFromDatastoreV1 {
+  datastore: string;
+  value: string;
+}
+
+interface ParameterDefaultV1 {
+  valueFrom: ParameterFromDependencyV1 | ParameterFromDatastoreV1;
+}
+
 interface ServiceParameterV1 {
   description?: string;
-  default?: string | number;
+  default?: string | number | ParameterDefaultV1;
   alias?: string;
   required?: boolean;
 }

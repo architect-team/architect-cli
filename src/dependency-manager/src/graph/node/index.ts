@@ -1,5 +1,4 @@
 import { Type } from 'class-transformer';
-import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
 
 export interface DependencyNodeOptions {
   host?: string;
@@ -7,7 +6,7 @@ export interface DependencyNodeOptions {
     target: number;
     expose: number;
   };
-  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
+  parameters: { [key: string]: string | number };
 }
 
 class DependencyState {
@@ -20,7 +19,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
   host = '0.0.0.0';
   ports!: { target: number; expose: number };
-  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
+  parameters: { [key: string]: string | number } = {};
   @Type(() => DependencyState)
   state?: DependencyState;
 
