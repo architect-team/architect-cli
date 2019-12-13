@@ -8,7 +8,7 @@ export interface ParameterDefault {
     dependency?: string;
     datastore?: string;
     value: string;
-  }
+  };
 }
 
 export interface ServiceParameter {
