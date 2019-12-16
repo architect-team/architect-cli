@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
+import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
 import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
@@ -7,7 +8,7 @@ export interface ServiceNodeOptions {
   image: string;
   tag?: string;
   service_config: ServiceConfig;
-  parameters?: { [key: string]: string | number };
+  parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
