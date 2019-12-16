@@ -13,8 +13,6 @@ import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import { readIfFile } from './utils/file';
 
-
-
 interface VaultParameter {
   valueFrom: {
     vault: string;
