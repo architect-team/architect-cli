@@ -290,6 +290,7 @@ export default abstract class DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       const dep_node = await this.loadService(dep_name, dep_id);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addNode(dep_node);
       this.graph.addEdge(edge);
       dependency_promises.push(() => this.loadDependencies(dep_node));
     }
