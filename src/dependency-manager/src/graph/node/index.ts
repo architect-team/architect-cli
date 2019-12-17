@@ -13,7 +13,7 @@ export interface DependencyNodeOptions {
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-  host = '0.0.0.0';
+  host!: string;
   ports!: { target: number; expose: number };
   parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
   @Type(() => DependencyState)
@@ -21,7 +21,9 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   protected constructor(options: DependencyNodeOptions) {
     if (options) {
-      Object.assign(this, options);
+      this.host = options.host || '0.0.0.0';
+      this.ports = options.ports;
+      this.parameters = options.parameters || {};
     }
   }
 
