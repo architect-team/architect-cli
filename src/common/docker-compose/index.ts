@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import NotificationEdge from '../../dependency-manager/src/graph/edge/notification';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
@@ -97,7 +98,7 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     }
 
     // Parse subscription logic
-    if (edge.type === 'notification' && node_to instanceof ServiceNode) {
+    if (edge instanceof NotificationEdge && node_to instanceof ServiceNode) {
       const to = node_to as ServiceNode;
       const to_subscriptions = to.service_config.getSubscriptions();
       service.environment.ARCHITECT[node_from.env_ref].subscriptions =

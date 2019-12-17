@@ -9,6 +9,7 @@ export interface ServiceNodeOptions {
   tag?: string;
   service_config: ServiceConfig;
   parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
+  replicas?: number;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -16,6 +17,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   image!: string;
   tag = 'latest';
+  replicas = 1;
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',
