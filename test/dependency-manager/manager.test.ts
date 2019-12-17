@@ -7,6 +7,7 @@ import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
+import { ServiceNode } from '../../src/dependency-manager/src';
 import ServiceEdge from '../../src/dependency-manager/src/graph/edge/service';
 import { ServiceConfigV1 } from '../../src/dependency-manager/src/service-config/v1';
 
@@ -35,5 +36,16 @@ describe('manager', function () {
 
     expect(graph.edges).lengthOf(3);
     expect(graph.edges[0]).instanceOf(ServiceEdge);
+  });
+
+  it('create ServiceNode', async () => {
+    const node = new ServiceNode({
+      tag: 'test',
+      image: 'image',
+      service_config: new ServiceConfigV1(),
+      ports: { target: 8080, expose: 80 },
+      parameters: {}
+    });
+    expect(node.tag).eq('test');
   });
 });

@@ -12,6 +12,10 @@ export class ExternalNode extends DependencyNode {
 
   constructor(options: DependencyNodeOptions & ExternalNodeOptions) {
     super(options);
+    if (options) {
+      this.parent_ref = options.parent_ref;
+      this.key = options.key;
+    }
   }
 
   get env_ref() {

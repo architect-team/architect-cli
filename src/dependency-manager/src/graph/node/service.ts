@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
 import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
@@ -8,7 +7,6 @@ export interface ServiceNodeOptions {
   image: string;
   tag?: string;
   service_config: ServiceConfig;
-  parameters?: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
   replicas?: number;
 }
 
@@ -16,7 +14,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
   image!: string;
-  tag = 'latest';
+  tag!: string;
   replicas = 1;
   @Type(() => ServiceConfig, {
     discriminator: {
@@ -31,6 +29,11 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super(options);
+    if (options) {
+      this.image = options.image;
+      this.tag = options.tag || 'latest';
+      this.service_config = options.service_config;
+    }
   }
 
   get env_ref() {
