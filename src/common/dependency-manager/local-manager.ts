@@ -1,6 +1,7 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -101,7 +102,9 @@ export default class LocalDependencyManager extends DependencyManager {
         dep_node = await this.loadService(dep_name, dep_id);
       }
 
-      this.graph.addEdge(parent_node, dep_node);
+      this.graph.addNode(dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
       if (recursive) {
         await this.loadDatastores(dep_node);
         dependency_resolvers.push(() => this.loadDependencies(dep_node));

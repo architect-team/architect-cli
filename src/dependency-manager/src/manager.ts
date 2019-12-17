@@ -7,6 +7,8 @@ import { ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
+import NotificationEdge from './graph/edge/notification';
+import ServiceEdge from './graph/edge/service';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
@@ -52,9 +54,8 @@ export default abstract class DependencyManager {
           const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
           if (ref && this.graph.nodes_map.has(ref)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const source = this.graph.nodes_map.get(ref)!;
-            this.graph.addEdge(source, node, 'notification');
+            const edge = new NotificationEdge(ref, node.ref);
+            this.graph.addEdge(edge);
           }
         }
       }
@@ -272,7 +273,8 @@ export default abstract class DependencyManager {
       }
 
       this.graph.addNode(dep_node);
-      this.graph.addEdge(parent_node, dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
     }
   }
 
@@ -285,7 +287,8 @@ export default abstract class DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       const dep_node = await this.loadService(dep_name, dep_id);
       this.graph.addNode(dep_node);
-      this.graph.addEdge(parent_node, dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
       await this.loadDatastores(dep_node);
       dependency_promises.push(() => this.loadDependencies(dep_node));
     }

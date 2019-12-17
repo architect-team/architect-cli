@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
+import { DependencyState } from '../state';
 
 export interface DependencyNodeOptions {
   host?: string;
@@ -8,12 +9,6 @@ export interface DependencyNodeOptions {
     expose: number;
   };
   parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
-}
-
-class DependencyState {
-  action: ('create' | 'delete' | 'update' | 'no-op') = 'no-op';
-  applied_at?: Date;
-  failed_at?: Date;
 }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
