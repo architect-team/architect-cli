@@ -1,4 +1,5 @@
 import axios from 'axios';
+import dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import * as https from 'https';
 import untildify from 'untildify';
@@ -6,17 +7,32 @@ import { ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
+import NotificationEdge from './graph/edge/notification';
+import ServiceEdge from './graph/edge/service';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import { readIfFile } from './utils/file';
 
-
 interface VaultParameter {
   valueFrom: {
     vault: string;
     key: string;
+  };
+}
+
+export interface ValueFromParameter {
+  valueFrom: {
+    dependency: string;
+    value: string;
+  };
+}
+
+export interface DatastoreValueFromParameter {
+  valueFrom: {
+    datastore: string;
+    value: string;
   };
 }
 
@@ -38,9 +54,99 @@ export default abstract class DependencyManager {
           const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
           if (ref && this.graph.nodes_map.has(ref)) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const source = this.graph.nodes_map.get(ref)!;
-            this.graph.addEdge(source, node, 'notification');
+            const edge = new NotificationEdge(ref, node.ref);
+            this.graph.addEdge(edge);
+          }
+        }
+      }
+    }
+  }
+
+  /*
+   * Expand all valueFrom parameters into real values that can be used insides of services and datastores
+  */
+  protected static loadParameters(dependency_manager: DependencyManager) {
+    const env_params_to_expand: { [key: string]: string } = {};
+    for (const node of dependency_manager.graph.nodes) {
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+      for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
+        if (typeof param_value === 'string') {
+          if (param_value.indexOf('$') > -1) {
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
+          } else {
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
+          }
+        }
+      }
+
+      if (node instanceof ServiceNode) {
+        for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) { // load param references
+          if (param_value.default instanceof Object && param_value.default?.valueFrom) {
+            const param_target_service_name = (param_value.default as ValueFromParameter).valueFrom.dependency;
+            const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
+            if (param_target_service_name) {
+              const param_target_service = dependency_manager.graph.getNodeByRef(param_target_service_name);
+              const node_dependency_refs = node.service_config.getDependencies();
+              if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
+                throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
+              }
+              env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+                param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
+            } else if (param_target_datastore_name) {
+              const param_target_datastore = dependency_manager.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
+              const datastore_names = Object.keys(node.service_config.getDatastores());
+              if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
+                throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
+              }
+              env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
+                param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/[.-]/g, '_');
+            }
+          }
+        }
+      }
+    }
+
+    const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
+    for (const node of dependency_manager.graph.nodes) {
+      if (node instanceof ServiceNode) {
+        const service_name = node.normalized_ref;
+        const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
+        const written_env_keys = [];
+
+        // map datastore params
+        const node_datastores = dependency_manager.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
+        for (const datastore of node_datastores) {
+          const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
+          const service_datastore_params = Object.entries(expanded_params || {})
+            .filter(([key, _]) => key.startsWith(datastore_prefix));
+
+          // reverse order params by length in order to avoid key collisions
+          service_datastore_params.sort((pair1: [string, string], pair2: [string, string]) => {
+            return pair2[0].length - pair1[0].length;
+          });
+
+          for (const [param_name, param_value] of service_datastore_params) {
+            const real_param_name = param_name.replace(`${datastore_prefix}_`, '');
+            node.parameters[real_param_name] = param_value;
+            written_env_keys.push(param_name.replace(`${datastore_prefix}_`, ''));
+          }
+        }
+
+        // map service params
+        const service_params = Object.entries(expanded_params || {})
+          .filter(([key, _]) => key.startsWith(service_prefix));
+
+        // reverse order params by length in order to avoid key collisions
+        service_params.sort((pair1: [string, string], pair2: [string, string]) => {
+          return pair2[0].length - pair1[0].length;
+        });
+
+        for (const [param_name, param_value] of service_params) {
+          const real_param_name = param_name.replace(`${service_prefix}_`, '');
+          if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
+            node.parameters[real_param_name] = param_value;
           }
         }
       }
@@ -55,7 +161,7 @@ export default abstract class DependencyManager {
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
-  ): Promise<{ [key: string]: string | number }> {
+  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
 
     let raw_params: { [key: string]: string | number | VaultParameter } = {};
@@ -98,18 +204,18 @@ export default abstract class DependencyManager {
     }
 
     return Object.keys(parameters).reduce(
-      (params: { [s: string]: string | number }, key: string) => {
+      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
         if (service_param.required && !env_params.has(key)) {
           throw new MissingRequiredParamError(key, service_param.description, service_ref);
         }
 
         let val = env_params.get(key) || service_param.default || '';
-        if (typeof val !== 'string') {
+        if (typeof val === 'number') {
           val = val.toString();
         }
 
-        if (val.startsWith('file:')) {
+        if (typeof val === 'string' && val.startsWith('file:')) {
           val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
         params[key] = val;
@@ -167,7 +273,8 @@ export default abstract class DependencyManager {
       }
 
       this.graph.addNode(dep_node);
-      this.graph.addEdge(parent_node, dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
     }
   }
 
@@ -177,11 +284,14 @@ export default abstract class DependencyManager {
    */
   async loadDependencies(parent_node: ServiceNode) {
     const dependency_promises = [];
+    this.graph.addNode(parent_node);
+    await this.loadDatastores(parent_node);
+
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       const dep_node = await this.loadService(dep_name, dep_id);
       this.graph.addNode(dep_node);
-      this.graph.addEdge(parent_node, dep_node);
-      await this.loadDatastores(dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
       dependency_promises.push(() => this.loadDependencies(dep_node));
     }
 

@@ -12,5 +12,9 @@ export class LocalServiceNode extends ServiceNode implements LocalServiceNodeOpt
 
   constructor(options: LocalServiceNodeOptions & ServiceNodeOptions & DependencyNodeOptions) {
     super(options);
+    if (options) {
+      this.service_path = options.service_path;
+      this.command = options.command;
+    }
   }
 }

@@ -1,16 +1,16 @@
-import { Exclude, Type } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import DependencyEdge from './edge';
 import { DependencyNode } from './node';
 
 export default abstract class DependencyGraph {
   version: string;
-  @Type(() => DependencyNode)
-  nodes: DependencyNode[] = [];
-  @Type(() => DependencyEdge)
-  edges: DependencyEdge[] = [];
+  abstract nodes: DependencyNode[] = [];
+  abstract edges: DependencyEdge[] = [];
 
   @Exclude()
   protected __nodes_map?: Map<string, DependencyNode>;
+  @Exclude()
+  protected __edges_map?: Map<string, DependencyEdge>;
 
   constructor(version: string) {
     this.version = version;
@@ -19,23 +19,21 @@ export default abstract class DependencyGraph {
   addNode(node: DependencyNode): DependencyNode {
     if (!this.nodes_map.has(node.ref)) {
       this.nodes.push(node);
-      this.__nodes_map = undefined;
+      this.__nodes_map!.set(node.ref, node);
     }
     return node;
   }
 
-  addEdge(from: DependencyNode, to: DependencyNode, type: 'dependency' | 'notification' = 'dependency') {
-    // Ensure the nodes exist in the pool
-    from = this.addNode(from);
-    to = this.addNode(to);
+  addEdge(edge: DependencyEdge): DependencyEdge {
+    if (!this.edges_map.has(edge.ref)) {
+      // Ensure the nodes exist in the pool
+      this.getNodeByRef(edge.from)
+      this.getNodeByRef(edge.to)
 
-    const edgeIndex = this.edges.findIndex(edge => edge.from === from.ref && edge.to === to.ref);
-    if (edgeIndex < 0) {
-      const edge = new DependencyEdge(from.ref, to.ref, type);
       this.edges.push(edge);
+      this.__edges_map!.set(edge.ref, edge);
     }
-
-    return this;
+    return edge;
   }
 
   get nodes_map(): Map<string, DependencyNode> {
@@ -46,6 +44,16 @@ export default abstract class DependencyGraph {
       }
     }
     return this.__nodes_map;
+  }
+
+  get edges_map(): Map<string, DependencyEdge> {
+    if (!this.__edges_map) {
+      this.__edges_map = new Map();
+      for (const edge of this.edges) {
+        this.__edges_map.set(edge.ref, edge);
+      }
+    }
+    return this.__edges_map;
   }
 
   getNodeByRef(ref: string): DependencyNode {

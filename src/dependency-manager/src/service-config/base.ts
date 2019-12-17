@@ -1,3 +1,5 @@
+import { DatastoreValueFromParameter, ValueFromParameter } from '../manager';
+
 interface RestSubscriptionData {
   uri: string;
   headers?: { [key: string]: string };
@@ -5,7 +7,7 @@ interface RestSubscriptionData {
 
 export interface ServiceParameter {
   description: string;
-  default?: string | number;
+  default?: string | number | ValueFromParameter | DatastoreValueFromParameter;
   aliases: string[];
   required: boolean;
 }

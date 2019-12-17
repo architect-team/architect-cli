@@ -1,37 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import NotificationEdge from '../../dependency-manager/src/graph/edge/notification';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
-
-const inject_params = (environment: { [key: string]: string | number }, data_node: DependencyNode) => {
-  let node_ref;
-  if (data_node instanceof DatastoreNode) {
-    node_ref = data_node.parent_ref;
-  } else {
-    node_ref = data_node.ref;
-  }
-  const [service_name, service_tag] = node_ref.split(':');
-
-  const param_prefix = `$ARC_${service_name.replace(/[^\w\s]/gi, '_').toUpperCase()}_${service_tag.replace(/[^\w\s]/gi, '_').toUpperCase()}`;
-  const host_param_placeholder = `${param_prefix}_HOST`;
-  const port_param_placeholder = `${param_prefix}_PORT`;
-  const injected_params: { [key: string]: string | number } = {};
-  for (const [name, value] of Object.entries(environment)) {
-    let newValue = value;
-    if (newValue.toString().indexOf(host_param_placeholder) > -1) {
-      const regex = new RegExp(`\\${host_param_placeholder}`, 'g');
-      newValue = newValue.toString().replace(regex, `${data_node.protocol}${data_node.normalized_ref}`);
-    }
-    if (newValue.toString().indexOf(port_param_placeholder) > -1) {
-      const regex = new RegExp(`\\${port_param_placeholder}`, 'g');
-      newValue = newValue.toString().replace(regex, data_node.ports.target.toString());
-    }
-    injected_params[name] = newValue;
-  }
-  return injected_params;
-};
 
 export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -70,7 +43,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
-      compose.services[node.normalized_ref].environment = Object.assign({}, current_environment, inject_params(current_environment || {}, node));
     }
 
     if (node instanceof LocalServiceNode) {
@@ -111,7 +83,6 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
-      service.environment = Object.assign({}, service.environment, inject_params(service.environment, node_to));
     } else if (node_to instanceof ExternalNode) {
       service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: node_to.host,
@@ -124,11 +95,10 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
         port: node_to.ports.target.toString(),
         api: node_to.api.type,
       };
-      service.environment = Object.assign({}, service.environment, inject_params(service.environment, node_to));
     }
 
     // Parse subscription logic
-    if (edge.type === 'notification' && node_to instanceof ServiceNode) {
+    if (edge instanceof NotificationEdge && node_to instanceof ServiceNode) {
       const to = node_to as ServiceNode;
       const to_subscriptions = to.service_config.getSubscriptions();
       service.environment.ARCHITECT[node_from.env_ref].subscriptions =

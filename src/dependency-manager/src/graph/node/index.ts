@@ -1,4 +1,6 @@
 import { Type } from 'class-transformer';
+import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
+import { DependencyState } from '../state';
 
 export interface DependencyNodeOptions {
   host?: string;
@@ -6,26 +8,22 @@ export interface DependencyNodeOptions {
     target: number;
     expose: number;
   };
-  parameters: { [key: string]: string | number };
-}
-
-class DependencyState {
-  action: ('create' | 'delete' | 'update' | 'no-op') = 'no-op';
-  applied_at?: Date;
-  failed_at?: Date;
+  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-  host = '0.0.0.0';
+  host!: string;
   ports!: { target: number; expose: number };
-  parameters: { [key: string]: string | number } = {};
+  parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
   @Type(() => DependencyState)
   state?: DependencyState;
 
   protected constructor(options: DependencyNodeOptions) {
     if (options) {
-      Object.assign(this, options);
+      this.host = options.host || '0.0.0.0';
+      this.ports = options.ports;
+      this.parameters = options.parameters || {};
     }
   }
 
