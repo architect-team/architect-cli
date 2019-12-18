@@ -25,6 +25,9 @@ interface ServiceMap {
         };
       };
     };
+    ingress?: {
+      subdomain: string;
+    };
     debug?: {
       path: string;
     };

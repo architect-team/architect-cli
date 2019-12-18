@@ -47,5 +47,13 @@ describe('manager', function () {
       parameters: {}
     });
     expect(node.tag).eq('test');
+
+    node.state = {
+      action: 'update',
+      changes: [
+        { action: 'update', before: 5, after: 6, key: 'test', type: 'test' }
+      ]
+    }
+    expect(deserialize(ServiceNode, serialize(node)).state!.action).eq('update');
   });
 });
