@@ -3,18 +3,22 @@ import { DependencyNode, DependencyNodeOptions } from '.';
 interface ExternalNodeOptions {
   parent_ref: string;
   key: string;
+
+  host: string;
 }
 
 export class ExternalNode extends DependencyNode {
   __type = 'external';
   parent_ref!: string;
   key!: string;
+  host!: string;
 
   constructor(options: DependencyNodeOptions & ExternalNodeOptions) {
     super(options);
     if (options) {
       this.parent_ref = options.parent_ref;
       this.key = options.key;
+      this.host = options.host;
     }
   }
 
