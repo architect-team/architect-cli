@@ -26,6 +26,9 @@ export interface EnvironmentService {
   datastores: {
     [key: string]: ServiceDatastore;
   };
+  ingress?: {
+    subdomain: string;
+  };
   debug?: {
     path: string;
   };
