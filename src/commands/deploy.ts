@@ -96,7 +96,7 @@ export default class Deploy extends Command {
     const user_accounts = await this.get_accounts();
 
     // Prompt user for required inputs if not set as flags
-    let answers: any = await inquirer.prompt([{
+    const answers: any = await inquirer.prompt([{
       type: 'list',
       name: 'account',
       message: 'Which Architect account would you like to create this environment for?',
@@ -115,28 +115,28 @@ export default class Deploy extends Command {
     const environments = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
 
     // Prompt user for required inputs if not set as flags
-    answers = Object.assign({}, answers, await inquirer.prompt([{
+    const env_answers = await inquirer.prompt([{
       type: 'list',
       name: 'environment_id',
       message: 'Which Architect environment would you like to deploy the services to?',
       choices: environments.map((a: any) => { return { name: a.name, value: a.id } }),
       when: !flags.environment,
-    }]));
+    }]);
 
-    if (!answers.environment) {
+    if (!env_answers.environment_id) {
       const environment = environments.filter((env: any) => env.name === flags.environment);
       if (!environment.length) {
         throw new Error(`Environment with name ${flags.environment} not found`);
       }
-      answers.environment_id = environment[0].id;
+      env_answers.environment_id = environment[0].id;
     }
 
-    answers = { ...args, ...flags, ...answers };
+    const all_answers = { ...args, ...flags, ...answers, ...env_answers };
     const configPayload = fs.readJSONSync(env_config_path) as object;
-    const environment_name = environments.filter((env: any) => env.id === answers.environment_id)[0].name;
+    const environment_name = environments.filter((env: any) => env.id === all_answers.environment_id)[0].name;
 
     cli.action.start(chalk.blue(`Deploying services`));
-    await this.app.api.post(`/environments/${answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
+    await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
     cli.action.stop(chalk.green(`Services deployed successfully`));
   }
 
