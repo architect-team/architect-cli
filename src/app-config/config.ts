@@ -17,7 +17,7 @@ export default class AppConfig {
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
-    this.oauth_domain = 'architect.auth0.com';
+    this.oauth_domain = 'auth.architect.io';
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
 
     // Override defaults with input values
