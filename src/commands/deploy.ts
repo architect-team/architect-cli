@@ -29,6 +29,7 @@ export default class Deploy extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
+      exclusive: ['account', 'environment', 'auto_approve'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -37,20 +38,24 @@ export default class Deploy extends Command {
         os.tmpdir(),
         `architect-deployment-${Date.now().toString()}.json`,
       ),
+      exclusive: ['account', 'environment', 'auto_approve'],
     }),
+    auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
     account: flags.string({
       char: 'a',
-      description: 'Account to deploy the services with'
+      description: 'Account to deploy the services with',
+      exclusive: ['local', 'compose_file'],
     }),
     environment: flags.string({
       char: 'e',
-      description: 'Environment to deploy the services to'
+      description: 'Environment to deploy the services to',
+      exclusive: ['local', 'compose_file'],
     }),
   };
 
   static args = [{
     name: 'environment_config',
-    description: 'Path to an Architect environment config file',
+    description: 'Path to an environment config file',
   }];
 
   async runCompose(compose: DockerComposeTemplate) {
@@ -81,6 +86,30 @@ export default class Deploy extends Command {
     await this.runCompose(compose);
   }
 
+  async poll(deployment_id: string, match_stage?: string) {
+    return new Promise((resolve, reject) => {
+      let poll_count = 0;
+      const poll = setInterval(async () => {
+        const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
+        if (deployment.failed_at || poll_count > 100) {
+          clearInterval(poll);
+          reject(new Error('Deployment failed'));
+        }
+
+        if (match_stage) {
+          if (deployment.stage === match_stage) {
+            clearInterval(poll);
+            resolve(deployment);
+          }
+        } else if (deployment.applied_at) {
+          clearInterval(poll);
+          resolve(deployment);
+        }
+        poll_count += 1;
+      }, 3000);
+    });
+  }
+
   private async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
@@ -99,8 +128,8 @@ export default class Deploy extends Command {
     const answers: any = await inquirer.prompt([{
       type: 'list',
       name: 'account',
-      message: 'Which Architect account would you like to create this environment for?',
-      choices: user_accounts.map((a: any) => { return { name: a.name, value: a.id } }),
+      message: 'Which account would you like to deploy to?',
+      choices: user_accounts.map((a: any) => { return { name: a.name, value: a.id }; }),
       when: !flags.account,
     }]);
 
@@ -118,8 +147,8 @@ export default class Deploy extends Command {
     const env_answers = await inquirer.prompt([{
       type: 'list',
       name: 'environment_id',
-      message: 'Which Architect environment would you like to deploy the services to?',
-      choices: environments.map((a: any) => { return { name: a.name, value: a.id } }),
+      message: 'Which environment would you like to deploy to?',
+      choices: environments.map((a: any) => { return { name: a.name, value: a.id }; }),
       when: !flags.environment,
     }]);
 
@@ -135,9 +164,27 @@ export default class Deploy extends Command {
     const configPayload = fs.readJSONSync(env_config_path) as object;
     const environment_name = environments.filter((env: any) => env.id === all_answers.environment_id)[0].name;
 
-    cli.action.start(chalk.blue(`Deploying services`));
-    await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
-    cli.action.stop(chalk.green(`Services deployed successfully`));
+    cli.action.start(chalk.blue('Verifying'));
+    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
+
+    if (!flags.auto_approve) {
+      await this.poll(deployment.id, 'verify');
+      cli.action.stop(chalk.green(`Verified`));
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'deploy',
+        message: 'Would you like to apply?',
+      });
+      if (!confirmation.deploy) {
+        this.warn('Canceled deploy');
+        return;
+      }
+    }
+
+    cli.action.start(chalk.blue('Deploying'));
+    await this.app.api.post(`/deploy/${deployment.id}`);
+    await this.poll(deployment.id);
+    cli.action.stop(chalk.green(`Deployed`));
   }
 
   async run() {
