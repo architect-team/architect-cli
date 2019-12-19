@@ -1,7 +1,9 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
+import inquirer from 'inquirer';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
@@ -35,6 +37,14 @@ export default class Deploy extends Command {
         os.tmpdir(),
         `architect-deployment-${Date.now().toString()}.json`,
       ),
+    }),
+    account: flags.string({
+      char: 'a',
+      description: 'Account to deploy the services with'
+    }),
+    environment: flags.string({
+      char: 'e',
+      description: 'Environment to deploy the services to'
     }),
   };
 
@@ -71,11 +81,72 @@ export default class Deploy extends Command {
     await this.runCompose(compose);
   }
 
+  private async runRemote() {
+    const { args, flags } = this.parse(Deploy);
+
+    if (!args.environment_config) {
+      throw new EnvConfigRequiredError();
+    }
+
+    const env_config_path = path.resolve(untildify(args.environment_config));
+    if (!fs.existsSync(env_config_path)) {
+      throw new Error(`No file found at ${env_config_path}`);
+    }
+
+    const user_accounts = await this.get_accounts();
+
+    // Prompt user for required inputs if not set as flags
+    let answers: any = await inquirer.prompt([{
+      type: 'list',
+      name: 'account',
+      message: 'Which Architect account would you like to create this environment for?',
+      choices: user_accounts.map((a: any) => { return { name: a.name, value: a.id } }),
+      when: !flags.account,
+    }]);
+
+    if (!answers.account) {
+      const account = user_accounts.filter((account: any) => account.name === flags.account);
+      if (!account.length) {
+        throw new Error(`Account with name ${flags.account} not found`);
+      }
+      answers.account = account[0].id;
+    }
+
+    const environments = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
+
+    // Prompt user for required inputs if not set as flags
+    answers = Object.assign({}, answers, await inquirer.prompt([{
+      type: 'list',
+      name: 'environment_id',
+      message: 'Which Architect environment would you like to deploy the services to?',
+      choices: environments.map((a: any) => { return { name: a.name, value: a.id } }),
+      when: !flags.environment,
+    }]));
+
+    if (!answers.environment) {
+      const environment = environments.filter((env: any) => env.name === flags.environment);
+      if (!environment.length) {
+        throw new Error(`Environment with name ${flags.environment} not found`);
+      }
+      answers.environment_id = environment[0].id;
+    }
+
+    answers = { ...args, ...flags, ...answers };
+    const configPayload = fs.readJSONSync(env_config_path) as object;
+    const environment_name = environments.filter((env: any) => env.id === answers.environment_id)[0].name;
+
+    cli.action.start(chalk.blue(`Deploying services`));
+    await this.app.api.post(`/environments/${answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
+    cli.action.stop(chalk.green(`Services deployed successfully`));
+  }
+
   async run() {
     const { flags } = this.parse(Deploy);
 
     if (flags.local) {
       await this.runLocal();
+    } else {
+      await this.runRemote();
     }
   }
 }
