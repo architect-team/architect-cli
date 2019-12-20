@@ -7,6 +7,7 @@ export default class AppConfig {
   log_level: 'info' | 'debug' | 'test';
   registry_host: string;
   api_host: string;
+  app_host: string;
   oauth_domain: string;
   oauth_client_id: string;
 
@@ -17,6 +18,7 @@ export default class AppConfig {
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
+    this.app_host = 'https://app.architect.io';
     this.oauth_domain = 'auth.architect.io';
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
 
@@ -38,6 +40,7 @@ export default class AppConfig {
       log_level: this.log_level,
       registry_host: this.registry_host,
       api_host: this.api_host,
+      app_host: this.app_host,
       oauth_domain: this.oauth_domain,
       oauth_client_id: this.oauth_client_id,
     };
