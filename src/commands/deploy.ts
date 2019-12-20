@@ -164,12 +164,13 @@ export default class Deploy extends Command {
     const configPayload = fs.readJSONSync(env_config_path) as object;
     const environment_name = environments.filter((env: any) => env.id === all_answers.environment_id)[0].name;
 
-    cli.action.start(chalk.blue('Verifying'));
+    cli.action.start(chalk.blue('Creating'));
     const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
-      cli.action.stop(chalk.green(`Verified`));
+      cli.action.stop();
+      this.log(`Review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
