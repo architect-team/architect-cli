@@ -118,8 +118,9 @@ export default class LocalDependencyManager extends DependencyManager {
    * @override
    */
   async loadService(service_name: string, service_tag: string): Promise<ServiceNode> {
-    const { data: service } = await this.api.get(`/services/${service_name}`);
-    const { data: tag } = await this.api.get(`/services/${service.name}/versions/${service_tag}`);
+    const [account_name, svc_name] = service_name.split('/');
+    const { data: service } = await this.api.get(`/accounts/${account_name}/services/${svc_name}`);
+    const { data: tag } = await this.api.get(`/services/${service.id}/versions/${service_tag}`);
 
     const config = ServiceConfigBuilder.buildFromJSON(tag.config);
     const node = new ServiceNode({
