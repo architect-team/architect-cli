@@ -164,7 +164,7 @@ export default class EnvironmentCreate extends Command {
         type: 'list',
         name: 'account',
         message: 'Which Architect account would you like to create this environment for?',
-        choices: (await this.get_accounts()).map((a: any) => { return { name: a.name, value: a.id } }),
+        choices: (await this.get_accounts()).rows.map((a: any) => { return { name: a.name, value: a.id } }),
       },
     ]);
 
