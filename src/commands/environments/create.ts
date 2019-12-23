@@ -43,8 +43,16 @@ export default class EnvironmentCreate extends Command {
   };
 
   private async createArchitectEnvironment(data: CreateEnvironmentInput, account_id: string): Promise<any> {
-    const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
-    return environment;
+    let environment;
+    try {
+      environment = (await this.app.api.post(`/accounts/${account_id}/environments`, data)).data;
+      return environment;
+    } catch (err) {
+      if (err.response?.data?.statusCode === 403) {
+        throw new Error(`You do not have permission to create an environment for the selected account.`);
+      }
+      throw new Error(err);
+    }
   }
 
   private async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string) {

@@ -76,7 +76,12 @@
     "dirname": "architect",
     "plugins": [
       "@oclif/plugin-help"
-    ]
+    ],
+    "hooks": {
+      "prerun": [
+        "./src/hooks/prerun"
+      ]
+    }
   },
   "repository": "architect-team/architect-cli",
   "scripts": {

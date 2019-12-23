@@ -40,6 +40,10 @@ export default class EnvironmentUpdate extends Command {
     const { args, flags } = this.parse(EnvironmentUpdate)
 
     const [account_name, env_name] = args.namespaced_environment.split('/');
+    if (!account_name || !env_name) {
+      throw new Error(`Please specify a namespaced environment in the form <account_name>/<environment_name>`);
+    }
+
     let account;
     try {
       account = (await this.app.api.get(`/accounts/${account_name}`)).data;
@@ -47,15 +51,23 @@ export default class EnvironmentUpdate extends Command {
       throw new Error(`The account ${account_name} does not exist.`);
     }
 
-    cli.action.start(chalk.green('Updating environment'));
+    cli.action.start(chalk.blue('Updating environment'));
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
     const answers = { ...args, ...flags };
-    await this.app.api.put(`/environments/${account_environment.id}`, {
-      host: answers.host,
-      service_token: await readIfFile(answers.service_token),
-      cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
-    });
-    cli.action.stop(chalk.green('Environment updated successfully'));
+
+    try {
+      await this.app.api.put(`/environments/${account_environment.id}`, {
+        host: answers.host,
+        service_token: await readIfFile(answers.service_token),
+        cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
+        config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
+      });
+      cli.action.stop(chalk.green('Environment updated successfully'));
+    } catch (err) {
+      if (err.response?.data?.statusCode === 403) {
+        throw new Error(`You do not have permission to update an environment for the selected account.`);
+      }
+      throw new Error(err);
+    }
   }
 }
