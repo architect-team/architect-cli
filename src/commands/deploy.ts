@@ -122,7 +122,7 @@ export default class Deploy extends Command {
       throw new Error(`No file found at ${env_config_path}`);
     }
 
-    const user_accounts = await this.get_accounts();
+    const { rows: user_accounts } = await this.get_accounts();
 
     // Prompt user for required inputs if not set as flags
     const answers: any = await inquirer.prompt([{
@@ -141,7 +141,7 @@ export default class Deploy extends Command {
       answers.account = account[0].id;
     }
 
-    const environments = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
+    const { rows: environments } = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
 
     // Prompt user for required inputs if not set as flags
     const env_answers = await inquirer.prompt([{
@@ -164,8 +164,8 @@ export default class Deploy extends Command {
     const configPayload = fs.readJSONSync(env_config_path) as object;
     const environment_name = environments.filter((env: any) => env.id === all_answers.environment_id)[0].name;
 
-    cli.action.start(chalk.blue('Creating'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { environment: environment_name, config: configPayload });
+    cli.action.start(chalk.blue('Creating deployment'));
+    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: configPayload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');

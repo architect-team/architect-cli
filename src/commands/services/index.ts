@@ -16,9 +16,9 @@ export default class Services extends Command {
   }];
 
   async run() {
-    const {args} = this.parse(Services);
+    const { args } = this.parse(Services);
 
-    const { data: results } = await this.app.api.get(`/services?q=${args.query || ''}`);
+    const { rows: results } = (await this.app.api.get(`/services?q=${args.query || ''}`)).data;
 
     const table = new Table({ head: ['Name', 'Created', 'Updated'] });
     for (const row of results) {
