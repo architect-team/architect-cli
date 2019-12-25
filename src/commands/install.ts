@@ -81,9 +81,9 @@ export default class Install extends Command {
         break;
 
       case 'python':
-        // eslint-disable-next-line no-case-declarations
-        const { stderr } = await execa('python3', ['-c', '"import grpc_tools"']);
-        if (stderr) {
+        try {
+          await execa('python3', ['-c', '"import grpc_tools"'], { shell: true });
+        } catch {
           await execa('pip3', ['install', 'grpcio-tools']);
         }
 
