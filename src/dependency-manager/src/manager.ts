@@ -65,9 +65,9 @@ export default abstract class DependencyManager {
   /*
    * Expand all valueFrom parameters into real values that can be used insides of services and datastores
   */
-  protected static loadParameters(dependency_manager: DependencyManager) {
+  protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
-    for (const node of dependency_manager.graph.nodes) {
+    for (const node of this.graph.nodes) {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
@@ -87,7 +87,7 @@ export default abstract class DependencyManager {
             const param_target_service_name = (param_value.default as ValueFromParameter).valueFrom.dependency;
             const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
             if (param_target_service_name) {
-              const param_target_service = dependency_manager.graph.getNodeByRef(param_target_service_name);
+              const param_target_service = this.graph.getNodeByRef(param_target_service_name);
               const node_dependency_refs = node.service_config.getDependencies();
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
@@ -95,7 +95,7 @@ export default abstract class DependencyManager {
               env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
                 param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
             } else if (param_target_datastore_name) {
-              const param_target_datastore = dependency_manager.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
+              const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
               const datastore_names = Object.keys(node.service_config.getDatastores());
               if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
@@ -108,15 +108,17 @@ export default abstract class DependencyManager {
       }
     }
 
-    const expanded_params = dotenvExpand({ parsed: env_params_to_expand }).parsed;
-    for (const node of dependency_manager.graph.nodes) {
+    // ignoreProcessEnv is important otherwise it will be stored globally
+    const dotenv_config = { parsed: env_params_to_expand, ignoreProcessEnv: true };
+    const expanded_params = dotenvExpand(dotenv_config).parsed;
+    for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode) {
         const service_name = node.normalized_ref;
         const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
         const written_env_keys = [];
 
         // map datastore params
-        const node_datastores = dependency_manager.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
+        const node_datastores = this.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
         for (const datastore of node_datastores) {
           const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
           const service_datastore_params = Object.entries(expanded_params || {})
