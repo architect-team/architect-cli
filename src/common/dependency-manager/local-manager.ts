@@ -44,7 +44,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
-    this.loadParameters(dependency_manager);
+    dependency_manager.loadParameters();
     return dependency_manager;
   }
 
