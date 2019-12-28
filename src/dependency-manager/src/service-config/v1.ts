@@ -27,6 +27,7 @@ interface ServiceParameterV1 {
   default?: string | number;
   alias?: string;
   required?: boolean;
+  build_arg?: boolean;
 }
 
 interface ApiSpecV1 {
@@ -55,6 +56,7 @@ export class ServiceConfigV1 extends ServiceConfig {
         required: param.required !== false && !param.default,
         description: param.description || '',
         aliases: param.alias ? [param.alias] : [],
+        build_arg: param.build_arg,
       };
       return res;
     }, {});

@@ -46,10 +46,12 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     }
 
     if (node instanceof LocalServiceNode) {
+      const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
+      const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
       // Setup build context
       compose.services[node.normalized_ref].build = {
         context: node.service_path,
-        args: ['ARCHITECT_DEBUG=1'],
+        args: [...build_args, 'ARCHITECT_DEBUG=1'],
       };
 
       if (node.command) {
