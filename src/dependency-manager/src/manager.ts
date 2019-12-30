@@ -63,7 +63,7 @@ export default abstract class DependencyManager {
   }
 
   /*
-   * Expand all valueFrom parameters into real values that can be used insides of services and datastores
+   * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
   protected static loadParameters(dependency_manager: DependencyManager) {
     const env_params_to_expand: { [key: string]: string } = {};

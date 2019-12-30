@@ -4,6 +4,7 @@ import ARCHITECTPATHS from '../paths';
 
 export default class AppConfig {
   private config_dir: string;
+  debug?: boolean;
   log_level: 'info' | 'debug' | 'test';
   registry_host: string;
   api_host: string;
@@ -14,7 +15,23 @@ export default class AppConfig {
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
 
+    if (partial?.registry_host) {
+      partial.registry_host = partial.registry_host.replace('http://', '').replace('https://', '');
+    }
+
+    if (partial?.api_host) {
+      if (partial.debug && !partial.api_host.startsWith('http://')) {
+        partial.api_host = `http://${partial.api_host}`;
+      } else if (!partial.debug && !partial.api_host.startsWith('https://')) {
+        if (partial.api_host.startsWith('http://')) {
+          partial.api_host = partial.api_host.replace('http://', '');
+        }
+        partial.api_host = `https://${partial.api_host}`;
+      }
+    }
+
     // Set defaults
+    this.debug = partial?.debug;
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
