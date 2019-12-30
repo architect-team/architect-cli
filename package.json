@@ -1,5 +1,5 @@
 {
-  "name": "architect-cli",
+  "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
   "version": "0.3.4",
   "author": "Architect.io",
