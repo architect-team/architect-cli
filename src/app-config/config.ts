@@ -4,7 +4,7 @@ import ARCHITECTPATHS from '../paths';
 
 export default class AppConfig {
   private config_dir: string;
-  debug?: boolean;
+  debug: any = false;
   log_level: 'info' | 'debug' | 'test';
   registry_host: string;
   api_host: string;
@@ -31,7 +31,7 @@ export default class AppConfig {
     }
 
     // Set defaults
-    this.debug = partial?.debug;
+    this.debug = partial?.debug === true;
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
