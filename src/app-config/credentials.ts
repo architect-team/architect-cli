@@ -7,6 +7,8 @@ const CREDENTIALS_FILENAME = 'creds.json';
 interface Credential {
   account: string;
   password: string;
+  id: string;
+  type: string;
 }
 
 export default class CredentialManager {
@@ -51,7 +53,7 @@ export default class CredentialManager {
     if (this.keytar) {
       await this.keytar.setPassword(service, account, password);
     } else {
-      this.credentials[service] = { account, password };
+      this.credentials[service] = { account, password, id: '', type: '' };
       await this.save();
     }
   }

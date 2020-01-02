@@ -1,15 +1,16 @@
-import {expect} from '@oclif/test';
+import { expect } from '@oclif/test';
+import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
-import fs from 'fs-extra';
-
-import { ServiceConfig, ServiceConfigBuilder } from '../../src/dependency-manager/src';
-import Build from '../../src/commands/build';
 import AppConfig from '../../src/app-config/config';
-import ARCHITECTPATHS from '../../src/paths';
+import CredentialManager from '../../src/app-config/credentials';
 import AppService from '../../src/app-config/service';
+import Build from '../../src/commands/build';
 import * as DockerUtil from '../../src/common/utils/docker';
+import { ServiceConfig, ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import ARCHITECTPATHS from '../../src/paths';
+
 
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
@@ -52,11 +53,11 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
   }
 };
 
-describe('build', function() {
+describe('build', function () {
   let tmp_dir = os.tmpdir();
   let spy: sinon.SinonSpy;
 
-  beforeEach(function() {
+  beforeEach(function () {
     // Fake the docker build command
     spy = sinon.fake.returns(null);
     sinon.replace(DockerUtil, 'docker', spy);
@@ -72,9 +73,12 @@ describe('build', function() {
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
     sinon.replace(AppService, 'create', app_config_stub);
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
-  afterEach(function() {
+  afterEach(function () {
     // Restore stubs
     sinon.restore();
 

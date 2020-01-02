@@ -51,6 +51,10 @@ export default class AuthClient {
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
   }
 
+  async getToken(): Promise<Credential> {
+    return this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+  }
+
   async refreshToken() {
     const credential = await this.credentials.get(CREDENTIAL_PREFIX);
     if (!credential) {

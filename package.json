@@ -84,7 +84,7 @@
     "lint": "eslint --ext .ts,.js .",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
-    "test": "export ARC_DISABLE_AUTH_CHECK=true && nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" && export ARC_DISABLE_AUTH_CHECK=false",
+    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"

@@ -1,14 +1,17 @@
-import {expect, test} from '@oclif/test';
+import { expect } from '@oclif/test';
 import sinon from 'sinon';
-import Logout from '../../src/commands/logout';
 import CredentialManager from '../../src/app-config/credentials';
+import Logout from '../../src/commands/logout';
 
 describe('logout', () => {
-  beforeEach(function() {
+  beforeEach(function () {
     sinon.replace(Logout.prototype, 'log', sinon.stub());
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
-  afterEach(function() {
+  afterEach(function () {
     sinon.restore();
   });
 

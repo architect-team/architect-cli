@@ -1,13 +1,7 @@
 import Command, { flags } from '@oclif/command';
 import chalk from 'chalk';
-import fs from 'fs-extra';
-import path from 'path';
 import 'reflect-metadata';
-import { CREDENTIAL_PREFIX } from './app-config/auth';
-import AppConfig from './app-config/config';
-import CredentialManager from './app-config/credentials';
 import AppService from './app-config/service';
-import ARCHITECTPATHS from './paths';
 
 export default abstract class extends Command {
   app!: AppService;
@@ -29,22 +23,8 @@ export default abstract class extends Command {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
 
-      if (this.auth_required() && !process.env.ARC_DISABLE_AUTH_CHECK) {
-        const config_dir = this.config.configDir;
-        let config: AppConfig = new AppConfig(config_dir);
-        if (config_dir) {
-          const config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-          if (fs.existsSync(config_file)) {
-            const payload = fs.readJSONSync(config_file);
-            config = new AppConfig(config_dir, payload);
-          }
-        }
-
-        const credentials = new CredentialManager(config);
-        const credential = await credentials.get(CREDENTIAL_PREFIX);
-        if (!credential) {
-          this.error(chalk.red(`Please log in using 'architect login'`));
-        }
+      if (this.auth_required() && !await this.app.auth.getToken()) {
+        this.error(chalk.red(`Please log in using 'architect login'`));
       }
     }
   }

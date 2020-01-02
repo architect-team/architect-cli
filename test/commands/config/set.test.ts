@@ -1,8 +1,9 @@
-import {expect} from '@oclif/test';
-import sinon from 'sinon';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
-import ConfigSet from '../../../src/commands/config/set';
+import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
+import CredentialManager from '../../../src/app-config/credentials';
+import ConfigSet from '../../../src/commands/config/set';
 import InvalidConfigOption from '../../../src/common/errors/invalid-config-option';
 
 const verifyConfigField = async (key: string, value: string) => {
@@ -18,9 +19,14 @@ const verifyConfigField = async (key: string, value: string) => {
   sinon.restore();
 };
 
-describe('config:set', function() {
-  afterEach(function() {
+describe('config:set', function () {
+  afterEach(function () {
     sinon.restore();
+  });
+
+  beforeEach(function () {
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
   it('should fail for bad key', async () => {

@@ -1,11 +1,12 @@
-import {expect} from '@oclif/test';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
-import AppConfig from '../../../src/app-config/config';
 import sinon from 'sinon';
-import ConfigGet from '../../../src/commands/config/get';
+import AppConfig from '../../../src/app-config/config';
+import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
+import ConfigGet from '../../../src/commands/config/get';
 import ARCHITECTPATHS from '../../../src/paths';
 
 const expectValueForField = async (tmp_config_dir: string, key: string, value: string) => {
@@ -29,10 +30,15 @@ const expectConfigValues = async (config_dir: string, config: AppConfig) => {
   await expectValueForField(config_dir, 'oauth_client_id', config.oauth_client_id);
 };
 
-describe('config:get', function() {
-  afterEach(function() {
+describe('config:get', function () {
+  afterEach(function () {
     sinon.restore();
-  })
+  });
+
+  beforeEach(function () {
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
+  });
 
   it('expects default values', async () => {
     // Save a temporary config file and mock the app service to read from it

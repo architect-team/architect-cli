@@ -1,15 +1,19 @@
-import {expect} from '@oclif/test';
-import sinon from 'sinon';
+import { expect } from '@oclif/test';
 import moxios from 'moxios';
+import sinon from 'sinon';
+import CredentialManager from '../../../src/app-config/credentials';
 import Environments from '../../../src/commands/environments';
 
 describe('environments', () => {
-  beforeEach(function() {
+  beforeEach(function () {
     sinon.replace(Environments.prototype, 'log', sinon.stub());
     moxios.install();
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
-  afterEach(function() {
+  afterEach(function () {
     moxios.uninstall();
     sinon.restore();
   });

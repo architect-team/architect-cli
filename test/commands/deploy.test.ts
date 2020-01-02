@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import path from 'path';
 import sinon from 'sinon';
+import CredentialManager from '../../src/app-config/credentials';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
@@ -9,6 +10,9 @@ import PortUtil from '../../src/common/utils/port';
 describe('deploy', () => {
   before(() => {
     PortUtil.tested_ports = new Set();
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
   it('generates compose locally', async () => {
