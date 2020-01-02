@@ -22,6 +22,11 @@ class EnvConfigRequiredError extends Error {
 }
 
 export default class Deploy extends Command {
+  auth_required() {
+    const { flags } = this.parse(Deploy);
+    return !flags.local;
+  }
+
   static description = 'Create a deploy job on Architect Cloud or run stacks locally';
 
   static flags = {

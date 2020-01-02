@@ -56,4 +56,15 @@ describe('manager', function () {
     }
     expect(deserialize(ServiceNode, serialize(node)).state!.action).eq('update');
   });
+
+  it('remove serviceNode', async () => {
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
+    const serialized_graph = serialize(manager.graph);
+    const graph = deserialize(LocalDependencyGraph, serialized_graph);
+
+    expect(graph.nodes).lengthOf(4);
+    graph.removeNodeByRef('architect/addition-service-rest:latest')
+    expect(graph.nodes).lengthOf(3);
+  });
 });

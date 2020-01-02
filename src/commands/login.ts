@@ -4,6 +4,10 @@ import Command from '../base-command';
 import inquirer = require('inquirer');
 
 export default class Login extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'Login to the Architect Cloud platform';
 
   static flags = {

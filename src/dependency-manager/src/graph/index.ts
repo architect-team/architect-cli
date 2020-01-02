@@ -24,6 +24,13 @@ export default abstract class DependencyGraph {
     return node;
   }
 
+  removeNodeByRef(ref: string) {
+    this.nodes = this.nodes.filter(node => node.ref !== ref);
+    this.__nodes_map = undefined;
+    this.edges = this.edges.filter(edge => edge.from !== ref && edge.to !== ref);
+    this.__edges_map = undefined;
+  }
+
   addEdge(edge: DependencyEdge): DependencyEdge {
     if (!this.edges_map.has(edge.ref)) {
       // Ensure the nodes exist in the pool
