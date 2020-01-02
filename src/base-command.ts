@@ -29,7 +29,7 @@ export default abstract class extends Command {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
 
-      if (this.auth_required()) {
+      if (this.auth_required() && !process.env.ARC_DISABLE_AUTH_CHECK) {
         const config_dir = this.config.configDir;
         let config: AppConfig = new AppConfig(config_dir);
         if (config_dir) {
