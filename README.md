@@ -16,11 +16,11 @@ Command-line interface for Architect.io
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g architect-cli
+$ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-architect-cli/0.3.4 win32-x64 node-v10.15.3
+@architect-io/cli/0.3.4 win32-x64 node-v10.15.3
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -133,7 +133,7 @@ OPTIONS
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: C:\Users\TJ\AppData\Local\Temp\architect-deployment-1577728759934.json]
+  -o, --compose_file=compose_file  [default: C:\Users\TJ\AppData\Local\Temp\architect-deployment-1577993452573.json]
                                    Path where the compose file should be written to
 
   --auto_approve
@@ -232,11 +232,8 @@ ARGUMENTS
   NAMESPACED_ENVIRONMENT  Name of the environment to update
 
 OPTIONS
-  -c, --config_file=config_file                        Path to an environment configuration file to use
-  -h, --help                                           show CLI help
-  -k, --cluster_ca_certificate=cluster_ca_certificate  File path of cluster_ca_certificate
-  -t, --service_token=service_token                    Service token
-  --host=host
+  -d, --description=description
+  -h, --help                     show CLI help
 
 ALIASES
   $ architect environment:update
