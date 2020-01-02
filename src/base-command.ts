@@ -43,7 +43,7 @@ export default abstract class extends Command {
         const credentials = new CredentialManager(config);
         const credential = await credentials.get(CREDENTIAL_PREFIX);
         if (!credential) {
-          console.error(chalk.red(`Please log in using 'architect login'`));
+          this.error(chalk.red(`Please log in using 'architect login'`));
         }
       }
     }

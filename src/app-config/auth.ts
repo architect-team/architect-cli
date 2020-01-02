@@ -85,7 +85,7 @@ export default class AuthClient {
 
       await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
       return this.auth_results;
-    } catch (error) {
+    } catch {
       return undefined;
     }
   }
