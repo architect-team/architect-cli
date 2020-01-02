@@ -31,6 +31,8 @@ export interface EnvironmentService {
   };
   debug?: {
     path: string;
+    dockerfile?: string;
+    volumes?: string[];
   };
 }
 

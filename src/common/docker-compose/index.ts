@@ -63,6 +63,16 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       if (fs.pathExistsSync(src_path)) {
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
       }
+
+      const env_service = dependency_manager.environment.getServices()[node.ref];
+      if (env_service && env_service.debug) {
+        if (env_service.debug.dockerfile) {
+          compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
+        }
+        if (env_service.debug.volumes) {
+          compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1]);
+        }
+      }
     } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref].image = node.image;
     }
