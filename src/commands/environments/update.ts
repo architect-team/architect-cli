@@ -1,10 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
-import fs from 'fs-extra';
-import untildify from 'untildify';
 import Command from '../../base-command';
-import { readIfFile } from '../../common/utils/file';
 
 export default class EnvironmentUpdate extends Command {
   static aliases = ['environment:update', 'envs:update', 'env:update'];
@@ -12,21 +9,7 @@ export default class EnvironmentUpdate extends Command {
 
   static flags = {
     ...Command.flags,
-    host: flags.string(),
-    service_token: flags.string({
-      description: 'Service token',
-      env: 'ARCHITECT_SERVICE_TOKEN',
-      char: 't',
-    }),
-    cluster_ca_certificate: flags.string({
-      description: 'File path of cluster_ca_certificate',
-      env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE',
-      char: 'k',
-    }),
-    config_file: flags.string({
-      description: 'Path to an environment configuration file to use',
-      char: 'c',
-    }),
+    description: flags.string({ char: 'd' }),
   };
 
   static args = [{
@@ -57,10 +40,7 @@ export default class EnvironmentUpdate extends Command {
 
     try {
       await this.app.api.put(`/environments/${account_environment.id}`, {
-        host: answers.host,
-        service_token: await readIfFile(answers.service_token),
-        cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-        config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
+        description: answers.description
       });
       cli.action.stop(chalk.green('Environment updated successfully'));
     } catch (err) {

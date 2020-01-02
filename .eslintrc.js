@@ -17,6 +17,7 @@ module.exports = {
     'comma-dangle': [1, 'always-multiline'],
     'semi': 'off',
     'no-prototype-builtins': [0],
+    'no-case-declarations': [0],
     'space-before-function-paren': ['error', { 'anonymous': 'always', 'named': 'never', 'asyncArrow': 'always' }],
 
     '@typescript-eslint/camelcase': [0],

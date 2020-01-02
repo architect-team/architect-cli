@@ -165,3 +165,8 @@ workflows:
           context: NPM Packaging
           requires:
             - build_cli
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/

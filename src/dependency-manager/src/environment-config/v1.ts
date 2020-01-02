@@ -30,6 +30,8 @@ interface ServiceMap {
     };
     debug?: {
       path: string;
+      dockerfile?: string;
+      volumes?: string[];
     };
   };
 }

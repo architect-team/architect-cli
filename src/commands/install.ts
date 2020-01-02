@@ -81,16 +81,25 @@ export default class Install extends Command {
         break;
 
       case 'python':
-        // eslint-disable-next-line no-case-declarations
-        const { stderr } = await execa('python3', ['-c', '"import grpc_tools"']);
-        if (stderr) {
-          await execa('pip3', ['install', 'grpcio-tools']);
+        let python = 'python3';
+        let pip = 'pip3';
+        try {
+          await execa('which', ['python3']);
+        } catch {
+          python = 'python';
+          pip = 'pip';
+        }
+
+        try {
+          await execa(python, ['-c', '"import grpc_tools"'], { shell: true });
+        } catch {
+          await execa(pip, ['install', 'grpcio-tools']);
         }
 
         for (const filename of Object.keys(definitions_contents)) {
           const proto_path = path.join(tmp_stub_directory, filename);
           await fs.outputFile(proto_path, definitions_contents[filename]);
-          await execa('python3', [
+          await execa(python, [
             '-m', 'grpc_tools.protoc',
             '-I', tmp_stub_root,
             `--python_out=${output_directory}`,
