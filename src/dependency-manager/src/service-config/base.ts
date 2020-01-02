@@ -10,6 +10,7 @@ export interface ServiceParameter {
   default?: string | number | ValueFromParameter | DatastoreValueFromParameter;
   aliases: string[];
   required: boolean;
+  build_arg?: boolean;
 }
 
 export interface ServiceDatastore {

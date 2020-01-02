@@ -46,10 +46,12 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
     }
 
     if (node instanceof LocalServiceNode) {
+      const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
+      const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
       // Setup build context
       compose.services[node.normalized_ref].build = {
         context: node.service_path,
-        args: ['ARCHITECT_DEBUG=1'],
+        args: [...build_args, 'ARCHITECT_DEBUG=1'],
       };
 
       if (node.command) {
@@ -60,6 +62,16 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       const src_path = path.join(node.service_path, 'src');
       if (fs.pathExistsSync(src_path)) {
         compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
+      }
+
+      const env_service = dependency_manager.environment.getServices()[node.ref];
+      if (env_service && env_service.debug) {
+        if (env_service.debug.dockerfile) {
+          compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
+        }
+        if (env_service.debug.volumes) {
+          compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1]);
+        }
       }
     } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref].image = node.image;

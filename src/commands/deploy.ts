@@ -162,7 +162,6 @@ export default class Deploy extends Command {
 
     const all_answers = { ...args, ...flags, ...answers, ...env_answers };
     const configPayload = fs.readJSONSync(env_config_path) as object;
-    const environment_name = environments.filter((env: any) => env.id === all_answers.environment_id)[0].name;
 
     cli.action.start(chalk.blue('Creating deployment'));
     const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: configPayload });
