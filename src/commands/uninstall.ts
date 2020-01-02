@@ -4,6 +4,10 @@ import Command from '../base-command';
 import { ServiceConfigBuilder } from '../dependency-manager/src';
 
 export default class Uninstall extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'Uninstall a dependency from the current service';
 
   static flags = {
@@ -21,7 +25,7 @@ export default class Uninstall extends Command {
   }];
 
   async run() {
-    const {flags, args} = this.parse(Uninstall);
+    const { flags, args } = this.parse(Uninstall);
     let service_path = process.cwd();
     if (flags.service) {
       service_path = flags.service;

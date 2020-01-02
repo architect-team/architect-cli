@@ -2,6 +2,10 @@ import Table from 'cli-table3';
 import Command from '../../base-command';
 
 export default class ConfigView extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'View all the CLI configuration settings';
   static aliases = ['config'];
 

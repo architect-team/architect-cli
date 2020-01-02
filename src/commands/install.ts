@@ -16,6 +16,11 @@ import { ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
 
 export default class Install extends Command {
+  auth_required() {
+    const { args } = this.parse(Install);
+    return args.service_ref;
+  }
+
   static description = 'Install services and generate the corresponding client libraries';
 
   static args = [{
