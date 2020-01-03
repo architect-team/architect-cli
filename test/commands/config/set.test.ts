@@ -1,8 +1,8 @@
-import {expect} from '@oclif/test';
-import sinon from 'sinon';
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
-import ConfigSet from '../../../src/commands/config/set';
+import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
+import ConfigSet from '../../../src/commands/config/set';
 import InvalidConfigOption from '../../../src/common/errors/invalid-config-option';
 
 const verifyConfigField = async (key: string, value: string) => {
@@ -18,10 +18,7 @@ const verifyConfigField = async (key: string, value: string) => {
   sinon.restore();
 };
 
-describe('config:set', function() {
-  afterEach(function() {
-    sinon.restore();
-  });
+describe('config:set', function () {
 
   it('should fail for bad key', async () => {
     const spy = sinon.fake.returns(null);

@@ -26,7 +26,7 @@ export default class AuthClient {
   }
 
   async init() {
-    const token = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+    const token = await this.getToken();
     if (token) {
       this.auth_results = JSON.parse(token.password) as AuthResults;
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
@@ -49,6 +49,10 @@ export default class AuthClient {
   async logout() {
     await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
+  }
+
+  async getToken() {
+    return this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
   }
 
   async refreshToken() {
@@ -85,7 +89,7 @@ export default class AuthClient {
 
       await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
       return this.auth_results;
-    } catch (error) {
+    } catch {
       return undefined;
     }
   }

@@ -1,8 +1,12 @@
+import AppConfig from '../../app-config/config';
 import Command from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
-import AppConfig from '../../app-config/config';
 
 export default class ConfigGet extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'Get the value of a CLI config option';
 
   static flags = {
@@ -16,7 +20,7 @@ export default class ConfigGet extends Command {
   }];
 
   async run() {
-    const {args} = this.parse(ConfigGet);
+    const { args } = this.parse(ConfigGet);
 
     if (!Object.keys(this.app.config).includes(args.option)) {
       throw new InvalidConfigOption(args.option);

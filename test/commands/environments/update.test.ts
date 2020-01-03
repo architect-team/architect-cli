@@ -5,6 +5,7 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
+import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import EnvironmentUpdate from '../../../src/commands/environments/destroy';
 import ARCHITECTPATHS from '../../../src/paths';
@@ -24,6 +25,9 @@ describe('environment:update', () => {
 
     sinon.replace(EnvironmentUpdate.prototype, 'log', sinon.stub());
     moxios.install();
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
   afterEach(function () {

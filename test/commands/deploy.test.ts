@@ -1,14 +1,37 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
+import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
+import AppConfig from '../../src/app-config/config';
+import CredentialManager from '../../src/app-config/credentials';
+import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
+import ARCHITECTPATHS from '../../src/paths';
 
 describe('deploy', () => {
+  let tmp_dir = os.tmpdir();
+
   before(() => {
     PortUtil.tested_ports = new Set();
+
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
+
+    // Stub the log_level
+    const config = new AppConfig('', {
+      log_level: 'debug',
+    });
+    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+    fs.writeJSONSync(tmp_config_file, config);
+    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
+    sinon.replace(AppService, 'create', app_config_stub);
+  });
+
+  after(() => {
+    sinon.restore();
   });
 
   it('generates compose locally', async () => {

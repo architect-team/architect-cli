@@ -5,7 +5,7 @@ export default class IngressEdge extends DependencyEdge {
   subdomain: string;
 
   constructor(from: string, to: string, subdomain: string) {
-    super(from, to)
+    super(from, to);
     this.subdomain = subdomain;
   }
 }
