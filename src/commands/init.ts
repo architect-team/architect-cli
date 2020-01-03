@@ -9,6 +9,10 @@ import ARCHITECTPATHS from '../paths';
 declare const process: NodeJS.Process;
 
 export default class Init extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'Generate an Architect service configuration file';
 
   static examples = [

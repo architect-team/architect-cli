@@ -31,8 +31,8 @@ export default abstract class DependencyGraph {
     this.__edges_map = undefined;
   }
 
-  removeEdgeByRef(from_ref: string, to_ref: string) {
-    this.edges = this.edges.filter(edge => edge.from !== from_ref && edge.to !== to_ref);
+  removeEdgeByRef(edge_ref: string) {
+    this.edges = this.edges.filter(edge => edge.ref !== edge_ref);
     this.__edges_map = undefined;
   }
 

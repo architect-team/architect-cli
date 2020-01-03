@@ -75,7 +75,7 @@ describe('manager', function () {
     const graph = deserialize(LocalDependencyGraph, serialized_graph);
 
     expect(graph.edges).lengthOf(3);
-    graph.removeEdgeByRef('architect/division-service-grpc:latest', 'architect/subtraction-service-rest:latest');
+    graph.removeEdgeByRef(graph.edges[0].ref);
     expect(graph.edges).lengthOf(2);
   });
 });

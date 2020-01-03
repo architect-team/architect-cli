@@ -4,7 +4,7 @@ import LoginRequiredError from '../common/errors/login-required';
 import AppConfig from './config';
 import CredentialManager from './credentials';
 
-export const CREDENTIAL_PREFIX = 'architect.io';
+const CREDENTIAL_PREFIX = 'architect.io';
 
 interface AuthResults {
   access_token: string;
