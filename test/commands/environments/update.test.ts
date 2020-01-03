@@ -14,7 +14,10 @@ describe('environment:update', () => {
   let tmp_dir = os.tmpdir();
 
   beforeEach(function () {
-    const config = new AppConfig('', {});
+    // Stub the log_level
+    const config = new AppConfig('', {
+      log_level: 'debug',
+    });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
