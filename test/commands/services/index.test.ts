@@ -1,13 +1,27 @@
 import { expect } from '@oclif/test';
+import fs from 'fs-extra';
 import moxios from 'moxios';
+import os from 'os';
+import path from 'path';
 import sinon from 'sinon';
+import AppConfig from '../../../src/app-config/config';
 import CredentialManager from '../../../src/app-config/credentials';
+import AppService from '../../../src/app-config/service';
 import Services from '../../../src/commands/services';
+import ARCHITECTPATHS from '../../../src/paths';
 
 describe('services', () => {
+  let tmp_dir = os.tmpdir();
+
   beforeEach(function () {
     sinon.replace(Services.prototype, 'log', sinon.stub());
     moxios.install();
+
+    const config = new AppConfig('', {});
+    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+    fs.writeJSONSync(tmp_config_file, config);
+    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
+    sinon.replace(AppService, 'create', app_config_stub);
 
     const credential_spy = sinon.fake.returns('token');
     sinon.replace(CredentialManager.prototype, 'get', credential_spy);
