@@ -9,6 +9,10 @@ import ARCHITECTPATHS from '../paths';
 declare const process: NodeJS.Process;
 
 export default class Init extends Command {
+  auth_required() {
+    return false;
+  }
+
   static description = 'Generate an Architect service configuration file';
 
   static examples = [
@@ -37,6 +41,10 @@ export default class Init extends Command {
       char: 'o',
       description: 'Directory to write config file to',
     }),
+    account: flags.string({
+      char: 'a',
+      description: 'Name of the account to create the service for',
+    }),
   };
 
   static args = [{
@@ -48,12 +56,24 @@ export default class Init extends Command {
 
   private async promptQuestions(): Promise<ServiceConfig> {
     const { args, flags } = this.parse(Init);
+    const { rows: user_accounts } = await this.get_accounts();
+
+    let account_answer;
+    if (!flags.account) {
+      account_answer = await inquirer.prompt([{
+        type: 'list',
+        name: 'account',
+        message: 'Which account would you like to create the service for?',
+        choices: user_accounts.map((a: any) => a.name),
+        when: !flags.account,
+      }]);
+    }
 
     let answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
-        default: args.name,
+        default: `${flags.account || account_answer?.account}/${args.name}`,
         filter: value => value.toLowerCase(),
         validate: (val: string) => {
           const parts = val.split('/');

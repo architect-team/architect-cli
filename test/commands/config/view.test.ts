@@ -1,17 +1,23 @@
+import { expect } from '@oclif/test';
 import Table from 'cli-table3';
-import sinon from 'sinon';
-import os from 'os';
 import fs from 'fs-extra';
+import os from 'os';
 import path from 'path';
-import {expect} from '@oclif/test';
-import ARCHITECTPATHS from '../../../src/paths';
+import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
+import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import ConfigView from '../../../src/commands/config/view';
+import ARCHITECTPATHS from '../../../src/paths';
 
 describe('config:view', () => {
-  afterEach(function() {
+  afterEach(function () {
     sinon.restore();
+  });
+
+  beforeEach(function () {
+    const credential_spy = sinon.fake.returns('token');
+    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
   it('expects results table', async () => {

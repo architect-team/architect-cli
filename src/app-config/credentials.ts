@@ -1,10 +1,10 @@
-import path from 'path';
 import fs from 'fs-extra';
+import path from 'path';
 import AppConfig from './config';
 
 const CREDENTIALS_FILENAME = 'creds.json';
 
-interface Credential {
+export interface Credential {
   account: string;
   password: string;
 }

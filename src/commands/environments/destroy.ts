@@ -33,6 +33,10 @@ export default class EnvironmentDestroy extends Command {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
     const [account_name, env_name] = args.namespaced_environment.split('/');
+    if (!account_name || !env_name) {
+      throw new Error(`Please specify a namespaced environment in the form <account_name>/<environment_name>`);
+    }
+
     let account;
     try {
       account = (await this.app.api.get(`/accounts/${account_name}`)).data;
@@ -56,11 +60,19 @@ export default class EnvironmentDestroy extends Command {
     cli.action.start(chalk.green('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
-    await this.app.api.delete(`/environments/${account_environment.id}`, {
-      params: {
-        force: answers.force ? 1 : 0,
-      },
-    });
-    cli.action.stop(chalk.green('Environment destroyed'));
+
+    try {
+      await this.app.api.delete(`/environments/${account_environment.id}`, {
+        params: {
+          force: answers.force ? 1 : 0,
+        },
+      });
+      cli.action.stop(chalk.green('Environment destroyed'));
+    } catch (err) {
+      if (err.response?.data?.statusCode === 403) {
+        throw new Error(`You do not have permission to delete an environment for the selected account.`);
+      }
+      throw new Error(err);
+    }
   }
 }

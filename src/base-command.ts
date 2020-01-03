@@ -7,6 +7,10 @@ export default abstract class extends Command {
   app!: AppService;
   accounts?: any;
 
+  auth_required() {
+    return true;
+  }
+
   static flags = {
     help: flags.help({ char: 'h' }),
   };
@@ -18,6 +22,10 @@ export default abstract class extends Command {
   async init() {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
+
+      if (this.auth_required() && !await this.app.auth.getToken()) {
+        this.error(chalk.red(`Please log in using 'architect login'`));
+      }
     }
   }
 
