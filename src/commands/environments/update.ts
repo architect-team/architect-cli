@@ -20,7 +20,7 @@ export default class EnvironmentUpdate extends Command {
   }];
 
   async run() {
-    const { args, flags } = this.parse(EnvironmentUpdate)
+    const { args, flags } = this.parse(EnvironmentUpdate);
 
     const [account_name, env_name] = args.namespaced_environment.split('/');
     if (!account_name || !env_name) {
@@ -40,7 +40,7 @@ export default class EnvironmentUpdate extends Command {
 
     try {
       await this.app.api.put(`/environments/${account_environment.id}`, {
-        description: answers.description
+        description: answers.description,
       });
       cli.action.stop(chalk.green('Environment updated successfully'));
     } catch (err) {

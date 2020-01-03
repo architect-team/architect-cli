@@ -26,7 +26,7 @@ export default class AuthClient {
   }
 
   async init() {
-    const token = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+    const token = await this.getToken();
     if (token) {
       this.auth_results = JSON.parse(token.password) as AuthResults;
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
@@ -51,7 +51,7 @@ export default class AuthClient {
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
   }
 
-  async getToken(): Promise<Credential> {
+  async getToken() {
     return this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
   }
 

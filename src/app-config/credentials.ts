@@ -4,11 +4,9 @@ import AppConfig from './config';
 
 const CREDENTIALS_FILENAME = 'creds.json';
 
-interface Credential {
+export interface Credential {
   account: string;
   password: string;
-  id: string;
-  type: string;
 }
 
 export default class CredentialManager {
@@ -53,7 +51,7 @@ export default class CredentialManager {
     if (this.keytar) {
       await this.keytar.setPassword(service, account, password);
     } else {
-      this.credentials[service] = { account, password, id: '', type: '' };
+      this.credentials[service] = { account, password };
       await this.save();
     }
   }

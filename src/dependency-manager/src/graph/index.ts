@@ -39,8 +39,8 @@ export default abstract class DependencyGraph {
   addEdge(edge: DependencyEdge): DependencyEdge {
     if (!this.edges_map.has(edge.ref)) {
       // Ensure the nodes exist in the pool
-      this.getNodeByRef(edge.from)
-      this.getNodeByRef(edge.to)
+      this.getNodeByRef(edge.from);
+      this.getNodeByRef(edge.to);
 
       this.edges.push(edge);
       this.__edges_map!.set(edge.ref, edge);

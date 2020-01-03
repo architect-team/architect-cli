@@ -43,7 +43,7 @@ export default class Init extends Command {
     }),
     account: flags.string({
       char: 'a',
-      description: 'Name of the account to create the service for'
+      description: 'Name of the account to create the service for',
     }),
   };
 

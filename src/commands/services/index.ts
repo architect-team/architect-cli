@@ -7,7 +7,7 @@ export default class Services extends Command {
 
   static flags = {
     ...Command.flags,
-  }
+  };
 
   static args = [{
     name: 'query',
