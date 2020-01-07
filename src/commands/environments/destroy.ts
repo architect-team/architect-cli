@@ -57,7 +57,7 @@ export default class EnvironmentDestroy extends Command {
       when: !flags.auto_approve,
     }]);
 
-    cli.action.start(chalk.green('Destroying environment'));
+    cli.action.start(chalk.blue('Destroying environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
 

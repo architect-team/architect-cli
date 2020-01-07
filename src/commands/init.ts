@@ -126,6 +126,7 @@ export default class Init extends Command {
       savePath = path.resolve(flags.output);
     }
     savePath = path.join(savePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+    delete config.__version;
     const configJson = JSON.stringify(config, null, 2);
     fs.writeFileSync(savePath, configJson);
 
