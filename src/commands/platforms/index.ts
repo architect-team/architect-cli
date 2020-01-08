@@ -1,9 +1,9 @@
 import Table from 'cli-table3';
 import Command from '../../base-command';
 
-export default class Services extends Command {
-  static aliases = ['services', 'services:search'];
-  static description = 'Search for services on Architect Cloud';
+export default class Platforms extends Command {
+  static aliases = ['platforms', 'platforms:search'];
+  static description = 'Search for platforms on Architect Cloud';
 
   static flags = {
     ...Command.flags,
@@ -16,17 +16,17 @@ export default class Services extends Command {
   }];
 
   async run() {
-    const { args } = this.parse(Services);
+    const { args } = this.parse(Platforms);
 
-    const { data: { rows: services } } = await this.app.api.get(`/services?q=${args.query || ''}`);
+    const { data: { rows: platforms } } = await this.app.api.get(`/platforms?q=${args.query || ''}`);
 
-    if (!services.length) {
-      this.log('You have not pushed any services yet. Use `architect push` to add your first one.');
+    if (!platforms.length) {
+      this.log('You have not configured any platforms yet. Use `architect env:create` to set up your first one.');
       return;
     }
 
     const table = new Table({ head: ['Name', 'Created', 'Updated'] });
-    for (const row of services) {
+    for (const row of platforms) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       table.push([row.name, row.created_at, row.updated_at]);
