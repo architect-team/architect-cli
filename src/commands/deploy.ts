@@ -56,6 +56,10 @@ export default class Deploy extends Command {
       description: 'Environment to deploy the services to',
       exclusive: ['local', 'compose_file'],
     }),
+    build_prod: flags.boolean({
+      description: 'Build without the ARCHITECT_DEBUG flag and mounted volumes',
+      hidden: true,
+    }),
   };
 
   static args = [{
@@ -77,7 +81,7 @@ export default class Deploy extends Command {
   }
 
   private async runLocal() {
-    const { args } = this.parse(Deploy);
+    const { args, flags } = this.parse(Deploy);
 
     if (!args.environment_config) {
       throw new EnvConfigRequiredError();
@@ -87,7 +91,7 @@ export default class Deploy extends Command {
       this.app.api,
       path.resolve(untildify(args.environment_config)),
     );
-    const compose = DockerCompose.generate(dependency_manager);
+    const compose = DockerCompose.generate(dependency_manager, flags.build_prod);
     await this.runCompose(compose);
   }
 
