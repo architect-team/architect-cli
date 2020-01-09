@@ -6,7 +6,7 @@ import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_manager: DependencyManager): DockerComposeTemplate => {
+export const generate = (dependency_manager: DependencyManager, build_prod = false): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -51,26 +51,30 @@ export const generate = (dependency_manager: DependencyManager): DockerComposeTe
       // Setup build context
       compose.services[node.normalized_ref].build = {
         context: node.service_path,
-        args: [...build_args, 'ARCHITECT_DEBUG=1'],
+        args: [...build_args],
       };
 
-      if (node.command) {
-        compose.services[node.normalized_ref].command = node.command;
-      }
+      if (!build_prod) {
+        compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');
 
-      // Mount the src directory
-      const src_path = path.join(node.service_path, 'src');
-      if (fs.pathExistsSync(src_path)) {
-        compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
-      }
-
-      const env_service = dependency_manager.environment.getServices()[node.ref];
-      if (env_service && env_service.debug) {
-        if (env_service.debug.dockerfile) {
-          compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
+        if (node.command) {
+          compose.services[node.normalized_ref].command = node.command;
         }
-        if (env_service.debug.volumes) {
-          compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1]);
+
+        // Mount the src directory
+        const src_path = path.join(node.service_path, 'src');
+        if (fs.pathExistsSync(src_path)) {
+          compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
+        }
+
+        const env_service = dependency_manager.environment.getServices()[node.ref];
+        if (env_service && env_service.debug) {
+          if (env_service.debug.dockerfile) {
+            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
+          }
+          if (env_service.debug.volumes) {
+            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1]);
+          }
         }
       }
     } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
