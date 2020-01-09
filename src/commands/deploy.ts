@@ -59,6 +59,7 @@ export default class Deploy extends Command {
     build_prod: flags.boolean({
       description: 'Build without the ARCHITECT_DEBUG flag and mounted volumes',
       hidden: true,
+      exclusive: ['account', 'environment', 'auto_approve'],
     }),
   };
 
