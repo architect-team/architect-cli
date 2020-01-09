@@ -55,6 +55,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       };
 
       if (!build_prod) {
+        compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');
+
         if (node.command) {
           compose.services[node.normalized_ref].command = node.command;
         }
