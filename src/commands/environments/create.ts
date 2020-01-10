@@ -112,7 +112,7 @@ export default class EnvironmentCreate extends Command {
   }
 
   private async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string) {
-    const set_kubeconfig = ['--kubeconfig', kubeconfig_path];
+    const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
 
     // Create the service account
     await execa('kubectl', [
@@ -150,7 +150,7 @@ export default class EnvironmentCreate extends Command {
       throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
     }
 
-    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path)];
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path), '--namespace', 'default'];
 
     // Get original kubernetes current-context
     const { stdout: original_kubecontext } = await execa('kubectl', [
