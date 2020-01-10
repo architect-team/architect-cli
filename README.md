@@ -135,7 +135,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/z9/k6scysj12871tsvr_8zknq400000gn/T/architect-deployment-1578672085292.j
+                                   /var/folders/z9/k6scysj12871tsvr_8zknq400000gn/T/architect-deployment-1578696052087.j
                                    son] Path where the compose file should be written to
 
   --auto_approve
@@ -187,7 +187,7 @@ OPTIONS
   -k, --kubeconfig=kubeconfig        [default: ~/.kube/config]
   -n, --namespace=namespace
   -p, --platform=platform
-  -t, --type=kubernetes              [default: kubernetes]
+  -t, --type=KUBERNETES              [default: KUBERNETES]
   --cluster_ca_cert=cluster_ca_cert  File path of cluster_ca_cert
   --service_token=service_token      Service token
 
