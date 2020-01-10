@@ -119,20 +119,19 @@ export default class LocalDependencyManager extends DependencyManager {
    */
   async loadService(service_name: string, service_tag: string): Promise<ServiceNode> {
     const [account_name, svc_name] = service_name.split('/');
-    const { data: service } = await this.api.get(`/accounts/${account_name}/services/${svc_name}`);
-    const { data: tag } = await this.api.get(`/services/${service.id}/versions/${service_tag}`);
+    const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
-    const config = ServiceConfigBuilder.buildFromJSON(tag.config);
+    const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
     const node = new ServiceNode({
       service_config: config,
-      tag: tag.tag,
-      image: service.url.replace(/(^\w+:|^)\/\//, ''),
+      tag: service_digest.tag,
+      image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: {
         target: 8080,
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
-        `${config.getName()}:${tag.tag}`,
+        `${config.getName()}:${service_digest.tag}`,
         config.getParameters(),
       ),
     });
