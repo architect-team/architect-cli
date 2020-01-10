@@ -51,7 +51,7 @@ export default class EnvironmentCreate extends Command {
   static flags = {
     ...Command.flags,
     namespace: flags.string({ char: 'n' }),
-    type: flags.string({ char: 't', options: ['kubernetes'], default: 'kubernetes' }),
+    type: flags.string({ char: 't', options: ['KUBERNETES'], default: 'KUBERNETES' }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
@@ -61,9 +61,9 @@ export default class EnvironmentCreate extends Command {
     platform: flags.string({ char: 'p', exclusive: ['type', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
   };
 
-  private async createArchitectPlatform(data: CreatePlatformInput, account_id: string): Promise<any> {
+  private async createArchitectPlatform(dto: CreatePlatformInput, account_id: string): Promise<any> {
     try {
-      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, data);
+      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
       return platform;
     } catch (err) {
       if (err.response?.data?.statusCode === 403) {
@@ -182,7 +182,7 @@ export default class EnvironmentCreate extends Command {
         type: 'input',
         name: 'name',
         message: 'What would you like to name your new environment?',
-        when: !args.name,
+        when: !flags.namespace,
         filter: value => value.toLowerCase(),
         validate: value => {
           if (EnvironmentNameValidator.test(value)) return true;
@@ -227,11 +227,11 @@ export default class EnvironmentCreate extends Command {
     }
 
     if (!answers.platform_id) {
-      answers.platform_id = await this.createPlatform(set_kubeconfig, kubeconfig_path, kubeconfig, answers.account);
+      answers.platform_id = await this.createPlatform(set_kubeconfig, kubeconfig_path, flags, kubeconfig, answers.account);
     }
 
     const environment = await this.createArchitectEnvironment({
-      name: args.name || answers.name,
+      name: flags.namespace || answers.name,
       namespace: flags.namespace || answers.namespace,
       platform_id: answers.platform_id,
       config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
@@ -250,15 +250,22 @@ export default class EnvironmentCreate extends Command {
     return environment;
   }
 
+  private static default_platform_name(account: any, flags: any, answers: any) {
+    const type = flags.type || answers.platform_type;
+    return `${account.name}-${type}`.toLowerCase();
+  }
+
   private async createPlatform(
     set_kubeconfig: any,
     kubeconfig_path: string,
+    flags: any,
     kubeconfig: any,
     account: { id: string; name: string },
   ): Promise<string> {
 
     const new_platform_answers: any = await inquirer.prompt([
       {
+        when: !flags.type,
         type: 'list',
         name: 'platform_type',
         message: 'What type of platform would you like to create?',
@@ -275,7 +282,7 @@ export default class EnvironmentCreate extends Command {
           if (EnvironmentNameValidator.test(value)) return true;
           return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
         },
-        default: (answers: any) => `${account.name}-${answers.platform_type}`.toLowerCase(),
+        default: (answers: any) => EnvironmentCreate.default_platform_name(account, flags, answers),
       },
       {
         type: 'list',
@@ -392,10 +399,10 @@ export default class EnvironmentCreate extends Command {
 
     const platform = await this.createArchitectPlatform({
       name: new_platform_answers.name,
-      type: new_platform_answers.platform_type,
+      type: flags.type || new_platform_answers.platform_type,
       host: cluster_host,
       credentials: {
-        kind: new_platform_answers.platform_type,
+        kind: flags.type || new_platform_answers.platform_type,
         service_token,
         cluster_ca_cert,
       },
@@ -410,7 +417,7 @@ export default class EnvironmentCreate extends Command {
     this.platforms = await this.load_platforms();
 
     let environment;
-    if (flags.type === 'kubernetes' && flags.kubeconfig && !flags.host) {
+    if (flags.type === 'KUBERNETES' && flags.kubeconfig && !flags.host) {
       environment = await this.runKubernetes();
     } else {
       throw new Error('We do not support that environment type at the moment.');
