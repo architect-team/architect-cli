@@ -7,22 +7,40 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../../base-command';
-import { readIfFile } from '../../common/utils/file';
 import { EnvironmentNameValidator } from '../../common/utils/validation';
 
 interface CreateEnvironmentInput {
   name: string;
   namespace: string;
+  platform_id: string;
+  config?: string;
+}
+
+interface CreatePlatformInput {
+  name: string;
   type: string;
   host: string;
+  credentials: PlatformCredentials;
+}
+
+export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
+
+export interface KubernetesPlatformCredentials {
+  kind: 'KUBERNETES';
+
+  cluster_ca_cert: string;
   service_token: string;
-  cluster_ca_certificate: string;
-  config: string;
+}
+
+export interface EcsPlatformCredentials {
+  kind: 'ECS';
+
 }
 
 export default class EnvironmentCreate extends Command {
-  static aliases = ['environment:create', 'envs:create', 'env:create'];
+  static aliases = ['environment:create', 'environments:create', 'envs:create', 'env:create'];
   static description = 'Register a new environment with Architect Cloud';
+  private platforms: any[] = [];
 
   static args = [{
     name: 'name',
@@ -35,24 +53,62 @@ export default class EnvironmentCreate extends Command {
     namespace: flags.string({ char: 'n' }),
     type: flags.string({ char: 't', options: ['kubernetes'], default: 'kubernetes' }),
     host: flags.string({ char: 'h' }),
-    kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_certificate', 'host'] }),
+    kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
-    cluster_ca_certificate: flags.string({ description: 'File path of cluster_ca_certificate', env: 'ARCHITECT_CLUSTER_CA_CERTIFICATE' }),
+    cluster_ca_cert: flags.string({ description: 'File path of cluster_ca_cert', env: 'ARCHITECT_CLUSTER_CA_CERT' }),
     config_file: flags.string({ char: 'c' }),
     account: flags.string({ char: 'a' }),
+    platform: flags.string({ char: 'p', exclusive: ['type', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
   };
 
-  private async createArchitectEnvironment(data: CreateEnvironmentInput, account_id: string): Promise<any> {
-    let environment;
+  private async createArchitectPlatform(data: CreatePlatformInput, account_id: string): Promise<any> {
     try {
-      environment = (await this.app.api.post(`/accounts/${account_id}/environments`, data)).data;
+      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, data);
+      return platform;
+    } catch (err) {
+      if (err.response?.data?.statusCode === 403) {
+        throw new Error(`You do not have permission to create a platform for the selected account.`);
+      }
+      if (err.response?.data?.status === 409) {
+        throw new Error(`The server responded with 409 CONFLICT. Perhaps this platform name already exists under that account?`);
+      }
+      if (err.response?.data?.message) {
+        throw new Error(err.response?.data?.message);
+      }
+      throw new Error(err);
+    }
+  }
+
+  private async createArchitectEnvironment(data: CreateEnvironmentInput, account_id: string): Promise<any> {
+    try {
+      const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
       return environment;
     } catch (err) {
       if (err.response?.data?.statusCode === 403) {
         throw new Error(`You do not have permission to create an environment for the selected account.`);
       }
+      if (err.response?.data?.status === 409) {
+        throw new Error(`The server responded with 409 CONFLICT. Perhaps this environment name already exists under that account?`);
+      }
+      if (err.response?.data?.message) {
+        throw new Error(err.response?.data?.message);
+      }
       throw new Error(err);
     }
+  }
+
+  async load_platforms(account_id?: string) {
+    const endpoint = account_id ? `/platforms?account_id=${account_id}` : `/platforms`;
+    const { data: { rows: platforms } } = await this.app.api.get(endpoint);
+    return platforms;
+  }
+
+  async load_platform_by_name(account_id: string, name: string) {
+    const { data: platform } = await this.app.api.get(`/accounts/${account_id}/platforms/${name}`);
+    if (!platform) {
+      throw new Error(`No platform exists with name=${name}`);
+    }
+    return platform;
   }
 
   private async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string) {
@@ -81,11 +137,11 @@ export default class EnvironmentCreate extends Command {
     const { args, flags } = this.parse(EnvironmentCreate);
 
     let kubeconfig: any;
+    const kubeconfig_path = untildify(flags.kubeconfig!);
     try {
-      flags.kubeconfig = untildify(flags.kubeconfig!);
-      kubeconfig = await fs.readFile(path.resolve(flags.kubeconfig), 'utf-8');
+      kubeconfig = await fs.readFile(path.resolve(kubeconfig_path), 'utf-8');
     } catch {
-      throw new Error(`No kubeconfig found at ${flags.kubeconfig}`);
+      throw new Error(`No kubeconfig found at ${kubeconfig_path}`);
     }
 
     try {
@@ -94,7 +150,7 @@ export default class EnvironmentCreate extends Command {
       throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
     }
 
-    const set_kubeconfig = ['--kubeconfig', untildify(flags.kubeconfig)];
+    const set_kubeconfig = ['--kubeconfig', untildify(kubeconfig_path)];
 
     // Get original kubernetes current-context
     const { stdout: original_kubecontext } = await execa('kubectl', [
@@ -102,8 +158,26 @@ export default class EnvironmentCreate extends Command {
       'config', 'current-context',
     ]);
 
+    let selected_account: any;
+    this.accounts = await this.get_accounts();
+
+    if (flags.account) {
+      selected_account = this.accounts.rows.find((a: any) => a.name === flags.account);
+      if (!selected_account) {
+        throw new Error(`Account=${flags.account} does not exist or you do not have access to it.`);
+      }
+    }
+
     // Prompt user for required inputs
     const answers: any = await inquirer.prompt([
+      {
+        when: () => !flags.account,
+        type: 'list',
+        name: 'account',
+        message: 'For which Architect account would you like to create this environment?',
+        choices: this.accounts.rows.map((a: any) => { return { name: a.name, value: a }; }),
+        default: selected_account,
+      },
       {
         type: 'input',
         name: 'name',
@@ -115,6 +189,93 @@ export default class EnvironmentCreate extends Command {
           return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
         },
         default: flags.namespace || '',
+      },
+      {
+        when: () => !flags.namespace,
+        type: 'input',
+        name: 'namespace',
+        message: 'What namespace should the environment deploy resources to?',
+        filter: value => value.toLowerCase(),
+        validate: value => {
+          if (EnvironmentNameValidator.test(value)) return true;
+          return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+        },
+        default: args.name || '',
+      },
+      {
+        when: async (answers: any) => {
+          if (flags.platform) {
+            return false;
+          }
+          this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
+          return true;
+        },
+        type: 'list',
+        name: 'platform_id',
+        message: 'On which Architect platform would you like to put this environment?',
+        choices: [...this.platforms.map((a: any) => { return { name: a.name, value: a.id }; }), { name: 'Configure new platform', value: false }],
+      },
+    ]);
+
+    if (selected_account) {
+      answers.account = selected_account;
+    }
+
+    if (flags.platform) {
+      const platform = await this.load_platform_by_name(answers.account.id, flags.platform);
+      answers.platform_id = platform.id;
+    }
+
+    if (!answers.platform_id) {
+      answers.platform_id = await this.createPlatform(set_kubeconfig, kubeconfig_path, kubeconfig, answers.account);
+    }
+
+    const environment = await this.createArchitectEnvironment({
+      name: args.name || answers.name,
+      namespace: flags.namespace || answers.namespace,
+      platform_id: answers.platform_id,
+      config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
+    }, answers.account.id);
+
+    cli.action.stop();
+
+    cli.action.start('Registering environment with Architect');
+    await execa('kubectl', [
+      ...set_kubeconfig,
+      'config', 'set',
+      'current-context', original_kubecontext,
+    ]);
+    cli.action.stop();
+
+    return environment;
+  }
+
+  private async createPlatform(
+    set_kubeconfig: any,
+    kubeconfig_path: string,
+    kubeconfig: any,
+    account: { id: string; name: string },
+  ): Promise<string> {
+
+    const new_platform_answers: any = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'platform_type',
+        message: 'What type of platform would you like to create?',
+        choices: [
+          'KUBERNETES',
+        ],
+      },
+      {
+        type: 'input',
+        name: 'name',
+        message: 'What would you like to name the new platform?',
+        filter: value => value.toLowerCase(),
+        validate: value => {
+          if (EnvironmentNameValidator.test(value)) return true;
+          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+        },
+        default: (answers: any) => `${account.name}-${answers.platform_type}`.toLowerCase(),
       },
       {
         type: 'list',
@@ -156,32 +317,14 @@ export default class EnvironmentCreate extends Command {
         name: 'use_existing_sa',
         message: 'A service account with that name already exists. Would you like to use it for this environment?',
       },
-      {
-        when: answers => !flags.namespace && answers.use_existing_sa !== false,
-        type: 'input',
-        name: 'namespace',
-        message: 'What namespace should the environment deploy resources to?',
-        filter: value => value.toLowerCase(),
-        validate: value => {
-          if (EnvironmentNameValidator.test(value)) return true;
-          return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-        },
-        default: args.name || '',
-      },
-      {
-        type: 'list',
-        name: 'account',
-        message: 'Which Architect account would you like to create this environment for?',
-        choices: (await this.get_accounts()).rows.map((a: any) => { return { name: a.name, value: a.id }; }),
-      },
     ]);
 
-    if (answers.use_existing_sa === false) {
+    if (new_platform_answers.use_existing_sa === false) {
       throw new Error('Please select another service account name');
     }
 
     // Make sure the existing SA uses cluster-admin role binding
-    if (answers.use_existing_sa) {
+    if (new_platform_answers.use_existing_sa) {
       const { stdout } = await execa('kubectl', [
         ...set_kubeconfig,
         'get', 'clusterrolebinding',
@@ -195,7 +338,7 @@ export default class EnvironmentCreate extends Command {
           rolebinding.subjects.find(
             (subject: any) =>
               subject.kind === 'ServiceAccount' &&
-              subject.name === answers.service_account_name
+              subject.name === new_platform_answers.service_account_name
           )
       );
 
@@ -204,38 +347,38 @@ export default class EnvironmentCreate extends Command {
           ...set_kubeconfig,
           'create',
           'clusterrolebinding',
-          `${answers.service_account_name}-cluster-admin`,
+          `${new_platform_answers.service_account_name}-cluster-admin`,
           '--clusterrole',
           'cluster-admin',
           '--serviceaccount',
-          `default:${answers.service_account_name}`,
+          `default:${new_platform_answers.service_account_name}`,
         ]);
       }
     }
 
-    if (!answers.use_existing_sa) {
+    if (!new_platform_answers.use_existing_sa) {
       cli.action.start('Creating the service account');
-      await this.createKubernetesServiceAccount(untildify(flags.kubeconfig), answers.service_account_name);
+      await this.createKubernetesServiceAccount(untildify(kubeconfig_path), new_platform_answers.service_account_name);
       cli.action.stop();
     }
 
-    cli.action.start('Registering environment with Architect');
+    cli.action.start('Registering platform with Architect');
 
     // Retrieve cluster host and ca certificate
-    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === answers.context.context.cluster);
-    let cluster_ca_certificate: string;
+    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === new_platform_answers.context.context.cluster);
+    let cluster_ca_cert: string;
     if ('certificate-authority-data' in cluster.cluster) {
       const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
-      cluster_ca_certificate = ca_cert_buffer.toString('utf-8');
+      cluster_ca_cert = ca_cert_buffer.toString('utf-8');
     } else {
-      cluster_ca_certificate = await fs.readFile(untildify(cluster.cluster['certificate-authority']), 'utf-8');
+      cluster_ca_cert = await fs.readFile(untildify(cluster.cluster['certificate-authority']), 'utf-8');
     }
     const cluster_host = cluster.cluster.server;
 
     // Retrieve service account token
     const saRes = await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'sa', answers.service_account_name,
+      'get', 'sa', new_platform_answers.service_account_name,
       '-o', 'json',
     ]);
     const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
@@ -247,92 +390,30 @@ export default class EnvironmentCreate extends Command {
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
     const service_token = sa_token_buffer.toString('utf-8');
 
-    const environment = await this.createArchitectEnvironment({
-      name: args.name || answers.name,
-      namespace: flags.namespace || answers.namespace,
-      type: flags.type!,
-      config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
+    const platform = await this.createArchitectPlatform({
+      name: new_platform_answers.name,
+      type: new_platform_answers.platform_type,
       host: cluster_host,
-      service_token,
-      cluster_ca_certificate,
-    }, answers.account);
-
-    cli.action.stop();
-
-    cli.action.start('Registering environment with Architect');
-    await execa('kubectl', [
-      ...set_kubeconfig,
-      'config', 'set',
-      'current-context', original_kubecontext,
-    ]);
-    cli.action.stop();
-
-    return environment;
-  }
-
-  private async runGeneric() {
-    const { args, flags } = this.parse(EnvironmentCreate);
-
-    let answers: any = await inquirer.prompt([{
-      type: 'input',
-      name: 'name',
-      when: !args.name,
-      filter: value => value.toLowerCase(),
-      validate: value => {
-        if (EnvironmentNameValidator.test(value)) return true;
-        return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+      credentials: {
+        kind: new_platform_answers.platform_type,
+        service_token,
+        cluster_ca_cert,
       },
-    }, {
-      type: 'input',
-      name: 'namespace',
-      when: !flags.namespace,
-      filter: value => value.toLowerCase(),
-      validate: value => {
-        if (EnvironmentNameValidator.test(value)) return true;
-        return `Namespace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-      },
-      default: (answers: any) => answers.name,
-    }, {
-      type: 'input',
-      name: 'host',
-      when: !flags.host,
-    }, {
-      type: 'input',
-      name: 'service_token',
-      message: 'service token:',
-      when: !flags.service_token,
-    }, {
-      type: 'input',
-      name: 'cluster_ca_certificate',
-      message: 'cluster certificate:',
-      when: !flags.cluster_ca_certificate,
-    }, {
-      type: 'input',
-      name: 'account',
-      message: 'Architect account',
-      when: !flags.account,
-    }]);
+    }, account.id);
 
-    answers = { ...args, ...flags, ...answers };
-    return this.createArchitectEnvironment({
-      name: answers.name,
-      namespace: answers.namespace,
-      host: answers.host,
-      type: answers.type,
-      service_token: await readIfFile(answers.service_token),
-      cluster_ca_certificate: await readIfFile(answers.cluster_ca_certificate),
-      config: answers.config_file ? await fs.readJSON(untildify((answers.config_file))) : undefined,
-    }, answers.account);
+    return platform.id;
   }
 
   async run() {
     const { args, flags } = this.parse(EnvironmentCreate);
 
+    this.platforms = await this.load_platforms();
+
     let environment;
     if (flags.type === 'kubernetes' && flags.kubeconfig && !flags.host) {
       environment = await this.runKubernetes();
     } else {
-      environment = await this.runGeneric();
+      throw new Error('We do not support that environment type at the moment.');
     }
 
     this.log(environment);
