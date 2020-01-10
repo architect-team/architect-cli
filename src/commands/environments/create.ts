@@ -72,6 +72,9 @@ export default class EnvironmentCreate extends Command {
       if (err.response?.data?.status === 409) {
         throw new Error(`The server responded with 409 CONFLICT. Perhaps this platform name already exists under that account?`);
       }
+      if (err.response?.data?.message) {
+        throw new Error(err.response?.data?.message);
+      }
       throw new Error(err);
     }
   }
@@ -86,6 +89,9 @@ export default class EnvironmentCreate extends Command {
       }
       if (err.response?.data?.status === 409) {
         throw new Error(`The server responded with 409 CONFLICT. Perhaps this environment name already exists under that account?`);
+      }
+      if (err.response?.data?.message) {
+        throw new Error(err.response?.data?.message);
       }
       throw new Error(err);
     }
@@ -152,13 +158,25 @@ export default class EnvironmentCreate extends Command {
       'config', 'current-context',
     ]);
 
+    let selected_account: any;
+    this.accounts = await this.get_accounts();
+
+    if (flags.account) {
+      selected_account = this.accounts.rows.find((a: any) => a.name === flags.account);
+      if (!selected_account) {
+        throw new Error(`Account=${flags.account} does not exist or you do not have access to it.`);
+      }
+    }
+
     // Prompt user for required inputs
     const answers: any = await inquirer.prompt([
       {
+        when: () => !flags.account,
         type: 'list',
         name: 'account',
         message: 'For which Architect account would you like to create this environment?',
-        choices: (await this.get_accounts()).rows.map((a: any) => { return { name: a.name, value: a }; }),
+        choices: this.accounts.rows.map((a: any) => { return { name: a.name, value: a }; }),
+        default: selected_account,
       },
       {
         type: 'input',
@@ -189,7 +207,7 @@ export default class EnvironmentCreate extends Command {
           if (flags.platform) {
             return false;
           }
-          this.platforms = await this.load_platforms(answers.account.id);
+          this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
           return true;
         },
         type: 'list',
@@ -198,6 +216,10 @@ export default class EnvironmentCreate extends Command {
         choices: [...this.platforms.map((a: any) => { return { name: a.name, value: a.id }; }), { name: 'Configure new platform', value: false }],
       }
     ]);
+
+    if (selected_account) {
+      answers.account = selected_account;
+    }
 
     if (flags.platform) {
       const platform = await this.load_platform_by_name(answers.account.id, flags.platform);

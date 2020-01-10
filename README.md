@@ -135,7 +135,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/z9/k6scysj12871tsvr_8zknq400000gn/T/architect-deployment-1578664257539.j
+                                   /var/folders/z9/k6scysj12871tsvr_8zknq400000gn/T/architect-deployment-1578672085292.j
                                    son] Path where the compose file should be written to
 
   --auto_approve
