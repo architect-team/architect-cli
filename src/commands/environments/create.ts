@@ -106,7 +106,7 @@ export default class EnvironmentCreate extends Command {
   async load_platform_by_name(account_id: string, name: string) {
     const { data: platform } = await this.app.api.get(`/accounts/${account_id}/platforms/${name}`);
     if (!platform) {
-      throw new Error(`No platform exists with name=${name}`)
+      throw new Error(`No platform exists with name=${name}`);
     }
     return platform;
   }
@@ -214,7 +214,7 @@ export default class EnvironmentCreate extends Command {
         name: 'platform_id',
         message: 'On which Architect platform would you like to put this environment?',
         choices: [...this.platforms.map((a: any) => { return { name: a.name, value: a.id }; }), { name: 'Configure new platform', value: false }],
-      }
+      },
     ]);
 
     if (selected_account) {
@@ -254,7 +254,7 @@ export default class EnvironmentCreate extends Command {
     set_kubeconfig: any,
     kubeconfig_path: string,
     kubeconfig: any,
-    account: { id: string, name: string },
+    account: { id: string; name: string },
   ): Promise<string> {
 
     const new_platform_answers: any = await inquirer.prompt([
@@ -263,7 +263,7 @@ export default class EnvironmentCreate extends Command {
         name: 'platform_type',
         message: 'What type of platform would you like to create?',
         choices: [
-          'KUBERNETES'
+          'KUBERNETES',
         ],
       },
       {
@@ -275,7 +275,7 @@ export default class EnvironmentCreate extends Command {
           if (EnvironmentNameValidator.test(value)) return true;
           return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
         },
-        default: (answers: any) => `${account.name}-${answers.platform_type}`.toLowerCase()
+        default: (answers: any) => `${account.name}-${answers.platform_type}`.toLowerCase(),
       },
       {
         type: 'list',
