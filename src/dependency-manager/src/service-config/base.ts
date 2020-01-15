@@ -39,7 +39,6 @@ export interface ServiceApiSpec {
 }
 
 export interface ServiceLivenessProbe {
-  interval: string;
   success_threshold: number;
   failure_threshold: number;
   timeout: string;
