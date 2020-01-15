@@ -35,6 +35,15 @@ export interface ServiceEventSubscriptions {
 export interface ServiceApiSpec {
   type: string;
   definitions?: string[];
+  liveness_probe?: ServiceLivenessProbe;
+}
+
+export interface ServiceLivenessProbe {
+  interval: string;
+  success_threshold: number;
+  failure_threshold: number;
+  timeout: string;
+  path: string;
 }
 
 export interface ServiceDebugOptions {

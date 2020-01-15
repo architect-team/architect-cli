@@ -33,6 +33,15 @@ interface ServiceParameterV1 {
 interface ApiSpecV1 {
   type: string;
   definitions?: string[];
+  liveness_probe?: LivenessProbeV1;
+}
+
+interface LivenessProbeV1 {
+  interval: string;
+  success_threshold: number;
+  failure_threshold: number;
+  timeout: string;
+  path: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
