@@ -1,3 +1,4 @@
+import { Transform, Type } from 'class-transformer/decorators';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventSubscriptions, ServiceParameter } from './base';
 
 interface ServiceSubscriptionsV1 {
@@ -30,9 +31,19 @@ interface ServiceParameterV1 {
   build_arg?: boolean;
 }
 
-interface ApiSpecV1 {
-  type: string;
+class LivenessProbeV1 {
+  success_threshold?: number;
+  failure_threshold?: number;
+  timeout?: string;
+  path?: string;
+  interval?: string;
+}
+
+class ApiSpecV1 {
+  type = 'rest';
   definitions?: string[];
+  @Transform(value => ({ path: '/', success_threshold: 1, failure_threshold: 1, timeout: '5s', interval: '30s', ...value }))
+  liveness_probe?: LivenessProbeV1;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
@@ -45,7 +56,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   debug?: string;
   parameters: { [s: string]: ServiceParameterV1 } = {};
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
-  api: ApiSpecV1 = { type: 'rest' };
+  @Type(() => ApiSpecV1)
+  api: ApiSpecV1 = {
+    type: 'rest',
+  };
   subscriptions: ServiceSubscriptionsV1 = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
