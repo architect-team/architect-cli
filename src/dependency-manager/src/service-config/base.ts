@@ -43,6 +43,7 @@ export interface ServiceLivenessProbe {
   failure_threshold: number;
   timeout: string;
   path: string;
+  interval: string;
 }
 
 export interface ServiceDebugOptions {

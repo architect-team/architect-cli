@@ -41,6 +41,7 @@ interface LivenessProbeV1 {
   failure_threshold: number;
   timeout: string;
   path: string;
+  interval: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
@@ -53,7 +54,16 @@ export class ServiceConfigV1 extends ServiceConfig {
   debug?: string;
   parameters: { [s: string]: ServiceParameterV1 } = {};
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
-  api: ApiSpecV1 = { type: 'rest' };
+  api: ApiSpecV1 = {
+    type: 'rest',
+    liveness_probe: {
+      path: '/health',
+      success_threshold: 1,
+      failure_threshold: 1,
+      timeout: '5s',
+      interval: '30s'
+    }
+  };
   subscriptions: ServiceSubscriptionsV1 = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
