@@ -37,11 +37,11 @@ interface ApiSpecV1 {
 }
 
 interface LivenessProbeV1 {
-  success_threshold: number;
-  failure_threshold: number;
-  timeout: string;
-  path: string;
-  interval: string;
+  success_threshold?: number;
+  failure_threshold?: number;
+  timeout?: string;
+  path?: string;
+  interval?: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {

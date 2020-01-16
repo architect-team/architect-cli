@@ -39,11 +39,11 @@ export interface ServiceApiSpec {
 }
 
 export interface ServiceLivenessProbe {
-  success_threshold: number;
-  failure_threshold: number;
-  timeout: string;
-  path: string;
-  interval: string;
+  success_threshold?: number;
+  failure_threshold?: number;
+  timeout?: string;
+  path?: string;
+  interval?: string;
 }
 
 export interface ServiceDebugOptions {
