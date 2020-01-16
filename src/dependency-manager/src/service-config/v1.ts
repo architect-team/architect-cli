@@ -31,19 +31,19 @@ interface ServiceParameterV1 {
   build_arg?: boolean;
 }
 
-class ApiSpecV1 {
-  type: string = 'rest';
-  definitions?: string[];
-  @Transform(value => ({ path: '/', success_threshold: 1, failure_threshold: 1, timeout: '5s', interval: '30s', ...value }))
-  liveness_probe?: LivenessProbeV1;
-}
-
 class LivenessProbeV1 {
   success_threshold?: number;
   failure_threshold?: number;
   timeout?: string;
   path?: string;
   interval?: string;
+}
+
+class ApiSpecV1 {
+  type: string = 'rest';
+  definitions?: string[];
+  @Transform(value => ({ path: '/', success_threshold: 1, failure_threshold: 1, timeout: '5s', interval: '30s', ...value }))
+  liveness_probe?: LivenessProbeV1;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
