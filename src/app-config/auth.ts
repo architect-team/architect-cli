@@ -1,9 +1,8 @@
 import { AuthenticationClient } from 'auth0';
-import execa from 'execa';
 import LoginRequiredError from '../common/errors/login-required';
+import { docker } from '../common/utils/docker';
 import AppConfig from './config';
 import CredentialManager from './credentials';
-import { docker } from '../common/utils/docker';
 
 const CREDENTIAL_PREFIX = 'architect.io';
 
@@ -80,7 +79,7 @@ export default class AuthClient {
         issued_at: new Date().getTime() / 1000,
       };
 
-      docker([
+      await docker([
         'login', this.config.registry_host,
         '-u', credential.account,
         '--password-stdin',

@@ -1,8 +1,8 @@
+import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import { ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
-import chalk from 'chalk';
 
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options) => {
@@ -12,8 +12,8 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
   try {
     return await cmd;
-  } catch(err) {
-    console.log(chalk.red('Command failed. Please ensure that Docker is installed properly.'));
+  } catch (err) {
+    console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
     process.exit(1);
   }
 };
