@@ -13,7 +13,11 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   try {
     return await cmd;
   } catch (err) {
-    console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
+    if (err.stderr) {
+      console.log(chalk.red(err.stderr));
+    } else {
+      console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
+    }
     process.exit(1);
   }
 };
