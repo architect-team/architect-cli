@@ -2,7 +2,6 @@ import Command, { flags } from '@oclif/command';
 import chalk from 'chalk';
 import 'reflect-metadata';
 import AppService from './app-config/service';
-import execa = require('execa');
 
 export default abstract class extends Command {
   app!: AppService;
