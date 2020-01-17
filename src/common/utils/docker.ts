@@ -1,15 +1,21 @@
-import execa from 'execa';
+import chalk from 'chalk';
+import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
 import { ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
 
 
-export const docker = async (args: string[], opts = { stdout: true }) => {
-  const cmd = execa('docker', args);
+export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options) => {
+  const cmd = execa('docker', args, execa_opts);
   if (opts.stdout) {
     cmd.stdout.pipe(process.stdout);
   }
-  return cmd;
+  try {
+    return await cmd;
+  } catch (err) {
+    console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
+    process.exit(1);
+  }
 };
 
 export const getServiceApiDefinitionContents = (service_path: string, service_config: ServiceConfig) => {
