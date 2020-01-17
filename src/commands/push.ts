@@ -56,9 +56,9 @@ export default class Push extends Command {
         try {
           await pushImage(tag);
         } catch (err) {
-          cli.action.stop(chalk.red(`Push failed for image ${node.ref}`));
+          cli.action.stop(chalk.red(`Push failed for image ${tag}`));
         }
-        cli.action.stop(chalk.green(`Successfully pushed Docker image for ${node.ref}`));
+        cli.action.stop(chalk.green(`Successfully pushed Docker image for ${tag}`));
       }
     }
   }
