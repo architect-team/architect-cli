@@ -83,7 +83,7 @@ export default class AuthClient {
         'login', this.config.registry_host,
         '-u', credential.account,
         '--password-stdin',
-      ], undefined, {
+      ], { stdout: false }, {
         input: JSON.stringify(this.auth_results),
       });
 
