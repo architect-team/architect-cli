@@ -1,5 +1,11 @@
 import { Transform, Type } from 'class-transformer/decorators';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventSubscriptions, ServiceParameter } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter } from './base';
+
+interface ServiceNotificationsV1 {
+  [notification_name: string]: {
+    description: string;
+  };
+}
 
 interface ServiceSubscriptionsV1 {
   [service_name: string]: {
@@ -60,6 +66,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   api: ApiSpecV1 = {
     type: 'rest',
   };
+  notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
@@ -127,6 +134,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
         throw new Error('Missing datastore docker config which is required for provisioning');
       }, {});
+  }
+
+  getNotifications(): ServiceEventNotifications {
+    return this.notifications;
   }
 
   getSubscriptions(): ServiceEventSubscriptions {

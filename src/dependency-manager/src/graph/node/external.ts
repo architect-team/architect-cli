@@ -3,7 +3,6 @@ import { DependencyNode, DependencyNodeOptions } from '.';
 interface ExternalNodeOptions {
   parent_ref: string;
   key: string;
-
   host: string;
 }
 

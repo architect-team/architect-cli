@@ -23,6 +23,12 @@ export interface ServiceDatastore {
   };
 }
 
+export interface ServiceEventNotifications {
+  [notification_name: string]: {
+    description: string;
+  };
+}
+
 export interface ServiceEventSubscriptions {
   [service_ref: string]: {
     [event_name: string]: {
@@ -58,6 +64,7 @@ export abstract class ServiceConfig {
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getApiSpec(): ServiceApiSpec;
+  abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
