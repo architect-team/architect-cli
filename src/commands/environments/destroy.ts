@@ -37,12 +37,7 @@ export default class EnvironmentDestroy extends Command {
       throw new Error(`Please specify a namespaced environment in the form <account_name>/<environment_name>`);
     }
 
-    let account;
-    try {
-      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
-    } catch (err) {
-      throw new Error(`The account ${account_name} does not exist.`);
-    }
+    let account = (await this.app.api.get(`/accounts/${account_name}`)).data;
 
     let answers = await inquirer.prompt([{
       type: 'input',
@@ -61,18 +56,11 @@ export default class EnvironmentDestroy extends Command {
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${env_name}`);
 
-    try {
-      await this.app.api.delete(`/environments/${account_environment.id}`, {
-        params: {
-          force: answers.force ? 1 : 0,
-        },
-      });
-      cli.action.stop(chalk.green('Environment destroyed'));
-    } catch (err) {
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to delete an environment for the selected account.`);
-      }
-      throw new Error(err);
-    }
+    await this.app.api.delete(`/environments/${account_environment.id}`, {
+      params: {
+        force: answers.force ? 1 : 0,
+      },
+    });
+    cli.action.stop(chalk.green('Environment destroyed'));
   }
 }

@@ -32,12 +32,7 @@ export default class PlatformDestroy extends Command {
       throw new Error(`Please specify a namespaced platform in the form <account_name>/<platform_name>`);
     }
 
-    let account;
-    try {
-      account = (await this.app.api.get(`/accounts/${account_name}`)).data;
-    } catch (err) {
-      throw new Error(`The account ${account_name} does not exist.`);
-    }
+    let account = (await this.app.api.get(`/accounts/${account_name}`)).data;
 
     let answers = await inquirer.prompt([{
       type: 'input',
@@ -54,21 +49,9 @@ export default class PlatformDestroy extends Command {
 
     answers = { ...args, ...flags, ...answers };
     const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform_name}`);
-    const { data: account_environments } = await this.app.api.get(`accounts/${account.id}/environments`);
-
-    if (account_environments.rows.some((env: any) => env.platform.id === account_platform.id)) {
-      throw new Error('Cannot delete a platform that still has environments');
-    }
 
     cli.action.start(chalk.blue('Destroying platform'));
-    try {
-      await this.app.api.delete(`/platforms/${account_platform.id}`);
-      cli.action.stop(chalk.green('Platform destroyed'));
-    } catch (err) {
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to delete this platform.`);
-      }
-      throw new Error(err);
-    }
+    await this.app.api.delete(`/platforms/${account_platform.id}`);
+    cli.action.stop(chalk.green('Platform destroyed'));
   }
 }
