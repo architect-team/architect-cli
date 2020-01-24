@@ -32,7 +32,7 @@ export default class PlatformDestroy extends Command {
       throw new Error(`Please specify a namespaced platform in the form <account_name>/<platform_name>`);
     }
 
-    let account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    const account = (await this.app.api.get(`/accounts/${account_name}`)).data;
 
     let answers = await inquirer.prompt([{
       type: 'input',

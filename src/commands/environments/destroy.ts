@@ -37,7 +37,7 @@ export default class EnvironmentDestroy extends Command {
       throw new Error(`Please specify a namespaced environment in the form <account_name>/<environment_name>`);
     }
 
-    let account = (await this.app.api.get(`/accounts/${account_name}`)).data;
+    const account = (await this.app.api.get(`/accounts/${account_name}`)).data;
 
     let answers = await inquirer.prompt([{
       type: 'input',
