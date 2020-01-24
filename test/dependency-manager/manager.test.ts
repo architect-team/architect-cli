@@ -78,4 +78,36 @@ describe('manager', function () {
     graph.removeEdgeByRef(graph.edges[0].ref);
     expect(graph.edges).lengthOf(2);
   });
+
+  it('get dependent nodes', async () => {
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
+    const serialized_graph = serialize(manager.graph);
+    const graph = deserialize(LocalDependencyGraph, serialized_graph);
+
+    const dependent_nodes = graph.getDependentNodes(graph.getNodeByRef('architect/addition-service-rest:latest'));
+    expect(dependent_nodes).lengthOf(1);
+    expect(dependent_nodes[0].ref).eq('architect/subtraction-service-rest:latest');
+  });
+
+  it('remove service with cleanup', async () => {
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
+    const serialized_graph = serialize(manager.graph);
+    const graph = deserialize(LocalDependencyGraph, serialized_graph);
+
+    graph.removeService('architect/subtraction-service-rest:latest', true);
+    expect(graph.nodes).lengthOf(1);
+    expect(graph.nodes[0].ref).eq('architect/division-service-grpc:latest');
+  });
+
+  it('remove service without cleanup', async () => {
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
+    const serialized_graph = serialize(manager.graph);
+    const graph = deserialize(LocalDependencyGraph, serialized_graph);
+
+    graph.removeService('architect/subtraction-service-rest:latest', false);
+    expect(graph.nodes).lengthOf(3);
+  });
 });
