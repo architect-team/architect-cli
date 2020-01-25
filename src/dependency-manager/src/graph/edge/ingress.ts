@@ -1,11 +1,15 @@
+import { Transform } from 'class-transformer';
 import DependencyEdge from '.';
 
 export default class IngressEdge extends DependencyEdge {
   __type = 'ingress';
-  subdomain: string;
+  @Transform(value => (value ? value.toLowerCase() : value))
+  subdomain!: string;
 
   constructor(from: string, to: string, subdomain: string) {
     super(from, to);
-    this.subdomain = subdomain.toLowerCase();
+    if (subdomain) {
+      this.subdomain = subdomain.toLowerCase();
+    }
   }
 }
