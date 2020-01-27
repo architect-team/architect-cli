@@ -1,7 +1,8 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
-import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { EnvironmentConfigBuilder, EnvironmentService, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
+import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -27,24 +28,31 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
-      let svc_node: ServiceNode;
 
-      if (env_svc_cfg.debug) {
-        const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
-        svc_node = await dependency_manager.loadLocalService(svc_path);
+      if (env_svc_cfg.host && env_svc_cfg.port && env_svc_cfg.debug) {
+        dependency_manager.loadExternalService(env_svc_cfg);
       } else {
-        const [name, tag] = ref.split(':');
-        svc_node = await dependency_manager.loadService(name, tag);
-      }
+        let svc_node: ServiceNode;
 
-      await dependency_manager.loadDatastores(svc_node);
-      dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
+        if (env_svc_cfg.debug) {
+          const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
+          svc_node = await dependency_manager.loadLocalService(svc_path);
+        } else {
+          const [name, tag] = ref.split(':');
+          svc_node = await dependency_manager.loadService(name, tag);
+        }
+
+        await dependency_manager.loadDatastores(svc_node);
+        dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
+      }
     }
 
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
     dependency_manager.loadParameters();
+    console.log(dependency_manager.graph.nodes)
+    throw new Error('nope')
     return dependency_manager;
   }
 
@@ -53,6 +61,20 @@ export default class LocalDependencyManager extends DependencyManager {
    */
   protected async getServicePort(): Promise<number> {
     return PortUtil.getAvailablePort();
+  }
+
+  async loadExternalService(env_service_config: EnvironmentService) {
+    const node = new ExternalNode({
+      host: env_service_config.host!,
+      ports: {
+        expose: env_service_config.port!,
+        target: env_service_config.port!
+      },
+      parameters: env_service_config.parameters,
+      parent_ref: 'external',
+      key: 'external' // TODO: fix
+    });
+    this.graph.addNode(node);
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {

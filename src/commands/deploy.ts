@@ -198,7 +198,7 @@ export default class Deploy extends Command {
   }
 
   async run() {
-    const { flags } = this.parse(Deploy);
+    const { flags } = this.parse(Deploy); // TODO: create external node for services that have a host (and port?)
 
     if (flags.local) {
       await this.runLocal();
