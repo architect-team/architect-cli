@@ -29,7 +29,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
-      if (env_svc_cfg.host && env_svc_cfg.port && env_svc_cfg.debug) {
+      if (env_svc_cfg.host && env_svc_cfg.port) {
         dependency_manager.loadExternalService(env_svc_cfg);
       } else {
         let svc_node: ServiceNode;
@@ -51,8 +51,6 @@ export default class LocalDependencyManager extends DependencyManager {
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
     dependency_manager.loadParameters();
-    console.log(dependency_manager.graph.nodes)
-    throw new Error('nope')
     return dependency_manager;
   }
 
