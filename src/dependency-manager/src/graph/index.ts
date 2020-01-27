@@ -86,4 +86,38 @@ export default abstract class DependencyGraph {
 
     return Array.from(nodes.values());
   }
+
+  removeNode(node_ref: string, cleanup_dangling: boolean) {
+    const queue = [node_ref];
+    while (queue.length > 0) {
+      const ref = queue.shift();
+      const node = this.getNodeByRef(ref!);
+      const dependents = this.getDependentNodes(node).filter(n => !queue.includes(n.ref));
+      const dependencies = this.getNodeDependencies(node);
+
+      if (dependents.length === 0 || node_ref === ref) {
+        this.removeNodeByRef(node.ref);
+
+        if (cleanup_dangling) {
+          dependencies.forEach((dep) => {
+            if (!queue.includes(dep.ref)) {
+              queue.push(dep.ref);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  getDependentNodes(node: DependencyNode) {
+    const nodes = new Map();
+
+    for (const edge of this.edges) {
+      if (edge.to === node.ref) {
+        nodes.set(edge.from, this.getNodeByRef(edge.from));
+      }
+    }
+
+    return Array.from(nodes.values());
+  }
 }
