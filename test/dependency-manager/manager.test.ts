@@ -96,7 +96,7 @@ describe('manager', function () {
     const serialized_graph = serialize(manager.graph);
     const graph = deserialize(LocalDependencyGraph, serialized_graph);
 
-    graph.removeService('architect/subtraction-service-rest:latest', true);
+    graph.removeNode('architect/subtraction-service-rest:latest', true);
     expect(graph.nodes).lengthOf(1);
     expect(graph.nodes[0].ref).eq('architect/division-service-grpc:latest');
   });
@@ -107,7 +107,7 @@ describe('manager', function () {
     const serialized_graph = serialize(manager.graph);
     const graph = deserialize(LocalDependencyGraph, serialized_graph);
 
-    graph.removeService('architect/subtraction-service-rest:latest', false);
+    graph.removeNode('architect/subtraction-service-rest:latest', false);
     expect(graph.nodes).lengthOf(3);
   });
 });
