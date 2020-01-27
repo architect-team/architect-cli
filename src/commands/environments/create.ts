@@ -11,7 +11,7 @@ import { EnvironmentNameValidator } from '../../common/utils/validation';
 
 interface CreateEnvironmentInput {
   name: string;
-  namespace: string;
+  namespace?: string;
   platform_id: string;
   config?: string;
 }
@@ -235,7 +235,7 @@ export default class EnvironmentCreate extends Command {
 
     const environment = await this.createArchitectEnvironment({
       name: args.name || answers.name,
-      namespace: flags.namespace || args.name || answers.name,
+      namespace: flags.namespace,
       platform_id: answers.platform_id,
       config: flags.config_file ? await fs.readJSON(untildify((flags.config_file))) : undefined,
     }, answers.account.id);
