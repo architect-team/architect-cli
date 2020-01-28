@@ -20,7 +20,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.3.9 darwin-x64 node-v12.14.1
+@architect-io/cli/0.3.9 linux-x64 node-v10.16.3
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -44,6 +44,7 @@ USAGE
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
 * [`architect platforms [QUERY]`](#architect-platforms-query)
+* [`architect platforms:destroy NAMESPACED_PLATFORM`](#architect-platformsdestroy-namespaced_platform)
 * [`architect push`](#architect-push)
 * [`architect services [QUERY]`](#architect-services-query)
 * [`architect uninstall DEPENDENCY_NAME`](#architect-uninstall-dependency_name)
@@ -134,9 +135,8 @@ OPTIONS
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default:
-                                   /var/folders/nf/91s1nr5d4gsdtzdknwxk560w0000gn/T/architect-deployment-1579206803336.j
-                                   son] Path where the compose file should be written to
+  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1580225224831.json] Path where the compose file
+                                   should be written to
 
   --auto_approve
 ```
@@ -359,6 +359,27 @@ ALIASES
 ```
 
 _See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.9/src/commands/platforms/index.ts)_
+
+## `architect platforms:destroy NAMESPACED_PLATFORM`
+
+Destroy a platform
+
+```
+USAGE
+  $ architect platforms:destroy NAMESPACED_PLATFORM
+
+ARGUMENTS
+  NAMESPACED_PLATFORM  Name of the platform to destroy
+
+OPTIONS
+  -a, --auto_approve  Automatically apply the changes without reviewing the diff
+  -h, --help          show CLI help
+
+ALIASES
+  $ architect platform:destroy
+```
+
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.9/src/commands/platforms/destroy.ts)_
 
 ## `architect push`
 
