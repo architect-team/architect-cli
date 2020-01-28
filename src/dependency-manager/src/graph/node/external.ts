@@ -1,14 +1,14 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
 
 interface ExternalNodeOptions {
-  parent_ref: string;
+  parent_ref?: string;
   key: string;
   host: string;
 }
 
 export class ExternalNode extends DependencyNode {
   __type = 'external';
-  parent_ref!: string;
+  parent_ref?: string;
   key!: string;
   host!: string;
 
@@ -22,10 +22,12 @@ export class ExternalNode extends DependencyNode {
   }
 
   get env_ref() {
-    return `${this.parent_ref.split(':')[0]}.${this.key}`;
+    const prefix = this.parent_ref ? `external.${this.parent_ref.split(':')[0]}` : 'external';
+    return `${prefix}.${this.key}`;
   }
 
   get ref() {
-    return `${this.parent_ref}.${this.key}`;
+    const prefix = this.parent_ref ? `external.${this.parent_ref}` : 'external';
+    return `${prefix}.${this.key}`;
   }
 }
