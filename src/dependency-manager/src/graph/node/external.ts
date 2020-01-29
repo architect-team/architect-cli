@@ -22,12 +22,10 @@ export class ExternalNode extends DependencyNode {
   }
 
   get env_ref() {
-    const prefix = this.parent_ref ? `external.${this.parent_ref.split(':')[0]}` : 'external';
-    return `${prefix}.${this.key}`;
+    return this.parent_ref ? `${this.parent_ref.split(':')[0]}.${this.key}` : this.key.split(':')[0];
   }
 
   get ref() {
-    const prefix = this.parent_ref ? `external.${this.parent_ref}` : 'external';
-    return `${prefix}.${this.key}`;
+    return this.parent_ref ? `${this.parent_ref}.${this.key}` : this.key;
   }
 }
