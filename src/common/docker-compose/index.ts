@@ -17,15 +17,15 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
   for (const node of dependency_manager.graph.nodes) {
     if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref] = {
-        ports: [`${node.ports.expose}:${node.ports.target}`],
+        ports: node.ports.map((port) => (`${port.expose}:${port.target}`)),
         depends_on: [],
         environment: {
           HOST: node.normalized_ref,
-          PORT: node.ports.target.toString(),
+          PORT: node.ports[0].target.toString(),
           ARCHITECT: JSON.stringify({
             [node.env_ref]: {
               host: `${node.protocol}${node.normalized_ref}`,
-              port: node.ports.target.toString(),
+              port: node.ports[0].target.toString(),
               datastores: {},
               subscriptions: {},
             },
@@ -46,19 +46,28 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     }
 
     if (node instanceof LocalServiceNode) {
-      const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
-      const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
-      // Setup build context
-      compose.services[node.normalized_ref].build = {
-        context: node.service_path,
-        args: [...build_args],
-      };
+      if (node.image) {
+        compose.services[node.normalized_ref].image = node.image;
+      } else {
+        const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
+        const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
+        // Setup build context
+        compose.services[node.normalized_ref].build = {
+          context: node.service_path,
+          args: [...build_args],
+        };
+      }
 
       if (!build_prod) {
         compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');
 
         if (node.command) {
           compose.services[node.normalized_ref].command = node.command;
+          if (node.command === 'worker') {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+            // @ts-ignore
+            compose.services[node.normalized_ref].privileged = true;
+          }
         }
 
         // Mount the src directory
@@ -96,19 +105,19 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     if (node_to instanceof DatastoreNode) {
       service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports.target.toString(),
+        port: node_to.ports[0].target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ExternalNode) {
       service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: node_to.host,
-        port: node_to.ports.target.toString(),
+        port: node_to.ports[0].target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ServiceNode) {
       service.environment.ARCHITECT[node_to.env_ref] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports.target.toString(),
+        port: node_to.ports[0].target.toString(),
         api: node_to.api.type,
       };
     }

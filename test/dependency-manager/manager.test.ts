@@ -43,7 +43,7 @@ describe('manager', function () {
       tag: 'test',
       image: 'image',
       service_config: new ServiceConfigV1(),
-      ports: { target: 8080, expose: 80 },
+      ports: [{ target: 8080, expose: 80 }],
       parameters: {}
     });
     expect(node.tag).eq('test');

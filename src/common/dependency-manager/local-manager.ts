@@ -63,15 +63,17 @@ export default class LocalDependencyManager extends DependencyManager {
       return this.graph.nodes_map.get(`${config.getName()}:latest`)! as ServiceNode;
     }
 
+    const ports = [];
+    for (const port of config.getPorts()) {
+      ports.push({ target: port, expose: await this.getServicePort() });
+    }
+
     const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
-      image: '',
+      image: config.getImage(),
       tag: 'latest',
-      ports: {
-        target: 8080,
-        expose: await this.getServicePort(),
-      },
+      ports: ports,
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
@@ -122,14 +124,15 @@ export default class LocalDependencyManager extends DependencyManager {
     const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
     const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+    const ports = [];
+    for (const port of config.getPorts()) {
+      ports.push({ target: port, expose: await this.getServicePort() });
+    }
     const node = new ServiceNode({
       service_config: config,
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-      ports: {
-        target: 8080,
-        expose: await this.getServicePort(),
-      },
+      ports: ports,
       parameters: await this.getParamValues(
         `${config.getName()}:${service_digest.tag}`,
         config.getParameters(),

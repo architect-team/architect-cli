@@ -69,7 +69,7 @@ export default abstract class DependencyManager {
     const env_params_to_expand: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
@@ -258,19 +258,19 @@ export default abstract class DependencyManager {
         dep_node = new ExternalNode({
           ...dep_node_config,
           host: environment_service_config.datastores[ds_name].host!,
-          ports: {
+          ports: [{
             target: external_port,
             expose: external_port,
-          },
+          }],
         });
       } else {
         dep_node = new DatastoreNode({
           ...dep_node_config,
           image: ds_config.docker.image,
-          ports: {
+          ports: [{
             target: ds_config.docker.target_port,
             expose: await this.getServicePort(),
-          },
+          }],
         });
       }
 
