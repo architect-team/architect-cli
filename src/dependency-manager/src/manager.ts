@@ -240,6 +240,8 @@ export default abstract class DependencyManager {
    * Similar to `loadDependencies()`, but iterates over the datastores instead
    */
   protected async loadDatastores(parent_node: ServiceNode) {
+    if (parent_node instanceof ExternalNode) { return; }
+
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
       const dep_node_config = {
         parent_ref: parent_node.ref,

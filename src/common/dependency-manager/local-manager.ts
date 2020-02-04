@@ -30,7 +30,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
       if (env_svc_cfg.host && env_svc_cfg.port) {
-        dependency_manager.loadExternalService(env_svc_cfg);
+        dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
 
@@ -41,7 +41,6 @@ export default class LocalDependencyManager extends DependencyManager {
           const [name, tag] = ref.split(':');
           svc_node = await dependency_manager.loadService(name, tag);
         }
-
         await dependency_manager.loadDatastores(svc_node);
         dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
       }
@@ -61,7 +60,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort();
   }
 
-  async loadExternalService(env_service_config: EnvironmentService) {
+  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
     const node = new ExternalNode({
       host: env_service_config.host!,
       ports: {
@@ -69,8 +68,7 @@ export default class LocalDependencyManager extends DependencyManager {
         target: env_service_config.port!
       },
       parameters: env_service_config.parameters,
-      parent_ref: 'external',
-      key: 'external' // TODO: fix
+      key: service_ref
     });
     this.graph.addNode(node);
   }
@@ -110,6 +108,8 @@ export default class LocalDependencyManager extends DependencyManager {
    * @override
    */
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
+    if (parent_node instanceof ExternalNode) { return; }
+
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       let dep_node: ServiceNode;
