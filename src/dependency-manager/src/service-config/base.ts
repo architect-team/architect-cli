@@ -69,6 +69,7 @@ export abstract class ServiceConfig {
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
 }

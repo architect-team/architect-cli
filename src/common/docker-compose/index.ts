@@ -43,6 +43,15 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
+
+      const platforms = node.service_config.getPlatforms();
+      const docker_compose_config = platforms['docker-compose'];
+      if (docker_compose_config) {
+        compose.services[node.normalized_ref] = {
+          ...docker_compose_config,
+          ...compose.services[node.normalized_ref],
+        };
+      }
     }
 
     if (node instanceof LocalServiceNode) {
@@ -63,11 +72,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
 
         if (node.command) {
           compose.services[node.normalized_ref].command = node.command;
-          if (node.command === 'worker') {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-            // @ts-ignore
-            compose.services[node.normalized_ref].privileged = true;
-          }
         }
 
         // Mount the src directory

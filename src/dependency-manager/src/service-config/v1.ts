@@ -70,6 +70,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   };
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
+  platforms: { [s: string]: any } = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -181,5 +182,9 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
 
     return this.language;
+  }
+
+  getPlatforms(): { [s: string]: any } {
+    return this.platforms;
   }
 }
