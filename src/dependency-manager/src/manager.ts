@@ -180,6 +180,9 @@ export default abstract class DependencyManager {
         env_params.set(key, data);
         continue;
       }
+      if (!data.valueFrom.vault) {
+        continue;
+      }
 
       const param = data as VaultParameter;
       const vaults = this.environment.getVaults();
