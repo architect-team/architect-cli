@@ -19,8 +19,8 @@ interface CreateEnvironmentInput {
 interface CreatePlatformInput {
   name: string;
   type: string;
-  host: string;
-  credentials: PlatformCredentials;
+  host?: string;
+  credentials?: PlatformCredentials;
 }
 
 export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
@@ -51,7 +51,7 @@ export default class EnvironmentCreate extends Command {
   static flags = {
     ...Command.flags,
     namespace: flags.string({ char: 'n' }),
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'], default: 'KUBERNETES' }),
+    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT_PUBLIC', 'architect_public'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
@@ -250,6 +250,66 @@ export default class EnvironmentCreate extends Command {
     return environment;
   }
 
+  private async runArchitectPublic() {
+    const { args, flags } = this.parse(EnvironmentCreate);
+
+    let selected_account: any;
+    this.accounts = await this.get_accounts();
+
+    if (flags.account) {
+      selected_account = this.accounts.rows.find((a: any) => a.name === flags.account);
+      if (!selected_account) {
+        throw new Error(`Account=${flags.account} does not exist or you do not have access to it.`);
+      }
+    }
+
+    // Prompt user for required inputs
+    const answers: any = await inquirer.prompt([
+      {
+        when: () => !flags.account,
+        type: 'list',
+        name: 'account',
+        message: 'For which Architect account would you like to create this environment?',
+        choices: this.accounts.rows.map((a: any) => { return { name: a.name, value: a }; }),
+        default: selected_account,
+      },
+      {
+        type: 'input',
+        name: 'name',
+        message: 'What would you like to name your new environment?',
+        when: !args.name,
+        filter: value => value.toLowerCase(),
+        validate: value => {
+          if (EnvironmentNameValidator.test(value)) return true;
+          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+        },
+        default: flags.namespace || '',
+      },
+    ]);
+
+    cli.action.start('Registering platform with Architect');
+
+    const platform = await this.createArchitectPlatform({
+      name: 'architect-public',
+      type: 'ARCHITECT_PUBLIC',
+    }, answers.account.id);
+
+    cli.action.stop();
+
+    // cli.action.start('Registering environment with Architect');
+
+    // const environment = await this.createArchitectEnvironment({
+    //   name: args.name || answers.name,
+    //   namespace: flags.namespace,
+    //   platform_id: platform.id, // TODO: this should be the potentially created public platform
+    //   // TODO: add metadata on the backend
+    // }, answers.account.id);
+
+    // cli.action.stop();
+
+    // return environment;
+  }
+
   private static default_platform_name(account: any, flags: any, answers: any) {
     const type = flags.type || answers.platform_type;
     return `${account.name}-${type}`.toLowerCase();
@@ -265,15 +325,6 @@ export default class EnvironmentCreate extends Command {
   ): Promise<string> {
 
     const new_platform_answers: any = await inquirer.prompt([
-      {
-        when: !flags.type,
-        type: 'list',
-        name: 'platform_type',
-        message: 'What type of platform would you like to create?',
-        choices: [
-          'KUBERNETES',
-        ],
-      },
       {
         type: 'input',
         name: 'name',
@@ -423,9 +474,26 @@ export default class EnvironmentCreate extends Command {
 
     this.platforms = await this.load_platforms();
 
+    const new_platform_answers: any = await inquirer.prompt([
+      {
+        when: !flags.type, // remove? should probably be the first step and we already know kubernetes
+        type: 'list',
+        name: 'platform_type',
+        message: 'On what type of platform would you like to create the environment?',
+        choices: [
+          'KUBERNETES',
+          'ARCHITECT_PUBLIC',
+        ],
+      },
+    ]);
+
+    flags.type = new_platform_answers.platform_type;
+
     let environment;
     if (flags.type?.toUpperCase() === 'KUBERNETES' && flags.kubeconfig && !flags.host) {
       environment = await this.runKubernetes();
+    } else if (flags.type?.toUpperCase() === 'ARCHITECT_PUBLIC') {
+      environment = await this.runArchitectPublic();
     } else {
       throw new Error('We do not support that environment type at the moment.');
     }
