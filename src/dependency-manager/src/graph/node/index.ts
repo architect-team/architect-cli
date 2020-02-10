@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { DatastoreValueFromParameter, ValueFromParameter } from '../../manager';
 import { DependencyState } from '../state';
 
@@ -6,14 +6,13 @@ export interface DependencyNodeOptions {
   ports: {
     target: number;
     expose: number;
-  }[];
+  };
   parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter };
 }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-  @Transform(value => (value instanceof Array ? value : [value]))
-  ports!: { target: number; expose: number }[];
+  ports!: { target: number; expose: number };
   parameters: { [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter } = {};
   @Type(() => DependencyState)
   state?: DependencyState;

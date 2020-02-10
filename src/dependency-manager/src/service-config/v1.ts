@@ -58,7 +58,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
-  ports = [8080];
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -96,10 +95,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getImage(): string {
     return this.image || '';
-  }
-
-  getPorts(): number[] {
-    return this.ports;
   }
 
   getDependencies(): { [s: string]: string } {

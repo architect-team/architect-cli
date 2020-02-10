@@ -12,20 +12,19 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     services: {},
     volumes: {},
   };
-
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
     if (!(node instanceof ExternalNode)) {
       compose.services[node.normalized_ref] = {
-        ports: node.ports.map((port) => (`${port.expose}:${port.target}`)),
+        ports: [`${node.ports.expose}:${node.ports.target}`],
         depends_on: [],
         environment: {
           HOST: node.normalized_ref,
-          PORT: node.ports[0].target.toString(),
+          PORT: node.ports.target.toString(),
           ARCHITECT: JSON.stringify({
             [node.env_ref]: {
               host: `${node.protocol}${node.normalized_ref}`,
-              port: node.ports[0].target.toString(),
+              port: node.ports.target.toString(),
               datastores: {},
               subscriptions: {},
             },
@@ -109,19 +108,19 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     if (node_to instanceof DatastoreNode) {
       service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports[0].target.toString(),
+        port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ExternalNode) {
       service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
         host: node_to.host,
-        port: node_to.ports[0].target.toString(),
+        port: node_to.ports.target.toString(),
         ...node_to.parameters,
       };
     } else if (node_to instanceof ServiceNode) {
       service.environment.ARCHITECT[node_to.env_ref] = {
         host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports[0].target.toString(),
+        port: node_to.ports.target.toString(),
         api: node_to.api.type,
       };
     }
