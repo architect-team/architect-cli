@@ -12,7 +12,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     services: {},
     volumes: {},
   };
-
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
     if (!(node instanceof ExternalNode)) {
@@ -43,16 +42,29 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
+
+      const platforms = node.service_config.getPlatforms();
+      const docker_compose_config = platforms['docker-compose'];
+      if (docker_compose_config) {
+        compose.services[node.normalized_ref] = {
+          ...docker_compose_config,
+          ...compose.services[node.normalized_ref],
+        };
+      }
     }
 
     if (node instanceof LocalServiceNode) {
-      const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
-      const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
-      // Setup build context
-      compose.services[node.normalized_ref].build = {
-        context: node.service_path,
-        args: [...build_args],
-      };
+      if (node.image) {
+        compose.services[node.normalized_ref].image = node.image;
+      } else {
+        const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
+        const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
+        // Setup build context
+        compose.services[node.normalized_ref].build = {
+          context: node.service_path,
+          args: [...build_args],
+        };
+      }
 
       if (!build_prod) {
         compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');

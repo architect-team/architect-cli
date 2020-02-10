@@ -57,6 +57,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   name = '';
   description?: string;
   keywords?: string[];
+  image?: string;
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -68,6 +69,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   };
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
+  platforms: { [s: string]: any } = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -89,6 +91,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getApiSpec(): ServiceApiSpec {
     return this.api;
+  }
+
+  getImage(): string {
+    return this.image || '';
   }
 
   getDependencies(): { [s: string]: string } {
@@ -171,5 +177,9 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
 
     return this.language;
+  }
+
+  getPlatforms(): { [s: string]: any } {
+    return this.platforms;
   }
 }

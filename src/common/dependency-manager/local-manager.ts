@@ -66,7 +66,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
-      image: '',
+      image: config.getImage(),
       tag: 'latest',
       ports: {
         target: 8080,
