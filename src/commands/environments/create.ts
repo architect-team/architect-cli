@@ -19,8 +19,12 @@ interface CreateEnvironmentInput {
 interface CreatePlatformInput {
   name: string;
   type: string;
-  host?: string;
-  credentials?: PlatformCredentials;
+  host: string;
+  credentials: PlatformCredentials;
+}
+
+interface CreatePublicPlatformInput {
+  name: string;
 }
 
 export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
@@ -34,7 +38,6 @@ export interface KubernetesPlatformCredentials {
 
 export interface EcsPlatformCredentials {
   kind: 'ECS';
-
 }
 
 export default class EnvironmentCreate extends Command {
@@ -61,10 +64,15 @@ export default class EnvironmentCreate extends Command {
     platform: flags.string({ char: 'p', exclusive: ['type', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
   };
 
-  private async createArchitectPlatform(dto: CreatePlatformInput, account_id: string): Promise<any> {
+  private async createArchitectPlatform(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
     try {
-      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
-      return platform;
+      if (public_platform) {
+        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
+        return platform;
+      } else {
+        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
+        return platform;
+      }
     } catch (err) {
       //TODO:89:we shouldn't have to do this on the client side
       if (err.response?.data?.statusCode === 403) {
@@ -287,27 +295,34 @@ export default class EnvironmentCreate extends Command {
       },
     ]);
 
-    cli.action.start('Registering platform with Architect');
+    if (!flags.platform) {
+      this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
 
-    const platform = await this.createArchitectPlatform({
-      name: 'architect-public',
-      type: 'ARCHITECT_PUBLIC',
+      const public_platforms = this.platforms.filter(platform => platform.type === 'ARCHITECT_PUBLIC');
+      if (public_platforms) {
+        answers.platform_id = public_platforms[0].id;
+      }
+    }
+
+    if (!answers.platform_id) {
+      const platform = await this.createArchitectPlatform({
+        name: 'architect-public',
+      }, answers.account.id, true);
+
+      answers.platform_id = platform.id;
+    }
+
+    cli.action.start('Registering environment with Architect');
+
+    const environment = await this.createArchitectEnvironment({
+      name: args.name || answers.name,
+      namespace: flags.namespace,
+      platform_id: answers.platform_id,
     }, answers.account.id);
 
     cli.action.stop();
 
-    // cli.action.start('Registering environment with Architect');
-
-    // const environment = await this.createArchitectEnvironment({
-    //   name: args.name || answers.name,
-    //   namespace: flags.namespace,
-    //   platform_id: platform.id, // TODO: this should be the potentially created public platform
-    //   // TODO: add metadata on the backend
-    // }, answers.account.id);
-
-    // cli.action.stop();
-
-    // return environment;
+    return environment;
   }
 
   private static default_platform_name(account: any, flags: any, answers: any) {
