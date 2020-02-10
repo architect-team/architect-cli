@@ -60,6 +60,7 @@ export abstract class ServiceConfig {
   abstract __version: string;
   abstract getName(): string;
   abstract getLanguage(): string;
+  abstract getImage(): string;
   abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
@@ -67,6 +68,7 @@ export abstract class ServiceConfig {
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
 }
