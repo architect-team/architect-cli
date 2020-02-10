@@ -490,7 +490,7 @@ export default class EnvironmentCreate extends Command {
 
     const new_platform_answers: any = await inquirer.prompt([
       {
-        when: !flags.type, // remove? should probably be the first step and we already know kubernetes
+        when: !flags.type,
         type: 'list',
         name: 'platform_type',
         message: 'On what type of platform would you like to create the environment?',
