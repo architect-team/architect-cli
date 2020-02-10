@@ -295,21 +295,20 @@ export default class EnvironmentCreate extends Command {
       },
     ]);
 
-    if (!flags.platform) {
-      this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
+    let platform_id;
+    this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
 
-      const public_platforms = this.platforms.filter(platform => platform.type === 'ARCHITECT_PUBLIC');
-      if (public_platforms) {
-        answers.platform_id = public_platforms[0].id;
-      }
+    const public_platforms = this.platforms.filter(platform => platform.type === 'ARCHITECT_PUBLIC');
+    if (public_platforms) {
+      platform_id = public_platforms[0].id;
     }
 
-    if (!answers.platform_id) {
+    if (!platform_id) {
       const platform = await this.createArchitectPlatform({
         name: 'architect-public',
       }, answers.account.id, true);
 
-      answers.platform_id = platform.id;
+      platform_id = platform.id;
     }
 
     cli.action.start('Registering environment with Architect');
@@ -317,7 +316,7 @@ export default class EnvironmentCreate extends Command {
     const environment = await this.createArchitectEnvironment({
       name: args.name || answers.name,
       namespace: flags.namespace,
-      platform_id: answers.platform_id,
+      platform_id,
     }, answers.account.id);
 
     cli.action.stop();
