@@ -297,9 +297,8 @@ export default class EnvironmentCreate extends Command {
 
     let platform_id;
     this.platforms = await this.load_platforms(answers.account?.id || selected_account.id);
-
     const public_platforms = this.platforms.filter(platform => platform.type === 'ARCHITECT_PUBLIC');
-    if (public_platforms) {
+    if (public_platforms.length) {
       platform_id = public_platforms[0].id;
     }
 
