@@ -323,9 +323,8 @@ export default class EnvironmentCreate extends Command {
     return environment;
   }
 
-  private static default_platform_name(account: any, flags: any, answers: any) {
-    const type = flags.type || answers.platform_type;
-    return `${account.name}-${type}`.toLowerCase();
+  private static default_kubernetes_platform_name(account: any) {
+    return `${account.name}-kubernetes`.toLowerCase();
   }
 
   private async createPlatform(
@@ -348,7 +347,7 @@ export default class EnvironmentCreate extends Command {
           if (EnvironmentNameValidator.test(value)) return true;
           return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
         },
-        default: (answers: any) => EnvironmentCreate.default_platform_name(account, flags, answers),
+        default: (answers: any) => EnvironmentCreate.default_kubernetes_platform_name(account),
       },
       {
         type: 'list',
@@ -468,10 +467,10 @@ export default class EnvironmentCreate extends Command {
 
     const platform = await this.createArchitectPlatform({
       name: args.name || new_platform_answers.name,
-      type: (flags.type || new_platform_answers.platform_type)?.toUpperCase(),
+      type: 'KUBERNETES',
       host: cluster_host,
       credentials: {
-        kind: (flags.type || new_platform_answers.platform_type)?.toUpperCase(),
+        kind: 'KUBERNETES',
         service_token,
         cluster_ca_cert,
       },
