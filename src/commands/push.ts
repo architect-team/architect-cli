@@ -33,7 +33,7 @@ export default class Push extends Command {
     }),
   };
 
-  async run() { // TODO: skip iteration on push when there's an external service in an env
+  async run() {
     const { flags } = this.parse(Push);
 
     let dependency_manager = new LocalDependencyManager(this.app.api);
