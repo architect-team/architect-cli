@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
-import DependencyManager, { EnvironmentConfigBuilder, EnvironmentService, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import PortUtil from '../utils/port';
@@ -58,19 +58,6 @@ export default class LocalDependencyManager extends DependencyManager {
    */
   protected async getServicePort(): Promise<number> {
     return PortUtil.getAvailablePort();
-  }
-
-  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
-    const node = new ExternalNode({
-      host: env_service_config.host!,
-      ports: {
-        expose: env_service_config.port!,
-        target: env_service_config.port!
-      },
-      parameters: env_service_config.parameters,
-      key: service_ref
-    });
-    this.graph.addNode(node);
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
