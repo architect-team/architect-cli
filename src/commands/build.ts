@@ -45,7 +45,6 @@ export default class Build extends Command {
     } else {
       throw new MissingContextError();
     }
-
     for (const node of dependency_manager.graph.nodes) {
       if (node instanceof LocalServiceNode) {
         await buildImage(node.service_path, this.app.config.registry_host, flags.tag);

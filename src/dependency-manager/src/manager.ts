@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import * as https from 'https';
 import untildify from 'untildify';
 import { ServiceNode } from '.';
-import { EnvironmentConfig } from './environment-config/base';
+import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import NotificationEdge from './graph/edge/notification';
@@ -243,6 +243,8 @@ export default abstract class DependencyManager {
    * Similar to `loadDependencies()`, but iterates over the datastores instead
    */
   protected async loadDatastores(parent_node: ServiceNode) {
+    if (parent_node instanceof ExternalNode) { return; }
+
     for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
       const dep_node_config = {
         parent_ref: parent_node.ref,
@@ -308,4 +310,20 @@ export default abstract class DependencyManager {
    * its name and tag
    */
   abstract async loadService(service_name: string, service_tag: string): Promise<ServiceNode>;
+
+  /**
+   * Create an external node and add it to the graph
+   */
+  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+    const node = new ExternalNode({
+      host: env_service_config.host!,
+      ports: {
+        expose: env_service_config.port!,
+        target: env_service_config.port!
+      },
+      parameters: env_service_config.parameters,
+      key: service_ref
+    });
+    this.graph.addNode(node);
+  }
 }
