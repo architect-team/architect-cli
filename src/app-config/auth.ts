@@ -79,7 +79,7 @@ export default class AuthClient {
         issued_at: new Date().getTime() / 1000,
       };
 
-      await docker([ // TODO: make this a separate failure?
+      await docker([
         'login', this.config.registry_host,
         '-u', credential.account,
         '--password-stdin',
