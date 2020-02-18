@@ -194,7 +194,7 @@ export default class EnvironmentCreate extends Command {
       case 'ECS':
         return await EcsPlatformUtils.configure_ecs_platform(args, flags, account);
       case 'ARCHITECT_PUBLIC':
-        return await PublicPlatformUtils.runArchitectPublic(args, flags, account);
+        return await PublicPlatformUtils.runArchitectPublic(args, flags);
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
     }
