@@ -6,6 +6,7 @@ import untildify from 'untildify';
 import Command from '../../base-command';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { PublicPlatformUtils } from '../../common/utils/public-platform.utils';
 import { EnvironmentNameValidator } from '../../common/utils/validation';
 
 interface CreateEnvironmentInput {
@@ -20,6 +21,10 @@ export interface CreatePlatformInput {
   type: string;
   description: string;
   credentials: PlatformCredentials;
+}
+
+export interface CreatePublicPlatformInput {
+  name: string;
 }
 
 export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
@@ -54,7 +59,7 @@ export default class EnvironmentCreate extends Command {
   static flags = {
     ...Command.flags,
     namespace: flags.string({ char: 'n' }),
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
+    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT_PUBLIC', 'architect_public', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     // awsconfig: flags.string({ char: 'w', default: '~/.aws', exclusive: ['kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }), // TODO:106:CLI: replace the below lines with this one once we've configured aws cli to work.
@@ -144,11 +149,11 @@ export default class EnvironmentCreate extends Command {
     }
 
     if (!answers.platform_id) {
-
       const platform = await this.create_platform(args, flags, answers.account);
 
       cli.action.start('Registering platform with Architect');
-      const created_platform = await this.post_platform_to_api(platform, answers.account.id);
+      const public_platform = Object.keys(platform).length === 1 && !!platform.name;
+      const created_platform = await this.post_platform_to_api(platform, answers.account.id, public_platform);
       cli.action.stop();
 
       answers.platform_id = created_platform.id;
@@ -176,6 +181,7 @@ export default class EnvironmentCreate extends Command {
         choices: [
           'KUBERNETES',
           'ECS',
+          'ARCHITECT_PUBLIC',
         ],
       },
     ]);
@@ -187,6 +193,8 @@ export default class EnvironmentCreate extends Command {
         return await KubernetesPlatformUtils.configure_kubernetes_platform(args, flags, account);
       case 'ECS':
         return await EcsPlatformUtils.configure_ecs_platform(args, flags, account);
+      case 'ARCHITECT_PUBLIC':
+        return await PublicPlatformUtils.runArchitectPublic(args, flags);
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
     }
@@ -206,10 +214,16 @@ export default class EnvironmentCreate extends Command {
     return platform;
   }
 
-  private async post_platform_to_api(dto: CreatePlatformInput, account_id: string): Promise<any> {
+  private async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
     try {
-      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
-      return platform;
+      if (public_platform) {
+        console.log('creating public platform')
+        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
+        return platform;
+      } else {
+        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
+        return platform;
+      }
     } catch (err) {
       //TODO:89:we shouldn't have to do this on the client side
       if (err.response?.data?.statusCode === 403) {
