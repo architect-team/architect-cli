@@ -12,7 +12,7 @@ export class PublicPlatformUtils {
       {
         type: 'input',
         name: 'name',
-        message: 'What would you like to name your new environment?',
+        message: 'What would you like to name your new platform?',
         when: !args.name,
         filter: value => value.toLowerCase(),
         validate: value => {

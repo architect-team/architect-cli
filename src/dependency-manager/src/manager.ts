@@ -325,5 +325,6 @@ export default abstract class DependencyManager {
       key: service_ref
     });
     this.graph.addNode(node);
+    return node;
   }
 }
