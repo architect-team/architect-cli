@@ -30,7 +30,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
       if (env_svc_cfg.host && env_svc_cfg.port) {
-        dependency_manager.loadExternalService(env_svc_cfg, ref);
+        await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
 
@@ -49,7 +49,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
-    dependency_manager.loadParameters();// TODO: load params from vault here as well
+    dependency_manager.loadParameters();
     return dependency_manager;
   }
 
@@ -86,6 +86,7 @@ export default class LocalDependencyManager extends DependencyManager {
     if (config.getDebugOptions()) {
       node.command = config.getDebugOptions()?.command;
     }
+
     this.graph.addNode(node);
     return node;
   }
