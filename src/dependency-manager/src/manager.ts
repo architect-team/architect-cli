@@ -314,7 +314,7 @@ export default abstract class DependencyManager {
   /**
    * Create an external node and add it to the graph
    */
-  protected async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
     const node = new ExternalNode({
       host: env_service_config.host!,
       ports: {
