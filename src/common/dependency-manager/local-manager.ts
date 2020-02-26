@@ -49,7 +49,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // We resolve these after the loop to ensure that explicitly cited service configs take precedence
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
-    dependency_manager.loadParameters();
+    dependency_manager.loadParameters();// TODO: load params from vault here as well
     return dependency_manager;
   }
 
@@ -86,7 +86,6 @@ export default class LocalDependencyManager extends DependencyManager {
     if (config.getDebugOptions()) {
       node.command = config.getDebugOptions()?.command;
     }
-
     this.graph.addNode(node);
     return node;
   }
@@ -99,22 +98,27 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      let dep_node: ServiceNode;
 
       const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_services && env_services.debug) {
-        const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
-        dep_node = await this.loadLocalService(svc_path);
+      if (env_services?.host && env_services?.port) {
+        await this.loadExternalService(env_services, `${dep_name}:${dep_id}`);
       } else {
-        dep_node = await this.loadService(dep_name, dep_id);
-      }
+        let dep_node: ServiceNode;
+        if (env_services && env_services.debug) {
+          const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
+          dep_node = await this.loadLocalService(svc_path);
+        } else {
+          dep_node = await this.loadService(dep_name, dep_id);
+        }
 
-      this.graph.addNode(dep_node);
-      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-      this.graph.addEdge(edge);
-      if (recursive) {
-        await this.loadDatastores(dep_node);
-        dependency_resolvers.push(() => this.loadDependencies(dep_node));
+        this.graph.addNode(dep_node);
+        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+        this.graph.addEdge(edge);
+
+        if (recursive) {
+          await this.loadDatastores(dep_node);
+          dependency_resolvers.push(() => this.loadDependencies(dep_node));
+        }
       }
     }
 

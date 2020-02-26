@@ -155,11 +155,13 @@ export default abstract class DependencyManager {
     }
   }
 
+
+
   /**
    * Parse the parameter values by comparing defaults for a service to
    * values in the environment configuration.
    */
-  protected async getParamValues(
+  protected async getParamValues( // TODO: move into `loadParameters`, keep in local only (create a parent method that contains this and vaults actually)
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
@@ -314,7 +316,7 @@ export default abstract class DependencyManager {
   /**
    * Create an external node and add it to the graph
    */
-  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+  protected async loadExternalService(env_service_config: EnvironmentService, service_ref: string) { // TODO: also use for datastores
     const node = new ExternalNode({
       host: env_service_config.host!,
       ports: {

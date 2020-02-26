@@ -7,7 +7,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildImage, pushImage } from '../common/utils/docker';
+import { buildImage, pullImage, pushImage } from '../common/utils/docker';
 
 
 export default class Push extends Command {
@@ -55,6 +55,7 @@ export default class Push extends Command {
         cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
         try {
           await pushImage(tag);
+          await pullImage(tag);
         } catch (err) {
           cli.action.stop(chalk.red(`Push failed for image ${tag}`));
         }

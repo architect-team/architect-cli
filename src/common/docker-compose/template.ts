@@ -12,6 +12,7 @@ export interface DockerService {
   build?: DockerServiceBuild;
   volumes?: string[];
   command?: string;
+  dns?: string[];
 }
 
 export default interface DockerComposeTemplate {
