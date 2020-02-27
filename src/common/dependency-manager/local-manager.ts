@@ -30,7 +30,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
       if (env_svc_cfg.host && env_svc_cfg.port) {
-        dependency_manager.loadExternalService(env_svc_cfg, ref);
+        await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
 
@@ -99,22 +99,27 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      let dep_node: ServiceNode;
 
       const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_services && env_services.debug) {
-        const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
-        dep_node = await this.loadLocalService(svc_path);
+      if (env_services?.host && env_services?.port) {
+        await this.loadExternalService(env_services, `${dep_name}:${dep_id}`);
       } else {
-        dep_node = await this.loadService(dep_name, dep_id);
-      }
+        let dep_node: ServiceNode;
+        if (env_services && env_services.debug) {
+          const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
+          dep_node = await this.loadLocalService(svc_path);
+        } else {
+          dep_node = await this.loadService(dep_name, dep_id);
+        }
 
-      this.graph.addNode(dep_node);
-      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-      this.graph.addEdge(edge);
-      if (recursive) {
-        await this.loadDatastores(dep_node);
-        dependency_resolvers.push(() => this.loadDependencies(dep_node));
+        this.graph.addNode(dep_node);
+        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+        this.graph.addEdge(edge);
+
+        if (recursive) {
+          await this.loadDatastores(dep_node);
+          dependency_resolvers.push(() => this.loadDependencies(dep_node));
+        }
       }
     }
 
