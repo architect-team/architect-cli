@@ -295,7 +295,7 @@ export default abstract class DependencyManager {
     await this.loadDatastores(parent_node);
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);;
+      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
       if (env_service?.host && env_service.port) {
         const external_node = await this.loadExternalService(env_service, dep_id);
         const edge = new ServiceEdge(parent_node.ref, external_node.ref);

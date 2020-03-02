@@ -18,7 +18,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
     } else {
       console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
     }
-    throw err;
+    // throw err;
   }
 };
 
@@ -52,6 +52,10 @@ export const buildImage = async (service_path: string, registry_host: string, ta
 
 export const pushImage = async (image_ref: string) => {
   await docker(['push', image_ref]);
+};
+
+export const pullImage = async (image_ref: string) => {
+  await docker(['pull', image_ref]);
 };
 
 export const imageExists = async (image_ref: string) => {
