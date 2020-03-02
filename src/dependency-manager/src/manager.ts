@@ -295,11 +295,18 @@ export default abstract class DependencyManager {
     await this.loadDatastores(parent_node);
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      const dep_node = await this.loadService(dep_name, dep_id);
-      this.graph.addNode(dep_node);
-      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-      this.graph.addEdge(edge);
-      dependency_promises.push(() => this.loadDependencies(dep_node));
+      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
+      if (env_service?.host && env_service.port) {
+        const external_node = await this.loadExternalService(env_service, dep_id);
+        const edge = new ServiceEdge(parent_node.ref, external_node.ref);
+        this.graph.addEdge(edge);
+      } else {
+        const dep_node = await this.loadService(dep_name, dep_id);
+        this.graph.addNode(dep_node);
+        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+        this.graph.addEdge(edge);
+        dependency_promises.push(() => this.loadDependencies(dep_node));
+      }
     }
 
     await Promise.all(dependency_promises.map(fn => fn()));
