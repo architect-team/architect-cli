@@ -290,8 +290,6 @@ export default abstract class DependencyManager {
    * dependencies and datastores
    */
   async loadDependencies(parent_node: ServiceNode) {
-    if (parent_node instanceof ExternalNode) { return; }
-
     const dependency_promises = [];
     this.graph.addNode(parent_node);
     await this.loadDatastores(parent_node);
