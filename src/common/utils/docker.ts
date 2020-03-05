@@ -5,7 +5,7 @@ import path from 'path';
 import { ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
 
 
-export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options) => {
+export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   const cmd = execa('docker', args, execa_opts);
   if (opts.stdout) {
     cmd.stdout.pipe(process.stdout);
@@ -52,6 +52,11 @@ export const buildImage = async (service_path: string, registry_host: string, ta
 
 export const pushImage = async (image_ref: string) => {
   await docker(['push', image_ref]);
+};
+
+export const getDigest = async (image_ref: string): Promise<string> => {
+  const digest = await docker([`inspect`, `--format='{{index .RepoDigests 0}}'`, image_ref], { stdout: false });
+  return digest.stdout.split('@')[1].replace('\'', '');
 };
 
 export const imageExists = async (image_ref: string) => {

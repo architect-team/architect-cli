@@ -5,6 +5,7 @@ import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
   image: string;
+  artifact: string;
   tag?: string;
   service_config: ServiceConfig;
   replicas?: number;
@@ -13,6 +14,7 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
+  artifact!: string;
   image!: string;
   tag!: string;
   replicas = 1;
@@ -30,6 +32,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super(options);
     if (options) {
+      this.artifact = options.artifact;
       this.image = options.image;
       this.tag = options.tag || 'latest';
       this.service_config = options.service_config;

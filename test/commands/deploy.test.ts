@@ -65,6 +65,7 @@ describe('deploy', () => {
 
       expect(expected.ports).to.have.members(input.ports);
       expect(expected.image).to.equal(input.image);
+      expect(expected.artifact).to.equal(input.artifact);
       expect(expected.depends_on).to.have.members(input.depends_on);
       expect(expected.build).to.eql(input.build);
       expect(expected.command).to.equal(input.command);
