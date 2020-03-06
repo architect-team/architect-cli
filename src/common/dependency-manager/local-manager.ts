@@ -68,13 +68,14 @@ export default class LocalDependencyManager extends DependencyManager {
       return this.graph.nodes_map.get(`${config.getName()}:latest`)! as ServiceNode;
     }
 
+    const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
     const node = new LocalServiceNode({
       service_path: service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
       ports: {
-        target: 8080,
+        target: env_service?.port ? env_service.port : 8080,
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
