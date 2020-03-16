@@ -73,7 +73,6 @@ export default class LocalDependencyManager extends DependencyManager {
       service_path: service_path,
       service_config: config,
       image: config.getImage(),
-      artifact: config.getArtifact(),
       tag: 'latest',
       ports: {
         target: env_service?.port ? env_service.port : 8080,
@@ -139,7 +138,6 @@ export default class LocalDependencyManager extends DependencyManager {
     const node = new ServiceNode({
       service_config: config,
       tag: service_digest.tag,
-      artifact: service_digest.artifact,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: {
         target: 8080,

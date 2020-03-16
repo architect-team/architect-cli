@@ -89,10 +89,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           }
         }
       }
-    } else if (node instanceof ServiceNode) {
-      compose.services[node.normalized_ref].artifact = node.artifact;
-      compose.services[node.normalized_ref].image = node.image;
-    } else if (node instanceof DatastoreNode) {
+    } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref].image = node.image;
     }
   }

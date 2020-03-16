@@ -58,7 +58,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
-  artifact?: string;
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;

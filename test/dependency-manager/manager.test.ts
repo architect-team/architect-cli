@@ -42,7 +42,6 @@ describe('manager', function () {
     const node = new ServiceNode({
       tag: 'test',
       image: 'image',
-      artifact: 'artifact',
       service_config: new ServiceConfigV1(),
       ports: { target: 8080, expose: 80 },
       parameters: {}

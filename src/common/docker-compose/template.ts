@@ -7,7 +7,6 @@ export interface DockerServiceBuild {
 export interface DockerService {
   ports: string[];
   image?: string;
-  artifact?: string;
   environment?: { [key: string]: any };
   depends_on: string[];
   build?: DockerServiceBuild;
