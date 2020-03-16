@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
@@ -13,10 +12,10 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   try {
     return await cmd;
   } catch (err) {
-    if (err.stderr) {
-      console.log(chalk.red(err.stderr));
-    } else {
-      console.log(chalk.red('Architect requires Docker to be installed. Please install it and try again.'));
+    try {
+      await execa('which', ['docker']);
+    } catch {
+      throw new Error('Architect requires Docker to be installed. Please install it and try again.');
     }
     throw err;
   }

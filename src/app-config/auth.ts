@@ -70,27 +70,23 @@ export default class AuthClient {
       scope: 'openid email',
     }) as AuthResults;
 
-    try {
-      // Windows credential manager password max length is 256 chars
-      this.auth_results = {
-        access_token: auth0_results.access_token,
-        token_type: auth0_results.token_type,
-        expires_in: auth0_results.expires_in,
-        issued_at: new Date().getTime() / 1000,
-      };
+    // Windows credential manager password max length is 256 chars
+    this.auth_results = {
+      access_token: auth0_results.access_token,
+      token_type: auth0_results.token_type,
+      expires_in: auth0_results.expires_in,
+      issued_at: new Date().getTime() / 1000,
+    };
 
-      await docker([
-        'login', this.config.registry_host,
-        '-u', credential.account,
-        '--password-stdin',
-      ], { stdout: false }, {
-        input: JSON.stringify(this.auth_results),
-      });
+    await docker([
+      'login', this.config.registry_host,
+      '-u', credential.account,
+      '--password-stdin',
+    ], { stdout: false }, {
+      input: JSON.stringify(this.auth_results),
+    });
 
-      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
-      return this.auth_results;
-    } catch {
-      return undefined;
-    }
+    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
+    return this.auth_results;
   }
 }

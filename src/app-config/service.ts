@@ -56,7 +56,7 @@ export default class AppService {
             this._api.interceptors.response.eject(unauthorized_interceptor);
 
             // Attempt a token refresh
-            const new_token = await this.auth.refreshToken();
+            const new_token = await this.auth.refreshToken().catch(() => undefined);
             if (!new_token) {
               // eslint-disable-next-line no-undef
               return Promise.reject(new LoginRequiredError());
