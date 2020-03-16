@@ -97,10 +97,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
-  getArtifact(): string {
-    return this.artifact || '';
-  }
-
   getDependencies(): { [s: string]: string } {
     return this.dependencies || {};
   }

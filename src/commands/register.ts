@@ -67,8 +67,8 @@ export default class ServiceRegister extends Command {
 
         let image;
         if (!flags.no_build) {
-          if (node.service_config.getArtifact()) {
-            throw new Error('Your Service config specifies an artifact. In this case please use the --no_build flag to avoid using the Architect repository.');
+          if (node.service_config.getImage()) {
+            throw new Error('Your Service config specifies an image. In this case please use the --no_build flag to avoid using the Architect repository.');
           }
           image = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
 
@@ -79,10 +79,10 @@ export default class ServiceRegister extends Command {
             cli.action.stop(chalk.red(`Push failed for image ${image}`));
           }
           cli.action.stop(chalk.green(`Successfully pushed Docker image for ${image}`));
-        } else if (!node.service_config.getArtifact()) {
-          throw new Error('When using the `--no-build` flag, please specify an `artifact` in your ServiceConfig.');
+        } else if (!node.service_config.getImage()) {
+          throw new Error('When using the `--no-build` flag, please specify an `image` in your ServiceConfig.');
         } else {
-          image = node.service_config.getArtifact();
+          image = node.service_config.getImage();
         }
 
         const [account_name, _] = node.service_config.getName().split('/');
@@ -91,9 +91,9 @@ export default class ServiceRegister extends Command {
         cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
         const digest = await getDigest(image).catch(e => {
           cli.action.stop(chalk.red(`Inspect failed`));
-          throw new Error(`The artifact specified in your ServiceConfig is not reachable by docker: ${node.service_config.getArtifact()}`);
+          throw new Error(`The image specified in your ServiceConfig is not reachable by docker: ${node.service_config.getImage()}`);
         });
-        cli.action.stop(chalk.green(`Artifact verified`));
+        cli.action.stop(chalk.green(`Image verified`));
 
         const service_dto = {
           tag: flags.tag,
