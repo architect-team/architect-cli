@@ -76,7 +76,7 @@ export class ServiceConfigV1 extends ServiceConfig {
       const param = parameters[key];
       res[key] = {
         default: param.default,
-        required: param.required !== false && !param.default,
+        required: param.required !== false && !('default' in param),
         description: param.description || '',
         aliases: param.alias ? [param.alias] : [],
         build_arg: param.build_arg,
