@@ -34,7 +34,7 @@ export default class Deploy extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'environment', 'auto_approve'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -43,9 +43,20 @@ export default class Deploy extends Command {
         os.tmpdir(),
         `architect-deployment-${Date.now().toString()}.json`,
       ),
-      exclusive: ['account', 'environment', 'auto_approve'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
     }),
     auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
+    lock: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose_file'],
+    }),
+    force_unlock: flags.integer({
+      description: 'Be very careful with this flag. Usage: --force_unlock=<lock_id>.',
+      hidden: true,
+      exclusive: ['local', 'compose_file'],
+    }),
     account: flags.string({
       char: 'a',
       description: 'Account to deploy the services with',
@@ -59,7 +70,7 @@ export default class Deploy extends Command {
     build_prod: flags.boolean({
       description: 'Build without the ARCHITECT_DEBUG flag and mounted volumes',
       hidden: true,
-      exclusive: ['account', 'environment', 'auto_approve'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
     }),
   };
 
@@ -192,7 +203,7 @@ export default class Deploy extends Command {
     }
 
     cli.action.start(chalk.blue('Deploying'));
-    await this.app.api.post(`/deploy/${deployment.id}`);
+    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock } });
     await this.poll(deployment.id);
     cli.action.stop(chalk.green(`Deployed`));
   }
