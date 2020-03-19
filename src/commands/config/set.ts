@@ -24,6 +24,7 @@ export default class ConfigSet extends Command {
   }];
 
   async run() {
+    console.log('ConfigSet.run()');
     const { args } = this.parse(ConfigSet);
 
     if (!Object.keys(this.app.config).includes(args.option)) {
