@@ -20,9 +20,11 @@ export default abstract class extends Command {
   }
 
   async init() {
+    console.log('Command.init()');
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
 
+      console.log('Command.init()', 'Checking if auth is required');
       if (this.auth_required() && !await this.app.auth.getToken()) {
         this.error(chalk.red(`Please log in using 'architect login'`));
       }
@@ -30,6 +32,8 @@ export default abstract class extends Command {
   }
 
   async catch(err: any) {
+    console.log('Command.catch()');
+    console.log(err);
     if (err.oclif && err.oclif.exit === 0) return;
 
     if (err.response && err.response.data) {
