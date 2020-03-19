@@ -26,13 +26,18 @@ export default class AuthClient {
   }
 
   async init() {
+    console.log('AuthClient.init()');
     const token = await this.getToken();
+    console.log('AuthClient.init()', 'Got token');
     if (token) {
       this.auth_results = JSON.parse(token.password) as AuthResults;
+      console.log('AuthClient.init()', 'Got auth results');
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
+      console.log('AuthClient.init()', 'Got expiration date');
       // Refresh the token if its expired to force a docker login
       if (expires_at < (new Date().getTime() / 1000)) {
         await this.refreshToken().catch(() => undefined);
+        console.log('AuthClient.init()', 'Got refresh token');
       }
     }
   }

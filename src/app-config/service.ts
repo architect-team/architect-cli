@@ -29,16 +29,13 @@ export default class AppService {
       }
     }
 
-    console.log('AppService.__constructor()', 'Setting up auth client');
     this.auth = new AuthClient(this.config, new AuthenticationClient({
       domain: this.config.oauth_domain,
       clientId: this.config.oauth_client_id,
     }));
-    console.log('AppService.__constructor()', 'Setting up API client');
     this._api = axios.create({
       baseURL: this.config.api_host,
     });
-    console.log('AppService.__constructor()', 'Setting up API client');
   }
 
   saveConfig() {
