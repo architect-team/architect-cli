@@ -7,7 +7,8 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildImage, pushImage } from '../common/utils/docker';
+import { buildImage, getDigest, pushImage } from '../common/utils/docker';
+import { CreateServiceVersionInput } from './register';
 
 
 export default class Push extends Command {
@@ -49,6 +50,8 @@ export default class Push extends Command {
       throw new MissingContextError();
     }
 
+    this.accounts = await this.get_accounts();
+
     for (const node of dependency_manager.graph.nodes) {
       if (node instanceof LocalServiceNode) {
         const tag = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
@@ -59,7 +62,48 @@ export default class Push extends Command {
           cli.action.stop(chalk.red(`Push failed for image ${tag}`));
         }
         cli.action.stop(chalk.green(`Successfully pushed Docker image for ${tag}`));
+
+        const [account_name, _] = node.service_config.getName().split('/');
+        const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
+
+        cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${tag}`));
+        const digest = await getDigest(tag).catch(e => {
+          cli.action.stop(chalk.red(`Inspect failed`));
+          throw new Error(`The image specified in your ServiceConfig is not reachable by docker: ${node.service_config.getImage()}`);
+        });
+        cli.action.stop(chalk.green(`Image verified`));
+
+        const service_dto = {
+          tag: flags.tag,
+          digest: digest,
+          config: node.service_config,
+        };
+        cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
+        await this.post_service_to_api(service_dto, selected_account.id);
+        cli.action.stop(chalk.green(`Successfully registered service`));
       }
+    }
+  }
+
+  private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
+    try {
+      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+      return service_digest;
+    } catch (err) {
+      //TODO:89:we shouldn't have to do this on the client side
+      if (err.response?.data?.statusCode === 403) {
+        throw new Error(`You do not have permission to create a ServiceVersion for the selected account.`);
+      }
+      if (err.response?.data?.status === 409) {
+        throw new Error(`The server responded with 409 CONFLICT. Perhaps this Service name already exists under that account?`);
+      }
+      if (err.response?.data?.message?.message) {
+        throw new Error(JSON.stringify(err.response?.data?.message?.message));
+      }
+      if (err.response?.data?.message) {
+        throw new Error(err.response?.data?.message);
+      }
+      throw new Error(err);
     }
   }
 }
