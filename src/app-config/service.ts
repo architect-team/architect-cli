@@ -38,6 +38,7 @@ export default class AppService {
     this._api = axios.create({
       baseURL: this.config.api_host,
     });
+    console.log('AppService.__constructor()', 'Setting up API client');
   }
 
   saveConfig() {
