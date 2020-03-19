@@ -20,7 +20,6 @@ export default abstract class extends Command {
   }
 
   async init() {
-    console.log('Command.init()');
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
 

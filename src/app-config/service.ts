@@ -13,6 +13,7 @@ export default class AppService {
   _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
+    console.log(`AppService.create("${config_dir}")`);
     const service = new AppService(config_dir);
     await service.auth.init();
     return service;
@@ -28,10 +29,12 @@ export default class AppService {
       }
     }
 
+    console.log('AppService.__constructor()', 'Setting up auth client');
     this.auth = new AuthClient(this.config, new AuthenticationClient({
       domain: this.config.oauth_domain,
       clientId: this.config.oauth_client_id,
     }));
+    console.log('AppService.__constructor()', 'Setting up API client');
     this._api = axios.create({
       baseURL: this.config.api_host,
     });
