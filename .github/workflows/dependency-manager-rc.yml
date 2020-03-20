@@ -11,18 +11,18 @@ env:
   NPM_CACHE_NAME: dependency-manager-node-modules
 
 jobs:
-  # lint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '12.x'
-  #     - run: npm install
-  #       working-directory: ./src/dependency-manager
-  #     - run: npm run lint
-  #       working-directory: ./src/dependency-manager
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v1
+      #   with:
+      #     node-version: '12.x'
+      # - run: npm install
+      #   working-directory: ./src/dependency-manager
+      # - run: npm run lint
+      #   working-directory: ./src/dependency-manager
   test:
     runs-on: ubuntu-latest
     strategy:
