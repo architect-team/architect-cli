@@ -8,21 +8,24 @@ on:
 
 env:
   CI: true
+  NPM_CACHE_NAME: cache-node-modules
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
       - name: Cache node modules
         uses: actions/cache@v1
-        env:
-          cache-name: cache-node-modules
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Setup Node.js
@@ -40,15 +43,17 @@ jobs:
       - uses: actions/checkout@master
         with:
           submodules: recursive
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
       - name: Cache node modules
         uses: actions/cache@v1
-        env:
-          cache-name: cache-node-modules
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Use Node.js ${{ matrix.node-version }}
