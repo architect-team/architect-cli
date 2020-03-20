@@ -56,13 +56,11 @@ jobs:
       - run: npm run build
         working-directory: ./src/dependency-manager
       - name: Cut release candidate
-        run: npm version prerelease --git-tag-version=false --preid=github-actions
-        working-directory: ./src/dependency-manager
-      - name: Commit version bump
-        working-directory: ./src/dependency-manager
         run: |
+          npm version prerelease --git-tag-version=false --preid=github-actions
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
           git commit -m "New RC from commit: ${{ github.sha }}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+        working-directory: ./src/dependency-manager
