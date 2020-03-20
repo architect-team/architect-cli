@@ -51,6 +51,7 @@ jobs:
         with:
           node-version: '12.x'
           registry-url: 'https://npm.pkg.github.com'
+          always-auth: true
       - run: ls -la
       - run: npm install
         working-directory: ./src/dependency-manager
