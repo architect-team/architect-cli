@@ -34,5 +34,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
-      - run: sudo apt-get install libsecret-1-dev
       - run: npm test
