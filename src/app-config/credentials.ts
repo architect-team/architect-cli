@@ -19,11 +19,13 @@ export default class CredentialManager {
     this.credentials_file = path.join(config.getConfigDir(), CREDENTIALS_FILENAME);
     fs.ensureFileSync(this.credentials_file);
     this.credentials = fs.readJSONSync(this.credentials_file, { throws: false }) || {};
-
-    this.setupKeytar();
   }
 
-  private async setupKeytar() {
+  private save() {
+    return fs.writeJSON(this.credentials_file, this.credentials, { replacer: null, spaces: 2 });
+  }
+
+  async init() {
     try {
       // eslint-disable-next-line no-undef
       this.keytar = require('keytar');
@@ -38,10 +40,6 @@ export default class CredentialManager {
 
       this.keytar = null;
     }
-  }
-
-  private save() {
-    return fs.writeJSON(this.credentials_file, this.credentials, { replacer: null, spaces: 2 });
   }
 
   async get(service: string): Promise<Credential> {
