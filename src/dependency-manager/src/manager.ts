@@ -68,26 +68,8 @@ export default abstract class DependencyManager {
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
-
-      let external_host;
-      let external_port;
-      if ((node as ExternalNode).parent_ref) {
-        const external_node = node as ExternalNode;
-        const env_service = this.environment.getServices()[external_node.parent_ref!];
-        if (env_service) {
-          const datastore_external_host = env_service.datastores[external_node.key].host;
-          const datastore_external_port = env_service.datastores[external_node.key].port;
-          if (datastore_external_host) {
-            external_host = datastore_external_host;
-          }
-          if (datastore_external_port) {
-            external_port = datastore_external_port.toString();
-          }
-        }
-      }
-
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host || node.normalized_ref;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_port || node.ports.target.toString();
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? node.host : node.normalized_ref;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
 
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
