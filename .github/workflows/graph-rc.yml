@@ -1,14 +1,16 @@
-name: Create release candidate
+name: Create release candidate for dependency manager
 
 on:
   push:
     branches:
       - github-actions
       - master
+    paths:
+      - 'src/dependency-manager/**'
 
 env:
   CI: true
-  NPM_CACHE_NAME: cache-node-modules
+  NPM_CACHE_NAME: dependency-manager-node-modules
 
 jobs:
   lint:
@@ -17,10 +19,10 @@ jobs:
       - uses: actions/checkout@v2
       - name: Get npm cache directory
         id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
+        run: echo "::set-output name=dir::$(npm config get cache)"
       - name: Cache node modules
         uses: actions/cache@v1
+        working-directory: ./src/dependency-manager
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
@@ -33,7 +35,9 @@ jobs:
         with:
           node-version: '12.x'
       - run: npm install
+        working-directory: ./src/dependency-manager
       - run: npm run lint
+        working-directory: ./src/dependency-manager
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -45,9 +49,9 @@ jobs:
           submodules: recursive
       - name: Get npm cache directory
         id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
+        run: echo "::set-output name=dir::$(npm config get cache)"
       - name: Cache node modules
+        working-directory: ./src/dependency-manager
         uses: actions/cache@v1
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
@@ -61,28 +65,21 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
+        working-directory: ./src/dependency-manager
       - run: npm test
-  build_cli:
+        working-directory: ./src/dependency-manager
+  cut_release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/github-actions'
     needs: [lint, test]
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        include:
-          - os: macos-latest
-            distro: macos
-          - os: windows-latest
-            distro: win
-          - os: ubuntu-latest
-            distro: deb
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Get npm cache directory
         id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
+        run: echo "::set-output name=dir::$(npm config get cache)"
       - name: Cache node modules
         uses: actions/cache@v1
+        working-directory: ./src/dependency-manager
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
@@ -94,11 +91,21 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
+          registry-url: 'https://npm.pkg.github.com'
       - run: npm install
-      - name: oclif build
-        run: sudo npx oclif-dev pack
-      - name: Archive artifact
-        uses: actions/upload-artifact@v1
-        with:
-          name: dist
-          path: dist
+        working-directory: ./src/dependency-manager
+      - run: npm run build
+        working-directory: ./src/dependency-manager
+      - name: Cut release candidate
+        run: npm version prerelease --git-tag-version=false --preid=github-actions
+        working-directory: ./src/dependency-manager
+      - name: Commit version bump
+        working-directory: ./src/dependency-manager
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add package.json package-lock.json
+          git commit -m "New RC from commit: ${GITHUB_SHA}"
+          git push "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${INPUT_REPO}.git"
