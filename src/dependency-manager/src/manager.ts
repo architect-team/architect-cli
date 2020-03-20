@@ -68,8 +68,25 @@ export default abstract class DependencyManager {
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref; // TODO: OR HOST from env config, overridden
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+
+      let external_host;
+      let external_port;
+      if ((node as ExternalNode).parent_ref) {
+        const external_node = node as ExternalNode;
+        const env_service = this.environment.getServices()[external_node.parent_ref!];
+        const datastore_external_host = env_service.datastores[external_node.key].host;
+        const datastore_external_port = env_service.datastores[external_node.key].port;
+        if (datastore_external_host) {
+          external_host = datastore_external_host;
+        }
+        if (datastore_external_port) {
+          external_port = datastore_external_port.toString();
+        }
+      }
+
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host || node.normalized_ref;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_port || node.ports.target.toString();
+
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
@@ -114,19 +131,17 @@ export default abstract class DependencyManager {
     const dotenv_config = { parsed: env_params_to_expand, ignoreProcessEnv: true };
     const expanded_params = dotenvExpand(dotenv_config).parsed;
     for (const node of this.graph.nodes) {
-      console.log(node.ref)
       if (node instanceof ServiceNode) {
         const service_name = node.normalized_ref;
         const service_prefix = service_name.replace(/[^\w\s]/gi, '_').toUpperCase();
         const written_env_keys = [];
 
         // map datastore params
-        const node_datastores = this.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode || node instanceof ExternalNode); // TODO: is this safe? and reasonable? safe if the node is overridden in the env config?
+        const node_datastores = this.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode || node instanceof ExternalNode);
         for (const datastore of node_datastores) {
           const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
           const service_datastore_params = Object.entries(expanded_params || {})
             .filter(([key, _]) => key.startsWith(datastore_prefix));
-
           // reverse order params by length in order to avoid key collisions
           service_datastore_params.sort((pair1: [string, string], pair2: [string, string]) => {
             return pair2[0].length - pair1[0].length;
