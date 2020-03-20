@@ -74,13 +74,15 @@ export default abstract class DependencyManager {
       if ((node as ExternalNode).parent_ref) {
         const external_node = node as ExternalNode;
         const env_service = this.environment.getServices()[external_node.parent_ref!];
-        const datastore_external_host = env_service.datastores[external_node.key].host;
-        const datastore_external_port = env_service.datastores[external_node.key].port;
-        if (datastore_external_host) {
-          external_host = datastore_external_host;
-        }
-        if (datastore_external_port) {
-          external_port = datastore_external_port.toString();
+        if (env_service) {
+          const datastore_external_host = env_service.datastores[external_node.key].host;
+          const datastore_external_port = env_service.datastores[external_node.key].port;
+          if (datastore_external_host) {
+            external_host = datastore_external_host;
+          }
+          if (datastore_external_port) {
+            external_port = datastore_external_port.toString();
+          }
         }
       }
 
