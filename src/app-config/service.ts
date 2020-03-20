@@ -13,7 +13,6 @@ export default class AppService {
   _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
-    console.log(`AppService.create("${config_dir}")`);
     const service = new AppService(config_dir);
     await service.auth.init();
     return service;
