@@ -97,3 +97,8 @@ jobs:
       - run: npm install
       - name: oclif build
         run: sudo npx oclif-dev pack:${{ matrix.distro }}
+      - name: Archive artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist
