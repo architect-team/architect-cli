@@ -15,19 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache node modules
-        uses: actions/cache@v1
-        working-directory: ./src/dependency-manager
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
@@ -45,19 +32,6 @@ jobs:
       - uses: actions/checkout@master
         with:
           submodules: recursive
-      - name: Get npm cache directory
-        id: npm-cache
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache node modules
-        working-directory: ./src/dependency-manager
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
@@ -72,19 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Get npm cache directory
-        id: npm-cache
-        run: echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache node modules
-        uses: actions/cache@v1
-        working-directory: ./src/dependency-manager
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
