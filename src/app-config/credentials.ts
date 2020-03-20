@@ -23,6 +23,8 @@ export default class CredentialManager {
     try {
       // eslint-disable-next-line no-undef
       this.keytar = require('keytar');
+      this.keytar.setPassword('architect', 'test', 'value');
+      this.keytar.deletePassword('architect', 'test');
     } catch {
       // eslint-disable-next-line no-undef
       if (!this.keychainWarningIssued) {
