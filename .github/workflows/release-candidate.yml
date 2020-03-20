@@ -66,7 +66,7 @@ jobs:
     needs: [lint, test]
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [ubuntu-latest]
         include:
           - os: macos-latest
             distro: macos
@@ -96,7 +96,7 @@ jobs:
           node-version: '12.x'
       - run: npm install
       - name: oclif build
-        run: sudo npx oclif-dev pack:${{ matrix.distro }}
+        run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:
