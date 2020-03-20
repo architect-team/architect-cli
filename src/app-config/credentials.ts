@@ -20,11 +20,15 @@ export default class CredentialManager {
     fs.ensureFileSync(this.credentials_file);
     this.credentials = fs.readJSONSync(this.credentials_file, { throws: false }) || {};
 
+    this.setupKeytar();
+  }
+
+  private async setupKeytar() {
     try {
       // eslint-disable-next-line no-undef
       this.keytar = require('keytar');
-      this.keytar.setPassword('architect', 'test', 'value');
-      this.keytar.deletePassword('architect', 'test');
+      await this.keytar.setPassword('architect', 'test', 'value');
+      await this.keytar.deletePassword('architect', 'test');
     } catch {
       // eslint-disable-next-line no-undef
       if (!this.keychainWarningIssued) {
