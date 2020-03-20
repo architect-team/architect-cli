@@ -77,7 +77,10 @@
     "dirname": "architect",
     "plugins": [
       "@oclif/plugin-help"
-    ]
+    ],
+    "macos": {
+      "identifier": "io.architect.cli"
+    }
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
