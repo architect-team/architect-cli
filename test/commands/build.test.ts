@@ -58,6 +58,7 @@ describe('build', function () {
   let spy: sinon.SinonSpy;
 
   beforeEach(function () {
+    this.timeout(8000);
     // Fake the docker build command
     spy = sinon.fake.returns(null);
     sinon.replace(DockerUtil, 'docker', spy);
