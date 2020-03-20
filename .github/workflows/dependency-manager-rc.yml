@@ -65,7 +65,10 @@ jobs:
           git commit -m "New RC from commit: ${{ github.sha }}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         working-directory: ./src/dependency-manager
-      - run: npm publish
+      - name: npm publish
+        run: |
+          cp ../../.npmrc .
+          npm publish
         working-directory: ./src/dependency-manager
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
