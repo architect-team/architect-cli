@@ -60,11 +60,9 @@ jobs:
         working-directory: ./src/dependency-manager
       - name: Commit version bump
         working-directory: ./src/dependency-manager
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
-          git commit -m "New RC from commit: ${GITHUB_SHA}"
-          git push "https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${INPUT_REPO}.git"
+          git commit -m "New RC from commit: ${{ github.sha }}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
