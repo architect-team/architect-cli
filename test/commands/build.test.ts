@@ -54,6 +54,8 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
 };
 
 describe('build', function () {
+  this.timeout(8000);
+
   let tmp_dir = os.tmpdir();
   let spy: sinon.SinonSpy;
 
