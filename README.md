@@ -20,7 +20,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.3.14 win32-x64 node-v12.14.1
+@architect-io/cli/0.3.14 darwin-x64 node-v10.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -65,7 +65,7 @@ OPTIONS
   -t, --tag=tag                  [default: latest] Tag to give to the new Docker image(s)
 ```
 
-_See code: [src\commands\build.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\build.ts)_
+_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/build.ts)_
 
 ## `architect config:get OPTION`
 
@@ -82,7 +82,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src\commands\config\get.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\config\get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -100,7 +100,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src\commands\config\set.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\config\set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -117,7 +117,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src\commands\config\view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\config\view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/config/view.ts)_
 
 ## `architect deploy [ENVIRONMENT_CONFIG]`
 
@@ -136,13 +136,14 @@ OPTIONS
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: C:\Users\TJ\AppData\Local\Temp\architect-deployment-1584475326203.json]
-                                   Path where the compose file should be written to
+  -o, --compose_file=compose_file  [default:
+                                   /var/folders/9z/2tfwvkyn5kg2zq427pb5xvp40000gn/T/architect-deployment-1584721362305.j
+                                   son] Path where the compose file should be written to
 
   --auto_approve
 ```
 
-_See code: [src\commands\deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/deploy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -167,7 +168,7 @@ ALIASES
   $ architect env:list
 ```
 
-_See code: [src\commands\environments\index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\environments\index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/environments/index.ts)_
 
 ## `architect environments:create [NAME]`
 
@@ -202,7 +203,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src\commands\environments\create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\environments\create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy NAMESPACED_ENVIRONMENT`
 
@@ -226,7 +227,7 @@ ALIASES
   $ architect env:destroy
 ```
 
-_See code: [src\commands\environments\destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\environments\destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/environments/destroy.ts)_
 
 ## `architect environments:update NAMESPACED_ENVIRONMENT`
 
@@ -249,7 +250,7 @@ ALIASES
   $ architect env:update
 ```
 
-_See code: [src\commands\environments\update.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\environments\update.ts)_
+_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/environments/update.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -266,7 +267,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src\commands\help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
 
 ## `architect init [NAME]`
 
@@ -292,7 +293,7 @@ EXAMPLE
   ? author: architect
 ```
 
-_See code: [src\commands\init.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/init.ts)_
 
 ## `architect install [SERVICE_REF]`
 
@@ -311,7 +312,7 @@ OPTIONS
   -s, --services=services        Path to a service to build
 ```
 
-_See code: [src\commands\install.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\install.ts)_
+_See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/install.ts)_
 
 ## `architect login`
 
@@ -327,7 +328,7 @@ OPTIONS
   -u, --username=username  Username
 ```
 
-_See code: [src\commands\login.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -341,7 +342,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src\commands\logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -362,7 +363,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src\commands\platforms\index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\platforms\index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/platforms/index.ts)_
 
 ## `architect platforms:destroy NAMESPACED_PLATFORM`
 
@@ -383,7 +384,7 @@ ALIASES
   $ architect platform:destroy
 ```
 
-_See code: [src\commands\platforms\destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\platforms\destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/platforms/destroy.ts)_
 
 ## `architect push`
 
@@ -400,7 +401,7 @@ OPTIONS
   -t, --tag=tag                  [default: latest] Tag to give to the new Docker image(s)
 ```
 
-_See code: [src\commands\push.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\push.ts)_
+_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/push.ts)_
 
 ## `architect register`
 
@@ -424,7 +425,7 @@ ALIASES
   $ architect svc:register
 ```
 
-_See code: [src\commands\register.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/register.ts)_
 
 ## `architect services [QUERY]`
 
@@ -445,7 +446,7 @@ ALIASES
   $ architect services:search
 ```
 
-_See code: [src\commands\services\index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\services\index.ts)_
+_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/services/index.ts)_
 
 ## `architect uninstall DEPENDENCY_NAME`
 
@@ -463,5 +464,5 @@ OPTIONS
   -s, --service=service  Path to service root
 ```
 
-_See code: [src\commands\uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src\commands\uninstall.ts)_
+_See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.14/src/commands/uninstall.ts)_
 <!-- commandsstop -->

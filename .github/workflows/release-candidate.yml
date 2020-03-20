@@ -62,3 +62,18 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install
       - run: npm test
+  build_cli:
+    needs: [lint, test]
+    matrix:
+      os: [macos-latest, windows-latest, ubuntu-latest]
+      include:
+        - os: macos-latest
+          distro: macos
+        - os: windows-latest
+          distro: win
+        - os: ubuntu-latest
+          distro: deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: oclif build
+        run: npx oclif-dev pack:${{ matrix.distro }}
