@@ -43,14 +43,10 @@ export default class CredentialManager {
   }
 
   async get(service: string): Promise<Credential> {
-    console.log(`CredentialManager.get("${service}")`);
     if (this.keytar) {
-      console.log('CredentialManager.get()', 'keytar installed');
       const credentials = await this.keytar.findCredentials(service);
-      console.log('CredentialManager.get()', 'Found credentials');
       return credentials.length ? credentials[0] : null;
     } else {
-      console.log('CredentialManager.get()', 'No keytar installed');
       return this.credentials[service];
     }
   }
