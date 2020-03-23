@@ -3,11 +3,11 @@ name: Dependency Manager - Cut Release Candidate
 on:
   push:
     branches:
-      - github-actions
       - master
 
 env:
   CI: true
+  PRERELEASE_PREFIX: rc
   NPM_CACHE_NAME: dependency-manager-node-modules
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       - run: npm test
         working-directory: ./src/dependency-manager
   cut_release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/github-actions'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +57,7 @@ jobs:
       - name: Bump NPM version
         id: npm-version-bump
         run: |
-          npm version prerelease --git-tag-version=false --preid=github-actions
+          npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX}
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
@@ -66,8 +66,6 @@ jobs:
         working-directory: ./src/dependency-manager
       - name: npm publish
         run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
           npm publish
         working-directory: ./src/dependency-manager
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
