@@ -2,7 +2,7 @@ export interface DebugConfig {
   path: string;
 }
 
-interface EnvironmentParameters {
+export interface EnvironmentParameters {
   [key: string]: string | number;
 }
 
@@ -38,6 +38,7 @@ export interface EnvironmentService {
 
 export abstract class EnvironmentConfig {
   abstract __version: string;
+  abstract getParameters(): EnvironmentParameters;
   abstract getVaults(): { [key: string]: EnvironmentVault };
   abstract getServices(): { [key: string]: EnvironmentService };
 

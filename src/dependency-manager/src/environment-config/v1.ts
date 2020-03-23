@@ -1,4 +1,4 @@
-import { EnvironmentConfig, EnvironmentService, EnvironmentVault } from './base';
+import { EnvironmentConfig, EnvironmentParameters, EnvironmentService, EnvironmentVault } from './base';
 
 interface VaultMap {
   [vault_name: string]: {
@@ -38,8 +38,13 @@ interface ServiceMap {
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
+  parameters: EnvironmentParameters = {};
   services: ServiceMap = {};
   vaults: VaultMap = {};
+
+  getParameters(): EnvironmentParameters {
+    return this.parameters;
+  }
 
   getServices(): { [key: string]: EnvironmentService } {
     // Ensure that default, empty objects are populated for necessary service components

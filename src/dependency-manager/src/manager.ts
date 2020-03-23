@@ -168,11 +168,18 @@ export default abstract class DependencyManager {
   ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
 
+    const global_params = this.environment.getParameters();
     let raw_params: { [key: string]: string | number | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
-      raw_params = services[service_ref].datastores[datastore_key].parameters || {};
+      raw_params = {
+        ...global_params,
+        ...services[service_ref].datastores[datastore_key].parameters,
+      } || {};
     } else if (services[service_ref]) {
-      raw_params = services[service_ref].parameters || {};
+      raw_params = {
+        ...global_params,
+        ...services[service_ref].parameters,
+      } || {};
     }
 
     // Enrich vault parameters
@@ -328,10 +335,10 @@ export default abstract class DependencyManager {
       host: env_service_config.host!,
       ports: {
         expose: env_service_config.port!,
-        target: env_service_config.port!
+        target: env_service_config.port!,
       },
       parameters: env_service_config.parameters,
-      key: service_ref
+      key: service_ref,
     });
     this.graph.addNode(node);
     return node;
