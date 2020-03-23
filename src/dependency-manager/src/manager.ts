@@ -220,14 +220,13 @@ export default abstract class DependencyManager {
     return Object.keys(parameters).reduce(
       (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
+        if (service_param.required && !env_params.has(key)) {
+          throw new MissingRequiredParamError(key, service_param.description, service_ref);
+        }
 
         let val = env_params.get(key) || service_param.default || '';
         if (typeof val === 'number') {
           val = val.toString();
-        }
-
-        if (service_param.required && !val) {
-          throw new MissingRequiredParamError(key, service_param.description, service_ref);
         }
 
         if (typeof val === 'string' && val.startsWith('file:')) {
