@@ -23,21 +23,21 @@ jobs:
         working-directory: ./src/dependency-manager
       - run: npm run build
         working-directory: ./src/dependency-manager
-      - name: Set NPM version
-        id: npm-version-bump
-        run: |
-          npm version ${{ env.GITHUB_REF }} --git-tag-version=false
-          git config --global user.name "Github Actions"
-          git config --global user.email "bot@architect.io"
-          git add package.json package-lock.json
-          git commit -m "Published ${{ env.GITHUB_REF }}"
-          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-        working-directory: ./src/dependency-manager
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
-        working-directory: ./src/dependency-manager
+      # - name: Set NPM version
+      #   id: npm-version-bump
+      #   run: |
+      #     npm version ${{ env.GITHUB_REF }} --git-tag-version=false
+      #     git config --global user.name "Github Actions"
+      #     git config --global user.email "bot@architect.io"
+      #     git add package.json package-lock.json
+      #     git commit -m "Published ${{ env.GITHUB_REF }}"
+      #     git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+      #   working-directory: ./src/dependency-manager
+      # - name: npm publish
+      #   run: |
+      #     echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+      #     npm publish
+      #   working-directory: ./src/dependency-manager
   publish_cli:
     name: Publish CLI
     runs-on: ubuntu-latest
