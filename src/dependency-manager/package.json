@@ -11,6 +11,9 @@
     "directory": "src/dependency-graph",
     "url": "ssh://git@github.com/architect-team/architect-cli.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "engines": {
     "node": ">=8.0.0"
   },
