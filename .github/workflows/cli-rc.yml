@@ -64,7 +64,7 @@ jobs:
       - run: npm install
       - run: npm test
   cut_release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/github-actions'
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
