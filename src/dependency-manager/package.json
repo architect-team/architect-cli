@@ -1,5 +1,5 @@
 {
-  "name": "@architect-io/dependency-manager",
+  "name": "@architect-team/dependency-manager",
   "description": "Graphing library for managing complex, service-oriented applications",
   "author": {
     "name": "Architect.io",
