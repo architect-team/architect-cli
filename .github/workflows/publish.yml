@@ -92,7 +92,6 @@ jobs:
         run: |
           VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
           ARTIFACT_PATH=$(find ./dist -type f -name "architect-${VERSION}${{ matrix.artifact_suffix }}")
-          echo ${ARTIFACT_PATH}
           echo "::set-output name=version::${VERSION}"
           echo "::set-output name=path::${ARTIFACT_PATH}"
       - name: Upload artifact
