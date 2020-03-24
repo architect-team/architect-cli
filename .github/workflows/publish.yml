@@ -97,7 +97,7 @@ jobs:
           echo $LOOKUP
           find ./dist -type f -name '${LOOKUP}'
           echo "::set-output name=version::$(echo $VERSION)"
-          echo "::set-output name=path::$(find ./dist -type f -name 'architect-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}')"
+          echo "::set-output name=path::$(find ./dist -type f -name '${LOOKUP}')"
       - name: Upload artifact
         uses: actions/upload-release-asset@v1.0.1
         env:
