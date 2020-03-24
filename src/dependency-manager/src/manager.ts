@@ -68,8 +68,9 @@ export default abstract class DependencyManager {
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node.normalized_ref;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? node.host : node.normalized_ref;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
@@ -120,12 +121,11 @@ export default abstract class DependencyManager {
         const written_env_keys = [];
 
         // map datastore params
-        const node_datastores = this.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode);
+        const node_datastores = this.graph.getNodeDependencies(node).filter(node => node instanceof DatastoreNode || node instanceof ExternalNode);
         for (const datastore of node_datastores) {
           const datastore_prefix = `${(datastore as DatastoreNode).key}_${service_prefix}`.toUpperCase();
           const service_datastore_params = Object.entries(expanded_params || {})
             .filter(([key, _]) => key.startsWith(datastore_prefix));
-
           // reverse order params by length in order to avoid key collisions
           service_datastore_params.sort((pair1: [string, string], pair2: [string, string]) => {
             return pair2[0].length - pair1[0].length;
@@ -168,11 +168,18 @@ export default abstract class DependencyManager {
   ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
 
+    const global_params = this.environment.getParameters();
     let raw_params: { [key: string]: string | number | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
-      raw_params = services[service_ref].datastores[datastore_key].parameters || {};
+      raw_params = {
+        ...global_params,
+        ...services[service_ref].datastores[datastore_key].parameters,
+      } || {};
     } else if (services[service_ref]) {
-      raw_params = services[service_ref].parameters || {};
+      raw_params = {
+        ...global_params,
+        ...services[service_ref].parameters,
+      } || {};
     }
 
     // Enrich vault parameters
@@ -328,10 +335,10 @@ export default abstract class DependencyManager {
       host: env_service_config.host!,
       ports: {
         expose: env_service_config.port!,
-        target: env_service_config.port!
+        target: env_service_config.port!,
       },
       parameters: env_service_config.parameters,
-      key: service_ref
+      key: service_ref,
     });
     this.graph.addNode(node);
     return node;

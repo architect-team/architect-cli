@@ -10,7 +10,7 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage } from '../common/utils/docker';
 import { ServiceConfig } from '../dependency-manager/src';
 
-interface CreateServiceVersionInput {
+export interface CreateServiceVersionInput {
   tag: string;
   digest: string;
   config: ServiceConfig;

@@ -54,6 +54,7 @@ export const pushImage = async (image_ref: string) => {
 };
 
 export const getDigest = async (image_ref: string): Promise<string> => {
+  await docker(['pull', image_ref], { stdout: false });
   const digest = await docker([`inspect`, `--format='{{index .RepoDigests 0}}'`, image_ref], { stdout: false });
   return digest.stdout.split('@')[1].replace('\'', '');
 };
