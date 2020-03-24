@@ -76,20 +76,26 @@ jobs:
     needs: [publish_cli]
     strategy:
       matrix:
-        artifacts:
+        artifact_suffix:
           - .tar.gz # base artifact
           - -linux-arm.tar.gz
           - -linux-x64.tar.gz
+          - -win32-x64.tar.gz
+          - -win32-x86.tar.gz
+          - -darwin-x64.tar.gz
     steps:
       - uses: actions/download-artifact@v1
         with:
           name: dist
-      # - name: Upload artifact
-      #   uses: actions/upload-release-asset@v1.0.1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ./dist/
-      #     asset_name: oq-${{ github.event.release.tag_name }}-linux-x86_64
-      #     asset_content_type: binary/octet-stream
+      - name: Find artifact path
+        id: find-artifact
+        run: echo "::set-output name=path::$(find ./dist -type f -name 'architect-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}')"
+      - name: Upload artifact
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find-artifact.outputs.path }}
+          asset_name: architect-cli-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}
+          asset_content_type: application/gzip
