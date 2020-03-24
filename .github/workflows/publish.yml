@@ -26,11 +26,11 @@ jobs:
       # - name: Set NPM version
       #   id: npm-version-bump
       #   run: |
-      #     npm version ${{ env.GITHUB_REF }} --git-tag-version=false
+      #     npm version ${{ github.ref }} --git-tag-version=false
       #     git config --global user.name "Github Actions"
       #     git config --global user.email "bot@architect.io"
       #     git add package.json package-lock.json
-      #     git commit -m "Published ${{ env.GITHUB_REF }}"
+      #     git commit -m "Published ${{ github.ref }}"
       #     git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
       #   working-directory: ./src/dependency-manager
       # - name: npm publish
@@ -52,11 +52,11 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          echo "::set-output name=version::$(npm version ${{ env.GITHUB_REF }} --git-tag-version=false)"
+          echo "::set-output name=version::$(npm version ${{ github.ref }} --git-tag-version=false)"
 # git config --global user.name "Github Actions"
 # git config --global user.email "bot@architect.io"
 # git add package.json package-lock.json
-# git commit -m "Published ${{ env.GITHUB_REF }}"
+# git commit -m "Published ${{ github.ref }}"
 # git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
       - name: oclif pack
         run: sudo npx oclif-dev pack
