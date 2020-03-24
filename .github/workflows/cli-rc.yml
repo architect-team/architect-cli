@@ -1,9 +1,6 @@
 name: CLI - Cut Release Candidate
 
-on:
-  push:
-    branches:
-      - master
+on: push
 
 env:
   CI: true

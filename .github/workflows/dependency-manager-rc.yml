@@ -1,9 +1,6 @@
 name: Dependency Manager - Cut Release Candidate
 
-on:
-  push:
-    branches:
-      - master
+on: push
 
 env:
   CI: true
