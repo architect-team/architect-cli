@@ -29,7 +29,6 @@ describe('config:set', function () {
 
     await ConfigSet.run([fake_option, 'test-value']);
     expect(spy.calledOnce).to.equal(true);
-    console.log(spy.firstCall.args[0]);
     expect(spy.firstCall.args[0].name).to.equal(expected_error.name);
     expect(spy.firstCall.args[0].message).to.equal(expected_error.message);
   });
