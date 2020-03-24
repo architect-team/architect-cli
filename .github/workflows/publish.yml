@@ -90,6 +90,8 @@ jobs:
       - name: Find artifact path
         id: find-artifact
         run: |
+          ls -R ./dist
+          find ./dist -type f -name 'architect-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}'
           echo "::set-output name=version::$(echo ${GITHUB_REF/refs\/tags\//})"
           echo "::set-output name=path::$(find ./dist -type f -name 'architect-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}')"
       - name: Upload artifact
