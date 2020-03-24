@@ -41,6 +41,7 @@ jobs:
   publish_cli:
     name: Publish CLI
     runs-on: ubuntu-latest
+    needs: [publish_dependency_manager]
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js
@@ -64,27 +65,31 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: dist
-          path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
+          path: dist
       # - name: npm publish
       #   run: |
       #     echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
       #     npm publish
-  # attach_binaries_to_release:
-  #   name: Attach CLI binaries to the release
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       artifacts:
-  #         - .tar.gz # base artifact
-  #         - -linux-arm.tar.gz
-  #         - -linux-x64.tar.gz
-  #   steps:
-  #     - name: Upload artifact
-  #       uses: actions/upload-release-asset@v1.0.1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ github.event.release.upload_url }}
-  #         asset_path: ./dist/
-  #         asset_name: oq-${{ github.event.release.tag_name }}-linux-x86_64
-  #         asset_content_type: binary/octet-stream
+  attach_binaries_to_release:
+    name: Attach CLI binaries to the release
+    runs-on: ubuntu-latest
+    needs: [publish_cli]
+    strategy:
+      matrix:
+        artifacts:
+          - .tar.gz # base artifact
+          - -linux-arm.tar.gz
+          - -linux-x64.tar.gz
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: dist
+      # - name: Upload artifact
+      #   uses: actions/upload-release-asset@v1.0.1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }}
+      #     asset_path: ./dist/
+      #     asset_name: oq-${{ github.event.release.tag_name }}-linux-x86_64
+      #     asset_content_type: binary/octet-stream
