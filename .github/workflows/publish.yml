@@ -89,7 +89,11 @@ jobs:
           name: dist
       - name: Find artifact path
         id: find-artifact
-        run: echo "::set-output name=path::$(find ./dist -type f -name 'architect-*${{ matrix.artifact_suffix }}')"
+        run: |
+          echo ${GITHUB_REF/refs\/tags\//}
+          echo architect-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}
+          echo "::set-output name=version::$(echo ${GITHUB_REF/refs\/tags\//})"
+          echo "::set-output name=path::$(find ./dist -type f -name 'architect-architect-*${GITHUB_REF/refs\/tags\//}*${{ matrix.artifact_suffix }}')"
       - name: Upload artifact
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -97,5 +101,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ${{ steps.find-artifact.outputs.path }}
-          asset_name: architect-cli-${GITHUB_REF/refs\/tags\//}${{ matrix.artifact_suffix }}
+          asset_name: architect-cli-${{ steps.find-artifact.outputs.version }}${{ matrix.artifact_suffix }}
           asset_content_type: application/gzip
