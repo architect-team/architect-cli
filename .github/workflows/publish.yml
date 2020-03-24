@@ -47,19 +47,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - name: Get npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-      - name: Cache node modules
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+      - run: npm install
       - run: npm run build
       - name: Set NPM version
         id: npm-version-bump
