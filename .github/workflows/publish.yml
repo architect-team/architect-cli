@@ -90,14 +90,11 @@ jobs:
       - name: Find artifact path
         id: find-artifact
         run: |
-          ls -R ./dist
           VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
-          echo ${VERSION}
-          LOOKUP=$(echo 'architect-${VERSION}${{ matrix.artifact_suffix }}')
-          echo $LOOKUP
-          find ./dist -type f -name '${LOOKUP}'
-          echo "::set-output name=version::$(echo $VERSION)"
-          echo "::set-output name=path::$(find ./dist -type f -name '${LOOKUP}')"
+          ARTIFACT_PATH=$(find ./dist -type f -name "architect-${VERSION}${{ matrix.artifact_suffix }}")
+          echo ${ARTIFACT_PATH}
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=path::${ARTIFACT_PATH}"
       - name: Upload artifact
         uses: actions/upload-release-asset@v1.0.1
         env:
