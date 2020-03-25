@@ -7,6 +7,7 @@ import { ServiceNode } from '.';
 import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
+import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
 import { DatastoreNode } from './graph/node/datastore';
@@ -67,9 +68,21 @@ export default abstract class DependencyManager {
   */
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
+
+    const subdomain_map: { [key: string]: string } = {};
+    for (const edge of this.graph.edges.filter((edge) => (edge instanceof IngressEdge))) {
+      subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
+    }
+
     for (const node of this.graph.nodes) {
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? node.host : node.normalized_ref;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+      const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
+      const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = '80';
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports.target.toString();
 
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {

@@ -1,8 +1,10 @@
 import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import NotificationEdge from '../../dependency-manager/src/graph/edge/notification';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
+import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
@@ -14,13 +16,21 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
   };
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
-    if (!(node instanceof ExternalNode)) {
+    if (node instanceof GatewayNode) {
+      compose.services[node.normalized_ref] = {
+        image: 'jwilder/nginx-proxy',
+        restart: 'always',
+        ports: [`${node.ports.expose}:${node.ports.target}`],
+        volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
+        depends_on: [],
+      }
+    }
+
+    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref] = {
         ports: [`${node.ports.expose}:${node.ports.target}`],
         depends_on: [],
         environment: {
-          HOST: node.normalized_ref,
-          PORT: node.ports.target.toString(),
           ARCHITECT: JSON.stringify({
             [node.env_ref]: {
               host: `${node.protocol}${node.normalized_ref}`,
@@ -31,6 +41,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           }),
           ARCHITECT_CURRENT_SERVICE: node.env_ref,
           ...node.parameters,
+          HOST: node.normalized_ref,
+          PORT: node.ports.target.toString(),
         },
       };
     }
@@ -127,6 +139,14 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       };
     }
 
+    if (edge instanceof IngressEdge) {
+      const service_to = compose.services[node_to.normalized_ref];
+      service_to.environment = service_to.environment || {};
+      service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
+      service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
+      service_to.restart = 'always';
+    }
+
     // Parse subscription logic
     if (edge instanceof NotificationEdge && node_to instanceof ServiceNode) {
       const to = node_to as ServiceNode;
@@ -138,6 +158,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           });
           return subscriptions;
         }, service.environment.ARCHITECT[node_from.env_ref].subscriptions);
+    } else if (node_from instanceof GatewayNode) {
+      compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
     } else if (!(node_to instanceof ExternalNode)) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }

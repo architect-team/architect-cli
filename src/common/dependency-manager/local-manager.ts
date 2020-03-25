@@ -1,8 +1,10 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
+import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -43,6 +45,15 @@ export default class LocalDependencyManager extends DependencyManager {
         }
         await dependency_manager.loadDatastores(svc_node);
         dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
+
+        if (env_svc_cfg.ingress) {
+          const gateway = new GatewayNode({
+            ports: { target: 80, expose: 80 },
+            parameters: {},
+          });
+          dependency_manager.graph.addNode(gateway);
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
+        }
       }
     }
 

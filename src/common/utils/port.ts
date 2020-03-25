@@ -16,7 +16,10 @@ export default class PortUtil {
 
   static async isPortAvailable(port: number): Promise<boolean> {
     try {
-      await _isPortAvailable('0.0.0.0', port);
+      await Promise.all([
+        _isPortAvailable('0.0.0.0', port),
+        _isPortAvailable('::', port) // Check for windows
+      ])
       return true;
     } catch {
       return false;
