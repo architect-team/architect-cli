@@ -5,7 +5,16 @@ const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k + 50000);
 // eslint-disable-next-line no-undef
 const _isPortAvailable = async (host: string, port: number) => new Promise((resolve, reject) => {
   const tester: net.Server = net.createServer()
-    .once('error', err => reject(err))
+    .once('error', (err) => {
+      // @ts-ignore Check for unsupported interfaces
+      if (err.syscall === 'uv_interface_addresses') {
+        return resolve();
+      } else {
+        // @ts-ignore
+        console.log('err syscall:', err.syscall, err.code)
+        return reject(err);
+      }
+    })
     .once('listening', () => tester.once('close', () => resolve()).close())
     .listen(port, host);
 });
