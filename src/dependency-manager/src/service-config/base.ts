@@ -53,7 +53,7 @@ export interface ServiceLivenessProbe {
 }
 
 export interface ServiceDebugOptions {
-  command: string;
+  cmd: string;
 }
 
 export abstract class ServiceConfig {
