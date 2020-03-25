@@ -61,6 +61,7 @@ export abstract class ServiceConfig {
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
+  abstract getCmd(): string;
   abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };

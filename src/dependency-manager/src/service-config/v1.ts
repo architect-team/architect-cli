@@ -58,6 +58,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
+  cmd?: string;
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -95,6 +96,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getImage(): string {
     return this.image || '';
+  }
+
+  getCmd(): string {
+    return this.cmd || '';
   }
 
   getDependencies(): { [s: string]: string } {
