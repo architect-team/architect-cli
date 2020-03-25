@@ -58,7 +58,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
-  cmd?: string;
+  command?: string;
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -98,8 +98,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
-  getCmd(): string {
-    return this.cmd || '';
+  getCommand(): string {
+    return this.command || '';
   }
 
   getDependencies(): { [s: string]: string } {
@@ -173,7 +173,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getDebugOptions(): ServiceDebugOptions | undefined {
-    return this.debug ? { cmd: this.debug } : undefined;
+    return this.debug ? { command: this.debug } : undefined;
   }
 
   getLanguage(): string {

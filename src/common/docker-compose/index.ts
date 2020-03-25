@@ -42,7 +42,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       ARCHITECT[node.env_ref].api = node.api.type;
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
-      compose.services[node.normalized_ref].command = node.cmd;
+      compose.services[node.normalized_ref].command = node.service_config.getCommand();
 
       const platforms = node.service_config.getPlatforms();
       const docker_compose_config = platforms['docker-compose'];
@@ -69,6 +69,11 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
 
       if (!build_prod) {
         compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');
+
+        const debug_options = node.service_config.getDebugOptions();
+        if (debug_options) {
+          compose.services[node.normalized_ref].command = debug_options.command;
+        }
 
         // Mount the src directory
         const src_path = path.join(node.service_path, 'src');

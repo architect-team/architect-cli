@@ -73,7 +73,6 @@ export default class LocalDependencyManager extends DependencyManager {
       service_path: service_path,
       service_config: config,
       image: config.getImage(),
-      cmd: config.getCmd(),
       tag: 'latest',
       ports: {
         target: env_service?.port ? env_service.port : 8080,
@@ -84,10 +83,6 @@ export default class LocalDependencyManager extends DependencyManager {
         config.getParameters(),
       ),
     });
-
-    if (config.getDebugOptions()) {
-      node.cmd = config.getDebugOptions()?.cmd;
-    }
 
     this.graph.addNode(node);
     return node;
@@ -140,7 +135,6 @@ export default class LocalDependencyManager extends DependencyManager {
       service_config: config,
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-      cmd: config.getCmd(),
       ports: {
         target: 8080,
         expose: await this.getServicePort(),

@@ -53,7 +53,7 @@ export interface ServiceLivenessProbe {
 }
 
 export interface ServiceDebugOptions {
-  cmd: string;
+  command: string;
 }
 
 export abstract class ServiceConfig {
@@ -61,7 +61,7 @@ export abstract class ServiceConfig {
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
-  abstract getCmd(): string;
+  abstract getCommand(): string;
   abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
