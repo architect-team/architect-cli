@@ -72,4 +72,5 @@ export abstract class ServiceConfig {
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
+  abstract getPort(): number | undefined;
 }
