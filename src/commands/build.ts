@@ -47,7 +47,7 @@ export default class Build extends Command {
     }
     for (const node of dependency_manager.graph.nodes) {
       if (node instanceof LocalServiceNode) {
-        await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
+        await buildImage(node, this.app.config.registry_host, flags.tag);
       }
     }
   }
