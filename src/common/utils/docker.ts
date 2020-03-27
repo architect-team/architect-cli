@@ -1,7 +1,8 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import path from 'path';
-import { ServiceConfig, ServiceConfigBuilder } from '../../dependency-manager/src';
+import { ServiceConfig } from '../../dependency-manager/src';
+import { LocalServiceNode } from '../dependency-manager/local-service-node';
 
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
@@ -34,8 +35,8 @@ export const getServiceApiDefinitionContents = (service_path: string, service_co
   return definitionsContents;
 };
 
-export const buildImage = async (service_path: string, registry_host: string, tag_name = 'latest') => {
-  const config = ServiceConfigBuilder.buildFromPath(service_path);
+export const buildImage = async (node: LocalServiceNode, registry_host: string, tag_name = 'latest') => {
+  const config = node.service_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
   await docker([
     'build',
@@ -43,8 +44,8 @@ export const buildImage = async (service_path: string, registry_host: string, ta
     '--build-arg', `SERVICE_LANGUAGE=${config.getLanguage()}`,
     '-t', image_tag,
     '--label', `architect.json=${JSON.stringify(config)}`,
-    '--label', `api_definitions=${JSON.stringify(getServiceApiDefinitionContents(service_path, config))}`,
-    service_path,
+    '--label', `api_definitions=${JSON.stringify(getServiceApiDefinitionContents(node.service_path, config))}`,
+    node.service_path,
   ]);
   return image_tag;
 };

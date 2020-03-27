@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToClass } from 'class-transformer';
 import cli from 'cli-ux';
 import crypto from 'crypto';
 import execa from 'execa';
@@ -179,7 +180,7 @@ export default class Install extends Command {
       // Dependencies can only be installed on local nodes
       if (node instanceof LocalServiceNode) {
         this.log(chalk.blue(`Installing dependencies for ${node.ref}`));
-        const config = ServiceConfigBuilder.buildFromPath(node.service_path);
+        const config = classToClass(node.service_config);
 
         // Install a single new dependency
         if (args.service_ref) {

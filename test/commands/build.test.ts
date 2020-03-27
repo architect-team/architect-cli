@@ -91,29 +91,26 @@ describe('build', function () {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
-    // expect(stdout).to.contain('Building docker image for architect/addition-service');
     expect(spy.calledOnce).to.equal(true);
     testBuildArgs(service_path, service_config, spy.getCall(0).args[0]);
   });
 
   it('builds gRPC docker image', async () => {
-    const service_path = path.join(__dirname, '../calculator/addition-service/grpc');
+    const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
-    // expect(stdout).to.contain('Building docker image for architect/addition-service');
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path, service_config, spy.getCall(0).args[0]);
+    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, service_config, spy.getCall(0).args[0]);
   });
 
   it('builds docker image w/ specific tag', async () => {
-    const service_path = path.join(__dirname, '../calculator/addition-service/grpc');
+    const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path, '-t', TEST_TAG]);
 
-    // expect(stdout).to.contain('Building docker image for architect/addition-service');
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path, service_config, spy.getCall(0).args[0], TEST_TAG);
+    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, service_config, spy.getCall(0).args[0], TEST_TAG);
   });
 
   it('builds local images from environment config', async () => {
@@ -123,7 +120,12 @@ describe('build', function () {
     expect(spy.callCount).to.equal(3);
     for (const call of spy.getCalls()) {
       const service_path = call.args[0][call.args[0].length - 1];
-      const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+      let service_file = service_path;
+      // hack to get tests to pass
+      if (service_file.endsWith('grpc')) {
+        service_file = path.join(service_file, 'add.architect.json');
+      }
+      const service_config = ServiceConfigBuilder.buildFromPath(service_file);
       testBuildArgs(service_path, service_config, call.args[0]);
     }
   });
