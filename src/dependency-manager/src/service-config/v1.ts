@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer/decorators';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter } from './base';
 
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
@@ -52,6 +52,11 @@ class ApiSpecV1 {
   liveness_probe?: LivenessProbeV1;
 }
 
+class InterfaceSpecV1 {
+  description?: string;
+  port?: number;
+}
+
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
   name = '';
@@ -68,6 +73,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   api: ApiSpecV1 = {
     type: 'rest',
   };
+  interfaces: { [s: string]: InterfaceSpecV1 } = {};
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
   platforms: { [s: string]: any } = {};
@@ -92,6 +98,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getApiSpec(): ServiceApiSpec {
     return this.api;
+  }
+
+  getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
+    return this.interfaces;
   }
 
   getImage(): string {

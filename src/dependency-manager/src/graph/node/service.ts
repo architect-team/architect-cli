@@ -48,6 +48,10 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return this.service_config.getApiSpec();
   }
 
+  get interfaces() {
+    return this.service_config.getInterfaces();
+  }
+
   /**
    * @override
    */

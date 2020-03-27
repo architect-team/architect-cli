@@ -44,6 +44,11 @@ export interface ServiceApiSpec {
   liveness_probe?: ServiceLivenessProbe;
 }
 
+export interface ServiceInterfaceSpec {
+  description?: string;
+  port?: number;
+}
+
 export interface ServiceLivenessProbe {
   success_threshold?: number;
   failure_threshold?: number;
@@ -66,6 +71,7 @@ export abstract class ServiceConfig {
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getApiSpec(): ServiceApiSpec;
+  abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;

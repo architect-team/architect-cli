@@ -27,6 +27,7 @@ export interface ValueFromParameter {
   valueFrom: {
     dependency: string;
     value: string;
+    interface?: string;
   };
 }
 
