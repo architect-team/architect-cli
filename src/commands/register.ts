@@ -8,7 +8,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildImage, getDigest, pushImage } from '../common/utils/docker';
+import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
 
 export interface CreateServiceVersionInput {
   tag: string;
@@ -107,6 +107,9 @@ export default class ServiceRegister extends Command {
 
         const [account_name, _] = node.service_config.getName().split('/');
         const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
+        if (!selected_account) {
+          throw new Error(`You do not have access to the account specified in your service config: ${account_name}`);
+        }
 
         cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
         const digest = await getDigest(image).catch(e => {
@@ -115,12 +118,14 @@ export default class ServiceRegister extends Command {
         });
         cli.action.stop(chalk.green(`Image verified`));
 
+        const image_without_tag = strip_tag_from_image(image); // we don't need the tag on our image because we use the digest as the key.
+
         const service_dto = {
           tag: flags.tag,
           digest: digest,
           config: {
             ...node.service_config,
-            image: image.split(':')[0], // we don't actually need the tag because we capture the digest
+            image: image_without_tag,
           },
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
