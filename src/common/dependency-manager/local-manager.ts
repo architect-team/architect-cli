@@ -81,7 +81,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
     const node = new LocalServiceNode({
-      service_path: service_path,
+      service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
