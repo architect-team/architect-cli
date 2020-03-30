@@ -82,8 +82,8 @@ export default abstract class DependencyManager {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = '80';
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports.target.toString();
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports[0].target.toString();
 
       if (node instanceof ServiceNode && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
@@ -291,19 +291,19 @@ export default abstract class DependencyManager {
         dep_node = new ExternalNode({
           ...dep_node_config,
           host: environment_service_config.datastores[ds_name].host!,
-          ports: {
+          ports: [{
             target: external_port,
             expose: external_port,
-          },
+          }],
         });
       } else {
         dep_node = new DatastoreNode({
           ...dep_node_config,
           image: ds_config.docker.image,
-          ports: {
+          ports: [{
             target: ds_config.docker.target_port,
             expose: await this.getServicePort(),
-          },
+          }],
         });
       }
 
@@ -352,10 +352,10 @@ export default abstract class DependencyManager {
   async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
     const node = new ExternalNode({
       host: env_service_config.host!,
-      ports: {
+      ports: [{
         expose: env_service_config.port!,
         target: env_service_config.port!,
-      },
+      }],
       parameters: env_service_config.parameters,
       key: service_ref,
     });

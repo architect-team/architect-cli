@@ -48,7 +48,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
         if (env_svc_cfg.ingress) {
           const gateway = new GatewayNode({
-            ports: { target: 80, expose: 80 },
+            ports: [{ target: 80, expose: 80 }],
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
@@ -86,10 +86,10 @@ export default class LocalDependencyManager extends DependencyManager {
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
-      ports: {
+      ports: [{
         target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
         expose: await this.getServicePort(),
-      },
+      }],
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
@@ -147,10 +147,10 @@ export default class LocalDependencyManager extends DependencyManager {
       service_config: config,
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-      ports: {
+      ports: [{
         target: config.getPort() || 8080,
         expose: await this.getServicePort(),
-      },
+      }],
       parameters: await this.getParamValues(
         `${config.getName()}:${service_digest.tag}`,
         config.getParameters(),

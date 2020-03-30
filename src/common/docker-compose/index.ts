@@ -20,7 +20,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       compose.services[node.normalized_ref] = {
         image: 'jwilder/nginx-proxy',
         restart: 'always',
-        ports: [`${node.ports.expose}:${node.ports.target}`],
+        ports: [`${node.ports[0].expose}:${node.ports[0].target}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
       }
@@ -29,12 +29,12 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
-        ports: [`${node.ports.expose}:${node.ports.target}`],
+        ports: [`${node.ports[0].expose}:${node.ports[0].target}`],
         depends_on: [],
         environment: {
           ...node.parameters,
           HOST: node.normalized_ref,
-          PORT: node.ports.target.toString(),
+          PORT: node.ports[0].target.toString(),
         },
       };
     }
