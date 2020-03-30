@@ -32,7 +32,6 @@ interface ServiceDatastoreV1 {
 interface ServiceParameterV1 {
   description?: string;
   default?: string | number;
-  alias?: string;
   required?: boolean;
   build_arg?: boolean;
 }
@@ -80,7 +79,6 @@ export class ServiceConfigV1 extends ServiceConfig {
         default: param.default,
         required: param.required !== false && !('default' in param),
         description: param.description || '',
-        aliases: param.alias ? [param.alias] : [],
         build_arg: param.build_arg,
       };
       return res;

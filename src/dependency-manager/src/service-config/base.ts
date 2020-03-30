@@ -8,7 +8,6 @@ interface RestSubscriptionData {
 export interface ServiceParameter {
   description: string;
   default?: string | number | ValueFromParameter | DatastoreValueFromParameter;
-  aliases: string[];
   required: boolean;
   build_arg?: boolean;
 }

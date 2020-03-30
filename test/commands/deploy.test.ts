@@ -72,13 +72,7 @@ describe('deploy', () => {
 
       // Test env variables
       for (const [key, value] of Object.entries(expected.environment || {})) {
-        if (key === 'ARCHITECT') {
-          const architect_input = JSON.parse(input.environment![key]);
-          const architect_expected = JSON.parse(value);
-          expect(architect_expected).to.eql(architect_input);
-        } else {
-          expect(value).to.equal(input.environment![key]);
-        }
+        expect(value).to.equal(input.environment![key]);
       }
     }
   });
