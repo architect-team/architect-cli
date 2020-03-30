@@ -99,14 +99,26 @@ export default abstract class DependencyManager {
       if (node instanceof ServiceNode) {
         for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) { // load param references
           if (param_value.default instanceof Object && param_value.default?.valueFrom) {
-            const param_target_service_name = (param_value.default as ValueFromParameter).valueFrom.dependency;
+            const value_from_parameter = (param_value.default as ValueFromParameter).valueFrom;
+            const param_target_service_name = value_from_parameter.dependency;
             const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
             if (param_target_service_name) {
-              const param_target_service = this.graph.getNodeByRef(param_target_service_name);
+              const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
               const node_dependency_refs = node.service_config.getDependencies();
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
+
+              if (value_from_parameter.interface) { // sets outward communication from frontend nodes
+                if (!Object.keys(param_target_service.interfaces).includes(value_from_parameter.interface)) {
+                  throw new Error(`${param_target_service_name} does not specify interface ${value_from_parameter.interface}`);
+                }
+                const service_interface = param_target_service.interfaces[value_from_parameter.interface];
+                if (service_interface.port) {
+                  env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = service_interface.port.toString();
+                }
+              }
+
               env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
                 param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
             } else if (param_target_datastore_name) {
