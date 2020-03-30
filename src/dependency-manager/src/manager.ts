@@ -175,7 +175,7 @@ export default abstract class DependencyManager {
 
         for (const [param_name, param_value] of service_params) {
           const real_param_name = param_name.replace(`${service_prefix}_`, '');
-          if (!written_env_keys.find(key => key === real_param_name) && real_param_name !== 'ARCHITECT') {
+          if (!written_env_keys.find(key => key === real_param_name)) {
             node.parameters[real_param_name] = param_value;
           }
         }
@@ -259,9 +259,6 @@ export default abstract class DependencyManager {
           val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
         params[key] = val;
-        service_param.aliases.forEach(alias => {
-          params[alias] = val;
-        });
         return params;
       }, {});
   }

@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import NotificationEdge from '../../dependency-manager/src/graph/edge/notification';
+import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
@@ -28,18 +28,10 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref] = {
+        image: node.image ? node.image : undefined,
         ports: [`${node.ports.expose}:${node.ports.target}`],
         depends_on: [],
         environment: {
-          ARCHITECT: JSON.stringify({
-            [node.env_ref]: {
-              host: `${node.protocol}${node.normalized_ref}`,
-              port: node.ports.target.toString(),
-              datastores: {},
-              subscriptions: {},
-            },
-          }),
-          ARCHITECT_CURRENT_SERVICE: node.env_ref,
           ...node.parameters,
           HOST: node.normalized_ref,
           PORT: node.ports.target.toString(),
@@ -48,12 +40,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     }
 
     if (node instanceof ServiceNode) {
-      const current_environment = compose.services[node.normalized_ref].environment;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const ARCHITECT = JSON.parse(current_environment!.ARCHITECT);
-      ARCHITECT[node.env_ref].api = node.api.type;
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      compose.services[node.normalized_ref].environment!.ARCHITECT = JSON.stringify(ARCHITECT);
       compose.services[node.normalized_ref].command = node.service_config.getCommand();
 
       const platforms = node.service_config.getPlatforms();
@@ -67,9 +53,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     }
 
     if (node instanceof LocalServiceNode) {
-      if (node.image) {
-        compose.services[node.normalized_ref].image = node.image;
-      } else {
+      if (!node.image) {
         const build_parameter_keys = Object.entries(node.service_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
         const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
         // Setup build context
@@ -109,8 +93,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           }
         }
       }
-    } else if (node instanceof ServiceNode || node instanceof DatastoreNode) {
-      compose.services[node.normalized_ref].image = node.image;
     }
   }
 
@@ -119,30 +101,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     const node_from = dependency_manager.graph.getNodeByRef(edge.from);
     const node_to = dependency_manager.graph.getNodeByRef(edge.to);
 
-    // Parse the ARCHITECT param
-    const service = compose.services[node_from.normalized_ref];
-    service.environment = service.environment || {};
-    service.environment.ARCHITECT = service.environment.ARCHITECT ? JSON.parse(service.environment.ARCHITECT) : {};
-
-    // Handle datastore credential enrichment to callers
-    if (node_to instanceof DatastoreNode) {
-      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
-        host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports.target.toString(),
-        ...node_to.parameters,
-      };
-    } else if (node_to instanceof ExternalNode) {
-      service.environment.ARCHITECT[node_from.env_ref].datastores[node_to.key] = {
-        host: node_to.host,
-        port: node_to.ports.target.toString(),
-        ...node_to.parameters,
-      };
-    } else if (node_to instanceof ServiceNode) {
-      service.environment.ARCHITECT[node_to.env_ref] = {
-        host: `${node_to.protocol}${node_to.normalized_ref}`,
-        port: node_to.ports.target.toString(),
-        api: node_to.api.type,
-      };
+    if (node_to instanceof ExternalNode) {
+      continue;
     }
 
     if (edge instanceof IngressEdge) {
@@ -151,28 +111,10 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
       service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
-    }
-
-    // Parse subscription logic
-    if (edge instanceof NotificationEdge && node_to instanceof ServiceNode) {
-      const to = node_to as ServiceNode;
-      const to_subscriptions = to.service_config.getSubscriptions();
-      service.environment.ARCHITECT[node_from.env_ref].subscriptions =
-        Object.keys(to_subscriptions).reduce((subscriptions, publisher_name) => {
-          Object.keys(to_subscriptions[publisher_name]).forEach(event_name => {
-            subscriptions[event_name] = { [to.service_config.getName()]: to_subscriptions[publisher_name][event_name].data };
-          });
-          return subscriptions;
-        }, service.environment.ARCHITECT[node_from.env_ref].subscriptions);
-    } else if (node_from instanceof GatewayNode) {
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
-    } else if (!(node_to instanceof ExternalNode)) {
+    } else if (edge instanceof ServiceEdge) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }
-
-    // Re-encode the ARCHITECT param
-    service.environment.ARCHITECT = JSON.stringify(service.environment.ARCHITECT || {});
-    compose.services[node_from.normalized_ref] = service;
   }
 
   return compose;
