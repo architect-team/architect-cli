@@ -37,8 +37,6 @@ describe('manager parameters', function () {
 
   it('valueFrom override valueFrom', async () => {
     const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest')!;
-    console.log(addition_node.parameters.DB_PRIMARY_HOST)
-
     expect(addition_node.parameters.DB_PRIMARY_HOST).eq('postgres://dev:dev@architect.addition-service-rest.latest.primary:5432/sponsored-products_development');
   });
 
