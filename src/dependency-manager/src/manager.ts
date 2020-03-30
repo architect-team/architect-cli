@@ -181,7 +181,7 @@ export default abstract class DependencyManager {
   ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
     const global_params = this.environment.getParameters();
-    let raw_params: { [key: string]: string | number | VaultParameter } = {};
+    let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
       raw_params = {
         ...global_params,
@@ -195,9 +195,9 @@ export default abstract class DependencyManager {
     }
 
     // Enrich vault parameters
-    const env_params = new Map<string, string | number>();
+    const env_params = new Map<string, string | number | ValueFromParameter>();
     for (const [key, data] of Object.entries(raw_params)) {
-      if (data instanceof Object && data.valueFrom && data.valueFrom.vault) {
+      if (data instanceof Object && data.valueFrom && 'vault' in data.valueFrom) {
         const param = data as VaultParameter;
         const vaults = this.environment.getVaults();
         const param_vault = vaults[param.valueFrom.vault];
@@ -221,6 +221,7 @@ export default abstract class DependencyManager {
           throw new Error(`Error retrieving secret ${data.valueFrom.key}`);
         }
       } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
         env_params.set(key, data);
       }
