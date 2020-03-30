@@ -63,6 +63,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
+  port?: string;
   command?: string | string[];
   dependencies: { [s: string]: string } = {};
   language?: string;
@@ -196,5 +197,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getPlatforms(): { [s: string]: any } {
     return this.platforms;
+  }
+
+  getPort(): number | undefined {
+    return this.port ? Number(this.port) : undefined;
   }
 }

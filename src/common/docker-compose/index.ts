@@ -99,7 +99,13 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
             compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
           }
           if (env_service.debug.volumes) {
-            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1]);
+            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => {
+              const volumeDef = v.split(':');
+              if (volumeDef.length === 1) {
+                return path.resolve(node.service_path, volumeDef[0]);
+              }
+              return path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1];
+            });
           }
         }
       }
