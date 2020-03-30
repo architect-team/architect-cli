@@ -1,7 +1,5 @@
-import axios from 'axios';
 import dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
-import * as https from 'https';
 import untildify from 'untildify';
 import { ServiceNode } from '.';
 import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
@@ -14,9 +12,9 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
-import { readIfFile } from './utils/file';
+import VaultManager from './vault-manager';
 
-interface VaultParameter {
+export interface VaultParameter {
   valueFrom: {
     vault: string;
     key: string;
@@ -40,9 +38,11 @@ export interface DatastoreValueFromParameter {
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
   environment: EnvironmentConfig;
+  protected vault_manager: VaultManager;
 
   constructor(environment_config?: EnvironmentConfig) {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.vault_manager = new VaultManager(this.environment.getVaults());
   }
 
   /**
@@ -198,28 +198,7 @@ export default abstract class DependencyManager {
     const env_params = new Map<string, string | number | ValueFromParameter>();
     for (const [key, data] of Object.entries(raw_params)) {
       if (data instanceof Object && data.valueFrom && 'vault' in data.valueFrom) {
-        const param = data as VaultParameter;
-        const vaults = this.environment.getVaults();
-        const param_vault = vaults[param.valueFrom.vault];
-        const vault_client = axios.create({
-          baseURL: param_vault.host,
-          headers: {
-            'X-Vault-Token': readIfFile(param_vault.access_token),
-          },
-          httpsAgent: new https.Agent({
-            rejectUnauthorized: false,
-          }),
-        });
-
-        const param_start = param.valueFrom.key.lastIndexOf('/');
-        const param_key = param.valueFrom.key.substr(0, param_start);
-        const param_name = param.valueFrom.key.substr(param_start + 1);
-        try {
-          const res = await vault_client.get(`v1/${param_key}/data/${param_name}`);
-          env_params.set(key, res.data.data.data[param_name]);
-        } catch (err) {
-          throw new Error(`Error retrieving secret ${data.valueFrom.key}`);
-        }
+        env_params.set(key, await this.vault_manager.getSecret(data as VaultParameter));
       } else {
         // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore

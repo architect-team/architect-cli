@@ -5,6 +5,7 @@ import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -19,6 +20,14 @@ export default class LocalDependencyManager extends DependencyManager {
     const env_config = config_path
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
+
+    // Only include in cli since it will read files off disk
+    for (const vault of Object.values(env_config.getVaults())) {
+      vault.client_token = readIfFile(vault.client_token);
+      vault.role_id = readIfFile(vault.role_id);
+      vault.secret_id = readIfFile(vault.secret_id);
+    }
+
     super(env_config);
     this.graph = new LocalDependencyGraph(env_config.__version);
     this.api = api;
@@ -158,5 +167,15 @@ export default class LocalDependencyManager extends DependencyManager {
     });
     this.graph.addNode(node);
     return node;
+  }
+
+  protected loadParameters() {
+    for (const node of this.graph.nodes) {
+      for (const [key, value] of Object.entries(node.parameters)) {
+        // Only include in cli since it will read files off disk
+        node.parameters[key] = readIfFile(value);
+      }
+    }
+    super.loadParameters();
   }
 }
