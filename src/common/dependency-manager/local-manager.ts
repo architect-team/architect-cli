@@ -80,13 +80,14 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
+    const configPort = config.getPort();
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
       ports: {
-        target: env_service?.port ? env_service.port : 8080,
+        target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
@@ -147,7 +148,7 @@ export default class LocalDependencyManager extends DependencyManager {
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: {
-        target: 8080,
+        target: config.getPort() || 8080,
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
