@@ -45,7 +45,7 @@ export interface ServiceApiSpec {
 
 export interface ServiceInterfaceSpec {
   description?: string;
-  port?: number;
+  port: number;
 }
 
 export interface ServiceLivenessProbe {

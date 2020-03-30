@@ -85,6 +85,13 @@ export default abstract class DependencyManager {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports.target.toString();
 
+      if (node instanceof ServiceNode && node.interfaces) {
+        for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
+          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
+          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
+        }
+      }
+
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
@@ -108,17 +115,6 @@ export default abstract class DependencyManager {
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
-
-              if (value_from_parameter.interface) { // sets outward communication from frontend nodes
-                if (!Object.keys(param_target_service.interfaces).includes(value_from_parameter.interface)) {
-                  throw new Error(`${param_target_service_name} does not specify interface ${value_from_parameter.interface}`);
-                }
-                const service_interface = param_target_service.interfaces[value_from_parameter.interface];
-                if (service_interface.port) {
-                  env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = service_interface.port.toString();
-                }
-              }
-
               env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
                 param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
             } else if (param_target_datastore_name) {
