@@ -75,10 +75,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           compose.services[node.normalized_ref].command = debug_options.command;
         }
 
-        if (node.service_config.getEntrypoint()) {
-          compose.services[node.normalized_ref].entrypoint = node.service_config.getEntrypoint();
-        }
-
         // Mount the src directory
         const src_path = path.join(node.service_path, 'src');
         if (fs.pathExistsSync(src_path)) {
