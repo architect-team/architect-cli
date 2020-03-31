@@ -1,7 +1,5 @@
-import axios from 'axios';
 import dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
-import * as https from 'https';
 import untildify from 'untildify';
 import { ServiceNode } from '.';
 import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
@@ -14,9 +12,9 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
-import { readIfFile } from './utils/file';
+import VaultManager from './vault-manager';
 
-interface VaultParameter {
+export interface VaultParameter {
   valueFrom: {
     vault: string;
     key: string;
@@ -41,9 +39,11 @@ export interface DatastoreValueFromParameter {
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
   environment: EnvironmentConfig;
+  protected vault_manager: VaultManager;
 
   constructor(environment_config?: EnvironmentConfig) {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.vault_manager = new VaultManager(this.environment.getVaults());
   }
 
   /**
@@ -87,7 +87,6 @@ export default abstract class DependencyManager {
 
       if (node instanceof ServiceNode && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = internal_host;
           env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
         }
       }
@@ -96,7 +95,7 @@ export default abstract class DependencyManager {
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
             env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
+              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
           } else {
             env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
           }
@@ -104,11 +103,11 @@ export default abstract class DependencyManager {
       }
 
       if (node instanceof ServiceNode) {
-        for (const [param_name, param_value] of Object.entries(node.service_config.getParameters())) { // load param references
-          if (param_value.default instanceof Object && param_value.default?.valueFrom) {
-            const value_from_parameter = (param_value.default as ValueFromParameter).valueFrom;
-            const param_target_service_name = value_from_parameter.dependency;
-            const param_target_datastore_name = (param_value.default as DatastoreValueFromParameter).valueFrom.datastore;
+        for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
+          if (param_value instanceof Object && param_value.valueFrom) {
+            const param_target_service_name = (param_value as ValueFromParameter).valueFrom.dependency;
+            const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
+
             if (param_target_service_name) {
               const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
               const node_dependency_refs = node.service_config.getDependencies();
@@ -116,7 +115,7 @@ export default abstract class DependencyManager {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
               env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-                param_value.default.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`).replace(/[.-]/g, '_');
+                param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
               const datastore_names = Object.keys(node.service_config.getDatastores());
@@ -124,7 +123,7 @@ export default abstract class DependencyManager {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
               }
               env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
-                param_value.default.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase()).replace(/[.-]/g, '_');
+                param_value.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase().replace(/[.-]/g, '_'));
             } else {
               throw new Error(`Error creating parameter ${param_name} of ${node.ref}. A valueFrom reference must specify a dependency or datastore.`);
             }
@@ -189,9 +188,8 @@ export default abstract class DependencyManager {
     datastore_key?: string,
   ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
     const services = this.environment.getServices();
-
     const global_params = this.environment.getParameters();
-    let raw_params: { [key: string]: string | number | VaultParameter } = {};
+    let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
     if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
       raw_params = {
         ...global_params,
@@ -205,37 +203,14 @@ export default abstract class DependencyManager {
     }
 
     // Enrich vault parameters
-    const env_params = new Map<string, string | number>();
+    const env_params = new Map<string, string | number | ValueFromParameter>();
     for (const [key, data] of Object.entries(raw_params)) {
-      if (typeof data !== 'object') {
+      if (data instanceof Object && data.valueFrom && 'vault' in data.valueFrom) {
+        env_params.set(key, await this.vault_manager.getSecret(data as VaultParameter));
+      } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore
         env_params.set(key, data);
-        continue;
-      }
-      if (!data.valueFrom.vault) {
-        continue;
-      }
-
-      const param = data as VaultParameter;
-      const vaults = this.environment.getVaults();
-      const param_vault = vaults[param.valueFrom.vault];
-      const vault_client = axios.create({
-        baseURL: param_vault.host,
-        headers: {
-          'X-Vault-Token': readIfFile(param_vault.access_token),
-        },
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      });
-
-      const param_start = param.valueFrom.key.lastIndexOf('/');
-      const param_key = param.valueFrom.key.substr(0, param_start);
-      const param_name = param.valueFrom.key.substr(param_start + 1);
-      try {
-        const res = await vault_client.get(`v1/${param_key}/data/${param_name}`);
-        env_params.set(key, res.data.data.data[param_name]);
-      } catch (err) {
-        throw new Error(`Error retrieving secret ${data.valueFrom.key}`);
       }
     }
 
