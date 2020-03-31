@@ -52,7 +52,15 @@ export default class LocalDependencyManager extends DependencyManager {
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
+
+          // console.log(svc_node.interfaces);
+          // if (!svc_node.interfaces) {
+          //   console.log('no interfaces for ' + svc_node.ref)
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
+          //} else {
+          // TODO: create edges based on individual interfaces, need one for each api
+          // }
+          // dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
         }
       }
     }
@@ -81,15 +89,28 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
     const configPort = config.getPort();
+
+    let ports;
+    if (Object.keys(config.getInterfaces()).length > 0) {
+      ports = await Promise.all(Object.values(config.getInterfaces()).map(async value => {
+        return {
+          target: value.port,
+          expose: await this.getServicePort()
+        }
+      }));
+    } else {
+      ports = [{
+        target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
+        expose: await this.getServicePort(),
+      }];
+    }
+
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
-      ports: [{
-        target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
-        expose: await this.getServicePort(),
-      }],
+      ports,
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),
@@ -149,7 +170,7 @@ export default class LocalDependencyManager extends DependencyManager {
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: [{
         target: config.getPort() || 8080,
-        expose: await this.getServicePort(),
+        expose: await this.getServicePort(), // TODO
       }],
       parameters: await this.getParamValues(
         `${config.getName()}:${service_digest.tag}`,

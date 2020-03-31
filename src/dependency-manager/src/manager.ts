@@ -70,7 +70,7 @@ export default abstract class DependencyManager {
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
 
-    const subdomain_map: { [key: string]: string } = {};
+    const subdomain_map: { [key: string]: string } = {}; // TODO: alter for multiple interfaces, probably
     for (const edge of this.graph.edges.filter((edge) => (edge instanceof IngressEdge))) {
       subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
     }
@@ -87,6 +87,7 @@ export default abstract class DependencyManager {
 
       if (node instanceof ServiceNode && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
+          // TODO: do we also handle the internal port in the interface spec?
           env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
           env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
         }

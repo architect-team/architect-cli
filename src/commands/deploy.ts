@@ -82,13 +82,14 @@ export default class Deploy extends Command {
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
     Object.keys(compose.services).forEach(svc_name => {
-      const exposed_port = compose.services[svc_name].ports[0].split(':')[0]; // TODO: printouts for port mappings
-      this.log(`${chalk.blue(`0.0.0.0:${exposed_port}`)} => ${svc_name}`);
+      for (const port_pair of compose.services[svc_name].ports) {
+        const exposed_port = port_pair.split(':')[0];
+        this.log(`${chalk.blue(`0.0.0.0:${exposed_port}`)} => ${svc_name}`);
+      }
     });
     await fs.ensureFile(flags.compose_file);
     await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
-    // this.log(chalk.green(JSON.stringify(compose, null, 2)));
     await execa('docker-compose', ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
   }
 
