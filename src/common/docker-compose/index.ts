@@ -50,6 +50,10 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           ...compose.services[node.normalized_ref],
         };
       }
+
+      if (node.service_config.getEntrypoint()) {
+        compose.services[node.normalized_ref].entrypoint = node.service_config.getEntrypoint();
+      }
     }
 
     if (node instanceof LocalServiceNode) {
@@ -69,6 +73,10 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         const debug_options = node.service_config.getDebugOptions();
         if (debug_options) {
           compose.services[node.normalized_ref].command = debug_options.command;
+        }
+
+        if (node.service_config.getEntrypoint()) {
+          compose.services[node.normalized_ref].entrypoint = node.service_config.getEntrypoint();
         }
 
         // Mount the src directory
