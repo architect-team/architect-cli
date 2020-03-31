@@ -87,9 +87,8 @@ export default abstract class DependencyManager {
 
       if (node instanceof ServiceNode && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-          // TODO: do we also handle the internal port in the interface spec?
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
+          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = internal_host;
+          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
         }
       }
 

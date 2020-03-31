@@ -29,7 +29,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
-        ports: node.ports.map(port_pair => `${port_pair.expose}:${port_pair.target}`), //[`${node.ports[0].expose}:${node.ports[0].target}`],
+        ports: node.ports.map(port_pair => `${port_pair.expose}:${port_pair.target}`),
         depends_on: [],
         environment: {
           ...node.parameters,
@@ -88,7 +88,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
               if (volumeDef.length === 1) {
                 return path.resolve(node.service_path, volumeDef[0]);
               }
-              return path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1];
+              return `${path.resolve(node.service_path, v.split(':')[0])}:${v.split(':')[1]}`;
             });
           }
         }
@@ -109,13 +109,11 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       const service_to = compose.services[node_to.normalized_ref];
       service_to.environment = service_to.environment || {};
       service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
-      // console.log(edge) // TODO: fix below when proper ingressedges are being created
-      if (service_to.environment.VIRTUAL_HOST === 'api.localhost') {
-        service_to.environment.VIRTUAL_PORT = '50003'; // why is it that this works and not 50002?
-      } else {
-        service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
-      } service_to.restart = 'always';
-      compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
+      service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
+      service_to.restart = 'always';
+      if (!compose.services[node_to.normalized_ref].depends_on.includes(node_from.normalized_ref)) {
+        compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
+      }
     } else if (edge instanceof ServiceEdge) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }

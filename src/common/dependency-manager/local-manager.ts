@@ -52,15 +52,7 @@ export default class LocalDependencyManager extends DependencyManager {
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
-
-          // console.log(svc_node.interfaces);
-          // if (!svc_node.interfaces) {
-          //   console.log('no interfaces for ' + svc_node.ref)
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
-          //} else {
-          // TODO: create edges based on individual interfaces, need one for each api
-          // }
-          // dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
         }
       }
     }

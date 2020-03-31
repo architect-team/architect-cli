@@ -12,4 +12,8 @@ export default class IngressEdge extends DependencyEdge {
       this.subdomain = subdomain.toLowerCase();
     }
   }
+
+  get ref() {
+    return `${this.__type}.${this.from}.${this.to}.${this.subdomain}`;
+  }
 }
