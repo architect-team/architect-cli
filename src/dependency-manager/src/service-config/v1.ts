@@ -53,7 +53,7 @@ class ApiSpecV1 {
 
 class InterfaceSpecV1 {
   description?: string;
-  port: number = 8080;
+  port!: number;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {

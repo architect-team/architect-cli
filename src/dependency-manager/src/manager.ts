@@ -75,6 +75,13 @@ export default abstract class DependencyManager {
       subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
     }
 
+    const all_interface_names = this.graph.nodes.reduce((acc, node) => {
+      if (node instanceof ServiceNode && node.interfaces) {
+        acc = acc.concat(Object.keys(node.interfaces));
+      }
+      return acc;
+    }, new Array<string>());
+
     for (const node of this.graph.nodes) {
       const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
       const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
@@ -105,10 +112,14 @@ export default abstract class DependencyManager {
       if (node instanceof ServiceNode) {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom) {
-            const param_target_service_name = (param_value as ValueFromParameter).valueFrom.dependency;
+            const value_from_param = param_value as ValueFromParameter;
+            const param_target_service_name = value_from_param.valueFrom.dependency;
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
             if (param_target_service_name) {
+              if (value_from_param.valueFrom.interface && !all_interface_names.includes(value_from_param.valueFrom.interface)) {
+                throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on any service.`);
+              }
               const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
               const node_dependency_refs = node.service_config.getDependencies();
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {

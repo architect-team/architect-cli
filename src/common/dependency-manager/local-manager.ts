@@ -96,8 +96,8 @@ export default class LocalDependencyManager extends DependencyManager {
       ports = await Promise.all(Object.values(config.getInterfaces()).map(async value => {
         return {
           target: value.port,
-          expose: await this.getServicePort()
-        }
+          expose: await this.getServicePort(),
+        };
       }));
     } else {
       ports = [{
@@ -171,7 +171,7 @@ export default class LocalDependencyManager extends DependencyManager {
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: [{
         target: config.getPort() || 8080,
-        expose: await this.getServicePort(), // TODO
+        expose: await this.getServicePort(),
       }],
       parameters: await this.getParamValues(
         `${config.getName()}:${service_digest.tag}`,

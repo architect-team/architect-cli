@@ -217,7 +217,6 @@ export default class EnvironmentCreate extends Command {
   private async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
     try {
       if (public_platform) {
-        console.log('creating public platform')
         const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
         return platform;
       } else {

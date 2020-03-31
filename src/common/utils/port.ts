@@ -19,7 +19,7 @@ export default class PortUtil {
       await Promise.all([
         _isPortAvailable('0.0.0.0', port),
         // _isPortAvailable('::', port) // Check for windows
-      ])
+      ]);
       return true;
     } catch {
       return false;

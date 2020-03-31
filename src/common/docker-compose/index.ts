@@ -23,7 +23,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         ports: [`${node.ports[0].expose}:${node.ports[0].target}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
-      }
+      };
     }
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
