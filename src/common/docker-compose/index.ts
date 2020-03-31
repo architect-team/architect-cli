@@ -111,9 +111,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
       service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
       service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
-      if (!compose.services[node_to.normalized_ref].depends_on.includes(node_from.normalized_ref)) {
-        compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
-      }
+      compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
     } else if (edge instanceof ServiceEdge) {
       compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
     }

@@ -70,7 +70,7 @@ export default abstract class DependencyManager {
   protected loadParameters() {
     const env_params_to_expand: { [key: string]: string } = {};
 
-    const subdomain_map: { [key: string]: string } = {}; // TODO: alter for multiple interfaces, probably
+    const subdomain_map: { [key: string]: string } = {};
     for (const edge of this.graph.edges.filter((edge) => (edge instanceof IngressEdge))) {
       subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
     }
