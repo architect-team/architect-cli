@@ -177,13 +177,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getDebugOptions(): ServiceDebugOptions | undefined {
-    if (this.debug || this.entrypoint) {
-      const options: ServiceDebugOptions = {};
-      if (this.debug) { options.command = this.debug; }
-      if (this.entrypoint) { options.entrypoint = this.entrypoint; }
-      return options;
-    }
-    return undefined;
+    return this.debug ? { command: this.debug } : undefined;
   }
 
   getLanguage(): string {
