@@ -57,7 +57,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
         if (env_svc_cfg.ingress) {
           const gateway = new GatewayNode({
-            ports: { target: 80, expose: 80 },
+            ports: { target: 80, expose: await dependency_manager.getServicePort(80) },
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
@@ -76,8 +76,8 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  protected async getServicePort(): Promise<number> {
-    return PortUtil.getAvailablePort();
+  protected async getServicePort(starting_port?: number): Promise<number> {
+    return PortUtil.getAvailablePort(starting_port);
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {

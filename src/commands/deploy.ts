@@ -81,9 +81,22 @@ export default class Deploy extends Command {
 
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
+
+    const gateway = compose.services['gateway'];
+    if (gateway) {
+      const gateway_port = gateway.ports[0].split(':')[0];
+      for (const [service_name, service] of Object.entries(compose.services)) {
+        if (service.environment && service.environment.VIRTUAL_HOST) {
+          const service_host = `http://${service.environment.VIRTUAL_HOST}:${gateway_port}/`;
+          this.log(`${chalk.blue(service_host)} => ${service_name}`);
+        }
+      }
+      this.log('');
+    }
+
     Object.keys(compose.services).forEach(svc_name => {
       const exposed_port = compose.services[svc_name].ports[0].split(':')[0];
-      this.log(`${chalk.blue(`0.0.0.0:${exposed_port}`)} => ${svc_name}`);
+      this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
     });
     await fs.ensureFile(flags.compose_file);
     await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
