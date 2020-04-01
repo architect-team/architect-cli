@@ -340,6 +340,14 @@ export default abstract class DependencyManager {
    * Create an external node and add it to the graph
    */
   async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+    if (env_service_config.interfaces) {
+      for (const [name, interface_details] of Object.entries(env_service_config.interfaces)) {
+        if (!interface_details.host || !interface_details.port) {
+          throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
+        }
+      }
+    }
+
     const node = new ExternalNode({
       host: env_service_config.interfaces ? undefined : env_service_config.host!,
       ports: env_service_config.interfaces ? [] : [{
