@@ -40,7 +40,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
-      if (env_svc_cfg.host && env_svc_cfg.port) {
+      if ((env_svc_cfg.host && env_svc_cfg.port) || env_svc_cfg.interfaces) {
         await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
@@ -119,13 +119,13 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
 
-      const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_services?.host && env_services?.port) {
-        await this.loadExternalService(env_services, `${dep_name}:${dep_id}`);
+      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
+      if ((env_service?.host && env_service?.port) || env_service?.interfaces) {
+        await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
-        if (env_services && env_services.debug) {
-          const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
+        if (env_service && env_service.debug) {
+          const svc_path = path.join(path.dirname(this.config_path), env_service.debug.path);
           dep_node = await this.loadLocalService(svc_path);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);

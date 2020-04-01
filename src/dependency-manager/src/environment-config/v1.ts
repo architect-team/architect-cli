@@ -11,6 +11,13 @@ interface VaultMap {
   };
 }
 
+interface InterfaceMap {
+  [interface_name: string]: {
+    host: string;
+    port: string;
+  };
+}
+
 interface ServiceMap {
   [service_ref: string]: {
     host?: string;
@@ -35,6 +42,7 @@ interface ServiceMap {
       dockerfile?: string;
       volumes?: string[];
     };
+    interfaces?: InterfaceMap;
   };
 }
 

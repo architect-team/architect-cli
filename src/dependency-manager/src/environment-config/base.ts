@@ -21,6 +21,11 @@ export interface EnvironmentVault {
   secret_id?: string;
 }
 
+export interface EnvironmentInterface {
+  host: string;
+  port: string;
+}
+
 export interface EnvironmentService {
   host?: string;
   port?: number;
@@ -35,6 +40,9 @@ export interface EnvironmentService {
     path: string;
     dockerfile?: string;
     volumes?: string[];
+  };
+  interfaces?: {
+    [key: string]: EnvironmentInterface;
   };
 }
 

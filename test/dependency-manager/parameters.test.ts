@@ -77,7 +77,7 @@ describe('manager parameters', function () {
             "valueFrom": {
               "dependency": "architect/backend:latest",
               "interface": "main",
-              "value": "$HOST:$MAIN_PORT"
+              "value": "$MAIN_HOST:$MAIN_PORT"
             }
           }
         }

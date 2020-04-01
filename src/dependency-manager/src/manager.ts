@@ -79,14 +79,25 @@ export default abstract class DependencyManager {
       const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
       const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = '80';
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports[0].target.toString();
 
-      if (node instanceof ServiceNode && node.interfaces) {
+      if (internal_host) {
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
+      }
+      if (external_host) {
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host;
+      } else if (internal_host) {
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = internal_host;
+      }
+
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = '80';
+      if (node.ports.length) {
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports[0].target.toString();
+      }
+
+      if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
+          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
           env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
         }
       }
@@ -110,8 +121,8 @@ export default abstract class DependencyManager {
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
             if (param_target_service_name) {
-              const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
-              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in param_target_service.interfaces)) {
+              const param_target_service = this.graph.getNodeByRef(param_target_service_name);
+              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
               const node_dependency_refs = node.service_config.getDependencies();
@@ -330,13 +341,14 @@ export default abstract class DependencyManager {
    */
   async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
     const node = new ExternalNode({
-      host: env_service_config.host!,
-      ports: [{
+      host: env_service_config.interfaces ? undefined : env_service_config.host!,
+      ports: env_service_config.interfaces ? [] : [{
         expose: env_service_config.port!,
         target: env_service_config.port!,
       }],
       parameters: env_service_config.parameters,
       key: service_ref,
+      interfaces: env_service_config.interfaces,
     });
     this.graph.addNode(node);
     return node;
