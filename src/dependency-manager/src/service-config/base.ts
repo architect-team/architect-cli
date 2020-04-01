@@ -52,7 +52,7 @@ export interface ServiceLivenessProbe {
 }
 
 export interface ServiceDebugOptions {
-  command?: string | string[];
+  command: string | string[];
 }
 
 export abstract class ServiceConfig {
