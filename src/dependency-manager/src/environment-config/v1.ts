@@ -41,6 +41,7 @@ interface ServiceMap {
       path: string;
       dockerfile?: string;
       volumes?: string[];
+      entrypoint?: string | string[];
     };
     interfaces?: InterfaceMap;
   };

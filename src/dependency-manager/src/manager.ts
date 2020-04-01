@@ -10,6 +10,7 @@ import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
+import GatewayNode from './graph/node/gateway';
 import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import VaultManager from './vault-manager';
@@ -75,6 +76,8 @@ export default abstract class DependencyManager {
       subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
     }
 
+    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
+    const gateway_port = gateway_node ? gateway_node.ports[0].expose.toString() : '80';
     for (const node of this.graph.nodes) {
       const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
       const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
@@ -89,10 +92,10 @@ export default abstract class DependencyManager {
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = internal_host;
       }
 
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = '80';
+      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = gateway_port;
       if (node.ports.length) {
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? '80' : node.ports[0].target.toString();
+        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
       }
 
       if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {

@@ -13,6 +13,7 @@ export interface DockerService {
   volumes?: string[];
   command?: string | string[];
   restart?: string;
+  entrypoint?: string | string[];
 }
 
 export default interface DockerComposeTemplate {

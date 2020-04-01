@@ -1,6 +1,6 @@
 import net from 'net';
 
-const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k + 50000);
+const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k);
 
 // eslint-disable-next-line no-undef
 const _isPortAvailable = async (host: string, port: number) => new Promise((resolve, reject) => {
@@ -26,10 +26,11 @@ export default class PortUtil {
     }
   }
 
-  static async getAvailablePort() {
+  static async getAvailablePort(starting_port = 50000) {
     let port = 0;
 
-    for (const p of PORT_RANGE) {
+    for (const pr of PORT_RANGE) {
+      const p = pr + starting_port;
       if (PortUtil.tested_ports.has(p)) continue;
       const isAvailable = await PortUtil.isPortAvailable(p);
       if (isAvailable) {

@@ -64,6 +64,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   image?: string;
   port?: string;
   command?: string | string[];
+  entrypoint?: string | string[];
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -110,6 +111,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getCommand(): string | string[] {
     return this.command || '';
+  }
+
+  getEntrypoint(): string | string[] {
+    return this.entrypoint || '';
   }
 
   getDependencies(): { [s: string]: string } {

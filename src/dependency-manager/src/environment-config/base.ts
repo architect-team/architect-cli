@@ -40,6 +40,7 @@ export interface EnvironmentService {
     path: string;
     dockerfile?: string;
     volumes?: string[];
+    entrypoint?: string | string[];
   };
   interfaces?: {
     [key: string]: EnvironmentInterface;
