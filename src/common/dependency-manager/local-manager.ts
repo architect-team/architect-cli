@@ -90,28 +90,17 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
     const configPort = config.getPort();
-
-    let ports;
-    if (Object.keys(config.getInterfaces()).length > 0) {
-      ports = await Promise.all(Object.values(config.getInterfaces()).map(async value => {
-        return {
-          target: value.port,
-          expose: await this.getServicePort(),
-        };
-      }));
-    } else {
-      ports = [{
-        target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
-        expose: await this.getServicePort(),
-      }];
-    }
-
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
-      ports,
+      ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
+        return {
+          target: env_service?.port ? env_service.port : (configPort ? configPort : value.port),
+          expose: await this.getServicePort(),
+        };
+      })),
       parameters: await this.getParamValues(
         `${config.getName()}:latest`,
         config.getParameters(),

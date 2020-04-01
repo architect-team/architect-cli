@@ -75,12 +75,15 @@ export default abstract class DependencyManager {
       subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
     }
 
-    const all_interface_names = this.graph.nodes.reduce((acc, node) => {
+    const interface_map = this.graph.nodes.reduce((acc: any, node) => {
+      if (!acc[node.ref]) {
+        acc[node.ref] = [];
+      }
       if (node instanceof ServiceNode && node.interfaces) {
-        acc = acc.concat(Object.keys(node.interfaces));
+        acc[node.ref] = acc[node.ref].concat(Object.keys(node.interfaces));
       }
       return acc;
-    }, new Array<string>());
+    }, {});
 
     for (const node of this.graph.nodes) {
       const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
@@ -117,8 +120,8 @@ export default abstract class DependencyManager {
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
             if (param_target_service_name) {
-              if (value_from_param.valueFrom.interface && !all_interface_names.includes(value_from_param.valueFrom.interface)) {
-                throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on any service.`);
+              if (value_from_param.valueFrom.interface && !interface_map[param_target_service_name].includes(value_from_param.valueFrom.interface)) {
+                throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
               const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
               const node_dependency_refs = node.service_config.getDependencies();
