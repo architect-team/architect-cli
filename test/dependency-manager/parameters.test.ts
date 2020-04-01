@@ -1,6 +1,5 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
-import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
@@ -24,8 +23,6 @@ describe('manager parameters', function () {
   afterEach(function () {
     // Restore stubs
     sinon.restore();
-    // Restore fs
-    mock_fs.restore();
   });
 
   it('value no override datastore', async () => {

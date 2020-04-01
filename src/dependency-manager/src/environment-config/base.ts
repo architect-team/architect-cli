@@ -21,11 +21,6 @@ export interface EnvironmentVault {
   secret_id?: string;
 }
 
-export interface EnvironmentInterface {
-  host: string;
-  port: string;
-}
-
 export interface EnvironmentService {
   host?: string;
   port?: number;
@@ -43,7 +38,10 @@ export interface EnvironmentService {
     entrypoint?: string | string[];
   };
   interfaces?: {
-    [key: string]: EnvironmentInterface;
+    [key: string]: {
+      host: string;
+      port: string;
+    };
   };
 }
 
