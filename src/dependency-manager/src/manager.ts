@@ -97,13 +97,6 @@ export default abstract class DependencyManager {
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
       }
 
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = gateway_port;
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
-      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
-
       if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
           env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
