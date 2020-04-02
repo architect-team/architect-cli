@@ -40,7 +40,7 @@ describe('manager parameters', function () {
             "valueFrom": {
               "dependency": "architect/backend:latest",
               "interface": "main",
-              "value": "$MAIN_HOST:$MAIN_PORT"
+              "value": "$HOST:$PORT"
             }
           }
         }
@@ -58,7 +58,7 @@ describe('manager parameters', function () {
             "valueFrom": {
               "dependency": "architect/backend:latest",
               "interface": "secondary",
-              "value": "$SECONDARY_HOST:$SECONDARY_PORT"
+              "value": "$HOST:$PORT"
             }
           }
         }

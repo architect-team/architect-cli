@@ -131,8 +131,14 @@ export default abstract class DependencyManager {
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
-              env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-                param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+
+              if (value_from_param.valueFrom.interface) {
+                env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+                  param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_${value_from_param.valueFrom.interface.toUpperCase()}_`.replace(/[.-]/g, '_'));
+              } else {
+                env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
+                  param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+              }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
               const datastore_names = Object.keys(node.service_config.getDatastores());
