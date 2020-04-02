@@ -7,6 +7,7 @@ import LocalDependencyGraph from '../../src/common/dependency-manager/local-grap
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
 import * as DockerCompose from '../../src/common/docker-compose';
+import PortUtil from '../../src/common/utils/port';
 import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
 import { ValueFromParameter } from '../../src/dependency-manager/src/manager';
 
@@ -133,6 +134,8 @@ describe('interfaces', function () {
     sinon.restore();
     // Restore fs
     mock_fs.restore();
+    // reset port range between simulated processes
+    PortUtil.reset();
   });
 
   it('valueFrom port from service interfaces', async () => {
