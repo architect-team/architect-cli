@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
-import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { EnvironmentConfigBuilder, EnvironmentService, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
@@ -178,5 +178,40 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     super.loadParameters();
+  }
+
+  /**
+   * @override
+   */
+  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+    if ('interfaces' in env_service_config) {
+      for (const [name, interface_details] of Object.entries(env_service_config.interfaces || {})) {
+        if (!interface_details.host || !interface_details.port) {
+          throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
+        }
+      }
+
+      if (env_service_config.debug?.path) {
+        const env_config_interfaces = Object.keys(env_service_config.interfaces || {});
+        const expected_interfaces = Object.keys(ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), env_service_config.debug?.path)).getInterfaces());
+        const union = new Set([...expected_interfaces, ...env_config_interfaces]);
+        if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
+          throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
+        }
+      }
+    }
+
+    const node = new ExternalNode({
+      host: env_service_config.interfaces ? undefined : env_service_config.host!,
+      ports: env_service_config.interfaces ? [] : [{
+        expose: env_service_config.port!,
+        target: env_service_config.port!,
+      }],
+      parameters: env_service_config.parameters,
+      key: service_ref,
+      interfaces: env_service_config.interfaces,
+    });
+    this.graph.addNode(node);
+    return node;
   }
 }

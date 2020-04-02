@@ -1,7 +1,7 @@
 import dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import untildify from 'untildify';
-import { ServiceConfigBuilder, ServiceNode } from '.';
+import { ServiceNode } from '.';
 import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
@@ -96,6 +96,13 @@ export default abstract class DependencyManager {
       if (external_host || node.ports.length) {
         env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
       }
+
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = gateway_port;
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
+      // env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
 
       if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
@@ -346,15 +353,6 @@ export default abstract class DependencyManager {
       for (const [name, interface_details] of Object.entries(env_service_config.interfaces)) {
         if (!interface_details.host || !interface_details.port) {
           throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
-        }
-      }
-
-      if (env_service_config.debug?.path) {
-        const env_config_interfaces = Object.keys(env_service_config.interfaces);
-        const expected_interfaces = Object.keys(ServiceConfigBuilder.buildFromPath(env_service_config.debug?.path).getInterfaces());
-        const union = new Set([...expected_interfaces, ...env_config_interfaces]);
-        if (union.size !== expected_interfaces.length) {
-          throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
         }
       }
     }
