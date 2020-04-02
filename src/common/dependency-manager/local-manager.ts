@@ -70,6 +70,7 @@ export default class LocalDependencyManager extends DependencyManager {
     await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
     dependency_manager.loadParameters();
+    PortUtil.reset();
     return dependency_manager;
   }
 

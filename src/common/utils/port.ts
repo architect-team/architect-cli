@@ -43,4 +43,8 @@ export default class PortUtil {
     PortUtil.tested_ports.add(port);
     return port;
   }
+
+  static reset() {
+    PortUtil.tested_ports = new Set();
+  }
 }
