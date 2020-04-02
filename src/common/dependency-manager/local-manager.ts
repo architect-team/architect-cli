@@ -88,7 +88,6 @@ export default class LocalDependencyManager extends DependencyManager {
       return this.graph.nodes_map.get(`${config.getName()}:latest`)! as ServiceNode;
     }
 
-    const configPort = config.getPort();
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
@@ -96,7 +95,7 @@ export default class LocalDependencyManager extends DependencyManager {
       tag: 'latest',
       ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
         return {
-          target: configPort ? configPort : value.port,
+          target: value.port,
           expose: await this.getServicePort(),
         };
       })),
