@@ -6,10 +6,11 @@ import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
+import * as DockerCompose from '../../src/common/docker-compose';
 import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
 import { ValueFromParameter } from '../../src/dependency-manager/src/manager';
 
-describe('manager parameters', function () {
+describe('interfaces', function () {
 
   beforeEach(async () => {
     // Stub the logger
@@ -26,7 +27,8 @@ describe('manager parameters', function () {
           "description": "secondary port",
           "port": "8081"
         }
-      }
+      },
+      "port": 8888
     };
 
     const frontend_main_json = {
@@ -173,5 +175,23 @@ describe('manager parameters', function () {
     const interfaced_secondary_value_from = frontend_secondary_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter;
     expect(interfaced_secondary_value_from.valueFrom.interface).eq('secondary');
     expect(frontend_secondary_node!.parameters.API_ADDR).eq(`secondary.host:8081`);
+  });
+
+  it('correct compose port mappings', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
+    const compose = DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50002:8080', '50003:8081']);
+    expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8080']);
+    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50001:8080']);
+  });
+
+  it('correct interface environment variables in compose', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
+    const compose = DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
+    expect(compose.services['architect.backend.latest'].environment!.MAIN_PORT).eq('8080');
+    expect(compose.services['architect.backend.latest'].environment!.SECONDARY_PORT).eq('8081');
   });
 });
