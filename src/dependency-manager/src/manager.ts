@@ -8,11 +8,12 @@ import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
+import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import MissingRequiredParamError from './missing-required-param-error';
-import { ServiceParameter } from './service-config/base';
+import { ServiceConfig, ServiceParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -65,6 +66,10 @@ export default abstract class DependencyManager {
     }
   }
 
+  private scopeEnv(node: DependencyNode, key: string, node_prefix = '') {
+    return `${node_prefix ? `${node_prefix}_` : ''}${node.normalized_ref}_${key}`.toUpperCase().replace(/[.-]/g, '_');
+  }
+
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
@@ -82,35 +87,34 @@ export default abstract class DependencyManager {
       const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
       const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
 
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
+      env_params_to_expand[this.scopeEnv(node, 'EXTERNAL_HOST')] = external_host;
       if (internal_host) {
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
+        env_params_to_expand[this.scopeEnv(node, 'INTERNAL_HOST')] = internal_host;
       }
       if (external_host || internal_host) {
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host!;
+        env_params_to_expand[this.scopeEnv(node, 'HOST')] = external_host ? external_host : internal_host!;
       }
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = gateway_port;
+      env_params_to_expand[this.scopeEnv(node, 'EXTERNAL_PORT')] = gateway_port;
       if (node.ports.length) {
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports[0].target.toString();
+        env_params_to_expand[this.scopeEnv(node, 'INTERNAL_PORT')] = node.ports[0].target.toString();
       }
       if (external_host || node.ports.length) {
-        env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports[0].target.toString();
+        env_params_to_expand[this.scopeEnv(node, 'PORT')] = external_host ? gateway_port : node.ports[0].target.toString();
       }
 
       if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
-          env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${interface_name.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = interface_details.port.toString();
+          env_params_to_expand[this.scopeEnv(node, `${interface_name}_HOST`)] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
+          env_params_to_expand[this.scopeEnv(node, `${interface_name}_PORT`)] = interface_details.port.toString();
         }
       }
 
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value;
           }
         }
       }
@@ -133,11 +137,9 @@ export default abstract class DependencyManager {
               }
 
               if (value_from_param.valueFrom.interface) {
-                env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-                  param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_${value_from_param.valueFrom.interface.toUpperCase()}_`.replace(/[.-]/g, '_'));
+                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface)}_`);
               } else {
-                env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-                  param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}_`);
               }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
@@ -145,8 +147,8 @@ export default abstract class DependencyManager {
               if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
               }
-              env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
-                param_value.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase().replace(/[.-]/g, '_'));
+              env_params_to_expand[this.scopeEnv(node, param_name, param_target_datastore_name)] =
+                param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(node, param_target_datastore_name)}_`);
             } else {
               throw new Error(`Error creating parameter ${param_name} of ${node.ref}. A valueFrom reference must specify a dependency or datastore.`);
             }
@@ -354,6 +356,13 @@ export default abstract class DependencyManager {
           throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
         }
       }
+
+      const env_config_interfaces = Object.keys(env_service_config.interfaces || {});
+      const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
+      const union = new Set([...expected_interfaces, ...env_config_interfaces]);
+      if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
+        throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
+      }
     }
 
     const node = new ExternalNode({
@@ -369,4 +378,6 @@ export default abstract class DependencyManager {
     this.graph.addNode(node);
     return node;
   }
+
+  abstract async loadServiceConfig(node_ref: string): Promise<ServiceConfig>;
 }
