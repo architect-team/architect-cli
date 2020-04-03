@@ -82,13 +82,14 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         }
 
         const env_service = dependency_manager.environment.getServices()[node.ref];
-        if (env_service && env_service.debug) {
-          if (env_service.debug.dockerfile) {
-            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
+        const env_service_debug = env_service.getDebug();
+        if (env_service_debug) {
+          if (env_service_debug.dockerfile) {
+            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service_debug.dockerfile!);
           }
 
-          if (env_service.debug.volumes) {
-            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => {
+          if (env_service_debug.volumes) {
+            compose.services[node.normalized_ref].volumes = env_service_debug.volumes.map((v) => {
               const volumeDef = v.split(':');
               if (volumeDef.length === 1) {
                 return path.resolve(node.service_path, volumeDef[0]);
@@ -97,8 +98,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
             });
           }
 
-          if (env_service.debug.entrypoint) {
-            compose.services[node.normalized_ref].entrypoint = env_service.debug.entrypoint;
+          if (env_service_debug.entrypoint) {
+            compose.services[node.normalized_ref].entrypoint = env_service_debug.entrypoint;
           }
         }
       }

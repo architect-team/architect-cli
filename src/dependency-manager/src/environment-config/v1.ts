@@ -1,4 +1,8 @@
-import { EnvironmentConfig, EnvironmentParameters, EnvironmentService, EnvironmentVault } from './base';
+import { Transform } from 'class-transformer/decorators';
+import { EnvironmentService } from '../environment-service/base';
+import { EnvironmentServiceV1 } from '../environment-service/v1';
+import { Dict } from '../utils/transform';
+import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
 interface VaultMap {
   [vault_name: string]: {
@@ -11,46 +15,11 @@ interface VaultMap {
   };
 }
 
-interface InterfaceMap {
-  [interface_name: string]: {
-    host: string;
-    port: string;
-  };
-}
-
-interface ServiceMap {
-  [service_ref: string]: {
-    host?: string;
-    port?: number;
-    parameters: {
-      [key: string]: string;
-    };
-    datastores: {
-      [key: string]: {
-        host?: string;
-        port?: number;
-        parameters: {
-          [key: string]: string;
-        };
-      };
-    };
-    ingress?: {
-      subdomain: string;
-    };
-    debug?: {
-      path: string;
-      dockerfile?: string;
-      volumes?: string[];
-      entrypoint?: string | string[];
-    };
-    interfaces?: InterfaceMap;
-  };
-}
-
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   parameters: EnvironmentParameters = {};
-  services: ServiceMap = {};
+  @Transform(Dict(() => EnvironmentServiceV1), { toClassOnly: true })
+  services: { [service_ref: string]: EnvironmentService } = {};
   vaults: VaultMap = {};
 
   getParameters(): EnvironmentParameters {
@@ -58,17 +27,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getServices(): { [key: string]: EnvironmentService } {
-    // Ensure that default, empty objects are populated for necessary service components
-    for (const service_ref of Object.keys(this.services)) {
-      if (!this.services[service_ref].datastores) {
-        this.services[service_ref].datastores = {};
-      }
-
-      if (!this.services[service_ref].parameters) {
-        this.services[service_ref].parameters = {};
-      }
-    }
-
     return this.services;
   }
 

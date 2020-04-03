@@ -40,13 +40,13 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
-      if ((env_svc_cfg.host && env_svc_cfg.port) || env_svc_cfg.interfaces) {
+      if (!env_svc_cfg.getInterfaces()._default) {
         await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
 
-        if (env_svc_cfg.debug) {
-          const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
+        if (env_svc_cfg.getDebug()) {
+          const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.getDebug()!.path);
           svc_node = await dependency_manager.loadLocalService(svc_path);
         } else {
           const [name, tag] = ref.split(':');
@@ -55,13 +55,13 @@ export default class LocalDependencyManager extends DependencyManager {
         await dependency_manager.loadDatastores(svc_node);
         dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
 
-        if (env_svc_cfg.ingress) {
+        if (env_svc_cfg.getIngress()) {
           const gateway = new GatewayNode({
             ports: [{ target: 80, expose: await dependency_manager.getServicePort(80) }],
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
-          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.getIngress()!.subdomain));
         }
       }
     }
@@ -119,12 +119,12 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
 
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if ((env_service?.host && env_service?.port) || env_service?.interfaces) {
-        await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
+      if (!(env_service?.getInterfaces()._default)) {
+        await this.loadExternalService(env_service!, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
-        if (env_service && env_service.debug) {
-          const svc_path = path.join(path.dirname(this.config_path), env_service.debug.path);
+        if (env_service?.getDebug()) {
+          const svc_path = path.join(path.dirname(this.config_path), env_service.getDebug()!.path);
           dep_node = await this.loadLocalService(svc_path);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);
@@ -183,8 +183,8 @@ export default class LocalDependencyManager extends DependencyManager {
   * @override
   */
   async loadServiceConfig(node_ref: string) {
-    if (this.environment.getServices()[node_ref]?.debug?.path) {
-      return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), this.environment.getServices()[node_ref].debug!.path));
+    if (this.environment.getServices()[node_ref]?.getDebug()?.path) {
+      return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), this.environment.getServices()[node_ref].getDebug()!.path));
     } else {
       const [account_name, service_name, service_tag] = node_ref.split(/\/|:/);
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${service_name}/versions/${service_tag}`);

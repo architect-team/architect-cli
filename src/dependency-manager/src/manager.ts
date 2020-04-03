@@ -2,8 +2,9 @@ import dotenvExpand from 'dotenv-expand';
 import fs from 'fs-extra';
 import untildify from 'untildify';
 import { ServiceNode } from '.';
-import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
+import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
+import { EnvironmentService } from './environment-service/base';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
@@ -102,7 +103,7 @@ export default abstract class DependencyManager {
         env_params_to_expand[this.scopeEnv(node, 'PORT')] = external_host ? gateway_port : node.ports[0].target.toString();
       }
 
-      if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces) {
+      if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces && !('_default' in node.interfaces)) {
         for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
           env_params_to_expand[this.scopeEnv(node, `${interface_name}_HOST`)] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
           env_params_to_expand[this.scopeEnv(node, `${interface_name}_PORT`)] = interface_details.port.toString();
@@ -139,7 +140,7 @@ export default abstract class DependencyManager {
               if (value_from_param.valueFrom.interface) {
                 env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface)}_`);
               } else {
-                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}_`);
+                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
               }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
@@ -215,15 +216,15 @@ export default abstract class DependencyManager {
     const services = this.environment.getServices();
     const global_params = this.environment.getParameters();
     let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
-    if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
+    if (datastore_key && services[service_ref] && services[service_ref].getDatastores()[datastore_key]) {
       raw_params = {
         ...global_params,
-        ...services[service_ref].datastores[datastore_key].parameters,
+        ...services[service_ref].getDatastores()[datastore_key].parameters,
       } || {};
     } else if (services[service_ref]) {
       raw_params = {
         ...global_params,
-        ...services[service_ref].parameters,
+        ...services[service_ref].getParameters(),
       } || {};
     }
 
@@ -286,11 +287,11 @@ export default abstract class DependencyManager {
       const environment_service_config = this.environment.getServices()[parent_node.ref];
       let dep_node;
 
-      if (environment_service_config?.datastores[ds_name]?.host) {
-        const external_port = environment_service_config?.datastores[ds_name]?.port || ds_config.docker.target_port;
+      if (environment_service_config?.getDatastores()[ds_name]?.host) {
+        const external_port = environment_service_config?.getDatastores()[ds_name]?.port || ds_config.docker.target_port;
         dep_node = new ExternalNode({
           ...dep_node_config,
-          host: environment_service_config.datastores[ds_name].host!,
+          host: environment_service_config.getDatastores()[ds_name].host!,
           ports: [{
             target: external_port,
             expose: external_port,
@@ -324,7 +325,7 @@ export default abstract class DependencyManager {
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service?.host && env_service.port) {
+      if (env_service?.getHost() && env_service.getPort()) {
         const external_node = await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
         const edge = new ServiceEdge(parent_node.ref, external_node.ref);
         this.graph.addEdge(edge);
@@ -350,14 +351,15 @@ export default abstract class DependencyManager {
    * Create an external node and add it to the graph
    */
   async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
-    if (env_service_config.interfaces) {
-      for (const [name, interface_details] of Object.entries(env_service_config.interfaces)) {
+    const interfaces = env_service_config.getInterfaces();
+    if (interfaces) {
+      for (const [name, interface_details] of Object.entries(interfaces)) {
         if (!interface_details.host || !interface_details.port) {
           throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
         }
       }
 
-      const env_config_interfaces = Object.keys(env_service_config.interfaces || {});
+      const env_config_interfaces = Object.keys(interfaces || {});
       const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
       const union = new Set([...expected_interfaces, ...env_config_interfaces]);
       if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
@@ -366,14 +368,14 @@ export default abstract class DependencyManager {
     }
 
     const node = new ExternalNode({
-      host: env_service_config.interfaces ? undefined : env_service_config.host!,
-      ports: env_service_config.interfaces ? [] : [{
-        expose: env_service_config.port!,
-        target: env_service_config.port!,
+      host: interfaces ? undefined : env_service_config.getHost()!,
+      ports: env_service_config.getInterfaces() ? [] : [{
+        expose: env_service_config.getPort()!,
+        target: env_service_config.getPort()!,
       }],
-      parameters: env_service_config.parameters,
+      parameters: env_service_config.getParameters(),
       key: service_ref,
-      interfaces: env_service_config.interfaces,
+      interfaces: env_service_config.getInterfaces(),
     });
     this.graph.addNode(node);
     return node;

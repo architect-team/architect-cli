@@ -1,15 +1,11 @@
+import { EnvironmentService } from '../environment-service/base';
+
 export interface DebugConfig {
   path: string;
 }
 
 export interface EnvironmentParameters {
   [key: string]: string | number;
-}
-
-interface ServiceDatastore {
-  host?: string;
-  port?: number;
-  parameters: EnvironmentParameters;
 }
 
 export interface EnvironmentVault {
@@ -21,30 +17,6 @@ export interface EnvironmentVault {
   secret_id?: string;
 }
 
-export interface EnvironmentService {
-  host?: string;
-  port?: number;
-  parameters: EnvironmentParameters;
-  datastores: {
-    [key: string]: ServiceDatastore;
-  };
-  ingress?: {
-    subdomain: string;
-  };
-  debug?: {
-    path: string;
-    dockerfile?: string;
-    volumes?: string[];
-    entrypoint?: string | string[];
-  };
-  interfaces?: {
-    [key: string]: {
-      host: string;
-      port: string;
-    };
-  };
-}
-
 export abstract class EnvironmentConfig {
   abstract __version: string;
   abstract getParameters(): EnvironmentParameters;
@@ -54,6 +26,9 @@ export abstract class EnvironmentConfig {
   getServiceDetails(key: string): EnvironmentService | undefined {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
-    return ref ? services[ref] : undefined;
+    if (!ref) {
+      throw new Error(`Service ${key} not found in environment config`);
+    }
+    return services[ref];
   }
 }

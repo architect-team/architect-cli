@@ -7,7 +7,7 @@ interface ExternalNodeOptions {
   interfaces?: {
     [key: string]: {
       host: string;
-      port: string;
+      port: number;
     };
   };
 }
@@ -20,7 +20,7 @@ export class ExternalNode extends DependencyNode {
   interfaces?: {
     [key: string]: {
       host: string;
-      port: string;
+      port: number;
     };
   };
 
