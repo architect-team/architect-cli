@@ -121,7 +121,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
 
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service!.getInterfaces()) {
+      if (env_service?.getInterfaces()) {
         await this.loadExternalService(env_service!, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
