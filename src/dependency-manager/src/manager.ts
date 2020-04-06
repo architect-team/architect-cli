@@ -353,7 +353,8 @@ export default abstract class DependencyManager {
    * Create an external node and add it to the graph
    */
   async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
-    const interfaces = env_service_config.getInterfaces();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const interfaces = env_service_config.getInterfaces()!;
     if (interfaces) {
       for (const [name, interface_details] of Object.entries(interfaces)) {
         if (!interface_details.host || !interface_details.port) {
@@ -370,14 +371,11 @@ export default abstract class DependencyManager {
     }
 
     const node = new ExternalNode({
-      host: interfaces ? undefined : env_service_config.getHost()!,
-      ports: env_service_config.getInterfaces() ? [] : [{
-        expose: env_service_config.getPort()!,
-        target: env_service_config.getPort()!,
-      }],
+      host: interfaces ? undefined : env_service_config.getHost(),
+      ports: Object.values(interfaces).map((i) => ({ target: i.port, expose: i.port })),
       parameters: env_service_config.getParameters(),
       key: service_ref,
-      interfaces: env_service_config.getInterfaces(),
+      interfaces: interfaces,
     });
     this.graph.addNode(node);
     return node;
