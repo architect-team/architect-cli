@@ -45,8 +45,9 @@ export default class LocalDependencyManager extends DependencyManager {
       } else {
         let svc_node: ServiceNode;
 
-        if (env_svc_cfg.getDebug()) {
-          const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.getDebug()!.path);
+        const env_debug_options = env_svc_cfg.getDebug();
+        if (env_debug_options) {
+          const svc_path = path.join(path.dirname(env_config_path), env_debug_options.path);
           svc_node = await dependency_manager.loadLocalService(svc_path);
         } else {
           const [name, tag] = ref.split(':');
@@ -55,13 +56,14 @@ export default class LocalDependencyManager extends DependencyManager {
         await dependency_manager.loadDatastores(svc_node);
         dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
 
-        if (env_svc_cfg.getIngress()) {
+        const env_ingress = env_svc_cfg.getIngress();
+        if (env_ingress) {
           const gateway = new GatewayNode({
             ports: [{ target: 80, expose: await dependency_manager.getServicePort(80) }],
             parameters: {},
           });
           dependency_manager.graph.addNode(gateway);
-          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.getIngress()!.subdomain));
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_ingress.subdomain));
         }
       }
     }
@@ -119,12 +121,14 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
 
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (!(env_service?.getInterfaces()._default)) {
+      if (!(env_service!.getInterfaces()._default)) {
         await this.loadExternalService(env_service!, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
-        if (env_service?.getDebug()) {
-          const svc_path = path.join(path.dirname(this.config_path), env_service.getDebug()!.path);
+        const env_debug_options = env_service!.getDebug();
+
+        if (env_debug_options) {
+          const svc_path = path.join(path.dirname(this.config_path), env_debug_options.path);
           dep_node = await this.loadLocalService(svc_path);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);
