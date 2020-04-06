@@ -77,7 +77,10 @@
     "dirname": "architect",
     "plugins": [
       "@oclif/plugin-help"
-    ]
+    ],
+    "macos": {
+      "identifier": "io.architect.cli"
+    }
   },
   "repository": "architect-team/architect-cli",
   "scripts": {
@@ -86,7 +89,7 @@
     "fix": "eslint --ext .ts,.js . --fix",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
+    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"

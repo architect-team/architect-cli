@@ -1,0 +1,93 @@
+name: CLI - Cut Release Candidate
+
+on: push
+
+env:
+  CI: true
+  PRERELEASE_PREFIX: rc
+  NPM_CACHE_NAME: cli-node-modules
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+      - run: npm run lint
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x, 11.x, 12.x]
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: recursive
+      - name: Get npm cache directory
+        id: npm-cache
+        run: |
+          echo "::set-output name=dir::$(npm config get cache)"
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.npm-cache.outputs.dir }}
+          key: ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.NPM_CACHE_NAME }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm test
+  cut_release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+      - run: npm run build
+      - name: Bump NPM version
+        id: npm-version-bump
+        run: |
+          echo "::set-output name=version::$(npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX})"
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add package.json package-lock.json
+          git commit -m "New RC from commit: ${{ github.sha }}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish
+      - name: oclif build
+        run: sudo npx oclif-dev pack
+      - name: Archive artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}

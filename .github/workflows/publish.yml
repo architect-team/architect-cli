@@ -1,0 +1,105 @@
+name: Publish CLI and dependency manager
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  CI: true
+  NPM_CACHE_NAME: cli-node-modules
+
+jobs:
+  publish_dependency_manager:
+    name: Publish Dependency Manager
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+        working-directory: ./src/dependency-manager
+      - run: npm run build
+        working-directory: ./src/dependency-manager
+      - name: Set NPM version
+        id: npm-version-bump
+        run: |
+          npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add package.json package-lock.json
+          git commit -m "Published ${GITHUB_REF/refs\/tags\//}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+        working-directory: ./src/dependency-manager
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish
+        working-directory: ./src/dependency-manager
+  publish_cli:
+    name: Publish CLI
+    runs-on: ubuntu-latest
+    needs: [publish_dependency_manager]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: npm install
+      - run: npm run build
+      - name: Set NPM version
+        id: npm-version-bump
+        run: |
+          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)"
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add package.json package-lock.json
+          git commit -m "Published ${GITHUB_REF/refs\/tags\//}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+      - name: oclif pack
+        run: sudo npx oclif-dev pack
+      - name: Archive artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish
+  attach_binaries_to_release:
+    name: Attach CLI binaries to the release
+    runs-on: ubuntu-latest
+    needs: [publish_cli]
+    strategy:
+      matrix:
+        artifact_suffix:
+          - .tar.gz # base artifact
+          - -linux-arm.tar.gz
+          - -linux-x64.tar.gz
+          - -win32-x64.tar.gz
+          - -win32-x86.tar.gz
+          - -darwin-x64.tar.gz
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: dist
+      - name: Find artifact path
+        id: find-artifact
+        run: |
+          VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
+          ARTIFACT_PATH=$(find ./dist -type f -name "architect-${VERSION}${{ matrix.artifact_suffix }}")
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=path::${ARTIFACT_PATH}"
+      - name: Upload artifact
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.find-artifact.outputs.path }}
+          asset_name: architect-cli-${{ steps.find-artifact.outputs.version }}${{ matrix.artifact_suffix }}
+          asset_content_type: application/gzip
