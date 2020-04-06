@@ -44,10 +44,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return `${this.service_config.getName()}:${this.tag}`;
   }
 
-  get api() {
-    return this.service_config.getApiSpec();
-  }
-
   get interfaces() {
     return this.service_config.getInterfaces();
   }
@@ -56,6 +52,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
    * @override
    */
   get protocol() {
-    return this.api.type === 'grpc' ? '' : 'http://';
+    return this.service_config.getApiSpec().type === 'grpc' ? '' : 'http://';
   }
 }

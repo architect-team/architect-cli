@@ -140,7 +140,7 @@ export default class Install extends Command {
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
-      switch (target.api.type) {
+      switch (target.service_config.getApiSpec().type) {
         case 'grpc':
           return this.genGrpcStubs(source, target.env_ref.replace(/-/g, '_'), target_api_definitions);
       }
