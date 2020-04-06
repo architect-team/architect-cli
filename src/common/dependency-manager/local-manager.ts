@@ -10,13 +10,15 @@ import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
 
+declare type LinkedServicesMap = { [serviceName: string]: string };
 
 export default class LocalDependencyManager extends DependencyManager {
   graph: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
+  linked_services: LinkedServicesMap;
 
-  constructor(api: AxiosInstance, config_path?: string) {
+  constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}) {
     const env_config = config_path
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
@@ -32,10 +34,11 @@ export default class LocalDependencyManager extends DependencyManager {
     this.graph = new LocalDependencyGraph(env_config.__version);
     this.api = api;
     this.config_path = config_path || '';
+    this.linked_services = linked_services;
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path);
+  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}): Promise<LocalDependencyManager> {
+    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
 
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
@@ -44,12 +47,14 @@ export default class LocalDependencyManager extends DependencyManager {
         await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
+        const [name, tag] = ref.split(':');
 
-        if (env_svc_cfg.debug) {
+        if (env_svc_cfg.debug?.path) {
           const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
           svc_node = await dependency_manager.loadLocalService(svc_path);
+        } else if (linked_services.hasOwnProperty(name)) {
+          svc_node = await dependency_manager.loadLocalService(linked_services[name]);
         } else {
-          const [name, tag] = ref.split(':');
           svc_node = await dependency_manager.loadService(name, tag);
         }
         await dependency_manager.loadDatastores(svc_node);
@@ -126,6 +131,8 @@ export default class LocalDependencyManager extends DependencyManager {
         if (env_services && env_services.debug) {
           const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
           dep_node = await this.loadLocalService(svc_path);
+        } else if (this.linked_services.hasOwnProperty(dep_name)) {
+          dep_node = await this.loadLocalService(this.linked_services[dep_name]);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);
         }

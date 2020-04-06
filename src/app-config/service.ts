@@ -7,9 +7,12 @@ import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
+declare type LinkedServicesMap = { [serviceName: string]: string };
+
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
+  linkedServices: LinkedServicesMap = {};
   _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
@@ -35,6 +38,47 @@ export default class AppService {
     this._api = axios.create({
       baseURL: this.config.api_host,
     });
+
+    const linkedServicesFile = path.join(config_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
+    if (fs.existsSync(linkedServicesFile)) {
+      this.linkedServices = fs.readJSONSync(linkedServicesFile) as LinkedServicesMap;
+    }
+  }
+
+  private saveLinkedServices() {
+    const linkedServicesFile = path.join(this.config.getConfigDir(), ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
+    fs.writeJSONSync(linkedServicesFile, this.linkedServices);
+  }
+
+  linkServicePath(serviceName: string, servicePath: string) {
+    this.linkedServices[serviceName] = servicePath;
+    this.saveLinkedServices();
+  }
+
+  unlinkService(serviceNameOrPath: string): string {
+    let res = serviceNameOrPath;
+
+    if (this.linkedServices.hasOwnProperty(serviceNameOrPath)) {
+      delete this.linkedServices[serviceNameOrPath];
+    } else {
+      this.linkedServices = Object.entries(this.linkedServices).reduce((linkedServices, [serviceName, servicePath]) => {
+        if (servicePath !== serviceNameOrPath) {
+          linkedServices[serviceName] = servicePath;
+        } else {
+          res = serviceName;
+        }
+
+        return linkedServices;
+      }, {} as LinkedServicesMap);
+    }
+
+    this.saveLinkedServices();
+    return res;
+  }
+
+  unlinkAllServices() {
+    this.linkedServices = {};
+    this.saveLinkedServices();
   }
 
   saveConfig() {
