@@ -75,8 +75,8 @@ export default class Init extends Command {
         message: 'What environment parameter should be enriched with the location of this dependency?',
         validate: (value: string) => {
           const match = value.match(/[A-Z|0-9|_]+/g);
-          if (!match || match.length !== 1) {
-            return 'Variable must contain only uppercase letters and underscores';
+          if (!match || match.length !== 1 || match[0] !== value) {
+            return 'Variable must contain only uppercase letters, numbers, and underscores';
           }
           return true;
         },
@@ -101,8 +101,8 @@ export default class Init extends Command {
         name: 'var_name',
         message: 'What is the name of this parameter?',
         validate: (value: string) => {
-          const match = value.match(/[A-Z|0-9|_]+/);
-          if (!match?.length) {
+          const match = value.match(/[A-Z|0-9|_]+/g);
+          if (!match || match.length !== 1 || match[0] !== value) {
             return 'Variable must contain only uppercase letters, numbers, and underscores';
           }
           return true;
