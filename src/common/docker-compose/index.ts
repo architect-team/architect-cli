@@ -82,7 +82,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         }
 
         const env_service = dependency_manager.environment.getServices()[node.ref];
-        const env_service_debug = env_service.getDebug();
+        const env_service_debug = env_service?.getDebug();
         if (env_service_debug) {
           if (env_service_debug.dockerfile) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
