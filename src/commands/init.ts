@@ -90,8 +90,8 @@ export default class Init extends Command {
     ];
 
     const { add_another, ...answers } = await inquirer.prompt(prompts);
-    const newInputs = [...inputs, answers];
-    return add_another ? this.promptDependencies(newInputs) : newInputs;
+    const new_inputs = [...inputs, answers];
+    return add_another ? this.promptDependencies(new_inputs) : new_inputs;
   }
 
   private async promptVariables(inputs: any = []): Promise<any> {
@@ -127,8 +127,8 @@ export default class Init extends Command {
     ];
 
     const { add_another, ...answers } = await inquirer.prompt(prompts);
-    const newInputs = [...inputs, answers];
-    return add_another ? this.promptVariables(newInputs) : newInputs;
+    const new_inputs = [...inputs, answers];
+    return add_another ? this.promptVariables(new_inputs) : new_inputs;
   }
 
   private async promptQuestions(): Promise<ServiceConfig> {
@@ -200,7 +200,7 @@ export default class Init extends Command {
       ...flags,
     };
     if (dependency_answers.length) {
-      const dependency_dict = dependency_answers.reduce((acc: any, val: any) => {
+      config.dependencies = dependency_answers.reduce((acc: any, val: any) => {
         let service_name;
         let service_tag;
         const file_path = path.join(val.dependency_name_or_path, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
@@ -227,18 +227,16 @@ export default class Init extends Command {
 
         return acc;
       }, {});
-      config.dependencies = dependency_dict;
     }
 
     if (variable_answers.length) {
-      const var_dict = variable_answers.reduce((acc: any, val: any) => {
+      config.parameters = variable_answers.reduce((acc: any, val: any) => {
         acc[val.var_name] = {
           required: val.var_required,
           default: val.var_default || undefined,
         };
         return acc;
       }, {});
-      config.parameters = var_dict;
     }
 
     return ServiceConfigBuilder.buildFromJSON(config);
