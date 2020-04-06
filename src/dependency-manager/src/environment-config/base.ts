@@ -26,9 +26,6 @@ export abstract class EnvironmentConfig {
   getServiceDetails(key: string): EnvironmentService | undefined {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
-    if (!ref) {
-      throw new Error(`Service ${key} not found in environment config`);
-    }
-    return services[ref];
+    return ref ? services[ref] : undefined;
   }
 }

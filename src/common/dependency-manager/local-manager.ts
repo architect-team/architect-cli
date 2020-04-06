@@ -40,7 +40,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
 
-      if (!env_svc_cfg.getInterfaces()._default) {
+      if (env_svc_cfg.getInterfaces()) {
         await dependency_manager.loadExternalService(env_svc_cfg, ref);
       } else {
         let svc_node: ServiceNode;
@@ -121,7 +121,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
 
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (!(env_service!.getInterfaces()._default)) {
+      if (env_service!.getInterfaces()) {
         await this.loadExternalService(env_service!, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;

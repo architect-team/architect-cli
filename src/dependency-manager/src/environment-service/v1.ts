@@ -36,11 +36,15 @@ export class EnvironmentServiceV1 extends EnvironmentService {
   datastores: { [key: string]: ServiceDatastoreV1 } = {};
   ingress?: IngressSpecV1;
   debug?: DebugSpecV1;
-  interfaces: { [key: string]: InterfaceSpecV1 } = {};
+  interfaces?: { [key: string]: InterfaceSpecV1 } = {};
 
-  getInterfaces(): { [s: string]: InterfaceSpecV1 } {
-    const port = this.port || 8080;
-    return Object.keys(this.interfaces || {}).length ? this.interfaces! : { _default: { port, host: this.host! } };
+  getInterfaces(): { [s: string]: InterfaceSpecV1 } | undefined {
+    if (Object.keys(this.interfaces || {}).length) {
+      return this.interfaces;
+    } else if (this.host && this.port) {
+      return { _default: { host: this.host, port: this.port } };
+    }
+    return undefined;
   }
 
   getHost() {

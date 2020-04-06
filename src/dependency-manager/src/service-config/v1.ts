@@ -74,7 +74,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   api: ApiSpecV1 = {
     type: 'rest',
   };
-  interfaces?: { [s: string]: InterfaceSpecV1 } = {};
+  interfaces: { [s: string]: InterfaceSpecV1 } = {};
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
   platforms: { [s: string]: any } = {};

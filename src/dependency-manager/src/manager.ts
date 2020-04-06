@@ -325,7 +325,7 @@ export default abstract class DependencyManager {
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service?.getHost() && env_service.getPort()) {
+      if (env_service?.getInterfaces()) {
         const external_node = await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
         const edge = new ServiceEdge(parent_node.ref, external_node.ref);
         this.graph.addEdge(edge);

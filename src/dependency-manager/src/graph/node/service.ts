@@ -49,7 +49,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get interfaces() {
-    return this.service_config.getInterfaces() || {};
+    return this.service_config.getInterfaces();
   }
 
   /**
