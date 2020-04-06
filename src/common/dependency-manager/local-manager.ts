@@ -1,8 +1,11 @@
 import { AxiosInstance } from 'axios';
 import path from 'path';
 import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
+import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
@@ -17,6 +20,14 @@ export default class LocalDependencyManager extends DependencyManager {
     const env_config = config_path
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
+
+    // Only include in cli since it will read files off disk
+    for (const vault of Object.values(env_config.getVaults())) {
+      vault.client_token = readIfFile(vault.client_token);
+      vault.role_id = readIfFile(vault.role_id);
+      vault.secret_id = readIfFile(vault.secret_id);
+    }
+
     super(env_config);
     this.graph = new LocalDependencyGraph(env_config.__version);
     this.api = api;
@@ -43,6 +54,15 @@ export default class LocalDependencyManager extends DependencyManager {
         }
         await dependency_manager.loadDatastores(svc_node);
         dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
+
+        if (env_svc_cfg.ingress) {
+          const gateway = new GatewayNode({
+            ports: { target: 80, expose: await dependency_manager.getServicePort(80) },
+            parameters: {},
+          });
+          dependency_manager.graph.addNode(gateway);
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_svc_cfg.ingress.subdomain));
+        }
       }
     }
 
@@ -56,8 +76,8 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  protected async getServicePort(): Promise<number> {
-    return PortUtil.getAvailablePort();
+  protected async getServicePort(starting_port?: number): Promise<number> {
+    return PortUtil.getAvailablePort(starting_port);
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
@@ -69,13 +89,14 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     const env_service = this.environment.getServiceDetails(`${config.getName()}:latest`);
+    const configPort = config.getPort();
     const node = new LocalServiceNode({
-      service_path: service_path,
+      service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
       image: config.getImage(),
       tag: 'latest',
       ports: {
-        target: env_service?.port ? env_service.port : 8080,
+        target: env_service?.port ? env_service.port : (configPort ? configPort : 8080),
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
@@ -83,10 +104,6 @@ export default class LocalDependencyManager extends DependencyManager {
         config.getParameters(),
       ),
     });
-
-    if (config.getDebugOptions()) {
-      node.command = config.getDebugOptions()?.command;
-    }
 
     this.graph.addNode(node);
     return node;
@@ -140,7 +157,7 @@ export default class LocalDependencyManager extends DependencyManager {
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
       ports: {
-        target: 8080,
+        target: config.getPort() || 8080,
         expose: await this.getServicePort(),
       },
       parameters: await this.getParamValues(
@@ -150,5 +167,15 @@ export default class LocalDependencyManager extends DependencyManager {
     });
     this.graph.addNode(node);
     return node;
+  }
+
+  protected loadParameters() {
+    for (const node of this.graph.nodes) {
+      for (const [key, value] of Object.entries(node.parameters)) {
+        // Only include in cli since it will read files off disk
+        node.parameters[key] = readIfFile(value);
+      }
+    }
+    super.loadParameters();
   }
 }

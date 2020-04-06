@@ -10,9 +10,7 @@
       ],
       "environment": {
         "HOST": "architect.division-service-grpc.latest",
-        "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/division-service-grpc",
-        "ARCHITECT": "{\"architect/division-service-grpc\":{\"host\":\"architect.division-service-grpc.latest\",\"port\":\"8080\",\"api\":\"grpc\",\"datastores\":{},\"subscriptions\":{}},\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
+        "PORT": "8080"
       },
       "build": {
         "context": "/test/calculator/division-service/",
@@ -34,9 +32,7 @@
       ],
       "environment": {
         "HOST": "architect.subtraction-service-rest.latest",
-        "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/subtraction-service-rest",
-        "ARCHITECT": "{\"architect/subtraction-service-rest\":{\"host\":\"http://architect.subtraction-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{},\"subscriptions\":{}},\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\"}}"
+        "PORT": "8080"
       },
       "build": {
         "context": "/test/calculator/subtraction-services/go/rest/",
@@ -55,9 +51,7 @@
       ],
       "environment": {
         "HOST": "architect.addition-service-rest.latest",
-        "PORT": "8080",
-        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest",
-        "ARCHITECT": "{\"architect/addition-service-rest\":{\"host\":\"http://architect.addition-service-rest.latest\",\"port\":\"8080\",\"api\":\"rest\",\"datastores\":{\"primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"POSTGRES_USER\":\"postgres\",\"username\":\"postgres\",\"POSTGRES_PASSWORD\":\"architect\",\"password\":\"architect\",\"POSTGRES_DB\":\"addition_service\",\"name\":\"addition_service\"}},\"subscriptions\":{}}}"
+        "PORT": "8080"
       },
       "build": {
         "context": "/test/calculator/addition-service/rest/",
@@ -78,14 +72,9 @@
       "environment": {
         "HOST": "architect.addition-service-rest.latest.primary",
         "PORT": "5432",
-        "ARCHITECT_CURRENT_SERVICE": "architect/addition-service-rest.primary",
-        "ARCHITECT": "{\"architect/addition-service-rest.primary\":{\"host\":\"architect.addition-service-rest.latest.primary\",\"port\":\"5432\",\"datastores\":{},\"subscriptions\":{}}}",
         "POSTGRES_USER": "postgres",
-        "username": "postgres",
         "POSTGRES_PASSWORD": "architect",
-        "password": "architect",
-        "POSTGRES_DB": "addition_service",
-        "name": "addition_service"
+        "POSTGRES_DB": "addition_service"
       },
       "image": "postgres:10"
     }

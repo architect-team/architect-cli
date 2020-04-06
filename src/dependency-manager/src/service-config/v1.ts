@@ -32,7 +32,6 @@ interface ServiceDatastoreV1 {
 interface ServiceParameterV1 {
   description?: string;
   default?: string | number;
-  alias?: string;
   required?: boolean;
   build_arg?: boolean;
 }
@@ -58,6 +57,9 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
+  port?: string;
+  command?: string | string[];
+  entrypoint?: string | string[];
   dependencies: { [s: string]: string } = {};
   language?: string;
   debug?: string;
@@ -78,7 +80,6 @@ export class ServiceConfigV1 extends ServiceConfig {
         default: param.default,
         required: param.required !== false && !('default' in param),
         description: param.description || '',
-        aliases: param.alias ? [param.alias] : [],
         build_arg: param.build_arg,
       };
       return res;
@@ -95,6 +96,14 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getImage(): string {
     return this.image || '';
+  }
+
+  getCommand(): string | string[] {
+    return this.command || '';
+  }
+
+  getEntrypoint(): string | string[] {
+    return this.entrypoint || '';
   }
 
   getDependencies(): { [s: string]: string } {
@@ -181,5 +190,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getPlatforms(): { [s: string]: any } {
     return this.platforms;
+  }
+
+  getPort(): number | undefined {
+    return this.port ? Number(this.port) : undefined;
   }
 }

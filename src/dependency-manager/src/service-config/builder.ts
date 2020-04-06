@@ -1,8 +1,8 @@
-import path from 'path';
-import fs from 'fs-extra';
 import { plainToClass } from 'class-transformer';
-import { ServiceConfigV1 } from './v1';
+import fs from 'fs-extra';
+import path from 'path';
 import { ServiceConfig } from './base';
+import { ServiceConfigV1 } from './v1';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {
@@ -16,7 +16,10 @@ export class ServiceConfigBuilder {
   static CONFIG_FILENAME = 'architect.json';
 
   static buildFromPath(service_path: string): ServiceConfig {
-    const config_path = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
+    let config_path = service_path;
+    if (!service_path.endsWith('.json')) {
+      config_path = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
+    }
     if (!fs.existsSync(config_path)) {
       throw new MissingConfigFileError(config_path);
     }
@@ -29,8 +32,11 @@ export class ServiceConfigBuilder {
   }
 
   static saveToPath(service_path: string, config: ServiceConfig) {
-    const configPath = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
-    fs.writeJSONSync(configPath, config, {
+    let config_path = service_path;
+    if (!service_path.endsWith('.json')) {
+      config_path = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
+    }
+    fs.writeJSONSync(config_path, config, {
       spaces: 2,
     });
   }

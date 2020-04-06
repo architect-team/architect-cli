@@ -8,7 +8,6 @@ interface RestSubscriptionData {
 export interface ServiceParameter {
   description: string;
   default?: string | number | ValueFromParameter | DatastoreValueFromParameter;
-  aliases: string[];
   required: boolean;
   build_arg?: boolean;
 }
@@ -53,7 +52,7 @@ export interface ServiceLivenessProbe {
 }
 
 export interface ServiceDebugOptions {
-  command: string;
+  command: string | string[];
 }
 
 export abstract class ServiceConfig {
@@ -61,6 +60,8 @@ export abstract class ServiceConfig {
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
+  abstract getCommand(): string | string[];
+  abstract getEntrypoint(): string | string[];
   abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
@@ -71,4 +72,5 @@ export abstract class ServiceConfig {
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
+  abstract getPort(): number | undefined;
 }

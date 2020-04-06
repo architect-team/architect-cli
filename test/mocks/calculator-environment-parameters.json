@@ -13,6 +13,15 @@
     "architect/addition-service-rest:latest": {
       "debug": {
         "path": "../calculator/addition-service/rest/"
+      },
+      "parameters": {
+        "DB_PRIMARY_HOST": {
+          "valueFrom": {
+            "datastore": "primary",
+            "value": "postgres://dev:dev@$HOST:$PORT/sponsored-products_development"
+          }
+        },
+        "DB_PRIMARY_PORT": 5432
       }
     }
   }

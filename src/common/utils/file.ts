@@ -2,11 +2,11 @@ import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
 
-export const readIfFile = async (string_or_path: string): Promise<string> => {
-  if (string_or_path && string_or_path.startsWith('file:')) {
-    const res = await fs.readFile(path.resolve(untildify(string_or_path.slice('file:'.length))), 'utf-8');
+export const readIfFile = (any_or_path: any): any => {
+  if (any_or_path && any_or_path.startsWith && any_or_path.startsWith('file:')) {
+    const res = fs.readFileSync(path.resolve(untildify(any_or_path.slice('file:'.length))), 'utf-8');
     return res.trim();
   } else {
-    return string_or_path;
+    return any_or_path;
   }
 };

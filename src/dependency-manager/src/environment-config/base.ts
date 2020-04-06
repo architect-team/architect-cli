@@ -16,7 +16,9 @@ export interface EnvironmentVault {
   type: string;
   host: string;
   description?: string;
-  access_token: string;
+  client_token?: string;
+  role_id?: string;
+  secret_id?: string;
 }
 
 export interface EnvironmentService {
@@ -33,6 +35,7 @@ export interface EnvironmentService {
     path: string;
     dockerfile?: string;
     volumes?: string[];
+    entrypoint?: string | string[];
   };
 }
 

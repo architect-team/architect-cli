@@ -20,7 +20,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.3.15 darwin-x64 node-v11.15.0
+@architect-io/cli/0.3.19 win32-x64 node-v12.14.1
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -65,7 +65,7 @@ OPTIONS
   -t, --tag=tag                  [default: latest] Tag to give to the new Docker image(s)
 ```
 
-_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.3.15/src/commands/build.ts)_
+_See code: [src\commands\build.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src\commands\build.ts)_
 
 ## `architect config:get OPTION`
 
@@ -82,7 +82,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.3.15/src/commands/config/get.ts)_
+_See code: [src\commands\config\get.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src\commands\config\get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -100,7 +100,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.3.15/src/commands/config/set.ts)_
+_See code: [src\commands\config\set.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src\commands\config\set.ts)_
 
 ## `architect config:view`
 
@@ -117,7 +117,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.15/src/commands/config/view.ts)_
+_See code: [src\commands\config\view.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src\commands\config\view.ts)_
 
 ## `architect deploy [ENVIRONMENT_CONFIG]`
 
@@ -137,8 +137,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1585063705042.j
-                                   son] Path where the compose file should be written to
+                                   /tmp/architect-deployment-1585063705042.json] Path where the compose file should be written to
 
   --auto_approve
 ```
@@ -204,6 +203,7 @@ ALIASES
 ```
 
 _See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.3.15/src/commands/environments/create.ts)_
+
 
 ## `architect environments:destroy NAMESPACED_ENVIRONMENT`
 
@@ -414,9 +414,9 @@ USAGE
 OPTIONS
   -e, --environment=environment  Path to an environment config including local services to build
   -h, --help                     show CLI help
+  -i, --image=image              The docker image of the service.
   -s, --services=services        Path to a service to build
   -t, --tag=tag                  [default: latest] Tag to give to the new service
-  --no_build                     Docker image that corresponds to the service
 
 ALIASES
   $ architect service:register

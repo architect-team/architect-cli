@@ -11,7 +11,9 @@ export interface DockerService {
   depends_on: string[];
   build?: DockerServiceBuild;
   volumes?: string[];
-  command?: string;
+  command?: string | string[];
+  restart?: string;
+  entrypoint?: string | string[];
 }
 
 export default interface DockerComposeTemplate {

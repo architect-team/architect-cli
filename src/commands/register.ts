@@ -1,19 +1,19 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
+import inquirer from 'inquirer';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildImage, getDigest, pushImage } from '../common/utils/docker';
-import { ServiceConfig } from '../dependency-manager/src';
+import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
 
 export interface CreateServiceVersionInput {
   tag: string;
   digest: string;
-  config: ServiceConfig;
+  config: any;
 }
 
 export default class ServiceRegister extends Command {
@@ -31,16 +31,18 @@ export default class ServiceRegister extends Command {
     environment: flags.string({
       char: 'e',
       description: 'Path to an environment config including local services to build',
-      exclusive: ['service'],
+      exclusive: ['service', 'image'],
     }),
     tag: flags.string({
       char: 't',
       description: 'Tag to give to the new service',
       default: 'latest',
     }),
-    no_build: flags.boolean({
-      description: 'Docker image that corresponds to the service',
-      default: false,
+    image: flags.string({
+      char: 'i',
+      description: 'The docker image of the service.',
+      exclusive: ['environment'],
+      required: false,
     }),
   };
 
@@ -66,27 +68,48 @@ export default class ServiceRegister extends Command {
       if (node instanceof LocalServiceNode) {
 
         let image;
-        if (!flags.no_build) {
-          if (node.service_config.getImage()) {
-            throw new Error('Your Service config specifies an image. In this case please use the --no_build flag to avoid using the Architect repository.');
+        // if both image flag and image in service_config are set, warn and prompt user
+        if (flags.image && node.service_config.getImage()) {
+          const override_image_prompt: any = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'override',
+              message: 'Warning: an image already exists in this service config, are you sure you want to override it?',
+            },
+          ]);
+
+          if (override_image_prompt.override === false) {
+            throw new Error('Okay, exiting...');
           }
-          image = await buildImage(node.service_path, this.app.config.registry_host, flags.tag);
+          image = flags.image;
+        } else if (flags.image) {
+          image = flags.image;
+        } else if (node.service_config.getImage()) {
+          image = node.service_config.getImage();
+        } else {
+          cli.action.start(chalk.blue(`Building Docker image...`));
+          try {
+            image = await buildImage(node, this.app.config.registry_host, flags.tag);
+          } catch (err) {
+            cli.action.stop(chalk.red(`Build failed`));
+            throw new Error(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.service_path}`);
+          }
 
           cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
           try {
             await pushImage(image);
           } catch (err) {
             cli.action.stop(chalk.red(`Push failed for image ${image}`));
+            throw new Error(err);
           }
           cli.action.stop(chalk.green(`Successfully pushed Docker image for ${image}`));
-        } else if (!node.service_config.getImage()) {
-          throw new Error('When using the `--no-build` flag, please specify an `image` in your ServiceConfig.');
-        } else {
-          image = node.service_config.getImage();
         }
 
         const [account_name, _] = node.service_config.getName().split('/');
         const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
+        if (!selected_account) {
+          throw new Error(`You do not have access to the account specified in your service config: ${account_name}`);
+        }
 
         cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
         const digest = await getDigest(image).catch(e => {
@@ -95,10 +118,15 @@ export default class ServiceRegister extends Command {
         });
         cli.action.stop(chalk.green(`Image verified`));
 
+        const image_without_tag = strip_tag_from_image(image); // we don't need the tag on our image because we use the digest as the key.
+
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config: node.service_config,
+          config: {
+            ...node.service_config,
+            image: image_without_tag,
+          },
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);
