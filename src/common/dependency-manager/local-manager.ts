@@ -134,7 +134,7 @@ export default class LocalDependencyManager extends DependencyManager {
           const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
           dep_node = await this.loadLocalService(svc_path);
         } else if (this.linked_services.hasOwnProperty(dep_name)) {
-          console.log(`Using locally linked ${chalk.blue(name)} found at ${chalk.blue(this.linked_services[name])}`);
+          console.log(`Using locally linked ${chalk.blue(dep_name)} found at ${chalk.blue(this.linked_services[dep_name])}`);
           dep_node = await this.loadLocalService(this.linked_services[dep_name]);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);

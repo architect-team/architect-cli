@@ -21,6 +21,8 @@ describe('link', () => {
     const config = new AppConfig('', {
       log_level: 'info',
     });
+    const tmp_linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
+    fs.writeJSONSync(tmp_linked_services_file, {});
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
