@@ -124,13 +124,12 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_resolvers = [];
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-
       const env_services = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
       if (env_services?.host && env_services?.port) {
         await this.loadExternalService(env_services, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
-        if (env_services && env_services.debug) {
+        if (env_services?.debug?.path) {
           const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
           dep_node = await this.loadLocalService(svc_path);
         } else if (this.linked_services.hasOwnProperty(dep_name)) {
