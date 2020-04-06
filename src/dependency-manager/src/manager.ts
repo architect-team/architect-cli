@@ -361,7 +361,7 @@ export default abstract class DependencyManager {
         }
       }
 
-      const env_config_interfaces = Object.keys(interfaces || {});
+      const env_config_interfaces = Object.keys(interfaces);
       const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
       const union = new Set([...expected_interfaces, ...env_config_interfaces]);
       if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {

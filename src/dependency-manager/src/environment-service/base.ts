@@ -1,5 +1,4 @@
 interface InterfaceSpec {
-  description?: string;
   host: string;
   port: number;
 }
