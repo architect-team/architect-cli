@@ -36,6 +36,10 @@ export default class Unlink extends Command {
     }
 
     const removedServiceName = this.app.unlinkService(args.servicePathOrName);
-    this.log(chalk.green(`Successfully unlinked ${removedServiceName}`));
+    if (!removedServiceName) {
+      this.log(chalk.red(`No linked service found matching, ${args.servicePathOrName}`));
+    } else {
+      this.log(chalk.green(`Successfully unlinked ${removedServiceName}`));
+    }
   }
 }

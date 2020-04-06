@@ -55,11 +55,12 @@ export default class AppService {
     this.saveLinkedServices();
   }
 
-  unlinkService(serviceNameOrPath: string): string {
-    let res = serviceNameOrPath;
+  unlinkService(serviceNameOrPath: string): string | undefined {
+    let res;
 
     if (this.linkedServices.hasOwnProperty(serviceNameOrPath)) {
       delete this.linkedServices[serviceNameOrPath];
+      res = serviceNameOrPath;
     } else {
       this.linkedServices = Object.entries(this.linkedServices).reduce((linkedServices, [serviceName, servicePath]) => {
         if (servicePath !== serviceNameOrPath) {

@@ -1,4 +1,5 @@
 import { AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import path from 'path';
 import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -53,6 +54,7 @@ export default class LocalDependencyManager extends DependencyManager {
           const svc_path = path.join(path.dirname(env_config_path), env_svc_cfg.debug.path);
           svc_node = await dependency_manager.loadLocalService(svc_path);
         } else if (linked_services.hasOwnProperty(name)) {
+          console.log(`Using locally linked ${chalk.blue(name)} found at ${chalk.blue(linked_services[name])}`);
           svc_node = await dependency_manager.loadLocalService(linked_services[name]);
         } else {
           svc_node = await dependency_manager.loadService(name, tag);
@@ -132,6 +134,7 @@ export default class LocalDependencyManager extends DependencyManager {
           const svc_path = path.join(path.dirname(this.config_path), env_services.debug.path);
           dep_node = await this.loadLocalService(svc_path);
         } else if (this.linked_services.hasOwnProperty(dep_name)) {
+          console.log(`Using locally linked ${chalk.blue(name)} found at ${chalk.blue(this.linked_services[name])}`);
           dep_node = await this.loadLocalService(this.linked_services[dep_name]);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);
