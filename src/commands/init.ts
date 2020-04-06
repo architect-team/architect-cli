@@ -1,5 +1,5 @@
 import { flags } from '@oclif/command';
-import fs from 'fs';
+import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import path from 'path';
 import Command from '../base-command';
@@ -54,26 +54,94 @@ export default class Init extends Command {
     parse: (value: string) => value.toLowerCase(),
   }];
 
-  private async promptQuestions(): Promise<ServiceConfig> {
-    const { args, flags } = this.parse(Init);
-    const { rows: user_accounts } = await this.get_accounts();
+  private async promptDependencies(inputs: any = []): Promise<any> {
+    const prompts = [
+      {
+        type: 'input',
+        name: 'dependency_name',
+        message: 'Please provide the name of or file path to a dependent service',
+        validate: (value: string) => {
+          const file_path = path.join(value, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+          if (fs.existsSync(file_path)) {
+            return true
+          }
+          const [service_account, service_name] = value.split('/');
+          if (service_account && service_name.split(':').length === 2) {
+            return true;
+          }
+          return 'Must be a path to an architect.json file or a service name of the form account/name:tag';
+        }
+      },
+      {
+        type: 'input',
+        name: 'dependency_address_var',
+        message: 'What environment parameter should be enriched with the location of this dependency?',
+        validate: (value: string) => {
+          const match = value.match(/\b[A-Z|_]+\b/);
+          if (!match?.length) {
+            return 'Variable must contain only uppercase letters and underscores'
+          }
+          return true;
+        }
+      },
+      {
+        type: 'confirm',
+        name: 'add_another',
+        message: 'Any more dependencies?',
+        default: true
+      }
+    ];
 
-    let account_answer;
-    if (!flags.account) {
-      account_answer = await inquirer.prompt([{
-        type: 'list',
-        name: 'account',
-        message: 'Which account would you like to create the service for?',
-        choices: user_accounts.map((a: any) => a.name),
-        when: !flags.account,
-      }]);
-    }
+    const { add_another, ...answers } = await inquirer.prompt(prompts);
+    const newInputs = [...inputs, answers];
+    return add_another ? this.promptDependencies(newInputs) : newInputs;
+  }
+
+  private async promptVariables(inputs: any = []): Promise<any> {
+    const prompts = [
+      {
+        type: 'input',
+        name: 'var_name',
+        message: 'What is the name of this parameter?',
+        validate: (value: string) => {
+          const match = value.match(/\b[A-Z|_]+\b/);
+          if (!match?.length) {
+            return 'Variable must contain only uppercase letters and underscores'
+          }
+          return true;
+        }
+      },
+      {
+        type: 'confirm',
+        name: 'var_required',
+        message: 'Is this parameter required?'
+      },
+      {
+        type: 'input',
+        name: 'var_default',
+        message: 'What is the default value of this parameter (if any)?'
+      },
+      {
+        type: 'confirm',
+        name: 'add_another',
+        message: 'Any more parameters?',
+        default: true
+      }
+    ];
+
+    const { add_another, ...answers } = await inquirer.prompt(prompts);
+    const newInputs = [...inputs, answers];
+    return add_another ? this.promptVariables(newInputs) : newInputs;
+  }
+
+  private async promptQuestions(): Promise<ServiceConfig> {
+    const { flags } = this.parse(Init);
 
     let answers = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
-        default: `${flags.account || account_answer?.account}/${args.name}`,
+        message: 'Name of service (account/name)',
         filter: value => value.toLowerCase(),
         validate: (val: string) => {
           const parts = val.split('/');
@@ -86,32 +154,76 @@ export default class Init extends Command {
           return true;
         },
       },
+    ]);
+
+    let has_dependencies = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'has_dependencies',
+        message: 'Does your service connect to any dependencies?',
+      }
+    ]);
+
+    let dependency_answers;
+    if (has_dependencies.has_dependencies) {
+      dependency_answers = await this.promptDependencies([]);
+    }
+
+    let has_variables = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'has_variables',
+        message: 'Does your service expose any configurable parameters?',
+      }
+    ]);
+
+    let variable_answers;
+    if (has_variables.has_variables) {
+      variable_answers = await this.promptVariables([]);
+    }
+
+    const other_answers = await inquirer.prompt([
       {
         type: 'input',
-        name: 'description',
-        default: flags.description,
-        when: !flags.description,
+        name: 'dockerfile',
+        message: 'When running locally, what Dockerfile does this use service use (leave blank to use default)?'
       },
       {
         type: 'input',
-        name: 'keywords',
-        message: 'keywords (comma-separated)',
-        default: flags.keywords,
-        filter: input => input.split(',').map((s: string) => s.trim()),
-        when: !flags.keywords,
-      },
-      {
-        type: 'input',
-        name: 'language',
-        default: flags.language,
-        when: !flags.language,
+        name: 'command',
+        message: 'When running locally, what command should be used to start the service (leave blank to use default docker CMD)?'
       },
     ]);
 
-    answers = {
-      ...answers,
-      ...flags,
+    answers = { ...answers, ...flags };
+    console.log(answers)
+    console.log(dependency_answers)
+    console.log(variable_answers)
+
+    const config: any = {
+      name: answers.name,
+      dockerfile: other_answers.dockerfile,
+      command: other_answers.command
     };
+    config.dependencies = {
+      ...dependency_answers.reduce((acc: any, val: any) => {
+        let service_name;
+        let service_tag;
+        const file_path = path.join(val, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
+        if (fs.existsSync(file_path)) {
+          const architect_json = fs.readJSONSync(file_path);
+          service_name = architect_json.name;
+          service_tag = 'latest';
+        } else {
+          const [name, tag] = val.split(':');
+          service_name = name;
+          service_tag = tag;
+        }
+        acc[service_name] = service_tag;
+        return acc;
+      })
+    };
+    // vars TODO
 
     return ServiceConfigBuilder.buildFromJSON(answers);
   }
@@ -121,16 +233,16 @@ export default class Init extends Command {
 
     const config = await this.promptQuestions();
 
-    let savePath = process.cwd();
-    if (flags.output) {
-      savePath = path.resolve(flags.output);
-    }
+    let savePath = flags.output ? path.resolve(flags.output) : process.cwd();
     savePath = path.join(savePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
     delete config.__version;
     const configJson = JSON.stringify(config, null, 2);
-    fs.writeFileSync(savePath, configJson);
+    // fs.writeFileSync(savePath, configJson);
 
-    this.log(`Service configuration created successfully:`);
-    this.log(configJson);
+    // TODO: also write/append to arc.env.json
+
+    this.log('Success! A manifest for this service has been added at `architect.json`, and an environment config allowing for provisioning a local environment has been added at `arc.env.json`.');
+    this.log('To run this stack locally, run the following command');
+    this.log('$ architect deploy --local arc.env.json');
   }
 }
