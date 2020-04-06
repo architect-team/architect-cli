@@ -57,8 +57,12 @@ describe('deploy', () => {
       const expected = expected_compose.services[svc_key];
 
       // Overwrite expected paths with full directories
-      if (expected.build) {
-        expected.build.context = path.join(__dirname, '../../', expected.build.context.replace(/\/$/, ''));
+      if (expected.build?.context) {
+        expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').toLowerCase();
+      }
+
+      if (input.build?.context) {
+        input.build.context = input.build.context.replace(/\/$/ig, '').toLowerCase();
       }
 
       if (expected.volumes) {
