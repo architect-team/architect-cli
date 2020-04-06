@@ -42,8 +42,10 @@ describe('link', () => {
     expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No config file found at ${bad_path}/architect.json`));
 
     const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    const linked_services = fs.readJSONSync(linked_services_file);
-    expect(linked_services).not.to.have.property('architect/addition-service-rest');
+    if (fs.existsSync(linked_services_file)) {
+      const linked_services = fs.readJSONSync(linked_services_file);
+      expect(linked_services).not.to.have.property('architect/addition-service-rest');
+    }
   });
 
   it('should link service', async () => {
@@ -57,6 +59,7 @@ describe('link', () => {
     expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('architect/addition-service-rest')} to local system at ${chalk.green(service_path)}.`);
 
     const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
+    expect(fs.existsSync(linked_services_file)).to.be.true;
     const linked_services = fs.readJSONSync(linked_services_file);
     expect(linked_services).to.have.property('architect/addition-service-rest', service_path);
   });
