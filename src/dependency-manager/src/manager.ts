@@ -93,6 +93,7 @@ export default abstract class DependencyManager {
         env_params_to_expand[this.scopeEnv(node, 'INTERNAL_HOST')] = internal_host;
       }
       if (external_host || internal_host) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         env_params_to_expand[this.scopeEnv(node, 'HOST')] = external_host ? external_host : internal_host!;
       }
       env_params_to_expand[this.scopeEnv(node, 'EXTERNAL_PORT')] = gateway_port;
@@ -287,11 +288,12 @@ export default abstract class DependencyManager {
       const environment_service_config = this.environment.getServices()[parent_node.ref];
       let dep_node;
 
-      if (environment_service_config?.getDatastores()[ds_name]?.host) {
+      const database_host = environment_service_config?.getDatastores()[ds_name]?.host;
+      if (database_host) {
         const external_port = environment_service_config?.getDatastores()[ds_name]?.port || ds_config.docker.target_port;
         dep_node = new ExternalNode({
           ...dep_node_config,
-          host: environment_service_config.getDatastores()[ds_name].host!,
+          host: database_host,
           ports: [{
             target: external_port,
             expose: external_port,

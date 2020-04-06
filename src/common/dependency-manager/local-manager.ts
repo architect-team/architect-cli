@@ -122,13 +122,13 @@ export default class LocalDependencyManager extends DependencyManager {
 
       const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
       if (env_service?.getInterfaces()) {
-        await this.loadExternalService(env_service!, `${dep_name}:${dep_id}`);
+        await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
       } else {
         let dep_node: ServiceNode;
-        const env_debug_options = env_service!.getDebug();
 
-        if (env_debug_options) {
-          const svc_path = path.join(path.dirname(this.config_path), env_debug_options.path);
+        const debug_path = env_service?.getDebug()?.path;
+        if (debug_path) {
+          const svc_path = path.join(path.dirname(this.config_path), debug_path);
           dep_node = await this.loadLocalService(svc_path);
         } else {
           dep_node = await this.loadService(dep_name, dep_id);
@@ -187,8 +187,9 @@ export default class LocalDependencyManager extends DependencyManager {
   * @override
   */
   async loadServiceConfig(node_ref: string) {
-    if (this.environment.getServices()[node_ref]?.getDebug()?.path) {
-      return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), this.environment.getServices()[node_ref].getDebug()!.path));
+    const debug_path = this.environment.getServices()[node_ref]?.getDebug()?.path;
+    if (debug_path) {
+      return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), debug_path));
     } else {
       const [account_name, service_name, service_tag] = node_ref.split(/\/|:/);
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${service_name}/versions/${service_tag}`);

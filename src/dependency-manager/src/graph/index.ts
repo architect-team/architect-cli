@@ -19,6 +19,7 @@ export default abstract class DependencyGraph {
   addNode(node: DependencyNode): DependencyNode {
     if (!this.nodes_map.has(node.ref)) {
       this.nodes.push(node);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__nodes_map!.set(node.ref, node);
     }
     return node;
@@ -43,6 +44,7 @@ export default abstract class DependencyGraph {
       this.getNodeByRef(edge.to);
 
       this.edges.push(edge);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.__edges_map!.set(edge.ref, edge);
     }
     return edge;
@@ -91,6 +93,7 @@ export default abstract class DependencyGraph {
     const queue = [node_ref];
     while (queue.length > 0) {
       const ref = queue.shift();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node = this.getNodeByRef(ref!);
       const dependents = this.getDependentNodes(node).filter(n => !queue.includes(n.ref));
       const dependencies = this.getNodeDependencies(node);

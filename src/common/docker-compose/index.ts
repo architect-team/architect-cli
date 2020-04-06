@@ -85,7 +85,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         const env_service_debug = env_service.getDebug();
         if (env_service_debug) {
           if (env_service_debug.dockerfile) {
-            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service_debug.dockerfile!);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service_debug.dockerfile);
           }
 
           if (env_service_debug.volumes) {
