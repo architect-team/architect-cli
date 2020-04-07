@@ -170,10 +170,12 @@ export default class LocalDependencyManager extends DependencyManager {
       service_config: config,
       tag: service_digest.tag,
       image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-      ports: [{
-        target: config.getPort() || 8080,
-        expose: await this.getServicePort(),
-      }],
+      ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
+        return {
+          target: value.port,
+          expose: await this.getServicePort(),
+        };
+      })),
       parameters: await this.getParamValues(
         `${config.getName()}:${service_digest.tag}`,
         config.getParameters(),
