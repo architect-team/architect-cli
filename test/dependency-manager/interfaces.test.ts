@@ -41,7 +41,7 @@ describe('interfaces', function () {
         "API_ADDR": {
           "default": {
             "valueFrom": {
-              "dependency": "architect/backend:latest",
+              "dependency": "architect/backend",
               "interface": "main",
               "value": "$HOST:$PORT"
             }
@@ -61,7 +61,7 @@ describe('interfaces', function () {
             "valueFrom": {
               "dependency": "architect/backend:latest",
               "interface": "secondary",
-              "value": "$HOST:$PORT"
+              "value": "$INTERNAL_HOST:$INTERNAL_PORT"
             }
           }
         }

@@ -81,32 +81,41 @@ export default abstract class DependencyManager {
     }
 
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? gateway_node.ports[0].expose.toString() : '80';
+    const gateway_port = gateway_node ? gateway_node.ports[0].expose.toString() : '';
     for (const node of this.graph.nodes) {
-      const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
-      const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
-
-      env_params_to_expand[this.scopeEnv(node, 'EXTERNAL_HOST')] = external_host;
-      if (internal_host) {
-        env_params_to_expand[this.scopeEnv(node, 'INTERNAL_HOST')] = internal_host;
-      }
-      if (external_host || internal_host) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        env_params_to_expand[this.scopeEnv(node, 'HOST')] = external_host ? external_host : internal_host!;
-      }
-      env_params_to_expand[this.scopeEnv(node, 'EXTERNAL_PORT')] = gateway_port;
-      if (node.ports.length) {
-        env_params_to_expand[this.scopeEnv(node, 'INTERNAL_PORT')] = node.ports[0].target.toString();
-      }
-      if (external_host || node.ports.length) {
-        env_params_to_expand[this.scopeEnv(node, 'PORT')] = external_host ? gateway_port : node.ports[0].target.toString();
+      let interfaces: { [key: string]: { host?: string; port: number } } = {};
+      if (node instanceof ServiceNode) {
+        interfaces = node.interfaces;
+      } else if (node instanceof ExternalNode) {
+        interfaces = node.interfaces || { _default: { host: node.host, port: node.ports[0].target } };
+      } else {
+        interfaces = { _default: { port: node.ports[0].target } };
       }
 
-      if ((node instanceof ServiceNode || node instanceof ExternalNode) && node.interfaces && !('_default' in node.interfaces)) {
-        for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-          env_params_to_expand[this.scopeEnv(node, `${interface_name}_HOST`)] = node instanceof ExternalNode ? interface_details.host.toString() : internal_host;
-          env_params_to_expand[this.scopeEnv(node, `${interface_name}_PORT`)] = interface_details.port.toString();
+      for (const [interface_name, interface_details] of Object.entries(interfaces)) {
+        let external_host, internal_host, external_port, internal_port;
+        if (node instanceof ExternalNode) {
+          if (!interface_details.host) {
+            throw new Error('External node needs to override the host');
+          }
+          external_host = interface_details.host;
+          internal_host = interface_details.host;
+          external_port = interface_details.port.toString();
+          internal_port = interface_details.port.toString();
+        } else {
+          external_host = (subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '');
+          internal_host = node.normalized_ref;
+          external_port = gateway_port;
+          internal_port = interface_details.port.toString();
         }
+
+        const prefix = interface_name === '_default' ? '' : `${interface_name}_`;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = external_port ? external_port : internal_port;
       }
 
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
