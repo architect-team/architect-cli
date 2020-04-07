@@ -81,6 +81,22 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
         }
 
+        const volumes = node.service_config.getVolumes();
+        if (volumes) {
+          const existing_volumes = compose.services[node.normalized_ref].volumes || [];
+          const config_volumes = Object.values(volumes).map(spec => {
+            if (spec.mountPath.startsWith('$')) {
+              const volume_path = node.parameters[spec.mountPath.substr(1)];
+              if (!volume_path) {
+                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
+              }
+              return volume_path.toString();
+            }
+            return spec.mountPath;
+          }, []);
+          compose.services[node.normalized_ref].volumes = existing_volumes.concat(config_volumes);
+        }
+
         const env_service = dependency_manager.environment.getServices()[node.ref];
         if (env_service && env_service.debug) {
           if (env_service.debug.dockerfile) {

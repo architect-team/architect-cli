@@ -51,6 +51,13 @@ class ApiSpecV1 {
   liveness_probe?: LivenessProbeV1;
 }
 
+export class ServiceVolumesV1 {
+  [s: string]: {
+    mountPath: string;
+    description?: string;
+  }
+}
+
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
   name = '';
@@ -72,6 +79,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
   platforms: { [s: string]: any } = {};
+  volumes?: ServiceVolumesV1 | undefined;
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -194,5 +202,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getPort(): number | undefined {
     return this.port ? Number(this.port) : undefined;
+  }
+
+  getVolumes(): ServiceVolumesV1 | undefined {
+    return this.volumes;
   }
 }
