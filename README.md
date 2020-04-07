@@ -41,6 +41,7 @@ USAGE
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect init [NAME]`](#architect-init-name)
 * [`architect install [SERVICE_REF]`](#architect-install-service_ref)
+* [`architect link [SERVICEPATH]`](#architect-link-servicepath)
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
 * [`architect platforms [QUERY]`](#architect-platforms-query)
@@ -49,6 +50,7 @@ USAGE
 * [`architect register`](#architect-register)
 * [`architect services [QUERY]`](#architect-services-query)
 * [`architect uninstall DEPENDENCY_NAME`](#architect-uninstall-dependency_name)
+* [`architect unlink [FILE]`](#architect-unlink-file)
 
 ## `architect build`
 
@@ -137,7 +139,7 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
   -o, --compose_file=compose_file  [default:
-                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1586194428715.j
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1586197616985.j
                                    son] Path where the compose file should be written to
 
   --auto_approve
@@ -314,6 +316,20 @@ OPTIONS
 
 _See code: [src/commands/install.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src/commands/install.ts)_
 
+## `architect link [SERVICEPATH]`
+
+Link a local service to the host to be used to power local deployments.
+
+```
+USAGE
+  $ architect link [SERVICEPATH]
+
+OPTIONS
+  -h, --help  show CLI help
+```
+
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src/commands/link.ts)_
+
 ## `architect login`
 
 Login to the Architect Cloud platform
@@ -465,4 +481,20 @@ OPTIONS
 ```
 
 _See code: [src/commands/uninstall.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src/commands/uninstall.ts)_
+
+## `architect unlink [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ architect unlink [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.3.19/src/commands/unlink.ts)_
 <!-- commandsstop -->
