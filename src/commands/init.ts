@@ -17,11 +17,21 @@ export default class Init extends Command {
   static description = 'Generate an Architect service configuration file';
 
   static examples = [
-    `$ architect hello
-? name: architect/test-service
-? description: Test service
-? keywords (comma-separated): test,microservice
-? author: architect`,
+    `$ architect init
+    ? Name of service (account/name) account-name/service-name
+    ? Does your service connect to any dependencies? Yes
+    ? Please provide the name of or file path to a dependent service account-name/dependency:latest
+    ? What environment parameter should be enriched with the location of this dependency? DEPENDENCY_ADDR
+    ? Any more dependencies? No
+    ? Does your service expose any configurable parameters? Yes
+    ? What is the name of this parameter? ENV_PARAM
+    ? Is this parameter required? Yes
+    ? What is the default value of this parameter (if any)? param_value
+    ? Any more parameters? No
+    ? When running locally, what Dockerfile does this use service use (leave blank to use default)? Dockerfile.dev
+    ? When running locally, what command should be used to start the service (leave blank to use default docker CMD)?
+    npm run start:dev
+    Success! A manifest for this service has been added at \`architect.json\`.`,
   ];
 
   static flags = {
@@ -196,7 +206,7 @@ export default class Init extends Command {
     const config: any = {
       name: answers.name,
       dockerfile: docker_command_answers.dockerfile,
-      command: docker_command_answers.command,
+      debug: docker_command_answers.command,
       ...flags,
     };
     if (dependency_answers.length) {
