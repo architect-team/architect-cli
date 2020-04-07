@@ -81,7 +81,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
   platforms: { [s: string]: any } = {};
-  volumes?: ServiceVolumesV1 | undefined;
+  volumes: ServiceVolumesV1 = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
