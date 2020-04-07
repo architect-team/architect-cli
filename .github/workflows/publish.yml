@@ -68,15 +68,15 @@ jobs:
           git add package.json package-lock.json
           git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:
           name: dist
           path: dist
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish
   attach_binaries_to_release:
     name: Attach CLI binaries to the release
     runs-on: ubuntu-latest
