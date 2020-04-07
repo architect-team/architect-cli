@@ -63,7 +63,7 @@ export default class Init extends Command {
             return true;
           }
           const [service_account, service_name] = value.split('/');
-          if (service_account && service_name.split(':').length === 2) {
+          if (service_account && service_name?.split(':').length === 2) {
             return true;
           }
           return 'Must be a path to an architect.json file or a service name of the form account/name:tag';
