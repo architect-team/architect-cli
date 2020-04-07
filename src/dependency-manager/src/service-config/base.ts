@@ -56,7 +56,7 @@ export interface ServiceDebugOptions {
 }
 
 export interface VolumeSpec {
-  mountPath: string;
+  mountPath?: string;
   description?: string;
 }
 
