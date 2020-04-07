@@ -7,6 +7,7 @@ import AppConfig from '../../src/app-config/config';
 import CredentialManager from '../../src/app-config/credentials';
 import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
+import Link from '../../src/commands/link';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import ARCHITECTPATHS from '../../src/paths';
@@ -38,7 +39,11 @@ describe('deploy', () => {
     const compose_spy = sinon.fake.resolves(null);
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
 
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    // Link the addition service
+    const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
+    await Link.run([additionServicePath]);
+
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment-linked-service.json');
     await Deploy.run(['-l', calculator_env_config_path]);
 
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
@@ -52,8 +57,12 @@ describe('deploy', () => {
       const expected = expected_compose.services[svc_key];
 
       // Overwrite expected paths with full directories
-      if (expected.build) {
-        expected.build.context = path.join(__dirname, '../../', expected.build.context);
+      if (expected.build?.context) {
+        expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').toLowerCase();
+      }
+
+      if (input.build?.context) {
+        input.build.context = input.build.context.replace(/\/$/ig, '').toLowerCase();
       }
 
       if (expected.volumes) {

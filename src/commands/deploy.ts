@@ -116,6 +116,7 @@ export default class Deploy extends Command {
     const dependency_manager = await LocalDependencyManager.createFromPath(
       this.app.api,
       path.resolve(untildify(args.environment_config)),
+      this.app.linkedServices,
     );
     const compose = DockerCompose.generate(dependency_manager, flags.build_prod);
     await this.runCompose(compose);
