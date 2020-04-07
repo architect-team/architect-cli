@@ -10,7 +10,7 @@ import AppService from '../../src/app-config/service';
 import Unlink from '../../src/commands/unlink';
 import ARCHITECTPATHS from '../../src/paths';
 
-const addition_service_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/, '');
+const addition_service_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
 
 describe('unlink', () => {
   let tmp_dir = os.tmpdir();

@@ -58,11 +58,11 @@ describe('deploy', () => {
 
       // Overwrite expected paths with full directories
       if (expected.build?.context) {
-        expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').toLowerCase();
+        expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       }
 
       if (input.build?.context) {
-        input.build.context = input.build.context.replace(/\/$/ig, '').toLowerCase();
+        input.build.context = input.build.context.replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       }
 
       if (expected.volumes) {
