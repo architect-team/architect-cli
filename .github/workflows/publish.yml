@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: 'master'
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
@@ -30,7 +32,6 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          git checkout master
           echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)""
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
