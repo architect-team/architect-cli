@@ -32,7 +32,7 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)""
+          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)"
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
