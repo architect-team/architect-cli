@@ -70,8 +70,7 @@ jobs:
         with:
           node-version: '12.x'
       - run: npm install
-      - name: build and pack artifacts
-        run: sudo npx oclif-dev pack
+      - run: npm run build
       - name: Bump NPM version
         id: npm-version-bump
         run: |
@@ -82,12 +81,14 @@ jobs:
           git commit -m "New CLI RC from commit: ${{ github.sha }}"
           git pull
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
+      - name: oclif-dev pack
+        run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:
           name: dist
           path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish

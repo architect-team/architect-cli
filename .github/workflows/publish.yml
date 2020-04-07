@@ -57,8 +57,7 @@ jobs:
         with:
           node-version: '12.x'
       - run: npm install
-      - name: build and pack artifacts
-        run: sudo npx oclif-dev pack
+      - run: npm run build
       - name: Set NPM version
         id: npm-version-bump
         run: |
@@ -68,6 +67,8 @@ jobs:
           git add package.json package-lock.json
           git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+      - name: oclif-dev pack
+        run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:

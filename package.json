@@ -86,8 +86,9 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "fix": "eslint --ext .ts,.js . --fix",
+    "build": "rm -rf ./lib && tsc -b",
     "postpack": "rm -f oclif.manifest.json",
-    "prepack": "rm -rf lib && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "version": "oclif-dev readme && git add README.md"
   },
