@@ -5,6 +5,7 @@ import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import { ServiceVolumeV1 } from '../../dependency-manager/src/service-config/v1';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
@@ -23,7 +24,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         ports: [`${node.ports.expose}:${node.ports.target}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
-      }
+      },
     }
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
@@ -75,42 +76,49 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           compose.services[node.normalized_ref].command = debug_options.command;
         }
 
-        // Mount the src directory
+        let volumes: string[] = [];
         const src_path = path.join(node.service_path, 'src');
         if (fs.pathExistsSync(src_path)) {
-          compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
-        }
-
-        const volumes = node.service_config.getVolumes();
-        if (volumes) {
-          const existing_volumes = compose.services[node.normalized_ref].volumes || [];
-          const config_volumes = Object.values(volumes).map(spec => {
-            if (spec.mountPath.startsWith('$')) {
-              const volume_path = node.parameters[spec.mountPath.substr(1)];
-              if (!volume_path) {
-                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
-              }
-              return volume_path.toString();
-            }
-            return spec.mountPath;
-          }, []);
-          compose.services[node.normalized_ref].volumes = existing_volumes.concat(config_volumes);
+          volumes = [`${src_path}:/usr/src/app/src`]; // Mount the src directory
         }
 
         const env_service = dependency_manager.environment.getServices()[node.ref];
+        const service_volumes = node.service_config.getVolumes();
+        const env_volumes = env_service?.debug?.volumes ? env_service.debug.volumes : {};
+        const all_volumes: { [s: string]: string | ServiceVolumeV1 } = { ...service_volumes, ...env_volumes };
+        if (all_volumes) {
+          const config_volumes = Object.entries(all_volumes).map(([key, spec]) => {
+
+            let vol;
+            if (typeof spec === 'object') {
+              if (spec.mountPath?.startsWith('$')) {
+                const volume_path = node.parameters[spec.mountPath.substr(1)];
+                if (!volume_path) {
+                  throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
+                }
+                vol = volume_path.toString();
+              } else if (spec.mountPath) {
+                vol = spec.mountPath;
+              } else {
+                throw new Error(`mountPath must be specified for volume ${key}`);
+              }
+            } else {
+              vol = spec;
+            }
+
+            const volumeDef = vol.split(':');
+            if (volumeDef.length === 1) {
+              return path.resolve(node.service_path, volumeDef[0]);
+            }
+            return path.resolve(node.service_path, vol.split(':')[0]) + ':' + vol.split(':')[1];
+          }, []);
+          volumes = volumes.concat(config_volumes);
+        }
+        compose.services[node.normalized_ref].volumes = volumes;
+
         if (env_service && env_service.debug) {
           if (env_service.debug.dockerfile) {
             compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
-          }
-
-          if (env_service.debug.volumes) {
-            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => {
-              const volumeDef = v.split(':');
-              if (volumeDef.length === 1) {
-                return path.resolve(node.service_path, volumeDef[0]);
-              }
-              return path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1];
-            });
           }
 
           if (env_service.debug.entrypoint) {

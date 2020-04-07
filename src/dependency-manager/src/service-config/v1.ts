@@ -51,11 +51,13 @@ class ApiSpecV1 {
   liveness_probe?: LivenessProbeV1;
 }
 
+export class ServiceVolumeV1 {
+  mountPath?: string;
+  description?: string;
+}
+
 export class ServiceVolumesV1 {
-  [s: string]: {
-    mountPath: string;
-    description?: string;
-  }
+  [s: string]: ServiceVolumeV1;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
