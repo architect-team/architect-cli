@@ -70,7 +70,8 @@ jobs:
         with:
           node-version: '12.x'
       - run: npm install
-      - run: npm run build
+      - name: build and pack artifacts
+        run: sudo npx oclif-dev pack
       - name: Bump NPM version
         id: npm-version-bump
         run: |
@@ -85,8 +86,6 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
           npm publish
-      - name: oclif build
-        run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:
