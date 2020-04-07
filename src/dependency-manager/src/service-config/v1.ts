@@ -58,26 +58,26 @@ class InterfaceSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
-  name = '';
-  description?: string;
-  keywords?: string[];
-  image?: string;
-  port?: string;
-  command?: string | string[];
-  entrypoint?: string | string[];
-  dependencies: { [s: string]: string } = {};
-  language?: string;
-  debug?: string;
-  parameters: { [s: string]: ServiceParameterV1 } = {};
-  datastores: { [s: string]: ServiceDatastoreV1 } = {};
+  protected name = '';
+  protected description?: string;
+  protected keywords?: string[];
+  protected image?: string;
+  protected port?: string;
+  protected command?: string | string[];
+  protected entrypoint?: string | string[];
+  protected dependencies: { [s: string]: string } = {};
+  protected language?: string;
+  protected debug?: string;
+  protected parameters: { [s: string]: ServiceParameterV1 } = {};
+  protected datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
-  api: ApiSpecV1 = {
+  protected api: ApiSpecV1 = {
     type: 'rest',
   };
-  interfaces: { [s: string]: InterfaceSpecV1 } = {};
-  notifications: ServiceNotificationsV1 = {};
-  subscriptions: ServiceSubscriptionsV1 = {};
-  platforms: { [s: string]: any } = {};
+  protected interfaces: { [s: string]: InterfaceSpecV1 } = {};
+  protected notifications: ServiceNotificationsV1 = {};
+  protected subscriptions: ServiceSubscriptionsV1 = {};
+  protected platforms: { [s: string]: any } = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {

@@ -17,10 +17,10 @@ interface VaultMap {
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
-  parameters: EnvironmentParameters = {};
+  protected parameters: EnvironmentParameters = {};
   @Transform(Dict(() => EnvironmentServiceV1), { toClassOnly: true })
-  services: { [service_ref: string]: EnvironmentService } = {};
-  vaults: VaultMap = {};
+  protected services: { [service_ref: string]: EnvironmentService } = {};
+  protected vaults: VaultMap = {};
 
   getParameters(): EnvironmentParameters {
     return this.parameters;
