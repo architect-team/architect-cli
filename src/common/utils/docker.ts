@@ -8,7 +8,7 @@ import { LocalServiceNode } from '../dependency-manager/local-service-node';
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   const cmd = execa('docker', args, execa_opts);
   if (opts.stdout) {
-    cmd.stdout.pipe(process.stdout);
+    cmd.stdout?.pipe(process.stdout);
   }
   try {
     return await cmd;

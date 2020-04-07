@@ -20,7 +20,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.4.0 linux-x64 node-v12.16.1
+@architect-io/cli/0.4.0 darwin-x64 node-v11.15.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -138,8 +138,9 @@ OPTIONS
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1586277107814.json] Path where the compose file
-                                   should be written to
+  -o, --compose_file=compose_file  [default:
+                                   /var/folders/7q/hbx8m39d6sx_97r00bmwyd9w0000gn/T/architect-deployment-1586279004326.j
+                                   son] Path where the compose file should be written to
 
   --auto_approve
 ```
