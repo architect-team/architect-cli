@@ -1,7 +1,6 @@
 import { EnvironmentService } from './base';
 
 interface InterfaceSpecV1 {
-  description?: string;
   host: string;
   port: number;
 }
@@ -30,13 +29,13 @@ interface ServiceDatastoreV1 {
 export class EnvironmentServiceV1 extends EnvironmentService {
   __version = '1.0.0';
 
-  host?: string;
-  port?: number;
-  parameters: EnvironmentParametersV1 = {};
-  datastores: { [key: string]: ServiceDatastoreV1 } = {};
-  ingress?: IngressSpecV1;
-  debug?: DebugSpecV1;
-  interfaces?: { [key: string]: InterfaceSpecV1 };
+  protected host?: string;
+  protected port?: number;
+  protected parameters: EnvironmentParametersV1 = {};
+  protected datastores: { [key: string]: ServiceDatastoreV1 } = {};
+  protected ingress?: IngressSpecV1;
+  protected debug?: DebugSpecV1;
+  protected interfaces?: { [key: string]: InterfaceSpecV1 };
 
   getInterfaces(): { [s: string]: InterfaceSpecV1 } | undefined {
     if (this.interfaces) {
@@ -45,14 +44,6 @@ export class EnvironmentServiceV1 extends EnvironmentService {
       return { _default: { host: this.host, port: this.port } };
     }
     return undefined;
-  }
-
-  getHost() {
-    return this.host;
-  }
-
-  getPort() {
-    return this.port;
   }
 
   getDatastores() {

@@ -125,7 +125,11 @@ export default abstract class DependencyManager {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom) {
             const value_from_param = param_value as ValueFromParameter;
-            const param_target_service_name = value_from_param.valueFrom.dependency;
+            let param_target_service_name = value_from_param.valueFrom.dependency;
+            // Support dep ref with or without tag
+            if (param_target_service_name in node.service_config.getDependencies()) {
+              param_target_service_name = `${param_target_service_name}:${node.service_config.getDependencies()[param_target_service_name]}`;
+            }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
             if (param_target_service_name) {
@@ -371,7 +375,7 @@ export default abstract class DependencyManager {
     }
 
     const node = new ExternalNode({
-      host: interfaces ? undefined : env_service_config.getHost(),
+      host: interfaces._default?.host,
       ports: Object.values(interfaces).map((i) => ({ target: i.port, expose: i.port })),
       parameters: env_service_config.getParameters(),
       key: service_ref,

@@ -27,8 +27,6 @@ interface IngressSpec {
 export abstract class EnvironmentService {
   abstract __version: string;
   abstract getInterfaces(): { [s: string]: InterfaceSpec } | undefined;
-  abstract getHost(): string | undefined;
-  abstract getPort(): number | undefined;
   abstract getDatastores(): { [key: string]: DatastoreSpec };
   abstract getParameters(): EnvironmentParameters;
   abstract getDebug(): DebugSpec | undefined;
