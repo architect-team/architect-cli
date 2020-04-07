@@ -4,6 +4,10 @@ on:
   release:
     types:
       - published
+    branches:
+      - master
+    tags:
+      - v*.*.*
 
 env:
   CI: true
@@ -26,7 +30,8 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false
+          git checkout master
+          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)""
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
