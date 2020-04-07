@@ -1,6 +1,4 @@
 import dotenvExpand from 'dotenv-expand';
-import fs from 'fs-extra';
-import untildify from 'untildify';
 import { ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
@@ -111,7 +109,7 @@ export default abstract class DependencyManager {
         }
       }
 
-      for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
+      for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string') {
           if (param_value.indexOf('$') > -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.replace(/\$/g, `$${this.scopeEnv(node, '')}`);
@@ -255,10 +253,6 @@ export default abstract class DependencyManager {
         let val = env_params.get(key) || service_param.default || '';
         if (typeof val === 'number') {
           val = val.toString();
-        }
-
-        if (typeof val === 'string' && val.startsWith('file:')) {
-          val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
         }
         params[key] = val;
         return params;
