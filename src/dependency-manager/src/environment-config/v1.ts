@@ -39,11 +39,20 @@ interface ServiceMap {
   };
 }
 
+interface DnsConfigSpec {
+  searches?: string | string[];
+}
+
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   parameters: EnvironmentParameters = {};
   services: ServiceMap = {};
   vaults: VaultMap = {};
+  dns?: DnsConfigSpec;
+
+  getDnsConfig(): DnsConfigSpec {
+    return this.dns || {};
+  }
 
   getParameters(): EnvironmentParameters {
     return this.parameters;
