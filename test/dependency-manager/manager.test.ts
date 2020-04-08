@@ -8,14 +8,21 @@ import LocalDependencyGraph from '../../src/common/dependency-manager/local-grap
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
 import { ServiceNode } from '../../src/dependency-manager/src';
+import DependencyGraph from '../../src/dependency-manager/src/graph';
 import ServiceEdge from '../../src/dependency-manager/src/graph/edge/service';
 import { ServiceConfigV1 } from '../../src/dependency-manager/src/service-config/v1';
 
 describe('manager', function () {
+  let graph: DependencyGraph;
 
-  beforeEach(function () {
+  beforeEach(async function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
+
+    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
+    const serialized_graph = serialize(manager.graph);
+    graph = deserialize(LocalDependencyGraph, serialized_graph);
   });
 
   afterEach(function () {
@@ -24,10 +31,6 @@ describe('manager', function () {
   });
 
   it('serialize/deserialize graph', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
 
     expect(graph.version).eq('1.0.0')
     expect(graph.nodes).lengthOf(4);
@@ -58,55 +61,30 @@ describe('manager', function () {
   });
 
   it('remove serviceNode', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
-
     expect(graph.nodes).lengthOf(4);
     graph.removeNodeByRef('architect/addition-service-rest:latest');
     expect(graph.nodes).lengthOf(3);
   });
 
   it('remove graph edge', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
-
     expect(graph.edges).lengthOf(3);
     graph.removeEdgeByRef(graph.edges[0].ref);
     expect(graph.edges).lengthOf(2);
   });
 
   it('get dependent nodes', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
-
     const dependent_nodes = graph.getDependentNodes(graph.getNodeByRef('architect/addition-service-rest:latest'));
     expect(dependent_nodes).lengthOf(1);
     expect(dependent_nodes[0].ref).eq('architect/subtraction-service-rest:latest');
   });
 
   it('remove service with cleanup', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
-
     graph.removeNode('architect/subtraction-service-rest:latest', true);
     expect(graph.nodes).lengthOf(1);
     expect(graph.nodes[0].ref).eq('architect/division-service-grpc:latest');
   });
 
   it('remove service without cleanup', async () => {
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    const graph = deserialize(LocalDependencyGraph, serialized_graph);
-
     graph.removeNode('architect/subtraction-service-rest:latest', false);
     expect(graph.nodes).lengthOf(3);
   });
