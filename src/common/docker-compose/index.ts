@@ -14,6 +14,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
     services: {},
     volumes: {},
   };
+
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
     if (node instanceof GatewayNode) {
@@ -120,6 +121,12 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           }
         }
       }
+    }
+
+    // Append the dns_search value if it was provided in the environment config
+    const dns_config = dependency_manager.environment.getDnsConfig();
+    if (dns_config.searches) {
+      compose.services[node.normalized_ref].dns_search = dns_config.searches;
     }
   }
 
