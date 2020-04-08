@@ -78,16 +78,17 @@ jobs:
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
-          git commit -m "New RC from commit: ${{ github.sha }}"
+          git commit -m "New CLI RC from commit: ${{ github.sha }}"
+          git pull
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: npm publish
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
-      - name: oclif build
+      - name: oclif-dev pack
         run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
         with:
           name: dist
           path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
+      - name: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish

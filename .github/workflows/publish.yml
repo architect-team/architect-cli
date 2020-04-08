@@ -4,6 +4,10 @@ on:
   release:
     types:
       - published
+    branches:
+      - master
+    tags:
+      - v*.*.*
 
 env:
   CI: true
@@ -15,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: 'master'
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
@@ -26,11 +32,11 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false
+          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
-          git commit -m "Published ${GITHUB_REF/refs\/tags\//}"
+          git commit -m "Published dependency manager ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         working-directory: ./src/dependency-manager
       - name: npm publish
@@ -44,6 +50,8 @@ jobs:
     needs: [publish_dependency_manager]
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: 'master'
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
@@ -53,13 +61,13 @@ jobs:
       - name: Set NPM version
         id: npm-version-bump
         run: |
-          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false)"
+          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
           git add package.json package-lock.json
-          git commit -m "Published ${GITHUB_REF/refs\/tags\//}"
+          git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: oclif pack
+      - name: oclif-dev pack
         run: sudo npx oclif-dev pack
       - name: Archive artifact
         uses: actions/upload-artifact@v1
