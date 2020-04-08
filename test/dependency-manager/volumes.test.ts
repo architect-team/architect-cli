@@ -27,6 +27,9 @@ describe('volumes', function () {
         },
         "parameter_env_volume": {
           "mountPath": "$VOLUME_PATH"
+        },
+        "engine_created_volume": {
+          "mountPath": "/usr/src/volume3"
         }
       }
     };
@@ -67,5 +70,9 @@ describe('volumes', function () {
 
   it('service config volume from parameter', async () => {
     expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume2:/usr/src/volume2']);
+  });
+
+  it('service config volume created by docker engine', async () => {
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/usr/src/volume3']);
   });
 });
