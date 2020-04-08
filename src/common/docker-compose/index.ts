@@ -5,7 +5,6 @@ import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import { ServiceVolumeV1 } from '../../dependency-manager/src/service-config/v1';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
@@ -85,32 +84,27 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         const env_service = dependency_manager.environment.getServices()[node.ref];
         const service_volumes = node.service_config.getVolumes();
         const env_volumes = env_service?.debug?.volumes ? env_service.debug.volumes : {};
-        const all_volumes: { [s: string]: string | ServiceVolumeV1 } = { ...service_volumes, ...env_volumes };
-        if (all_volumes) {
-          const config_volumes = Object.entries(all_volumes).map(([key, spec]) => {
+        if (service_volumes) {
+          const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
 
-            let vol;
-            if (typeof spec === 'object') {
-              if (spec.mountPath?.startsWith('$')) {
-                const volume_path = node.parameters[spec.mountPath.substr(1)];
-                if (!volume_path) {
-                  throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
-                }
-                vol = volume_path.toString();
-              } else if (spec.mountPath) {
-                vol = spec.mountPath;
-              } else {
-                throw new Error(`mountPath must be specified for volume ${key}`);
+            let service_volume;
+            if (spec.mountPath?.startsWith('$')) {
+              const volume_path = node.parameters[spec.mountPath.substr(1)];
+              if (!volume_path) {
+                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
               }
+              service_volume = volume_path.toString();
+            } else if (spec.mountPath) {
+              service_volume = spec.mountPath;
             } else {
-              vol = spec;
+              throw new Error(`mountPath must be specified for volume ${key}`);
             }
 
-            const volumeDef = vol.split(':');
-            if (volumeDef.length === 1) {
-              return path.resolve(node.service_path, volumeDef[0]);
+            const env_volume = env_volumes[key];
+            if (!env_volume) {
+              return path.resolve(node.service_path, service_volume);
             }
-            return path.resolve(node.service_path, vol.split(':')[0]) + ':' + vol.split(':')[1];
+            return `${path.resolve(node.service_path, env_volume)}:${service_volume}`;
           }, []);
           volumes = volumes.concat(config_volumes);
         }

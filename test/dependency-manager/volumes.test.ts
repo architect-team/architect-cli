@@ -18,21 +18,15 @@ describe('volumes', function () {
       "name": "architect/backend",
       "parameters": {
         "VOLUME_PATH": {
-          "default": '/tmp/volume_path'
+          "default": '/usr/src/volume2'
         }
       },
       "volumes": {
-        "service_config_volume": {
-          "mountPath": "/tmp/volume"
+        "env_volume": {
+          "mountPath": "/usr/src/volume1"
         },
-        "volume_from_param": {
+        "parameter_env_volume": {
           "mountPath": "$VOLUME_PATH"
-        },
-        "split_volume": {
-          "mountPath": "/tmp:/vol/service_config"
-        },
-        "service_config_override": {
-          "mountPath": "/tmp/overridden_path"
         }
       }
     };
@@ -43,8 +37,8 @@ describe('volumes', function () {
           "debug": {
             "path": "./src/backend",
             "volumes": {
-              "service_config_override": "/tmp/service_config_overridden",
-              "env_defined_volume": "/tmp/env_defined_volume"
+              "env_volume": "/home/testUser/volume1",
+              "parameter_env_volume": "/home/testUser/volume2"
             }
           }
         }
@@ -67,23 +61,11 @@ describe('volumes', function () {
     mock_fs.restore();
   });
 
-  it('service config volume', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/tmp/volume']);
+  it('basic service config volume', async () => {
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1']);
   });
 
-  it('volume from parameter', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/tmp/volume_path']);
-  });
-
-  it('split volume with colon', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/tmp:/vol/service_config']);
-  });
-
-  it('volume path overridden from env config', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/tmp/service_config_overridden']);
-  });
-
-  it('volume path from env config', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/tmp/env_defined_volume']);
+  it('service config volume from parameter', async () => {
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume2:/usr/src/volume2']);
   });
 });
