@@ -1,4 +1,3 @@
-import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -76,11 +75,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         }
 
         let volumes: string[] = [];
-        const src_path = path.join(node.service_path, 'src');
-        if (fs.pathExistsSync(src_path)) {
-          volumes = [`${src_path}:/usr/src/app/src`]; // Mount the src directory
-        }
-
         const service_volumes = node.service_config.getVolumes();
         const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
         if (service_volumes) {
