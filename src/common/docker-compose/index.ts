@@ -81,9 +81,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           volumes = [`${src_path}:/usr/src/app/src`]; // Mount the src directory
         }
 
-        const env_service = dependency_manager.environment.getServices()[node.ref];
         const service_volumes = node.service_config.getVolumes();
-        const env_volumes = env_service?.debug?.volumes ? env_service.debug.volumes : {};
+        const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
         if (service_volumes) {
           const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
 
@@ -110,6 +109,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         }
         compose.services[node.normalized_ref].volumes = volumes;
 
+        const env_service = dependency_manager.environment.getServices()[node.ref];
         if (env_service && env_service.debug) {
           if (env_service.debug.dockerfile) {
             compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
