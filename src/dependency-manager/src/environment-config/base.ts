@@ -34,7 +34,7 @@ export interface EnvironmentService {
   debug?: {
     path: string;
     dockerfile?: string;
-    volumes?: string[];
+    volumes?: { [s: string]: string };
     entrypoint?: string | string[];
   };
 }
@@ -49,5 +49,12 @@ export abstract class EnvironmentConfig {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
     return ref ? services[ref] : undefined;
+  }
+
+  getVolumes(key: string) {
+    const services = this.getServices();
+    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
+    const debug = ref && services[ref].debug ? services[ref].debug : undefined;
+    return debug ? debug.volumes : undefined;
   }
 }

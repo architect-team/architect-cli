@@ -23,7 +23,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         ports: [`${node.ports.expose}:${node.ports.target}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
-      }
+      };
     }
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
@@ -75,26 +75,44 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           compose.services[node.normalized_ref].command = debug_options.command;
         }
 
-        // Mount the src directory
+        let volumes: string[] = [];
         const src_path = path.join(node.service_path, 'src');
         if (fs.pathExistsSync(src_path)) {
-          compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
+          volumes = [`${src_path}:/usr/src/app/src`]; // Mount the src directory
         }
+
+        const service_volumes = node.service_config.getVolumes();
+        const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
+        if (service_volumes) {
+          const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
+
+            let service_volume;
+            if (spec.mountPath?.startsWith('$')) {
+              const volume_path = node.parameters[spec.mountPath.substr(1)];
+              if (!volume_path) {
+                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
+              }
+              service_volume = volume_path.toString();
+            } else if (spec.mountPath) {
+              service_volume = spec.mountPath;
+            } else {
+              throw new Error(`mountPath must be specified for volume ${key}`);
+            }
+
+            const env_volume = env_volumes[key];
+            if (!env_volume) {
+              return path.resolve(node.service_path, service_volume);
+            }
+            return `${path.resolve(node.service_path, env_volume)}:${service_volume}`;
+          }, []);
+          volumes = volumes.concat(config_volumes);
+        }
+        compose.services[node.normalized_ref].volumes = volumes;
 
         const env_service = dependency_manager.environment.getServices()[node.ref];
         if (env_service && env_service.debug) {
           if (env_service.debug.dockerfile) {
             compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service.debug.dockerfile);
-          }
-
-          if (env_service.debug.volumes) {
-            compose.services[node.normalized_ref].volumes = env_service.debug.volumes.map((v) => {
-              const volumeDef = v.split(':');
-              if (volumeDef.length === 1) {
-                return path.resolve(node.service_path, volumeDef[0]);
-              }
-              return path.resolve(node.service_path, v.split(':')[0]) + ':' + v.split(':')[1];
-            });
           }
 
           if (env_service.debug.entrypoint) {
