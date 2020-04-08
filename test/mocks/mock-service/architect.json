@@ -1,0 +1,14 @@
+{
+  "name": "architect-mocks/test1",
+  "language": "node",
+  "docker": {
+    "dockerfile": ".docker/Dockerfile",
+    "context": "./src/",
+    "command": "node index.js"
+  },
+  "debug": {
+    "docker": {
+      "command": "echo \"DEBUG\""
+    }
+  }
+}

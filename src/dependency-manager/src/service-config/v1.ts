@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer/decorators';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceDockerSpec, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter } from './base';
 
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
@@ -36,6 +36,17 @@ interface ServiceParameterV1 {
   build_arg?: boolean;
 }
 
+interface DockerSpecV1 {
+  dockerfile?: string;
+  context?: string;
+  command?: string;
+  entrypoint?: string;
+}
+
+interface DebugSpecV1 {
+  docker?: DockerSpecV1;
+}
+
 class LivenessProbeV1 {
   success_threshold?: number;
   failure_threshold?: number;
@@ -58,11 +69,12 @@ export class ServiceConfigV1 extends ServiceConfig {
   keywords?: string[];
   image?: string;
   port?: string;
+  docker?: DockerSpecV1;
   command?: string | string[];
   entrypoint?: string | string[];
   dependencies: { [s: string]: string } = {};
   language?: string;
-  debug?: string;
+  debug?: DebugSpecV1 | string;
   parameters: { [s: string]: ServiceParameterV1 } = {};
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
@@ -98,12 +110,24 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
+  getDockerOptions(): ServiceDockerSpec {
+    return this.docker || {};
+  }
+
   getCommand(): string | string[] {
-    return this.command || '';
+    if (typeof this.debug === 'string') {
+      return this.debug;
+    }
+
+    return this.debug?.docker?.command || this.command || '';
   }
 
   getEntrypoint(): string | string[] {
-    return this.entrypoint || '';
+    if (typeof this.debug === 'string') {
+      return '';
+    }
+
+    return this.debug?.docker?.entrypoint || this.entrypoint || '';
   }
 
   getDependencies(): { [s: string]: string } {
@@ -176,8 +200,16 @@ export class ServiceConfigV1 extends ServiceConfig {
       }, {});
   }
 
-  getDebugOptions(): ServiceDebugOptions | undefined {
-    return this.debug ? { command: this.debug } : undefined;
+  getDebugOptions(): ServiceDebugOptions {
+    if (typeof this.debug === 'object') {
+      return this.debug;
+    }
+
+    return this.debug ? {
+      docker: {
+        command: this.debug,
+      },
+    } : {};
   }
 
   getLanguage(): string {

@@ -1,12 +1,35 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DatastoreNode, ServiceDockerSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
-import DockerComposeTemplate from './template';
+import DockerComposeTemplate, { DockerService } from './template';
+
+const applyDockerConfig = (compose_service: DockerService, service_path: string, docker_spec: ServiceDockerSpec): DockerService => {
+  if (docker_spec.command) {
+    compose_service.command = docker_spec.command;
+  }
+
+  if (docker_spec.entrypoint) {
+    compose_service.entrypoint = docker_spec.entrypoint;
+  }
+
+  if (compose_service.build) {
+    if (docker_spec.context) {
+      compose_service.build.context = path.join(service_path, docker_spec.context);
+    }
+
+    if (docker_spec.dockerfile) {
+      compose_service.build.dockerfile = path.join(service_path, docker_spec.dockerfile);
+    }
+  }
+
+  return compose_service;
+};
 
 export const generate = (dependency_manager: DependencyManager, build_prod = false): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
@@ -23,7 +46,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         ports: [`${node.ports.expose}:${node.ports.target}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
-      }
+      };
     }
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
@@ -67,13 +90,24 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         };
       }
 
+      // If the user has provided non-default docker behavior for prod, add it to the template
+      const docker_options = node.service_config.getDockerOptions();
+      compose.services[node.normalized_ref] = applyDockerConfig(
+        compose.services[node.normalized_ref],
+        node.service_path,
+        docker_options,
+      );
+
       if (!build_prod) {
         compose.services[node.normalized_ref].build?.args.push('ARCHITECT_DEBUG=1');
 
-        const debug_options = node.service_config.getDebugOptions();
-        if (debug_options) {
-          compose.services[node.normalized_ref].command = debug_options.command;
-        }
+        // If the user has cited docker behavior unique to local dev, add it to the template
+        const docker_debug_options = node.service_config.getDebugOptions().docker || {};
+        compose.services[node.normalized_ref] = applyDockerConfig(
+          compose.services[node.normalized_ref],
+          node.service_path,
+          docker_debug_options,
+        );
 
         // Mount the src directory
         const src_path = path.join(node.service_path, 'src');

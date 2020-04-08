@@ -1,0 +1,31 @@
+{
+  "version": "3",
+  "services": {
+    "architect-mocks.test1.latest": {
+      "ports": [
+        "50000:8080"
+      ],
+      "depends_on": [],
+      "environment": {
+        "EXTERNAL_HOST": "",
+        "INTERNAL_HOST": "architect-mocks.test1.latest",
+        "EXTERNAL_PORT": "80",
+        "INTERNAL_PORT": "8080",
+        "HOST": "architect-mocks.test1.latest",
+        "PORT": "8080"
+      },
+      "command": "echo \"DEBUG\"",
+      "build": {
+        "context": "/test/mocks/mock-service/src/",
+        "args": [
+          "ARCHITECT_DEBUG=1"
+        ],
+        "dockerfile": "/test/mocks/mock-service/.docker/Dockerfile"
+      },
+      "volumes": [
+        "/test/mocks/mock-service/src:/usr/src/app/src"
+      ]
+    }
+  },
+  "volumes": {}
+}

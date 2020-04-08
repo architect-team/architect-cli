@@ -51,8 +51,15 @@ export interface ServiceLivenessProbe {
   interval?: string;
 }
 
+export interface ServiceDockerSpec {
+  dockerfile?: string;
+  context?: string;
+  command?: string | string[];
+  entrypoint?: string | string[];
+}
+
 export interface ServiceDebugOptions {
-  command: string | string[];
+  docker?: ServiceDockerSpec;
 }
 
 export abstract class ServiceConfig {
@@ -60,6 +67,7 @@ export abstract class ServiceConfig {
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
+  abstract getDockerOptions(): ServiceDockerSpec;
   abstract getCommand(): string | string[];
   abstract getEntrypoint(): string | string[];
   abstract getDependencies(): { [s: string]: string };
@@ -68,7 +76,7 @@ export abstract class ServiceConfig {
   abstract getApiSpec(): ServiceApiSpec;
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
-  abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract getDebugOptions(): ServiceDebugOptions;
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;

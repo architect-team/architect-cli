@@ -15,11 +15,17 @@ import ARCHITECTPATHS from '../../src/paths';
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
 
-const testBuildArgs = (service_path: string, service_config: ServiceConfig, build_args: string[], expected_tag = 'latest') => {
+const testBuildArgs = (
+  build_context: string,
+  service_config: ServiceConfig,
+  build_args: string[],
+  service_path = build_context,
+  expected_tag = 'latest',
+) => {
   expect(build_args[0]).to.equal('build');
   build_args = build_args.slice(1);
 
-  expect(build_args[build_args.length - 1]).to.equal(service_path);
+  expect(build_args[build_args.length - 1]).to.equal(build_context);
   build_args.splice(build_args.length - 1, 1);
 
   for (let i = 0; i < build_args.length; i++) {
@@ -31,6 +37,10 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
       case '-t':
       case '--tag':
         expect(build_args[i + 1]).to.equal(`${REGISTRY_HOST}/${service_config.getName()}:${expected_tag}`);
+        i++;
+        break;
+      case '-f':
+        expect(build_args[i + 1]).to.equal(path.join(service_path, service_config.getDockerOptions().dockerfile || ''));
         i++;
         break;
       case '--label':
@@ -112,7 +122,19 @@ describe('build', function () {
     await Build.run(['-s', service_path, '-t', TEST_TAG]);
 
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, service_config, spy.getCall(0).args[0], TEST_TAG);
+    const build_context = service_path.endsWith('.json') ? path.dirname(service_path) : service_path;
+    testBuildArgs(build_context, service_config, spy.getCall(0).args[0], build_context, TEST_TAG);
+  });
+
+  it('builds docker image with different dockerfile and context', async () => {
+    const service_path = path.join(__dirname, '../mocks/mock-service/');
+    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    expect(Object.keys(service_config.getDockerOptions())).to.include.members(['context']);
+    const build_context = path.join(service_path, service_config.getDockerOptions().context || '');
+    await Build.run(['-s', service_path]);
+
+    expect(spy.calledOnce).to.equal(true);
+    testBuildArgs(build_context, service_config, spy.getCall(0).args[0], service_path);
   });
 
   it('builds local images from environment config', async () => {

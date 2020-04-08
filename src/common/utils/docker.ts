@@ -38,6 +38,14 @@ export const getServiceApiDefinitionContents = (service_path: string, service_co
 export const buildImage = async (node: LocalServiceNode, registry_host: string, tag_name = 'latest') => {
   const config = node.service_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
+
+  const additional_flags = [];
+
+  const docker_options = config.getDockerOptions();
+  if (docker_options.dockerfile) {
+    additional_flags.push('-f', path.join(node.service_path, docker_options.dockerfile));
+  }
+
   await docker([
     'build',
     '--compress',
@@ -45,7 +53,8 @@ export const buildImage = async (node: LocalServiceNode, registry_host: string, 
     '-t', image_tag,
     '--label', `architect.json=${JSON.stringify(config)}`,
     '--label', `api_definitions=${JSON.stringify(getServiceApiDefinitionContents(node.service_path, config))}`,
-    node.service_path,
+    ...additional_flags,
+    path.join(node.service_path, docker_options.context || '.'),
   ]);
   return image_tag;
 };
