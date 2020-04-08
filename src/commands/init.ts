@@ -28,7 +28,6 @@ export default class Init extends Command {
     ? Is this parameter required? Yes
     ? What is the default value of this parameter (if any)? param_value
     ? Any more parameters? No
-    ? When running locally, what Dockerfile does this use service use (leave blank to use default)? Dockerfile.dev
     ? When running locally, what command should be used to start the service (leave blank to use default docker CMD)?
     npm run start:dev
     Success! A manifest for this service has been added at \`architect.json\`.`,
@@ -188,13 +187,7 @@ export default class Init extends Command {
       variable_answers = await this.promptVariables([]);
     }
 
-    const docker_command_answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'dockerfile',
-        message: 'When running locally, what Dockerfile does this use service use (leave blank to use default)?',
-        filter: value => value || undefined,
-      },
+    const command_answer = await inquirer.prompt([
       {
         type: 'input',
         name: 'command',
@@ -205,8 +198,7 @@ export default class Init extends Command {
 
     const config: any = {
       name: answers.name,
-      dockerfile: docker_command_answers.dockerfile,
-      debug: docker_command_answers.command,
+      debug: command_answer.command,
       ...flags,
     };
     if (dependency_answers.length) {
