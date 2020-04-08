@@ -39,11 +39,16 @@ export interface EnvironmentService {
   };
 }
 
+export interface DnsConfig {
+  searches?: string | string[];
+}
+
 export abstract class EnvironmentConfig {
   abstract __version: string;
   abstract getParameters(): EnvironmentParameters;
   abstract getVaults(): { [key: string]: EnvironmentVault };
   abstract getServices(): { [key: string]: EnvironmentService };
+  abstract getDnsConfig(): DnsConfig;
 
   getServiceDetails(key: string): EnvironmentService | undefined {
     const services = this.getServices();

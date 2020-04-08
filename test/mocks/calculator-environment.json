@@ -1,4 +1,10 @@
 {
+  "dns": {
+    "searches": [
+      "testdomain.com"
+    ]
+  },
+
   "services": {
     "architect/division-service-grpc:latest": {
       "debug": {
