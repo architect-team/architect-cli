@@ -96,6 +96,7 @@ describe('nodes', function () {
     // Restore stubs
     sinon.restore();
     moxios.uninstall();
+    mock_fs.restore();
   });
 
   it('load ServiceNode', async () => {
