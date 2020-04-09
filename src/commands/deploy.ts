@@ -251,7 +251,7 @@ export default class Deploy extends Command {
       const response = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph, { timeout: 2000 });
       validation_results = response.data;
     } catch (err) {
-      this.warn('Could not connect to the Architect API to validate the deployment, carrying on anyway...');
+      cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the deployment, carrying on anyway...`));
       // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
       return;
     }
