@@ -58,6 +58,7 @@ export interface ServiceDebugOptions {
 export interface VolumeSpec {
   mountPath?: string;
   description?: string;
+  readonly: boolean;
 }
 
 export abstract class ServiceConfig {
