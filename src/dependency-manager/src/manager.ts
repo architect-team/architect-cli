@@ -11,7 +11,6 @@ import ServiceEdge from './graph/edge/service';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
@@ -212,11 +211,14 @@ export default abstract class DependencyManager {
     return Object.keys(parameters).reduce(
       (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
-        if (service_param.required && !env_params.has(key)) {
-          throw new MissingRequiredParamError(key, service_param.description, service_ref);
+
+        let val = env_params.has(key) ? env_params.get(key) : service_param.default;
+
+        // note: an empty string is considered a valid value for a parameter so we explicitly check for null or undefined here
+        if (val === null || val === undefined) {
+          return params;
         }
 
-        let val = env_params.get(key) || service_param.default || '';
         if (typeof val === 'number') {
           val = val.toString();
         }

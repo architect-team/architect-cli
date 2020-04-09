@@ -11,6 +11,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import DependencyGraph from '../dependency-manager/src/graph';
 
 
 class EnvConfigRequiredError extends Error {
@@ -19,6 +20,14 @@ class EnvConfigRequiredError extends Error {
     this.name = 'environment_config_required';
     this.message = 'An environment configuration is required';
   }
+}
+
+interface ValidationResult {
+  valid: boolean;
+  slug: string;
+  rule: string;
+  doc_ref: string;
+  details?: string;
 }
 
 export default class Deploy extends Command {
@@ -116,6 +125,9 @@ export default class Deploy extends Command {
       path.resolve(untildify(args.environment_config)),
       this.app.linkedServices,
     );
+
+    await this.validate_graph(dependency_manager.graph);
+
     const compose = DockerCompose.generate(dependency_manager, flags.build_prod);
     await this.runCompose(compose);
   }
@@ -228,6 +240,45 @@ export default class Deploy extends Command {
       await this.runLocal();
     } else {
       await this.runRemote();
+    }
+  }
+
+  async validate_graph(graph: DependencyGraph): Promise<void> {
+    cli.action.start(chalk.blue('Validating deployment'));
+
+    let validation_results;
+    try {
+      const response = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph, { timeout: 2000 });
+      validation_results = response.data;
+    } catch (err) {
+      cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the deployment, carrying on anyway...`));
+      // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
+      return;
+    }
+
+    const failing_rules = validation_results.filter(r => !r.valid);
+    const passing_rules = validation_results.filter(r => r.valid);
+
+    if (failing_rules && failing_rules.length > 0) {
+      cli.action.stop(chalk.red(`${failing_rules.length} rule${failing_rules.length > 1 ? 's' : ''} failing`));
+
+      this.log('\n');
+      for (const failure of failing_rules) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore
+        this.log(chalk.red(failure.rule));
+
+        if (failure.details) {
+          this.log(`\t${chalk.red('Details: ' + failure.details)}`);
+        }
+        this.log(`\t${chalk.red(failure.doc_ref)}`);
+        this.log('\n');
+      }
+
+      this.log(chalk.blue(`...${passing_rules.length} other passing rules\n`));
+      this.error('The deployment failed validation.');
+    } else {
+      cli.action.stop(chalk.green(`${passing_rules.length} rules passing`));
     }
   }
 }
