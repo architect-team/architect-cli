@@ -245,7 +245,16 @@ export default class Deploy extends Command {
 
   async validate_graph(graph: DependencyGraph): Promise<void> {
     cli.action.start(chalk.blue('Validating deployment'));
-    const { data: validation_results } = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph);
+
+    let validation_results;
+    try {
+      const response = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph, { timeout: 2000 });
+      validation_results = response.data;
+    } catch (err) {
+      this.warn('Could not connect to the Architect API to validate the deployment, carrying on anyway...');
+      // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
+      return;
+    }
 
     const failing_rules = validation_results.filter(r => !r.valid);
     const passing_rules = validation_results.filter(r => r.valid);

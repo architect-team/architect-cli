@@ -212,7 +212,13 @@ export default abstract class DependencyManager {
       (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
 
-        let val = env_params.get(key) || service_param.default || '';
+        let val = env_params.has(key) ? env_params.get(key) : service_param.default;
+
+        // note: an empty string is considered a valid value for a parameter so we explicitly check for null or undefined here
+        if (val === null || val === undefined) {
+          return params;
+        }
+
         if (typeof val === 'number') {
           val = val.toString();
         }
