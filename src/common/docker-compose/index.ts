@@ -80,7 +80,6 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
         const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
         if (service_volumes) {
           const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
-
             let service_volume;
             if (spec.mountPath?.startsWith('$')) {
               const volume_path = node.parameters[spec.mountPath.substr(1)];
@@ -98,7 +97,8 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
             if (!env_volume) {
               return path.resolve(node.service_path, service_volume);
             }
-            return `${path.resolve(node.service_path, env_volume)}:${service_volume}`;
+
+            return `${path.resolve(node.service_path, env_volume)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
           }, []);
           volumes = volumes.concat(config_volumes);
         }

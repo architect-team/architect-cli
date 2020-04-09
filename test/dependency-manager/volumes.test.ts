@@ -5,56 +5,11 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
-import DockerComposeTemplate from '../../src/common/docker-compose/template';
 
 describe('volumes', function () {
-  let compose: DockerComposeTemplate;
-
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
-
-    const backend_json = {
-      "name": "architect/backend",
-      "parameters": {
-        "VOLUME_PATH": {
-          "default": '/usr/src/volume2'
-        }
-      },
-      "volumes": {
-        "env_volume": {
-          "mountPath": "/usr/src/volume1"
-        },
-        "parameter_env_volume": {
-          "mountPath": "$VOLUME_PATH"
-        },
-        "engine_created_volume": {
-          "mountPath": "/usr/src/volume3"
-        }
-      }
-    };
-
-    const env_config = {
-      "services": {
-        "architect/backend:latest": {
-          "debug": {
-            "path": "./src/backend",
-            "volumes": {
-              "env_volume": "/home/testUser/volume1",
-              "parameter_env_volume": "/home/testUser/volume2"
-            }
-          }
-        }
-      }
-    };
-
-    mock_fs({
-      '/stack/src/backend/architect.json': JSON.stringify(backend_json),
-      '/stack/arc.env.json': JSON.stringify(env_config),
-    });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    compose = DockerCompose.generate(manager);
   });
 
   afterEach(function () {
@@ -64,15 +19,144 @@ describe('volumes', function () {
     mock_fs.restore();
   });
 
-  it('basic service config volume', async () => {
+  it('should mount host path to container path', async () => {
+    const service_config = {
+      name: "architect/backend",
+      volumes: {
+        env_volume: {
+          mountPath: "/usr/src/volume1"
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              env_volume: "/home/testUser/volume1"
+            }
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1']);
   });
 
-  it('service config volume from parameter', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume2:/usr/src/volume2']);
+  it('should mount to parameterized container path', async () => {
+    const service_config = {
+      name: "architect/backend",
+      parameters: {
+        VOLUME_PATH: {
+          default: '/usr/src/volume2'
+        }
+      },
+      volumes: {
+        parameter_env_volume: {
+          mountPath: "$VOLUME_PATH"
+        },
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              parameter_env_volume: "/home/testUser/volume2"
+            }
+          },
+
+          parameters: {
+            VOLUME_PATH: '/my/custom/path'
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume2:/my/custom/path']);
   });
 
-  it('service config volume created by docker engine', async () => {
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/usr/src/volume3']);
+  it('should create volume w/out explicit host binding', async () => {
+    const service_config = {
+      name: "architect/backend",
+      volumes: {
+        env_volume: {
+          mountPath: "/usr/src/no-host-binding"
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend"
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/usr/src/no-host-binding']);
+  });
+
+  it('should support readonly mode', async () => {
+    const service_config = {
+      name: "architect/backend",
+      volumes: {
+        env_volume: {
+          mountPath: "/usr/src/volume1",
+          readonly: true
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              env_volume: "/home/testUser/volume1"
+            }
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1:ro']);
   });
 });

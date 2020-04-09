@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer/decorators';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceParameter, VolumeSpec } from './base';
 
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
@@ -54,6 +54,7 @@ class ApiSpecV1 {
 export class ServiceVolumeV1 {
   mountPath?: string;
   description?: string;
+  readonly?: boolean;
 }
 
 export class ServiceVolumesV1 {
@@ -206,7 +207,15 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.port ? Number(this.port) : undefined;
   }
 
-  getVolumes(): ServiceVolumesV1 | undefined {
-    return this.volumes;
+  getVolumes(): { [s: string]: VolumeSpec } | undefined {
+    return Object.entries(this.volumes).reduce((volumes, [key, entry]) => {
+      if (entry.readonly !== true && entry.readonly !== false) {
+        // Set readonly to false by default
+        entry.readonly = false;
+      }
+
+      volumes[key] = entry as VolumeSpec;
+      return volumes;
+    }, {} as { [key: string]: VolumeSpec });
   }
 }
