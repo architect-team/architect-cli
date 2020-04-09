@@ -1,13 +1,14 @@
 import path from 'path';
-import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import LocalDependencyManager from '../dependency-manager/local-manager';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_manager: DependencyManager, build_prod = false): DockerComposeTemplate => {
+export const generate = (dependency_manager: LocalDependencyManager, build_prod = false): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -98,7 +99,7 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
               return path.resolve(node.service_path, service_volume);
             }
 
-            return `${path.resolve(node.service_path, env_volume)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+            return `${path.resolve(path.dirname(dependency_manager.config_path), env_volume)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
           }, []);
           volumes = volumes.concat(config_volumes);
         }
