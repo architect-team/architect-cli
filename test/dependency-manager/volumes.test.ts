@@ -52,6 +52,39 @@ describe('volumes', function () {
     expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1']);
   });
 
+  it('should mount relative paths correctly', async () => {
+    const service_config = {
+      name: "architect/backend",
+      volumes: {
+        env_volume: {
+          mountPath: "/usr/src/volume1"
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              env_volume: "./relative-volume"
+            }
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/stack/relative-volume:/usr/src/volume1']);
+  });
+
   it('should mount to parameterized container path', async () => {
     const service_config = {
       name: "architect/backend",
