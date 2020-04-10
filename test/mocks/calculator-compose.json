@@ -75,7 +75,7 @@
     },
     "architect.addition-service-rest.latest.primary": {
       "ports": [
-        "50004:5432"
+        "50003:5432"
       ],
       "depends_on": [],
       "environment": {

@@ -201,7 +201,9 @@ export default class Install extends Command {
           config.addDependency(service_name, service_tag);
           ServiceConfigBuilder.saveToPath(node.service_path, config);
           const dep_node = await dependency_manager.loadService(service_name, service_tag);
-          this.genClientCode(node, dep_node);
+          if (dep_node instanceof ServiceNode) {
+            this.genClientCode(node, dep_node);
+          }
           cli.action.stop(chalk.grey('done'));
         } else {
           const dependencies = dependency_manager.graph.getNodeDependencies(node);

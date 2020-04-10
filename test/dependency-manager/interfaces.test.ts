@@ -184,9 +184,9 @@ describe('interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50002:8080', '50003:8081']);
+    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081']);
     expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8080']);
-    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50001:8080']);
+    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50003:8080']);
   });
 
   it('correct interface environment variables in compose', async () => {

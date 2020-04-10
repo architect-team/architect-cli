@@ -127,6 +127,7 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
     }
   }
 
+  const seen_edges = new Set();
   // Enrich service relationships
   for (const edge of dependency_manager.graph.edges) {
     const node_from = dependency_manager.graph.getNodeByRef(edge.from);
@@ -144,7 +145,11 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
       service_to.restart = 'always';
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
     } else if (edge instanceof ServiceEdge) {
-      compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
+      if (!seen_edges.has(`${edge.to}__${edge.from}`)) { // Detect circular refs and pick first one
+        compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
+        seen_edges.add(`${edge.to}__${edge.from}`);
+        seen_edges.add(`${edge.from}__${edge.to}`);
+      }
     }
   }
 

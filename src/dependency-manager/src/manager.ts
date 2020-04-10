@@ -329,34 +329,22 @@ export default abstract class DependencyManager {
    * Load the dependency graph with nodes and edges associated with a services
    * dependencies and datastores
    */
-  async loadDependencies(parent_node: ServiceNode) {
-    const dependency_promises = [];
-    this.graph.addNode(parent_node);
-    await this.loadDatastores(parent_node);
+  async loadDependencies(parent_node: ServiceNode, recursive = true) {
+    if (parent_node instanceof ExternalNode) { return; }
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service?.getInterfaces()) {
-        const external_node = await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
-        const edge = new ServiceEdge(parent_node.ref, external_node.ref);
-        this.graph.addEdge(edge);
-      } else {
-        const dep_node = await this.loadService(dep_name, dep_id);
-        this.graph.addNode(dep_node);
-        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-        this.graph.addEdge(edge);
-        dependency_promises.push(() => this.loadDependencies(dep_node));
-      }
+      const dep_node = await this.loadService(dep_name, dep_id, recursive);
+      this.graph.addNode(dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
     }
-
-    await Promise.all(dependency_promises.map(fn => fn()));
   }
 
   /**
    * Queries the API to create a node and config object for a service based on
    * its name and tag
    */
-  abstract async loadService(service_name: string, service_tag: string): Promise<ServiceNode>;
+  abstract async loadService(service_name: string, service_tag: string, recursive: boolean): Promise<ServiceNode | ExternalNode>;
 
   /**
    * Create an external node and add it to the graph

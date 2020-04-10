@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import path from 'path';
 import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { readIfFile } from '../utils/file';
@@ -40,29 +39,10 @@ export default class LocalDependencyManager extends DependencyManager {
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
-
-    const dependency_resolvers = [];
     for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
-
-      if (env_svc_cfg.getInterfaces()) {
-        await dependency_manager.loadExternalService(env_svc_cfg, ref);
-      } else {
-        let svc_node: ServiceNode;
-        const [name, tag] = ref.split(':');
-
-        const env_debug_options = env_svc_cfg.getDebug();
-        if (env_debug_options) {
-          const svc_path = path.join(path.dirname(env_config_path), env_debug_options.path);
-          svc_node = await dependency_manager.loadLocalService(svc_path);
-        } else if (linked_services.hasOwnProperty(name)) {
-          console.log(`Using locally linked ${chalk.blue(name)} found at ${chalk.blue(linked_services[name])}`);
-          svc_node = await dependency_manager.loadLocalService(linked_services[name]);
-        } else {
-          svc_node = await dependency_manager.loadService(name, tag);
-        }
-        await dependency_manager.loadDatastores(svc_node);
-        dependency_resolvers.push(() => dependency_manager.loadDependencies(svc_node));
-
+      const [name, tag] = ref.split(':');
+      const svc_node = await dependency_manager.loadService(name, tag);
+      if (svc_node instanceof ServiceNode) {
         const env_ingress = env_svc_cfg.getIngress();
         if (env_ingress) {
           const gateway = new GatewayNode({
@@ -74,9 +54,6 @@ export default class LocalDependencyManager extends DependencyManager {
         }
       }
     }
-
-    // We resolve these after the loop to ensure that explicitly cited service configs take precedence
-    await Promise.all(dependency_resolvers.map(fn => fn()));
     dependency_manager.loadSubscriptions();
     dependency_manager.loadParameters();
     return dependency_manager;
@@ -91,11 +68,6 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     const config = ServiceConfigBuilder.buildFromPath(service_path);
-
-    if (this.graph.nodes_map.has(`${config.getName()}:latest`)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return this.graph.nodes_map.get(`${config.getName()}:latest`)! as ServiceNode;
-    }
 
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
@@ -121,68 +93,54 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadDependencies(parent_node: ServiceNode, recursive = true) {
-    if (parent_node instanceof ExternalNode) { return; }
-
-    const dependency_resolvers = [];
-    for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-
-      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service?.getInterfaces()) {
-        await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
-      } else {
-        let dep_node: ServiceNode;
-
-        const debug_path = env_service?.getDebug()?.path;
-        if (debug_path) {
-          const svc_path = path.join(path.dirname(this.config_path), debug_path);
-          dep_node = await this.loadLocalService(svc_path);
-        } else if (this.linked_services.hasOwnProperty(dep_name)) {
-          console.log(`Using locally linked ${chalk.blue(dep_name)} found at ${chalk.blue(this.linked_services[dep_name])}`);
-          dep_node = await this.loadLocalService(this.linked_services[dep_name]);
-        } else {
-          dep_node = await this.loadService(dep_name, dep_id);
-        }
-
-        this.graph.addNode(dep_node);
-        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-        this.graph.addEdge(edge);
-
-        if (recursive) {
-          await this.loadDatastores(dep_node);
-          dependency_resolvers.push(() => this.loadDependencies(dep_node));
-        }
-      }
+  async loadService(service_name: string, service_tag: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+    const ref = `${service_name}:${service_tag}`;
+    const existing_node = this.graph.nodes_map.get(ref);
+    if (existing_node) {
+      return existing_node as ServiceNode | ExternalNode;
     }
 
-    await Promise.all(dependency_resolvers.map(fn => fn()));
-  }
+    const env_service = this.environment.getServiceDetails(`${service_name}:${service_tag}`);
+    if (env_service?.getInterfaces()) {
+      return this.loadExternalService(env_service, `${service_name}:${service_tag}`);
+    }
 
-  /**
-   * @override
-   */
-  async loadService(service_name: string, service_tag: string): Promise<ServiceNode> {
-    const [account_name, svc_name] = service_name.split('/');
-    const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
+    const debug_path = env_service?.getDebug()?.path;
+    let service_node;
+    if (debug_path) {
+      const svc_path = path.join(path.dirname(this.config_path), debug_path);
+      service_node = await this.loadLocalService(svc_path);
+    } else if (this.linked_services.hasOwnProperty(service_name)) {
+      console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
+      service_node = await this.loadLocalService(this.linked_services[service_name]);
+    } else {
+      const [account_name, svc_name] = service_name.split('/');
+      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
-    const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
-    const node = new ServiceNode({
-      service_config: config,
-      tag: service_digest.tag,
-      image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-      ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
-        return {
-          target: value.port,
-          expose: await this.getServicePort(),
-        };
-      })),
-      parameters: await this.getParamValues(
-        `${config.getName()}:${service_digest.tag}`,
-        config.getParameters(),
-      ),
-    });
-    this.graph.addNode(node);
-    return node;
+      const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+      service_node = new ServiceNode({
+        service_config: config,
+        tag: service_digest.tag,
+        image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
+        ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
+          return {
+            target: value.port,
+            expose: await this.getServicePort(),
+          };
+        })),
+        parameters: await this.getParamValues(
+          `${config.getName()}:${service_digest.tag}`,
+          config.getParameters(),
+        ),
+      });
+    }
+
+    this.graph.addNode(service_node);
+    await this.loadDatastores(service_node);
+    if (recursive) {
+      await this.loadDependencies(service_node, recursive);
+    }
+    return service_node;
   }
 
   protected loadParameters() {
