@@ -193,4 +193,42 @@ describe('volumes', function () {
     const compose = DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
   });
+
+  it('should override volume locally', async () => {
+    const service_config = {
+      name: "architect/backend",
+      volumes: {
+        env_volume: {
+          mountPath: "/usr/src/overridden_volume"
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              env_volume: "/home/testUser/volume1"
+            }
+          },
+          volumes: {
+            env_volume: {
+              mountPath: "/usr/src/env_volume"
+            }
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const compose = DockerCompose.generate(manager);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/env_volume`]);
+  });
 });
