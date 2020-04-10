@@ -87,12 +87,12 @@ export default abstract class DependencyManager {
       env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports.target.toString();
 
       for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
-        if (typeof param_value === 'string') {
-          if (param_value.indexOf('$') > -1) {
+        if (typeof param_value === 'string' || typeof param_value === 'boolean') {
+          if (param_value.toString().indexOf('$') > -1) {
             env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
               param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
           } else {
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value;
+            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value.toString();
           }
         }
       }
