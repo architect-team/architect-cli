@@ -359,11 +359,15 @@ export default abstract class DependencyManager {
         }
       }
 
-      const env_config_interfaces = Object.keys(interfaces);
-      const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
-      const union = new Set([...expected_interfaces, ...env_config_interfaces]);
-      if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
-        throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
+      try {
+        const env_config_interfaces = Object.keys(interfaces);
+        const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
+        const union = new Set([...expected_interfaces, ...env_config_interfaces]);
+        if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
+          throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
+        }
+      } catch (err) {
+        console.log(`Warning: Failed to find config for external service ${service_ref}`);
       }
     }
 
