@@ -174,7 +174,7 @@ export default class LocalDependencyManager extends DependencyManager {
         `${config.getName()}:${service_digest.tag}`,
         config.getParameters(),
       ),
-      env_volumes: this.environment.getOverrideVolumes(config.getName()),
+      env_volumes: this.environment.getOverrideVolumes(`${config.getName()}:latest`),
     });
     this.graph.addNode(node);
     return node;
