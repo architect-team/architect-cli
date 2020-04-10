@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceConfig } from '../../service-config/base';
+import { ServiceConfig, VolumeSpec } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
@@ -8,6 +8,7 @@ export interface ServiceNodeOptions {
   tag?: string;
   service_config: ServiceConfig;
   replicas?: number;
+  env_volumes?: { [s: string]: VolumeSpec };
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -26,6 +27,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     keepDiscriminatorProperty: true,
   })
   service_config!: ServiceConfig;
+  env_volumes?: { [s: string]: VolumeSpec };
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super(options);
@@ -33,6 +35,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       this.image = options.image;
       this.tag = options.tag || 'latest';
       this.service_config = options.service_config;
+      this.env_volumes = options.env_volumes;
     }
   }
 
@@ -53,5 +56,9 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
    */
   get protocol() {
     return this.api.type === 'grpc' ? '' : 'http://';
+  }
+
+  get volumes(): { [s: string]: VolumeSpec } {
+    return { ...this.service_config.getVolumes(), ...this.env_volumes };
   }
 }

@@ -1,3 +1,5 @@
+import { VolumeSpec } from '../service-config/base';
+
 export interface DebugConfig {
   path: string;
 }
@@ -37,6 +39,7 @@ export interface EnvironmentService {
     volumes?: { [s: string]: string };
     entrypoint?: string | string[];
   };
+  volumes?: { [s: string]: VolumeSpec };
 }
 
 export interface DnsConfig {
@@ -56,10 +59,16 @@ export abstract class EnvironmentConfig {
     return ref ? services[ref] : undefined;
   }
 
-  getVolumes(key: string) {
+  getDebugVolumes(key: string) {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
     const debug = ref && services[ref].debug ? services[ref].debug : undefined;
     return debug ? debug.volumes : undefined;
+  }
+
+  getOverrideVolumes(key: string) {
+    const services = this.getServices();
+    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
+    return ref && services[ref] ? services[ref].volumes : undefined;
   }
 }

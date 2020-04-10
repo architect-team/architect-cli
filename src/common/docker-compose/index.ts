@@ -77,8 +77,8 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
         }
 
         let volumes: string[] = [];
-        const service_volumes = node.service_config.getVolumes();
-        const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
+        const service_volumes = node.volumes;
+        const env_debug_volumes = dependency_manager.environment.getDebugVolumes(node.ref) || {};
         if (service_volumes) {
           const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
             let service_volume;
@@ -94,7 +94,7 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
               throw new Error(`mountPath must be specified for volume ${key}`);
             }
 
-            const env_volume = env_volumes[key];
+            const env_volume = env_debug_volumes[key];
             if (!env_volume) {
               return path.resolve(node.service_path, service_volume);
             }
