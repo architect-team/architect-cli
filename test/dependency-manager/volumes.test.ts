@@ -1,6 +1,7 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
+import path from 'path';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
@@ -49,7 +50,7 @@ describe('volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1']);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1')}:/usr/src/volume1`]);
   });
 
   it('should mount relative paths correctly', async () => {
@@ -82,7 +83,7 @@ describe('volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/stack/relative-volume:/usr/src/volume1']);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/relative-volume')}:/usr/src/volume1`]);
   });
 
   it('should mount to parameterized container path', async () => {
@@ -125,7 +126,7 @@ describe('volumes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume2:/my/custom/path']);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume2')}:/my/custom/path`]);
   });
 
   it('should create volume w/out explicit host binding', async () => {
@@ -156,7 +157,7 @@ describe('volumes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/usr/src/no-host-binding']);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/usr/src/no-host-binding')}`]);
   });
 
   it('should support readonly mode', async () => {
@@ -190,6 +191,6 @@ describe('volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].volumes).to.include.members(['/home/testUser/volume1:/usr/src/volume1:ro']);
+    expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
   });
 });
