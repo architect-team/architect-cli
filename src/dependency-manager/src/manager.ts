@@ -71,7 +71,15 @@ export default abstract class DependencyManager {
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
-  protected loadParameters() {
+  protected async loadParameters() {
+    for (const node of this.graph.nodes) {
+      for (const [key, value] of Object.entries(node.parameters)) {
+        if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
+          node.parameters[key] = await this.vault_manager.getSecret(value as VaultParameter);
+        }
+      }
+    }
+
     const env_params_to_expand: { [key: string]: string } = {};
 
     const subdomain_map: { [key: string]: string } = {};
@@ -129,7 +137,7 @@ export default abstract class DependencyManager {
 
       if (node instanceof ServiceNode) {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
-          if (param_value instanceof Object && param_value.valueFrom) {
+          if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
             const value_from_param = param_value as ValueFromParameter;
             let param_target_service_name = value_from_param.valueFrom.dependency;
             // Support dep ref with or without tag
@@ -223,7 +231,7 @@ export default abstract class DependencyManager {
     service_ref: string,
     parameters: { [key: string]: ServiceParameter },
     datastore_key?: string,
-  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
+  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter | VaultParameter }> {
     const services = this.environment.getServices();
     const global_params = this.environment.getParameters();
     let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
@@ -240,19 +248,13 @@ export default abstract class DependencyManager {
     }
 
     // Enrich vault parameters
-    const env_params = new Map<string, string | number | ValueFromParameter>();
+    const env_params = new Map<string, string | number | ValueFromParameter | VaultParameter>();
     for (const [key, data] of Object.entries(raw_params)) {
-      if (data instanceof Object && data.valueFrom && 'vault' in data.valueFrom) {
-        env_params.set(key, await this.vault_manager.getSecret(data as VaultParameter));
-      } else {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        env_params.set(key, data);
-      }
+      env_params.set(key, data);
     }
 
     return Object.keys(parameters).reduce(
-      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
+      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter | VaultParameter }, key: string) => {
         const service_param = parameters[key];
 
         let val = env_params.has(key) ? env_params.get(key) : service_param.default;

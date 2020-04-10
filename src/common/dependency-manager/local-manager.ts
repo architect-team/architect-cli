@@ -55,7 +55,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     dependency_manager.loadSubscriptions();
-    dependency_manager.loadParameters();
+    await dependency_manager.loadParameters();
     return dependency_manager;
   }
 
@@ -143,7 +143,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return service_node;
   }
 
-  protected loadParameters() {
+  protected async loadParameters() {
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         // Only include in cli since it will read files off disk
