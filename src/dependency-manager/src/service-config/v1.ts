@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer/decorators';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
@@ -56,6 +56,16 @@ class InterfaceSpecV1 {
   port!: number;
 }
 
+export class ServiceVolumeV1 {
+  mountPath?: string;
+  description?: string;
+  readonly?: boolean;
+}
+
+export class ServiceVolumesV1 {
+  [s: string]: ServiceVolumeV1;
+}
+
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
   protected name = '';
@@ -78,6 +88,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   protected notifications: ServiceNotificationsV1 = {};
   protected subscriptions: ServiceSubscriptionsV1 = {};
   protected platforms: { [s: string]: any } = {};
+  protected volumes: ServiceVolumesV1 = {};
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -205,5 +216,17 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getPort(): number | undefined {
     return this.port ? Number(this.port) : undefined;
+  }
+
+  getVolumes(): { [s: string]: VolumeSpec } | undefined {
+    return Object.entries(this.volumes).reduce((volumes, [key, entry]) => {
+      if (entry.readonly !== true && entry.readonly !== false) {
+        // Set readonly to false by default
+        entry.readonly = false;
+      }
+
+      volumes[key] = entry as VolumeSpec;
+      return volumes;
+    }, {} as { [key: string]: VolumeSpec });
   }
 }

@@ -14,6 +14,7 @@ export interface DockerService {
   command?: string | string[];
   restart?: string;
   entrypoint?: string | string[];
+  dns_search?: string | string[];
 }
 
 export default interface DockerComposeTemplate {

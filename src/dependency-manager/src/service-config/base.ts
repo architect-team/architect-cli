@@ -60,6 +60,12 @@ export interface ServiceDebugOptions {
   command: string | string[];
 }
 
+export interface VolumeSpec {
+  mountPath?: string;
+  description?: string;
+  readonly: boolean;
+}
+
 export abstract class ServiceConfig {
   abstract __version: string;
   abstract getName(): string;
@@ -79,4 +85,5 @@ export abstract class ServiceConfig {
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
   abstract getPort(): number | undefined;
+  abstract getVolumes(): { [s: string]: VolumeSpec } | undefined;
 }

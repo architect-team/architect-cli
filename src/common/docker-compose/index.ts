@@ -1,19 +1,20 @@
-import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import LocalDependencyManager from '../dependency-manager/local-manager';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_manager: DependencyManager, build_prod = false): DockerComposeTemplate => {
+export const generate = (dependency_manager: LocalDependencyManager, build_prod = false): DockerComposeTemplate => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
     volumes: {},
   };
+
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
     if (node instanceof GatewayNode) {
@@ -75,11 +76,34 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
           compose.services[node.normalized_ref].command = debug_options.command;
         }
 
-        // Mount the src directory
-        const src_path = path.join(node.service_path, 'src');
-        if (fs.pathExistsSync(src_path)) {
-          compose.services[node.normalized_ref].volumes = [`${src_path}:/usr/src/app/src`];
+        let volumes: string[] = [];
+        const service_volumes = node.service_config.getVolumes();
+        const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
+        if (service_volumes) {
+          const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
+            let service_volume;
+            if (spec.mountPath?.startsWith('$')) {
+              const volume_path = node.parameters[spec.mountPath.substr(1)];
+              if (!volume_path) {
+                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
+              }
+              service_volume = volume_path.toString();
+            } else if (spec.mountPath) {
+              service_volume = spec.mountPath;
+            } else {
+              throw new Error(`mountPath must be specified for volume ${key}`);
+            }
+
+            const env_volume = env_volumes[key];
+            if (!env_volume) {
+              return path.resolve(node.service_path, service_volume);
+            }
+
+            return `${path.resolve(path.dirname(dependency_manager.config_path), env_volume)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+          }, []);
+          volumes = volumes.concat(config_volumes);
         }
+        compose.services[node.normalized_ref].volumes = volumes;
 
         const env_service = dependency_manager.environment.getServices()[node.ref];
         const env_service_debug = env_service?.getDebug();
@@ -89,21 +113,17 @@ export const generate = (dependency_manager: DependencyManager, build_prod = fal
             compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service_debug.dockerfile);
           }
 
-          if (env_service_debug.volumes) {
-            compose.services[node.normalized_ref].volumes = env_service_debug.volumes.map((v) => {
-              const volumeDef = v.split(':');
-              if (volumeDef.length === 1) {
-                return path.resolve(node.service_path, volumeDef[0]);
-              }
-              return `${path.resolve(node.service_path, v.split(':')[0])}:${v.split(':')[1]}`;
-            });
-          }
-
           if (env_service_debug.entrypoint) {
             compose.services[node.normalized_ref].entrypoint = env_service_debug.entrypoint;
           }
         }
       }
+    }
+
+    // Append the dns_search value if it was provided in the environment config
+    const dns_config = dependency_manager.environment.getDnsConfig();
+    if (dns_config.searches) {
+      compose.services[node.normalized_ref].dns_search = dns_config.searches;
     }
   }
 

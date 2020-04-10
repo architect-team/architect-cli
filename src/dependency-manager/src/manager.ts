@@ -11,7 +11,6 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import MissingRequiredParamError from './missing-required-param-error';
 import { ServiceConfig, ServiceParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
@@ -119,11 +118,11 @@ export default abstract class DependencyManager {
       }
 
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
-        if (typeof param_value === 'string') {
-          if (param_value.indexOf('$') > -1) {
+        if (typeof param_value === 'string' || typeof param_value === 'boolean') {
+          if (param_value.toString().indexOf('$') > -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
-            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value;
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
           }
         }
       }
@@ -255,11 +254,14 @@ export default abstract class DependencyManager {
     return Object.keys(parameters).reduce(
       (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
         const service_param = parameters[key];
-        if (service_param.required && !env_params.has(key)) {
-          throw new MissingRequiredParamError(key, service_param.description, service_ref);
+
+        let val = env_params.has(key) ? env_params.get(key) : service_param.default;
+
+        // note: an empty string is considered a valid value for a parameter so we explicitly check for null or undefined here
+        if (val === null || val === undefined) {
+          return params;
         }
 
-        let val = env_params.get(key) || service_param.default || '';
         if (typeof val === 'number') {
           val = val.toString();
         }

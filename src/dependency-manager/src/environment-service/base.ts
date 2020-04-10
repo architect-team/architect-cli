@@ -16,7 +16,7 @@ interface DatastoreSpec {
 interface DebugSpec {
   path: string;
   dockerfile?: string;
-  volumes?: string[];
+  volumes?: { [s: string]: string };
   entrypoint?: string | string[];
 }
 

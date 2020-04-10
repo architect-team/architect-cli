@@ -21,6 +21,9 @@
       "command": "npm run debug",
       "volumes": [
         "/test/calculator/division-service/src:/usr/src/app/src"
+      ],
+      "dns_search": [
+        "testdomain.com"
       ]
     },
     "architect.subtraction-service-rest.latest": {
@@ -40,7 +43,10 @@
           "ARCHITECT_DEBUG=1"
         ]
       },
-      "command": "sh -c 'go run main.go'"
+      "command": "sh -c 'go run main.go'",
+      "dns_search": [
+        "testdomain.com"
+      ]
     },
     "architect.addition-service-rest.latest": {
       "ports": [
@@ -62,6 +68,9 @@
       "command": "npm run dev",
       "volumes": [
         "/test/calculator/addition-service/rest/src:/usr/src/app/src"
+      ],
+      "dns_search": [
+        "testdomain.com"
       ]
     },
     "architect.addition-service-rest.latest.primary": {
@@ -76,7 +85,10 @@
         "POSTGRES_PASSWORD": "architect",
         "POSTGRES_DB": "addition_service"
       },
-      "image": "postgres:10"
+      "image": "postgres:10",
+      "dns_search": [
+        "testdomain.com"
+      ]
     }
   },
   "volumes": {}

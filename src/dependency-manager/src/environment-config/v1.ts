@@ -15,12 +15,21 @@ interface VaultMap {
   };
 }
 
+interface DnsConfigSpec {
+  searches?: string | string[];
+}
+
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   protected parameters: EnvironmentParameters = {};
   @Transform(Dict(() => EnvironmentServiceV1), { toClassOnly: true })
   protected services: { [service_ref: string]: EnvironmentService } = {};
   protected vaults: VaultMap = {};
+  protected dns?: DnsConfigSpec;
+
+  getDnsConfig(): DnsConfigSpec {
+    return this.dns || {};
+  }
 
   getParameters(): EnvironmentParameters {
     return this.parameters;
