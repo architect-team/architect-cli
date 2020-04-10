@@ -22,11 +22,18 @@ class EnvConfigRequiredError extends Error {
   }
 }
 
+enum ValidationSeverity {
+  INFO = 0,
+  WARNING = 1,
+  ERROR = 2,
+}
+
 interface ValidationResult {
   valid: boolean;
   slug: string;
   rule: string;
   doc_ref: string;
+  severity: ValidationSeverity;
   details?: string;
 }
 
