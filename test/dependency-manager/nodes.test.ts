@@ -32,6 +32,11 @@ describe('nodes', function () {
       '/stack/arc.env.external.json': JSON.stringify(env_config_external),
     });
 
+    moxios.stubRequest(`/accounts/architect/services/frontend/versions/latest`, {
+      status: 200,
+      response: { config: { interfaces: {} } }
+    });
+
     moxios.stubRequest(`/accounts/architect/services/backend/versions/latest`, {
       status: 200,
       response: {
@@ -86,10 +91,6 @@ describe('nodes', function () {
         }
       }
     });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
-    const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
   });
 
   afterEach(function () {
@@ -100,11 +101,17 @@ describe('nodes', function () {
   });
 
   it('load ServiceNode', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
+    const serialized_graph = serialize(manager.graph);
+    graph = deserialize(LocalDependencyGraph, serialized_graph);
     const service_node = graph.getNodeByRef('architect/backend:latest');
     expect(service_node instanceof ServiceNode).true;
   });
 
   it('load ExternalNode', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
+    const serialized_graph = serialize(manager.graph);
+    graph = deserialize(LocalDependencyGraph, serialized_graph);
     const external_node = graph.getNodeByRef('architect/frontend:latest');
     expect(external_node instanceof ExternalNode).true;
   });
