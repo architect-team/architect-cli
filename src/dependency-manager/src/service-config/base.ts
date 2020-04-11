@@ -1,4 +1,5 @@
-import { DatastoreValueFromParameter, ValueFromParameter } from '../manager';
+import { classToClass, plainToClassFromExist } from 'class-transformer';
+import { Parameter } from '../manager';
 
 interface RestSubscriptionData {
   uri: string;
@@ -7,16 +8,15 @@ interface RestSubscriptionData {
 
 export interface ServiceParameter {
   description: string;
-  default?: string | number | ValueFromParameter | DatastoreValueFromParameter;
+  default?: Parameter;
   required: boolean;
   build_arg?: boolean;
 }
 
 export interface ServiceDatastore {
-  docker: {
-    image: string;
-    target_port: number;
-  };
+  host?: string;
+  port?: number;
+  image?: string;
   parameters: {
     [key: string]: ServiceParameter;
   };
@@ -45,6 +45,7 @@ export interface ServiceApiSpec {
 
 export interface ServiceInterfaceSpec {
   description?: string;
+  host?: string;
   port: number;
 }
 
@@ -56,14 +57,23 @@ export interface ServiceLivenessProbe {
   interval?: string;
 }
 
-export interface ServiceDebugOptions {
-  command: string | string[];
+export class ServiceDebugOptions {
+  path?: string;
+  dockerfile?: string;
+  volumes?: { [s: string]: VolumeSpec };
+  command?: string | string[];
+  entrypoint?: string | string[];
 }
 
 export interface VolumeSpec {
   mountPath?: string;
+  hostPath?: string;
   description?: string;
-  readonly: boolean;
+  readonly?: boolean;
+}
+
+export interface IngressSpec {
+  subdomain: string;
 }
 
 export abstract class ServiceConfig {
@@ -85,5 +95,14 @@ export abstract class ServiceConfig {
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
   abstract getPort(): number | undefined;
-  abstract getVolumes(): { [s: string]: VolumeSpec } | undefined;
+  abstract getVolumes(): { [s: string]: VolumeSpec };
+  abstract getIngress(): IngressSpec | undefined;
+
+  copy() {
+    return classToClass(this);
+  }
+
+  merge(other_config: ServiceConfig): ServiceConfig {
+    return plainToClassFromExist(this, other_config);
+  }
 }

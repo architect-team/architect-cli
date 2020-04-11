@@ -1,6 +1,6 @@
 import { Transform } from 'class-transformer/decorators';
-import { EnvironmentService } from '../environment-service/base';
-import { EnvironmentServiceV1 } from '../environment-service/v1';
+import { ServiceConfig } from '../service-config/base';
+import { ServiceConfigV1 } from '../service-config/v1';
 import { Dict } from '../utils/transform';
 import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
@@ -22,8 +22,8 @@ interface DnsConfigSpec {
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   protected parameters: EnvironmentParameters = {};
-  @Transform(Dict(() => EnvironmentServiceV1), { toClassOnly: true })
-  protected services: { [service_ref: string]: EnvironmentService } = {};
+  @Transform(Dict(() => ServiceConfigV1), { toClassOnly: true })
+  protected services: { [service_ref: string]: ServiceConfig } = {};
   protected vaults: VaultMap = {};
   protected dns?: DnsConfigSpec;
 
@@ -35,7 +35,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return this.parameters;
   }
 
-  getServices(): { [key: string]: EnvironmentService } {
+  getServices(): { [key: string]: ServiceConfig } {
     return this.services;
   }
 

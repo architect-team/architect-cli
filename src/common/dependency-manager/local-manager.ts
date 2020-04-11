@@ -39,16 +39,13 @@ export default class LocalDependencyManager extends DependencyManager {
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
-    for (const [ref, env_svc_cfg] of Object.entries(dependency_manager.environment.getServices())) {
+    for (const ref of Object.keys(dependency_manager._environment.getServices())) {
       const [name, tag] = ref.split(':');
       const svc_node = await dependency_manager.loadService(name, tag);
       if (svc_node instanceof ServiceNode) {
-        const env_ingress = env_svc_cfg.getIngress();
+        const env_ingress = svc_node.node_config.getIngress();
         if (env_ingress) {
-          const gateway = new GatewayNode({
-            ports: [{ target: 80, expose: await dependency_manager.getServicePort(80) }],
-            parameters: {},
-          });
+          const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_ingress.subdomain));
         }
@@ -62,7 +59,7 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  protected async getServicePort(starting_port?: number): Promise<number> {
+  async getServicePort(starting_port?: number): Promise<number> {
     return PortUtil.getAvailablePort(starting_port);
   }
 
@@ -72,18 +69,9 @@ export default class LocalDependencyManager extends DependencyManager {
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: config,
+      node_config: config.copy(),
       image: config.getImage(),
       tag: 'latest',
-      ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
-        return {
-          target: value.port,
-          expose: await this.getServicePort(),
-        };
-      })),
-      parameters: await this.getParamValues(
-        `${config.getName()}:latest`,
-        config.getParameters(),
-      ),
     });
 
     this.graph.addNode(node);
@@ -100,12 +88,12 @@ export default class LocalDependencyManager extends DependencyManager {
       return existing_node as ServiceNode | ExternalNode;
     }
 
-    const env_service = this.environment.getServiceDetails(`${service_name}:${service_tag}`);
-    if (env_service?.getInterfaces()) {
+    const env_service = this._environment.getServiceDetails(`${service_name}:${service_tag}`);
+    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
       return this.loadExternalService(env_service, `${service_name}:${service_tag}`);
     }
 
-    const debug_path = env_service?.getDebug()?.path;
+    const debug_path = env_service?.getDebugOptions()?.path;
     let service_node;
     if (debug_path) {
       const svc_path = path.join(path.dirname(this.config_path), debug_path);
@@ -117,21 +105,17 @@ export default class LocalDependencyManager extends DependencyManager {
       const [account_name, svc_name] = service_name.split('/');
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
-      const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+      const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+
+      // TODO: TJ support global parameters/add test if none exists
+      const node_config = env_service ? service_config.merge(env_service) : service_config.copy();
+
       service_node = new ServiceNode({
-        service_config: config,
+        service_config: service_config,
+        node_config: node_config,
         tag: service_digest.tag,
         image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-        ports: await Promise.all(Object.values(config.getInterfaces()).map(async value => {
-          return {
-            target: value.port,
-            expose: await this.getServicePort(),
-          };
-        })),
-        parameters: await this.getParamValues(
-          `${config.getName()}:${service_digest.tag}`,
-          config.getParameters(),
-        ),
+        digest: service_digest.digest,
       });
     }
 
@@ -157,7 +141,7 @@ export default class LocalDependencyManager extends DependencyManager {
   * @override
   */
   async loadServiceConfig(node_ref: string) {
-    const debug_path = this.environment.getServices()[node_ref]?.getDebug()?.path;
+    const debug_path = this._environment.getServices()[node_ref]?.getDebugOptions()?.path;
     if (debug_path) {
       return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), debug_path));
     } else {

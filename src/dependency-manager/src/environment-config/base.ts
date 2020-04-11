@@ -1,7 +1,8 @@
-import { EnvironmentService } from '../environment-service/base';
+import { Parameter } from '../manager';
+import { ServiceConfig } from '../service-config/base';
 
 export interface EnvironmentParameters {
-  [key: string]: string | number;
+  [key: string]: Parameter;
 }
 
 export interface EnvironmentVault {
@@ -21,19 +22,12 @@ export abstract class EnvironmentConfig {
   abstract __version: string;
   abstract getParameters(): EnvironmentParameters;
   abstract getVaults(): { [key: string]: EnvironmentVault };
-  abstract getServices(): { [key: string]: EnvironmentService };
+  abstract getServices(): { [key: string]: ServiceConfig };
   abstract getDnsConfig(): DnsConfig;
 
-  getServiceDetails(key: string): EnvironmentService | undefined {
+  getServiceDetails(key: string): ServiceConfig | undefined {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
     return ref ? services[ref] : undefined;
-  }
-
-  getVolumes(key: string) {
-    const services = this.getServices();
-    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
-    const debug = ref && services[ref].getDebug() ? services[ref].getDebug() : undefined;
-    return debug ? debug.volumes : undefined;
   }
 }

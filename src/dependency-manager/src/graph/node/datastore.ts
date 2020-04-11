@@ -1,10 +1,11 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
+import { ServiceDatastore } from '../../service-config/base';
 
 interface DatastoreNodeOptions {
   parent_ref: string;
   key: string;
-  image: string;
-  replicas?: number;
+  datastore_config: ServiceDatastore;
+  node_config: ServiceDatastore;
 }
 
 export class DatastoreNode extends DependencyNode {
@@ -12,15 +13,16 @@ export class DatastoreNode extends DependencyNode {
   parent_ref!: string;
   key!: string;
 
-  image!: string;
-  replicas = 1;
+  datastore_config!: ServiceDatastore;
+  node_config!: ServiceDatastore;
 
   constructor(options: DependencyNodeOptions & DatastoreNodeOptions) {
-    super(options);
+    super();
     if (options) {
       this.parent_ref = options.parent_ref;
       this.key = options.key;
-      this.image = options.image;
+      this.datastore_config = options.datastore_config;
+      this.node_config = options.node_config;
     }
   }
 
@@ -30,5 +32,13 @@ export class DatastoreNode extends DependencyNode {
 
   get ref() {
     return `${this.parent_ref}.${this.key}`;
+  }
+
+  get image() {
+    return this.node_config.image;
+  }
+
+  get interfaces() {
+    return { _default: { host: this.node_config.host, port: this.node_config.port || 8080 } };
   }
 }

@@ -145,8 +145,8 @@ describe('interfaces', function () {
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as LocalServiceNode;
     expect(backend_node!.parameters.MAIN_PORT).eq('8080');
     expect(backend_node!.parameters.SECONDARY_PORT).eq('8081');
-    expect(backend_node!.ports.filter(port_pair => port_pair.target.toString() === '8080').length).eq(1);
-    expect(backend_node!.ports.filter(port_pair => port_pair.target.toString() === '8081').length).eq(1);
+    expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
+    expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8081').length).eq(1);
     expect(backend_node!.service_config.getInterfaces().main.port).eq('8080');
     expect(backend_node!.service_config.getInterfaces().secondary.port).eq('8081');
 
@@ -182,7 +182,7 @@ describe('interfaces', function () {
 
   it('correct compose port mappings', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
 
     expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081']);
     expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8080']);
@@ -191,7 +191,7 @@ describe('interfaces', function () {
 
   it('correct interface environment variables in compose', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
 
     expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
     expect(compose.services['architect.backend.latest'].environment!.MAIN_PORT).eq('8080');

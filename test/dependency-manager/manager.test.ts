@@ -45,9 +45,9 @@ describe('manager', function () {
     const node = new ServiceNode({
       tag: 'test',
       image: 'image',
+      digest: '56546546',
       service_config: new ServiceConfigV1(),
-      ports: [{ target: 8080, expose: 80 }],
-      parameters: {}
+      node_config: new ServiceConfigV1(),
     });
     expect(node.tag).eq('test');
 

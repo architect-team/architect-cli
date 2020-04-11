@@ -49,7 +49,7 @@ describe('volumes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1')}:/usr/src/volume1`]);
   });
 
@@ -82,7 +82,7 @@ describe('volumes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/relative-volume')}:/usr/src/volume1`]);
   });
 
@@ -124,7 +124,7 @@ describe('volumes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
 
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume2')}:/my/custom/path`]);
   });
@@ -155,7 +155,7 @@ describe('volumes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
 
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/usr/src/no-host-binding')}`]);
   });
@@ -190,7 +190,7 @@ describe('volumes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const compose = DockerCompose.generate(manager);
+    const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
   });
 });

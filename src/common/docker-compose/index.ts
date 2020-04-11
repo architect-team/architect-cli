@@ -8,7 +8,7 @@ import LocalDependencyManager from '../dependency-manager/local-manager';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
-export const generate = (dependency_manager: LocalDependencyManager, build_prod = false): DockerComposeTemplate => {
+export const generate = async (dependency_manager: LocalDependencyManager, build_prod = false): Promise<DockerComposeTemplate> => {
   const compose: DockerComposeTemplate = {
     version: '3',
     services: {},
@@ -21,21 +21,25 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
       compose.services[node.normalized_ref] = {
         image: 'jwilder/nginx-proxy',
         restart: 'always',
-        ports: [`${node.ports[0].expose}:${node.ports[0].target}`],
+        ports: [`${await dependency_manager.gateway_port}:${node.ports[0]}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
       };
     }
 
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
+      const ports = [];
+      for (const port of node.ports) {
+        ports.push(`${await dependency_manager.getServicePort()}:${port}`);
+      }
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
-        ports: node.ports.map(port_pair => `${port_pair.expose}:${port_pair.target}`),
+        ports: ports,
         depends_on: [],
         environment: {
           ...node.parameters,
           HOST: node.normalized_ref,
-          PORT: node.ports[0].target.toString(),
+          PORT: node.ports[0].toString(),
         },
       };
     }
@@ -74,54 +78,43 @@ export const generate = (dependency_manager: LocalDependencyManager, build_prod 
         const debug_options = node.service_config.getDebugOptions();
         if (debug_options) {
           compose.services[node.normalized_ref].command = debug_options.command;
+          if (debug_options.dockerfile) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, debug_options.dockerfile);
+          }
+          if (debug_options.entrypoint) {
+            compose.services[node.normalized_ref].entrypoint = debug_options.entrypoint;
+          }
         }
 
         let volumes: string[] = [];
-        const service_volumes = node.service_config.getVolumes();
-        const env_volumes = dependency_manager.environment.getVolumes(node.ref) || {};
-        if (service_volumes) {
-          const config_volumes = Object.entries(service_volumes).map(([key, spec]) => {
-            let service_volume;
-            if (spec.mountPath?.startsWith('$')) {
-              const volume_path = node.parameters[spec.mountPath.substr(1)];
-              if (!volume_path) {
-                throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
-              }
-              service_volume = volume_path.toString();
-            } else if (spec.mountPath) {
-              service_volume = spec.mountPath;
-            } else {
-              throw new Error(`mountPath must be specified for volume ${key}`);
+        const config_volumes = Object.entries(node.volumes).map(([key, spec]) => {
+          let service_volume;
+          if (spec.mountPath?.startsWith('$')) {
+            const volume_path = node.parameters[spec.mountPath.substr(1)];
+            if (!volume_path) {
+              throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
             }
+            service_volume = volume_path.toString();
+          } else if (spec.mountPath) {
+            service_volume = spec.mountPath;
+          } else {
+            throw new Error(`mountPath must be specified for volume ${key}`);
+          }
 
-            const env_volume = env_volumes[key];
-            if (!env_volume) {
-              return path.resolve(node.service_path, service_volume);
-            }
-
-            return `${path.resolve(path.dirname(dependency_manager.config_path), env_volume)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          }, []);
-          volumes = volumes.concat(config_volumes);
-        }
+          if (spec.hostPath) {
+            return `${path.resolve(path.dirname(dependency_manager.config_path), spec.hostPath)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+          } else {
+            return path.resolve(node.service_path, service_volume);
+          }
+        }, []);
+        volumes = volumes.concat(config_volumes);
         compose.services[node.normalized_ref].volumes = volumes;
-
-        const env_service = dependency_manager.environment.getServices()[node.ref];
-        const env_service_debug = env_service?.getDebug();
-        if (env_service_debug) {
-          if (env_service_debug.dockerfile) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            compose.services[node.normalized_ref].build!.dockerfile = path.resolve(node.service_path, env_service_debug.dockerfile);
-          }
-
-          if (env_service_debug.entrypoint) {
-            compose.services[node.normalized_ref].entrypoint = env_service_debug.entrypoint;
-          }
-        }
       }
     }
 
     // Append the dns_search value if it was provided in the environment config
-    const dns_config = dependency_manager.environment.getDnsConfig();
+    const dns_config = dependency_manager._environment.getDnsConfig();
     if (dns_config.searches) {
       compose.services[node.normalized_ref].dns_search = dns_config.searches;
     }

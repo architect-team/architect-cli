@@ -130,7 +130,7 @@ export default class Deploy extends Command {
 
     await this.validate_graph(dependency_manager.graph);
 
-    const compose = DockerCompose.generate(dependency_manager, flags.build_prod);
+    const compose = await DockerCompose.generate(dependency_manager, flags.build_prod);
     await this.runCompose(compose);
   }
 

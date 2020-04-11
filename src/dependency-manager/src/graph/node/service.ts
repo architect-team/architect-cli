@@ -6,7 +6,9 @@ import { ServiceConfigV1 } from '../../service-config/v1';
 export interface ServiceNodeOptions {
   image: string;
   tag?: string;
+  digest?: string;
   service_config: ServiceConfig;
+  node_config: ServiceConfig;
   replicas?: number;
 }
 
@@ -15,6 +17,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   image!: string;
   tag!: string;
+  digest?: string;
   replicas = 1;
   @Type(() => ServiceConfig, {
     discriminator: {
@@ -27,12 +30,25 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   })
   service_config!: ServiceConfig;
 
+  @Type(() => ServiceConfig, {
+    discriminator: {
+      property: '__version',
+      subTypes: [
+        { value: ServiceConfigV1, name: '1.0.0' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  node_config!: ServiceConfig;
+
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
-    super(options);
+    super();
     if (options) {
       this.image = options.image;
       this.tag = options.tag || 'latest';
+      this.digest = options.digest;
       this.service_config = options.service_config;
+      this.node_config = options.node_config;
     }
   }
 
@@ -41,17 +57,17 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get ref() {
-    return `${this.service_config.getName()}:${this.tag}`;
+    return `${this.node_config.getName()}:${this.tag}`;
   }
 
-  get interfaces() {
-    return this.service_config.getInterfaces();
+  get volumes() {
+    return this.node_config.getVolumes();
   }
 
   /**
    * @override
    */
   get protocol() {
-    return this.service_config.getApiSpec().type === 'grpc' ? '' : 'http://';
+    return this.node_config.getApiSpec().type === 'grpc' ? '' : 'http://';
   }
 }

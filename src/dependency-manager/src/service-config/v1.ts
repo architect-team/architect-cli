@@ -1,5 +1,32 @@
 import { Transform, Type } from 'class-transformer/decorators';
+import { Dict } from '../utils/transform';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
+
+function transformParameters(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore
+    if (value instanceof Object && !value.valueFrom) {
+      output[key] = value;
+    } else {
+      output[key] = { default: value };
+    }
+  }
+  return output;
+}
+
+function transformVolumes(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value instanceof Object) {
+      output[key] = value;
+    } else {
+      output[key] = { hostPath: value };
+    }
+  }
+  return output;
+}
 
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
@@ -16,17 +43,12 @@ interface ServiceSubscriptionsV1 {
   };
 }
 
-interface ServiceDatastoreV1 {
+class ServiceDatastoreV1 {
   host?: string;
   port?: number;
   image?: string;
-  docker?: {
-    image: string;
-    target_port: number;
-  };
-  parameters: {
-    [key: string]: ServiceParameterV1;
-  };
+  @Transform(value => (transformParameters(value)))
+  parameters: { [key: string]: ServiceParameterV1 } = {};
 }
 
 interface ServiceParameterV1 {
@@ -53,17 +75,28 @@ class ApiSpecV1 {
 
 class InterfaceSpecV1 {
   description?: string;
+  host?: string;
   port!: number;
 }
 
 export class ServiceVolumeV1 {
-  mountPath?: string;
+  mountPath?: string;  // TODO: TJ Ask David about volumes camelcase
+  hostPath?: string;
   description?: string;
   readonly?: boolean;
 }
 
-export class ServiceVolumesV1 {
-  [s: string]: ServiceVolumeV1;
+class ServiceDebugOptionsV1 {
+  path?: string;
+  dockerfile?: string;
+  @Transform(value => (transformVolumes(value)))
+  volumes?: { [s: string]: ServiceVolumeV1 };
+  command?: string | string[];
+  entrypoint?: string | string[];
+}
+
+interface IngressSpecV1 {
+  subdomain: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
@@ -72,13 +105,17 @@ export class ServiceConfigV1 extends ServiceConfig {
   protected description?: string;
   protected keywords?: string[];
   protected image?: string;
+  protected host?: string;
   protected port?: string;
   protected command?: string | string[];
   protected entrypoint?: string | string[];
   protected dependencies: { [s: string]: string } = {};
   protected language?: string;
-  protected debug?: string;
+  @Transform(value => (value instanceof Object ? value : (value ? { command: value } : value)))
+  protected debug?: ServiceDebugOptionsV1;
+  @Transform(value => (transformParameters(value)))
   protected parameters: { [s: string]: ServiceParameterV1 } = {};
+  @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   protected datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
   protected api: ApiSpecV1 = {
@@ -88,7 +125,9 @@ export class ServiceConfigV1 extends ServiceConfig {
   protected notifications: ServiceNotificationsV1 = {};
   protected subscriptions: ServiceSubscriptionsV1 = {};
   protected platforms: { [s: string]: any } = {};
-  protected volumes: ServiceVolumesV1 = {};
+  @Transform(value => (transformVolumes(value)))
+  protected volumes: { [s: string]: ServiceVolumeV1 } = {};
+  protected ingress?: IngressSpecV1;
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -113,7 +152,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
     const _default = this.port ? parseInt(this.port) : 8080;
-    return Object.keys(this.interfaces).length ? this.interfaces : { _default: { port: _default } };
+    return Object.keys(this.interfaces).length ? this.interfaces : { _default: { host: this.host, port: _default } };
   }
 
   getImage(): string {
@@ -154,16 +193,6 @@ export class ServiceConfigV1 extends ServiceConfig {
           }
 
           res[key] = {
-            docker: {
-              image: ds_config.image,
-              target_port: ds_config.port,
-            },
-            parameters: this.normalizeParameters(ds_config.parameters || {}),
-          };
-          return res;
-        } else if (ds_config.docker) {
-          res[key] = {
-            docker: ds_config.docker,
             parameters: this.normalizeParameters(ds_config.parameters || {}),
           };
           return res;
@@ -199,7 +228,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getDebugOptions(): ServiceDebugOptions | undefined {
-    return this.debug ? { command: this.debug } : undefined;
+    return this.debug;
   }
 
   getLanguage(): string {
@@ -218,7 +247,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.port ? Number(this.port) : undefined;
   }
 
-  getVolumes(): { [s: string]: VolumeSpec } | undefined {
+  getVolumes(): { [s: string]: VolumeSpec } {
     return Object.entries(this.volumes).reduce((volumes, [key, entry]) => {
       if (entry.readonly !== true && entry.readonly !== false) {
         // Set readonly to false by default
@@ -228,5 +257,9 @@ export class ServiceConfigV1 extends ServiceConfig {
       volumes[key] = entry as VolumeSpec;
       return volumes;
     }, {} as { [key: string]: VolumeSpec });
+  }
+
+  getIngress() {
+    return this.ingress;
   }
 }

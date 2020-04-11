@@ -2,7 +2,6 @@ import dotenvExpand from 'dotenv-expand';
 import { ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
-import { EnvironmentService } from './environment-service/base';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
@@ -11,7 +10,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig, ServiceParameter } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -36,14 +35,18 @@ export interface DatastoreValueFromParameter {
   };
 }
 
+export type Parameter = string | number | ValueFromParameter | VaultParameter | DatastoreValueFromParameter;
+
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
-  environment: EnvironmentConfig;
+  gateway_port: Promise<number>;
+  _environment: EnvironmentConfig;
   protected vault_manager: VaultManager;
 
   constructor(environment_config?: EnvironmentConfig) {
-    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
-    this.vault_manager = new VaultManager(this.environment.getVaults());
+    this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.vault_manager = new VaultManager(this._environment.getVaults());
+    this.gateway_port = this.getServicePort(80);
   }
 
   /**
@@ -64,7 +67,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  private scopeEnv(node: DependencyNode, key: string, node_prefix = '') {
+  protected scopeEnv(node: DependencyNode, key: string, node_prefix = '') {
     return `${node_prefix ? `${node_prefix}_` : ''}${node.normalized_ref}_${key}`.toUpperCase().replace(/[.-]/g, '_');
   }
 
@@ -88,18 +91,9 @@ export default abstract class DependencyManager {
     }
 
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? gateway_node.ports[0].expose.toString() : '';
+    const gateway_port = gateway_node ? await this.gateway_port : '';
     for (const node of this.graph.nodes) {
-      let interfaces: { [key: string]: { host?: string; port: number } } = {};
-      if (node instanceof ServiceNode) {
-        interfaces = node.interfaces;
-      } else if (node instanceof ExternalNode) {
-        interfaces = node.interfaces || { _default: { host: node.host, port: node.ports[0].target } };
-      } else {
-        interfaces = { _default: { port: node.ports[0].target } };
-      }
-
-      for (const [interface_name, interface_details] of Object.entries(interfaces)) {
+      for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
         let external_host, internal_host, external_port, internal_port;
         if (node instanceof ExternalNode) {
           if (!interface_details.host) {
@@ -224,60 +218,11 @@ export default abstract class DependencyManager {
   }
 
   /**
-   * Parse the parameter values by comparing defaults for a service to
-   * values in the environment configuration.
-   */
-  protected async getParamValues(
-    service_ref: string,
-    parameters: { [key: string]: ServiceParameter },
-    datastore_key?: string,
-  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter | VaultParameter }> {
-    const services = this.environment.getServices();
-    const global_params = this.environment.getParameters();
-    let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
-    if (datastore_key && services[service_ref] && services[service_ref].getDatastores()[datastore_key]) {
-      raw_params = {
-        ...global_params,
-        ...services[service_ref].getDatastores()[datastore_key].parameters,
-      } || {};
-    } else if (services[service_ref]) {
-      raw_params = {
-        ...global_params,
-        ...services[service_ref].getParameters(),
-      } || {};
-    }
-
-    // Enrich vault parameters
-    const env_params = new Map<string, string | number | ValueFromParameter | VaultParameter>();
-    for (const [key, data] of Object.entries(raw_params)) {
-      env_params.set(key, data);
-    }
-
-    return Object.keys(parameters).reduce(
-      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter | VaultParameter }, key: string) => {
-        const service_param = parameters[key];
-
-        let val = env_params.has(key) ? env_params.get(key) : service_param.default;
-
-        // note: an empty string is considered a valid value for a parameter so we explicitly check for null or undefined here
-        if (val === null || val === undefined) {
-          return params;
-        }
-
-        if (typeof val === 'number') {
-          val = val.toString();
-        }
-        params[key] = val;
-        return params;
-      }, {});
-  }
-
-  /**
    * Returns a port available for a service to run on. Primary use-case is to be
    * extended by the CLI to return a dynamic available port.
    */
-  protected async getServicePort(): Promise<number> {
-    return Promise.resolve(80);
+  async getServicePort(starting_port?: number): Promise<number> {
+    return Promise.resolve(starting_port || 80);
   }
 
   /**
@@ -286,38 +231,21 @@ export default abstract class DependencyManager {
   protected async loadDatastores(parent_node: ServiceNode) {
     if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      const dep_node_config = {
-        parent_ref: parent_node.ref,
-        key: ds_name,
-        parameters: await this.getParamValues(
-          parent_node.ref,
-          ds_config.parameters,
-          ds_name,
-        ),
-      };
-      const environment_service_config = this.environment.getServices()[parent_node.ref];
+    for (const [ds_name, ds_config] of Object.entries(parent_node.node_config.getDatastores())) {
       let dep_node;
 
-      const database_host = environment_service_config?.getDatastores()[ds_name]?.host;
-      if (database_host) {
-        const external_port = environment_service_config?.getDatastores()[ds_name]?.port || ds_config.docker.target_port;
+      if (ds_config.host) {
         dep_node = new ExternalNode({
-          ...dep_node_config,
-          host: database_host,
-          ports: [{
-            target: external_port,
-            expose: external_port,
-          }],
+          parent_ref: parent_node.ref,
+          key: ds_name,
+          node_config: ds_config,
         });
       } else {
         dep_node = new DatastoreNode({
-          ...dep_node_config,
-          image: ds_config.docker.image,
-          ports: [{
-            target: ds_config.docker.target_port,
-            expose: await this.getServicePort(),
-          }],
+          parent_ref: parent_node.ref,
+          key: ds_name,
+          datastore_config: parent_node.service_config.getDatastores()[ds_name] || ds_config,
+          node_config: ds_config,
         });
       }
 
@@ -351,7 +279,7 @@ export default abstract class DependencyManager {
   /**
    * Create an external node and add it to the graph
    */
-  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+  async loadExternalService(env_service_config: ServiceConfig, service_ref: string) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const interfaces = env_service_config.getInterfaces()!;
     if (interfaces) {
@@ -374,11 +302,8 @@ export default abstract class DependencyManager {
     }
 
     const node = new ExternalNode({
-      host: interfaces._default?.host,
-      ports: Object.values(interfaces).map((i) => ({ target: i.port, expose: i.port })),
-      parameters: env_service_config.getParameters(),
       key: service_ref,
-      interfaces: interfaces,
+      node_config: env_service_config,
     });
     this.graph.addNode(node);
     return node;

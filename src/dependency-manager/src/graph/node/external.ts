@@ -1,36 +1,24 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
+import { ServiceConfig, ServiceDatastore } from '../../service-config/base';
 
 interface ExternalNodeOptions {
   parent_ref?: string;
   key: string;
-  host?: string;
-  interfaces?: {
-    [key: string]: {
-      host: string;
-      port: number;
-    };
-  };
+  node_config: ServiceConfig | ServiceDatastore;
 }
 
 export class ExternalNode extends DependencyNode {
   __type = 'external';
   parent_ref?: string;
   key!: string;
-  host?: string;
-  interfaces?: {
-    [key: string]: {
-      host: string;
-      port: number;
-    };
-  };
+  node_config!: ServiceConfig | ServiceDatastore;
 
   constructor(options: DependencyNodeOptions & ExternalNodeOptions) {
-    super(options);
+    super();
     if (options) {
       this.parent_ref = options.parent_ref;
       this.key = options.key;
-      this.host = options.host;
-      this.interfaces = options.interfaces;
+      this.node_config = options.node_config;
     }
   }
 
