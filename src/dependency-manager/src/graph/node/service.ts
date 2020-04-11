@@ -64,6 +64,18 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return this.node_config.getVolumes();
   }
 
+  get parameters() {
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config.getParameters())) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
+      }
+    }
+    return this._parameters;
+  }
+
   /**
    * @override
    */

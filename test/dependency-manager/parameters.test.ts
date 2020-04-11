@@ -42,6 +42,6 @@ describe('manager parameters', function () {
 
   it('value override valueFrom', async () => {
     const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest')!;
-    expect(addition_node.parameters.DB_PRIMARY_PORT).eq('5432');
+    expect(addition_node.parameters.DB_PRIMARY_PORT).eq(5432);
   });
 });

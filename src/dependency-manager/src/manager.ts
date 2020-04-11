@@ -55,7 +55,7 @@ export default abstract class DependencyManager {
   protected loadSubscriptions() {
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode) {
-        for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
+        for (const svc_name of Object.keys(node.node_config.getSubscriptions())) {
           const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
           if (ref && this.graph.nodes_map.has(ref)) {
@@ -135,8 +135,8 @@ export default abstract class DependencyManager {
             const value_from_param = param_value as ValueFromParameter;
             let param_target_service_name = value_from_param.valueFrom.dependency;
             // Support dep ref with or without tag
-            if (param_target_service_name in node.service_config.getDependencies()) {
-              param_target_service_name = `${param_target_service_name}:${node.service_config.getDependencies()[param_target_service_name]}`;
+            if (param_target_service_name in node.node_config.getDependencies()) {
+              param_target_service_name = `${param_target_service_name}:${node.node_config.getDependencies()[param_target_service_name]}`;
             }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
@@ -145,7 +145,7 @@ export default abstract class DependencyManager {
               if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
-              const node_dependency_refs = node.service_config.getDependencies();
+              const node_dependency_refs = node.node_config.getDependencies();
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
@@ -157,7 +157,7 @@ export default abstract class DependencyManager {
               }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
-              const datastore_names = Object.keys(node.service_config.getDatastores());
+              const datastore_names = Object.keys(node.node_config.getDatastores());
               if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
               }
@@ -262,7 +262,7 @@ export default abstract class DependencyManager {
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
     if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
+    for (const [dep_name, dep_id] of Object.entries(parent_node.node_config.getDependencies())) {
       const dep_node = await this.loadService(dep_name, dep_id, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);

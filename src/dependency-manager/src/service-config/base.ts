@@ -83,6 +83,7 @@ export abstract class ServiceConfig {
   abstract getImage(): string;
   abstract getCommand(): string | string[];
   abstract getEntrypoint(): string | string[];
+  abstract getDockerfile(): string | undefined;
   abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };

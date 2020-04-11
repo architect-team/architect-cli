@@ -36,7 +36,7 @@ export const getServiceApiDefinitionContents = (service_path: string, service_co
 };
 
 export const buildImage = async (node: LocalServiceNode, registry_host: string, tag_name = 'latest') => {
-  const config = node.service_config;
+  const config = node.node_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
   await docker([
     'build',

@@ -109,6 +109,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   protected port?: string;
   protected command?: string | string[];
   protected entrypoint?: string | string[];
+  protected dockerfile?: string;
   protected dependencies: { [s: string]: string } = {};
   protected language?: string;
   @Transform(value => (value instanceof Object ? value : (value ? { command: value } : value)))
@@ -159,12 +160,16 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
-  getCommand(): string | string[] {
+  getCommand() {
     return this.command || '';
   }
 
-  getEntrypoint(): string | string[] {
+  getEntrypoint() {
     return this.entrypoint || '';
+  }
+
+  getDockerfile() {
+    return this.dockerfile;
   }
 
   getDependencies(): { [s: string]: string } {

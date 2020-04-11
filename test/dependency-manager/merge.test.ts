@@ -15,6 +15,7 @@ describe('service config merge', function () {
         'override': { 'default': 'old' },
         'valueFrom': { 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'old' } } },
         'overrideValueFrom': { 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'old' } } },
+        'overrideValueFrom2': { 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'old' } } },
       },
       'datastores': {
         'primary': {
@@ -71,7 +72,8 @@ describe('service config merge', function () {
       },
       'parameters': {
         'override': 'new',
-        'overrideValueFrom': 'new'
+        'overrideValueFrom': 'new',
+        'overrideValueFrom2': { 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'override' } } },
       },
       'datastores': {
         'override': {
@@ -116,9 +118,10 @@ describe('service config merge', function () {
     expect(node_config.getDependencies()['override']).eq('new');
     expect(node_config.getDependencies()['no_override']).eq('old');
 
-    expect(node_config.getParameters()).keys('override', 'simple', 'overrideValueFrom', 'valueFrom');
+    expect(node_config.getParameters()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
     expect(node_config.getParameters()['override'].default).eq('new');
     expect(node_config.getParameters()['overrideValueFrom'].default).eq('new');
+    expect(node_config.getParameters()['overrideValueFrom2'].default!.toString()).eq({ 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'override' } } }.toString());
     expect(node_config.getParameters()['simple'].default).eq('old');
     expect(node_config.getParameters()['valueFrom'].default!.toString()).eq({ 'valueFrom': { 'dependency': 'override', 'value': 'old' } }.toString());
 

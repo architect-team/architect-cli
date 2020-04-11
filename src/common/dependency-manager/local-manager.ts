@@ -17,8 +17,9 @@ export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   config_path: string;
   linked_services: LinkedServicesMap;
+  debug: boolean;
 
-  constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}) {
+  constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
     const env_config = config_path
       ? EnvironmentConfigBuilder.buildFromPath(config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
@@ -35,10 +36,11 @@ export default class LocalDependencyManager extends DependencyManager {
     this.api = api;
     this.config_path = config_path || '';
     this.linked_services = linked_services;
+    this.debug = debug;
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
+  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
+    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
     for (const ref of Object.keys(dependency_manager._environment.getServices())) {
       const [name, tag] = ref.split(':');
       const svc_node = await dependency_manager.loadService(name, tag);
@@ -64,13 +66,20 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
-    const config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+
+    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:latest`);
+    let node_config = env_service ? service_config.merge(env_service) : service_config.copy();
+    const debug_options = node_config.getDebugOptions();
+    if (this.debug && debug_options) {
+      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+    }
 
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
-      service_config: config,
-      node_config: config.copy(),
-      image: config.getImage(),
+      service_config: service_config,
+      node_config: node_config,
+      image: service_config.getImage(),
       tag: 'latest',
     });
 
@@ -108,7 +117,11 @@ export default class LocalDependencyManager extends DependencyManager {
       const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
 
       // TODO: TJ support global parameters/add test if none exists
-      const node_config = env_service ? service_config.merge(env_service) : service_config.copy();
+      let node_config = env_service ? service_config.merge(env_service) : service_config.copy();
+      const debug_options = node_config.getDebugOptions();
+      if (this.debug && debug_options) {
+        node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+      }
 
       service_node = new ServiceNode({
         service_config: service_config,
