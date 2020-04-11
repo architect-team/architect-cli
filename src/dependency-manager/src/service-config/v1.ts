@@ -101,7 +101,7 @@ interface IngressSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
-  protected name = '';
+  protected name?: string;
   protected description?: string;
   protected keywords?: string[];
   protected image?: string;
@@ -143,7 +143,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getName(): string {
-    return this.name;
+    return this.name || '';
   }
 
   getApiSpec(): ServiceApiSpec {
