@@ -265,27 +265,57 @@ export default class Deploy extends Command {
 
     const failing_rules = validation_results.filter(r => !r.valid);
     const passing_rules = validation_results.filter(r => r.valid);
+    const error_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.ERROR).length;
+    const warning_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.WARNING).length;
+    const info_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.INFO).length;
 
-    if (failing_rules && failing_rules.length > 0) {
-      cli.action.stop(chalk.red(`${failing_rules.length} rule${failing_rules.length > 1 ? 's' : ''} failing`));
-
-      this.log('\n');
-      for (const failure of failing_rules) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        this.log(chalk.red(failure.rule));
-
-        if (failure.details) {
-          this.log(`\t${chalk.red('Details: ' + failure.details)}`);
-        }
-        this.log(`\t${chalk.red(failure.doc_ref)}`);
-        this.log('\n');
-      }
-
-      this.log(chalk.blue(`...${passing_rules.length} other passing rules\n`));
-      this.error('The deployment failed validation.');
+    if (error_count || warning_count || info_count) {
+      cli.action.stop(
+        (error_count ? this.get_severity_color(ValidationSeverity.ERROR)(`${error_count} error${error_count > 1 ? 's ' : ' '}`) : ' ') +
+        (warning_count ? this.get_severity_color(ValidationSeverity.WARNING)(`${warning_count} warning${warning_count > 1 ? 's ' : ' '}`) : ' ') +
+        (info_count ? this.get_severity_color(ValidationSeverity.INFO)(`${info_count} info${info_count > 1 ? 's ' : ' '}`) : ' ')
+      );
     } else {
       cli.action.stop(chalk.green(`${passing_rules.length} rules passing`));
+    }
+
+    if (failing_rules.length) {
+      this.log('\n');
+      for (const failure of failing_rules) {
+        this.log_failure(failure);
+      }
+      this.log(chalk.blue(`...${passing_rules.length} other rules passing\n`));
+    }
+
+    if (error_count > 0) {
+      this.error('The deployment failed validation.');
+    }
+  }
+
+  private log_failure(failure: ValidationResult) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore
+    const color_fnc = this.get_severity_color(failure.severity);
+
+    this.log(color_fnc(ValidationSeverity[failure.severity] + ': ' + failure.rule));
+
+    if (failure.details) {
+      this.log(`\t${color_fnc('Details: ' + failure.details)}`);
+    }
+    this.log(`\t${color_fnc(failure.doc_ref)}`);
+    this.log('\n');
+  }
+
+  private get_severity_color(severity: ValidationSeverity) {
+    switch (severity) {
+      case ValidationSeverity.ERROR:
+        return chalk.red;
+      case ValidationSeverity.WARNING:
+        return chalk.yellow;
+      case ValidationSeverity.INFO:
+        return chalk.blue;
+      default:
+        return chalk.white;
     }
   }
 }
