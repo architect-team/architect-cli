@@ -193,6 +193,7 @@ export class ServiceConfigV1 extends ServiceConfig {
           }
 
           res[key] = {
+            ...ds_config,
             parameters: this.normalizeParameters(ds_config.parameters || {}),
           };
           return res;

@@ -19,7 +19,42 @@ describe('service config merge', function () {
           "overrideValueFrom": { "default": { "valueFrom": { "dependency": "override", "value": "old" } } },
         },
         "datastores": {
-
+          "primary": {
+            "image": "postgres:10",
+            "port": 5432,
+            "parameters": {
+              "POSTGRES_USER": {
+                "alias": "username",
+                "default": "postgres"
+              },
+              "POSTGRES_PASS": {
+                "alias": "password",
+                "default": "architect"
+              },
+              "POSTGRES_DB": {
+                "alias": "name",
+                "default": "addition_service"
+              }
+            }
+          },
+          "override": {
+            "image": "postgres:10",
+            "port": 5432,
+            "parameters": {
+              "POSTGRES_USER": {
+                "alias": "username",
+                "default": "postgres"
+              },
+              "POSTGRES_PASS": {
+                "alias": "password",
+                "default": "architect"
+              },
+              "POSTGRES_DB": {
+                "alias": "name",
+                "default": "addition_service"
+              }
+            }
+          },
         },
         "api": {
           "type": "grpc",
@@ -39,7 +74,29 @@ describe('service config merge', function () {
           "override": "new",
           "overrideValueFrom": "new"
         },
-        "datastores": {},
+        "datastores": {
+          "override": {
+            "host": "override"
+          },
+          "new": {
+            "image": "postgres:10",
+            "port": 5432,
+            "parameters": {
+              "POSTGRES_USER": {
+                "alias": "username",
+                "default": "postgres"
+              },
+              "POSTGRES_PASS": {
+                "alias": "password",
+                "default": "architect"
+              },
+              "POSTGRES_DB": {
+                "alias": "name",
+                "default": "addition_service"
+              }
+            }
+          }
+        },
         "api": {
           "type": "grpc",
           "definitions": []
@@ -50,6 +107,8 @@ describe('service config merge', function () {
 
       const service_config = ServiceConfigBuilder.buildFromJSON(service_config_json);
       const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
+
+
 
       const node_config = service_config.merge(env_config);
 
@@ -65,6 +124,8 @@ describe('service config merge', function () {
       expect(node_config.getParameters()['simple'].default).eq('old');
       expect(node_config.getParameters()['valueFrom'].default!.toString()).eq({ "valueFrom": { "dependency": "override", "value": "old" } }.toString());
 
+      expect(node_config.getDatastores()).keys('primary', 'override', 'new');
+      expect(node_config.getDatastores()['override'].host).eq('override');
     });
   });
 });
