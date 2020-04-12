@@ -1,3 +1,4 @@
+import pLimit from 'p-limit';
 import path from 'path';
 import { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -15,6 +16,17 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     volumes: {},
   };
 
+  const limit = pLimit(5);
+  const port_promises = [];
+  for (const node of dependency_manager.graph.nodes) {
+    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
+      for (const _ of node.ports) {
+        port_promises.push(limit(() => dependency_manager.getServicePort()));
+      }
+    }
+  }
+  const available_ports = (await Promise.all(port_promises)).sort();
+
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
     if (node instanceof GatewayNode) {
@@ -30,7 +42,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       const ports = [];
       for (const port of node.ports) {
-        ports.push(`${await dependency_manager.getServicePort()}:${port}`);
+        ports.push(`${available_ports.shift()}:${port}`);
       }
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
