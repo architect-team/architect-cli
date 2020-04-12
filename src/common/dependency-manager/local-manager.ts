@@ -147,7 +147,7 @@ export default class LocalDependencyManager extends DependencyManager {
         node.parameters[key] = readIfFile(value);
       }
     }
-    super.loadParameters();
+    await super.loadParameters();
   }
 
   /**
