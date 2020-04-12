@@ -1,4 +1,4 @@
-import { DependencyNode } from '..';
+import { DependencyNode } from '.';
 
 export default class GatewayNode extends DependencyNode {
   __type = 'gateway';

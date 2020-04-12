@@ -57,7 +57,7 @@ export interface ServiceLivenessProbe {
   interval?: string;
 }
 
-export class ServiceDebugOptions {
+export interface ServiceDebugOptions {
   path?: string;
   dockerfile?: string;
   volumes?: { [s: string]: VolumeSpec };

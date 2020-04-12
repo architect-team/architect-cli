@@ -155,7 +155,7 @@ export default abstract class DependencyManager {
         env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
         env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = external_port ? external_port : internal_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = external_host ? external_port : internal_port;
       }
 
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params

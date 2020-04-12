@@ -8,12 +8,13 @@ import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
+import GatewayNode from '../../src/dependency-manager/src/graph/node/gateway';
 import { ServiceNode } from '../../src/dependency-manager/src/graph/node/service';
 
 describe('nodes', function () {
   let graph: LocalDependencyGraph;
 
-  beforeEach(async function () {
+  before(async function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
@@ -24,7 +25,11 @@ describe('nodes', function () {
           "host": "frontend.host.arc",
           "port": 80
         },
-        "architect/backend:latest": {}
+        "architect/backend:latest": {
+          "ingress": {
+            "subdomain": "api"
+          }
+        }
       }
     };
 
@@ -91,9 +96,13 @@ describe('nodes', function () {
         }
       }
     });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
+    const serialized_graph = serialize(manager.graph);
+    graph = deserialize(LocalDependencyGraph, serialized_graph);
   });
 
-  afterEach(function () {
+  after(function () {
     // Restore stubs
     sinon.restore();
     moxios.uninstall();
@@ -101,18 +110,17 @@ describe('nodes', function () {
   });
 
   it('load ServiceNode', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
-    const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
     const service_node = graph.getNodeByRef('architect/backend:latest');
     expect(service_node instanceof ServiceNode).true;
   });
 
   it('load ExternalNode', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
-    const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
     const external_node = graph.getNodeByRef('architect/frontend:latest');
     expect(external_node instanceof ExternalNode).true;
+  });
+
+  it('load GatewayNode', async () => {
+    const gateway_node = graph.getNodeByRef('gateway');
+    expect(gateway_node instanceof GatewayNode).true;
   });
 });
