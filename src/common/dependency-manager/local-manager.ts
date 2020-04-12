@@ -17,7 +17,6 @@ export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   config_path: string;
   linked_services: LinkedServicesMap;
-  debug: boolean;
 
   constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
     const env_config = config_path
@@ -68,17 +67,10 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
 
-    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:latest`);
-    let node_config = env_service ? service_config.merge(env_service) : service_config.copy();
-    const debug_options = node_config.getDebugOptions();
-    if (this.debug && debug_options) {
-      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
-    }
-
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: service_config,
-      node_config: node_config,
+      node_config: this.getNodeConfig(service_config),
       image: service_config.getImage(),
       tag: 'latest',
     });
@@ -115,17 +107,9 @@ export default class LocalDependencyManager extends DependencyManager {
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
       const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
-
-      // TODO: TJ support global parameters/add test if none exists
-      let node_config = env_service ? service_config.merge(env_service) : service_config.copy();
-      const debug_options = node_config.getDebugOptions();
-      if (this.debug && debug_options) {
-        node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
-      }
-
       service_node = new ServiceNode({
         service_config: service_config,
-        node_config: node_config,
+        node_config: this.getNodeConfig(service_config),
         tag: service_digest.tag,
         image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
         digest: service_digest.digest,

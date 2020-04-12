@@ -1,5 +1,5 @@
 import dotenvExpand from 'dotenv-expand';
-import { ServiceNode } from '.';
+import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
@@ -39,6 +39,7 @@ export type Parameter = string | number | ValueFromParameter | VaultParameter | 
 
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
+  debug = false;
   gateway_port: Promise<number>;
   _environment: EnvironmentConfig;
   protected vault_manager: VaultManager;
@@ -47,6 +48,44 @@ export default abstract class DependencyManager {
     this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.vault_manager = new VaultManager(this._environment.getVaults());
     this.gateway_port = this.getServicePort(80);
+  }
+
+  getNodeConfig(service_config: ServiceConfig) {
+    // Merge in global parameters
+    const global_overrides: any = {
+      parameters: {},
+      datastores: {},
+    };
+    const global_parameters = this._environment.getParameters();
+    for (const key of Object.keys(service_config.getParameters())) {
+      if (key in global_parameters) {
+        global_overrides.parameters[key] = global_parameters[key];
+      }
+    }
+    for (const [datastore_name, datastore] of Object.entries(service_config.getDatastores())) {
+      for (const key of Object.keys(datastore.parameters)) {
+        if (key in global_parameters) {
+          if (!global_overrides.datastores[datastore_name]) {
+            global_overrides.datastores[datastore_name] = { parameters: {} };
+          }
+          global_overrides.datastores[datastore_name].parameters[key] = global_parameters[key];
+        }
+      }
+    }
+    let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
+
+    // Merge in service overrides in the environment
+    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:latest`);
+    if (env_service) {
+      node_config = node_config.merge(env_service);
+    }
+
+    // If debug is enabled merge in debug options ex. debug.command -> command
+    const debug_options = node_config.getDebugOptions();
+    if (this.debug && debug_options) {
+      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+    }
+    return node_config;
   }
 
   /**
