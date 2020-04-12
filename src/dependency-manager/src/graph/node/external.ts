@@ -30,6 +30,18 @@ export class ExternalNode extends DependencyNode {
     return this.parent_ref ? `${this.parent_ref}.${this.key}` : this.key;
   }
 
+  get parameters(): { [key: string]: any } {
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config instanceof ServiceConfig ? this.node_config.getParameters() : this.node_config.parameters)) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
+      }
+    }
+    return this._parameters;
+  }
+
   get interfaces(): { [key: string]: any } {
     return this.node_config instanceof ServiceConfig ? this.node_config.getInterfaces() : { _default: { host: this.node_config.host, port: this.node_config.port || 8080 } };
   }
