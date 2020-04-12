@@ -1,3 +1,4 @@
+import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { Dict } from '../utils/transform';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
@@ -112,7 +113,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   protected dockerfile?: string;
   protected dependencies: { [s: string]: string } = {};
   protected language?: string;
-  @Transform(value => (value instanceof Object ? value : (value ? { command: value } : value)))
+  @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
   protected debug?: ServiceDebugOptionsV1;
   @Transform(value => (transformParameters(value)))
   protected parameters: { [s: string]: ServiceParameterV1 } = {};

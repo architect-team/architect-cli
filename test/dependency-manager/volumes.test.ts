@@ -231,4 +231,43 @@ describe('volumes', function () {
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/env_volume`]);
   });
+
+  it('specify only debug volume', async () => {
+    const service_config = {
+      name: "architect/backend",
+      debug: {
+        volumes: {
+          src: {
+            mountPath: "/src"
+          }
+        }
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend:latest": {
+          debug: {
+            path: "./src/backend",
+            volumes: {
+              src: "./src"
+            }
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, false);
+    const compose = await DockerCompose.generate(manager);
+    expect(compose.services['architect.backend.latest'].volumes).empty;
+
+    const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const debug_compose = await DockerCompose.generate(debug_manager);
+    expect(debug_compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/src')}:/src`]);
+  });
 });
