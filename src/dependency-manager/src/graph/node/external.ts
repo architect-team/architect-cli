@@ -29,4 +29,8 @@ export class ExternalNode extends DependencyNode {
   get ref() {
     return this.parent_ref ? `${this.parent_ref}.${this.key}` : this.key;
   }
+
+  get interfaces(): { [key: string]: any } {
+    return this.node_config instanceof ServiceConfig ? this.node_config.getInterfaces() : { _default: { host: this.node_config.host, port: this.node_config.port || 8080 } };
+  }
 }

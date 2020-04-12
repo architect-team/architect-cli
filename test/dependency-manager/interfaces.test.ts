@@ -17,8 +17,16 @@ describe('interfaces', function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
 
+    const checkout_json = {
+      "name": "architect/checkout",
+      "port": 7000
+    };
+
     const backend_json = {
       "name": "architect/backend",
+      "dependencies": {
+        "architect/checkout": "latest"
+      },
       "interfaces": {
         "main": {
           "description": "main port",
@@ -27,6 +35,22 @@ describe('interfaces', function () {
         "secondary": {
           "description": "secondary port",
           "port": "8081"
+        }
+      },
+      "parameters": {
+        "CHECKOUT_ADDR": {
+          "valueFrom": {
+            "dependency": "architect/checkout",
+            "value": "$HOST:$PORT"
+          }
+        },
+        "CHECKOUT_ADDR_DEFAULT": {
+          "default": {
+            "valueFrom": {
+              "dependency": "architect/checkout",
+              "value": "$HOST:$PORT"
+            }
+          }
         }
       },
       "port": 8888
@@ -80,6 +104,11 @@ describe('interfaces', function () {
             "path": "./src/frontend-secondary",
           }
         },
+        "architect/checkout:latest": {
+          "debug": {
+            "path": "./src/checkout/checkout-architect.json",
+          }
+        },
         "architect/backend:latest": {
           "debug": {
             "path": "./src/backend",
@@ -121,6 +150,7 @@ describe('interfaces', function () {
     };
 
     mock_fs({
+      '/stack/src/checkout/checkout-architect.json': JSON.stringify(checkout_json),
       '/stack/src/frontend-main/architect.json': JSON.stringify(frontend_main_json),
       '/stack/src/frontend-secondary/architect.json': JSON.stringify(frontend_secondary_json),
       '/stack/src/backend/architect.json': JSON.stringify(backend_json),
@@ -136,6 +166,14 @@ describe('interfaces', function () {
     mock_fs.restore();
     // reset port range between simulated processes
     PortUtil.reset();
+  });
+
+  it('non-interface valueFrom', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
+    const compose = await DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].environment!.CHECKOUT_ADDR).eq('architect.checkout.latest:7000');
+    expect(compose.services['architect.backend.latest'].environment!.CHECKOUT_ADDR_DEFAULT).eq('architect.checkout.latest:7000');
   });
 
   it('valueFrom port from service interfaces', async () => {
@@ -186,7 +224,7 @@ describe('interfaces', function () {
 
     expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081']);
     expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8080']);
-    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50003:8080']);
+    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50004:8080']);
   });
 
   it('correct interface environment variables in compose', async () => {

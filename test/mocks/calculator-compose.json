@@ -14,9 +14,7 @@
       },
       "build": {
         "context": "/test/calculator/division-service",
-        "args": [
-          "ARCHITECT_DEBUG=1"
-        ]
+        "args": []
       },
       "command": "npm run debug",
       "volumes": [
@@ -39,9 +37,7 @@
       },
       "build": {
         "context": "/test/calculator/subtraction-services/go/rest",
-        "args": [
-          "ARCHITECT_DEBUG=1"
-        ]
+        "args": []
       },
       "command": "sh -c 'go run main.go'",
       "dns_search": [
@@ -61,9 +57,7 @@
       },
       "build": {
         "context": "/test/calculator/addition-service/rest",
-        "args": [
-          "ARCHITECT_DEBUG=1"
-        ]
+        "args": []
       },
       "command": "npm run dev",
       "volumes": [

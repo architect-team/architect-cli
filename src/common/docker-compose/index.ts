@@ -68,8 +68,12 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         compose.services[node.normalized_ref].build = {
           context: node.service_path,
           args: [...build_args],
-          dockerfile: node.node_config.getDockerfile(),
         };
+
+        if (node.node_config.getDockerfile()) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          compose.services[node.normalized_ref].build!.dockerfile = node.node_config.getDockerfile();
+        }
       }
 
       const volumes: string[] = [];

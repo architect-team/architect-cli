@@ -7,7 +7,6 @@ export interface DependencyNodeOptions { }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-  abstract node_config: any;
   @Exclude()
   protected _parameters?: { [key: string]: Parameter };
 
@@ -30,12 +29,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
     return this._parameters;
   }
 
-  get interfaces(): { [key: string]: any } {
-    if (!this.node_config?.getInterfaces) {
-      return {};
-    }
-    return this.node_config.getInterfaces();
-  }
+  abstract get interfaces(): { [key: string]: any };
 
   get ports(): number[] {
     return Object.values(this.interfaces).map((i) => (i.port));
