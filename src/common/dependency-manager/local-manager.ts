@@ -89,9 +89,9 @@ export default class LocalDependencyManager extends DependencyManager {
       return existing_node as ServiceNode | ExternalNode;
     }
 
-    const env_service = this._environment.getServiceDetails(`${service_name}:${service_tag}`);
+    const env_service = this._environment.getServiceDetails(ref);
     if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(env_service, `${service_name}:${service_tag}`);
+      return this.loadExternalService(env_service, ref);
     }
 
     const debug_path = env_service?.getDebugOptions()?.path;

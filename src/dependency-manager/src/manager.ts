@@ -130,7 +130,7 @@ export default abstract class DependencyManager {
     }
 
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? await this.gateway_port : '';
+    const gateway_port = gateway_node ? await (await this.gateway_port).toString() : '';
     for (const node of this.graph.nodes) {
       for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
         let external_host, internal_host, external_port, internal_port;
