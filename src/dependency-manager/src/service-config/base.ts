@@ -98,6 +98,7 @@ export abstract class ServiceConfig {
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getIngress(): IngressSpec | undefined;
+  abstract getReplicas(): number;
 
   copy() {
     return classToClass(this);

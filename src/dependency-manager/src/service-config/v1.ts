@@ -129,6 +129,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Transform(value => (transformVolumes(value)))
   protected volumes: { [s: string]: ServiceVolumeV1 } = {};
   protected ingress?: IngressSpecV1;
+  protected replicas = 1;
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -267,5 +268,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getIngress() {
     return this.ingress;
+  }
+
+  getReplicas() {
+    return this.replicas;
   }
 }

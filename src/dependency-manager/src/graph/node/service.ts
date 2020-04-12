@@ -9,7 +9,6 @@ export interface ServiceNodeOptions {
   digest?: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
-  replicas?: number;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -18,7 +17,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   image!: string;
   tag!: string;
   digest?: string;
-  replicas = 1;
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',
