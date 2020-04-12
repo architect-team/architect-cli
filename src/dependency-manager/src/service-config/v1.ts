@@ -102,35 +102,35 @@ interface IngressSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
-  protected name?: string;
-  protected description?: string;
-  protected keywords?: string[];
-  protected image?: string;
-  protected host?: string;
-  protected port?: string;
-  protected command?: string | string[];
-  protected entrypoint?: string | string[];
-  protected dockerfile?: string;
-  protected dependencies: { [s: string]: string } = {};
-  protected language?: string;
+  name?: string;
+  description?: string;
+  keywords?: string[];
+  image?: string;
+  host?: string;
+  port?: string;
+  command?: string | string[];
+  entrypoint?: string | string[];
+  dockerfile?: string;
+  dependencies: { [s: string]: string } = {};
+  language?: string;
   @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
-  protected debug?: ServiceDebugOptionsV1;
+  debug?: ServiceDebugOptionsV1;
   @Transform(value => (transformParameters(value)))
-  protected parameters: { [s: string]: ServiceParameterV1 } = {};
+  parameters: { [s: string]: ServiceParameterV1 } = {};
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
-  protected datastores: { [s: string]: ServiceDatastoreV1 } = {};
+  datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
-  protected api: ApiSpecV1 = {
+  api: ApiSpecV1 = {
     type: 'rest',
   };
-  protected interfaces: { [s: string]: InterfaceSpecV1 } = {};
-  protected notifications: ServiceNotificationsV1 = {};
-  protected subscriptions: ServiceSubscriptionsV1 = {};
-  protected platforms: { [s: string]: any } = {};
+  interfaces: { [s: string]: InterfaceSpecV1 } = {};
+  notifications: ServiceNotificationsV1 = {};
+  subscriptions: ServiceSubscriptionsV1 = {};
+  platforms: { [s: string]: any } = {};
   @Transform(value => (transformVolumes(value)))
-  protected volumes: { [s: string]: ServiceVolumeV1 } = {};
-  protected ingress?: IngressSpecV1;
-  protected replicas = 1;
+  volumes: { [s: string]: ServiceVolumeV1 } = {};
+  ingress?: IngressSpecV1;
+  replicas = 1;
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
