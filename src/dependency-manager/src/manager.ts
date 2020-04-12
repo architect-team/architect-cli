@@ -130,10 +130,10 @@ export default abstract class DependencyManager {
     }
 
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? await (await this.gateway_port).toString() : '';
+    const gateway_port = gateway_node ? await this.gateway_port : '';
     for (const node of this.graph.nodes) {
       for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-        let external_host, internal_host, external_port, internal_port;
+        let external_host: string, internal_host: string, external_port: string, internal_port: string;
         if (node instanceof ExternalNode) {
           if (!interface_details.host) {
             throw new Error('External node needs to override the host');
@@ -145,7 +145,7 @@ export default abstract class DependencyManager {
         } else {
           external_host = (subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '');
           internal_host = node.normalized_ref;
-          external_port = gateway_port;
+          external_port = gateway_port.toString();
           internal_port = interface_details.port.toString();
         }
 
