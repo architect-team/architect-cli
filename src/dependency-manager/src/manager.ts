@@ -3,7 +3,6 @@ import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
-import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
@@ -110,6 +109,9 @@ export default abstract class DependencyManager {
     return `${node_prefix ? `${node_prefix}_` : ''}${node.normalized_ref}_${key}`.toUpperCase().replace(/[.-]/g, '_');
   }
 
+  protected abstract toExternalHost(node: DependencyNode): string;
+  protected abstract toInternalHost(node: DependencyNode): string;
+
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
@@ -123,12 +125,6 @@ export default abstract class DependencyManager {
     }
 
     const env_params_to_expand: { [key: string]: string } = {};
-
-    const subdomain_map: { [key: string]: string } = {};
-    for (const edge of this.graph.edges.filter((edge) => (edge instanceof IngressEdge))) {
-      subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
-    }
-
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
     const gateway_port = gateway_node ? await this.gateway_port : '';
     for (const node of this.graph.nodes) {
@@ -143,8 +139,8 @@ export default abstract class DependencyManager {
           external_port = interface_details.port.toString();
           internal_port = interface_details.port.toString();
         } else {
-          external_host = (subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '');
-          internal_host = node.normalized_ref;
+          external_host = this.toExternalHost(node);
+          internal_host = this.toInternalHost(node);
           external_port = gateway_port.toString();
           internal_port = interface_details.port.toString();
         }

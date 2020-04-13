@@ -1,7 +1,7 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import path from 'path';
-import DependencyManager, { EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -146,5 +146,18 @@ export default class LocalDependencyManager extends DependencyManager {
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${service_name}/versions/${service_tag}`);
       return ServiceConfigBuilder.buildFromJSON(service_digest.config);
     }
+  }
+
+  toExternalHost(node: DependencyNode) {
+    if (node instanceof ServiceNode) {
+      const ingress = node.node_config.getIngress();
+      return ingress ? `${ingress.subdomain}.localhost` : '';
+    } else {
+      return '';
+    }
+  }
+
+  toInternalHost(node: DependencyNode) {
+    return node.normalized_ref;
   }
 }
