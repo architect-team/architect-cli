@@ -1,10 +1,10 @@
 import { expect } from '@oclif/test';
 import { ServiceConfigBuilder } from '../../src/dependency-manager/src';
 
-describe('builder', function () {
+describe('service config builder', function () {
 
   describe('buildFromJSON', function () {
-    it("port is parsed into the config", function() {
+    it('port is parsed into the config', function () {
       const serviceConfigWithNoPort = {
         "name": "foo/service",
         "description": "a test service",
@@ -18,7 +18,7 @@ describe('builder', function () {
         "subscriptions": {},
         "keywords": [],
       };
-      const serviceConfigWithConfigPort = { ...serviceConfigWithNoPort, port: "8081" };
+      const serviceConfigWithConfigPort = { ...serviceConfigWithNoPort, port: '8081' };
 
       expect(ServiceConfigBuilder.buildFromJSON(serviceConfigWithNoPort).getPort()).undefined;
       expect(ServiceConfigBuilder.buildFromJSON(serviceConfigWithConfigPort).getPort()).eq(8081);

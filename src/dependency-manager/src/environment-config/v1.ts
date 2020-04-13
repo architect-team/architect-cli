@@ -1,4 +1,8 @@
-import { EnvironmentConfig, EnvironmentParameters, EnvironmentService, EnvironmentVault } from './base';
+import { Transform } from 'class-transformer/decorators';
+import { ServiceConfig } from '../service-config/base';
+import { ServiceConfigV1 } from '../service-config/v1';
+import { Dict } from '../utils/transform';
+import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
 interface VaultMap {
   [vault_name: string]: {
@@ -11,44 +15,17 @@ interface VaultMap {
   };
 }
 
-interface ServiceMap {
-  [service_ref: string]: {
-    host?: string;
-    port?: number;
-    parameters: {
-      [key: string]: string;
-    };
-    datastores: {
-      [key: string]: {
-        host?: string;
-        port?: number;
-        parameters: {
-          [key: string]: string;
-        };
-      };
-    };
-    ingress?: {
-      subdomain: string;
-    };
-    debug?: {
-      path: string;
-      dockerfile?: string;
-      volumes?: { [s: string]: string };
-      entrypoint?: string | string[];
-    };
-  };
-}
-
 interface DnsConfigSpec {
   searches?: string | string[];
 }
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
-  parameters: EnvironmentParameters = {};
-  services: ServiceMap = {};
-  vaults: VaultMap = {};
-  dns?: DnsConfigSpec;
+  protected parameters: EnvironmentParameters = {};
+  @Transform(Dict(() => ServiceConfigV1), { toClassOnly: true })
+  protected services: { [service_ref: string]: ServiceConfig } = {};
+  protected vaults: VaultMap = {};
+  protected dns?: DnsConfigSpec;
 
   getDnsConfig(): DnsConfigSpec {
     return this.dns || {};
@@ -58,18 +35,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return this.parameters;
   }
 
-  getServices(): { [key: string]: EnvironmentService } {
-    // Ensure that default, empty objects are populated for necessary service components
-    for (const service_ref of Object.keys(this.services)) {
-      if (!this.services[service_ref].datastores) {
-        this.services[service_ref].datastores = {};
-      }
-
-      if (!this.services[service_ref].parameters) {
-        this.services[service_ref].parameters = {};
-      }
-    }
-
+  getServices(): { [key: string]: ServiceConfig } {
     return this.services;
   }
 

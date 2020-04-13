@@ -6,8 +6,9 @@ import { ServiceConfigV1 } from '../../service-config/v1';
 export interface ServiceNodeOptions {
   image: string;
   tag?: string;
+  digest?: string;
   service_config: ServiceConfig;
-  replicas?: number;
+  node_config: ServiceConfig;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -15,7 +16,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   image!: string;
   tag!: string;
-  replicas = 1;
+  digest?: string;
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',
@@ -27,12 +28,25 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   })
   service_config!: ServiceConfig;
 
+  @Type(() => ServiceConfig, {
+    discriminator: {
+      property: '__version',
+      subTypes: [
+        { value: ServiceConfigV1, name: '1.0.0' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  node_config!: ServiceConfig;
+
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
-    super(options);
+    super();
     if (options) {
       this.image = options.image;
       this.tag = options.tag || 'latest';
+      this.digest = options.digest;
       this.service_config = options.service_config;
+      this.node_config = options.node_config;
     }
   }
 
@@ -41,17 +55,33 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get ref() {
-    return `${this.service_config.getName()}:${this.tag}`;
+    return `${this.node_config.getName()}:${this.tag}`;
   }
 
-  get api() {
-    return this.service_config.getApiSpec();
+  get volumes() {
+    return this.node_config.getVolumes();
+  }
+
+  get interfaces(): { [key: string]: any } {
+    return this.node_config.getInterfaces();
+  }
+
+  get parameters() {
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config.getParameters())) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
+      }
+    }
+    return this._parameters;
   }
 
   /**
    * @override
    */
   get protocol() {
-    return this.api.type === 'grpc' ? '' : 'http://';
+    return this.node_config.getApiSpec().type === 'grpc' ? '' : 'http://';
   }
 }

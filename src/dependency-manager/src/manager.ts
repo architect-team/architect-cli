@@ -1,17 +1,15 @@
 import dotenvExpand from 'dotenv-expand';
-import fs from 'fs-extra';
-import untildify from 'untildify';
-import { ServiceNode } from '.';
-import { EnvironmentConfig, EnvironmentService } from './environment-config/base';
+import { ServiceConfigBuilder, ServiceNode } from '.';
+import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
-import IngressEdge from './graph/edge/ingress';
 import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
+import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { ServiceParameter } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -25,6 +23,7 @@ export interface ValueFromParameter {
   valueFrom: {
     dependency: string;
     value: string;
+    interface?: string;
   };
 }
 
@@ -35,14 +34,57 @@ export interface DatastoreValueFromParameter {
   };
 }
 
+export type Parameter = string | number | ValueFromParameter | VaultParameter | DatastoreValueFromParameter;
+
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
-  environment: EnvironmentConfig;
+  debug = false;
+  gateway_port: Promise<number>;
+  _environment: EnvironmentConfig;
   protected vault_manager: VaultManager;
 
   constructor(environment_config?: EnvironmentConfig) {
-    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
-    this.vault_manager = new VaultManager(this.environment.getVaults());
+    this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.vault_manager = new VaultManager(this._environment.getVaults());
+    this.gateway_port = this.getServicePort(80);
+  }
+
+  getNodeConfig(service_config: ServiceConfig) {
+    // Merge in global parameters
+    const global_overrides: any = {
+      parameters: {},
+      datastores: {},
+    };
+    const global_parameters = this._environment.getParameters();
+    for (const key of Object.keys(service_config.getParameters())) {
+      if (key in global_parameters) {
+        global_overrides.parameters[key] = global_parameters[key];
+      }
+    }
+    for (const [datastore_name, datastore] of Object.entries(service_config.getDatastores())) {
+      for (const key of Object.keys(datastore.parameters)) {
+        if (key in global_parameters) {
+          if (!global_overrides.datastores[datastore_name]) {
+            global_overrides.datastores[datastore_name] = { parameters: {} };
+          }
+          global_overrides.datastores[datastore_name].parameters[key] = global_parameters[key];
+        }
+      }
+    }
+    let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
+
+    // Merge in service overrides in the environment
+    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:latest`);
+    if (env_service) {
+      node_config = node_config.merge(env_service);
+    }
+
+    // If debug is enabled merge in debug options ex. debug.command -> command
+    const debug_options = node_config.getDebugOptions();
+    if (this.debug && debug_options) {
+      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+    }
+    return node_config;
   }
 
   /**
@@ -51,7 +93,7 @@ export default abstract class DependencyManager {
   protected loadSubscriptions() {
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode) {
-        for (const svc_name of Object.keys(node.service_config.getSubscriptions())) {
+        for (const svc_name of Object.keys(node.node_config.getSubscriptions())) {
           const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
 
           if (ref && this.graph.nodes_map.has(ref)) {
@@ -63,61 +105,99 @@ export default abstract class DependencyManager {
     }
   }
 
+  protected scopeEnv(node: DependencyNode, key: string, node_prefix = '') {
+    return `${node_prefix ? `${node_prefix}_` : ''}${node.normalized_ref}_${key}`.toUpperCase().replace(/[.-]/g, '_');
+  }
+
+  protected abstract toExternalHost(node: DependencyNode): string;
+  protected abstract toInternalHost(node: DependencyNode): string;
+
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
-  protected loadParameters() {
-    const env_params_to_expand: { [key: string]: string } = {};
-
-    const subdomain_map: { [key: string]: string } = {};
-    for (const edge of this.graph.edges.filter((edge) => (edge instanceof IngressEdge))) {
-      subdomain_map[edge.to] = (edge as IngressEdge).subdomain;
+  protected async loadParameters() {
+    for (const node of this.graph.nodes) {
+      for (const [key, value] of Object.entries(node.parameters)) {
+        if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
+          node.parameters[key] = await this.vault_manager.getSecret(value as VaultParameter);
+        }
+      }
     }
 
+    const env_params_to_expand: { [key: string]: string } = {};
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? gateway_node.ports.expose.toString() : '80';
+    const gateway_port = gateway_node ? await this.gateway_port : '';
     for (const node of this.graph.nodes) {
-      const external_host = subdomain_map[node.ref] ? `${subdomain_map[node.ref]}.localhost` : '';
-      const internal_host = node instanceof ExternalNode ? node.host : node.normalized_ref;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_HOST`.replace(/[.-]/g, '_')] = external_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_HOST`.replace(/[.-]/g, '_')] = internal_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_HOST`.replace(/[.-]/g, '_')] = external_host ? external_host : internal_host;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_EXTERNAL_PORT`.replace(/[.-]/g, '_')] = gateway_port;
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_INTERNAL_PORT`.replace(/[.-]/g, '_')] = node.ports.target.toString();
-      env_params_to_expand[`${node.normalized_ref.toUpperCase()}_PORT`.replace(/[.-]/g, '_')] = external_host ? gateway_port : node.ports.target.toString();
+      for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
+        let external_host: string, internal_host: string, external_port: string, internal_port: string;
+        if (node instanceof ExternalNode) {
+          if (!interface_details.host) {
+            throw new Error('External node needs to override the host');
+          }
+          external_host = interface_details.host;
+          internal_host = interface_details.host;
+          external_port = interface_details.port.toString();
+          internal_port = interface_details.port.toString();
+        } else {
+          external_host = this.toExternalHost(node);
+          internal_host = this.toInternalHost(node);
+          external_port = gateway_port.toString();
+          internal_port = interface_details.port.toString();
+        }
 
-      for (const [param_name, param_value] of Object.entries(node.parameters || {})) { // load the service's own params
+        const prefix = interface_name === '_default' ? '' : `${interface_name}_`;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = external_host ? external_port : internal_port;
+      }
+
+      for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
           if (param_value.toString().indexOf('$') > -1) {
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-              param_value.replace(/\$/g, `$${node.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
-            env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] = param_value.toString();
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
           }
         }
       }
 
       if (node instanceof ServiceNode) {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
-          if (param_value instanceof Object && param_value.valueFrom) {
-            const param_target_service_name = (param_value as ValueFromParameter).valueFrom.dependency;
+          if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
+            const value_from_param = param_value as ValueFromParameter;
+            let param_target_service_name = value_from_param.valueFrom.dependency;
+            // Support dep ref with or without tag
+            if (param_target_service_name in node.node_config.getDependencies()) {
+              param_target_service_name = `${param_target_service_name}:${node.node_config.getDependencies()[param_target_service_name]}`;
+            }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
+
             if (param_target_service_name) {
               const param_target_service = this.graph.getNodeByRef(param_target_service_name);
-              const node_dependency_refs = node.service_config.getDependencies();
+              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
+                throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
+              }
+              const node_dependency_refs = node.node_config.getDependencies();
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
-              env_params_to_expand[`${node.normalized_ref.toUpperCase()}_${param_name}`.replace(/[.-]/g, '_')] =
-                param_value.valueFrom.value.replace(/\$/g, `$${param_target_service.normalized_ref.toUpperCase()}_`.replace(/[.-]/g, '_'));
+
+              if (value_from_param.valueFrom.interface) {
+                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface)}_`);
+              } else {
+                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
+              }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
-              const datastore_names = Object.keys(node.service_config.getDatastores());
+              const datastore_names = Object.keys(node.node_config.getDatastores());
               if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
                 throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
               }
-              env_params_to_expand[`${param_target_datastore_name}.${node.normalized_ref}.${param_name}`.toUpperCase().replace(/[.-]/g, '_')] =
-                param_value.valueFrom.value.replace(/\$/g, `$${node.normalized_ref}.${param_target_datastore_name}_`.toUpperCase().replace(/[.-]/g, '_'));
+              env_params_to_expand[this.scopeEnv(node, param_name, param_target_datastore_name)] =
+                param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(node, param_target_datastore_name)}_`);
             } else {
               throw new Error(`Error creating parameter ${param_name} of ${node.ref}. A valueFrom reference must specify a dependency or datastore.`);
             }
@@ -173,70 +253,11 @@ export default abstract class DependencyManager {
   }
 
   /**
-   * Parse the parameter values by comparing defaults for a service to
-   * values in the environment configuration.
-   */
-  protected async getParamValues(
-    service_ref: string,
-    parameters: { [key: string]: ServiceParameter },
-    datastore_key?: string,
-  ): Promise<{ [key: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }> {
-    const services = this.environment.getServices();
-    const global_params = this.environment.getParameters();
-    let raw_params: { [key: string]: string | number | ValueFromParameter | VaultParameter } = {};
-    if (datastore_key && services[service_ref] && services[service_ref].datastores[datastore_key]) {
-      raw_params = {
-        ...global_params,
-        ...services[service_ref].datastores[datastore_key].parameters,
-      } || {};
-    } else if (services[service_ref]) {
-      raw_params = {
-        ...global_params,
-        ...services[service_ref].parameters,
-      } || {};
-    }
-
-    // Enrich vault parameters
-    const env_params = new Map<string, string | number | ValueFromParameter>();
-    for (const [key, data] of Object.entries(raw_params)) {
-      if (data instanceof Object && data.valueFrom && 'vault' in data.valueFrom) {
-        env_params.set(key, await this.vault_manager.getSecret(data as VaultParameter));
-      } else {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        env_params.set(key, data);
-      }
-    }
-
-    return Object.keys(parameters).reduce(
-      (params: { [s: string]: string | number | ValueFromParameter | DatastoreValueFromParameter }, key: string) => {
-        const service_param = parameters[key];
-
-        let val = env_params.has(key) ? env_params.get(key) : service_param.default;
-
-        // note: an empty string is considered a valid value for a parameter so we explicitly check for null or undefined here
-        if (val === null || val === undefined) {
-          return params;
-        }
-
-        if (typeof val === 'number') {
-          val = val.toString();
-        }
-
-        if (typeof val === 'string' && val.startsWith('file:')) {
-          val = fs.readFileSync(untildify(val.slice('file:'.length)), 'utf-8');
-        }
-        params[key] = val;
-        return params;
-      }, {});
-  }
-
-  /**
    * Returns a port available for a service to run on. Primary use-case is to be
    * extended by the CLI to return a dynamic available port.
    */
-  protected async getServicePort(): Promise<number> {
-    return Promise.resolve(80);
+  async getServicePort(starting_port?: number): Promise<number> {
+    return Promise.resolve(starting_port || 80);
   }
 
   /**
@@ -245,37 +266,21 @@ export default abstract class DependencyManager {
   protected async loadDatastores(parent_node: ServiceNode) {
     if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [ds_name, ds_config] of Object.entries(parent_node.service_config.getDatastores())) {
-      const dep_node_config = {
-        parent_ref: parent_node.ref,
-        key: ds_name,
-        parameters: await this.getParamValues(
-          parent_node.ref,
-          ds_config.parameters,
-          ds_name,
-        ),
-      };
-      const environment_service_config = this.environment.getServices()[parent_node.ref];
+    for (const [ds_name, ds_config] of Object.entries(parent_node.node_config.getDatastores())) {
       let dep_node;
 
-      if (environment_service_config?.datastores[ds_name]?.host) {
-        const external_port = environment_service_config?.datastores[ds_name]?.port || ds_config.docker.target_port;
+      if (ds_config.host) {
         dep_node = new ExternalNode({
-          ...dep_node_config,
-          host: environment_service_config.datastores[ds_name].host!,
-          ports: {
-            target: external_port,
-            expose: external_port,
-          },
+          parent_ref: parent_node.ref,
+          key: ds_name,
+          node_config: ds_config,
         });
       } else {
         dep_node = new DatastoreNode({
-          ...dep_node_config,
-          image: ds_config.docker.image,
-          ports: {
-            target: ds_config.docker.target_port,
-            expose: await this.getServicePort(),
-          },
+          parent_ref: parent_node.ref,
+          key: ds_name,
+          datastore_config: parent_node.service_config.getDatastores()[ds_name] || ds_config,
+          node_config: ds_config,
         });
       }
 
@@ -289,49 +294,75 @@ export default abstract class DependencyManager {
    * Load the dependency graph with nodes and edges associated with a services
    * dependencies and datastores
    */
-  async loadDependencies(parent_node: ServiceNode) {
-    const dependency_promises = [];
-    this.graph.addNode(parent_node);
-    await this.loadDatastores(parent_node);
+  async loadDependencies(parent_node: ServiceNode, recursive = true) {
+    if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [dep_name, dep_id] of Object.entries(parent_node.service_config.getDependencies())) {
-      const env_service = this.environment.getServiceDetails(`${dep_name}:${dep_id}`);
-      if (env_service?.host && env_service.port) {
-        const external_node = await this.loadExternalService(env_service, `${dep_name}:${dep_id}`);
-        const edge = new ServiceEdge(parent_node.ref, external_node.ref);
-        this.graph.addEdge(edge);
-      } else {
-        const dep_node = await this.loadService(dep_name, dep_id);
-        this.graph.addNode(dep_node);
-        const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-        this.graph.addEdge(edge);
-        dependency_promises.push(() => this.loadDependencies(dep_node));
-      }
+    for (const [dep_name, dep_id] of Object.entries(parent_node.node_config.getDependencies())) {
+      const dep_node = await this.loadService(`${dep_name}:${dep_id}`, recursive);
+      this.graph.addNode(dep_node);
+      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
+      this.graph.addEdge(edge);
     }
-
-    await Promise.all(dependency_promises.map(fn => fn()));
   }
 
   /**
    * Queries the API to create a node and config object for a service based on
    * its name and tag
    */
-  abstract async loadService(service_name: string, service_tag: string): Promise<ServiceNode>;
+  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+    const existing_node = this.graph.nodes_map.get(service_ref);
+    if (existing_node) {
+      return existing_node as ServiceNode | ExternalNode;
+    }
+
+    const env_service = this._environment.getServiceDetails(service_ref);
+    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
+      return this.loadExternalService(env_service, service_ref);
+    }
+
+    const service_node = await this.loadServiceNode(service_ref);
+    this.graph.addNode(service_node);
+    await this.loadDatastores(service_node);
+    if (recursive) {
+      await this.loadDependencies(service_node, recursive);
+    }
+    return service_node;
+  }
+
+  async abstract loadServiceNode(service_ref: string): Promise<ServiceNode>;
 
   /**
    * Create an external node and add it to the graph
    */
-  async loadExternalService(env_service_config: EnvironmentService, service_ref: string) {
+  async loadExternalService(env_service_config: ServiceConfig, service_ref: string) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const interfaces = env_service_config.getInterfaces()!;
+    if (interfaces) {
+      for (const [name, interface_details] of Object.entries(interfaces)) {
+        if (!interface_details.host || !interface_details.port) {
+          throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
+        }
+      }
+
+      try {
+        const env_config_interfaces = Object.keys(interfaces);
+        const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
+        const union = new Set([...expected_interfaces, ...env_config_interfaces]);
+        if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
+          throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
+        }
+      } catch (err) {
+        console.log(`Warning: Failed to find config for external service ${service_ref}`);
+      }
+    }
+
     const node = new ExternalNode({
-      host: env_service_config.host!,
-      ports: {
-        expose: env_service_config.port!,
-        target: env_service_config.port!,
-      },
-      parameters: env_service_config.parameters,
       key: service_ref,
+      node_config: env_service_config,
     });
     this.graph.addNode(node);
     return node;
   }
+
+  abstract async loadServiceConfig(node_ref: string): Promise<ServiceConfig>;
 }

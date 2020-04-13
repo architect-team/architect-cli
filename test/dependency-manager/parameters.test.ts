@@ -26,8 +26,8 @@ describe('manager parameters', function () {
   });
 
   it('value no override datastore', async () => {
-    const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest.primary')!;
-    expect(addition_node.parameters.POSTGRES_DB).eq('addition_service');
+    const addition_db_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest.primary')!;
+    expect(addition_db_node.parameters.POSTGRES_DB).eq('addition_service');
   });
 
   it('valueFrom no override', async () => {
@@ -42,6 +42,16 @@ describe('manager parameters', function () {
 
   it('value override valueFrom', async () => {
     const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest')!;
-    expect(addition_node.parameters.DB_PRIMARY_PORT).eq('5432');
+    expect(addition_node.parameters.DB_PRIMARY_PORT).eq(5432);
+  });
+
+  it('global value override', async () => {
+    const division_node = graph.nodes.find((node) => node.ref === 'architect/division-service-grpc:latest')!;
+    expect(division_node.parameters.SUBTRACTION_SERVICE_ADDRESS).eq('global');
+  });
+
+  it('global value override datastore', async () => {
+    const addition_db_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest.primary')!;
+    expect(addition_db_node.parameters.POSTGRES_PASSWORD).eq('global');
   });
 });

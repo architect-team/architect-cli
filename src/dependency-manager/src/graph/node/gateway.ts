@@ -1,4 +1,4 @@
-import { DependencyNode } from '..';
+import { DependencyNode } from '.';
 
 export default class GatewayNode extends DependencyNode {
   __type = 'gateway';
@@ -9,5 +9,9 @@ export default class GatewayNode extends DependencyNode {
 
   get ref(): string {
     return 'gateway';
+  }
+
+  get interfaces(): { [key: string]: any } {
+    return { _default: { port: 80 } };
   }
 }

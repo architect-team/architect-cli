@@ -84,7 +84,7 @@ export default class Deploy extends Command {
       exclusive: ['local', 'compose_file'],
     }),
     build_prod: flags.boolean({
-      description: 'Build without the ARCHITECT_DEBUG flag and mounted volumes',
+      description: 'Build without debug config',
       hidden: true,
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
     }),
@@ -111,8 +111,10 @@ export default class Deploy extends Command {
     }
 
     Object.keys(compose.services).forEach(svc_name => {
-      const exposed_port = compose.services[svc_name].ports[0].split(':')[0];
-      this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
+      for (const port_pair of compose.services[svc_name].ports) {
+        const exposed_port = port_pair.split(':')[0];
+        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
+      }
     });
     await fs.ensureFile(flags.compose_file);
     await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
@@ -131,11 +133,12 @@ export default class Deploy extends Command {
       this.app.api,
       path.resolve(untildify(args.environment_config)),
       this.app.linkedServices,
+      !flags.build_prod,
     );
 
     await this.validate_graph(dependency_manager.graph);
 
-    const compose = DockerCompose.generate(dependency_manager, flags.build_prod);
+    const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
 

@@ -140,7 +140,7 @@ export default class Install extends Command {
     }
 
     if (Object.keys(target_api_definitions).length > 0) {
-      switch (target.api.type) {
+      switch (target.service_config.getApiSpec().type) {
         case 'grpc':
           return this.genGrpcStubs(source, target.env_ref.replace(/-/g, '_'), target_api_definitions);
       }
@@ -200,8 +200,10 @@ export default class Install extends Command {
           cli.action.start(chalk.grey(`-- Installing ${service_name} as dependency of ${config.getName()}`), undefined, { stdout: true });
           config.addDependency(service_name, service_tag);
           ServiceConfigBuilder.saveToPath(node.service_path, config);
-          const dep_node = await dependency_manager.loadService(service_name, service_tag);
-          this.genClientCode(node, dep_node);
+          const dep_node = await dependency_manager.loadService(`${service_name}:${service_tag}`);
+          if (dep_node instanceof ServiceNode) {
+            this.genClientCode(node, dep_node);
+          }
           cli.action.stop(chalk.grey('done'));
         } else {
           const dependencies = dependency_manager.graph.getNodeDependencies(node);

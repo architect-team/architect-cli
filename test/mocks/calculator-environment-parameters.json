@@ -1,4 +1,8 @@
 {
+  "parameters": {
+    "SUBTRACTION_SERVICE_ADDRESS": "global",
+    "POSTGRES_PASSWORD": "global"
+  },
   "services": {
     "architect/division-service-grpc:latest": {
       "debug": {
