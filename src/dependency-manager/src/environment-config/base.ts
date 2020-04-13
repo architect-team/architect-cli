@@ -1,15 +1,8 @@
-export interface DebugConfig {
-  path: string;
-}
+import { Parameter } from '../manager';
+import { ServiceConfig } from '../service-config/base';
 
 export interface EnvironmentParameters {
-  [key: string]: string | number;
-}
-
-interface ServiceDatastore {
-  host?: string;
-  port?: number;
-  parameters: EnvironmentParameters;
+  [key: string]: Parameter;
 }
 
 export interface EnvironmentVault {
@@ -21,24 +14,6 @@ export interface EnvironmentVault {
   secret_id?: string;
 }
 
-export interface EnvironmentService {
-  host?: string;
-  port?: number;
-  parameters: EnvironmentParameters;
-  datastores: {
-    [key: string]: ServiceDatastore;
-  };
-  ingress?: {
-    subdomain: string;
-  };
-  debug?: {
-    path: string;
-    dockerfile?: string;
-    volumes?: { [s: string]: string };
-    entrypoint?: string | string[];
-  };
-}
-
 export interface DnsConfig {
   searches?: string | string[];
 }
@@ -47,19 +22,12 @@ export abstract class EnvironmentConfig {
   abstract __version: string;
   abstract getParameters(): EnvironmentParameters;
   abstract getVaults(): { [key: string]: EnvironmentVault };
-  abstract getServices(): { [key: string]: EnvironmentService };
+  abstract getServices(): { [key: string]: ServiceConfig };
   abstract getDnsConfig(): DnsConfig;
 
-  getServiceDetails(key: string): EnvironmentService | undefined {
+  getServiceDetails(key: string): ServiceConfig | undefined {
     const services = this.getServices();
     const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
     return ref ? services[ref] : undefined;
-  }
-
-  getVolumes(key: string) {
-    const services = this.getServices();
-    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
-    const debug = ref && services[ref].debug ? services[ref].debug : undefined;
-    return debug ? debug.volumes : undefined;
   }
 }

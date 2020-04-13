@@ -1,3 +1,4 @@
+import isWindows from 'is-windows';
 import net from 'net';
 
 const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k);
@@ -18,7 +19,7 @@ export default class PortUtil {
     try {
       await Promise.all([
         _isPortAvailable('0.0.0.0', port),
-        // _isPortAvailable('::', port) // Check for windows
+        isWindows() ? _isPortAvailable('::', port) : Promise.resolve(), // Check for windows
       ]);
       return true;
     } catch {
@@ -32,6 +33,7 @@ export default class PortUtil {
     for (const pr of PORT_RANGE) {
       const p = pr + starting_port;
       if (PortUtil.tested_ports.has(p)) continue;
+      PortUtil.tested_ports.add(p);
       const isAvailable = await PortUtil.isPortAvailable(p);
       if (isAvailable) {
         port = p;
@@ -40,7 +42,10 @@ export default class PortUtil {
     }
 
     if (!port) throw new Error('No ports available in configured range (50000 -> 51000)');
-    PortUtil.tested_ports.add(port);
     return port;
+  }
+
+  static reset() {
+    PortUtil.tested_ports = new Set();
   }
 }

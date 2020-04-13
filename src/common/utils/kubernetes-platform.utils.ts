@@ -17,7 +17,7 @@ export class KubernetesPlatformUtils {
   ): Promise<CreatePlatformInput> {
 
     let kubeconfig: any;
-    const kubeconfig_path = untildify(flags.kubeconfig!);
+    const kubeconfig_path = untildify(flags.kubeconfig);
     try {
       kubeconfig = await fs.readFile(path.resolve(kubeconfig_path), 'utf-8');
     } catch {
