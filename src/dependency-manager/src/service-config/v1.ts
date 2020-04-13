@@ -81,7 +81,7 @@ class InterfaceSpecV1 {
 }
 
 export class ServiceVolumeV1 {
-  mount_path?: string;  // TODO: TJ Ask David about volumes camelcase
+  mount_path?: string;
   host_path?: string;
   description?: string;
   readonly?: boolean;
