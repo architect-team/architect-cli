@@ -309,7 +309,27 @@ export default abstract class DependencyManager {
    * Queries the API to create a node and config object for a service based on
    * its name and tag
    */
-  abstract async loadService(service_ref: string, recursive: boolean): Promise<ServiceNode | ExternalNode>;
+  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+    const existing_node = this.graph.nodes_map.get(service_ref);
+    if (existing_node) {
+      return existing_node as ServiceNode | ExternalNode;
+    }
+
+    const env_service = this._environment.getServiceDetails(service_ref);
+    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
+      return this.loadExternalService(env_service, service_ref);
+    }
+
+    const service_node = await this.loadServiceNode(service_ref);
+    this.graph.addNode(service_node);
+    await this.loadDatastores(service_node);
+    if (recursive) {
+      await this.loadDependencies(service_node, recursive);
+    }
+    return service_node;
+  }
+
+  async abstract loadServiceNode(service_ref: string): Promise<ServiceNode>;
 
   /**
    * Create an external node and add it to the graph

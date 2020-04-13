@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
@@ -81,18 +80,9 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+  async loadServiceNode(service_ref: string) {
     const [service_name, service_tag] = service_ref.split(':');
-    const existing_node = this.graph.nodes_map.get(service_ref);
-    if (existing_node) {
-      return existing_node as ServiceNode | ExternalNode;
-    }
-
     const env_service = this._environment.getServiceDetails(service_ref);
-    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(env_service, service_ref);
-    }
-
     const debug_path = env_service?.getDebugOptions()?.path;
     let service_node;
     if (debug_path) {
@@ -113,12 +103,6 @@ export default class LocalDependencyManager extends DependencyManager {
         image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
         digest: service_digest.digest,
       });
-    }
-
-    this.graph.addNode(service_node);
-    await this.loadDatastores(service_node);
-    if (recursive) {
-      await this.loadDependencies(service_node, recursive);
     }
     return service_node;
   }
