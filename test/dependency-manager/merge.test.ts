@@ -51,10 +51,10 @@ describe('service config merge', function () {
       },
       'volumes': {
         'simple': {
-          'mountPath': '/simple'
+          'mount_path': '/simple'
         },
         'db_data': {
-          'mountPath': '/db'
+          'mount_path': '/db'
         }
       },
       'api': {
@@ -101,8 +101,8 @@ describe('service config merge', function () {
       'volumes': {
         'db_data': './db',
         'new_db_data': {
-          'mountPath': '/new_db',
-          'hostPath': './new_db'
+          'mount_path': '/new_db',
+          'host_path': './new_db'
         }
       }
     };
@@ -134,9 +134,9 @@ describe('service config merge', function () {
     expect(node_config.getDebugOptions()!.command).eq('./test.ts');
 
     expect(node_config.getVolumes()).keys('simple', 'db_data', 'new_db_data')
-    expect(node_config.getVolumes().db_data.mountPath).eq('/db')
-    expect(node_config.getVolumes().db_data.hostPath).eq('./db')
-    expect(node_config.getVolumes().new_db_data.mountPath).eq('/new_db')
-    expect(node_config.getVolumes().new_db_data.hostPath).eq('./new_db')
+    expect(node_config.getVolumes().db_data.mount_path).eq('/db')
+    expect(node_config.getVolumes().db_data.host_path).eq('./db')
+    expect(node_config.getVolumes().new_db_data.mount_path).eq('/new_db')
+    expect(node_config.getVolumes().new_db_data.host_path).eq('./new_db')
   });
 });

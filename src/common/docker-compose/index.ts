@@ -91,21 +91,21 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       const volumes: string[] = [];
       for (const [key, spec] of Object.entries(node.volumes)) {
         let service_volume;
-        if (spec.mountPath?.startsWith('$')) {
-          const volume_path = node.parameters[spec.mountPath.substr(1)];
+        if (spec.mount_path?.startsWith('$')) {
+          const volume_path = node.parameters[spec.mount_path.substr(1)];
           if (!volume_path) {
-            throw new Error(`Parameter ${spec.mountPath} could not be found for node ${node.ref}`);
+            throw new Error(`Parameter ${spec.mount_path} could not be found for node ${node.ref}`);
           }
           service_volume = volume_path.toString();
-        } else if (spec.mountPath) {
-          service_volume = spec.mountPath;
+        } else if (spec.mount_path) {
+          service_volume = spec.mount_path;
         } else {
-          throw new Error(`mountPath must be specified for volume ${key}`);
+          throw new Error(`mount_path must be specified for volume ${key}`);
         }
 
         let volume;
-        if (spec.hostPath) {
-          volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.hostPath)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+        if (spec.host_path) {
+          volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else {
           volume = path.resolve(node.service_path, service_volume);
         }

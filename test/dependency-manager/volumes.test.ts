@@ -25,7 +25,7 @@ describe('volumes', function () {
       name: "architect/backend",
       volumes: {
         env_volume: {
-          mountPath: "/usr/src/volume1"
+          mount_path: "/usr/src/volume1"
         }
       }
     };
@@ -58,7 +58,7 @@ describe('volumes', function () {
       name: "architect/backend",
       volumes: {
         env_volume: {
-          mountPath: "/usr/src/volume1"
+          mount_path: "/usr/src/volume1"
         }
       }
     };
@@ -96,7 +96,7 @@ describe('volumes', function () {
       },
       volumes: {
         parameter_env_volume: {
-          mountPath: "$VOLUME_PATH"
+          mount_path: "$VOLUME_PATH"
         },
       }
     };
@@ -134,7 +134,7 @@ describe('volumes', function () {
       name: "architect/backend",
       volumes: {
         env_volume: {
-          mountPath: "/usr/src/no-host-binding"
+          mount_path: "/usr/src/no-host-binding"
         }
       }
     };
@@ -165,7 +165,7 @@ describe('volumes', function () {
       name: "architect/backend",
       volumes: {
         env_volume: {
-          mountPath: "/usr/src/volume1",
+          mount_path: "/usr/src/volume1",
           readonly: true
         }
       }
@@ -199,7 +199,7 @@ describe('volumes', function () {
       name: "architect/backend",
       volumes: {
         env_volume: {
-          mountPath: "/usr/src/overridden_volume"
+          mount_path: "/usr/src/overridden_volume"
         }
       }
     };
@@ -215,7 +215,7 @@ describe('volumes', function () {
           },
           volumes: {
             env_volume: {
-              mountPath: "/usr/src/env_volume"
+              mount_path: "/usr/src/env_volume"
             }
           }
         }
@@ -238,7 +238,7 @@ describe('volumes', function () {
       debug: {
         volumes: {
           src: {
-            mountPath: "/src"
+            mount_path: "/src"
           }
         }
       }

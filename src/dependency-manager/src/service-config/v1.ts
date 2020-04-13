@@ -23,7 +23,7 @@ function transformVolumes(input: any) {
     if (value instanceof Object) {
       output[key] = value;
     } else {
-      output[key] = { hostPath: value };
+      output[key] = { host_path: value };
     }
   }
   return output;
@@ -81,8 +81,8 @@ class InterfaceSpecV1 {
 }
 
 export class ServiceVolumeV1 {
-  mountPath?: string;  // TODO: TJ Ask David about volumes camelcase
-  hostPath?: string;
+  mount_path?: string;  // TODO: TJ Ask David about volumes camelcase
+  host_path?: string;
   description?: string;
   readonly?: boolean;
 }
