@@ -111,6 +111,9 @@ export default abstract class DependencyManager {
 
   protected abstract toExternalHost(node: DependencyNode): string;
   protected abstract toInternalHost(node: DependencyNode): string;
+  protected toInternalPort(node: DependencyNode, interface_name: string): string {
+    return node.interfaces[interface_name].port.toString();
+  }
 
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
@@ -142,7 +145,7 @@ export default abstract class DependencyManager {
           external_host = this.toExternalHost(node);
           internal_host = this.toInternalHost(node);
           external_port = gateway_port.toString();
-          internal_port = interface_details.port.toString();
+          internal_port = this.toInternalPort(node, interface_name);
         }
 
         const prefix = interface_name === '_default' ? '' : `${interface_name}_`;
