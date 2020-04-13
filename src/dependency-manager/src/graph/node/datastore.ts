@@ -4,7 +4,6 @@ import { ServiceDatastore } from '../../service-config/base';
 interface DatastoreNodeOptions {
   parent_ref: string;
   key: string;
-  datastore_config: ServiceDatastore;
   node_config: ServiceDatastore;
 }
 
@@ -13,7 +12,6 @@ export class DatastoreNode extends DependencyNode {
   parent_ref!: string;
   key!: string;
 
-  datastore_config!: ServiceDatastore;
   node_config!: ServiceDatastore;
 
   constructor(options: DependencyNodeOptions & DatastoreNodeOptions) {
@@ -21,7 +19,6 @@ export class DatastoreNode extends DependencyNode {
     if (options) {
       this.parent_ref = options.parent_ref;
       this.key = options.key;
-      this.datastore_config = options.datastore_config;
       this.node_config = options.node_config;
     }
   }

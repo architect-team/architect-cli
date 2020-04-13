@@ -120,9 +120,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
-  api: ApiSpecV1 = {
-    type: 'rest',
-  };
+  api?: ApiSpecV1;
   interfaces: { [s: string]: InterfaceSpecV1 } = {};
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};
@@ -130,7 +128,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Transform(value => (transformVolumes(value)))
   volumes: { [s: string]: ServiceVolumeV1 } = {};
   ingress?: IngressSpecV1;
-  replicas = 1;
+  replicas?: number;
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -150,7 +148,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getApiSpec(): ServiceApiSpec {
-    return this.api;
+    return this.api || { type: 'rest' };
   }
 
   getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
@@ -272,6 +270,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getReplicas() {
-    return this.replicas;
+    return this.replicas || 1;
   }
 }

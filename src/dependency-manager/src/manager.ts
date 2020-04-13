@@ -279,7 +279,6 @@ export default abstract class DependencyManager {
         dep_node = new DatastoreNode({
           parent_ref: parent_node.ref,
           key: ds_name,
-          datastore_config: parent_node.service_config.getDatastores()[ds_name] || ds_config,
           node_config: ds_config,
         });
       }
