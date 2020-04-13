@@ -68,7 +68,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const node = new LocalServiceNode({
       service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
       service_config: service_config,
-      node_config: this.getNodeConfig(service_config),
+      node_config: this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
       tag: 'latest',
     });
@@ -98,7 +98,7 @@ export default class LocalDependencyManager extends DependencyManager {
       const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
       service_node = new ServiceNode({
         service_config: service_config,
-        node_config: this.getNodeConfig(service_config),
+        node_config: this.getNodeConfig(service_config, service_digest.tag),
         tag: service_digest.tag,
         image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
         digest: service_digest.digest,
@@ -107,7 +107,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return service_node;
   }
 
-  protected async loadParameters() {
+  async loadParameters() {
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         // Only include in cli since it will read files off disk

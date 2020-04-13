@@ -49,7 +49,7 @@ export default abstract class DependencyManager {
     this.gateway_port = this.getServicePort(80);
   }
 
-  getNodeConfig(service_config: ServiceConfig) {
+  getNodeConfig(service_config: ServiceConfig, tag: string) {
     // Merge in global parameters
     const global_overrides: any = {
       parameters: {},
@@ -74,7 +74,7 @@ export default abstract class DependencyManager {
     let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
 
     // Merge in service overrides in the environment
-    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:latest`);
+    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:${tag}`) || this._environment.getServiceDetails(service_config.getName());
     if (env_service) {
       node_config = node_config.merge(env_service);
     }
@@ -115,7 +115,7 @@ export default abstract class DependencyManager {
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
-  protected async loadParameters() {
+  async loadParameters() {
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
