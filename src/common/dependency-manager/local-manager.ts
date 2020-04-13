@@ -41,8 +41,7 @@ export default class LocalDependencyManager extends DependencyManager {
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
     for (const ref of Object.keys(dependency_manager._environment.getServices())) {
-      const [name, tag] = ref.split(':');
-      const svc_node = await dependency_manager.loadService(name, tag);
+      const svc_node = await dependency_manager.loadService(ref);
       if (svc_node instanceof ServiceNode) {
         const env_ingress = svc_node.node_config.getIngress();
         if (env_ingress) {
@@ -82,16 +81,16 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadService(service_name: string, service_tag: string, recursive = true): Promise<ServiceNode | ExternalNode> {
-    const ref = `${service_name}:${service_tag}`;
-    const existing_node = this.graph.nodes_map.get(ref);
+  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+    const [service_name, service_tag] = service_ref.split(':');
+    const existing_node = this.graph.nodes_map.get(service_ref);
     if (existing_node) {
       return existing_node as ServiceNode | ExternalNode;
     }
 
-    const env_service = this._environment.getServiceDetails(ref);
+    const env_service = this._environment.getServiceDetails(service_ref);
     if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(env_service, ref);
+      return this.loadExternalService(env_service, service_ref);
     }
 
     const debug_path = env_service?.getDebugOptions()?.path;

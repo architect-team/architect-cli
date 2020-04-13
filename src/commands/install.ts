@@ -200,7 +200,7 @@ export default class Install extends Command {
           cli.action.start(chalk.grey(`-- Installing ${service_name} as dependency of ${config.getName()}`), undefined, { stdout: true });
           config.addDependency(service_name, service_tag);
           ServiceConfigBuilder.saveToPath(node.service_path, config);
-          const dep_node = await dependency_manager.loadService(service_name, service_tag);
+          const dep_node = await dependency_manager.loadService(`${service_name}:${service_tag}`);
           if (dep_node instanceof ServiceNode) {
             this.genClientCode(node, dep_node);
           }

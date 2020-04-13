@@ -298,7 +298,7 @@ export default abstract class DependencyManager {
     if (parent_node instanceof ExternalNode) { return; }
 
     for (const [dep_name, dep_id] of Object.entries(parent_node.node_config.getDependencies())) {
-      const dep_node = await this.loadService(dep_name, dep_id, recursive);
+      const dep_node = await this.loadService(`${dep_name}:${dep_id}`, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
       this.graph.addEdge(edge);
@@ -309,7 +309,7 @@ export default abstract class DependencyManager {
    * Queries the API to create a node and config object for a service based on
    * its name and tag
    */
-  abstract async loadService(service_name: string, service_tag: string, recursive: boolean): Promise<ServiceNode | ExternalNode>;
+  abstract async loadService(service_ref: string, recursive: boolean): Promise<ServiceNode | ExternalNode>;
 
   /**
    * Create an external node and add it to the graph
