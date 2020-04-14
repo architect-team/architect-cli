@@ -41,7 +41,7 @@ describe('link', () => {
     await Link.run([bad_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No config file found at ${path.join(bad_path, 'architect.json')}`));
+    expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No config file found at ${bad_path}`));
 
     const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
     if (fs.existsSync(linked_services_file)) {

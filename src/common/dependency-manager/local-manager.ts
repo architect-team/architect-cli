@@ -1,5 +1,6 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -65,8 +66,9 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
 
+    const lstat = fs.lstatSync(service_path);
     const node = new LocalServiceNode({
-      service_path: service_path.endsWith('.json') ? path.dirname(service_path) : service_path,
+      service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
       service_config: service_config,
       node_config: this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
