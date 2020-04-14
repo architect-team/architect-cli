@@ -1,5 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
+import { ParameterValue } from '../manager';
 import { Dict } from '../utils/transform';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
@@ -54,7 +55,7 @@ class ServiceDatastoreV1 {
 
 interface ServiceParameterV1 {
   description?: string;
-  default?: string | number;
+  default?: ParameterValue;
   required?: boolean;
   build_arg?: boolean;
 }

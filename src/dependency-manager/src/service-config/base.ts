@@ -1,5 +1,5 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { Parameter } from '../manager';
+import { ParameterValue } from '../manager';
 
 interface RestSubscriptionData {
   uri: string;
@@ -8,7 +8,7 @@ interface RestSubscriptionData {
 
 export interface ServiceParameter {
   description: string;
-  default?: Parameter;
+  default?: ParameterValue;
   required: boolean;
   build_arg?: boolean;
 }
