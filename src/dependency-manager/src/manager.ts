@@ -34,7 +34,7 @@ export interface DatastoreValueFromParameter {
   };
 }
 
-export type Parameter = string | number | ValueFromParameter | VaultParameter | DatastoreValueFromParameter;
+export type ParameterValue = string | number | ValueFromParameter | VaultParameter | DatastoreValueFromParameter;
 
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
