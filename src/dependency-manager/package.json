@@ -38,6 +38,7 @@
   "types": "lib/index.d.ts",
   "devDependencies": {
     "@types/fs-extra": "^8.0.1",
+    "@types/js-yaml": "^3.12.3",
     "typescript": "^3.7.2"
   }
 }
