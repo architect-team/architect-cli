@@ -1,5 +1,7 @@
+/* eslint-disable no-empty */
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import { ServiceConfig } from './base';
 import { ServiceConfigV1 } from './v1';
@@ -13,31 +15,68 @@ class MissingConfigFileError extends Error {
 }
 
 export class ServiceConfigBuilder {
-  static CONFIG_FILENAME = 'architect.json';
+  static getConfigPaths(input: string) {
+    return [
+      input,
+      path.join(input, 'architect.json'),
+      path.join(input, 'architect.yml'),
+      path.join(input, 'architect.yaml'),
+    ];
+  }
 
-  static buildFromPath(service_path: string): ServiceConfig {
-    let config_path = service_path;
-    if (!service_path.endsWith('.json')) {
-      config_path = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
+  static buildFromPath(input: string): ServiceConfig {
+    const try_files = ServiceConfigBuilder.getConfigPaths(input);
+
+    // Make sure the file exists
+    let file_contents;
+    for (const file of try_files) {
+      try {
+        const data = fs.lstatSync(file);
+        if (data.isFile()) {
+          file_contents = fs.readFileSync(file, 'utf-8');
+          break;
+        }
+      } catch {
+        continue;
+      }
     }
-    if (!fs.existsSync(config_path)) {
-      throw new MissingConfigFileError(config_path);
+
+    if (!file_contents) {
+      throw new MissingConfigFileError(input);
     }
-    const configPayload = fs.readJSONSync(config_path) as object;
-    return ServiceConfigBuilder.buildFromJSON(configPayload);
+
+    // Try to parse as json
+    try {
+      const js_obj = JSON.parse(file_contents);
+      return ServiceConfigBuilder.buildFromJSON(js_obj);
+    } catch {}
+
+    // Try to parse as yaml
+    try {
+      const js_obj = yaml.safeLoad(file_contents);
+      return ServiceConfigBuilder.buildFromJSON(js_obj);
+    } catch {}
+
+    throw new Error('Invalid file format. Must be json or yaml.');
   }
 
   static buildFromJSON(obj: object): ServiceConfig {
     return plainToClass(ServiceConfigV1, obj);
   }
 
-  static saveToPath(service_path: string, config: ServiceConfig) {
-    let config_path = service_path;
-    if (!service_path.endsWith('.json')) {
-      config_path = path.join(service_path, ServiceConfigBuilder.CONFIG_FILENAME);
+  static saveToPath(input: string, config: ServiceConfig) {
+    const try_files = ServiceConfigBuilder.getConfigPaths(input);
+
+    for (const file of try_files) {
+      if (file.endsWith('.json')) {
+        fs.writeJsonSync(file, config, { spaces: 2 });
+        return;
+      } else if (file.endsWith('.yml') || file.endsWith('.yaml')) {
+        fs.writeFileSync(file, yaml.safeDump(config));
+        return;
+      }
     }
-    fs.writeJSONSync(config_path, config, {
-      spaces: 2,
-    });
+
+    throw new Error(`Cannot save config to invalid path: ${input}`);
   }
 }
