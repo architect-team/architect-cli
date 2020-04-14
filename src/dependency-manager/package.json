@@ -21,6 +21,7 @@
     "class-transformer": "^0.2.3",
     "dotenv-expand": "^5.1.0",
     "fs-extra": "^8.1.0",
+    "js-yaml": "^3.13.1",
     "tslib": "^1.10.0",
     "untildify": "^4.0.0"
   },
