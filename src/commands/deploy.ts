@@ -147,7 +147,7 @@ export default class Deploy extends Command {
       let poll_count = 0;
       const poll = setInterval(async () => {
         const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
-        if (deployment.failed_at || poll_count > 100) {
+        if (deployment.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
           clearInterval(poll);
           reject(new Error('Deployment failed'));
         }
@@ -162,7 +162,7 @@ export default class Deploy extends Command {
           resolve(deployment);
         }
         poll_count += 1;
-      }, 3000);
+      }, 10000);
     });
   }
 
