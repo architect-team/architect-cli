@@ -36,6 +36,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports: [`${await dependency_manager.gateway_port}:${node.ports[0]}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
+        environment: {
+          HTTPS_METHOD: 'noredirect',
+        },
       };
     }
 
