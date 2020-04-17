@@ -136,9 +136,9 @@ export default class LocalDependencyManager extends DependencyManager {
   toExternalHost(node: DependencyNode) {
     if (node instanceof ServiceNode) {
       const ingress = node.node_config.getIngress();
-      return ingress ? `${ingress.subdomain}.localhost` : '';
+      return ingress ? `${ingress.subdomain}.localhost` : ''; // TODO: in what case would someone want an empty host? should we throw an error?
     } else {
-      return '';
+      return ''; // TODO: in what case would someone want an empty host? should we throw an error?
     }
   }
 

@@ -92,7 +92,8 @@ export default class ServiceRegister extends Command {
             image = await buildImage(node, this.app.config.registry_host, flags.tag);
           } catch (err) {
             cli.action.stop(chalk.red(`Build failed`));
-            throw new Error(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.service_path}`);
+            this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.service_path}`);
+            throw new Error(err);
           }
 
           cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));

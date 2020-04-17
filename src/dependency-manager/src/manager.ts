@@ -126,6 +126,7 @@ export default abstract class DependencyManager {
         }
       }
     }
+    // console.log(this.graph.nodes)
 
     const env_params_to_expand: { [key: string]: string } = {};
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
@@ -318,7 +319,7 @@ export default abstract class DependencyManager {
     }
 
     const env_service = this._environment.getServiceDetails(service_ref);
-    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
+    if (env_service && Object.keys(env_service.getInterfaces()).length > 0 && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
       return this.loadExternalService(env_service, service_ref);
     }
 
