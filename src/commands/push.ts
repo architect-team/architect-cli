@@ -86,24 +86,7 @@ export default class Push extends Command {
   }
 
   private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
-    try {
-      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
-      return service_digest;
-    } catch (err) {
-      //TODO:89:we shouldn't have to do this on the client side
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to create a ServiceVersion for the selected account.`);
-      }
-      if (err.response?.data?.status === 409) {
-        throw new Error(`The server responded with 409 CONFLICT. Perhaps this Service name already exists under that account?`);
-      }
-      if (err.response?.data?.message?.message) {
-        throw new Error(JSON.stringify(err.response?.data?.message?.message));
-      }
-      if (err.response?.data?.message) {
-        throw new Error(err.response?.data?.message);
-      }
-      throw new Error(err);
-    }
+    const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+    return service_digest;
   }
 }

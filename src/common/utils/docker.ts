@@ -9,6 +9,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   const cmd = execa('docker', args, execa_opts);
   if (opts.stdout) {
     cmd.stdout?.pipe(process.stdout);
+    cmd.stderr?.pipe(process.stderr);
   }
   try {
     return await cmd;
