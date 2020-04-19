@@ -119,6 +119,7 @@ export default class Deploy extends Command {
     await fs.ensureFile(flags.compose_file);
     await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
+    //throw new Error('test')
     await execa('docker-compose', ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'], { stdio: 'inherit' });
   }
 

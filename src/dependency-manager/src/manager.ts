@@ -126,7 +126,6 @@ export default abstract class DependencyManager {
         }
       }
     }
-    // console.log(this.graph.nodes)
 
     const env_params_to_expand: { [key: string]: string } = {};
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));

@@ -49,13 +49,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
-        ports: ports,
+        ports,
         depends_on: [],
-        environment: {
-          ...node.parameters,
-          HOST: node.normalized_ref,
-          PORT: node.ports[0].toString(),
-        },
+        environment: node.parameters,
       };
     }
 
