@@ -54,7 +54,7 @@ describe('link', () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
 
-    const service_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
+    const service_path = path.join(__dirname, '../calculator/addition-service/rest/').replace(/\/$/gi, '').replace(/\\$/gi, '');
     await Link.run([service_path]);
 
     expect(log_spy.calledOnce).to.equal(true);

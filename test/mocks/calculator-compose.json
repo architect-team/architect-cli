@@ -9,7 +9,7 @@
         "architect.subtraction-service-rest.latest"
       ],
       "environment": {
-        "HOST": "architect.division-service-grpc.latest",
+        "SUBTRACTION_SERVICE_ADDRESS": "architect.subtraction-service-rest.latest:8080",
         "PORT": "8080"
       },
       "build": {
@@ -32,7 +32,7 @@
         "architect.addition-service-rest.latest"
       ],
       "environment": {
-        "HOST": "architect.subtraction-service-rest.latest",
+        "ADDITION_SERVICE_ADDRESS": "architect.addition-service-rest.latest:8080",
         "PORT": "8080"
       },
       "build": {
@@ -52,7 +52,11 @@
         "architect.addition-service-rest.latest.primary"
       ],
       "environment": {
-        "HOST": "architect.addition-service-rest.latest",
+        "DB_PRIMARY_HOST": "architect.addition-service-rest.latest.primary",
+        "DB_PRIMARY_PORT": "5432",
+        "DB_PRIMARY_USER": "postgres",
+        "DB_PRIMARY_PASSWORD": "architect",
+        "DB_PRIMARY_DB": "addition_service",
         "PORT": "8080"
       },
       "build": {
@@ -73,7 +77,6 @@
       ],
       "depends_on": [],
       "environment": {
-        "HOST": "architect.addition-service-rest.latest.primary",
         "PORT": "5432",
         "POSTGRES_USER": "postgres",
         "POSTGRES_PASSWORD": "architect",

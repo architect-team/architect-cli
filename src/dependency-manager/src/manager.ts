@@ -255,7 +255,7 @@ export default abstract class DependencyManager {
         }
       } else if (node instanceof DatastoreNode) {
         if (node.node_config.port) {
-          node.parameters['PORT'] = node.node_config.port;
+          node.parameters['PORT'] = node.node_config.port.toString();
         }
       }
     }
