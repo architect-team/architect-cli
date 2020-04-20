@@ -221,7 +221,7 @@ export default class Init extends Command {
           var_name: val.dependency_address_var,
           var_default: {
             valueFrom: {
-              value: '$HOST:$PORT',
+              value: '$HOST:$PORT', // TODO: add interface here
               dependency: `${service_name}:${service_tag}`,
             },
           },
