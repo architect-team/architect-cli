@@ -253,8 +253,8 @@ export default class Deploy extends Command {
         cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the service config, carrying on anyway...`));
         return;
       } else {
-        cli.action.stop(chalk.red(`Error, did not run validation`));
-        throw new Error(err.response.data.message);
+        cli.action.stop(chalk.red(`Error, did not run validation: ${err.response?.data?.message || err.message}`));
+        return;
       }
     }
 
