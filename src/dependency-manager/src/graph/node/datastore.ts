@@ -4,7 +4,7 @@ import { ServiceDatastore } from '../../service-config/base';
 interface DatastoreNodeOptions {
   parent_ref: string;
   key: string;
-  node_config: ServiceDatastore; // TODO
+  node_config: ServiceDatastore;
 }
 
 export class DatastoreNode extends DependencyNode {

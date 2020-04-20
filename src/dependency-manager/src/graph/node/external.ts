@@ -45,6 +45,6 @@ export class ExternalNode extends DependencyNode {
   get interfaces(): { [key: string]: any } {
     return this.node_config instanceof ServiceConfig ?
       this.node_config.getInterfaces() :
-      { _default: { host: this.node_config.host, port: this.node_config.port } }; // TODO: messaging that a port is required for a datastore
+      { _default: { host: this.node_config.host, port: this.node_config.port } };
   }
 }

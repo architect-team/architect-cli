@@ -19,7 +19,11 @@ describe('interfaces', function () {
 
     const checkout_json = {
       "name": "architect/checkout",
-      "port": 7000
+      "interfaces": {
+        "main": {
+          "port": 7000
+        }
+      }
     };
 
     const backend_json = {
@@ -41,6 +45,7 @@ describe('interfaces', function () {
         "CHECKOUT_ADDR": {
           "valueFrom": {
             "dependency": "architect/checkout",
+            "interface": "main",
             "value": "$HOST:$PORT"
           }
         },
@@ -48,12 +53,22 @@ describe('interfaces', function () {
           "default": {
             "valueFrom": {
               "dependency": "architect/checkout",
+              "interface": "main",
               "value": "$HOST:$PORT"
+            }
+          }
+        },
+        "HOST": {
+          "default": {
+            "valueFrom": {
+              "self": true,
+              "interface": "main",
+              "value": "$HOST"
             }
           }
         }
       },
-      "port": 8888
+      //"port": 8888
     };
 
     const frontend_main_json = {

@@ -91,6 +91,11 @@ export default class Init extends Command {
         },
       },
       {
+        type: 'input',
+        name: 'dependency_interface',
+        message: 'On what interface should the service connect?'
+      },
+      {
         type: 'confirm',
         name: 'add_another',
         message: 'Any more dependencies?',
@@ -221,7 +226,8 @@ export default class Init extends Command {
           var_name: val.dependency_address_var,
           var_default: {
             valueFrom: {
-              value: '$HOST:$PORT', // TODO: add interface here
+              value: '$HOST:$PORT',
+              interface: val.dependency_interface,
               dependency: `${service_name}:${service_tag}`,
             },
           },

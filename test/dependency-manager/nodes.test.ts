@@ -22,8 +22,12 @@ describe('nodes', function () {
     const env_config_external = {
       "services": {
         "architect/frontend:latest": {
-          "host": "frontend.host.arc",
-          "port": 80
+          "interfaces": {
+            "main": {
+              "host": "frontend.host.arc",
+              "port": 80
+            }
+          }
         },
         "architect/backend:latest": {
           "ingress": {
