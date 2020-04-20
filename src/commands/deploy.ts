@@ -11,6 +11,8 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { OfflineUtils } from '../common/utils/offline';
+import { ValidationClient, ValidationResult } from '../common/utils/validation';
 import DependencyGraph from '../dependency-manager/src/graph';
 
 
@@ -20,21 +22,6 @@ class EnvConfigRequiredError extends Error {
     this.name = 'environment_config_required';
     this.message = 'An environment configuration is required';
   }
-}
-
-enum ValidationSeverity {
-  INFO = 0,
-  WARNING = 1,
-  ERROR = 2,
-}
-
-interface ValidationResult {
-  valid: boolean;
-  slug: string;
-  rule: string;
-  doc_ref: string;
-  severity: ValidationSeverity;
-  details?: string;
 }
 
 export default class Deploy extends Command {
@@ -261,64 +248,31 @@ export default class Deploy extends Command {
       const response = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph, { timeout: 2000 });
       validation_results = response.data;
     } catch (err) {
-      cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the deployment, carrying on anyway...`));
       // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
-      return;
-    }
-
-    const failing_rules = validation_results.filter(r => !r.valid);
-    const passing_rules = validation_results.filter(r => r.valid);
-    const error_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.ERROR).length;
-    const warning_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.WARNING).length;
-    const info_count = failing_rules.filter(r => !r.valid && r.severity === ValidationSeverity.INFO).length;
-
-    if (error_count || warning_count || info_count) {
-      cli.action.stop(
-        (error_count ? this.get_severity_color(ValidationSeverity.ERROR)(`${error_count} error${error_count > 1 ? 's ' : ' '}`) : ' ') +
-        (warning_count ? this.get_severity_color(ValidationSeverity.WARNING)(`${warning_count} warning${warning_count > 1 ? 's ' : ' '}`) : ' ') +
-        (info_count ? this.get_severity_color(ValidationSeverity.INFO)(`${info_count} info${info_count > 1 ? 's ' : ' '}`) : ' ')
-      );
-    } else {
-      cli.action.stop(chalk.green(`${passing_rules.length} rules passing`));
-    }
-
-    if (failing_rules.length) {
-      this.log('\n');
-      for (const failure of failing_rules) {
-        this.log_failure(failure);
+      if (OfflineUtils.indicates_offline(err)) {
+        cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the service config, carrying on anyway...`));
+        return;
+      } else {
+        cli.action.stop(chalk.red(`Error, did not run validation`));
+        throw new Error(err.response.data.message);
       }
-      this.log(chalk.blue(`...${passing_rules.length} other rules passing\n`));
     }
 
-    if (error_count > 0) {
+    const summary = ValidationClient.summarize(validation_results);
+    if (summary.all_passing) {
+      cli.action.stop(chalk.green(`${summary.passing_count} rules passing`));
+    } else {
+      cli.action.stop(summary.message);
+    }
+
+    if (!summary.all_passing) {
+      this.log('\n');
+      this.log(summary.failure_report);
+      this.log(chalk.blue(`...${summary.passing_count} other rules passing\n`));
+    }
+
+    if (summary.blocker_count > 0) {
       this.error('The deployment failed validation.');
-    }
-  }
-
-  private log_failure(failure: ValidationResult) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore
-    const color_fnc = this.get_severity_color(failure.severity);
-
-    this.log(color_fnc(ValidationSeverity[failure.severity] + ': ' + failure.rule));
-
-    if (failure.details) {
-      this.log(`\t${color_fnc('Details: ' + failure.details)}`);
-    }
-    this.log(`\t${color_fnc(failure.doc_ref)}`);
-    this.log('\n');
-  }
-
-  private get_severity_color(severity: ValidationSeverity) {
-    switch (severity) {
-      case ValidationSeverity.ERROR:
-        return chalk.red;
-      case ValidationSeverity.WARNING:
-        return chalk.yellow;
-      case ValidationSeverity.INFO:
-        return chalk.blue;
-      default:
-        return chalk.white;
     }
   }
 }

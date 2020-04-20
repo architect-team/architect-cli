@@ -135,7 +135,14 @@ export default class EnvironmentCreate extends Command {
         type: 'list',
         name: 'platform_id',
         message: 'On which Architect platform would you like to put this environment?',
-        choices: [...this.platforms.map((p: any) => { return { name: `${p.name} (${p.type})`, value: p.id }; }), { name: 'Configure new platform', value: false }],
+        choices: async (answers: any) => {
+          return [
+            ...this.platforms
+              .filter((p: any) => (p.account.id === answers.account?.id || p.account.id === selected_account.id))
+              .map((p: any) => { return { name: `${p.name} (${p.type})`, value: p.id }; }),
+            { name: 'Configure new platform', value: false },
+          ];
+        },
       },
     ]);
 
@@ -215,48 +222,17 @@ export default class EnvironmentCreate extends Command {
   }
 
   private async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
-    try {
-      if (public_platform) {
-        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
-        return platform;
-      } else {
-        const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
-        return platform;
-      }
-    } catch (err) {
-      //TODO:89:we shouldn't have to do this on the client side
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to create a platform for the selected account.`);
-      }
-      if (err.response?.data?.status === 409) {
-        throw new Error(`The server responded with 409 CONFLICT. Perhaps this platform name already exists under that account?`);
-      }
-      if (err.response?.data?.message) {
-        throw new Error(err.response?.data?.message);
-      }
-      throw new Error(err);
+    if (public_platform) {
+      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
+      return platform;
+    } else {
+      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
+      return platform;
     }
   }
 
   private async post_environment_to_api(data: CreateEnvironmentInput, account_id: string): Promise<any> {
-    try {
-      const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
-      return environment;
-    } catch (err) {
-      //TODO:89:we shouldn't have to do this on the client side
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to create an environment for the selected account.`);
-      }
-      if (err.response?.data?.status === 409) {
-        throw new Error(`The server responded with 409 CONFLICT. Perhaps this environment name already exists under that account?`);
-      }
-      if (err.response?.data?.message?.message) {
-        throw new Error(JSON.stringify(err.response?.data?.message?.message));
-      }
-      if (err.response?.data?.message) {
-        throw new Error(err.response?.data?.message);
-      }
-      throw new Error(err);
-    }
+    const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
+    return environment;
   }
 }
