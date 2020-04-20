@@ -67,8 +67,7 @@ describe('interfaces', function () {
             }
           }
         }
-      },
-      //"port": 8888
+      }
     };
 
     const frontend_main_json = {

@@ -93,7 +93,7 @@ export default class Init extends Command {
       {
         type: 'input',
         name: 'dependency_interface',
-        message: 'On what interface should the service connect?'
+        message: 'On what interface should the service connect?',
       },
       {
         type: 'confirm',
