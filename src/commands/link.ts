@@ -21,7 +21,6 @@ export default class Link extends Command {
     name: 'servicePath',
     char: 'p',
     default: path.basename(process.cwd()),
-    parse: (value: string) => value,
   }];
 
   async run() {
