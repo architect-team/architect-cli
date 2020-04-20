@@ -1,3 +1,4 @@
 [submodule "test/calculator"]
 	path = test/calculator
 	url = https://github.com/architect-team/calculator-sample-project.git
+	branch = interface-testing
