@@ -24,7 +24,6 @@ export interface ValueFromParameter {
     dependency: string;
     value: string;
     interface?: string;
-    self?: boolean;
   };
 }
 
@@ -172,7 +171,7 @@ export default abstract class DependencyManager {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
             const value_from_param = param_value as ValueFromParameter;
-            let param_target_service_name = value_from_param.valueFrom.self ? node.ref : value_from_param.valueFrom.dependency;
+            let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
               param_target_service_name = `${param_target_service_name}:${node.node_config.getDependencies()[param_target_service_name]}`;

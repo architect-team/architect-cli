@@ -62,7 +62,6 @@ describe('interfaces', function () {
         "HOST": {
           "default": {
             "valueFrom": {
-              "self": true,
               "interface": "main",
               "value": "$HOST"
             }
