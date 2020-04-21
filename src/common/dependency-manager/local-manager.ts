@@ -67,10 +67,11 @@ export default class LocalDependencyManager extends DependencyManager {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
 
     const lstat = fs.lstatSync(service_path);
+    const architect_config_path = lstat.isFile() ? path.dirname(service_path) : service_path;
     const node = new LocalServiceNode({
-      service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
-      service_config: service_config,
-      node_config: this.getNodeConfig(service_config, 'latest'),
+      service_path: architect_config_path,
+      service_config,
+      node_config: this.getNodeConfig(service_config, 'latest', architect_config_path),
       image: service_config.getImage(),
       tag: 'latest',
     });

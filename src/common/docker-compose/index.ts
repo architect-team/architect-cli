@@ -108,7 +108,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
         let volume;
         if (spec.host_path) {
-          volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+          volume = `${spec.host_path}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else {
           volume = path.resolve(node.service_path, service_volume);
         }
