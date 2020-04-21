@@ -9,6 +9,9 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
+import { OfflineUtils } from '../common/utils/offline';
+import { ValidationClient, ValidationResult } from '../common/utils/validation';
+import { ServiceConfig } from '../dependency-manager/src';
 
 export interface CreateServiceVersionInput {
   tag: string;
@@ -66,6 +69,8 @@ export default class ServiceRegister extends Command {
 
     for (const node of dependency_manager.graph.nodes) {
       if (node instanceof LocalServiceNode) {
+
+        // await this.validate_service_config(node.service_config);
 
         let image;
         // if both image flag and image in service_config are set, warn and prompt user
@@ -137,24 +142,43 @@ export default class ServiceRegister extends Command {
   }
 
   private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
+    const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+    return service_digest;
+  }
+
+  async validate_service_config(config: ServiceConfig): Promise<void> {
+    cli.action.start(chalk.blue('Validating service config'));
+
+    let validation_results;
     try {
-      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
-      return service_digest;
+      const response = await this.app.api.post<ValidationResult[]>(`/services/validation`, config, { timeout: 2000 });
+      validation_results = response.data;
     } catch (err) {
-      //TODO:89:we shouldn't have to do this on the client side
-      if (err.response?.data?.statusCode === 403) {
-        throw new Error(`You do not have permission to create a ServiceVersion for the selected account.`);
+      // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
+      if (OfflineUtils.indicates_offline(err)) {
+        cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the service config, carrying on anyway...`));
+        return;
+      } else {
+        cli.action.stop(chalk.red(`Error, did not run validation`));
+        throw new Error(err.response.data.message);
       }
-      if (err.response?.data?.status === 409) {
-        throw new Error(`The server responded with 409 CONFLICT. Perhaps this Service name already exists under that account?`);
-      }
-      if (err.response?.data?.message?.message) {
-        throw new Error(JSON.stringify(err.response?.data?.message?.message));
-      }
-      if (err.response?.data?.message) {
-        throw new Error(err.response?.data?.message);
-      }
-      throw new Error(err);
+    }
+
+    const summary = ValidationClient.summarize(validation_results);
+    if (summary.all_passing) {
+      cli.action.stop(chalk.green(`${summary.passing_count} rules passing`));
+    } else {
+      cli.action.stop(summary.message);
+    }
+
+    if (!summary.all_passing) {
+      this.log('\n');
+      this.log(summary.failure_report);
+      this.log(chalk.blue(`...${summary.passing_count} other rules passing\n`));
+    }
+
+    if (summary.blocker_count > 0) {
+      this.error('The service failed validation.');
     }
   }
 }

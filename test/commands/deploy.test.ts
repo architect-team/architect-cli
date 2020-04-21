@@ -16,7 +16,7 @@ describe('deploy', () => {
   let tmp_dir = os.tmpdir();
 
   before(() => {
-    PortUtil.tested_ports = new Set();
+    PortUtil.reset();
 
     const credential_spy = sinon.fake.returns('token');
     sinon.replace(CredentialManager.prototype, 'get', credential_spy);

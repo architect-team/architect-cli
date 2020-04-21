@@ -21,11 +21,15 @@ function transformParameters(input: any) {
 function transformVolumes(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    if (value instanceof Object) {
-      output[key] = value;
-    } else {
-      output[key] = { host_path: value };
-    }
+    output[key] = value instanceof Object ? value : { host_path: value };
+  }
+  return output;
+}
+
+function transformInterfaces(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = value instanceof Object ? value : { port: value };
   }
   return output;
 }
@@ -122,6 +126,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
   api?: ApiSpecV1;
+  @Transform(value => (transformInterfaces(value)))
   interfaces: { [s: string]: InterfaceSpecV1 } = {};
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};

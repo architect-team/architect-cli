@@ -39,7 +39,8 @@ describe('interfaces', function () {
         "secondary": {
           "description": "secondary port",
           "port": "8081"
-        }
+        },
+        "concise": 8082
       },
       "parameters": {
         "CHECKOUT_ADDR": {
@@ -240,7 +241,7 @@ describe('interfaces', function () {
   it('correct compose port mappings', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081']);
+    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081', '50003:8082']);
     expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8082']);
     expect(compose.services['architect.frontend-secondary.latest'].ports).eql([]);
   });
@@ -252,5 +253,13 @@ describe('interfaces', function () {
     expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
     expect(compose.services['architect.backend.latest'].environment!.MAIN_PORT).eq('8080');
     expect(compose.services['architect.backend.latest'].environment!.SECONDARY_PORT).eq('8081');
+  });
+
+  it('concise interface port spec', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
+    const compose = await DockerCompose.generate(manager);
+
+    expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
+    expect(compose.services['architect.backend.latest'].environment!.CONCISE_PORT).eq('8082');
   });
 });
