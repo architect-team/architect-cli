@@ -106,9 +106,14 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           throw new Error(`mount_path must be specified for volume ${key}`);
         }
 
+        const service_volumes = node.service_config.getDebugOptions()?.volumes;
+        const env_volumes = dependency_manager._environment.getServices()[node.ref].getDebugOptions()?.volumes;
         let volume;
-        if (spec.host_path) {
-          volume = `${spec.host_path}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+        if ((service_volumes && service_volumes[key] && service_volumes[key].host_path && service_volumes[key].mount_path) && (env_volumes && !env_volumes[key])) {
+          const host_path = service_volumes[key].host_path!; // TODO: remove for lint rules
+          volume = `${path.resolve(node.service_path, host_path)}:${service_volume}`;
+        } else if (spec.host_path) {
+          volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else {
           volume = path.resolve(node.service_path, service_volume);
         }

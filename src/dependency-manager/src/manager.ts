@@ -1,5 +1,4 @@
 import dotenvExpand from 'dotenv-expand';
-import path from 'path';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
@@ -10,7 +9,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig, VolumeSpec } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -83,18 +82,6 @@ export default abstract class DependencyManager {
     // If debug is enabled merge in debug options ex. debug.command -> command
     const debug_options = node_config.getDebugOptions();
     if (this.debug && debug_options) {
-      const updated_volumes: { [s: string]: VolumeSpec } = {};
-      if (debug_options.volumes) {
-        for (const key of Object.keys(debug_options.volumes)) {
-          let vol = debug_options.volumes[key];
-          if (vol.host_path && service_path) {
-            vol.host_path = path.resolve(service_path, vol.host_path);
-          }
-          updated_volumes[key] = debug_options.volumes[key];
-        }
-      }
-      debug_options.volumes = updated_volumes;
-
       node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
     }
     return node_config;
