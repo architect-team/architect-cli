@@ -26,6 +26,14 @@ function transformVolumes(input: any) {
   return output;
 }
 
+function transformInterfaces(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = value instanceof Object ? value : { port: value };
+  }
+  return output;
+}
+
 interface ServiceNotificationsV1 {
   [notification_name: string]: {
     description: string;
@@ -118,6 +126,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   datastores: { [s: string]: ServiceDatastoreV1 } = {};
   @Type(() => ApiSpecV1)
   api?: ApiSpecV1;
+  @Transform(value => (transformInterfaces(value)))
   interfaces: { [s: string]: InterfaceSpecV1 } = {};
   notifications: ServiceNotificationsV1 = {};
   subscriptions: ServiceSubscriptionsV1 = {};

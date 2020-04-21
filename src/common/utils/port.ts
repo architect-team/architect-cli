@@ -13,7 +13,7 @@ const _isPortAvailable = async (host: string, port: number) => new Promise((reso
 
 export default class PortUtil {
   // eslint-disable-next-line no-undef
-  static tested_ports = new Set();
+  private static tested_ports = new Set();
 
   static async isPortAvailable(port: number): Promise<boolean> {
     try {
