@@ -49,7 +49,7 @@ export default abstract class DependencyManager {
     this.gateway_port = this.getServicePort(80);
   }
 
-  getNodeConfig(service_config: ServiceConfig, tag: string, service_path?: string) {
+  getNodeConfig(service_config: ServiceConfig, tag: string) {
     // Merge in global parameters
     const global_overrides: any = {
       parameters: {},
