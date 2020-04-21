@@ -271,7 +271,7 @@ describe('volumes', function () {
     expect(debug_compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/src')}:/src`]);
   });
 
-  it('volume ralative to service config', async () => {
+  it('volume relative to service config', async () => {
     const service_config = {
       name: "architect/backend",
       debug: {
