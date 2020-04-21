@@ -21,11 +21,7 @@ function transformParameters(input: any) {
 function transformVolumes(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    if (value instanceof Object) {
-      output[key] = value;
-    } else {
-      output[key] = { host_path: value };
-    }
+    output[key] = value instanceof Object ? value : { host_path: value };
   }
   return output;
 }

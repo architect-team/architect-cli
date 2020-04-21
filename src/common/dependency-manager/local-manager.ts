@@ -69,7 +69,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const lstat = fs.lstatSync(service_path);
     const node = new LocalServiceNode({
       service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
-      service_config: service_config,
+      service_config,
       node_config: this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
       tag: 'latest',
