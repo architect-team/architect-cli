@@ -38,6 +38,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         depends_on: [],
         environment: {
           HTTPS_METHOD: 'noredirect',
+          DISABLE_ACCESS_LOGS: 'true',
         },
       };
     }
