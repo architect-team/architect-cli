@@ -33,7 +33,7 @@ export default class AppConfig {
     this.api_host = 'https://api.architect.io';
     this.app_host = 'https://app.architect.io';
     this.oauth_domain = 'auth.architect.io';
-    this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+    this.oauth_client_id = 'RTaVfl3vuPZeHj2OJ8dsZMm5ub5k52G9';
 
     // Override defaults with input values
     Object.assign(this, partial);

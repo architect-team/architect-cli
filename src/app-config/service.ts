@@ -112,7 +112,7 @@ export default class AppService {
               Authorization: `${new_token.token_type} ${new_token.access_token}`,
             };
             const error_config = err.config;
-            error_config.headers.Authorization = this._api.defaults.headers.common.Authorization;
+            error_config.headers.Authorization = this._api.defaults.headers.Authorization;
             return this._api.request(error_config);
           }
 

@@ -11,18 +11,28 @@
     "@oclif/command": "1.5.19",
     "@oclif/config": "1.14.0",
     "@oclif/plugin-help": "2.2.3",
+    "@types/atob": "^2.1.2",
+    "@types/btoa": "^1.2.3",
+    "@types/is-ci": "^2.0.0",
+    "@types/opener": "^1.4.0",
+    "atob": "^2.1.2",
     "auth0": "2.20.0",
     "axios": "0.19.0",
+    "base64url": "^3.0.1",
+    "btoa": "^1.2.1",
     "class-transformer": "0.2.3",
     "class-validator": "0.12.2",
     "cli-table3": "0.5.1",
     "cli-ux": "5.3.2",
+    "crypto": "^1.0.1",
     "dotenv-expand": "5.1.0",
     "execa": "3.2.0",
     "fs-extra": "8.1.0",
-    "inquirer": "7.0.4",
+    "inquirer": "7.1.0",
+    "is-ci": "^2.0.0",
     "is-windows": "^1.0.2",
     "js-yaml": "3.13.1",
+    "opener": "^1.5.1",
     "p-limit": "^2.3.0",
     "reflect-metadata": "0.1.13",
     "tslib": "1.10.0",
@@ -47,6 +57,7 @@
     "@typescript-eslint/parser": "2.23.0",
     "chai": "4.2.0",
     "chalk": "2.4.2",
+    "copyfiles": "^2.2.0",
     "eslint": "6.8.0",
     "eslint-plugin-oclif": "0.1.0",
     "globby": "10.0.1",
@@ -84,6 +95,9 @@
     "plugins": [
       "@oclif/plugin-help"
     ],
+    "hooks": {
+      "init": "./lib/hooks/init/tty"
+    },
     "macos": {
       "identifier": "io.architect.cli"
     }
@@ -92,7 +106,8 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "fix": "eslint --ext .ts,.js . --fix",
-    "build": "rm -rf ./lib && tsc -b",
+    "build": "rm -rf ./lib && tsc -b && npm run copy-static",
+    "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",

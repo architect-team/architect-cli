@@ -35,7 +35,7 @@ export default abstract class extends Command {
     if (err.response && err.response.data) {
       this.error(chalk.red(this.getFormattedJSON(err.response.data)));
     }
-    if (this.app.config.log_level === 'debug') {
+    if (this.app?.config?.log_level === 'debug') {
       throw err;
     } else {
       this.error(chalk.red(err.stderr || err.message || err));
