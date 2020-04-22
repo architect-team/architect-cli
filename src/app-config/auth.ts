@@ -50,6 +50,7 @@ export default class AuthClient {
   async logout() {
     await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
+    await docker(['logout', this.config.registry_host], { stdout: false });
   }
 
   async getToken() {
