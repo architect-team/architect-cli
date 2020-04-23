@@ -123,7 +123,7 @@ export default class LocalDependencyManager extends DependencyManager {
   * @override
   */
   async loadServiceConfig(node_ref: string) {
-    const debug_path = this._environment.getServices()[node_ref]?.getDebugOptions()?.path;
+    const debug_path = this._environment.getServiceDetails(node_ref)?.getDebugOptions()?.path;
     if (debug_path) {
       return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), debug_path));
     } else {
