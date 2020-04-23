@@ -9,7 +9,8 @@ export interface BaseServiceMetadataConfig {
 export interface BaseInterfaceConfig {
   description?: string;
   default?: boolean;
-  port: number;
+  port?: number;
+  host?: string;
 }
 
 export interface BaseLivenessProbeConfig {

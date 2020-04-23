@@ -1,4 +1,4 @@
-import { IsInstance, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsInstance, IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
 import { BaseInterfaceConfig, BaseLivenessProbeConfig, BaseNotificationConfig, BasePlatformsConfig, BaseServiceConfig, BaseServiceMetadataConfig, BaseSubscriptionConfig, BaseVolumeConfig } from '../../base-configs/service-config';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
@@ -39,7 +39,11 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
   interfaces?: Dictionary<InterfacesSpecV1>;
 
   @IsOptional()
-  @IsNumber()
+  @IsString()
+  @IsUrl()
+  host?: string;
+
+  @ValidateIf(obj => !obj.interfaces && !obj.host)
   port?: number;
 
   @IsOptional()
@@ -58,10 +62,10 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
 
   @IsOptional()
   @IsInstance(ApiSpecV1)
-  api?: ApiSpecV1;
+  api?: ApiSpecV1;;
 
   @IsOptional()
-  notifications?: Dictionary<NotificationSpecV1>
+  notifications?: Dictionary<NotificationSpecV1>;
 
   @IsOptional()
   subscriptions?: Dictionary<Dictionary<EventSubscriptionSpecV1>>;
@@ -111,7 +115,7 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
     if (typeof this.volumes === 'object') {
       Object.entries(this.volumes).forEach(([key, value]) => {
         this.volumes![key] = new VolumeClaimSpecV1(value);
-      })
+      });
     }
   }
 
@@ -158,12 +162,19 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
 
   getInterfaces() {
     const res = new Map<string, BaseInterfaceConfig>(Object.entries(this.interfaces || {}));
-    
-    if (res.size === 0 && this.port) {
-      res.set('default', {
-        port: this.port,
-        default: true,
-      });
+
+    if (res.size === 0) {
+      const default_interface = { default: true } as BaseInterfaceConfig;
+
+      if (this.host) {
+        default_interface.host = this.host;
+      }
+
+      if (this.port) {
+        default_interface.port = this.port;
+      }
+
+      res.set('default', default_interface);
     }
 
     return res;
@@ -174,9 +185,23 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
 
     interfaces.forEach((value, key) => {
       const item = new InterfacesSpecV1();
-      item.default = value.default;
-      item.description = value.description;
-      item.port = value.port;
+
+      if (value.default) {
+        item.default = value.default;
+      }
+
+      if (value.description) {
+        item.description = value.description;
+      }
+
+      if (value.port) {
+        item.port = value.port;
+      }
+
+      if (value.host) {
+        item.host = value.host;
+      }
+
       newInterfaces[key] = item;
     });
 
@@ -315,7 +340,7 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
 
     return res;
   }
-  
+
   setSubscriptions(subscriptions: Map<string, Map<string, BaseSubscriptionConfig>>) {
     const newSubscriptions = {} as Dictionary<Dictionary<EventSubscriptionSpecV1>>;
 

@@ -6,7 +6,12 @@ describe('operator service (v1 spec)', () => {
   describe('name', () => {
     it('should get defined name', async () => {
       const spec = {
-        name: 'tests/test'
+        name: 'tests/test',
+        interfaces: {
+          default: {
+            port: 8080,
+          },
+        },
       };
       const parsedSpec = new OperatorServiceSpecV1(spec);
       await parsedSpec.validateOrReject();
@@ -15,7 +20,12 @@ describe('operator service (v1 spec)', () => {
 
     it('should set new name', async () => {
       const spec = {
-        name: 'tests/test'
+        name: 'tests/test',
+        interfaces: {
+          default: {
+            port: 8080,
+          },
+        },
       };
       const parsedSpec = new OperatorServiceSpecV1(spec);
       await parsedSpec.validateOrReject();
@@ -27,6 +37,11 @@ describe('operator service (v1 spec)', () => {
   describe('parameters', () => {
     it('should get defined parameters', async () => {
       const spec = {
+        interfaces: {
+          default: {
+            port: 8080,
+          },
+        },
         parameters: {
           SIMPLE: 'value',
           NESTED: {
@@ -118,10 +133,20 @@ describe('operator service (v1 spec)', () => {
   describe('dependencies', () => {
     it('should get declared dependencies', async () => {
       const spec = {
+        interfaces: {
+          default: {
+            port: 8080,
+          },
+        },
         dependencies: {
           'tests/dep': 'latest',
           'tests/nested': {
             ref: 'v1',
+            interfaces: {
+              default: {
+                port: 8080,
+              },
+            },
             parameters: {
               PARAM: 'value'
             },
@@ -176,6 +201,11 @@ describe('operator service (v1 spec)', () => {
       let dependencies = parsedSpec.getDependencies();
       const nested = new OperatorServiceSpecV1({
         name: 'tests/dep',
+        interfaces: {
+          default: {
+            port: 8080,
+          },
+        },
         ref: 'latest',
         dependencies: {
           'nested/dep': 'latest',
