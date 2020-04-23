@@ -30,7 +30,6 @@ describe('logout', () => {
   });
 
   it('deletes local credentials', async () => {
-    this.timeout(10000);
     const credential_spy = sinon.fake.returns(null);
     sinon.replace(CredentialManager.prototype, 'delete', credential_spy);
 
@@ -39,5 +38,5 @@ describe('logout', () => {
     expect(credential_spy.getCalls().length).to.equal(2);
     expect(credential_spy.firstCall.args[0]).to.equal('architect.io');
     expect(credential_spy.secondCall.args[0]).to.equal('architect.io/token');
-  });
+  }).timeout(10000);
 })
