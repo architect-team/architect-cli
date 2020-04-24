@@ -26,8 +26,7 @@ describe('graph', () => {
     });
 
     const parsedSpec = await EnvironmentBuilder.loadFromFile('/app/env-config.json');
-    const graph = new EnvironmentGraph(parsedSpec);
-    await graph.build({
+    const graph = await EnvironmentGraph.build(parsedSpec, {
       getConfig: async (ref: string): Promise<BaseServiceConfig> => {
         const [name, tag] = ref.split(':');
         const [account_name, service_name] = name.split('/');
@@ -74,8 +73,7 @@ describe('graph', () => {
     }));
 
     const parsedSpec = await EnvironmentBuilder.loadFromFile(config_path);
-    const graph = new EnvironmentGraph(parsedSpec);
-    await graph.build({
+    const graph = await EnvironmentGraph.build(parsedSpec, {
       getConfig: async (ref: string): Promise<BaseServiceConfig> => {
         const [name, tag] = ref.split(':');
 

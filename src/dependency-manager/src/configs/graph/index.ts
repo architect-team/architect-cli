@@ -172,22 +172,7 @@ export class EnvironmentGraph {
     this._enriched_config.addService(config);
   }
 
-  /**
-   * Run validation checks on the graph to ensure it has everything it needs
-   * in order to be deployed. This should not make network calls and should
-   * just check the contents of the _enriched_config
-   * @returns boolean
-   */
-  validate(): boolean {
-    throw new Error('Run validation checks');
-  }
-
-  /**
-   * Build out the enriched environment config from the base config to prep
-   * for deployment
-   * @param getConfigByRef [(ref: string) => Promise<BaseServiceConfig>] A function that returns a config matching a ref
-   */
-  async build(
+  private async build(
     options: GraphEnrichmentOptions,
     force_rebuild = false,
   ) {
@@ -205,6 +190,29 @@ export class EnvironmentGraph {
 
       this._is_built = true;
     }
+  }
+
+  /**
+   * Build out the enriched environment config from the base config to prep
+   * for deployment
+   */
+  static async build(
+    config: BaseEnvironmentConfig,
+    options: GraphEnrichmentOptions
+  ): Promise<EnvironmentGraph> {
+    const graph = new EnvironmentGraph(config);
+    await graph.build(options);
+    return graph;
+  }
+
+  /**
+   * Run validation checks on the graph to ensure it has everything it needs
+   * in order to be deployed. This should not make network calls and should
+   * just check the contents of the _enriched_config
+   * @returns boolean
+   */
+  validate(): boolean {
+    throw new Error('Run validation checks');
   }
 
   /**
@@ -244,6 +252,9 @@ export class EnvironmentGraph {
     return new VaultManager(vaults);
   }
 
+  /**
+   * Retrieve the DNS configuration settings for the graph
+   */
   getDnsConfig(): BaseDnsConfig {
     return this._enriched_config.getDnsConfig();
   }
