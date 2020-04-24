@@ -9,7 +9,8 @@ import AppService from '../../src/app-config/service';
 import Logout from '../../src/commands/logout';
 import ARCHITECTPATHS from '../../src/paths';
 
-describe('logout', () => {
+describe('logout', function () {
+  this.timeout(15000);
   let tmp_dir = os.tmpdir();
 
   beforeEach(function () {
@@ -38,4 +39,4 @@ describe('logout', () => {
     expect(credential_spy.firstCall.args[0]).to.equal('architect.io');
     expect(credential_spy.secondCall.args[0]).to.equal('architect.io/token');
   });
-}).timeout(15000);
+});
