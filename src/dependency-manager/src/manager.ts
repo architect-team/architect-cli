@@ -148,7 +148,7 @@ export default abstract class DependencyManager {
           internal_port = this.toInternalPort(node, interface_name);
         }
 
-        const prefix = interface_name === '_default' ? '' : `${interface_name}_`;
+        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`;
         env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
@@ -189,10 +189,12 @@ export default abstract class DependencyManager {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
 
-              if (value_from_param.valueFrom.interface) {
+              if (value_from_param.valueFrom.interface && Object.keys(param_target_service.interfaces).length > 1) {
                 env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface)}_`);
               } else {
-                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
+                if (!(this.scopeEnv(node, param_name) in env_params_to_expand)) { // prevent circular relationship
+                  env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
+                }
               }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
