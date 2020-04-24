@@ -27,7 +27,6 @@ export abstract class EnvironmentConfig {
 
   getServiceDetails(key: string): ServiceConfig | undefined {
     const services = this.getServices();
-    const ref = Object.keys(services).find(svc_key => key.startsWith(svc_key));
-    return ref ? services[ref] : undefined;
+    return services[key] || services[key.split(':')[0]];
   }
 }

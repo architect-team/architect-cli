@@ -23,6 +23,9 @@ describe('volumes', function () {
   it('should mount host path to container path', async () => {
     const service_config = {
       name: "architect/backend",
+      dependencies: {
+        "architect/backend-db": "latest"
+      },
       volumes: {
         env_volume: {
           mount_path: "/usr/src/volume1"
@@ -30,21 +33,49 @@ describe('volumes', function () {
       }
     };
 
+    const service_config2 = {
+      name: "architect/backend-db",
+      volumes: {
+        env_volume: {
+          mount_path: "/usr/src/volume1",
+          host_path: "./src"
+        }
+      }
+    };
+
     const env_config = {
       services: {
-        "architect/backend:latest": {
+        "architect/backend": {
           debug: {
             path: "./src/backend",
             volumes: {
-              env_volume: "/home/testUser/volume1"
+              env_volume: "/home/testUser/volume1",
+              new_volume: {
+                mount_path: "/src",
+                host_path: "./src",
+                readonly: true
+              }
             }
           }
-        }
+        },
+        "architect/backend-db": {
+          debug: {
+            path: "./src/backend-db",
+            volumes: {
+              new_volume: {
+                mount_path: "/src",
+                host_path: "./src",
+                readonly: true
+              }
+            }
+          }
+        },
       }
     };
 
     mock_fs({
       '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/src/backend-db/architect.json': JSON.stringify(service_config2),
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
@@ -288,8 +319,7 @@ describe('volumes', function () {
       services: {
         "architect/backend:latest": {
           debug: {
-            path: "./src/backend",
-            volumes: {}
+            path: "./src/backend"
           }
         }
       }
