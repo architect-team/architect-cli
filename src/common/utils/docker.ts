@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { ServiceConfig } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
-
+import DockerNotInstalledError from '../errors/docker-not-installed';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   const cmd = execa('docker', args, execa_opts);
@@ -17,7 +17,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
     try {
       await execa('which', ['docker']);
     } catch {
-      throw new Error('Architect requires Docker to be installed. Please install it and try again.');
+      throw new DockerNotInstalledError();
     }
     throw err;
   }

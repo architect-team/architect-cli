@@ -28,13 +28,27 @@ export default class AuthClient {
   async init() {
     await this.credentials.init();
     const token = await this.getToken();
-    if (token) {
+    if (token && token.account !== 'unknown') {
       this.auth_results = JSON.parse(token.password) as AuthResults;
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
       // Refresh the token if its expired to force a docker login
       if (expires_at < (new Date().getTime() / 1000)) {
         await this.refreshToken().catch(() => undefined);
       }
+    } else if (!token) {
+      try {
+        await docker([
+          'login', this.config.registry_host,
+          '-u', 'unknown',
+          '--password-stdin',
+        ], { stdout: false }, {
+          input: 'unknown',
+        });
+      } catch {
+        // docker is required, but not truly necessary here
+      }
+      await this.credentials.set(CREDENTIAL_PREFIX, 'unknown', 'unknown');
+      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, 'unknown', 'unknown');
     }
   }
 
@@ -50,7 +64,11 @@ export default class AuthClient {
   async logout() {
     await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
-    await docker(['logout', this.config.registry_host], { stdout: false });
+    try {
+      await docker(['logout', this.config.registry_host], { stdout: false });
+    } catch{
+      // docker is required, but not truly necessary here
+    }
   }
 
   async getToken() {
@@ -85,7 +103,7 @@ export default class AuthClient {
       '-u', credential.account,
       '--password-stdin',
     ], { stdout: false }, {
-      input: JSON.stringify(this.auth_results),
+      input: this.auth_results.access_token,
     });
 
     await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, credential.account, JSON.stringify(this.auth_results));
