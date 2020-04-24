@@ -99,7 +99,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         } else if (spec.mount_path) {
           service_volume = spec.mount_path;
         } else {
-          throw new Error(`mount_path must be specified for volume ${key}`);
+          throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
         }
 
         const service_volumes = node.service_config.getDebugOptions()?.volumes;
