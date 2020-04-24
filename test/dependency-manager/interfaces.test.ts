@@ -46,7 +46,6 @@ describe('interfaces', function () {
         "CHECKOUT_ADDR": {
           "valueFrom": {
             "dependency": "architect/checkout",
-            "interface": "main",
             "value": "$HOST:$PORT"
           }
         },
