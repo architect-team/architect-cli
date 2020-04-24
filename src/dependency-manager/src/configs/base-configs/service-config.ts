@@ -1,4 +1,12 @@
+import fs from 'fs';
+import path from 'path';
 import { BaseSpec } from '../base-spec';
+
+export interface BaseBuildConfig {
+  dockerfile?: string;
+  args?: string[];
+  context?: string;
+}
 
 export interface BaseServiceMetadataConfig {
   description?: string;
@@ -58,7 +66,8 @@ export interface BaseParameterValueConfig {
 }
 
 export interface BaseVolumeConfig {
-  mount_path: string;
+  host_path?: string;
+  mount_path?: string;
   description?: string;
   readonly?: boolean;
 }
@@ -92,14 +101,14 @@ export abstract class BaseServiceConfig extends BaseSpec {
   abstract getImage(): string | undefined;
   abstract setImage(image?: string): void;
 
-  abstract getCommand(debug?: boolean): string | string[] | undefined;
+  abstract getCommand(): string | string[] | undefined;
   abstract setCommand(command?: string | string[]): void;
 
-  abstract getEntrypoint(debug?: boolean): string | string[] | undefined;
+  abstract getEntrypoint(): string | string[] | undefined;
   abstract setEntrypoint(entrypoint?: string | string[]): void;
 
-  abstract getDockerfile(debug?: boolean): string | undefined;
-  abstract setDockerfile(dockerfile?: string): void;
+  abstract getBuildConfig(): BaseBuildConfig | undefined;
+  abstract setBuildConfig(config?: BaseBuildConfig): void;
 
   abstract getLivenessProbe(): BaseLivenessProbeConfig;
   abstract setLivenessProbe(liveness_probe: BaseLivenessProbeConfig): void;
@@ -113,7 +122,22 @@ export abstract class BaseServiceConfig extends BaseSpec {
   abstract getPlatformsConfig(): BasePlatformsConfig;
   abstract setPlatformsConfig(platforms: BasePlatformsConfig): void;
 
-  public getNormalizedRef() {
+  abstract getDebugPath(): string | undefined;
+  abstract setDebugPath(debug_path?: string): void;
+
+  abstract getDebugCommand(): string | string[] | undefined;
+  abstract setDebugCommand(command?: string | string[]): void;
+
+  abstract getDebugEntrypoint(): string | string[] | undefined;
+  abstract setDebugEntrypoint(entrypoint?: string | string[]): void;
+
+  abstract getDebugVolumes(): Map<string, BaseVolumeConfig>;
+  abstract setDebugVolumes(volumes: Map<string, BaseVolumeConfig>): void;
+
+  /**
+   * Retrieve the fully resolvable service ref (e.g. <account>/<name>:<tag>) of the service
+   */
+  public getResolvableRef() {
     if (this.getRef() && /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+\:[a-zA-Z0-9-_]+$/.test(this.getRef())) {
       return this.getRef();
     } else if (this.getRef() && this.getName()) {
@@ -121,6 +145,89 @@ export abstract class BaseServiceConfig extends BaseSpec {
     }
 
     return this.getName();
+  }
+
+  /**
+   * Get all the volumes for the service
+   * @param debug [boolean] whether or not to include debug volumes (default: false)
+   */
+  public getResolvableVolumes(debug = false): Map<string, BaseVolumeConfig> {
+    const res = this.getVolumes();
+    if (debug) {
+      return new Map([
+        ...res,
+        ...this.getDebugVolumes(),
+      ]);
+    }
+
+    const debug_path = this.getDebugPath();
+    if (debug_path) {
+      res.forEach((value, key) => {
+        if (value.host_path) {
+          value.host_path = path.join(debug_path, value.host_path);
+          res.set(key, value);
+        }
+      });
+    }
+
+    return res;
+  }
+
+  /**
+   * Combine the build context with the debug path (if it exists) to consolidate
+   * the object for build-time operations.
+   */
+  public getResolvableBuildConfig(): BaseBuildConfig | undefined {
+    let debug_path = this.getDebugPath();
+    if (debug_path) {
+      const debug_path_lstat = fs.lstatSync(debug_path);
+      if (debug_path_lstat.isFile()) {
+        debug_path = path.dirname(debug_path);
+      }
+    }
+
+    let build_config = this.getBuildConfig();
+
+    if (!debug_path && !build_config || this.getImage()) {
+      return undefined;
+    }
+
+    build_config = build_config || {};
+    if (build_config.context && debug_path) {
+      build_config.context = path.join(debug_path, build_config.context);
+    } else if (debug_path) {
+      build_config.context = debug_path;
+    }
+
+    if (build_config.dockerfile && debug_path) {
+      build_config.dockerfile = path.join(debug_path, build_config.dockerfile);
+    }
+
+    return build_config;
+  }
+
+  /**
+   * Get either the debug or default command to run
+   * @param debug [boolean] (default: false)
+   */
+  public getPrioritizedCommand(debug = false) {
+    if (debug) {
+      return this.getDebugCommand() || this.getCommand();
+    }
+
+    return this.getCommand();
+  }
+
+  /**
+   * Get either the debug or default entrypoint to run
+   * @param debug [boolean] (default: false)
+   */
+  public getPrioritizedEntrypoint(debug = false) {
+    if (debug) {
+      return this.getDebugEntrypoint() || this.getEntrypoint();
+    }
+
+    return this.getEntrypoint();
   }
 
   public merge(config: BaseServiceConfig) {
@@ -149,7 +256,7 @@ export abstract class BaseServiceConfig extends BaseSpec {
     this.setCommand(config.getCommand() || this.getCommand());
     this.setEntrypoint(config.getEntrypoint() || this.getEntrypoint());
     this.setImage(config.getImage() || this.getImage());
-    this.setDockerfile(config.getDockerfile() || this.getDockerfile());
+    this.setBuildConfig(config.getBuildConfig() || this.getBuildConfig());
     this.setLivenessProbe({
       ...this.getLivenessProbe(),
       ...config.getLivenessProbe(),
@@ -166,6 +273,10 @@ export abstract class BaseServiceConfig extends BaseSpec {
       ...this.getPlatformsConfig(),
       ...config.getPlatformsConfig(),
     });
+    this.setDebugPath(config.getDebugPath() || this.getDebugPath());
+    this.setDebugCommand(config.getDebugCommand() || this.getDebugCommand());
+    this.setDebugEntrypoint(config.getDebugEntrypoint() || this.getDebugEntrypoint());
+    this.setDebugVolumes(config.getDebugVolumes() || this.getDebugVolumes());
 
     // TODO: populate other getters/setters
   }

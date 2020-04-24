@@ -1,5 +1,5 @@
 import { IsBoolean, IsInstance, IsOptional, IsString, ValidateIf } from 'class-validator';
-import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../base-configs/service-config';
+import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig, BaseVolumeConfig } from '../base-configs/service-config';
 import { BaseSpec } from '../base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
@@ -28,7 +28,7 @@ class OperatorServiceDebugSpec extends SharedDebugSpecV1 {
   @IsOptional()
   volumes?: Dictionary<OperatorDebugVolumeSpecV1>;
 
-  constructor(plain: any) {
+  constructor(plain?: any) {
     super(plain);
 
     if (typeof this.volumes === 'object') {
@@ -239,5 +239,72 @@ export class OperatorServiceSpecV1 extends SharedServiceSpecV1 {
       newDeps[value.getName()] = OperatorServiceSpecV1.copy(value);
     });
     this.dependencies = newDeps;
+  }
+
+  getDebugCommand() {
+    return this.debug?.command;
+  }
+
+  setDebugCommand(command?: string | string[]) {
+    if (command) {
+      this.debug = this.debug || new OperatorServiceDebugSpec();
+      this.debug.command = command;
+    } else {
+      delete this.debug?.command;
+    }
+  }
+
+  getDebugEntrypoint() {
+    return this.debug?.entrypoint;
+  }
+
+  setDebugEntrypoint(entrypoint?: string | string[]) {
+    if (entrypoint) {
+      this.debug = this.debug || new OperatorServiceDebugSpec();
+      this.debug.entrypoint = entrypoint;
+    } else {
+      delete this.debug?.entrypoint;
+    }
+  }
+
+  getDebugVolumes(): Map<string, BaseVolumeConfig> {
+    return new Map(Object.entries(this.debug?.volumes || {}));
+  }
+
+  setDebugVolumes(volumes: Map<string, BaseVolumeConfig>) {
+    const newVolumes = {} as Dictionary<OperatorDebugVolumeSpecV1>;
+
+    volumes.forEach((value, key) => {
+      const volume = new OperatorDebugVolumeSpecV1();
+      if (value.description) {
+        volume.description = value.description;
+      }
+      if (value.readonly) {
+        volume.readonly = value.readonly;
+      }
+      if (value.mount_path) {
+        volume.mount_path = value.mount_path;
+      }
+      if (value.host_path) {
+        volume.host_path = value.host_path;
+      }
+      newVolumes[key] = volume;
+    });
+
+    this.debug = this.debug || new OperatorServiceDebugSpec();
+    this.debug.volumes = newVolumes;
+  }
+
+  getDebugPath() {
+    return this.debug?.path;
+  }
+
+  setDebugPath(debug_path?: string) {
+    if (debug_path) {
+      this.debug = this.debug || new OperatorServiceDebugSpec();
+      this.debug.path = debug_path;
+    } else {
+      delete this.debug?.path;
+    }
   }
 }

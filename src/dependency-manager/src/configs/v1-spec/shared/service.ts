@@ -1,8 +1,9 @@
 import { IsInstance, IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
-import { BaseInterfaceConfig, BaseLivenessProbeConfig, BaseNotificationConfig, BasePlatformsConfig, BaseServiceConfig, BaseServiceMetadataConfig, BaseSubscriptionConfig, BaseVolumeConfig } from '../../base-configs/service-config';
+import { BaseBuildConfig, BaseInterfaceConfig, BaseLivenessProbeConfig, BaseNotificationConfig, BasePlatformsConfig, BaseServiceConfig, BaseServiceMetadataConfig, BaseSubscriptionConfig, BaseVolumeConfig } from '../../base-configs/service-config';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { ApiSpecV1 } from './api';
+import { BuildConfigSpecV1 } from './build';
 import { InterfacesSpecV1 } from './interfaces';
 import { LivenessProbeV1 } from './liveness-probe';
 import { NotificationSpecV1 } from './notifications';
@@ -77,6 +78,9 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
   @IsOptional()
   volumes?: Dictionary<VolumeClaimSpecV1>;
 
+  @IsOptional()
+  build?: BuildConfigSpecV1;
+
   // ------------------------------------------------------
   //  START GETTERS/SETTERS
   // ------------------------------------------------------
@@ -117,6 +121,10 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
         this.volumes![key] = new VolumeClaimSpecV1(value);
       });
     }
+
+    if (typeof this.build === 'object') {
+      this.build = new BuildConfigSpecV1(this.build);
+    }
   }
 
   async validate() {
@@ -126,6 +134,7 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
     errors = await validateDictionary(this, 'notifications', errors);
     errors = await validateNested(this, 'platforms', errors);
     errors = await validateDictionary(this, 'volumes', errors);
+    errors = await validateNested(this, 'build', errors);
     // TODO: subscriptions
     return errors;
   }
@@ -208,7 +217,7 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
     this.interfaces = newInterfaces;
   }
 
-  getVolumes() {
+  getVolumes(): Map<string, BaseVolumeConfig> {
     return new Map(Object.entries(this.volumes || {}));
   }
 
@@ -217,9 +226,15 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
 
     volumes.forEach((value, key) => {
       const volume = new VolumeClaimSpecV1();
-      volume.description = value.description;
-      volume.readonly = value.readonly;
-      volume.mount_path = value.mount_path;
+      if (value.description) {
+        volume.description = value.description;
+      }
+      if (value.readonly) {
+        volume.readonly = value.readonly;
+      }
+      if (value.mount_path) {
+        volume.mount_path = value.mount_path;
+      }
       newVolumes[key] = volume;
     });
 
@@ -250,17 +265,26 @@ export abstract class SharedServiceSpecV1 extends BaseServiceConfig {
     this.entrypoint = entrypoint;
   }
 
-  getDockerfile() {
-    // Dockerfile is ignored if an image is set
-    if (this.image) {
-      return undefined;
-    }
-
-    return this.dockerfile;
+  getBuildConfig(): BaseBuildConfig | undefined {
+    return this.build;
   }
 
-  setDockerfile(dockerfile?: string) {
-    this.dockerfile = dockerfile;
+  setBuildConfig(config?: BaseBuildConfig) {
+    if (config) {
+      const newConfig = new BuildConfigSpecV1();
+
+      if (config.context) {
+        newConfig.context = config.context;
+      }
+
+      if (config.dockerfile) {
+        newConfig.dockerfile = config.dockerfile;
+      }
+
+      this.build = newConfig;
+    } else {
+      delete this.build;
+    }
   }
 
   getLivenessProbe() {

@@ -2,6 +2,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import { BaseServiceConfig } from './base-configs/service-config';
 import { ServiceSpecV1 } from './v1-spec/developer-service';
+import { OperatorServiceSpecV1 } from './v1-spec/operator-service';
 
 export class ServiceBuilder {
   static async loadFromFile(filepath: string) {
@@ -12,6 +13,7 @@ export class ServiceBuilder {
       if (data.isFile()) {
         file_contents = fs.readFileSync(filepath, 'utf-8');
       }
+    // eslint-disable-next-line no-empty
     } catch { }
 
     if (!file_contents) {
@@ -19,18 +21,23 @@ export class ServiceBuilder {
     }
 
     // Try to parse as json
+    let obj: any;
     if (filepath.endsWith('.json')) {
       try {
-        const js_obj = JSON.parse(file_contents);
-        return ServiceBuilder.parseAndValidate(js_obj);
-      } catch {}
+        obj = JSON.parse(file_contents);
+      // eslint-disable-next-line no-empty
+      } catch { }
     }
 
     // Try to parse as yaml
     try {
-      const js_obj = yaml.safeLoad(file_contents);
-      return ServiceBuilder.parseAndValidate(js_obj);
-    } catch {}    
+      obj = yaml.safeLoad(file_contents);
+    // eslint-disable-next-line no-empty
+    } catch { }
+
+    if (obj) {
+      return ServiceBuilder.parseAndValidate(obj);
+    }
 
     throw new Error('Invalid file format. Must be json or yaml.');
   }
@@ -42,6 +49,6 @@ export class ServiceBuilder {
   }
 
   static create(): BaseServiceConfig {
-    return new ServiceSpecV1();
+    return new OperatorServiceSpecV1();
   }
 }

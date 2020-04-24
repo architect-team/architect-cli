@@ -1,13 +1,14 @@
 /* eslint-disable no-empty */
 import { EnvironmentVault } from '../../environment-config/base';
 import VaultManager from '../../vault-manager';
-import { BaseEnvironmentConfig } from '../base-configs/environment-config';
+import { BaseDnsConfig, BaseEnvironmentConfig } from '../base-configs/environment-config';
 import { BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../base-configs/service-config';
 import { EnvironmentBuilder } from '../environment.builder';
 import { ServiceBuilder } from '../service.builder';
 
 interface GraphEnrichmentOptions {
   getConfig: (ref: string) => Promise<BaseServiceConfig>;
+  getRegistryImage: (ref: string) => string;
   getHostAssignment: (config: BaseServiceConfig, interface_key: string) => Promise<string>;
   getPortAssignment: (config: BaseServiceConfig, interface_key: string) => Promise<number>;
   debug?: boolean;
@@ -78,11 +79,11 @@ export class EnvironmentGraph {
         if (value.hasOwnProperty('vault')) {
           const value_from = value.value_from as BaseValueFromVaultConfig;
 
-          // TODO: Load from vault
+          throw new Error('Havent implemented vault parsing');
         } else {
           const value_from = value.value_from as BaseValueFromDependencyConfig;
           const dependency = current_services.find(dep =>
-            dep.getName() === value_from.dependency || dep.getNormalizedRef() === value_from.dependency
+            dep.getName() === value_from.dependency || dep.getResolvableRef() === value_from.dependency
           );
           if (!dependency) {
             throw new ValueFromDependencyError(service.getName(), value_from.dependency, key);
@@ -116,15 +117,30 @@ export class EnvironmentGraph {
     }
 
     // Get the config from the registry and merge it with any local settings
-    let config = ServiceBuilder.create();
-    try {
-      config = await options.getConfig(service.getNormalizedRef());
-    } catch { }
+    let config;
+    while (!config) {
+      const debug_path = service.getDebugPath();
+      if (debug_path) {
+        try {
+          config = await ServiceBuilder.loadFromFile(debug_path);
+        } catch {
+          console.log(`Failed to find ${service.getName()} at debug path. Falling back to registry.`);
+          service.setDebugPath(undefined);
+        }
+      } else {
+        try {
+          config = await options.getConfig(service.getResolvableRef());
+        } catch {
+          console.log(`Failed to find ${service.getResolvableRef()} in registry. Falling back to in-line config.`);
+          config = ServiceBuilder.create();
+        }
+      }
+    }
     config.merge(service);
 
     // Check if we've previously asserted the same config and merge in its values if so
     const enriched_services = this._enriched_config.getServices();
-    const existing_config_index = enriched_services.findIndex(config => config.getNormalizedRef() === service.getNormalizedRef());
+    const existing_config_index = enriched_services.findIndex(config => config.getResolvableRef() === service.getResolvableRef());
     if (existing_config_index >= 0) {
       config.merge(enriched_services[existing_config_index]);
       enriched_services.splice(existing_config_index, 1);
@@ -226,5 +242,9 @@ export class EnvironmentGraph {
       vaults[key] = config;
     });
     return new VaultManager(vaults);
+  }
+
+  getDnsConfig(): BaseDnsConfig {
+    return this._enriched_config.getDnsConfig();
   }
 }

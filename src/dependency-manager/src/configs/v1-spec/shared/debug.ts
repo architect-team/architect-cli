@@ -3,6 +3,10 @@ import { BaseSpec } from '../../base-spec';
 
 export abstract class SharedDebugSpecV1 extends BaseSpec {
   @IsOptional()
+  @IsString()
+  path?: string;
+
+  @IsOptional()
   command?: string | string[];
 
   @IsOptional()

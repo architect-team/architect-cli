@@ -780,21 +780,6 @@ describe('service (v1 spec)', () => {
       expect(parsedSpec.getEntrypoint()).to.eql(spec.entrypoint);
     });
 
-    it('should get defined dockerfile', async () => {
-      const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-        dockerfile: 'Dockerfile',
-      };
-
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
-      expect(parsedSpec.getDockerfile()).to.equal(spec.dockerfile);
-    });
-
     it('should get docker image', async () => {
       const spec = {
         name: 'tests/test',
@@ -808,22 +793,6 @@ describe('service (v1 spec)', () => {
 
       const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
       expect(parsedSpec.getImage()).to.equal(spec.image);
-    });
-
-    it('should ignore dockerfile if image is set', async () => {
-      const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-        image: 'postgres:11',
-        dockerfile: 'Dockerfile',
-      };
-
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
-      expect(parsedSpec.getDockerfile()).to.be.undefined;
     });
 
     it('should set docker image', async () => {
@@ -866,20 +835,6 @@ describe('service (v1 spec)', () => {
       expect(parsedSpec.getEntrypoint()).to.be.undefined;
       parsedSpec.setEntrypoint('./command.sh');
       expect(parsedSpec.getEntrypoint()).to.equal('./command.sh');
-    });
-
-    it('should set entrypoint', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
-      expect(parsedSpec.getDockerfile()).to.be.undefined;
-      parsedSpec.setDockerfile('./dev/Dockerfile');
-      expect(parsedSpec.getDockerfile()).to.equal('./dev/Dockerfile');
     });
   });
 

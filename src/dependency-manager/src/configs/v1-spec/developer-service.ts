@@ -1,5 +1,5 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig } from '../base-configs/service-config';
+import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseVolumeConfig } from '../base-configs/service-config';
 import { BaseSpec } from '../base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
@@ -83,7 +83,7 @@ export class ServiceSpecV1 extends SharedServiceSpecV1 {
   dependencies?: Dictionary<string | ServiceSpecV1>;
 
   @IsOptional()
-  debug?: ServiceDebugSpecV1;
+  debug?: string | ServiceDebugSpecV1;
 
   @IsOptional()
   datastores?: Dictionary<DatastoreClaimSpecV1>;
@@ -126,8 +126,10 @@ export class ServiceSpecV1 extends SharedServiceSpecV1 {
     let errors = await super.validate();
     errors = await validateDictionary(this, 'parameters', errors, value => value instanceof ParameterDefinitionSpecV1);
     errors = await validateDictionary(this, 'dependencies', errors, value => value instanceof ServiceSpecV1);
-    errors = await validateNested(this, 'debug', errors);
     errors = await validateDictionary(this, 'datastores', errors);
+    if (this.debug instanceof ServiceDebugSpecV1) {
+      errors = await validateNested(this, 'debug', errors);
+    }
     return errors;
   }
 
@@ -209,7 +211,7 @@ export class ServiceSpecV1 extends SharedServiceSpecV1 {
   }
 
   getDependencies(): Array<BaseServiceConfig> {
-    let res = new Array<BaseServiceConfig>();
+    const res = new Array<BaseServiceConfig>();
 
     if (this.dependencies) {
       Object.entries(this.dependencies).forEach(([dep_name, value]) => {
@@ -240,5 +242,114 @@ export class ServiceSpecV1 extends SharedServiceSpecV1 {
       newDeps[value.getName()] = ServiceSpecV1.copy(value);
     });
     this.dependencies = newDeps;
+  }
+
+  getDebugCommand() {
+    if (typeof this.debug === 'string') {
+      return this.debug;
+    } else {
+      return this.debug?.command;
+    }
+  }
+
+  setDebugCommand(command?: string | string[]) {
+    if (command) {
+      if (!(this.debug instanceof ServiceDebugSpecV1)) {
+        const newDebug = new ServiceDebugSpecV1();
+        newDebug.command = this.debug;
+        this.debug = newDebug;
+      }
+
+      this.debug = this.debug || new ServiceDebugSpecV1();
+      this.debug.command = command;
+    } else if (typeof this.debug === 'string') {
+      delete this.debug;
+    } else {
+      delete this.debug?.command;
+    }
+  }
+
+  getDebugEntrypoint() {
+    if (this.debug instanceof ServiceDebugSpecV1) {
+      return this.debug?.entrypoint;
+    }
+
+    return undefined;
+  }
+
+  setDebugEntrypoint(entrypoint?: string | string[]) {
+    if (entrypoint) {
+      if (!(this.debug instanceof ServiceDebugSpecV1)) {
+        const newDebug = new ServiceDebugSpecV1();
+        newDebug.command = this.debug;
+        this.debug = newDebug;
+      }
+
+      this.debug = this.debug || new ServiceDebugSpecV1();
+      this.debug.entrypoint = entrypoint;
+    } else if (this.debug instanceof ServiceDebugSpecV1) {
+      delete this.debug?.entrypoint;
+    }
+  }
+
+  getDebugVolumes(): Map<string, BaseVolumeConfig> {
+    if (this.debug instanceof ServiceDebugSpecV1) {
+      return new Map(Object.entries(this.debug?.volumes || {}));
+    }
+
+    return new Map();
+  }
+
+  setDebugVolumes(volumes: Map<string, BaseVolumeConfig>) {
+    const newVolumes = {} as Dictionary<VolumeSpecV1>;
+
+    volumes.forEach((value, key) => {
+      const volume = new VolumeSpecV1();
+      if (value.description) {
+        volume.description = value.description;
+      }
+      if (value.readonly) {
+        volume.readonly = value.readonly;
+      }
+      if (value.mount_path) {
+        volume.mount_path = value.mount_path;
+      }
+      if (value.host_path) {
+        volume.host_path = value.host_path;
+      }
+      newVolumes[key] = volume;
+    });
+
+    if (!(this.debug instanceof ServiceDebugSpecV1)) {
+      const newDebug = new ServiceDebugSpecV1();
+      newDebug.command = this.debug;
+      this.debug = newDebug;
+    }
+
+    this.debug = this.debug || new ServiceDebugSpecV1();
+    this.debug.volumes = newVolumes;
+  }
+
+  getDebugPath() {
+    if (this.debug instanceof ServiceDebugSpecV1) {
+      return this.debug?.path;
+    }
+
+    return undefined;
+  }
+
+  setDebugPath(debug_path?: string) {
+    if (debug_path) {
+      if (!(this.debug instanceof ServiceDebugSpecV1)) {
+        const newDebug = new ServiceDebugSpecV1();
+        newDebug.command = this.debug;
+        this.debug = newDebug;
+      }
+
+      this.debug = this.debug || new ServiceDebugSpecV1();
+      this.debug.path = debug_path;
+    } else if (this.debug instanceof ServiceDebugSpecV1) {
+      delete this.debug?.path;
+    }
   }
 }

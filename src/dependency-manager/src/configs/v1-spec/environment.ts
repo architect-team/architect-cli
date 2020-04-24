@@ -149,7 +149,11 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
   }
 
   setServices(services: Array<BaseServiceConfig>) {
-    this.services = services.map(service => OperatorServiceSpecV1.copy(service));
+    this.services = services.map(service => {
+      const operator_service = new OperatorServiceSpecV1();
+      operator_service.merge(service);
+      return operator_service;
+    });
   }
 
   getParameters(): Map<string, BaseParameterConfig> {

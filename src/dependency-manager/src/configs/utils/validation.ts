@@ -1,7 +1,7 @@
 import { ValidationError } from 'class-validator';
 import { BaseSpec } from '../base-spec';
 
-export const validateNested = async <T extends Object>(
+export const validateNested = async <T extends Record<string, any>>(
   target: T,
   property: string,
   errors: ValidationError[] = [],
@@ -22,8 +22,8 @@ export const validateNested = async <T extends Object>(
     for (const index in value) {
       error.children = await validateNested(value, index, error.children);
     }
-  } else {
-    error.children = await value?.validate() || [];
+  } else if (value) {
+    error.children = await value.validate() || [];
   }
 
   if ((error.constraints && Object.keys(error.constraints).length) || error.children.length) {
