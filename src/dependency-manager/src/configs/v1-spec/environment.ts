@@ -1,11 +1,12 @@
-import { IsArray, IsEnum, IsInstance, IsOptional, IsString } from 'class-validator';
-import { BaseDnsConfig, BaseEnvironmentConfig, BaseVaultConfig } from '../base-configs/environment-config';
-import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../base-configs/service-config';
+import { ClassTransformOptions } from 'class-transformer';
+import { Equals, IsIn, IsNotEmpty, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../base-spec';
+import { BaseDnsConfig, BaseEnvironmentConfig, BaseVaultConfig } from '../environment-config';
+import { BaseParameterConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../service-config';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
-import { OperatorParameterSpecV1, OperatorParameterValueSpecV1, OperatorServiceSpecV1, OperatorValueFromVaultParameterSpecV1, OperatorValueFromWrapperSpecV1 } from './operator-service';
-import { ValueFromDependencySpecV1 } from './shared/parameters';
+import { ParameterDefinitionSpecV1, ParameterValueSpecV1, ValueFromDatastoreSpecV1, ValueFromDependencySpecV1, ValueFromVaultSpecV1, ValueFromWrapperSpecV1 } from './parameters';
+import { ServiceSpecV1 } from './service';
 
 class DnsSpecV1 extends BaseSpec {
   @IsOptional()
@@ -14,7 +15,7 @@ class DnsSpecV1 extends BaseSpec {
 
 class VaultSpecV1 extends BaseSpec {
   @IsString()
-  @IsEnum(['hashicorp-vault'])
+  @IsIn(['hashicorp-vault'])
   type!: string;
 
   @IsString()
@@ -39,7 +40,7 @@ class VaultSpecV1 extends BaseSpec {
 
 export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
   @IsOptional()
-  @IsString()
+  @Equals('1')
   __version = '1';
 
   @IsOptional()
@@ -49,58 +50,68 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
   vaults?: Dictionary<VaultSpecV1>;
 
   @IsOptional()
-  parameters?: Dictionary<OperatorParameterSpecV1>;
+  parameters?: Dictionary<ParameterValueSpecV1>;
 
-  @IsArray()
-  @IsInstance(OperatorServiceSpecV1, { each: true })
-  services!: OperatorServiceSpecV1[];
+  @IsNotEmpty()
+  services!: ServiceSpecV1[] | Dictionary<string | ServiceSpecV1>;
 
-  constructor(plain?: any) {
-    super(plain);
+  constructor(plain?: any, options?: ClassTransformOptions) {
+    super(plain, options);
 
     if (typeof this.dns === 'object') {
-      this.dns = new DnsSpecV1(this.dns);
+      this.dns = new DnsSpecV1(this.dns, options);
     }
 
     if (typeof this.vaults === 'object') {
+      const vaults = {} as Dictionary<VaultSpecV1>;
       Object.entries(this.vaults).forEach(([key, value]) => {
-        if (typeof value === 'object') {
-          this.vaults![key] = new VaultSpecV1(value);
-        }
+        vaults[key] = new VaultSpecV1(value, options);
       });
+      this.vaults = vaults;
     }
 
     if (typeof this.parameters === 'object') {
+      const parameters = {} as Dictionary<ParameterValueSpecV1>;
       Object.entries(this.parameters).forEach(([key, value]) => {
         if (typeof value === 'object') {
-          this.parameters![key] = new OperatorParameterValueSpecV1(value);
+          parameters[key] = new ParameterDefinitionSpecV1(value, options);
+        } else {
+          parameters[key] = value;
         }
       });
+      this.parameters = parameters;
     }
 
-    this.services = (this.services || []).map(service => new OperatorServiceSpecV1(service));
+    if (Array.isArray(this.services)) {
+      this.services = (this.services || []).map(service => new ServiceSpecV1(service, options));
+    } else {
+      const services = {} as Dictionary<string | ServiceSpecV1>;
+      Object.entries(this.services || {}).forEach(([key, value]) => {
+        if (typeof value === 'object') {
+          services[key] = new ServiceSpecV1(value, options);
+        } else {
+          services[key] = value;
+        }
+      });
+      this.services = services;
+    }
   }
 
-  async validate() {
-    let errors = await super.validate();
-    errors = await validateNested(this, 'dns', errors);
-    errors = await validateDictionary(this, 'vaults', errors);
-    errors = await validateNested(this, 'services', errors);
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'dns', errors, options);
+    errors = await validateDictionary(this, 'vaults', errors, undefined, options);
+    errors = await validateDictionary(this, 'parameters', errors, value => value instanceof ParameterDefinitionSpecV1, options);
+    errors = await validateNested(this, 'services', errors, options);
     return errors;
   }
 
-  copy() {
-    const res = new EnvironmentSpecV1();
-    res.merge(this);
-    return res;
+  getDnsConfig(): DnsSpecV1 | undefined {
+    return this.dns;
   }
 
-  getDnsConfig(): DnsSpecV1 {
-    return this.dns || new DnsSpecV1();
-  }
-
-  setDnsConfig(dns: BaseDnsConfig) {
-    if (dns.searches) {
+  setDnsConfig(dns?: BaseDnsConfig) {
+    if (dns?.searches) {
       this.dns = new DnsSpecV1();
       this.dns.searches = dns.searches;
     } else {
@@ -108,7 +119,7 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
     }
   }
 
-  getVaults() {
+  getVaults(): Map<string, BaseVaultConfig> {
     return new Map(Object.entries(this.vaults || {}));
   }
 
@@ -121,21 +132,17 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
         newVaults[key].host = value.host;
         newVaults[key].type = value.type;
 
-        if (value.description) {
+        if (value.description)
           newVaults[key].description = value.description;
-        }
 
-        if (value.client_token) {
+        if (value.client_token)
           newVaults[key].client_token = value.client_token;
-        }
 
-        if (value.role_id) {
+        if (value.role_id)
           newVaults[key].role_id = value.role_id;
-        }
 
-        if (value.secret_id) {
+        if (value.secret_id)
           newVaults[key].secret_id = value.secret_id;
-        }
       });
 
       this.vaults = newVaults;
@@ -144,13 +151,30 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
     }
   }
 
-  getServices() {
-    return new Array(...this.services);
+  getServices(): Array<BaseServiceConfig> {
+    if (Array.isArray(this.services)) {
+      return new Array(...this.services);
+    } else {
+      const res = new Array<BaseServiceConfig>();
+      Object.entries(this.services).forEach(([key, value]) => {
+        if (value instanceof ServiceSpecV1) {
+          value.setName(key);
+          res.push(value);
+        } else {
+          const service = new ServiceSpecV1({
+            name: key,
+            ref: value,
+          });
+          res.push(service);
+        }
+      });
+      return res;
+    }
   }
 
   setServices(services: Array<BaseServiceConfig>) {
     this.services = services.map(service => {
-      const operator_service = new OperatorServiceSpecV1();
+      const operator_service = new ServiceSpecV1();
       operator_service.merge(service);
       return operator_service;
     });
@@ -161,15 +185,18 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
 
     // Map a string/number param value to the `value` field
     Object.entries(this.parameters || {}).forEach(([key, value]) => {
-      if (!(value instanceof OperatorParameterValueSpecV1)) {
+      if (!(value instanceof ParameterDefinitionSpecV1)) {
         res.set(key, { default: value });
       } else {
         let value_from = value.value_from || value.valueFrom;
-        if (value.default instanceof OperatorValueFromWrapperSpecV1) {
+        if (value.default instanceof ValueFromWrapperSpecV1) {
           value_from = value_from || value.default.value_from || value.default.valueFrom;
         }
 
-        if (value_from) {
+        // Transform a datastore to a dependency reference
+        if (value_from && value_from instanceof ValueFromDatastoreSpecV1) {
+          throw new Error('Datastores can only be referenced by the services that claim them');
+        } else if (value_from) {
           res.set(key, { value_from });
         } else {
           const item = {} as BaseParameterValueConfig;
@@ -185,17 +212,17 @@ export class EnvironmentSpecV1 extends BaseEnvironmentConfig {
   }
 
   setParameters(parameters: Map<string, BaseParameterConfig>) {
-    const newParameters = {} as Dictionary<OperatorParameterSpecV1>;
+    const newParameters = {} as Dictionary<ParameterValueSpecV1>;
 
     parameters.forEach((value, key) => {
-      const param = new OperatorParameterValueSpecV1();
+      const param = new ParameterDefinitionSpecV1();
       if (value.hasOwnProperty('default')) {
         value = value as BaseParameterValueConfig;
         param.default = value.default;
       } else {
         value = value as BaseParameterValueFromConfig;
         if (value.value_from.hasOwnProperty('vault')) {
-          param.value_from = new OperatorValueFromVaultParameterSpecV1();
+          param.value_from = new ValueFromVaultSpecV1();
           const value_from = value.value_from as BaseValueFromVaultConfig;
           param.value_from.vault = value_from.vault;
           param.value_from.key = value_from.key;

@@ -1,84 +1,44 @@
 import { expect } from 'chai';
-import { ValidationError } from 'class-validator';
-import { BaseInterfaceConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseSubscriptionConfig, BaseValueFromDependencyConfig } from '../../src/configs/base-configs/service-config';
-import { ServiceBuilder } from '../../src/configs/service.builder';
-import { ServiceSpecV1 } from '../../src/configs/v1-spec/developer-service';
+import { BaseInterfaceConfig, BaseLivenessProbeConfig, BaseParameterValueConfig, BaseParameterValueFromConfig, BaseSubscriptionConfig, BaseValueFromDependencyConfig } from '../../src/configs/service-config';
+import { ServiceSpecV1 } from '../../src/configs/v1-spec/service';
 
 describe('service (v1 spec)', () => {
   describe('metadata', () => {
-    it('should get name', async () => {
+    it('should get name', () => {
       const spec = {
         name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       expect(parsedSpec.getName()).to.equal(spec.name);
     });
 
-    it('should set name', async () => {
+    it('should set name', () => {
       const spec = {
         name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
       };
 
       const newVal = 'updated/value';
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       parsedSpec.setName(newVal);
       expect(parsedSpec.getName()).to.equal(newVal);
     });
 
-    it('should get other metadata', async () => {
+    it('should get other metadata', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         description: 'Some description',
         tags: ['test', 'this'],
         language: 'node',
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       expect(parsedSpec.getMetadata().description).to.equal(spec.description);
       expect(parsedSpec.getMetadata().tags).to.eql(spec.tags);
       expect(parsedSpec.getMetadata().language).to.equal(spec.language);
     });
 
-    it('should not fill empty metadata on object', async () => {
+    it('should set metadata', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      };
-
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
-      expect(parsedSpec.getMetadata().description).to.be.undefined;
-      expect(parsedSpec.getMetadata().language).to.be.undefined;
-      expect(parsedSpec.getMetadata().tags).to.be.undefined;
-    });
-
-    it('should set metadata', async () => {
-      const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         description: 'Some description',
         tags: ['test', 'this'],
         language: 'node',
@@ -89,7 +49,7 @@ describe('service (v1 spec)', () => {
         tags: ['some', 'new', 'tags'],
         language: 'python',
       };
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       parsedSpec.setMetadata(newMetadata)
 
       expect(parsedSpec.getMetadata().description).to.equal(newMetadata.description);
@@ -98,21 +58,15 @@ describe('service (v1 spec)', () => {
     });
   });
 
-  describe('parameters', async () => {
-    it('should get parameters with string value', async () => {
+  describe('parameters', () => {
+    it('should get parameters with string value', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: 'my-value',
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -125,14 +79,8 @@ describe('service (v1 spec)', () => {
       expect(param.default).to.equal(spec.parameters.PARAM);
     });
 
-    it('should get parameters with string default', async () => {
+    it('should get parameters with string default', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             default: 'my-value',
@@ -140,7 +88,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -153,14 +101,8 @@ describe('service (v1 spec)', () => {
       expect(param.default).to.equal(spec.parameters.PARAM.default);
     });
 
-    it('should get other parameter options', async () => {
+    it('should get other parameter options', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             required: true,
@@ -169,7 +111,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -186,14 +128,8 @@ describe('service (v1 spec)', () => {
       expect(param.description).to.equal(spec.parameters.PARAM.description);
     });
 
-    it('should get value_from parameters', async () => {
+    it('should get value_from parameters', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             value_from: {
@@ -204,7 +140,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -222,14 +158,8 @@ describe('service (v1 spec)', () => {
       expect(value_from.value).to.equal(spec.parameters.PARAM.value_from.value);
     });
 
-    it('should support alternative valueFrom syntax', async () => {
+    it('should support alternative valueFrom syntax', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             valueFrom: {
@@ -240,7 +170,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -258,14 +188,8 @@ describe('service (v1 spec)', () => {
       expect(value_from.value).to.equal(spec.parameters.PARAM.valueFrom.value);
     });
 
-    it('should support default value_from syntax', async () => {
+    it('should support default value_from syntax', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             default: {
@@ -278,7 +202,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -296,14 +220,8 @@ describe('service (v1 spec)', () => {
       expect(value_from.value).to.equal(spec.parameters.PARAM.default.value_from.value);
     });
 
-    it('should support alternative default valueFrom syntax', async () => {
+    it('should support alternative default valueFrom syntax', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           PARAM: {
             default: {
@@ -316,7 +234,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(1);
       expect(parameters).to.have.key('PARAM');
@@ -334,14 +252,8 @@ describe('service (v1 spec)', () => {
       expect(value_from.value).to.equal(spec.parameters.PARAM.default.valueFrom.value);
     });
 
-    it('should get multiple param formats concurrently', async () => {
+    it('should get multiple param formats concurrently', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         parameters: {
           BASIC: 'value',
           NESTED: {
@@ -357,7 +269,7 @@ describe('service (v1 spec)', () => {
         }
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const parameters = parsedSpec.getParameters();
       expect(parameters.size).to.equal(3);
       parameters.forEach((param, key) => {
@@ -384,82 +296,31 @@ describe('service (v1 spec)', () => {
       });
     });
 
-    it('should reject vault syntax for service spec', async () => {
-      const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-        parameters: {
-          PARAM: {
-            value_from: {
-              vault: 'my-vault',
-              key: 'test/test#test',
-            },
-          },
-        },
-      };
-
-      return ServiceBuilder.parseAndValidate(spec)
-        .then(() => {
-          throw new Error('Spec should fail to validate');
-        })
-        .catch(errors => {
-          expect(errors).to.be.an('array');
-          expect(errors.length).to.equal(1);
-          expect(errors[0].property).to.equal('parameters');
-          expect(errors[0].children).to.be.an('array');
-          expect(errors[0].children.length).to.equal(1);
-
-          const param = errors[0].children[0];
-          expect(param.property).to.equal('PARAM');
-          expect(param.children).to.be.an('array');
-          expect(param.children.length).to.equal(1);
-
-          const value_from = param.children[0];
-          expect(value_from.property).to.equal('value_from');
-          expect(value_from.children).to.be.an('array');
-          expect(value_from.children.length).to.equal(2);
-          value_from.children.forEach((child: ValidationError) => {
-            switch (child.property) {
-              case 'dependency':
-              case 'datastore':
-                expect(child.constraints).to.include({
-                  isString: `${child.property} must be a string`,
-                });
-                break;
-              case 'value':
-                expect(child.constraints).to.include({
-                  isString: 'value must be a string',
-                });
-                break;
-              default:
-                throw new Error('Unexpected validation error');
-            }
-          });
-        });
-
-    });
-
-    it('should set basic parameter', async () => {
-      const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      };
-
-      const parsedObj = await ServiceBuilder.parseAndValidate(spec);
+    it('should set basic parameter', () => {
+      const parsedObj = new ServiceSpecV1();
       let parameters = parsedObj.getParameters();
       expect(parameters.size).to.equal(0);
 
       parameters.set('BASIC', {
         default: 'value'
-      }).set('COMPLEX', {
+      });
+      parsedObj.setParameters(parameters);
+      parameters = parsedObj.getParameters();
+      expect(parameters.size).to.equal(1);
+
+      let param = parameters.get('BASIC');
+      expect(param).not.to.be.undefined;
+      expect(param).to.have.property('default');
+      param = param as BaseParameterValueConfig;
+      expect(param.default).to.equal('value');
+    });
+
+    it('should set complex parameter', () => {
+      const parsedObj = new ServiceSpecV1();
+      let parameters = parsedObj.getParameters();
+      expect(parameters.size).to.equal(0);
+
+      parameters.set('COMPLEX', {
         value_from: {
           dependency: 'tests/dep',
           value: 'value-from',
@@ -467,60 +328,37 @@ describe('service (v1 spec)', () => {
       });
       parsedObj.setParameters(parameters);
       parameters = parsedObj.getParameters();
+      expect(parameters.size).to.equal(1);
 
-      expect(parameters.size).to.equal(2);
-      parameters.forEach((value, key) => {
-        switch (key) {
-          case 'BASIC':
-            expect(value).to.have.property('default');
-            value = value as BaseParameterValueConfig;
-            expect(value.default).to.equal('value');
-            break;
-          case 'COMPLEX':
-            expect(value).to.have.property('value_from');
-            value = value as BaseParameterValueFromConfig;
-            expect(value.value_from).to.have.property('dependency');
-            expect(value.value_from).to.have.property('value');
-            const value_from = value.value_from as BaseValueFromDependencyConfig;
-            expect(value_from.dependency).to.equal('tests/dep');
-            expect(value_from.value).to.equal('value-from');
-            break;
-          default:
-            throw new Error('Unexpected validation error');
-        }
-      });
+      let param = parameters.get('COMPLEX');
+      expect(param).not.to.be.undefined;
+      expect(param).to.have.property('value_from');
+      param = param as BaseParameterValueFromConfig;
+      expect(param.value_from).to.have.property('dependency');
+      expect(param.value_from).to.have.property('value');
+      const value_from = param.value_from as BaseValueFromDependencyConfig;
+      expect(value_from.dependency).to.equal('tests/dep');
+      expect(value_from.value).to.equal('value-from');
     });
   });
 
-  describe('dependencies', async () => {
-    it('should get dependencies with shorthand refs', async () => {
+  describe('dependencies', () => {
+    it('should get dependencies with shorthand refs', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         dependencies: {
           'account/service': 'latest'
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const dependencies = parsedSpec.getDependencies();
       expect(dependencies.length).to.equal(1);
       expect(dependencies[0].getRef()).to.equal('latest');
       expect(dependencies[0].getName()).to.equal('account/service');
     });
 
-    it('should get dependencies with nested service spec', async () => {
+    it('should get dependencies with nested service spec', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         dependencies: {
           'account/service': {
             name: 'account/service',
@@ -536,7 +374,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedObj = await ServiceBuilder.parseAndValidate(spec);
+      const parsedObj = new ServiceSpecV1(spec);
       const dependencies = parsedObj.getDependencies();
       expect(dependencies.length).to.equal(1);
       expect(dependencies[0].getName()).to.equal('account/service');
@@ -550,9 +388,8 @@ describe('service (v1 spec)', () => {
       expect(param.default).to.equal(spec.dependencies['account/service'].parameters.NESTED_PARAM);
     });
 
-    it('should set simple dependency', async () => {
+    it('should set simple dependency', () => {
       const spec = {
-        name: 'tests/test',
         interfaces: {
           default: {
             port: 8080,
@@ -560,7 +397,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       let dependencies = parsedSpec.getDependencies();
       const newDep = new ServiceSpecV1();
       newDep.setName('tests/dep');
@@ -574,9 +411,8 @@ describe('service (v1 spec)', () => {
       expect(dependencies[0].getRef()).to.equal('latest');
     });
 
-    it('should set nested service config as dependency', async () => {
+    it('should set nested service config as dependency', () => {
       const spec = {
-        name: 'tests/test',
         interfaces: {
           default: {
             port: 8080,
@@ -584,17 +420,11 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       let dependencies = parsedSpec.getDependencies();
 
-      const nestedSpec = await ServiceBuilder.parseAndValidate({
+      const nestedSpec = new ServiceSpecV1({
         name: 'tests/dep',
-        ref: 'latest',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
       });
       dependencies.push(nestedSpec);
       parsedSpec.setDependencies(dependencies);
@@ -606,14 +436,13 @@ describe('service (v1 spec)', () => {
     });
   });
 
-  describe('interfaces', async () => {
-    it('should get port as interface', async () => {
+  describe('interfaces', () => {
+    it('should get port as interface', () => {
       const spec = {
-        name: 'tests/test',
         port: 8080
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const interfaces = parsedSpec.getInterfaces();
       expect(interfaces.size).to.equal(1);
       expect(interfaces).to.have.key('default');
@@ -623,9 +452,8 @@ describe('service (v1 spec)', () => {
       expect(i!.port).to.equal(spec.port);
     });
 
-    it('should get declared interfaces', async () => {
+    it('should get declared interfaces', () => {
       const spec = {
-        name: 'tests/test',
         interfaces: {
           web: {
             port: 8080
@@ -637,7 +465,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const interfaces = parsedSpec.getInterfaces();
       expect(interfaces.size).to.equal(2);
       interfaces.forEach((value, key) => {
@@ -656,9 +484,8 @@ describe('service (v1 spec)', () => {
       });
     });
 
-    it('should ignore port if interfaces exist', async () => {
+    it('should ignore port if interfaces exist', () => {
       const spec = {
-        name: 'tests/test',
         port: 8080,
         interfaces: {
           main: {
@@ -667,7 +494,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const interfaces = parsedSpec.getInterfaces();
       expect(interfaces.size).to.equal(1);
       expect(interfaces).to.have.key('main');
@@ -677,8 +504,8 @@ describe('service (v1 spec)', () => {
       expect(main!.port).to.equal(spec.interfaces.main.port);
     });
 
-    it('should set new interfaces', async () => {
-      const parsedSpec = ServiceBuilder.create();
+    it('should set new interfaces', () => {
+      const parsedSpec = new ServiceSpecV1();
       let interfaces = new Map<string, BaseInterfaceConfig>();
 
       interfaces.set('main', { port: 8080 });
@@ -694,14 +521,8 @@ describe('service (v1 spec)', () => {
   });
 
   describe('volumes', () => {
-    it('should get declared volumes', async () => {
+    it('should get declared volumes', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         volumes: {
           image_store: {
             description: 'Container path',
@@ -711,27 +532,20 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const volumes = parsedSpec.getVolumes();
       expect(volumes.size).to.equal(1);
       expect(volumes).to.have.keys('image_store');
 
-      const image_store = volumes.get('image_store');
+      const image_store = volumes.get('image_store')!;
       expect(image_store).not.to.be.undefined;
-      expect(image_store!.mount_path).to.equal(spec.volumes.image_store.mount_path);
-      expect(image_store!.description).to.equal(spec.volumes.image_store.description);
-      expect(image_store!.readonly).to.equal(spec.volumes.image_store.readonly);
+      expect(image_store.mount_path).to.equal(spec.volumes.image_store.mount_path);
+      expect(image_store.description).to.equal(spec.volumes.image_store.description);
+      expect(image_store.readonly).to.equal(spec.volumes.image_store.readonly);
     });
 
-    it('should set new volumes', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set new volumes', () => {
+      const parsedSpec = new ServiceSpecV1();
       let volumes = parsedSpec.getVolumes();
       expect(volumes.size).to.equal(0);
 
@@ -749,89 +563,50 @@ describe('service (v1 spec)', () => {
     });
   });
 
-  describe('docker build/run', async () => {
-    it('should get defined command', async () => {
+  describe('docker build/run', () => {
+    it('should get defined command', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         command: ['my', 'command'],
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       expect(parsedSpec.getCommand()).to.eql(spec.command);
     });
 
-    it('should get defined entrypoint', async () => {
+    it('should get defined entrypoint', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         entrypoint: ['my', 'entrypoint'],
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       expect(parsedSpec.getEntrypoint()).to.eql(spec.entrypoint);
     });
 
-    it('should get docker image', async () => {
+    it('should get docker image', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         image: 'postgres:11',
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       expect(parsedSpec.getImage()).to.equal(spec.image);
     });
 
-    it('should set docker image', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set docker image', () => {
+      const parsedSpec = new ServiceSpecV1();
       expect(parsedSpec.getImage()).to.be.undefined;
       parsedSpec.setImage('Dockerfile');
       expect(parsedSpec.getImage()).to.equal('Dockerfile');
     });
 
-    it('should set command', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set command', () => {
+      const parsedSpec = new ServiceSpecV1();
       expect(parsedSpec.getCommand()).to.be.undefined;
       parsedSpec.setCommand('./command.sh');
       expect(parsedSpec.getCommand()).to.equal('./command.sh');
     });
 
-    it('should set entrypoint', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set entrypoint', () => {
+      const parsedSpec = new ServiceSpecV1();
       expect(parsedSpec.getEntrypoint()).to.be.undefined;
       parsedSpec.setEntrypoint('./command.sh');
       expect(parsedSpec.getEntrypoint()).to.equal('./command.sh');
@@ -839,14 +614,8 @@ describe('service (v1 spec)', () => {
   });
 
   describe('liveness probe', () => {
-    it('should get liveness probe', async () => {
+    it('should get liveness probe', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         api: {
           liveness_probe: {
             success_threshold: 3,
@@ -857,8 +626,8 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
-      const liveness_probe = parsedSpec.getLivenessProbe();
+      const parsedSpec = new ServiceSpecV1(spec);
+      const liveness_probe = parsedSpec.getLivenessProbe()!;
       expect(Object.keys(liveness_probe).length).to.equal(4);
       expect(liveness_probe).to.have.keys([
         'success_threshold',
@@ -873,35 +642,23 @@ describe('service (v1 spec)', () => {
       expect(liveness_probe.interval).to.be.undefined;
     });
 
-    it('should set liveness probe', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
-      let liveness_probe = parsedSpec.getLivenessProbe();
-      expect(Object.keys(liveness_probe).length).to.equal(0);
-      expect(liveness_probe).not.to.have.keys([
-        'success_threshold',
-        'failure_threshold',
-        'timeout',
-        'path',
-        'interval',
-      ]);
+    it('should set liveness probe', () => {
+      const parsedSpec = new ServiceSpecV1();
+      let liveness_probe = parsedSpec.getLivenessProbe() as BaseLivenessProbeConfig;
+      expect(liveness_probe).to.be.undefined;
 
-      liveness_probe.path = '/path';
+      liveness_probe = {
+        path: '/path',
+      };
       parsedSpec.setLivenessProbe(liveness_probe);
-      liveness_probe = parsedSpec.getLivenessProbe();
+      liveness_probe = parsedSpec.getLivenessProbe()!;
       expect(Object.keys(liveness_probe).length).to.equal(1);
       expect(liveness_probe.path).to.equal('/path');
     });
   });
 
   describe('notifications/subscriptions', () => {
-    it('should get declared notifications', async () => {
+    it('should get declared notifications', () => {
       const spec = {
         name: 'tests/test',
         interfaces: {
@@ -916,7 +673,7 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const notifications = parsedSpec.getNotifications();
       expect(notifications.size).to.equal(1);
       expect(notifications).to.have.key('user_created');
@@ -926,15 +683,8 @@ describe('service (v1 spec)', () => {
       expect(user_created!.description).to.equal(spec.notifications.user_created.description);
     });
 
-    it('should set new notifications', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set new notifications', () => {
+      const parsedSpec = new ServiceSpecV1();
       let notifications = parsedSpec.getNotifications();
       expect(notifications.size).to.equal(0);
       notifications.set('user_deleted', {
@@ -947,14 +697,8 @@ describe('service (v1 spec)', () => {
       expect(notifications.get('user_deleted')!.description).to.equal('Deleted a user');
     });
 
-    it('should get declared subscriptions', async () => {
+    it('should get declared subscriptions', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         subscriptions: {
           'test/sub': {
             'my-event': {
@@ -967,7 +711,7 @@ describe('service (v1 spec)', () => {
         }
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const subscriptions = parsedSpec.getSubscriptions();
       expect(subscriptions.size).to.equal(1);
       expect(subscriptions).to.have.key('test/sub');
@@ -989,15 +733,8 @@ describe('service (v1 spec)', () => {
       expect(authorization).to.equal(spec.subscriptions['test/sub']['my-event'].headers.AUTHORIZATION);
     });
 
-    it('should set new subscriptions', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set new subscriptions', () => {
+      const parsedSpec = new ServiceSpecV1();
       let subscriptions = parsedSpec.getSubscriptions();
       expect(subscriptions.size).to.equal(0);
 
@@ -1021,14 +758,8 @@ describe('service (v1 spec)', () => {
   });
 
   describe('platforms', () => {
-    it('should get defined platform configs', async () => {
+    it('should get defined platform configs', () => {
       const spec = {
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
         platforms: {
           'docker-compose': {
             privileged: true,
@@ -1036,25 +767,18 @@ describe('service (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = await ServiceBuilder.parseAndValidate(spec);
+      const parsedSpec = new ServiceSpecV1(spec);
       const platforms = parsedSpec.getPlatformsConfig();
       expect(platforms).to.have.property('docker-compose');
 
-      const compose = platforms['docker-compose'];
+      const compose = platforms['docker-compose']!;
       expect(compose).to.have.property('privileged');
-      expect(compose!.privileged).to.equal(spec.platforms['docker-compose'].privileged);
-      expect(compose!.stop_signal).to.be.undefined;
+      expect(compose.privileged).to.equal(spec.platforms['docker-compose'].privileged);
+      expect(compose.stop_signal).to.be.undefined;
     });
 
-    it('should set new platform configs', async () => {
-      const parsedSpec = await ServiceBuilder.parseAndValidate({
-        name: 'tests/test',
-        interfaces: {
-          default: {
-            port: 8080,
-          },
-        },
-      });
+    it('should set new platform configs', () => {
+      const parsedSpec = new ServiceSpecV1();
       let platforms = parsedSpec.getPlatformsConfig();
       expect(Object.keys(platforms).length).to.equal(0);
       platforms['docker-compose'] = {

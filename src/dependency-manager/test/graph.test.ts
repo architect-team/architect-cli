@@ -5,9 +5,9 @@ import mock_fs from 'mock-fs';
 import os from 'os';
 import path from 'path';
 import { generate } from '../../common/docker-compose/new';
-import { BaseServiceConfig } from '../src/configs/base-configs/service-config';
 import { EnvironmentBuilder } from '../src/configs/environment.builder';
 import { EnvironmentGraph } from '../src/configs/graph';
+import { BaseServiceConfig } from '../src/configs/service-config';
 import { ServiceBuilder } from '../src/configs/service.builder';
 
 describe('graph', () => {

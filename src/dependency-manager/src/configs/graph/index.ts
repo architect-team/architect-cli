@@ -1,9 +1,9 @@
 /* eslint-disable no-empty */
 import { EnvironmentVault } from '../../environment-config/base';
 import VaultManager from '../../vault-manager';
-import { BaseDnsConfig, BaseEnvironmentConfig } from '../base-configs/environment-config';
-import { BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../base-configs/service-config';
+import { BaseDnsConfig, BaseEnvironmentConfig } from '../environment-config';
 import { EnvironmentBuilder } from '../environment.builder';
+import { BaseParameterValueConfig, BaseParameterValueFromConfig, BaseServiceConfig, BaseValueFromDependencyConfig, BaseValueFromVaultConfig } from '../service-config';
 import { ServiceBuilder } from '../service.builder';
 
 interface GraphEnrichmentOptions {
@@ -86,7 +86,7 @@ export class EnvironmentGraph {
             dep.getName() === value_from.dependency || dep.getResolvableRef() === value_from.dependency
           );
           if (!dependency) {
-            throw new ValueFromDependencyError(service.getName(), value_from.dependency, key);
+            throw new ValueFromDependencyError(service.getName() || '', value_from.dependency, key);
           }
 
           // Loop through the matching dependency's params and replace references with values
@@ -112,7 +112,8 @@ export class EnvironmentGraph {
     service: BaseServiceConfig,
     options: GraphEnrichmentOptions,
   ) {
-    if (options.skip_nodes?.includes(service.getName())) {
+    const name = service.getName();
+    if (name && options.skip_nodes?.includes(name)) {
       return;
     }
 
@@ -159,7 +160,7 @@ export class EnvironmentGraph {
 
     // Assert that we've already enriched this service
     options.skip_nodes = options.skip_nodes || [];
-    options.skip_nodes.push(config.getName());
+    options.skip_nodes.push(config.getName() || '');
 
     // Recurse through dependencies
     for (const dependency of config.getDependencies()) {
@@ -255,7 +256,7 @@ export class EnvironmentGraph {
   /**
    * Retrieve the DNS configuration settings for the graph
    */
-  getDnsConfig(): BaseDnsConfig {
+  getDnsConfig(): BaseDnsConfig | undefined {
     return this._enriched_config.getDnsConfig();
   }
 }

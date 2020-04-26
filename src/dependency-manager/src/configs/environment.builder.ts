@@ -1,7 +1,7 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
-import { BaseEnvironmentConfig } from './base-configs/environment-config';
+import { BaseEnvironmentConfig } from './environment-config';
 import { EnvironmentSpecV1 } from './v1-spec/environment';
 
 export class EnvironmentBuilder {

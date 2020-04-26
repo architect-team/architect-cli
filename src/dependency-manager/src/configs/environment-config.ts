@@ -1,4 +1,4 @@
-import { BaseSpec } from '../base-spec';
+import { BaseSpec } from './base-spec';
 import { BaseParameterConfig, BaseServiceConfig } from './service-config';
 
 export interface BaseVaultConfig {
@@ -15,16 +15,14 @@ export interface BaseDnsConfig {
 }
 
 export abstract class BaseEnvironmentConfig extends BaseSpec {
-  abstract copy(): BaseEnvironmentConfig;
-
   abstract getServices(): Array<BaseServiceConfig>;
   abstract setServices(services: Array<BaseServiceConfig>): void;
 
   abstract getVaults(): Map<string, BaseVaultConfig>;
   abstract setVaults(vaults: Map<string, BaseVaultConfig>): void;
 
-  abstract getDnsConfig(): BaseDnsConfig;
-  abstract setDnsConfig(dns: BaseDnsConfig): void;
+  abstract getDnsConfig(): BaseDnsConfig | undefined;
+  abstract setDnsConfig(dns?: BaseDnsConfig): void;
 
   abstract getParameters(): Map<string, BaseParameterConfig>;
   abstract setParameters(parameters: Map<string, BaseParameterConfig>): void;

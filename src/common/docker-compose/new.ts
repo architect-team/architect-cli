@@ -1,5 +1,5 @@
-import { BaseParameterValueConfig } from '../../dependency-manager/src/configs/base-configs/service-config';
 import { EnvironmentGraph } from '../../dependency-manager/src/configs/graph';
+import { BaseParameterValueConfig } from '../../dependency-manager/src/configs/service-config';
 import DockerComposeTemplate, { DockerService } from './template';
 
 export const generate = (graph: EnvironmentGraph) => {
@@ -16,8 +16,8 @@ export const generate = (graph: EnvironmentGraph) => {
       ports: [],
     } as DockerService;
 
-    if (graph.getDnsConfig().searches) {
-      compose_service.dns_search = graph.getDnsConfig().searches;
+    if (graph.getDnsConfig()?.searches) {
+      compose_service.dns_search = graph.getDnsConfig()?.searches;
     }
 
     service.getInterfaces().forEach(value => {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { BaseSpec } from '../base-spec';
+import { BaseSpec } from './base-spec';
 
 export interface BaseBuildConfig {
   dockerfile?: string;
@@ -75,13 +75,11 @@ export interface BaseVolumeConfig {
 export type BaseParameterConfig = BaseParameterValueConfig | BaseParameterValueFromConfig;
 
 export abstract class BaseServiceConfig extends BaseSpec {
-  abstract copy(): BaseServiceConfig;
+  abstract getRef(): string | undefined;
+  abstract setRef(ref?: string): void;
 
-  abstract getRef(): string;
-  abstract setRef(ref: string): void;
-
-  abstract getName(): string;
-  abstract setName(name: string): void;
+  abstract getName(): string | undefined;
+  abstract setName(name?: string): void;
 
   abstract getMetadata(): BaseServiceMetadataConfig;
   abstract setMetadata(metadata: BaseServiceMetadataConfig): void;
@@ -110,8 +108,8 @@ export abstract class BaseServiceConfig extends BaseSpec {
   abstract getBuildConfig(): BaseBuildConfig | undefined;
   abstract setBuildConfig(config?: BaseBuildConfig): void;
 
-  abstract getLivenessProbe(): BaseLivenessProbeConfig;
-  abstract setLivenessProbe(liveness_probe: BaseLivenessProbeConfig): void;
+  abstract getLivenessProbe(): BaseLivenessProbeConfig | undefined;
+  abstract setLivenessProbe(liveness_probe?: BaseLivenessProbeConfig): void;
 
   abstract getNotifications(): Map<string, BaseNotificationConfig>;
   abstract setNotifications(notifications: Map<string, BaseNotificationConfig>): void;
@@ -137,14 +135,19 @@ export abstract class BaseServiceConfig extends BaseSpec {
   /**
    * Retrieve the fully resolvable service ref (e.g. <account>/<name>:<tag>) of the service
    */
-  public getResolvableRef() {
-    if (this.getRef() && /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+\:[a-zA-Z0-9-_]+$/.test(this.getRef())) {
-      return this.getRef();
-    } else if (this.getRef() && this.getName()) {
-      return `${this.getName()}:${this.getRef()}`;
+  public getResolvableRef(): string {
+    const ref = this.getRef();
+    const name = this.getName();
+
+    if (ref && /^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+\:[a-zA-Z0-9-_]+$/.test(ref)) {
+      return ref;
+    } else if (ref && name) {
+      return `${name}:${ref}`;
+    } else if (name) {
+      return name;
     }
 
-    return this.getName();
+    throw new Error('A name or ref is required on all services');
   }
 
   /**

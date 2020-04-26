@@ -8,11 +8,14 @@ import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
-import * as DockerCompose from '../common/docker-compose';
+import * as DockerCompose from '../common/docker-compose/new';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { OfflineUtils } from '../common/utils/offline';
+import PortUtil from '../common/utils/port';
 import { ValidationClient, ValidationResult } from '../common/utils/validation';
+import { EnvironmentBuilder } from '../dependency-manager/src/configs/environment.builder';
+import { EnvironmentGraph } from '../dependency-manager/src/configs/graph';
+import { ServiceBuilder } from '../dependency-manager/src/configs/service.builder';
 import DependencyGraph from '../dependency-manager/src/graph';
 
 
@@ -116,17 +119,34 @@ export default class Deploy extends Command {
       throw new EnvConfigRequiredError();
     }
 
-    const dependency_manager = await LocalDependencyManager.createFromPath(
-      this.app.api,
-      path.resolve(untildify(args.environment_config)),
-      this.app.linkedServices,
-      !flags.build_prod,
-    );
+    try {
+      const config = await EnvironmentBuilder.loadFromFile(path.resolve(untildify(args.environment_config)));
+      const graph = await EnvironmentGraph.build(config, {
+        getConfig: async (ref: string) => {
+          const [name, tag] = ref.split(':');
 
-    await this.validate_graph(dependency_manager.graph);
+          // Check if the service has been linked locally
+          if (this.app.linkedServices.hasOwnProperty(name)) {
+            const config = await ServiceBuilder.loadFromFile(this.app.linkedServices[name]);
+            config.setDebugPath(this.app.linkedServices[name]);
+            return config;
+          }
 
-    const compose = await DockerCompose.generate(dependency_manager);
-    await this.runCompose(compose);
+          // Go get the service config from the registry
+          const [account_name, service_name] = name.split('/');
+          const { data: service_digest } = await this.app.api.get(`/accounts/${account_name}/services/${service_name}/versions/${tag}`);
+          return ServiceBuilder.parseAndValidate(service_digest.config);
+        },
+        getRegistryImage: (ref: string) => `${this.app.config.registry_host}/${ref}`,
+        getHostAssignment: () => Promise.resolve('host.docker.internal'),
+        getPortAssignment: async () => PortUtil.getAvailablePort(50000),
+      });
+
+      const compose = await DockerCompose.generate(graph);
+      await this.runCompose(compose);
+    } catch (err) {
+      console.log(err[0].children[0].children[0].children[0].children);
+    }
   }
 
   async poll(deployment_id: string, match_stage?: string) {

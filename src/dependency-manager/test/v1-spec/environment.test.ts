@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import { BaseParameterValueConfig, BaseParameterValueFromConfig, BaseValueFromVaultConfig } from '../../src/configs/base-configs/service-config';
+import { BaseVaultConfig } from '../../src/configs/environment-config';
+import { BaseParameterValueConfig, BaseParameterValueFromConfig, BaseValueFromVaultConfig } from '../../src/configs/service-config';
 import { EnvironmentSpecV1 } from '../../src/configs/v1-spec/environment';
 
 describe('environment (v1 spec)', () => {
   describe('dns', () => {
-    it('should get declared DNS config', async () => {
+    it('should get declared DNS config', () => {
       const spec = {
         dns: {
           searches: ['thefacebook.com'],
@@ -12,8 +13,7 @@ describe('environment (v1 spec)', () => {
       };
 
       const parsedSpec = new EnvironmentSpecV1(spec);
-      await parsedSpec.validateOrReject();
-      const dns = parsedSpec.getDnsConfig();
+      const dns = parsedSpec.getDnsConfig()!;
       expect(dns).to.have.property('searches');
       expect(dns.searches).to.eql(spec.dns.searches);
     });
@@ -23,20 +23,48 @@ describe('environment (v1 spec)', () => {
       parsedSpec.setDnsConfig({
         searches: ['thefacebook.com'],
       });
-      const dns = parsedSpec.getDnsConfig();
+      const dns = parsedSpec.getDnsConfig()!;
       expect(dns).to.have.property('searches');
       expect(dns.searches).to.eql(['thefacebook.com']);
     });
   });
 
   describe('parameters', () => {
-    it('should get defined parameters', async () => {
+    it('should get simple parameters', () => {
       const spec = {
         parameters: {
-          SIMPLE: 'value',
+          SIMPLE: 'value'
+        },
+      };
+
+      const parsedSpec = new EnvironmentSpecV1(spec);
+      const parameters = parsedSpec.getParameters();
+      expect(parameters.size).to.equal(1);
+
+      const param = parameters.get('SIMPLE') as BaseParameterValueConfig;
+      expect(param.default).to.equal(spec.parameters.SIMPLE);
+    });
+
+    it('should get nested parameters', () => {
+      const spec = {
+        parameters: {
           NESTED: {
-            default: 'nested'
-          },
+            default: 'value',
+          }
+        },
+      };
+
+      const parsedSpec = new EnvironmentSpecV1(spec);
+      const parameters = parsedSpec.getParameters();
+      expect(parameters.size).to.equal(1);
+
+      const param = parameters.get('NESTED') as BaseParameterValueConfig;
+      expect(param.default).to.equal(spec.parameters.NESTED.default);
+    });
+
+    it('should get value_from parameters', () => {
+      const spec = {
+        parameters: {
           VAULT: {
             value_from: {
               vault: 'my-vault',
@@ -46,38 +74,19 @@ describe('environment (v1 spec)', () => {
         },
       };
       const parsedSpec = new EnvironmentSpecV1(spec);
-      await parsedSpec.validateOrReject();
-
       const parameters = parsedSpec.getParameters();
-      expect(parameters.size).to.equal(3);
-      parameters.forEach((value, key) => {
-        switch (key) {
-          case 'SIMPLE':
-            expect(value).to.have.property('default');
-            value = value as BaseParameterValueConfig;
-            expect(value.default).to.equal(spec.parameters.SIMPLE);
-            break;
-          case 'NESTED':
-            expect(value).to.have.property('default');
-            value = value as BaseParameterValueConfig;
-            expect(value.default).to.equal(spec.parameters.NESTED.default);
-            break;
-          case 'VAULT':
-            expect(value).to.have.property('value_from');
-            value = value as BaseParameterValueFromConfig;
-            expect(value.value_from).to.have.property('vault');
-            expect(value.value_from).to.have.property('key');
-            value.value_from = value.value_from as BaseValueFromVaultConfig;
-            expect(value.value_from.vault).to.equal(spec.parameters.VAULT.value_from.vault);
-            expect(value.value_from.key).to.equal(spec.parameters.VAULT.value_from.key);
-            break;
-          default:
-            throw new Error('Unexpected validation error');
-        }
-      });
+      expect(parameters.size).to.equal(1);
+
+      const param = parameters.get('VAULT') as BaseParameterValueFromConfig;
+      expect(param).not.to.be.undefined;
+      expect(param.value_from).to.have.property('vault');
+      expect(param.value_from).to.have.property('key');
+      param.value_from = param.value_from as BaseValueFromVaultConfig;
+      expect(param.value_from.vault).to.equal(spec.parameters.VAULT.value_from.vault);
+      expect(param.value_from.key).to.equal(spec.parameters.VAULT.value_from.key);
     });
 
-    it('should set new simple parameters', async () => {
+    it('should set new simple parameters', () => {
       const config = new EnvironmentSpecV1();
       let parameters = config.getParameters();
       parameters.set('TEST', {
@@ -95,7 +104,7 @@ describe('environment (v1 spec)', () => {
       expect(test.default).to.equal('value');
     });
 
-    it('should set new complex parameters', async () => {
+    it('should set new complex parameters', () => {
       const config = new EnvironmentSpecV1();
       let parameters = config.getParameters();
       parameters.set('TEST', {
@@ -121,7 +130,7 @@ describe('environment (v1 spec)', () => {
   });
 
   describe('vaults', () => {
-    it('should get defined vaults', async () => {
+    it('should get defined vaults', () => {
       const spec = {
         vaults: {
           my_vault: {
@@ -135,7 +144,6 @@ describe('environment (v1 spec)', () => {
       };
 
       const parsedSpec = new EnvironmentSpecV1(spec);
-      await parsedSpec.validateOrReject();
       const vaults = parsedSpec.getVaults();
       expect(vaults.size).to.equal(1);
 
@@ -147,6 +155,82 @@ describe('environment (v1 spec)', () => {
       expect(my_vault!.role_id).to.equal(spec.vaults.my_vault.role_id);
       expect(my_vault!.secret_id).to.equal(spec.vaults.my_vault.secret_id);
       expect(my_vault!.client_token).to.be.undefined;
+    });
+
+    it('should set new vault', () => {
+      const parsedSpec = new EnvironmentSpecV1();
+      let vaults = parsedSpec.getVaults();
+      expect(vaults.size).to.equal(0);
+
+      const new_vault = {
+        type: 'hashicorp-vault',
+        host: '127.0.0.1',
+        role_id: 'role',
+        secret_id: 'secret',
+      } as BaseVaultConfig;
+      vaults.set('NEW', new_vault);
+      parsedSpec.setVaults(vaults);
+      vaults = parsedSpec.getVaults();
+      expect(vaults.size).to.equal(1);
+      expect(vaults).to.have.key('NEW');
+
+      const value = vaults.get('NEW');
+      expect(value).not.to.be.undefined;
+      expect(value).to.eql(new_vault);
+    });
+  });
+
+  describe('services', () => {
+    it('should get services defined as an array', async () => {
+      const spec = {
+        services: [
+          {
+            name: 'tests/test',
+            ref: 'latest'
+          }
+        ]
+      };
+
+      const parsedSpec = new EnvironmentSpecV1(spec);
+      const services = parsedSpec.getServices();
+      expect(services.length).to.equal(1);
+
+      expect(services[0].getName()).to.equal(spec.services[0].name);
+      expect(services[0].getRef()).to.equal(spec.services[0].ref);
+    });
+
+    it('should get services defined as a dictionary', async () => {
+      const spec = {
+        services: {
+          'tests/test': 'latest'
+        }
+      };
+
+      const parsedSpec = new EnvironmentSpecV1(spec);
+      const services = parsedSpec.getServices();
+      expect(services.length).to.equal(1);
+
+      expect(services[0].getName()).to.equal('tests/test');
+      expect(services[0].getRef()).to.equal(spec.services['tests/test']);
+    });
+
+    it('should get services defined as dicitonary with nested overrides', async () => {
+      const spec = {
+        services: {
+          'tests/test': {
+            ref: 'latest',
+            command: 'npm run dev'
+          }
+        }
+      };
+
+      const parsedSpec = new EnvironmentSpecV1(spec);
+      const services = parsedSpec.getServices();
+      expect(services.length).to.equal(1);
+
+      expect(services[0].getName()).to.equal('tests/test');
+      expect(services[0].getRef()).to.equal(spec.services['tests/test'].ref);
+      expect(services[0].getCommand()).to.equal(spec.services['tests/test'].command);
     });
   });
 });

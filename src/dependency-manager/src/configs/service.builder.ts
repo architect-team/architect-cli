@@ -1,8 +1,7 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
-import { BaseServiceConfig } from './base-configs/service-config';
-import { ServiceSpecV1 } from './v1-spec/developer-service';
-import { OperatorServiceSpecV1 } from './v1-spec/operator-service';
+import { BaseServiceConfig } from './service-config';
+import { ServiceSpecV1 } from './v1-spec/service';
 
 export class ServiceBuilder {
   static async loadFromFile(filepath: string) {
@@ -49,6 +48,6 @@ export class ServiceBuilder {
   }
 
   static create(): BaseServiceConfig {
-    return new OperatorServiceSpecV1();
+    return new ServiceSpecV1();
   }
 }
