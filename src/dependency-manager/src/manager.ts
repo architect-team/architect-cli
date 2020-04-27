@@ -1,3 +1,4 @@
+import { plainToClass } from 'class-transformer';
 import dotenvExpand from 'dotenv-expand';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
@@ -10,6 +11,7 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { ServiceConfig } from './service-config/base';
+import { ServiceConfigV1 } from './service-config/v1';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -307,31 +309,31 @@ export default abstract class DependencyManager {
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
     if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [dep_name, dep_config] of Object.entries(parent_node.node_config.getDependencies())) {
-      const dep_id = dep_config.getRef();
-      const dep_node = await this.loadService(`${dep_name}:${dep_id}`, recursive);
+    for (const dep_config of Object.values(parent_node.node_config.getDependencies())) {
+      const dep_node = await this.loadServiceFromConfig(dep_config, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
       this.graph.addEdge(edge);
     }
   }
 
-  /**
-   * Queries the API to create a node and config object for a service based on
-   * its name and tag
-   */
-  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
-    const existing_node = this.graph.nodes_map.get(service_ref);
-    if (existing_node) {
-      return existing_node as ServiceNode | ExternalNode;
+  async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode | ExternalNode> {
+    const service_ref = config.getRef();
+    if (service_ref) {
+      // TODO: Handle matching inline dependency ref
+      const existing_node = this.graph.nodes_map.get(service_ref);
+      if (existing_node) {
+        return existing_node as ServiceNode | ExternalNode;
+      }
+
+      // TODO: Add tests for inline external dependencies
+      const env_service = this._environment.getServiceDetails(service_ref);
+      if (env_service && Object.keys(env_service.getInterfaces()).length > 0 && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
+        return this.loadExternalService(env_service, service_ref);
+      }
     }
 
-    const env_service = this._environment.getServiceDetails(service_ref);
-    if (env_service && Object.keys(env_service.getInterfaces()).length > 0 && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(env_service, service_ref);
-    }
-
-    const service_node = await this.loadServiceNode(service_ref);
+    const service_node = await this.loadServiceNode(config);
     this.graph.addNode(service_node);
     await this.loadDatastores(service_node);
     if (recursive) {
@@ -340,7 +342,16 @@ export default abstract class DependencyManager {
     return service_node;
   }
 
-  async abstract loadServiceNode(service_ref: string): Promise<ServiceNode>;
+  /**
+   * Queries the API to create a node and config object for a service based on
+   * its name and tag
+   */
+  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
+    // TODO terrible
+    return this.loadServiceFromConfig(plainToClass(ServiceConfigV1, { ref: service_ref }), recursive);
+  }
+
+  async abstract loadServiceNode(config: ServiceConfig): Promise<ServiceNode>;
 
   /**
    * Create an external node and add it to the graph

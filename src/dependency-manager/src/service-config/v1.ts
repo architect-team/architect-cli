@@ -21,7 +21,17 @@ function transformParameters(input: any) {
 function transformDependencies(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    output[key] = plainToClass(ServiceConfigV1, value instanceof Object ? value : { ref: value });
+    let config;
+    if (value instanceof Object) {
+      config = { ...value, name: key };
+    } else {
+      if ((value as string).includes(':')) {
+        config = { ref: value, name: key };
+      } else {
+        config = { ref: `${key}:${value}`, name: key };
+      }
+    }
+    output[key] = plainToClass(ServiceConfigV1, config);
   }
   return output;
 }

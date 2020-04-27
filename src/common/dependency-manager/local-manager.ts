@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { readIfFile } from '../utils/file';
@@ -82,31 +82,44 @@ export default class LocalDependencyManager extends DependencyManager {
   /**
    * @override
    */
-  async loadServiceNode(service_ref: string) {
-    const [service_name, service_tag] = service_ref.split(':');
-    const env_service = this._environment.getServiceDetails(service_ref);
-    const debug_path = env_service?.getDebugOptions()?.path;
-    let service_node;
-    if (debug_path) {
-      const svc_path = path.join(path.dirname(this.config_path), debug_path);
-      service_node = await this.loadLocalService(svc_path);
-    } else if (this.linked_services.hasOwnProperty(service_name)) {
-      console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
-      service_node = await this.loadLocalService(this.linked_services[service_name]);
-    } else {
-      const [account_name, svc_name] = service_name.split('/');
-      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
+  async loadServiceNode(initial_config: ServiceConfig) {
+    let service_config = initial_config;
+    let tag = 'latest';
+    let image = initial_config.getImage();
+    let digest;
 
-      const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
-      service_node = new ServiceNode({
-        service_config: service_config,
-        node_config: this.getNodeConfig(service_config, service_digest.tag),
-        tag: service_digest.tag,
-        image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
-        digest: service_digest.digest,
-      });
+    const service_ref = initial_config.getRef();
+    if (service_ref) {
+      const [service_name, service_tag] = service_ref.split(':');
+      const env_service = this._environment.getServiceDetails(service_ref);
+      const debug_path = env_service?.getDebugOptions()?.path;
+      if (debug_path) {
+        const svc_path = path.join(path.dirname(this.config_path), debug_path);
+        return await this.loadLocalService(svc_path);
+      } else if (this.linked_services.hasOwnProperty(service_name)) {
+        console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
+        return await this.loadLocalService(this.linked_services[service_name]);
+      } else {
+        const [account_name, svc_name] = service_name.split('/');
+        const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
+
+        service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+        // Allow for inline overrides of external services
+        service_config.merge(initial_config);
+
+        tag = service_digest.tag;
+        image = service_digest.service.url.replace(/(^\w+:|^)\/\//, '');
+        digest = service_digest.digest;
+      }
     }
-    return service_node;
+
+    return new ServiceNode({
+      service_config: service_config,
+      node_config: this.getNodeConfig(service_config, tag),
+      tag: tag,
+      image: image,
+      digest: digest,
+    });
   }
 
   async loadParameters() {
