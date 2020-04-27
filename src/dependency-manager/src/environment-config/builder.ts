@@ -1,5 +1,6 @@
 /* eslint-disable no-empty */
-import { plainToClass } from 'class-transformer';
+import { classToClass, plainToClass } from 'class-transformer';
+import { ValidatorOptions } from 'class-validator';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import { EnvironmentConfig } from './base';
@@ -14,7 +15,7 @@ class MissingConfigFileError extends Error {
 }
 
 export class EnvironmentConfigBuilder {
-  static buildFromPath(config_path: string): EnvironmentConfig {
+  static async buildFromPath(config_path: string, validatorOptions?: ValidatorOptions): Promise<EnvironmentConfig> {
     let file_contents;
 
     try {
@@ -31,20 +32,22 @@ export class EnvironmentConfigBuilder {
     // Try to parse as json
     try {
       const js_obj = JSON.parse(file_contents);
-      return EnvironmentConfigBuilder.buildFromJSON(js_obj);
+      return EnvironmentConfigBuilder.buildFromJSON(js_obj, validatorOptions);
     } catch {}
 
     // Try to parse as yaml
     try {
       const js_obj = yaml.safeLoad(file_contents);
-      return EnvironmentConfigBuilder.buildFromJSON(js_obj);
+      return EnvironmentConfigBuilder.buildFromJSON(js_obj, validatorOptions);
     } catch {}
 
     throw new Error('Invalid file format. Must be json or yaml.');
   }
 
-  static buildFromJSON(obj: object): EnvironmentConfig {
-    return plainToClass(EnvironmentConfigV1, obj);
+  static async buildFromJSON(obj: object, validatorOptions?: ValidatorOptions): Promise<EnvironmentConfig> {
+    const res = plainToClass(EnvironmentConfigV1, obj, { groups: ['allow-shorthand' ]});
+    await res.validateOrReject(validatorOptions);
+    return classToClass(res, { groups: ['transform-shorthand'] });
   }
 
   static saveToPath(config_path: string, config: EnvironmentConfig) {

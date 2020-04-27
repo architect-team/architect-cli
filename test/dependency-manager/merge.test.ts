@@ -2,7 +2,7 @@ import { expect } from '@oclif/test';
 import { ServiceConfigBuilder } from '../../src/dependency-manager/src';
 
 describe('service config merge', function () {
-  it('merge configs', function () {
+  it('merge configs', async function () {
     const service_config_json = {
       'name': 'foo/service',
       'description': 'a test service',
@@ -107,8 +107,8 @@ describe('service config merge', function () {
       }
     };
 
-    const service_config = ServiceConfigBuilder.buildFromJSON(service_config_json);
-    const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
+    const service_config = await ServiceConfigBuilder.buildFromJSON(service_config_json);
+    const env_config = await ServiceConfigBuilder.buildFromJSON(env_config_json);
 
     const node_config = service_config.merge(env_config);
 

@@ -21,7 +21,7 @@ describe('manager', function () {
     const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
     const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
     const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
+    graph = deserialize(LocalDependencyGraph, serialized_graph, { groups: ['transform-shorthand'] });
   });
 
   afterEach(function () {
@@ -34,6 +34,7 @@ describe('manager', function () {
     expect(graph.version).eq('1.0.0')
     expect(graph.nodes).lengthOf(4);
     expect(graph.nodes[0]).instanceOf(LocalServiceNode);
+    console.log(graph.nodes[0]);
     expect((graph.nodes[0] as LocalServiceNode).service_config).instanceOf(ServiceConfig);
 
     expect(graph.edges).lengthOf(3);

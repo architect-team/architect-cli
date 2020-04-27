@@ -1,4 +1,5 @@
-import { Type } from 'class-transformer';
+import { plainToClass, Transform } from 'class-transformer';
+import { ClassType } from 'class-transformer/ClassTransformer';
 import { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import DependencyEdge from '../../dependency-manager/src/graph/edge';
@@ -9,32 +10,42 @@ import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { LocalServiceNode } from './local-service-node';
 
+const NodeTypes = {
+  local: LocalServiceNode,
+  datastore: DatastoreNode,
+  external: ExternalNode,
+  service: ServiceNode,
+  gateway: GatewayNode,
+} as { [key: string]: ClassType<DependencyNode> };
+
+const EdgeTypes = {
+  service: ServiceEdge,
+  notification: NotificationEdge,
+  ingress: IngressEdge,
+} as { [key: string]: ClassType<DependencyEdge> };
+
+const TransformNodes = (group: string) => Transform(nodes => {
+  const res = [];
+  for (const value of (nodes || [])) {
+    res.push(plainToClass(NodeTypes[value.__type], value, { groups: [group] }));
+  }
+  return res;
+}, { toClassOnly: true, groups: [group] });
+
+const TransformEdges = (group: string) => Transform(edges => {
+  const res = [];
+  for (const value of (edges || [])) {
+    res.push(plainToClass(EdgeTypes[value.__type], value, { groups: [group] }));
+  }
+  return res;
+}, { toClassOnly: true, groups: [group] });
+
 export default class LocalDependencyGraph extends DependencyGraph {
-  @Type(() => DependencyNode, {
-    discriminator: {
-      property: '__type',
-      subTypes: [
-        { value: LocalServiceNode, name: 'local' },
-        { value: DatastoreNode, name: 'datastore' },
-        { value: ExternalNode, name: 'external' },
-        { value: ServiceNode, name: 'service' },
-        { value: GatewayNode, name: 'gateway' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+  @TransformNodes('allow-shorthand')
+  @TransformNodes('transform-shorthand')
   nodes: DependencyNode[] = [];
 
-  @Type(() => DependencyEdge, {
-    discriminator: {
-      property: '__type',
-      subTypes: [
-        { value: ServiceEdge, name: 'service' },
-        { value: NotificationEdge, name: 'notification' },
-        { value: IngressEdge, name: 'ingress' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+  @TransformEdges('allow-shorthand')
+  @TransformNodes('transform-shorthand')
   edges: DependencyEdge[] = [];
 }

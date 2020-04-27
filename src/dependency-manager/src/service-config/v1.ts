@@ -242,9 +242,18 @@ export class ServiceConfigV1 extends ServiceConfig {
     value instanceof Object
       ? plainToClass(ServiceDebugOptionsV1, value)
       : value,
-    { toClassOnly: true })
+    { toClassOnly: true, groups: ['allow-shorthand'] })
+  @Transform(value => {
+    if (typeof value === 'string') {
+      const debug = new ServiceDebugOptionsV1();
+      debug.command = value;
+      return debug;
+    }
+
+    return value;
+  }, { toClassOnly: true, groups: ['transform-shorthand'] })
   @IsOptional()
-  debug?: string | ServiceDebugOptionsV1;
+  debug?: ServiceDebugOptionsV1;
 
   @Transform(value => (transformParameters(value)))
   @IsOptional()

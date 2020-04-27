@@ -1,5 +1,4 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
-import deepmerge from 'deepmerge';
 import { ParameterValue } from '../manager';
 import { BaseSpec } from '../utils/base-spec';
 
@@ -108,7 +107,6 @@ export abstract class ServiceConfig extends BaseSpec {
   }
 
   merge(other_config: ServiceConfig): ServiceConfig {
-    this.setDebugOptions(deepmerge(this.getDebugOptions() || {}, other_config.getDebugOptions() || {}));
-    return plainToClassFromExist(this, other_config);
+    return plainToClassFromExist(this, other_config, { groups: ['transform-shorthand'] });
   }
 }

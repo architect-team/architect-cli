@@ -248,8 +248,7 @@ export default class Init extends Command {
       }, {});
     }
 
-    const res = ServiceConfigBuilder.buildFromJSON(config);
-    await res.validateOrReject();
+    const res = await ServiceConfigBuilder.buildFromJSON(config);
     return res;
   }
 

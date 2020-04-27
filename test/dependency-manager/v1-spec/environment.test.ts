@@ -86,7 +86,7 @@ describe('environment (v1 spec)', () => {
         }
       };
 
-      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = await EnvironmentConfigBuilder.buildFromJSON(spec);
       const services = parsedSpec.getServices();
       expect(Object.keys(services).length).to.equal(1);
       expect(services).to.have.key('tests/test');
@@ -101,7 +101,7 @@ describe('environment (v1 spec)', () => {
         }
       };
 
-      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = await EnvironmentConfigBuilder.buildFromJSON(spec);
       const services = parsedSpec.getServices();
       expect(Object.keys(services).length).to.equal(1);
       expect(services).to.have.key('tests/test');

@@ -36,9 +36,8 @@ export default class LocalDependencyManager extends DependencyManager {
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
     const env_config = env_config_path
-      ? EnvironmentConfigBuilder.buildFromPath(env_config_path)
+      ? await EnvironmentConfigBuilder.buildFromPath(env_config_path)
       : EnvironmentConfigBuilder.create();
-    await env_config.validateOrReject();
     const dependency_manager = new LocalDependencyManager(api, env_config, env_config_path, linked_services, debug);
     for (const ref of Object.keys(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadService(ref);
@@ -64,17 +63,12 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
-    const errors = await service_config.validate();
-    if (errors?.length) {
-      return Promise.reject(errors);
-    }
-
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
     const lstat = fs.lstatSync(service_path);
     const node = new LocalServiceNode({
       service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
       service_config,
-      node_config: this.getNodeConfig(service_config, 'latest'),
+      node_config: await this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
       tag: 'latest',
     });

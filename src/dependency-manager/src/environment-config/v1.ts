@@ -2,11 +2,19 @@ import { plainToClass } from 'class-transformer';
 import { Exclude, Transform, Type } from 'class-transformer/decorators';
 import { IsInstance, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ServiceConfig } from '../service-config/base';
-import { ServiceConfigBuilder } from '../service-config/builder';
+import { ServiceConfigV1 } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { DnsConfig, EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
+
+const TransformServices = (group: string) => Transform((services: Dictionary<Record<string, any>>) => {
+  const newServices = {} as Dictionary<ServiceConfig>;
+  for (const [key, value] of Object.entries(services)) {
+    newServices[key] = plainToClass(ServiceConfigV1, value, { groups: [group] });
+  }
+  return newServices;
+}, { toClassOnly: true, groups: [group] });
 
 class VaultSpecV1 {
   @IsString()
@@ -44,13 +52,8 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @IsOptional()
   parameters?: EnvironmentParameters;
 
-  @Transform((services: Dictionary<Record<string, any>>) => {
-    const newServices = {} as Dictionary<ServiceConfig>;
-    for (const [key, value] of Object.entries(services)) {
-      newServices[key] = ServiceConfigBuilder.buildFromJSON(value);
-    }
-    return newServices;
-  }, { toClassOnly: true })
+  @TransformServices('allow-shorthand')
+  @TransformServices('transform-shorthand')
   @IsOptional()
   protected services?: Dictionary<ServiceConfig>;
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-empty */
-import { plainToClass } from 'class-transformer';
+import { classToClass, plainToClass } from 'class-transformer';
+import { ValidatorOptions } from 'class-validator';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
@@ -24,7 +25,7 @@ export class ServiceConfigBuilder {
     ];
   }
 
-  static buildFromPath(input: string): ServiceConfig {
+  static async buildFromPath(input: string, validatorOptions?: ValidatorOptions): Promise<ServiceConfig> {
     const try_files = ServiceConfigBuilder.getConfigPaths(input);
 
     // Make sure the file exists
@@ -48,20 +49,22 @@ export class ServiceConfigBuilder {
     // Try to parse as json
     try {
       const js_obj = JSON.parse(file_contents);
-      return ServiceConfigBuilder.buildFromJSON(js_obj);
+      return ServiceConfigBuilder.buildFromJSON(js_obj, validatorOptions);
     } catch {}
 
     // Try to parse as yaml
     try {
       const js_obj = yaml.safeLoad(file_contents);
-      return ServiceConfigBuilder.buildFromJSON(js_obj);
+      return ServiceConfigBuilder.buildFromJSON(js_obj, validatorOptions);
     } catch {}
 
     throw new Error('Invalid file format. Must be json or yaml.');
   }
 
-  static buildFromJSON(obj: object): ServiceConfig {
-    return plainToClass(ServiceConfigV1, obj);
+  static async buildFromJSON(obj: object, validateOptions?: ValidatorOptions): Promise<ServiceConfig> {
+    const res = plainToClass(ServiceConfigV1, obj, { groups: ['allow-shorthand' ]});
+    await res.validateOrReject(validateOptions);
+    return classToClass(res, { groups: ['transform-shorthand'] });
   }
 
   static saveToPath(input: string, config: ServiceConfig) {
