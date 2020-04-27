@@ -183,8 +183,10 @@ export default abstract class DependencyManager {
               if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
-              const node_dependency_refs = node.node_config.getDependencies();
-              node_dependency_refs[node.env_ref] = node.tag;
+              const node_dependency_refs = {
+                ...node.node_config.getDependencies(),
+                [node.env_ref]: node.tag
+              }
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
