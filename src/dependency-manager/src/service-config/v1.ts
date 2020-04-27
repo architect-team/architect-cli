@@ -158,8 +158,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
-    const _default = this.port ? parseInt(this.port) : 8080;
-    return Object.keys(this.interfaces).length ? this.interfaces : { _default: { host: this.host, port: _default } };
+    return this.interfaces;
   }
 
   getImage(): string {

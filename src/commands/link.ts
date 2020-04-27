@@ -21,11 +21,10 @@ export default class Link extends Command {
     name: 'servicePath',
     char: 'p',
     default: path.basename(process.cwd()),
-    parse: (value: string) => value.toLowerCase(),
   }];
 
   async run() {
-    const {args} = this.parse(Link);
+    const { args } = this.parse(Link);
 
     const servicePath = path.resolve(untildify(args.servicePath));
 

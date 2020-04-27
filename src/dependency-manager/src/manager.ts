@@ -148,7 +148,7 @@ export default abstract class DependencyManager {
           internal_port = this.toInternalPort(node, interface_name);
         }
 
-        const prefix = interface_name === '_default' ? '' : `${interface_name}_`;
+        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`;
         env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
@@ -171,27 +171,30 @@ export default abstract class DependencyManager {
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
             const value_from_param = param_value as ValueFromParameter;
-            let param_target_service_name = value_from_param.valueFrom.dependency;
+            let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
               param_target_service_name = `${param_target_service_name}:${node.node_config.getDependencies()[param_target_service_name]}`;
             }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
-            if (param_target_service_name) {
+            if (param_target_service_name && !param_target_datastore_name) {
               const param_target_service = this.graph.getNodeByRef(param_target_service_name);
               if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
               const node_dependency_refs = node.node_config.getDependencies();
+              node_dependency_refs[node.env_ref] = node.tag;
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
 
-              if (value_from_param.valueFrom.interface) {
+              if (value_from_param.valueFrom.interface && Object.keys(param_target_service.interfaces).length > 1) {
                 env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface)}_`);
               } else {
-                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
+                if (!(this.scopeEnv(node, param_name) in env_params_to_expand)) { // prevent circular relationship
+                  env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
+                }
               }
             } else if (param_target_datastore_name) {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
@@ -250,6 +253,10 @@ export default abstract class DependencyManager {
           if (!written_env_keys.find(key => key === real_param_name)) {
             node.parameters[real_param_name] = param_value;
           }
+        }
+      } else if (node instanceof DatastoreNode) {
+        if (node.node_config.port) {
+          node.parameters['PORT'] = node.node_config.port.toString();
         }
       }
     }
@@ -318,7 +325,7 @@ export default abstract class DependencyManager {
     }
 
     const env_service = this._environment.getServiceDetails(service_ref);
-    if (env_service?.getInterfaces() && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
+    if (env_service && Object.keys(env_service.getInterfaces()).length > 0 && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
       return this.loadExternalService(env_service, service_ref);
     }
 

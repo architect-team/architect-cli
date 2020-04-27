@@ -19,6 +19,7 @@ const verifyConfigField = async (key: string, value: string) => {
 };
 
 describe('config:set', function () {
+  this.timeout(15000);
 
   it('should fail for bad key', async () => {
     const spy = sinon.fake.returns(null);

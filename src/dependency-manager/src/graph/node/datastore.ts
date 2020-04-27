@@ -36,7 +36,7 @@ export class DatastoreNode extends DependencyNode {
   }
 
   get interfaces() {
-    return { _default: { host: this.node_config.host, port: this.node_config.port || 8080 } };
+    return { _default: { host: this.node_config.host, port: this.node_config.port } };
   }
 
   get parameters() {

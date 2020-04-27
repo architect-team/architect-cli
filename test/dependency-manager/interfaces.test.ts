@@ -19,7 +19,11 @@ describe('interfaces', function () {
 
     const checkout_json = {
       "name": "architect/checkout",
-      "port": 7000
+      "interfaces": {
+        "main": {
+          "port": 7000
+        }
+      }
     };
 
     const backend_json = {
@@ -49,12 +53,20 @@ describe('interfaces', function () {
           "default": {
             "valueFrom": {
               "dependency": "architect/checkout",
+              "interface": "main",
               "value": "$HOST:$PORT"
             }
           }
+        },
+        "HOST": {
+          "default": {
+            "valueFrom": {
+              "interface": "main",
+              "value": "$HOST"
+            }
+          }
         }
-      },
-      "port": 8888
+      }
     };
 
     const frontend_main_json = {
@@ -71,6 +83,11 @@ describe('interfaces', function () {
               "value": "$HOST:$PORT"
             }
           }
+        }
+      },
+      "interfaces": {
+        "main": {
+          "port": "8082"
         }
       }
     };
@@ -222,10 +239,9 @@ describe('interfaces', function () {
   it('correct compose port mappings', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-
     expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081', '50003:8082']);
-    expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8080']);
-    expect(compose.services['architect.frontend-secondary.latest'].ports).to.include.members(['50005:8080']);
+    expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8082']);
+    expect(compose.services['architect.frontend-secondary.latest'].ports).eql([]);
   });
 
   it('correct interface environment variables in compose', async () => {
