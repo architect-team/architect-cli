@@ -46,6 +46,6 @@ export default class LocalDependencyGraph extends DependencyGraph {
   nodes: DependencyNode[] = [];
 
   @TransformEdges('allow-shorthand')
-  @TransformNodes('transform-shorthand')
+  @TransformEdges('transform-shorthand')
   edges: DependencyEdge[] = [];
 }
