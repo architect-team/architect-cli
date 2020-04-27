@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Exclude, Transform, Type } from 'class-transformer/decorators';
-import { IsBoolean, IsEmpty, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
+import { Equals, IsBoolean, IsEmpty, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '../manager';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
@@ -94,17 +94,37 @@ class ServiceParameterV1 {
 }
 
 class LivenessProbeV1 {
+  @IsOptional()
+  @IsNumber()
   success_threshold?: number;
+
+  @IsOptional()
+  @IsNumber()
   failure_threshold?: number;
+
+  @IsOptional()
+  @IsString()
   timeout?: string;
+
+  @IsOptional()
+  @IsString()
   path?: string;
+
+  @IsOptional()
+  @IsString()
   interval?: string;
 }
 
 class ApiSpecV1 {
+  @Equals('rest')
   type = 'rest';
+
+  @IsOptional()
+  @IsString({ each: true })
   definitions?: string[];
-  @Transform(value => ({ path: '/', success_threshold: 1, failure_threshold: 1, timeout: '5s', interval: '30s', ...value }))
+
+  @Type(() => LivenessProbeV1)
+  @IsOptional()
   liveness_probe?: LivenessProbeV1;
 }
 
@@ -272,7 +292,19 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getApiSpec(): ServiceApiSpec {
-    return this.api || { type: 'rest' };
+    const res = this.api || { type: 'rest' };
+
+    // Add a default liveness probe
+    res.liveness_probe = {
+      path: '/',
+      success_threshold: 1,
+      failure_threshold: 1,
+      timeout: '5s',
+      interval: '30s',
+      ...res.liveness_probe,
+    };
+
+    return res;
   }
 
   getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
