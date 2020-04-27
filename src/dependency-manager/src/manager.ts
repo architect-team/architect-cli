@@ -185,8 +185,8 @@ export default abstract class DependencyManager {
               }
               const node_dependency_refs = {
                 ...node.node_config.getDependencies(),
-                [node.env_ref]: node.tag
-              }
+                [node.env_ref]: node.tag,
+              };
               if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
