@@ -77,4 +77,37 @@ describe('environment (v1 spec)', () => {
       expect(value).to.eql(new_vault);
     });
   });
+
+  describe('services', () => {
+    it('should get services defined as a dictionary', async () => {
+      const spec = {
+        services: {
+          'tests/test': {}
+        }
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
+      const services = parsedSpec.getServices();
+      expect(Object.keys(services).length).to.equal(1);
+      expect(services).to.have.key('tests/test');
+    });
+
+    it('should get services defined as dicitonary with nested overrides', async () => {
+      const spec = {
+        services: {
+          'tests/test': {
+            command: 'npm run dev'
+          }
+        }
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
+      const services = parsedSpec.getServices();
+      expect(Object.keys(services).length).to.equal(1);
+      expect(services).to.have.key('tests/test');
+
+      const service = services['tests/test'];
+      expect(service.getCommand()).to.equal(spec.services['tests/test'].command);
+    });
+  });
 });

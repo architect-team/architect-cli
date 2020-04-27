@@ -1,7 +1,8 @@
 import { plainToClass } from 'class-transformer';
 import { Exclude, Transform, Type } from 'class-transformer/decorators';
-import { Equals, IsBoolean, IsEmpty, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
+import { IsBoolean, IsEmpty, IsIn, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '../manager';
+import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
@@ -115,8 +116,8 @@ class LivenessProbeV1 {
   interval?: string;
 }
 
-class ApiSpecV1 {
-  @Equals('rest')
+class ApiSpecV1 extends BaseSpec {
+  @IsIn(['rest', 'grpc'])
   type = 'rest';
 
   @IsOptional()
@@ -126,18 +127,42 @@ class ApiSpecV1 {
   @Type(() => LivenessProbeV1)
   @IsOptional()
   liveness_probe?: LivenessProbeV1;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'liveness_probe', errors, options);
+    return errors;
+  }
 }
 
-class InterfaceSpecV1 {
+class InterfaceSpecV1 extends BaseSpec {
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
   host?: string;
+
+  @IsNumber()
   port!: number;
 }
 
-export class ServiceVolumeV1 {
+export class ServiceVolumeV1 extends BaseSpec {
+  @IsOptional()
+  @IsString()
   mount_path?: string;
+
+  @IsOptional()
+  @IsString()
   host_path?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
   readonly?: boolean;
 }
 
@@ -292,7 +317,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getApiSpec(): ServiceApiSpec {
-    const res = this.api || { type: 'rest' };
+    const res = this.api || { type: 'rest', liveness_probe: {} };
 
     // Add a default liveness probe
     res.liveness_probe = {
