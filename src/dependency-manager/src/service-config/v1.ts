@@ -18,6 +18,14 @@ function transformParameters(input: any) {
   return output;
 }
 
+function transformDependencies(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = plainToClass(ServiceConfigV1, value instanceof Object ? value : { ref: value });
+  }
+  return output;
+}
+
 function transformVolumes(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
@@ -107,6 +115,7 @@ interface IngressSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
+  ref?: string;
   name?: string;
   description?: string;
   keywords?: string[];
@@ -116,7 +125,8 @@ export class ServiceConfigV1 extends ServiceConfig {
   command?: string | string[];
   entrypoint?: string | string[];
   dockerfile?: string;
-  dependencies: { [s: string]: string } = {};
+  @Transform(value => (transformDependencies(value)))
+  dependencies: { [s: string]: ServiceConfigV1 } = {};
   language?: string;
   @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
   debug?: ServiceDebugOptionsV1;
@@ -149,6 +159,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     }, {});
   }
 
+  getRef(): string | undefined {
+    return this.ref;
+  }
+
   getName(): string {
     return this.name || '';
   }
@@ -177,12 +191,13 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies(): { [s: string]: string } {
+  getDependencies(): { [s: string]: ServiceConfig } {
     return this.dependencies || {};
   }
 
   addDependency(name: string, tag: string) {
-    this.dependencies[name] = tag;
+    this.dependencies[name] = new ServiceConfigV1();
+    this.dependencies[name].ref = tag;
   }
 
   removeDependency(dependency_name: string) {

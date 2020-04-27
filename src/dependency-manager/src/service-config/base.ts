@@ -78,13 +78,14 @@ export interface IngressSpec {
 
 export abstract class ServiceConfig {
   abstract __version: string;
+  abstract getRef(): string | undefined;
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
   abstract getCommand(): string | string[];
   abstract getEntrypoint(): string | string[];
   abstract getDockerfile(): string | undefined;
-  abstract getDependencies(): { [s: string]: string };
+  abstract getDependencies(): { [s: string]: ServiceConfig };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getApiSpec(): ServiceApiSpec;

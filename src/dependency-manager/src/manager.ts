@@ -168,26 +168,25 @@ export default abstract class DependencyManager {
       }
 
       if (node instanceof ServiceNode) {
+        const node_dependency_refs = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
+
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
             const value_from_param = param_value as ValueFromParameter;
             let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
-              param_target_service_name = `${param_target_service_name}:${node.node_config.getDependencies()[param_target_service_name]}`;
+              const dep_config = node.node_config.getDependencies()[param_target_service_name];
+              param_target_service_name = `${param_target_service_name}:${dep_config.getRef()}`;
             }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
             if (param_target_service_name && !param_target_datastore_name) {
-              const param_target_service = this.graph.getNodeByRef(param_target_service_name);
-              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in (param_target_service as ServiceNode).interfaces)) {
+              const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
+              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in param_target_service.interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
-              const node_dependency_refs = {
-                ...node.node_config.getDependencies(),
-                [node.env_ref]: node.tag,
-              };
-              if (!param_target_service || !node_dependency_refs[param_target_service.env_ref]) {
+              if (!param_target_service || !node_dependency_refs.has(param_target_service_name.split(':')[0])) {
                 throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
               }
 
@@ -308,7 +307,8 @@ export default abstract class DependencyManager {
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
     if (parent_node instanceof ExternalNode) { return; }
 
-    for (const [dep_name, dep_id] of Object.entries(parent_node.node_config.getDependencies())) {
+    for (const [dep_name, dep_config] of Object.entries(parent_node.node_config.getDependencies())) {
+      const dep_id = dep_config.getRef();
       const dep_node = await this.loadService(`${dep_name}:${dep_id}`, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
