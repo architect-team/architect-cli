@@ -186,7 +186,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional()
-  dependencies: { [s: string]: string } = {};
+  dependencies?: Dictionary<string>;
 
   @IsOptional()
   @IsString()
@@ -299,11 +299,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   addDependency(name: string, tag: string) {
+    this.dependencies = this.dependencies || {};
     this.dependencies[name] = tag;
   }
 
   removeDependency(dependency_name: string) {
-    delete this.dependencies[dependency_name];
+    if (this.dependencies) {
+      delete this.dependencies[dependency_name];
+    }
   }
 
   getParameters(): { [s: string]: ServiceParameter } {

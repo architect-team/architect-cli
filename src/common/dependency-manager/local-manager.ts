@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { readIfFile } from '../utils/file';
@@ -18,11 +18,7 @@ export default class LocalDependencyManager extends DependencyManager {
   config_path: string;
   linked_services: LinkedServicesMap;
 
-  constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
-    const env_config = config_path
-      ? EnvironmentConfigBuilder.buildFromPath(config_path)
-      : EnvironmentConfigBuilder.buildFromJSON({});
-
+  constructor(api: AxiosInstance, env_config: EnvironmentConfig = EnvironmentConfigBuilder.create(), config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
     // Only include in cli since it will read files off disk
     for (const vault of Object.values(env_config.getVaults())) {
       vault.client_token = readIfFile(vault.client_token);
@@ -39,7 +35,10 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
+    const env_config = env_config_path
+      ? await EnvironmentConfigBuilder.buildFromPath(env_config_path)
+      : EnvironmentConfigBuilder.create();
+    const dependency_manager = new LocalDependencyManager(api, env_config, env_config_path, linked_services, debug);
     for (const ref of Object.keys(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadService(ref);
       if (svc_node instanceof ServiceNode) {

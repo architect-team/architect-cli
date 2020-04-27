@@ -14,7 +14,7 @@ class MissingConfigFileError extends Error {
 }
 
 export class EnvironmentConfigBuilder {
-  static buildFromPath(config_path: string): EnvironmentConfig {
+  static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
     let file_contents;
 
     try {
@@ -43,8 +43,12 @@ export class EnvironmentConfigBuilder {
     throw new Error('Invalid file format. Must be json or yaml.');
   }
 
-  static buildFromJSON(obj: object): EnvironmentConfig {
-    return plainToClass(EnvironmentConfigV1, obj);
+  static async buildFromJSON(obj: object): Promise<EnvironmentConfig> {
+    const res = plainToClass(EnvironmentConfigV1, obj);
+    await res.validateOrReject({
+      groups: ['operator'],
+    });
+    return res;
   }
 
   static saveToPath(config_path: string, config: EnvironmentConfig) {
@@ -57,5 +61,9 @@ export class EnvironmentConfigBuilder {
     }
 
     throw new Error(`Cannot save config to invalid path: ${config_path}`);
+  }
+
+  static create() {
+    return new EnvironmentConfigV1();
   }
 }

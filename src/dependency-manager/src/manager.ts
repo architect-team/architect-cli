@@ -44,7 +44,7 @@ export default abstract class DependencyManager {
   protected vault_manager: VaultManager;
 
   constructor(environment_config?: EnvironmentConfig) {
-    this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this._environment = environment_config || EnvironmentConfigBuilder.create();
     this.vault_manager = new VaultManager(this._environment.getVaults());
     this.gateway_port = this.getServicePort(80);
   }

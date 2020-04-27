@@ -1,5 +1,7 @@
 import { ParameterValue } from '../manager';
 import { ServiceConfig } from '../service-config/base';
+import { BaseSpec } from '../utils/base-spec';
+import { Dictionary } from '../utils/dictionary';
 
 export interface EnvironmentParameters {
   [key: string]: ParameterValue;
@@ -18,12 +20,17 @@ export interface DnsConfig {
   searches?: string | string[];
 }
 
-export abstract class EnvironmentConfig {
+export abstract class EnvironmentConfig extends BaseSpec {
   abstract __version: string;
   abstract getParameters(): EnvironmentParameters;
-  abstract getVaults(): { [key: string]: EnvironmentVault };
+
+  abstract getVaults(): Dictionary<EnvironmentVault>;
+  abstract setVaults(vaults: Dictionary<EnvironmentVault>): void;
+
   abstract getServices(): { [key: string]: ServiceConfig };
+
   abstract getDnsConfig(): DnsConfig;
+  abstract setDnsConfig(dns: DnsConfig): void;
 
   getServiceDetails(key: string): ServiceConfig | undefined {
     const services = this.getServices();

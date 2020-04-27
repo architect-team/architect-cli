@@ -62,7 +62,9 @@ export class ServiceConfigBuilder {
 
   static async buildFromJSON(obj: object): Promise<ServiceConfig> {
     const res = plainToClass(ServiceConfigV1, obj);
-    await res.validateOrReject();
+    await res.validateOrReject({
+      groups: ['developer'],
+    });
     return res;
   }
 
