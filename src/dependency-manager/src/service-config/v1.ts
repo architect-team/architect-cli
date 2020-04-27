@@ -1,7 +1,10 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
+import { IsBoolean, IsEmpty, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '../manager';
+import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
+import { validateDictionary, validateNested } from '../utils/validation';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
 function transformParameters(input: any) {
@@ -34,10 +37,26 @@ function transformInterfaces(input: any) {
   return output;
 }
 
-interface ServiceNotificationsV1 {
-  [notification_name: string]: {
-    description: string;
-  };
+class DockerComposePlatformSpecV1 {
+  @IsOptional()
+  @IsBoolean()
+  privileged?: boolean;
+
+  @IsOptional()
+  @IsString()
+  stop_signal?: string;
+}
+
+class PlatformsSpecV1 {
+  @Type(() => DockerComposePlatformSpecV1)
+  @IsOptional()
+  @IsInstance(DockerComposePlatformSpecV1)
+  'docker-compose'?: DockerComposePlatformSpecV1;
+}
+
+class NotificationSpecV1 {
+  @IsString()
+  description!: string;
 }
 
 interface ServiceSubscriptionsV1 {
@@ -57,10 +76,20 @@ class ServiceDatastoreV1 {
   parameters: { [key: string]: ServiceParameterV1 } = {};
 }
 
-interface ServiceParameterV1 {
+class ServiceParameterV1 {
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
   default?: ParameterValue;
+
+  @IsOptional()
+  @IsBoolean()
   required?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   build_arg?: boolean;
 }
 
@@ -93,48 +122,136 @@ export class ServiceVolumeV1 {
 }
 
 class ServiceDebugOptionsV1 {
+  @IsOptional()
+  @IsString()
   path?: string;
+
+  @IsOptional()
+  @IsString()
   dockerfile?: string;
+
   @Transform(value => (transformVolumes(value)))
+  @IsOptional()
   volumes?: { [s: string]: ServiceVolumeV1 };
+
+  @IsOptional()
   command?: string | string[];
+
+  @IsOptional()
   entrypoint?: string | string[];
 }
 
-interface IngressSpecV1 {
-  subdomain: string;
+class IngressSpecV1 {
+  @IsEmpty({
+    groups: ['developer'],
+  })
+  @IsString()
+  subdomain!: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
+
+  @IsOptional()
+  @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString({ each: true })
   keywords?: string[];
+
+  @IsOptional()
+  @IsString()
   image?: string;
+
+  @IsOptional()
+  @IsString()
   host?: string;
+
+  @IsOptional()
+  @IsString()
   port?: string;
+
+  @IsOptional()
   command?: string | string[];
+
+  @IsOptional()
   entrypoint?: string | string[];
+
+  @IsOptional()
   dockerfile?: string;
+
+  @IsOptional()
   dependencies: { [s: string]: string } = {};
+
+  @IsOptional()
+  @IsString()
   language?: string;
-  @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
-  debug?: ServiceDebugOptionsV1;
+
+  @Transform(value =>
+    value instanceof Object
+      ? plainToClass(ServiceDebugOptionsV1, value)
+      : value,
+    { toClassOnly: true })
+  @IsOptional()
+  debug?: string | ServiceDebugOptionsV1;
+
   @Transform(value => (transformParameters(value)))
-  parameters: { [s: string]: ServiceParameterV1 } = {};
+  @IsOptional()
+  parameters?: { [s: string]: ServiceParameterV1 };
+
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
-  datastores: { [s: string]: ServiceDatastoreV1 } = {};
+  @IsOptional()
+  datastores?: { [s: string]: ServiceDatastoreV1 } = {};
+
   @Type(() => ApiSpecV1)
+  @IsOptional()
+  @IsInstance(ApiSpecV1)
   api?: ApiSpecV1;
+
   @Transform(value => (transformInterfaces(value)))
   interfaces: { [s: string]: InterfaceSpecV1 } = {};
-  notifications: ServiceNotificationsV1 = {};
-  subscriptions: ServiceSubscriptionsV1 = {};
-  platforms: { [s: string]: any } = {};
+
+  @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
+  @IsOptional()
+  notifications?: Dictionary<NotificationSpecV1>;
+
+  @IsOptional()
+  subscriptions?: ServiceSubscriptionsV1;
+
+  @Type(() => PlatformsSpecV1)
+  @IsOptional()
+  @IsInstance(PlatformsSpecV1)
+  platforms?: PlatformsSpecV1;
+
   @Transform(value => (transformVolumes(value)))
-  volumes: { [s: string]: ServiceVolumeV1 } = {};
+  @IsOptional()
+  volumes?: { [s: string]: ServiceVolumeV1 };
+
+  @Type(() => IngressSpecV1)
+  @IsOptional()
+  @IsInstance(IngressSpecV1)
   ingress?: IngressSpecV1;
+
+  @IsOptional()
+  @IsNumber()
   replicas?: number;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    if (this.debug instanceof ServiceDebugOptionsV1) {
+      errors = await validateNested(this, 'debug', errors, options);
+    }
+    errors = await validateNested(this, 'api', errors, options);
+    errors = await validateDictionary(this, 'notifications', errors, undefined, options);
+    errors = await validateNested(this, 'platforms', errors, options);
+    errors = await validateNested(this, 'ingress', errors, options);
+    return errors;
+  }
 
   private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
@@ -190,13 +307,13 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getParameters(): { [s: string]: ServiceParameter } {
-    return this.normalizeParameters(this.parameters);
+    return this.normalizeParameters(this.parameters || {});
   }
 
   getDatastores(): { [s: string]: ServiceDatastore } {
-    return Object.keys(this.datastores)
+    return Object.keys(this.datastores || {})
       .reduce((res: { [s: string]: ServiceDatastore }, key: string) => {
-        const ds_config = this.datastores[key];
+        const ds_config = (this.datastores || {})[key];
         if (ds_config.image) {
           if (!ds_config.port) {
             throw new Error('Missing datastore port which is required for provisioning');
@@ -214,13 +331,13 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getNotifications(): ServiceEventNotifications {
-    return this.notifications;
+    return this.notifications || {};
   }
 
   getSubscriptions(): ServiceEventSubscriptions {
-    return Object.keys(this.subscriptions)
+    return Object.keys(this.subscriptions || {})
       .reduce((res: ServiceEventSubscriptions, service_name: string) => {
-        const events = this.subscriptions[service_name];
+        const events = (this.subscriptions || {})[service_name];
         Object.keys(events).forEach(event_name => {
           if (!res[service_name]) {
             res[service_name] = {};
@@ -239,7 +356,23 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getDebugOptions(): ServiceDebugOptions | undefined {
-    return this.debug;
+    if (this.debug instanceof ServiceDebugOptionsV1) {
+      return this.debug;
+    } else if (this.debug) {
+      return {
+        command: this.debug,
+      };
+    }
+
+    return undefined;
+  }
+
+  setDebugOptions(debug?: ServiceDebugOptions) {
+    if (!this.debug) {
+      delete this.debug;
+    } else {
+      this.debug = plainToClass(ServiceDebugOptionsV1, debug);
+    }
   }
 
   getLanguage(): string {
@@ -250,8 +383,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.language;
   }
 
-  getPlatforms(): { [s: string]: any } {
-    return this.platforms;
+  getPlatforms(): Dictionary<any> {
+    return this.platforms || {};
   }
 
   getPort(): number | undefined {
@@ -259,7 +392,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getVolumes(): { [s: string]: VolumeSpec } {
-    return Object.entries(this.volumes).reduce((volumes, [key, entry]) => {
+    return Object.entries(this.volumes || {}).reduce((volumes, [key, entry]) => {
       if (entry.readonly !== true && entry.readonly !== false) {
         // Set readonly to false by default
         entry.readonly = false;

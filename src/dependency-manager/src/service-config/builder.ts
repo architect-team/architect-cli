@@ -24,7 +24,7 @@ export class ServiceConfigBuilder {
     ];
   }
 
-  static buildFromPath(input: string): ServiceConfig {
+  static async buildFromPath(input: string): Promise<ServiceConfig> {
     const try_files = ServiceConfigBuilder.getConfigPaths(input);
 
     // Make sure the file exists
@@ -60,8 +60,10 @@ export class ServiceConfigBuilder {
     throw new Error('Invalid file format. Must be json or yaml.');
   }
 
-  static buildFromJSON(obj: object): ServiceConfig {
-    return plainToClass(ServiceConfigV1, obj);
+  static async buildFromJSON(obj: object): Promise<ServiceConfig> {
+    const res = plainToClass(ServiceConfigV1, obj);
+    await res.validateOrReject();
+    return res;
   }
 
   static saveToPath(input: string, config: ServiceConfig) {

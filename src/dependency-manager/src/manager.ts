@@ -49,7 +49,7 @@ export default abstract class DependencyManager {
     this.gateway_port = this.getServicePort(80);
   }
 
-  getNodeConfig(service_config: ServiceConfig, tag: string) {
+  async getNodeConfig(service_config: ServiceConfig, tag: string) {
     // Merge in global parameters
     const global_overrides: any = {
       parameters: {},
@@ -71,7 +71,7 @@ export default abstract class DependencyManager {
         }
       }
     }
-    let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
+    let node_config = service_config.merge(await ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
 
     // Merge in service overrides in the environment
     const env_service = this._environment.getServiceDetails(`${service_config.getName()}:${tag}`) || this._environment.getServiceDetails(service_config.getName());
@@ -82,7 +82,7 @@ export default abstract class DependencyManager {
     // If debug is enabled merge in debug options ex. debug.command -> command
     const debug_options = node_config.getDebugOptions();
     if (this.debug && debug_options) {
-      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+      node_config = node_config.merge(await ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
     }
     return node_config;
   }

@@ -1,5 +1,7 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
+import deepmerge from 'deepmerge';
 import { ParameterValue } from '../manager';
+import { BaseSpec } from '../utils/base-spec';
 
 interface RestSubscriptionData {
   uri: string;
@@ -76,7 +78,7 @@ export interface IngressSpec {
   subdomain: string;
 }
 
-export abstract class ServiceConfig {
+export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
   abstract getName(): string;
   abstract getLanguage(): string;
@@ -92,6 +94,7 @@ export abstract class ServiceConfig {
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract setDebugOptions(debug?: ServiceDebugOptions): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
@@ -105,6 +108,7 @@ export abstract class ServiceConfig {
   }
 
   merge(other_config: ServiceConfig): ServiceConfig {
+    this.setDebugOptions(deepmerge(this.getDebugOptions() || {}, other_config.getDebugOptions() || {}));
     return plainToClassFromExist(this, other_config);
   }
 }

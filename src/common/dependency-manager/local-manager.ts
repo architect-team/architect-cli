@@ -64,13 +64,13 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
 
     const lstat = fs.lstatSync(service_path);
     const node = new LocalServiceNode({
       service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
       service_config,
-      node_config: this.getNodeConfig(service_config, 'latest'),
+      node_config: await this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
       tag: 'latest',
     });
@@ -97,10 +97,10 @@ export default class LocalDependencyManager extends DependencyManager {
       const [account_name, svc_name] = service_name.split('/');
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
-      const service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+      const service_config = await ServiceConfigBuilder.buildFromJSON(service_digest.config);
       service_node = new ServiceNode({
         service_config: service_config,
-        node_config: this.getNodeConfig(service_config, service_digest.tag),
+        node_config: await this.getNodeConfig(service_config, service_digest.tag),
         tag: service_digest.tag,
         image: service_digest.service.url.replace(/(^\w+:|^)\/\//, ''),
         digest: service_digest.digest,
