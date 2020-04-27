@@ -1,5 +1,5 @@
 import { plainToClass } from 'class-transformer';
-import { Transform, Type } from 'class-transformer/decorators';
+import { Exclude, Transform, Type } from 'class-transformer/decorators';
 import { IsBoolean, IsEmpty, IsInstance, IsNumber, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '../manager';
 import { Dictionary } from '../utils/dictionary';
@@ -150,6 +150,7 @@ class IngressSpecV1 {
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
+  @Exclude({ toPlainOnly: true })
   __version = '1.0.0';
 
   @IsOptional()

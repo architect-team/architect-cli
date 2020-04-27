@@ -1,7 +1,7 @@
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceConfig } from '../../service-config/base';
-import { ServiceConfigV1 } from '../../service-config/v1';
+import { ServiceConfigBuilder } from '../../service-config/builder';
 
 export interface ServiceNodeOptions {
   image: string;
@@ -17,26 +17,11 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   image!: string;
   tag!: string;
   digest?: string;
-  @Type(() => ServiceConfig, {
-    discriminator: {
-      property: '__version',
-      subTypes: [
-        { value: ServiceConfigV1, name: '1.0.0' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+
+  @Transform(value => ServiceConfigBuilder.buildFromJSON(value), { toClassOnly: true })
   service_config!: ServiceConfig;
 
-  @Type(() => ServiceConfig, {
-    discriminator: {
-      property: '__version',
-      subTypes: [
-        { value: ServiceConfigV1, name: '1.0.0' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+  @Transform(value => ServiceConfigBuilder.buildFromJSON(value), { toClassOnly: true })
   node_config!: ServiceConfig;
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {

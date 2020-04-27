@@ -79,4 +79,8 @@ export class ServiceConfigBuilder {
 
     throw new Error(`Cannot save config to invalid path: ${input}`);
   }
+
+  static create(): ServiceConfig {
+    return new ServiceConfigV1();
+  }
 }

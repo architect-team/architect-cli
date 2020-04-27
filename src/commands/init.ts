@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import path from 'path';
@@ -247,7 +248,9 @@ export default class Init extends Command {
       }, {});
     }
 
-    return ServiceConfigBuilder.buildFromJSON(config);
+    const res = ServiceConfigBuilder.buildFromJSON(config);
+    await res.validateOrReject();
+    return res;
   }
 
   async run() {
@@ -257,8 +260,7 @@ export default class Init extends Command {
 
     let savePath = flags.output ? path.resolve(flags.output) : process.cwd();
     savePath = path.join(savePath, ARCHITECTPATHS.SERVICE_CONFIG_FILENAME);
-    delete config.__version;
-    const configJson = JSON.stringify(config, null, 2);
+    const configJson = classToPlain(config);
     fs.writeFileSync(savePath, configJson);
     this.log(chalk.green('Success! A manifest for this service has been added at `architect.json`.'));
   }

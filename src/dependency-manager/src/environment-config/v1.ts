@@ -1,5 +1,5 @@
 import { plainToClass } from 'class-transformer';
-import { Transform, Type } from 'class-transformer/decorators';
+import { Exclude, Transform, Type } from 'class-transformer/decorators';
 import { IsInstance, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ServiceConfig } from '../service-config/base';
 import { ServiceConfigBuilder } from '../service-config/builder';
@@ -38,6 +38,7 @@ class DnsConfigSpecV1 {
 }
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
+  @Exclude({ toPlainOnly: true })
   __version = '1.0.0';
 
   @IsOptional()
