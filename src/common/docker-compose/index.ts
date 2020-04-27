@@ -52,7 +52,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         image: node.image ? node.image : undefined,
         ports,
         depends_on: [],
-        environment: node.parameters,
+        environment: {
+          ...node.parameters,
+          HOST: node.normalized_ref,
+          PORT: node.ports[0] && node.ports[0].toString(),
+        },
       };
     }
 
@@ -142,7 +146,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       const service_to = compose.services[node_to.normalized_ref];
       service_to.environment = service_to.environment || {};
       service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
-      service_to.environment.VIRTUAL_PORT = service_to.ports[0].split(':')[0];
+      service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
     } else if (edge instanceof ServiceEdge) {
