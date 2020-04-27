@@ -43,7 +43,13 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @IsOptional()
   parameters?: EnvironmentParameters;
 
-  @Transform(Dict(() => ServiceConfigV1), { toClassOnly: true })
+  @Transform((services: Dictionary<Record<string, any>>) => {
+    const newServices = {} as Dictionary<ServiceConfig>;
+    for (const [key, value] of Object.entries(services)) {
+      newServices[key] = plainToClass(ServiceConfigV1, value);
+    }
+    return newServices;
+  }, { toClassOnly: true })
   @IsOptional()
   protected services?: Dictionary<ServiceConfig>;
 

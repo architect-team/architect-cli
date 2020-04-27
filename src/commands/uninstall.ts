@@ -31,7 +31,8 @@ export default class Uninstall extends Command {
       service_path = flags.service;
     }
 
-    const config = await ServiceConfigBuilder.buildFromPath(service_path);
+    const config = ServiceConfigBuilder.buildFromPath(service_path);
+    await config.validateOrReject();
     if (Object.keys(config.getDependencies()).includes(args.dependency_name)) {
       config.removeDependency(args.dependency_name);
       ServiceConfigBuilder.saveToPath(service_path, config);

@@ -36,7 +36,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
     const env_config = env_config_path
-      ? await EnvironmentConfigBuilder.buildFromPath(env_config_path)
+      ? EnvironmentConfigBuilder.buildFromPath(env_config_path)
       : EnvironmentConfigBuilder.create();
     const dependency_manager = new LocalDependencyManager(api, env_config, env_config_path, linked_services, debug);
     for (const ref of Object.keys(dependency_manager._environment.getServices())) {
