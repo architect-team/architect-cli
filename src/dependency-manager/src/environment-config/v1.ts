@@ -2,7 +2,7 @@ import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { IsInstance, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { ServiceConfig } from '../service-config/base';
-import { ServiceConfigV1 } from '../service-config/v1';
+import { ServiceConfigBuilder } from '../service-config/builder';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
@@ -46,7 +46,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @Transform((services: Dictionary<Record<string, any>>) => {
     const newServices = {} as Dictionary<ServiceConfig>;
     for (const [key, value] of Object.entries(services)) {
-      newServices[key] = plainToClass(ServiceConfigV1, value);
+      newServices[key] = ServiceConfigBuilder.buildFromJSON(value);
     }
     return newServices;
   }, { toClassOnly: true })
