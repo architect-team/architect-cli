@@ -314,6 +314,110 @@ describe('dependencies', function () {
       // TODO: scope ref
       expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/service1:latest.postgres/postgres:11', 'service.architect/service2:latest.postgres/postgres:12'])
     });
+
+    it('two services that use the same inline postgres db X2', async () => {
+      const service_config1 = {
+        name: 'architect/service1',
+        dependencies: {
+          'postgres/postgres': {
+            image: 'postgres:11',
+            parameters: {
+              POSTGRES_DB: 'shared'
+            }
+          }
+        }
+      };
+
+      const service_config2 = {
+        name: 'architect/service2',
+        dependencies: {
+          'postgres/postgres': {
+            image: 'postgres:11',
+            parameters: {
+              POSTGRES_DB: 'shared'
+            }
+          }
+        }
+      };
+
+      const service_config3 = {
+        name: 'architect/service3',
+        dependencies: {
+          'postgres/postgres': {
+            image: 'postgres:12',
+            parameters: {
+              POSTGRES_DB: 'shared'
+            }
+          }
+        }
+      };
+
+      const service_config4 = {
+        name: 'architect/service4',
+        dependencies: {
+          'postgres/postgres': {
+            image: 'postgres:12',
+            parameters: {
+              POSTGRES_DB: 'shared'
+            }
+          }
+        }
+      };
+
+      const env_config = {
+        services: {
+          'architect/service1': {
+            debug: {
+              path: './src/service1'
+            }
+          },
+          'architect/service2': {
+            debug: {
+              path: './src/service2'
+            }
+          },
+          'architect/service3': {
+            debug: {
+              path: './src/service3'
+            }
+          },
+          'architect/service4': {
+            debug: {
+              path: './src/service4'
+            }
+          },
+        }
+      };
+
+      mock_fs({
+        '/stack/src/service1/architect.json': JSON.stringify(service_config1),
+        '/stack/src/service2/architect.json': JSON.stringify(service_config2),
+        '/stack/src/service3/architect.json': JSON.stringify(service_config3),
+        '/stack/src/service4/architect.json': JSON.stringify(service_config4),
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(6);
+      // TODO: scope ref
+      expect(graph.nodes.map((node) => node.ref)).members([
+        'architect/service1:latest',
+        'architect/service2:latest',
+        'architect/service3:latest',
+        'architect/service4:latest',
+        'TODO1-postgres/postgres:latest',
+        'TODO2-postgres/postgres:latest'
+      ])
+      expect(graph.edges).length(4);
+      // TODO: scope ref
+      expect(graph.edges.map((edge) => edge.ref)).members([
+        'service.architect/service1:latest.postgres/postgres:latest',
+        'service.architect/service2:latest.postgres/postgres:latest',
+        'service.architect/service3:latest.postgres/postgres:latest',
+        'service.architect/service4:latest.postgres/postgres:latest'
+      ])
+    });
   });
 
 
