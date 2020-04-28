@@ -1,5 +1,6 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { ParameterValue } from '../manager';
+import { BaseSpec } from '../utils/base-spec';
 
 interface RestSubscriptionData {
   uri: string;
@@ -31,7 +32,7 @@ export interface ServiceEventNotifications {
 export interface ServiceEventSubscriptions {
   [service_ref: string]: {
     [event_name: string]: {
-      type: 'rest';
+      type: string;
       data: RestSubscriptionData;
     };
   };
@@ -76,7 +77,7 @@ export interface IngressSpec {
   subdomain: string;
 }
 
-export abstract class ServiceConfig {
+export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
   abstract getName(): string;
   abstract getLanguage(): string;
