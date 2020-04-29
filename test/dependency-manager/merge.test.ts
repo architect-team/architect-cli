@@ -115,8 +115,8 @@ describe('service config merge', function () {
     expect(node_config.getName()).eq('foo/service');
 
     expect(node_config.getDependencies()).keys('override', 'no_override');
-    expect(node_config.getDependencies()['override']).eq('new');
-    expect(node_config.getDependencies()['no_override']).eq('old');
+    expect(node_config.getDependencies()['override'].getRef()).eq('override:new');
+    expect(node_config.getDependencies()['no_override'].getRef()).eq('no_override:old');
 
     expect(node_config.getParameters()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
     expect(node_config.getParameters()['override'].default).eq('new');

@@ -22,21 +22,21 @@ interface DnsConfigSpec {
 function transformServices(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    const [name, ref] = key.split(':');
+    const [name, ext] = key.split(':');
     let config;
     if (value instanceof Object) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      if (ref && !value.ref) {
+      if (ext && !value.extends) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore
-        value.ref = ref;
+        value.extends = ext;
       }
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      config = { private: !value.ref, ...value, name };
+      config = { private: !value.extends, ...value, name };
     } else {
-      config = { ref: value, name };
+      config = { extends: value, name };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);

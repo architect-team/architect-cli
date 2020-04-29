@@ -23,11 +23,9 @@ function transformDependencies(input: any) {
   for (const [key, value] of Object.entries(input)) {
     let config;
     if (value instanceof Object) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      config = { private: !value.ref, ...value, name: key };
+      config = { private: true, ...value, name: key };
     } else {
-      config = { ref: value, name: key };
+      config = { extends: value, name: key, private: false };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
@@ -124,7 +122,8 @@ interface IngressSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
-  ref?: string;
+  extends?: string;
+  parent_ref?: string;
   private?: boolean;
   name?: string;
   description?: string;
@@ -169,10 +168,24 @@ export class ServiceConfigV1 extends ServiceConfig {
     }, {});
   }
 
-  getRef(): string | undefined {
-    if (this.ref) {
-      return this.ref.includes(':') ? this.ref : `${this.getName()}:${this.ref}`;
+  getExtends() {
+    if (this.extends) {
+      return this.extends.includes(':') ? this.extends : `${this.getName()}:${this.extends}`;
     }
+  }
+
+  getRef() {
+    const tag = this.extends && this.extends.includes(':') ? 'latest' : this.extends || 'latest';
+    const ref = `${this.getName()}:${tag}`;
+    return this.parent_ref ? `${this.parent_ref}.${ref}` : ref;
+  }
+
+  setParentRef(ref: string) {
+    this.parent_ref = ref;
+  }
+
+  getParentRef() {
+    return this.parent_ref;
   }
 
   getPrivate(): boolean {
@@ -207,13 +220,13 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies(): { [s: string]: ServiceConfig } {
-    return this.dependencies || {};
+  getDependencies() {
+    return this.dependencies;
   }
 
   addDependency(name: string, tag: string) {
     this.dependencies[name] = new ServiceConfigV1();
-    this.dependencies[name].ref = tag;
+    this.dependencies[name].extends = tag;
   }
 
   removeDependency(dependency_name: string) {

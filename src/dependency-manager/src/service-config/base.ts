@@ -78,7 +78,10 @@ export interface IngressSpec {
 
 export abstract class ServiceConfig {
   abstract __version: string;
-  abstract getRef(): string | undefined;
+  abstract getExtends(): string | undefined;
+  abstract getRef(): string;
+  abstract setParentRef(ref: string): void;
+  abstract getParentRef(): string | undefined;
   abstract getPrivate(): boolean;
   abstract getName(): string;
   abstract getLanguage(): string;

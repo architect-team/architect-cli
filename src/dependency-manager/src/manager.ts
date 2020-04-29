@@ -170,7 +170,7 @@ export default abstract class DependencyManager {
       }
 
       if (node instanceof ServiceNode) {
-        const node_dependency_refs = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
+        const node_dependency_names = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
 
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
@@ -179,7 +179,7 @@ export default abstract class DependencyManager {
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
               const dep_config = node.node_config.getDependencies()[param_target_service_name];
-              param_target_service_name = `${param_target_service_name}:${dep_config.getRef()}`;
+              param_target_service_name = dep_config.getRef();
             }
             const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
 
@@ -188,8 +188,8 @@ export default abstract class DependencyManager {
               if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in param_target_service.interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
-              if (!param_target_service || !node_dependency_refs.has(param_target_service_name.split(':')[0])) {
-                throw new Error(`Service ${param_target_service_name} not found for config of ${node.env_ref}`);
+              if (!param_target_service || !node_dependency_names.has(param_target_service.node_config.getName())) {
+                throw new Error(`Service ${param_target_service_name} not found for config of ${node.ref}`);
               }
 
               if (value_from_param.valueFrom.interface && Object.keys(param_target_service.interfaces).length > 1) {
@@ -203,7 +203,7 @@ export default abstract class DependencyManager {
               const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
               const datastore_names = Object.keys(node.node_config.getDatastores());
               if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
-                throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.env_ref}`);
+                throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.ref}`);
               }
               env_params_to_expand[this.scopeEnv(node, param_name, param_target_datastore_name)] =
                 param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(node, param_target_datastore_name)}_`);
@@ -310,6 +310,9 @@ export default abstract class DependencyManager {
     if (parent_node instanceof ExternalNode) { return; }
 
     for (const dep_config of Object.values(parent_node.node_config.getDependencies())) {
+      if (dep_config.getPrivate()) {
+        dep_config.setParentRef(parent_node.ref);
+      }
       const dep_node = await this.loadServiceFromConfig(dep_config, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
@@ -318,21 +321,18 @@ export default abstract class DependencyManager {
   }
 
   async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode | ExternalNode> {
-    const service_ref = config.getRef();
-    if (service_ref) {
-      /*
-      // TODO: Handle matching inline dependency ref
-      const existing_node = this.graph.nodes_map.get(service_ref);
-      if (existing_node) {
-        return existing_node as ServiceNode | ExternalNode;
-      }
-      */
+    const env_service = this._environment.getServiceDetails(config.getRef());
+    if (env_service) {
+      config = config.merge(env_service);
+    }
 
-      // TODO: Add tests for inline external dependencies
-      const env_service = this._environment.getServiceDetails(service_ref);
-      if (env_service && Object.keys(env_service.getInterfaces()).length > 0 && Object.values(env_service?.getInterfaces()).every((i) => (i.host))) {
-        return this.loadExternalService(env_service, service_ref);
-      }
+    const service_ref = config.getRef();
+    const existing_node = this.graph.nodes_map.get(service_ref);
+    if (existing_node) {
+      return existing_node as ServiceNode | ExternalNode;
+    }
+    if (Object.keys(config.getInterfaces()).length > 0 && Object.values(config?.getInterfaces()).every((i) => (i.host))) {
+      return this.loadExternalService(config, service_ref);
     }
 
     const service_node = await this.loadServiceNode(config);
@@ -367,17 +367,6 @@ export default abstract class DependencyManager {
           throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
         }
       }
-
-      try {
-        const env_config_interfaces = Object.keys(interfaces);
-        const expected_interfaces = Object.keys((await this.loadServiceConfig(service_ref)).getInterfaces());
-        const union = new Set([...expected_interfaces, ...env_config_interfaces]);
-        if (union.size !== expected_interfaces.length || env_config_interfaces.length !== expected_interfaces.length) {
-          throw new Error(`All or no service interfaces for service ${service_ref} should be overridden in the environment config.`);
-        }
-      } catch (err) {
-        console.log(`Warning: Failed to find config for external service ${service_ref}`);
-      }
     }
 
     const node = new ExternalNode({
@@ -387,6 +376,4 @@ export default abstract class DependencyManager {
     this.graph.addNode(node);
     return node;
   }
-
-  abstract async loadServiceConfig(node_ref: string): Promise<ServiceConfig>;
 }

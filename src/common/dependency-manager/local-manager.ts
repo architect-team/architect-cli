@@ -84,13 +84,8 @@ export default class LocalDependencyManager extends DependencyManager {
     let image = initial_config.getImage();
     let digest;
 
-    const service_ref = initial_config.getRef();
-    if (service_ref) {
-      service_tag = service_ref.split(':')[1];
-    }
-
-    const debug_path = this.getNodeConfig(initial_config, service_tag)?.getDebugOptions()?.path;
-    const service_name = initial_config.getName();
+    const debug_path = initial_config.getDebugOptions()?.path;
+    let service_name = initial_config.getName();
     if (debug_path) {
       const svc_path = path.join(path.dirname(this.config_path), debug_path);
       return await this.loadLocalService(svc_path);
@@ -99,8 +94,9 @@ export default class LocalDependencyManager extends DependencyManager {
       return await this.loadLocalService(this.linked_services[service_name]);
     }
 
-    if (service_ref) {
-      const [service_name, service_tag] = service_ref.split(':');
+    const service_extends = initial_config.getExtends();
+    if (service_extends) {
+      [service_name, service_tag] = service_extends.split(':');
       const [account_name, svc_name] = service_name.split('/');
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
@@ -127,20 +123,6 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     await super.loadParameters();
-  }
-
-  /**
-  * @override
-  */
-  async loadServiceConfig(node_ref: string) {
-    const debug_path = this._environment.getServiceDetails(node_ref)?.getDebugOptions()?.path;
-    if (debug_path) {
-      return ServiceConfigBuilder.buildFromPath(path.join(path.dirname(this.config_path), debug_path));
-    } else {
-      const [account_name, service_name, service_tag] = node_ref.split(/\/|:/);
-      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${service_name}/versions/${service_tag}`);
-      return ServiceConfigBuilder.buildFromJSON(service_digest.config);
-    }
   }
 
   toExternalHost(node: DependencyNode) {

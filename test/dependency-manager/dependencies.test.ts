@@ -246,7 +246,7 @@ describe('dependencies', function () {
       expect(graph.edges).length(2);
     });
 
-    it('two services that use the same inline postgres db', async () => {
+    it('two services that use the same inline postgres db, but inline is private so we create two dbs', async () => {
       const service_config1 = {
         name: 'architect/service1',
         dependencies: {
@@ -294,96 +294,8 @@ describe('dependencies', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
-      expect(graph.nodes).length(3);
+      expect(graph.nodes).length(4);
       expect(graph.edges).length(2);
-    });
-
-    it('two services that use the same inline postgres db X2', async () => {
-      const service_config1 = {
-        name: 'architect/service1',
-        dependencies: {
-          'postgres/postgres': {
-            image: 'postgres:11',
-            parameters: {
-              POSTGRES_DB: 'shared'
-            }
-          }
-        }
-      };
-
-      const service_config2 = {
-        name: 'architect/service2',
-        dependencies: {
-          'postgres/postgres': {
-            image: 'postgres:11',
-            parameters: {
-              POSTGRES_DB: 'shared'
-            }
-          }
-        }
-      };
-
-      const service_config3 = {
-        name: 'architect/service3',
-        dependencies: {
-          'postgres/postgres': {
-            image: 'postgres:12',
-            parameters: {
-              POSTGRES_DB: 'shared'
-            }
-          }
-        }
-      };
-
-      const service_config4 = {
-        name: 'architect/service4',
-        dependencies: {
-          'postgres/postgres': {
-            image: 'postgres:12',
-            parameters: {
-              POSTGRES_DB: 'shared'
-            }
-          }
-        }
-      };
-
-      const env_config = {
-        services: {
-          'architect/service1': {
-            debug: {
-              path: './src/service1'
-            }
-          },
-          'architect/service2': {
-            debug: {
-              path: './src/service2'
-            }
-          },
-          'architect/service3': {
-            debug: {
-              path: './src/service3'
-            }
-          },
-          'architect/service4': {
-            debug: {
-              path: './src/service4'
-            }
-          },
-        }
-      };
-
-      mock_fs({
-        '/stack/src/service1/architect.json': JSON.stringify(service_config1),
-        '/stack/src/service2/architect.json': JSON.stringify(service_config2),
-        '/stack/src/service3/architect.json': JSON.stringify(service_config3),
-        '/stack/src/service4/architect.json': JSON.stringify(service_config4),
-        '/stack/arc.env.json': JSON.stringify(env_config),
-      });
-
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
-      const graph = manager.graph;
-      expect(graph.nodes).length(6);
-      expect(graph.edges).length(4);
     });
   });
 
@@ -420,6 +332,8 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(2);
+      expect(graph.nodes[0].ref).eq('architect/backend:latest');
+      expect(graph.nodes[1].ref).eq('db:latest');
       expect(graph.edges).length(1);
     });
 
