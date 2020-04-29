@@ -66,13 +66,15 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
     const lstat = fs.lstatSync(service_path);
-    return new LocalServiceNode({
+    const node = new LocalServiceNode({
       service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
       service_config,
       node_config: this.getNodeConfig(service_config, 'latest'),
       image: service_config.getImage(),
       tag: 'latest',
     });
+    this.graph.addNode(node);
+    return node;
   }
 
   /**
