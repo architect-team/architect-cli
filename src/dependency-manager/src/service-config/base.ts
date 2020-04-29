@@ -1,6 +1,27 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { ParameterValue } from '../manager';
 import { BaseSpec } from '../utils/base-spec';
+
+export interface VaultParameter {
+  vault: string;
+  key: string;
+}
+
+export interface DependencyParameter {
+  dependency: string;
+  value: string;
+  interface?: string;
+}
+
+export interface DatastoreParameter {
+  datastore: string;
+  value: string;
+}
+
+export interface ValueFromParameter<T> {
+  valueFrom: T;
+}
+
+export type ParameterValue = string | number | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
 
 interface RestSubscriptionData {
   uri: string;

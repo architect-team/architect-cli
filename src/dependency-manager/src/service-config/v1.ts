@@ -1,24 +1,33 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
-import { ParameterValue } from '../manager';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
+import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
-const transformParameters = (input?: Dictionary<any>): Dictionary<ServiceParameterV1> | undefined => {
+const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
     return undefined;
   }
 
-  const output: Dictionary<ServiceParameterV1> = {};
+  const output: Dictionary<ParameterDefinitionSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    if (value instanceof Object && !value.valueFrom) {
-      output[key] = plainToClass(ServiceParameterV1, value);
+    if (typeof value === 'object') {
+      if (value.value_from || value.valueFrom) {
+        value.valueFrom = value.valueFrom || value.value_from;
+        value.default = value.default || { valueFrom: value.valueFrom };
+        delete value.valueFrom;
+        delete value.value_from;
+      }
+
+      output[key] = plainToClass(ParameterDefinitionSpecV1, value);
     } else {
-      output[key] = plainToClass(ServiceParameterV1, { default: value });
+      output[key] = plainToClass(ParameterDefinitionSpecV1, {
+        default: value,
+      });
     }
   }
   return output;
@@ -97,24 +106,13 @@ class ServiceDatastoreV1 extends BaseSpec {
 
   @Transform(value => (transformParameters(value)))
   @IsOptional()
-  parameters?: Dictionary<ServiceParameterV1>;
-}
+  parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
-class ServiceParameterV1 extends BaseSpec {
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  default?: ParameterValue;
-
-  @IsOptional()
-  @IsBoolean()
-  required?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  build_arg?: boolean;
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    return errors;
+  }
 }
 
 class LivenessProbeV1 extends BaseSpec {
@@ -216,7 +214,7 @@ class ServiceDebugOptionsV1 extends BaseSpec {
 
   @Transform(value => (transformVolumes(value)))
   @IsOptional()
-  volumes?: { [s: string]: ServiceVolumeV1 };
+  volumes?: Dictionary<ServiceVolumeV1>;
 
   @IsOptional()
   command?: string | string[];
@@ -250,11 +248,12 @@ export class ServiceConfigV1 extends ServiceConfig {
     groups: ['operator'],
   })
   @IsString()
-  @Matches(/[a-zA-Z0-9-_]+/, {
+  @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+/, {
+  @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
+    groups: ['developer'],
   })
   name?: string;
 
@@ -289,7 +288,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional()
-  dependencies?: { [s: string]: string };
+  dependencies?: Dictionary<string>;
 
   @IsOptional()
   @IsString()
@@ -305,7 +304,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(value => (transformParameters(value)))
   @IsOptional()
-  parameters?: { [s: string]: ServiceParameterV1 };
+  parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional()
@@ -361,7 +360,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsNumber()
   replicas?: number;
 
-  private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
+  private normalizeParameters(parameters: Dictionary<ParameterDefinitionSpecV1>): Dictionary<ServiceParameter> {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
       const param = parameters[key];
       res[key] = {
@@ -379,6 +378,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     errors = await validateNested(this, 'debug', errors, options);
     errors = await validateNested(this, 'ingress', errors, options);
     errors = await validateDictionary(this, 'volumes', errors, undefined, options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    errors = await validateDictionary(this, 'datastores', errors, undefined, options);
     return errors;
   }
 
@@ -434,7 +435,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
   }
 
-  getParameters(): { [s: string]: ServiceParameter } {
+  getParameters(): Dictionary<ServiceParameter> {
     return this.normalizeParameters(this.parameters || {});
   }
 
