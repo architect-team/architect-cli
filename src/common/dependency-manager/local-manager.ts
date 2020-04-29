@@ -103,6 +103,7 @@ export default class LocalDependencyManager extends DependencyManager {
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
 
       service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+      service_config.merge(initial_config);
       image = service_digest.service.url.replace(/(^\w+:|^)\/\//, '');
       digest = service_digest.digest;
     }
@@ -110,7 +111,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return new ServiceNode({
       service_config: service_config,
       // Allow for inline overrides of services in dependencies/env
-      node_config: this.getNodeConfig(service_config.merge(initial_config), service_tag),
+      node_config: this.getNodeConfig(service_config, service_tag),
       tag: service_tag,
       image: image,
       digest: digest,

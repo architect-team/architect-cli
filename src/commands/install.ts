@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { classToClass } from 'class-transformer';
+import { classToClass, plainToClass } from 'class-transformer';
 import cli from 'cli-ux';
 import crypto from 'crypto';
 import execa from 'execa';
@@ -14,6 +14,7 @@ import { LocalServiceNode } from '../common/dependency-manager/local-service-nod
 import MissingContextError from '../common/errors/missing-build-context';
 import { getServiceApiDefinitionContents, parseImageLabel } from '../common/utils/docker';
 import { ServiceConfigBuilder, ServiceNode } from '../dependency-manager/src';
+import { ServiceConfigV1 } from '../dependency-manager/src/service-config/v1';
 import ARCHITECTPATHS from '../paths';
 
 export default class Install extends Command {
@@ -200,7 +201,9 @@ export default class Install extends Command {
           cli.action.start(chalk.grey(`-- Installing ${service_name} as dependency of ${config.getName()}`), undefined, { stdout: true });
           config.addDependency(service_name, service_tag);
           ServiceConfigBuilder.saveToPath(node.service_path, config);
-          const dep_node = await dependency_manager.loadService(`${service_name}:${service_tag}`);
+
+          // Hack to remove loadService from dependency manager
+          const dep_node = await dependency_manager.loadServiceFromConfig(plainToClass(ServiceConfigV1, { extends: `${service_name}:${service_tag}` }));
           if (dep_node instanceof ServiceNode) {
             this.genClientCode(node, dep_node);
           }

@@ -1,4 +1,3 @@
-import { plainToClass } from 'class-transformer';
 import dotenvExpand from 'dotenv-expand';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
@@ -11,7 +10,6 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { ServiceConfig } from './service-config/base';
-import { ServiceConfigV1 } from './service-config/v1';
 import VaultManager from './vault-manager';
 
 export interface VaultParameter {
@@ -342,15 +340,6 @@ export default abstract class DependencyManager {
       await this.loadDependencies(service_node, recursive);
     }
     return service_node;
-  }
-
-  /**
-   * Queries the API to create a node and config object for a service based on
-   * its name and tag
-   */
-  async loadService(service_ref: string, recursive = true): Promise<ServiceNode | ExternalNode> {
-    // TODO terrible
-    return this.loadServiceFromConfig(plainToClass(ServiceConfigV1, { ref: service_ref }), recursive);
   }
 
   async abstract loadServiceNode(config: ServiceConfig): Promise<ServiceNode>;
