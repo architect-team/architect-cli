@@ -37,8 +37,9 @@ export default class AuthClient {
       }
     } else if (!token) {
       try {
+        // Spoof login to production registry to enable pulling of public images (ex. architect-nginx/proxy)
         await docker([
-          'login', this.config.registry_host,
+          'login', 'registry.architect.io',
           '-u', 'unknown',
           '--password-stdin',
         ], { stdout: false }, {
