@@ -1,7 +1,7 @@
+import { plainToClass } from 'class-transformer';
 import { Transform } from 'class-transformer/decorators';
 import { ServiceConfig } from '../service-config/base';
 import { ServiceConfigV1 } from '../service-config/v1';
-import { Dict } from '../utils/transform';
 import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
 interface VaultMap {
@@ -19,10 +19,35 @@ interface DnsConfigSpec {
   searches?: string | string[];
 }
 
+function transformServices(input: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    const [name, ref] = key.split(':');
+    let config;
+    if (value instanceof Object) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      if (ref && !value.ref) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore
+        value.ref = ref;
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      config = { private: !value.ref, ...value, name };
+    } else {
+      config = { ref: value, name };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    output[key] = plainToClass(ServiceConfigV1, config);
+  }
+  return output;
+}
+
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   protected parameters: EnvironmentParameters = {};
-  @Transform(Dict(() => ServiceConfigV1), { toClassOnly: true })
+  @Transform(value => (transformServices(value)))
   protected services: { [service_ref: string]: ServiceConfig } = {};
   protected vaults: VaultMap = {};
   protected dns?: DnsConfigSpec;

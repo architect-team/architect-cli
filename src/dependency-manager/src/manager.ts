@@ -320,11 +320,13 @@ export default abstract class DependencyManager {
   async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode | ExternalNode> {
     const service_ref = config.getRef();
     if (service_ref) {
+      /*
       // TODO: Handle matching inline dependency ref
       const existing_node = this.graph.nodes_map.get(service_ref);
       if (existing_node) {
         return existing_node as ServiceNode | ExternalNode;
       }
+      */
 
       // TODO: Add tests for inline external dependencies
       const env_service = this._environment.getServiceDetails(service_ref);

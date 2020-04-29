@@ -1,4 +1,5 @@
-import { Type } from 'class-transformer';
+import { classToPlain, Type } from 'class-transformer';
+import hash from 'object-hash';
 import { DependencyNode, DependencyNodeOptions } from '.';
 import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
@@ -39,6 +40,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   })
   node_config!: ServiceConfig;
 
+  _hashed_config: any;
+
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
     if (options) {
@@ -55,7 +58,13 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get ref() {
-    return `${this.node_config.getName()}:${this.tag}`;
+    // TODO: what to do when hash changes via loadParameters
+    if (!this._hashed_config) {
+      const hashed_config = hash(classToPlain(this.node_config));
+      this._hashed_config = hashed_config;
+    }
+
+    return `${this.node_config.getName()}:${this.tag}:${this._hashed_config}`;
   }
 
   get volumes() {

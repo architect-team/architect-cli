@@ -5,6 +5,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('dependencies', function () {
   beforeEach(async () => {
@@ -58,9 +59,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/frontend:latest', 'architect/backend:latest'])
       expect(graph.edges).length(1);
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/frontend:latest.architect/backend:latest'])
     });
 
     it('two services that share a postgres db', async () => {
@@ -107,9 +106,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(3);
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/service1:latest', 'architect/service2:latest', 'postgres/postgres:11'])
       expect(graph.edges).length(2);
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/service1:latest.postgres/postgres:11', 'service.architect/service2:latest.postgres/postgres:11'])
     });
 
     it('two services that use different postgres dbs', async () => {
@@ -160,9 +157,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(4);
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/service1:latest', 'architect/service2:latest', 'postgres/postgres:11', 'postgres/postgres:12'])
       expect(graph.edges).length(2);
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/service1:latest.postgres/postgres:11', 'service.architect/service2:latest.postgres/postgres:12'])
     });
   });
 
@@ -196,11 +191,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      // TODO: scope ref
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/frontend:latest', 'TODO-architect/backend:latest'])
       expect(graph.edges).length(1);
-      // TODO: scope ref
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/frontend:latest.architect/backend:latest'])
     });
 
     it('two services that use different inline postgres dbs', async () => {
@@ -252,11 +243,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(4);
-      // TODO: scope ref
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/service1:latest', 'architect/service2:latest', 'TODO-postgres/postgres:latest', 'TODO-postgres/postgres:latest'])
       expect(graph.edges).length(2);
-      // TODO: scope ref
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/service1:latest.postgres/postgres:11', 'service.architect/service2:latest.postgres/postgres:12'])
     });
 
     it('two services that use the same inline postgres db', async () => {
@@ -308,11 +295,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(3);
-      // TODO: scope ref
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/service1:latest', 'architect/service2:latest', 'TODO-postgres/postgres:latest'])
       expect(graph.edges).length(2);
-      // TODO: scope ref
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/service1:latest.postgres/postgres:11', 'service.architect/service2:latest.postgres/postgres:12'])
     });
 
     it('two services that use the same inline postgres db X2', async () => {
@@ -400,23 +383,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(6);
-      // TODO: scope ref
-      expect(graph.nodes.map((node) => node.ref)).members([
-        'architect/service1:latest',
-        'architect/service2:latest',
-        'architect/service3:latest',
-        'architect/service4:latest',
-        'TODO1-postgres/postgres:latest',
-        'TODO2-postgres/postgres:latest'
-      ])
       expect(graph.edges).length(4);
-      // TODO: scope ref
-      expect(graph.edges.map((edge) => edge.ref)).members([
-        'service.architect/service1:latest.postgres/postgres:latest',
-        'service.architect/service2:latest.postgres/postgres:latest',
-        'service.architect/service3:latest.postgres/postgres:latest',
-        'service.architect/service4:latest.postgres/postgres:latest'
-      ])
     });
   });
 
@@ -453,15 +420,171 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      // TODO: scope ref
-      expect(graph.nodes.map((node) => node.ref)).members(['architect/backend:latest', 'TODO-db:11'])
       expect(graph.edges).length(1);
-      // TODO: scope ref
-      expect(graph.edges.map((edge) => edge.ref)).members(['service.architect/frontend:latest.architect/backend:latest'])
     });
 
-    // TODO add expanded ref test
+    it('ref env config with dependencies', async () => {
+      moxios.stubRequest(`/accounts/architect/services/checkout-service/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: { name: 'architect/checkout-service', parameters: { WORKED: 0 } }, service: { url: 'architect/checkout-service:latest' } }
+      });
 
-    // TODO add ref test for https://gitlab.com/architect-io/product/-/issues/45#option-2-define-a-shared-service-in-an-env-config
+      moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 0 } }, service: { url: 'architect/payments-service:v1' } }
+      });
+
+      const env_config = {
+        services: {
+          'architect/checkout-service': {
+            ref: 'latest',
+            parameters: { WORKED: 1 },
+            dependencies: {
+              'architect/payments-service': {
+                ref: 'v1',
+                parameters: { WORKED: 1 }
+              }
+            }
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.edges).length(1);
+
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+    });
+
+    it('load service and then load dependencies', async () => {
+      const service_config = {
+        parameters: { WORKED: 1 },
+        dependencies: {
+          'architect/payments-service': {
+            ref: 'v1',
+            parameters: { WORKED: 1 }
+          }
+        }
+      }
+      moxios.stubRequest(`/accounts/architect/services/checkout-service/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: service_config, service: { url: 'architect/checkout-service:latest' } }
+      });
+
+      moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 0 } }, service: { url: 'architect/payments-service:v1' } }
+      });
+
+      const env_config = {
+        services: {
+          'architect/checkout-service:latest': {}
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.edges).length(1);
+
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+    });
+
+    it('load service and then load dependencies with override in env config', async () => {
+      const service_config = {
+        parameters: { WORKED: 1 },
+        dependencies: {
+          'architect/payments-service': {
+            ref: 'v1',
+            parameters: { WORKED: 1 }
+          }
+        }
+      }
+      moxios.stubRequest(`/accounts/architect/services/checkout-service/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: service_config, service: { url: 'architect/checkout-service:latest' } }
+      });
+
+      moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 0 } }, service: { url: 'architect/payments-service:v1' } }
+      });
+
+      const env_config = {
+        services: {
+          'architect/checkout-service:latest': {
+            dependencies: {
+              'architect/payments-service': {
+                parameters: { WORKED: 2 }
+              }
+            }
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.edges).length(1);
+
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(2);
+    });
+
+    /*
+    it('chained refs', async () => {
+      const service_config = {
+        name: 'forked/payments-service',
+        ref: 'architect/payments-service:v1'
+      }
+
+      moxios.stubRequest(`/accounts/forked/services/payments-service/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: service_config, service: { url: 'forked/payments-service:v1' } }
+      });
+
+      moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 1 } }, service: { url: 'architect/payments-service:v1' } }
+      });
+
+      const env_config = {
+        services: {
+          'forked/payments-service': 'v1'
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(1);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect(graph.edges).length(0);
+    });
+    */
   });
 });

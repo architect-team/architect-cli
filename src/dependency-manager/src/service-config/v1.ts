@@ -23,14 +23,13 @@ function transformDependencies(input: any) {
   for (const [key, value] of Object.entries(input)) {
     let config;
     if (value instanceof Object) {
-      config = { ...value, name: key };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      config = { private: !value.ref, ...value, name: key };
     } else {
-      if ((value as string).includes(':')) {
-        config = { ref: value, name: key };
-      } else {
-        config = { ref: `${key}:${value}`, name: key };
-      }
+      config = { ref: value, name: key };
     }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
   }
   return output;
@@ -126,6 +125,7 @@ interface IngressSpecV1 {
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
   ref?: string;
+  private?: boolean;
   name?: string;
   description?: string;
   keywords?: string[];
@@ -170,7 +170,13 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getRef(): string | undefined {
-    return this.ref;
+    if (this.ref) {
+      return this.ref.includes(':') ? this.ref : `${this.getName()}:${this.ref}`;
+    }
+  }
+
+  getPrivate(): boolean {
+    return this.private || false;
   }
 
   getName(): string {
