@@ -133,6 +133,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   description?: string;
   keywords?: string[];
   image?: string;
+  digest?: string;
   host?: string;
   port?: string;
   command?: string | string[];
@@ -210,6 +211,18 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getImage(): string {
     return this.image || '';
+  }
+
+  setImage(image: string) {
+    this.image = image;
+  }
+
+  getDigest(): string | undefined {
+    return this.digest;
+  }
+
+  setDigest(digest: string) {
+    this.digest = digest;
   }
 
   getCommand() {

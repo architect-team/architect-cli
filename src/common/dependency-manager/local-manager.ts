@@ -90,9 +90,16 @@ export default class LocalDependencyManager extends DependencyManager {
       const [service_name, service_tag] = service_extends.split(':');
       const [account_name, svc_name] = service_name.split('/');
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
-      return ServiceConfigBuilder.buildFromJSON(service_digest.config);
+
+      const config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
+      if (!config.getImage()) {
+        config.setImage(service_digest.service.url.replace(/(^\w+:|^)\/\//, ''));
+        config.setDigest(service_digest.digest);
+      }
+      return config;
+    } else {
+      return initial_config;
     }
-    return initial_config;
   }
 
   /**
@@ -104,7 +111,9 @@ export default class LocalDependencyManager extends DependencyManager {
     // TODO: Kill LocalServiceNode
     let debug_path = node.node_config.getDebugOptions()?.path;
     if (debug_path) {
-      debug_path = path.resolve(path.dirname(this.config_path), debug_path);
+      if (this.config_path) {
+        debug_path = path.resolve(path.dirname(this.config_path), debug_path);
+      }
 
       const lstat = fs.lstatSync(debug_path);
       node = new LocalServiceNode({

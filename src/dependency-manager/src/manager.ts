@@ -323,7 +323,6 @@ export default abstract class DependencyManager {
   abstract async loadServiceConfig(initial_config: ServiceConfig): Promise<ServiceConfig>;
 
   protected async loadServiceConfigWrapper(initial_config: ServiceConfig): Promise<ServiceConfig> {
-    // TODO test local, inline, etc
     let service_extends = initial_config.getExtends();
     if (!service_extends) {
       return this.loadServiceConfig(initial_config);
@@ -383,7 +382,7 @@ export default abstract class DependencyManager {
       node_config: node_config,
       tag: service_config.getRef().split(':')[service_config.getRef().split(':').length - 1],
       image: service_config.getImage(),
-      // TODO support digest: digest,
+      digest: service_config.getDigest(),
     });
   }
 
