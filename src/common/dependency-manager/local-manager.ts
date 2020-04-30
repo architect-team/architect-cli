@@ -71,13 +71,15 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadServiceConfig(initial_config: ServiceConfig) {
-    const debug_path = initial_config.getDebugOptions()?.path;
+    let debug_path = initial_config.getDebugOptions()?.path;
     const service_name = initial_config.getName();
 
     if (debug_path) {
       // Load local service config
-      const service_path = path.join(path.dirname(this.config_path), debug_path);
-      return ServiceConfigBuilder.buildFromPath(service_path);
+      if (this.config_path) {
+        debug_path = path.resolve(path.dirname(this.config_path), debug_path);
+      }
+      return ServiceConfigBuilder.buildFromPath(debug_path);
     } else if (this.linked_services.hasOwnProperty(service_name)) {
       // Load locally linked service config
       console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
