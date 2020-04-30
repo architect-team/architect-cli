@@ -1,7 +1,6 @@
-import { plainToClass } from 'class-transformer';
 import { Transform } from 'class-transformer/decorators';
 import { ServiceConfig } from '../service-config/base';
-import { ServiceConfigV1 } from '../service-config/v1';
+import { transformServices } from '../service-config/v1';
 import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
 interface VaultMap {
@@ -17,31 +16,6 @@ interface VaultMap {
 
 interface DnsConfigSpec {
   searches?: string | string[];
-}
-
-function transformServices(input: any) {
-  const output: any = {};
-  for (const [key, value] of Object.entries(input)) {
-    const [name, ext] = key.split(':');
-    let config;
-    if (value instanceof Object) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      if (ext && !value.extends) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        value.extends = ext;
-      }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      config = { private: !value.extends, ...value, name };
-    } else {
-      config = { extends: value, name };
-    }
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    output[key] = plainToClass(ServiceConfigV1, config);
-  }
-  return output;
 }
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {

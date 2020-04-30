@@ -18,14 +18,18 @@ function transformParameters(input: any) {
   return output;
 }
 
-function transformDependencies(input: any) {
+export function transformServices(input: { [key: string]: string | ServiceConfigV1 }) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
+    const [name, ext] = key.split(':');
     let config;
     if (value instanceof Object) {
-      config = { private: true, ...value, name: key };
+      if (ext && !value.extends) {
+        value.extends = ext;
+      }
+      config = { private: !value.extends, ...value, name };
     } else {
-      config = { extends: value, name: key, private: false };
+      config = { extends: value, name };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
@@ -134,7 +138,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   command?: string | string[];
   entrypoint?: string | string[];
   dockerfile?: string;
-  @Transform(value => (transformDependencies(value)))
+  @Transform(value => (transformServices(value)))
   dependencies: { [s: string]: ServiceConfigV1 } = {};
   language?: string;
   @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
@@ -226,6 +230,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   addDependency(name: string, tag: string) {
     this.dependencies[name] = new ServiceConfigV1();
+    this.dependencies[name].name = name;
     this.dependencies[name].extends = tag;
   }
 
@@ -284,6 +289,13 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDebugOptions(): ServiceDebugOptions | undefined {
     return this.debug;
+  }
+
+  setDebugPath(debug_path: string) {
+    if (!this.debug) {
+      this.debug = {};
+    }
+    this.debug.path = debug_path;
   }
 
   getLanguage(): string {

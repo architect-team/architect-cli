@@ -45,17 +45,22 @@ export class ServiceConfigBuilder {
       throw new MissingConfigFileError(input);
     }
 
+    let js_obj;
     // Try to parse as json
     try {
-      const js_obj = JSON.parse(file_contents);
-      return ServiceConfigBuilder.buildFromJSON(js_obj);
-    } catch {}
+      js_obj = JSON.parse(file_contents);
+    } catch {
+      // Try to parse as yaml
+      try {
+        js_obj = yaml.safeLoad(file_contents);
+      } catch { }
+    }
 
-    // Try to parse as yaml
-    try {
-      const js_obj = yaml.safeLoad(file_contents);
-      return ServiceConfigBuilder.buildFromJSON(js_obj);
-    } catch {}
+    if (js_obj) {
+      const config = ServiceConfigBuilder.buildFromJSON(js_obj);
+      config.setDebugPath(input);
+      return config;
+    }
 
     throw new Error('Invalid file format. Must be json or yaml.');
   }

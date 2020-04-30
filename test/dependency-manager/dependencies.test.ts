@@ -351,11 +351,11 @@ describe('dependencies', function () {
       const env_config = {
         services: {
           'architect/checkout-service': {
-            ref: 'latest',
+            extends: 'latest',
             parameters: { WORKED: 1 },
             dependencies: {
               'architect/payments-service': {
-                ref: 'v1',
+                extends: 'v1',
                 parameters: { WORKED: 1 }
               }
             }
@@ -383,7 +383,7 @@ describe('dependencies', function () {
         parameters: { WORKED: 1 },
         dependencies: {
           'architect/payments-service': {
-            ref: 'v1',
+            extends: 'v1',
             parameters: { WORKED: 1 }
           }
         }
@@ -424,7 +424,7 @@ describe('dependencies', function () {
         parameters: { WORKED: 1 },
         dependencies: {
           'architect/payments-service': {
-            ref: 'v1',
+            extends: 'v1',
             parameters: { WORKED: 1 }
           }
         }
@@ -466,11 +466,10 @@ describe('dependencies', function () {
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(2);
     });
 
-    /*
     it('chained refs', async () => {
       const service_config = {
         name: 'forked/payments-service',
-        ref: 'architect/payments-service:v1'
+        extends: 'architect/payments-service:v1'
       }
 
       moxios.stubRequest(`/accounts/forked/services/payments-service/versions/v1`, {
@@ -499,6 +498,5 @@ describe('dependencies', function () {
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect(graph.edges).length(0);
     });
-    */
   });
 });

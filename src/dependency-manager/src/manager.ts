@@ -42,14 +42,16 @@ export default abstract class DependencyManager {
   gateway_port: Promise<number>;
   _environment: EnvironmentConfig;
   protected vault_manager: VaultManager;
+  protected _service_config_cache: { [key: string]: ServiceConfig | undefined };
 
   constructor(environment_config?: EnvironmentConfig) {
     this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.vault_manager = new VaultManager(this._environment.getVaults());
     this.gateway_port = this.getServicePort(80);
+    this._service_config_cache = {};
   }
 
-  getNodeConfig(service_config: ServiceConfig, tag: string) {
+  getNodeConfig(service_config: ServiceConfig) {
     // Merge in global parameters
     const global_overrides: any = {
       parameters: {},
@@ -74,7 +76,7 @@ export default abstract class DependencyManager {
     let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
 
     // Merge in service overrides in the environment
-    const env_service = this._environment.getServiceDetails(`${service_config.getName()}:${tag}`) || this._environment.getServiceDetails(service_config.getName());
+    const env_service = this._environment.getServiceDetails(service_config.getRef());
     if (env_service) {
       node_config = node_config.merge(env_service);
     }
@@ -318,6 +320,35 @@ export default abstract class DependencyManager {
     }
   }
 
+  abstract async loadServiceConfig(initial_config: ServiceConfig): Promise<ServiceConfig>;
+
+  protected async loadServiceConfigWrapper(initial_config: ServiceConfig): Promise<ServiceConfig> {
+    // TODO test local, inline, etc
+    let service_extends = initial_config.getExtends();
+    if (!service_extends) {
+      return this.loadServiceConfig(initial_config);
+    }
+
+    const seen_extends = new Set();
+    let service_config;
+    while (service_extends) {
+      if (seen_extends.has(service_extends)) {
+        throw new Error(`Circular service extends detected: ${service_extends}`);
+      }
+      seen_extends.add(service_extends);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      let cached_config = this._service_config_cache[service_extends];
+      if (!cached_config) {
+        cached_config = await this.loadServiceConfig(service_config || initial_config);
+        this._service_config_cache[service_extends] = cached_config;
+      }
+      service_extends = cached_config.getExtends();
+      service_config = service_config ? cached_config.merge(service_config) : cached_config;
+    }
+    return service_config;
+  }
+
   async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode | ExternalNode> {
     const env_service = this._environment.getServiceDetails(config.getRef());
     if (env_service) {
@@ -342,7 +373,19 @@ export default abstract class DependencyManager {
     return service_node;
   }
 
-  async abstract loadServiceNode(config: ServiceConfig): Promise<ServiceNode>;
+  async loadServiceNode(initial_config: ServiceConfig): Promise<ServiceNode> {
+    // Load the service config without merging in environment overrides
+    const service_config = await this.loadServiceConfigWrapper(initial_config);
+    const node_config = this.getNodeConfig(service_config.merge(initial_config));
+    return new ServiceNode({
+      service_config: service_config,
+      // Allow for inline overrides of services in dependencies/env
+      node_config: node_config,
+      tag: service_config.getRef().split(':')[service_config.getRef().split(':').length - 1],
+      image: service_config.getImage(),
+      // TODO support digest: digest,
+    });
+  }
 
   /**
    * Create an external node and add it to the graph

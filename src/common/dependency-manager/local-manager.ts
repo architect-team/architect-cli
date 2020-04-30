@@ -65,57 +65,54 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     const service_config = ServiceConfigBuilder.buildFromPath(service_path);
-    const lstat = fs.lstatSync(service_path);
-    const node = new LocalServiceNode({
-      service_path: lstat.isFile() ? path.dirname(service_path) : service_path,
-      service_config,
-      node_config: this.getNodeConfig(service_config, 'latest'),
-      image: service_config.getImage(),
-      tag: 'latest',
-    });
+    const node = await this.loadServiceNode(service_config);
     this.graph.addNode(node);
     return node;
+  }
+
+  async loadServiceConfig(initial_config: ServiceConfig) {
+    const debug_path = initial_config.getDebugOptions()?.path;
+    const service_name = initial_config.getName();
+
+    if (debug_path) {
+      // Load local service config
+      const service_path = path.join(path.dirname(this.config_path), debug_path);
+      return ServiceConfigBuilder.buildFromPath(service_path);
+    } else if (this.linked_services.hasOwnProperty(service_name)) {
+      // Load locally linked service config
+      console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
+      return ServiceConfigBuilder.buildFromPath(this.linked_services[service_name]);
+    }
+
+    const service_extends = initial_config.getExtends();
+    if (service_extends) {
+      // Load remote service config
+      const [service_name, service_tag] = service_extends.split(':');
+      const [account_name, svc_name] = service_name.split('/');
+      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
+      return ServiceConfigBuilder.buildFromJSON(service_digest.config);
+    }
+    return initial_config;
   }
 
   /**
    * @override
    */
   async loadServiceNode(initial_config: ServiceConfig) {
-    let service_config = initial_config;
-    let service_tag = 'latest';
-    let image = initial_config.getImage();
-    let digest;
+    let node = await super.loadServiceNode(initial_config);
 
-    const debug_path = initial_config.getDebugOptions()?.path;
-    let service_name = initial_config.getName();
+    // TODO: Kill LocalServiceNode
+    let debug_path = node.node_config.getDebugOptions()?.path;
     if (debug_path) {
-      const svc_path = path.join(path.dirname(this.config_path), debug_path);
-      return await this.loadLocalService(svc_path);
-    } else if (this.linked_services.hasOwnProperty(service_name)) {
-      console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
-      return await this.loadLocalService(this.linked_services[service_name]);
+      debug_path = path.resolve(path.dirname(this.config_path), debug_path);
+
+      const lstat = fs.lstatSync(debug_path);
+      node = new LocalServiceNode({
+        service_path: lstat.isFile() ? path.dirname(debug_path) : debug_path,
+        ...node,
+      });
     }
-
-    const service_extends = initial_config.getExtends();
-    if (service_extends) {
-      [service_name, service_tag] = service_extends.split(':');
-      const [account_name, svc_name] = service_name.split('/');
-      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
-
-      service_config = ServiceConfigBuilder.buildFromJSON(service_digest.config);
-      service_config.merge(initial_config);
-      image = service_digest.service.url.replace(/(^\w+:|^)\/\//, '');
-      digest = service_digest.digest;
-    }
-
-    return new ServiceNode({
-      service_config: service_config,
-      // Allow for inline overrides of services in dependencies/env
-      node_config: this.getNodeConfig(service_config, service_tag),
-      tag: service_tag,
-      image: image,
-      digest: digest,
-    });
+    return node;
   }
 
   async loadParameters() {
