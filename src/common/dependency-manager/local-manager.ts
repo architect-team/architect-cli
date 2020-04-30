@@ -109,12 +109,8 @@ export default class LocalDependencyManager extends DependencyManager {
     let node = await super.loadServiceNode(initial_config);
 
     // TODO: Kill LocalServiceNode
-    let debug_path = node.node_config.getDebugOptions()?.path;
+    const debug_path = node.service_config.getDebugOptions()?.path;
     if (debug_path) {
-      if (this.config_path) {
-        debug_path = path.resolve(path.dirname(this.config_path), debug_path);
-      }
-
       const lstat = fs.lstatSync(debug_path);
       node = new LocalServiceNode({
         service_path: lstat.isFile() ? path.dirname(debug_path) : debug_path,
