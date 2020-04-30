@@ -79,14 +79,6 @@ export interface ServiceLivenessProbe {
   interval?: string;
 }
 
-export interface ServiceDebugOptions {
-  path?: string;
-  dockerfile?: string;
-  volumes?: { [s: string]: VolumeSpec };
-  command?: string | string[];
-  entrypoint?: string | string[];
-}
-
 export interface VolumeSpec {
   mount_path?: string;
   host_path?: string;
@@ -121,7 +113,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
-  abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;

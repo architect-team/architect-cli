@@ -6,7 +6,7 @@ import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
 const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -219,38 +219,7 @@ export class ServiceVolumeV1 extends BaseSpec {
   readonly?: boolean;
 }
 
-class ServiceDebugOptionsV1 extends BaseSpec {
-  @IsOptional()
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a filesystem location when registering a service',
-  })
-  @IsString()
-  path?: string;
 
-  @IsOptional()
-  @IsString()
-  dockerfile?: string;
-
-  @Transform(value => (transformVolumes(value)))
-  @IsOptional()
-  volumes?: Dictionary<ServiceVolumeV1>;
-
-  @IsOptional()
-  command?: string | string[];
-
-  @IsOptional()
-  entrypoint?: string | string[];
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'volumes', errors, undefined, {
-      ...options,
-      groups: ['debug'],
-    });
-    return errors;
-  }
-}
 
 class IngressSpecV1 extends BaseSpec {
   @IsOptional()
@@ -264,8 +233,16 @@ class IngressSpecV1 extends BaseSpec {
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
 
+  @IsOptional()
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a filesystem location when registering a service',
+  })
+  @IsString()
+  path?: string;
+
   @IsOptional({
-    groups: ['operator'],
+    groups: ['debug', 'operator'],
   })
   @IsString()
   @Matches(/^[a-zA-Z0-9-_]+$/, {
@@ -332,12 +309,12 @@ export class ServiceConfigV1 extends ServiceConfig {
   language?: string;
 
   @Transform(value => (value instanceof Object
-    ? plainToClass(ServiceDebugOptionsV1, value)
-    : (value ? plainToClass(ServiceDebugOptionsV1, { command: value }) : value)),
+    ? plainToClass(ServiceConfigV1, value)
+    : (value ? plainToClass(ServiceConfigV1, { command: value }) : value)),
     { toClassOnly: true })
   @IsOptional()
-  @IsInstance(ServiceDebugOptionsV1)
-  debug?: ServiceDebugOptionsV1;
+  @IsInstance(ServiceConfigV1)
+  debug?: ServiceConfigV1;
 
   @Transform(value => (transformParameters(value)))
   @IsOptional()
@@ -412,7 +389,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   async validate(options?: ValidatorOptions) {
     let errors = await super.validate(options);
-    errors = await validateNested(this, 'debug', errors, options);
+    errors = await validateNested(this, 'debug', errors, { ...options, groups: (options?.groups || []).concat('debug') });
     errors = await validateNested(this, 'ingress', errors, options);
     errors = await validateDictionary(this, 'volumes', errors, undefined, options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options);
@@ -558,13 +535,13 @@ export class ServiceConfigV1 extends ServiceConfig {
       }, {});
   }
 
-  getDebugOptions(): ServiceDebugOptions | undefined {
+  getDebugOptions(): ServiceConfig | undefined {
     return this.debug;
   }
 
   setDebugPath(debug_path: string) {
     if (!this.debug) {
-      this.debug = new ServiceDebugOptionsV1();
+      this.debug = new ServiceConfigV1();
     }
     this.debug.path = debug_path;
   }

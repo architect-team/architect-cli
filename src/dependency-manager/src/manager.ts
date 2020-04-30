@@ -60,7 +60,7 @@ export default abstract class DependencyManager {
     // If debug is enabled merge in debug options ex. debug.command -> command
     const debug_options = node_config.getDebugOptions();
     if (this.debug && debug_options) {
-      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+      node_config = node_config.merge(debug_options);
     }
     return node_config;
   }
