@@ -1,7 +1,6 @@
 import { Transform } from 'class-transformer/decorators';
 import { ServiceConfig } from '../service-config/base';
-import { ServiceConfigV1 } from '../service-config/v1';
-import { Dict } from '../utils/transform';
+import { transformServices } from '../service-config/v1';
 import { EnvironmentConfig, EnvironmentParameters, EnvironmentVault } from './base';
 
 interface VaultMap {
@@ -22,7 +21,7 @@ interface DnsConfigSpec {
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   __version = '1.0.0';
   protected parameters: EnvironmentParameters = {};
-  @Transform(Dict(() => ServiceConfigV1), { toClassOnly: true })
+  @Transform(value => (transformServices(value)))
   protected services: { [service_ref: string]: ServiceConfig } = {};
   protected vaults: VaultMap = {};
   protected dns?: DnsConfigSpec;

@@ -33,12 +33,32 @@ const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefin
   return output;
 };
 
+export function transformServices(input: { [key: string]: string | ServiceConfigV1 }) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    const [name, ext] = key.split(':');
+    let config;
+    if (value instanceof Object) {
+      if (ext && !value.extends) {
+        value.extends = ext;
+      }
+      config = { private: !value.extends, ...value, name };
+    } else {
+      config = { extends: value, name };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    output[key] = plainToClass(ServiceConfigV1, config);
+  }
+  return output;
+}
+
 const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
   if (!input) {
     return undefined;
   }
 
   const output: Dictionary<ServiceVolumeV1> = {};
+
   for (const [key, value] of Object.entries(input)) {
     output[key] = value instanceof Object
       ? plainToClass(ServiceVolumeV1, value)
@@ -259,6 +279,18 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @IsOptional()
   @IsString()
+  extends?: string;
+
+  @IsOptional()
+  @IsString()
+  parent_ref?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  private?: boolean;
+
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @IsOptional()
@@ -268,6 +300,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional()
   @IsString()
   image?: string;
+
+  @IsOptional()
+  @IsString()
+  digest?: string;
 
   @IsOptional()
   @IsString()
@@ -288,7 +324,8 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional()
-  dependencies?: Dictionary<string>;
+  @Transform(value => (transformServices(value)))
+  dependencies?: Dictionary<ServiceConfigV1>;
 
   @IsOptional()
   @IsString()
@@ -297,7 +334,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Transform(value => (value instanceof Object
     ? plainToClass(ServiceDebugOptionsV1, value)
     : (value ? plainToClass(ServiceDebugOptionsV1, { command: value }) : value)),
-  { toClassOnly: true })
+    { toClassOnly: true })
   @IsOptional()
   @IsInstance(ServiceDebugOptionsV1)
   debug?: ServiceDebugOptionsV1;
@@ -383,6 +420,30 @@ export class ServiceConfigV1 extends ServiceConfig {
     return errors;
   }
 
+  getExtends() {
+    if (this.extends) {
+      return this.extends.includes(':') ? this.extends : `${this.getName()}:${this.extends}`;
+    }
+  }
+
+  getRef() {
+    const tag = this.extends && this.extends.includes(':') ? 'latest' : this.extends || 'latest';
+    const ref = `${this.getName()}:${tag}`;
+    return this.parent_ref ? `${this.parent_ref}.${ref}` : ref;
+  }
+
+  setParentRef(ref: string) {
+    this.parent_ref = ref;
+  }
+
+  getParentRef() {
+    return this.parent_ref;
+  }
+
+  getPrivate(): boolean {
+    return this.private || false;
+  }
+
   getName(): string {
     return this.name || '';
   }
@@ -408,6 +469,18 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
+  setImage(image: string) {
+    this.image = image;
+  }
+
+  getDigest(): string | undefined {
+    return this.digest;
+  }
+
+  setDigest(digest: string) {
+    this.digest = digest;
+  }
+
   getCommand() {
     return this.command || '';
   }
@@ -420,13 +493,15 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies(): { [s: string]: string } {
+  getDependencies() {
     return this.dependencies || {};
   }
 
   addDependency(name: string, tag: string) {
-    this.dependencies = this.dependencies || {};
-    this.dependencies[name] = tag;
+    this.dependencies = this.getDependencies();
+    this.dependencies[name] = new ServiceConfigV1();
+    this.dependencies[name].name = name;
+    this.dependencies[name].extends = tag;
   }
 
   removeDependency(dependency_name: string) {
@@ -485,6 +560,13 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDebugOptions(): ServiceDebugOptions | undefined {
     return this.debug;
+  }
+
+  setDebugPath(debug_path: string) {
+    if (!this.debug) {
+      this.debug = new ServiceDebugOptionsV1();
+    }
+    this.debug.path = debug_path;
   }
 
   getLanguage(): string {

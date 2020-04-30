@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { DependencyParameter, ServiceNode, ValueFromParameter } from '../../src/dependency-manager/src';
 
 describe('manager parameters', function () {
   let graph: LocalDependencyGraph;
@@ -36,7 +37,9 @@ describe('manager parameters', function () {
   });
 
   it('valueFrom override valueFrom', async () => {
-    const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest')!;
+    const addition_node = graph.nodes.find((node) => node.ref === 'architect/addition-service-rest:latest')! as ServiceNode;
+    expect((addition_node.service_config.getParameters().DB_PRIMARY_HOST.default as ValueFromParameter<DependencyParameter>).valueFrom.value).eq('$HOST');
+    expect((addition_node.node_config.getParameters().DB_PRIMARY_HOST.default as ValueFromParameter<DependencyParameter>).valueFrom.value).eq('postgres://dev:dev@$HOST:$PORT/sponsored-products_development');
     expect(addition_node.parameters.DB_PRIMARY_HOST).eq('postgres://dev:dev@architect.addition-service-rest.latest.primary:5432/sponsored-products_development');
   });
 

@@ -19,7 +19,6 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       .replace(/\//g, '.');
   }
 
-  abstract get env_ref(): string;
   abstract get ref(): string;
 
   get parameters(): { [key: string]: ParameterValue } {
