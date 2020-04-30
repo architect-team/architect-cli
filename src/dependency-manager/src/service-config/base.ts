@@ -111,6 +111,6 @@ export abstract class ServiceConfig {
   }
 
   merge(other_config: ServiceConfig): ServiceConfig {
-    return plainToClassFromExist(this, other_config);
+    return plainToClassFromExist(this.copy(), other_config);
   }
 }
