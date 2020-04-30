@@ -111,12 +111,13 @@ describe('service config merge', function () {
     const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
 
     const node_config = service_config.merge(env_config);
+    expect(service_config.getDependencies()['override'].getRef()).eq('override:old');  // Make sure we don't mutate the initial config
 
     expect(node_config.getName()).eq('foo/service');
 
     expect(node_config.getDependencies()).keys('override', 'no_override');
-    expect(node_config.getDependencies()['override']).eq('new');
-    expect(node_config.getDependencies()['no_override']).eq('old');
+    expect(node_config.getDependencies()['override'].getRef()).eq('override:new');
+    expect(node_config.getDependencies()['no_override'].getRef()).eq('no_override:old');
 
     expect(node_config.getParameters()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
     expect(node_config.getParameters()['override'].default).eq('new');

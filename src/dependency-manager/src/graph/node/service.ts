@@ -50,12 +50,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
   }
 
-  get env_ref() {
-    return this.ref.split(':')[0];
-  }
-
   get ref() {
-    return `${this.node_config.getName()}:${this.tag}`;
+    return this.node_config.getRef();
   }
 
   get volumes() {

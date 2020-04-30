@@ -27,6 +27,11 @@ export abstract class EnvironmentConfig {
 
   getServiceDetails(key: string): ServiceConfig | undefined {
     const services = this.getServices();
+
+    // Remove parent ref if it exists
+    const [parent, service] = key.split('.');
+    key = service ? service : parent;
+
     return services[key] || services[key.split(':')[0]];
   }
 }

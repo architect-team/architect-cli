@@ -78,13 +78,21 @@ export interface IngressSpec {
 
 export abstract class ServiceConfig {
   abstract __version: string;
+  abstract getExtends(): string | undefined;
+  abstract getRef(): string;
+  abstract setParentRef(ref: string): void;
+  abstract getParentRef(): string | undefined;
+  abstract getPrivate(): boolean;
   abstract getName(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
+  abstract setImage(image: string): void;
+  abstract getDigest(): string | undefined;
+  abstract setDigest(digest: string): void;
   abstract getCommand(): string | string[];
   abstract getEntrypoint(): string | string[];
   abstract getDockerfile(): string | undefined;
-  abstract getDependencies(): { [s: string]: string };
+  abstract getDependencies(): { [s: string]: ServiceConfig };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getApiSpec(): ServiceApiSpec;
@@ -92,6 +100,7 @@ export abstract class ServiceConfig {
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;
   abstract removeDependency(dependency_name: string): void;
@@ -105,6 +114,6 @@ export abstract class ServiceConfig {
   }
 
   merge(other_config: ServiceConfig): ServiceConfig {
-    return plainToClassFromExist(this, other_config);
+    return plainToClassFromExist(this.copy(), other_config);
   }
 }

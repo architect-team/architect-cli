@@ -18,6 +18,25 @@ function transformParameters(input: any) {
   return output;
 }
 
+export function transformServices(input: { [key: string]: string | ServiceConfigV1 }) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    const [name, ext] = key.split(':');
+    let config;
+    if (value instanceof Object) {
+      if (ext && !value.extends) {
+        value.extends = ext;
+      }
+      config = { private: !value.extends, ...value, name };
+    } else {
+      config = { extends: value, name };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    output[key] = plainToClass(ServiceConfigV1, config);
+  }
+  return output;
+}
+
 function transformVolumes(input: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
@@ -107,16 +126,21 @@ interface IngressSpecV1 {
 
 export class ServiceConfigV1 extends ServiceConfig {
   __version = '1.0.0';
+  extends?: string;
+  parent_ref?: string;
+  private?: boolean;
   name?: string;
   description?: string;
   keywords?: string[];
   image?: string;
+  digest?: string;
   host?: string;
   port?: string;
   command?: string | string[];
   entrypoint?: string | string[];
   dockerfile?: string;
-  dependencies: { [s: string]: string } = {};
+  @Transform(value => (transformServices(value)))
+  dependencies: { [s: string]: ServiceConfigV1 } = {};
   language?: string;
   @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
   debug?: ServiceDebugOptionsV1;
@@ -149,6 +173,30 @@ export class ServiceConfigV1 extends ServiceConfig {
     }, {});
   }
 
+  getExtends() {
+    if (this.extends) {
+      return this.extends.includes(':') ? this.extends : `${this.getName()}:${this.extends}`;
+    }
+  }
+
+  getRef() {
+    const tag = this.extends && this.extends.includes(':') ? 'latest' : this.extends || 'latest';
+    const ref = `${this.getName()}:${tag}`;
+    return this.parent_ref ? `${this.parent_ref}.${ref}` : ref;
+  }
+
+  setParentRef(ref: string) {
+    this.parent_ref = ref;
+  }
+
+  getParentRef() {
+    return this.parent_ref;
+  }
+
+  getPrivate(): boolean {
+    return this.private || false;
+  }
+
   getName(): string {
     return this.name || '';
   }
@@ -165,6 +213,18 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.image || '';
   }
 
+  setImage(image: string) {
+    this.image = image;
+  }
+
+  getDigest(): string | undefined {
+    return this.digest;
+  }
+
+  setDigest(digest: string) {
+    this.digest = digest;
+  }
+
   getCommand() {
     return this.command || '';
   }
@@ -177,12 +237,14 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies(): { [s: string]: string } {
-    return this.dependencies || {};
+  getDependencies() {
+    return this.dependencies;
   }
 
   addDependency(name: string, tag: string) {
-    this.dependencies[name] = tag;
+    this.dependencies[name] = new ServiceConfigV1();
+    this.dependencies[name].name = name;
+    this.dependencies[name].extends = tag;
   }
 
   removeDependency(dependency_name: string) {
@@ -240,6 +302,13 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDebugOptions(): ServiceDebugOptions | undefined {
     return this.debug;
+  }
+
+  setDebugPath(debug_path: string) {
+    if (!this.debug) {
+      this.debug = {};
+    }
+    this.debug.path = debug_path;
   }
 
   getLanguage(): string {
