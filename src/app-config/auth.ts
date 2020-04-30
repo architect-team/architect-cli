@@ -69,6 +69,7 @@ export default class AuthClient {
       realm: 'Username-Password-Authentication',
       username: username,
       password: password,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore: the auth0 library is not properly typed -_-
       audience: AuthClient.AUDIENCE,
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
@@ -212,6 +213,7 @@ export default class AuthClient {
     };
 
     try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore: the auth0 library is not properly typed -_-
       const auth_result = await this.auth0.oauth?.refreshToken(tokenOptions);
       if (!auth_result || !auth_result.id_token) {
