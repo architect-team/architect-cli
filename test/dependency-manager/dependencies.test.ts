@@ -297,6 +297,31 @@ describe('dependencies', function () {
       expect(graph.nodes).length(4);
       expect(graph.edges).length(2);
     });
+
+    it('inline service in env config', async () => {
+      const env_config = {
+        services: {
+          'architect/inline-service': {
+            parameters: {
+              WORKED: 1
+            }
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(1);
+      expect((graph.nodes[0] as ServiceNode).service_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).service_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect(graph.edges).length(0);
+    });
   });
 
 
@@ -460,8 +485,13 @@ describe('dependencies', function () {
       expect(graph.nodes).length(2);
       expect(graph.edges).length(1);
 
+      expect((graph.nodes[0] as ServiceNode).service_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).service_config.getParameters().WORKED.default).eq(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+
+      expect((graph.nodes[1] as ServiceNode).service_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[1] as ServiceNode).service_config.getParameters().WORKED.default).eq(0);
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(2);
     });

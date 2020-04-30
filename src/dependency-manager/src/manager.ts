@@ -375,10 +375,10 @@ export default abstract class DependencyManager {
   async loadServiceNode(initial_config: ServiceConfig): Promise<ServiceNode> {
     // Load the service config without merging in environment overrides
     const service_config = await this.loadServiceConfigWrapper(initial_config);
+    // Allow for inline overrides of services in dependencies/env
     const node_config = this.getNodeConfig(service_config.merge(initial_config));
     return new ServiceNode({
       service_config: service_config,
-      // Allow for inline overrides of services in dependencies/env
       node_config: node_config,
       tag: service_config.getRef().split(':')[service_config.getRef().split(':').length - 1],
       image: service_config.getImage(),
