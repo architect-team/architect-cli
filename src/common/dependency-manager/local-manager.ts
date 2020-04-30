@@ -71,7 +71,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadServiceConfig(initial_config: ServiceConfig) {
-    let debug_path = initial_config.getDebugOptions()?.path;
+    let debug_path = initial_config.getDebugOptions()?.getPath();
     const service_name = initial_config.getName();
 
     if (debug_path) {
@@ -111,7 +111,7 @@ export default class LocalDependencyManager extends DependencyManager {
     let node = await super.loadServiceNode(initial_config);
 
     // TODO: Kill LocalServiceNode
-    const debug_path = node.service_config.getDebugOptions()?.path;
+    const debug_path = node.service_config.getDebugOptions()?.getPath();
     if (debug_path) {
       const lstat = fs.lstatSync(debug_path);
       node = new LocalServiceNode({

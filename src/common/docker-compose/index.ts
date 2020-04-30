@@ -107,8 +107,8 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
         }
 
-        const service_volumes = node.service_config.getDebugOptions()?.volumes;
-        const env_volumes = dependency_manager._environment.getServiceDetails(node.ref)?.getDebugOptions()?.volumes;
+        const service_volumes = node.service_config.getDebugOptions()?.getVolumes();
+        const env_volumes = dependency_manager._environment.getServiceDetails(node.ref)?.getDebugOptions()?.getVolumes();
         const env_volume_unset = !env_volumes || env_volumes && !env_volumes[key];
         let volume;
         if (service_volumes && service_volumes[key] && service_volumes[key].host_path && env_volume_unset) {

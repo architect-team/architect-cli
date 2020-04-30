@@ -397,6 +397,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return errors;
   }
 
+  getPath() {
+    return this.path;
+  }
+
   getExtends() {
     if (this.extends) {
       return this.extends.includes(':') ? this.extends : `${this.getName()}:${this.extends}`;
