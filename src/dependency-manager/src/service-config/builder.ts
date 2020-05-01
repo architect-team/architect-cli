@@ -56,13 +56,19 @@ export class ServiceConfigBuilder {
       } catch { }
     }
 
-    if (js_obj) {
-      const config = ServiceConfigBuilder.buildFromJSON(js_obj);
-      config.setDebugPath(input);
-      return config;
+    if (!js_obj) {
+      throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    throw new Error('Invalid file format. Must be json or yaml.');
+    try {
+      const config = ServiceConfigBuilder.buildFromJSON(js_obj);
+      config.setDebugPath(input);
+      config.validateOrRejectSync({ groups: ['developer'] });
+      return config;
+    } catch (err) {
+      console.log('Invalid service config:', input);
+      throw err;
+    }
   }
 
   static buildFromJSON(obj: object): ServiceConfig {
