@@ -9,32 +9,8 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import VaultManager from './vault-manager';
-
-export interface VaultParameter {
-  valueFrom: {
-    vault: string;
-    key: string;
-  };
-}
-
-export interface ValueFromParameter {
-  valueFrom: {
-    dependency: string;
-    value: string;
-    interface?: string;
-  };
-}
-
-export interface DatastoreValueFromParameter {
-  valueFrom: {
-    datastore: string;
-    value: string;
-  };
-}
-
-export type ParameterValue = string | number | ValueFromParameter | VaultParameter | DatastoreValueFromParameter;
 
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
@@ -84,7 +60,7 @@ export default abstract class DependencyManager {
     // If debug is enabled merge in debug options ex. debug.command -> command
     const debug_options = node_config.getDebugOptions();
     if (this.debug && debug_options) {
-      node_config = node_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: node_config.__version, ...debug_options }));
+      node_config = node_config.merge(debug_options);
     }
     return node_config;
   }
@@ -124,7 +100,7 @@ export default abstract class DependencyManager {
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
-          node.parameters[key] = await this.vault_manager.getSecret(value as VaultParameter);
+          node.parameters[key] = await this.vault_manager.getSecret(value as ValueFromParameter<VaultParameter>);
         }
       }
     }
@@ -162,7 +138,7 @@ export default abstract class DependencyManager {
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
           if (param_value.toString().indexOf('$') > -1) {
-            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.replace(/\$/g, `$${this.scopeEnv(node, '')}`);
+            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
           }
@@ -174,14 +150,14 @@ export default abstract class DependencyManager {
 
         for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
           if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
-            const value_from_param = param_value as ValueFromParameter;
+            const value_from_param = param_value as ValueFromParameter<DependencyParameter>;
             let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
               const dep_config = node.node_config.getDependencies()[param_target_service_name];
               param_target_service_name = dep_config.getRef();
             }
-            const param_target_datastore_name = (param_value as DatastoreValueFromParameter).valueFrom.datastore;
+            const param_target_datastore_name = (param_value as ValueFromParameter<DatastoreParameter>).valueFrom.datastore;
 
             if (param_target_service_name && !param_target_datastore_name) {
               const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;

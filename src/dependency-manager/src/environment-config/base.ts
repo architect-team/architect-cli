@@ -1,9 +1,6 @@
-import { ParameterValue } from '../manager';
-import { ServiceConfig } from '../service-config/base';
-
-export interface EnvironmentParameters {
-  [key: string]: ParameterValue;
-}
+import { ParameterValue, ServiceConfig } from '../service-config/base';
+import { BaseSpec } from '../utils/base-spec';
+import { Dictionary } from '../utils/dictionary';
 
 export interface EnvironmentVault {
   type: string;
@@ -18,11 +15,11 @@ export interface DnsConfig {
   searches?: string | string[];
 }
 
-export abstract class EnvironmentConfig {
+export abstract class EnvironmentConfig extends BaseSpec {
   abstract __version: string;
-  abstract getParameters(): EnvironmentParameters;
-  abstract getVaults(): { [key: string]: EnvironmentVault };
-  abstract getServices(): { [key: string]: ServiceConfig };
+  abstract getParameters(): Dictionary<ParameterValue>;
+  abstract getVaults(): Dictionary<EnvironmentVault>;
+  abstract getServices(): Dictionary<ServiceConfig>;
   abstract getDnsConfig(): DnsConfig;
 
   getServiceDetails(key: string): ServiceConfig | undefined {

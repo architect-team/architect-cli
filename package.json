@@ -46,6 +46,7 @@
     "@typescript-eslint/parser": "2.23.0",
     "chai": "4.2.0",
     "chalk": "2.4.2",
+    "class-validator": "0.12.2",
     "eslint": "6.8.0",
     "eslint-plugin-oclif": "0.1.0",
     "globby": "10.0.1",

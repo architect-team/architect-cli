@@ -39,6 +39,7 @@
   "devDependencies": {
     "@types/fs-extra": "^8.0.1",
     "@types/js-yaml": "^3.12.3",
+    "class-validator": "^0.12.2",
     "typescript": "^3.7.2"
   }
 }

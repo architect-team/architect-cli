@@ -22,25 +22,36 @@ export class EnvironmentConfigBuilder {
       if (data.isFile()) {
         file_contents = fs.readFileSync(config_path, 'utf-8');
       }
-    } catch {}
+    } catch { }
 
     if (!file_contents) {
       throw new MissingConfigFileError(config_path);
     }
 
     // Try to parse as json
+    let js_obj;
     try {
-      const js_obj = JSON.parse(file_contents);
+      js_obj = JSON.parse(file_contents);
       return EnvironmentConfigBuilder.buildFromJSON(js_obj);
-    } catch {}
+    } catch {
+      try {
+        // Try to parse as yaml
+        js_obj = yaml.safeLoad(file_contents);
+      } catch { }
+    }
 
-    // Try to parse as yaml
+    if (!js_obj) {
+      throw new Error('Invalid file format. Must be json or yaml.');
+    }
+
     try {
-      const js_obj = yaml.safeLoad(file_contents);
-      return EnvironmentConfigBuilder.buildFromJSON(js_obj);
-    } catch {}
-
-    throw new Error('Invalid file format. Must be json or yaml.');
+      const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
+      env_config.validateOrRejectSync({ groups: ['operator'] });
+      return env_config;
+    } catch (err) {
+      console.log('Invalid environment config:', config_path);
+      throw err;
+    }
   }
 
   static buildFromJSON(obj: object): EnvironmentConfig {

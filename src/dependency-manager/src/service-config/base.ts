@@ -1,5 +1,27 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { ParameterValue } from '../manager';
+import { BaseSpec } from '../utils/base-spec';
+
+export interface VaultParameter {
+  vault: string;
+  key: string;
+}
+
+export interface DependencyParameter {
+  dependency: string;
+  value: string;
+  interface?: string;
+}
+
+export interface DatastoreParameter {
+  datastore: string;
+  value: string;
+}
+
+export interface ValueFromParameter<T> {
+  valueFrom: T;
+}
+
+export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
 
 interface RestSubscriptionData {
   uri: string;
@@ -31,7 +53,7 @@ export interface ServiceEventNotifications {
 export interface ServiceEventSubscriptions {
   [service_ref: string]: {
     [event_name: string]: {
-      type: 'rest';
+      type: string;
       data: RestSubscriptionData;
     };
   };
@@ -57,14 +79,6 @@ export interface ServiceLivenessProbe {
   interval?: string;
 }
 
-export interface ServiceDebugOptions {
-  path?: string;
-  dockerfile?: string;
-  volumes?: { [s: string]: VolumeSpec };
-  command?: string | string[];
-  entrypoint?: string | string[];
-}
-
 export interface VolumeSpec {
   mount_path?: string;
   host_path?: string;
@@ -76,14 +90,17 @@ export interface IngressSpec {
   subdomain: string;
 }
 
-export abstract class ServiceConfig {
+export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
+  abstract getPath(): string | undefined;
   abstract getExtends(): string | undefined;
   abstract getRef(): string;
   abstract setParentRef(ref: string): void;
   abstract getParentRef(): string | undefined;
   abstract getPrivate(): boolean;
   abstract getName(): string;
+  abstract getKeywords(): string[];
+  abstract getAuthor(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
   abstract setImage(image: string): void;
@@ -99,7 +116,7 @@ export abstract class ServiceConfig {
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;
-  abstract getDebugOptions(): ServiceDebugOptions | undefined;
+  abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract addDependency(dependency_name: string, dependency_tag: string): void;

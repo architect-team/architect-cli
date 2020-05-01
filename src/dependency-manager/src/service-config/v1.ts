@@ -1,22 +1,37 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { ParameterValue } from '../manager';
+import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { BaseSpec } from '../utils/base-spec';
+import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceDebugOptions, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
+import { validateDictionary, validateNested } from '../utils/validation';
+import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
-function transformParameters(input: any) {
-  const output: any = {};
+export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<ParameterDefinitionSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore
-    if (value instanceof Object && !value.valueFrom) {
-      output[key] = value;
+    if (typeof value === 'object') {
+      if (value.value_from || value.valueFrom) {
+        value.valueFrom = value.valueFrom || value.value_from;
+        value.default = value.default || { valueFrom: value.valueFrom };
+        delete value.valueFrom;
+        delete value.value_from;
+      }
+
+      output[key] = plainToClass(ParameterDefinitionSpecV1, value);
     } else {
-      output[key] = { default: value };
+      output[key] = plainToClass(ParameterDefinitionSpecV1, {
+        default: value,
+      });
     }
   }
   return output;
-}
+};
 
 export function transformServices(input: { [key: string]: string | ServiceConfigV1 }) {
   const output: any = {};
@@ -37,130 +52,336 @@ export function transformServices(input: { [key: string]: string | ServiceConfig
   return output;
 }
 
-function transformVolumes(input: any) {
-  const output: any = {};
+const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<ServiceVolumeV1> = {};
+
   for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object ? value : { host_path: value };
+    output[key] = value instanceof Object
+      ? plainToClass(ServiceVolumeV1, value)
+      : plainToClass(ServiceVolumeV1, { host_path: value });
   }
   return output;
-}
+};
 
-function transformInterfaces(input: any) {
-  const output: any = {};
+const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<InterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object ? value : { port: value };
+    output[key] = typeof value === 'object'
+      ? plainToClass(InterfaceSpecV1, value)
+      : plainToClass(InterfaceSpecV1, { port: value });
   }
   return output;
+};
+
+
+class NotificationSpecV1 extends BaseSpec {
+  @IsString({ always: true })
+  description!: string;
 }
 
-interface ServiceNotificationsV1 {
-  [notification_name: string]: {
-    description: string;
-  };
+class RestSubscriptionDataV1 extends BaseSpec {
+  @IsString({ always: true })
+  uri!: string;
+
+  @IsOptional({ always: true })
+  headers?: Dictionary<string>;
 }
 
-interface ServiceSubscriptionsV1 {
-  [service_name: string]: {
-    [event_name: string]: {
-      uri: string;
-      headers?: { [key: string]: string };
-    };
-  };
+class SubscriptionSpecV1 extends BaseSpec {
+  @IsString({ always: true })
+  @IsIn(['rest', 'grpc'], { always: true })
+  type!: string;
+
+  @Type(() => RestSubscriptionDataV1)
+  @ValidateIf(obj => obj.type === 'rest', { always: true })
+  @IsInstance(RestSubscriptionDataV1, { always: true })
+  data?: RestSubscriptionDataV1;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'data', errors, options);
+    return errors;
+  }
 }
 
-class ServiceDatastoreV1 {
+class ServiceDatastoreV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   host?: string;
+
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   port?: number;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   image?: string;
+
   @Transform(value => (transformParameters(value)))
-  parameters: { [key: string]: ServiceParameterV1 } = {};
+  @IsOptional({ always: true })
+  parameters?: Dictionary<ParameterDefinitionSpecV1>;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    return errors;
+  }
 }
 
-interface ServiceParameterV1 {
-  description?: string;
-  default?: ParameterValue;
-  required?: boolean;
-  build_arg?: boolean;
-}
-
-class LivenessProbeV1 {
+class LivenessProbeV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   success_threshold?: number;
+
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   failure_threshold?: number;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   timeout?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   path?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   interval?: string;
 }
 
-class ApiSpecV1 {
+class ApiSpecV1 extends BaseSpec {
+  @IsString({ always: true })
+  @IsIn(['rest', 'grpc'], { always: true })
   type = 'rest';
+
+  @IsOptional({ always: true })
+  @IsString({ each: true })
   definitions?: string[];
-  @Transform(value => ({ path: '/', success_threshold: 1, failure_threshold: 1, timeout: '5s', interval: '30s', ...value }))
+
+  @Type(() => LivenessProbeV1)
+  @IsOptional({ always: true })
   liveness_probe?: LivenessProbeV1;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'liveness_probe', errors, options);
+    return errors;
+  }
 }
 
-class InterfaceSpecV1 {
+class InterfaceSpecV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
+
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode interface hosts when publishing services',
+  })
+  @IsString({ always: true })
   host?: string;
+
+  @IsNumber(undefined, { always: true })
   port!: number;
 }
 
-export class ServiceVolumeV1 {
+export class ServiceVolumeV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   mount_path?: string;
+
+  @IsOptional({ groups: ['operator'] })
+  @IsNotEmpty({
+    groups: ['debug'],
+    message: 'Debug volumes require a host path to mount the volume to',
+  })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a host mount path when registering a service',
+  })
+  @IsString({ always: true })
   host_path?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
+
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
   readonly?: boolean;
 }
 
-class ServiceDebugOptionsV1 {
-  path?: string;
-  dockerfile?: string;
-  @Transform(value => (transformVolumes(value)))
-  volumes?: { [s: string]: ServiceVolumeV1 };
-  command?: string | string[];
-  entrypoint?: string | string[];
-}
 
-interface IngressSpecV1 {
-  subdomain: string;
+
+class IngressSpecV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a subdomain when registering services',
+  })
+  subdomain?: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
+  @Allow({ always: true })
   __version = '1.0.0';
-  extends?: string;
-  parent_ref?: string;
-  private?: boolean;
+
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a filesystem location when registering a service',
+  })
+  @IsString({ always: true })
+  path?: string;
+
+  @IsOptional({
+    groups: ['operator', 'debug'],
+  })
+  @IsString({ always: true })
+  @Matches(/^[a-zA-Z0-9-_]+$/, {
+    message: 'Names must only include letters, numbers, dashes, and underscores',
+  })
+  @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
+    message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
+    groups: ['developer'],
+  })
   name?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  extends?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  parent_ref?: string;
+
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
+  private?: boolean;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
-  keywords?: string[];
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   image?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   digest?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   host?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   port?: string;
+
+  @IsOptional({ always: true })
   command?: string | string[];
+
+  @IsOptional({ always: true })
   entrypoint?: string | string[];
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   dockerfile?: string;
+
+  @IsOptional({ always: true })
   @Transform(value => (transformServices(value)))
-  dependencies: { [s: string]: ServiceConfigV1 } = {};
+  dependencies?: Dictionary<ServiceConfigV1>;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   language?: string;
-  @Transform(value => (value instanceof Object ? plainToClass(ServiceDebugOptionsV1, value) : (value ? { command: value } : value)), { toClassOnly: true })
-  debug?: ServiceDebugOptionsV1;
+
+  @IsOptional({ always: true })
+  @IsString({ each: true, always: true })
+  keywords?: string[];
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  author?: string;
+
+  @Transform(value => (value instanceof Object
+    ? plainToClass(ServiceConfigV1, value)
+    : (value ? plainToClass(ServiceConfigV1, { command: value }) : value)),
+    { toClassOnly: true })
+  @IsOptional({ always: true })
+  @IsInstance(ServiceConfigV1, { always: true })
+  debug?: ServiceConfigV1;
+
   @Transform(value => (transformParameters(value)))
-  parameters: { [s: string]: ServiceParameterV1 } = {};
+  @IsOptional({ always: true })
+  parameters?: Dictionary<ParameterDefinitionSpecV1>;
+
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
-  datastores: { [s: string]: ServiceDatastoreV1 } = {};
+  @IsOptional({ always: true })
+  datastores?: Dictionary<ServiceDatastoreV1>;
+
   @Type(() => ApiSpecV1)
+  @IsOptional({ always: true })
+  @IsInstance(ApiSpecV1, { always: true })
   api?: ApiSpecV1;
+
   @Transform(value => (transformInterfaces(value)))
-  interfaces: { [s: string]: InterfaceSpecV1 } = {};
-  notifications: ServiceNotificationsV1 = {};
-  subscriptions: ServiceSubscriptionsV1 = {};
-  platforms: { [s: string]: any } = {};
+  @IsOptional({ always: true })
+  interfaces?: Dictionary<InterfaceSpecV1>;
+
+  @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
+  @IsOptional({ always: true })
+  notifications?: Dictionary<NotificationSpecV1>;
+
+  @Transform((subscriptions: Dictionary<Dictionary<any>> | undefined) => {
+    if (!subscriptions) {
+      return undefined;
+    }
+
+    const res = {} as Dictionary<Dictionary<SubscriptionSpecV1>>;
+    for (const [service_name, events] of Object.entries(subscriptions)) {
+      res[service_name] = {};
+      for (const [event_name, data] of Object.entries(events)) {
+        res[service_name][event_name] = plainToClass(SubscriptionSpecV1, data);
+      }
+    }
+    return res;
+  }, { toClassOnly: true })
+  @IsOptional({ always: true })
+  subscriptions?: Dictionary<Dictionary<SubscriptionSpecV1>>;
+
+  @IsOptional({ always: true })
+  platforms?: Dictionary<any>;
+
   @Transform(value => (transformVolumes(value)))
-  volumes: { [s: string]: ServiceVolumeV1 } = {};
+  @IsOptional({ always: true })
+  volumes?: Dictionary<ServiceVolumeV1>;
+
+  @Type(() => IngressSpecV1)
+  @IsOptional({ always: true })
+  @IsInstance(IngressSpecV1, { always: true })
   ingress?: IngressSpecV1;
+
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a replica count when registering services',
+  })
+  @IsNumber(undefined, { always: true })
   replicas?: number;
 
-  private normalizeParameters(parameters: { [s: string]: ServiceParameterV1 }): { [s: string]: ServiceParameter } {
+  private normalizeParameters(parameters: Dictionary<ParameterDefinitionSpecV1>): Dictionary<ServiceParameter> {
     return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
       const param = parameters[key];
       res[key] = {
@@ -171,6 +392,26 @@ export class ServiceConfigV1 extends ServiceConfig {
       };
       return res;
     }, {});
+  }
+
+  async validate(options?: ValidatorOptions) {
+    if (!options) { options = {}; }
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
+    errors = await validateNested(this, 'ingress', errors, options);
+    // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
+    const volumes_options = { ...options };
+    if (volumes_options.groups && volumes_options.groups.includes('debug')) {
+      volumes_options.groups = ['debug'];
+    }
+    errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    errors = await validateDictionary(this, 'datastores', errors, undefined, options);
+    return errors;
+  }
+
+  getPath() {
+    return this.path;
   }
 
   getExtends() {
@@ -202,11 +443,20 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getApiSpec(): ServiceApiSpec {
-    return this.api || { type: 'rest' };
+    const spec = (this.api || { type: 'rest' }) as ServiceApiSpec;
+    spec.liveness_probe = {
+      path: '/',
+      success_threshold: 1,
+      failure_threshold: 1,
+      timeout: '5s',
+      interval: '30s',
+      ...(spec.liveness_probe || {}),
+    };
+    return spec;
   }
 
-  getInterfaces(): { [name: string]: ServiceInterfaceSpec } {
-    return this.interfaces;
+  getInterfaces(): Dictionary<ServiceInterfaceSpec> {
+    return this.interfaces || {};
   }
 
   getImage(): string {
@@ -238,27 +488,31 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getDependencies() {
-    return this.dependencies;
+    return this.dependencies || {};
   }
 
   addDependency(name: string, tag: string) {
+    this.dependencies = this.getDependencies();
     this.dependencies[name] = new ServiceConfigV1();
     this.dependencies[name].name = name;
     this.dependencies[name].extends = tag;
   }
 
   removeDependency(dependency_name: string) {
-    delete this.dependencies[dependency_name];
+    if (this.dependencies) {
+      delete this.dependencies[dependency_name];
+    }
   }
 
-  getParameters(): { [s: string]: ServiceParameter } {
-    return this.normalizeParameters(this.parameters);
+  getParameters(): Dictionary<ServiceParameter> {
+    return this.normalizeParameters(this.parameters || {});
   }
 
-  getDatastores(): { [s: string]: ServiceDatastore } {
-    return Object.keys(this.datastores)
+  getDatastores(): Dictionary<ServiceDatastore> {
+    const datastores = this.datastores || {};
+    return Object.keys(datastores)
       .reduce((res: { [s: string]: ServiceDatastore }, key: string) => {
-        const ds_config = this.datastores[key];
+        const ds_config = datastores[key];
         if (ds_config.image) {
           if (!ds_config.port) {
             throw new Error('Missing datastore port which is required for provisioning');
@@ -276,23 +530,21 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getNotifications(): ServiceEventNotifications {
-    return this.notifications;
+    return this.notifications || {};
   }
 
   getSubscriptions(): ServiceEventSubscriptions {
-    return Object.keys(this.subscriptions)
+    const subscriptions = this.subscriptions || {};
+    return Object.keys(subscriptions)
       .reduce((res: ServiceEventSubscriptions, service_name: string) => {
-        const events = this.subscriptions[service_name];
-        Object.keys(events).forEach(event_name => {
-          if (!res[service_name]) {
-            res[service_name] = {};
-          }
-
+        const events = subscriptions[service_name];
+        Object.entries(events).forEach(([event_name, event_config]) => {
+          res[service_name] = res[service_name] || {};
           res[service_name][event_name] = {
-            type: 'rest',
+            type: event_config.type,
             data: {
-              uri: events[event_name].uri,
-              headers: events[event_name].headers,
+              uri: event_config.data?.uri || '',
+              headers: event_config.data?.headers,
             },
           };
         });
@@ -300,13 +552,13 @@ export class ServiceConfigV1 extends ServiceConfig {
       }, {});
   }
 
-  getDebugOptions(): ServiceDebugOptions | undefined {
+  getDebugOptions(): ServiceConfig | undefined {
     return this.debug;
   }
 
   setDebugPath(debug_path: string) {
     if (!this.debug) {
-      this.debug = {};
+      this.debug = new ServiceConfigV1();
     }
     this.debug.path = debug_path;
   }
@@ -319,8 +571,16 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.language;
   }
 
-  getPlatforms(): { [s: string]: any } {
-    return this.platforms;
+  getKeywords() {
+    return this.keywords || [];
+  }
+
+  getAuthor() {
+    return this.author || '';
+  }
+
+  getPlatforms(): Dictionary<any> {
+    return this.platforms || {};
   }
 
   getPort(): number | undefined {
@@ -328,7 +588,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getVolumes(): { [s: string]: VolumeSpec } {
-    return Object.entries(this.volumes).reduce((volumes, [key, entry]) => {
+    return Object.entries(this.volumes || {}).reduce((volumes, [key, entry]) => {
       if (entry.readonly !== true && entry.readonly !== false) {
         // Set readonly to false by default
         entry.readonly = false;
@@ -340,7 +600,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getIngress() {
-    return this.ingress;
+    if (this.ingress) {
+      return {
+        subdomain: '',
+        ...this.ingress,
+      };
+    }
+
+    return undefined;
   }
 
   getReplicas() {
