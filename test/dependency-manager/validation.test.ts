@@ -243,7 +243,7 @@ describe('validation (v1 spec)', () => {
       });
       const flattened_errors = flattenValidationErrors(errors);
       expect(Object.keys(flattened_errors)).members([]);
-      expect(errors.length).to.equal(1);
+      expect(errors.length).to.equal(0);
     });
   });
 
