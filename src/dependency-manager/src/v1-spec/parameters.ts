@@ -1,5 +1,5 @@
 import { plainToClass, Transform } from 'class-transformer';
-import { IsBoolean, IsEmpty, IsOptional, IsString, ValidatorOptions } from 'class-validator';
+import { IsBoolean, IsDefined, IsEmpty, IsOptional, IsString, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
 import { validateNested } from '../utils/validation';
 
@@ -13,8 +13,8 @@ export class ValueFromDependencySpecV1 extends BaseSpec {
   })
   dependency!: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   interface?: string;
 
   @IsString({
@@ -45,12 +45,12 @@ export class ValueFromVaultSpecV1 extends BaseSpec {
     message: 'Services cannot hardcode references to private secret stores',
   })
   @IsString({
-    groups: ['developer'],
+    groups: ['operator'],
   })
   vault!: string;
 
   @IsString({
-    groups: ['developer'],
+    groups: ['operator'],
   })
   key!: string;
 }
@@ -65,6 +65,7 @@ export class ValueFromWrapperSpecV1 extends BaseSpec {
       return plainToClass(ValueFromVaultSpecV1, valueFrom);
     }
   })
+  @IsDefined({ always: true })
   valueFrom!: ValueFromDependencySpecV1 | ValueFromDatastoreSpecV1 | ValueFromVaultSpecV1;
 
   async validate(options?: ValidatorOptions) {
@@ -75,31 +76,27 @@ export class ValueFromWrapperSpecV1 extends BaseSpec {
 }
 
 export class ParameterDefinitionSpecV1 extends BaseSpec {
-  @IsOptional()
-  @IsBoolean()
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
   required?: boolean;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
 
-  @IsOptional()
-  @IsBoolean()
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
   build_arg?: boolean;
 
   @Transform(value => {
-    switch (typeof value) {
-      case 'string':
-      case 'number':
-        return value;
-      case 'object':
-        return plainToClass(ValueFromWrapperSpecV1, value);
-      default:
-        return undefined;
+    if (value instanceof Object) {
+      return plainToClass(ValueFromWrapperSpecV1, value);
+    } else {
+      return value;
     }
   })
-  @IsOptional()
-  default?: string | number | ValueFromWrapperSpecV1;
+  @IsOptional({ always: true })
+  default?: string | number | boolean | ValueFromWrapperSpecV1;
 
   async validate(options?: ValidatorOptions) {
     let errors = await super.validate(options);
@@ -110,4 +107,4 @@ export class ParameterDefinitionSpecV1 extends BaseSpec {
   }
 }
 
-export type ParameterValueSpecV1 = string | number | ParameterDefinitionSpecV1;
+export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;

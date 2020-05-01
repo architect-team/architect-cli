@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
@@ -8,7 +8,7 @@ import { validateDictionary, validateNested } from '../utils/validation';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
-const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
+export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
     return undefined;
   }
@@ -81,27 +81,28 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
   return output;
 };
 
+
 class NotificationSpecV1 extends BaseSpec {
-  @IsString()
+  @IsString({ always: true })
   description!: string;
 }
 
 class RestSubscriptionDataV1 extends BaseSpec {
-  @IsString()
+  @IsString({ always: true })
   uri!: string;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   headers?: Dictionary<string>;
 }
 
 class SubscriptionSpecV1 extends BaseSpec {
-  @IsString()
-  @IsIn(['rest', 'grpc'])
+  @IsString({ always: true })
+  @IsIn(['rest', 'grpc'], { always: true })
   type!: string;
 
   @Type(() => RestSubscriptionDataV1)
-  @ValidateIf(obj => obj.type === 'rest')
-  @IsInstance(RestSubscriptionDataV1)
+  @ValidateIf(obj => obj.type === 'rest', { always: true })
+  @IsInstance(RestSubscriptionDataV1, { always: true })
   data?: RestSubscriptionDataV1;
 
   async validate(options?: ValidatorOptions) {
@@ -112,20 +113,20 @@ class SubscriptionSpecV1 extends BaseSpec {
 }
 
 class ServiceDatastoreV1 extends BaseSpec {
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   host?: string;
 
-  @IsOptional()
-  @IsNumber()
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   port?: number;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   image?: string;
 
   @Transform(value => (transformParameters(value)))
-  @IsOptional()
+  @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   async validate(options?: ValidatorOptions) {
@@ -136,37 +137,38 @@ class ServiceDatastoreV1 extends BaseSpec {
 }
 
 class LivenessProbeV1 extends BaseSpec {
-  @IsOptional()
-  @IsNumber()
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   success_threshold?: number;
 
-  @IsOptional()
-  @IsNumber()
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
   failure_threshold?: number;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   timeout?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   path?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   interval?: string;
 }
 
 class ApiSpecV1 extends BaseSpec {
-  @IsString()
-  @IsIn(['rest', 'grpc'])
+  @IsString({ always: true })
+  @IsIn(['rest', 'grpc'], { always: true })
   type = 'rest';
 
-  @IsOptional()
+  @IsOptional({ always: true })
   @IsString({ each: true })
   definitions?: string[];
 
   @Type(() => LivenessProbeV1)
+  @IsOptional({ always: true })
   liveness_probe?: LivenessProbeV1;
 
   async validate(options?: ValidatorOptions) {
@@ -177,52 +179,52 @@ class ApiSpecV1 extends BaseSpec {
 }
 
 class InterfaceSpecV1 extends BaseSpec {
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode interface hosts when publishing services',
   })
-  @IsString()
+  @IsString({ always: true })
   host?: string;
 
-  @IsNumber()
+  @IsNumber(undefined, { always: true })
   port!: number;
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   mount_path?: string;
 
-  @IsOptional()
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a host mount path when registering a service',
-  })
+  @IsOptional({ groups: ['operator'] })
   @IsNotEmpty({
     groups: ['debug'],
     message: 'Debug volumes require a host path to mount the volume to',
   })
-  @IsString()
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a host mount path when registering a service',
+  })
+  @IsString({ always: true })
   host_path?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
 
-  @IsOptional()
-  @IsBoolean()
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
   readonly?: boolean;
 }
 
 
 
 class IngressSpecV1 extends BaseSpec {
-  @IsOptional()
+  @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode a subdomain when registering services',
@@ -231,20 +233,21 @@ class IngressSpecV1 extends BaseSpec {
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
+  @Allow({ always: true })
   __version = '1.0.0';
 
-  @IsOptional()
+  @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode a filesystem location when registering a service',
   })
-  @IsString()
+  @IsString({ always: true })
   path?: string;
 
   @IsOptional({
-    groups: ['debug', 'operator'],
+    groups: ['operator', 'debug'],
   })
-  @IsString()
+  @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
@@ -254,87 +257,91 @@ export class ServiceConfigV1 extends ServiceConfig {
   })
   name?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   extends?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   parent_ref?: string;
 
-  @IsOptional()
-  @IsBoolean()
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
   private?: boolean;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   description?: string;
 
-  @IsOptional()
-  @IsString()
-  keywords?: string[];
-
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   image?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   digest?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   host?: string;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   port?: string;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   command?: string | string[];
 
-  @IsOptional()
+  @IsOptional({ always: true })
   entrypoint?: string | string[];
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   dockerfile?: string;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   @Transform(value => (transformServices(value)))
   dependencies?: Dictionary<ServiceConfigV1>;
 
-  @IsOptional()
-  @IsString()
+  @IsOptional({ always: true })
+  @IsString({ always: true })
   language?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ each: true, always: true })
+  keywords?: string[];
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  author?: string;
 
   @Transform(value => (value instanceof Object
     ? plainToClass(ServiceConfigV1, value)
     : (value ? plainToClass(ServiceConfigV1, { command: value }) : value)),
     { toClassOnly: true })
-  @IsOptional()
-  @IsInstance(ServiceConfigV1)
+  @IsOptional({ always: true })
+  @IsInstance(ServiceConfigV1, { always: true })
   debug?: ServiceConfigV1;
 
   @Transform(value => (transformParameters(value)))
-  @IsOptional()
+  @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
-  @IsOptional()
+  @IsOptional({ always: true })
   datastores?: Dictionary<ServiceDatastoreV1>;
 
   @Type(() => ApiSpecV1)
-  @IsOptional()
-  @IsInstance(ApiSpecV1)
+  @IsOptional({ always: true })
+  @IsInstance(ApiSpecV1, { always: true })
   api?: ApiSpecV1;
 
   @Transform(value => (transformInterfaces(value)))
-  @IsOptional()
+  @IsOptional({ always: true })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
-  @IsOptional()
+  @IsOptional({ always: true })
   notifications?: Dictionary<NotificationSpecV1>;
 
   @Transform((subscriptions: Dictionary<Dictionary<any>> | undefined) => {
@@ -351,27 +358,27 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
     return res;
   }, { toClassOnly: true })
-  @IsOptional()
+  @IsOptional({ always: true })
   subscriptions?: Dictionary<Dictionary<SubscriptionSpecV1>>;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   platforms?: Dictionary<any>;
 
   @Transform(value => (transformVolumes(value)))
-  @IsOptional()
+  @IsOptional({ always: true })
   volumes?: Dictionary<ServiceVolumeV1>;
 
   @Type(() => IngressSpecV1)
-  @IsOptional()
-  @IsInstance(IngressSpecV1)
+  @IsOptional({ always: true })
+  @IsInstance(IngressSpecV1, { always: true })
   ingress?: IngressSpecV1;
 
-  @IsOptional()
+  @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode a replica count when registering services',
   })
-  @IsNumber()
+  @IsNumber(undefined, { always: true })
   replicas?: number;
 
   private normalizeParameters(parameters: Dictionary<ParameterDefinitionSpecV1>): Dictionary<ServiceParameter> {
@@ -388,10 +395,16 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   async validate(options?: ValidatorOptions) {
+    if (!options) { options = {}; }
     let errors = await super.validate(options);
-    errors = await validateNested(this, 'debug', errors, { ...options, groups: (options?.groups || []).concat('debug') });
+    errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
     errors = await validateNested(this, 'ingress', errors, options);
-    errors = await validateDictionary(this, 'volumes', errors, undefined, options);
+    // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
+    const volumes_options = { ...options };
+    if (volumes_options.groups && volumes_options.groups.includes('debug')) {
+      volumes_options.groups = ['debug'];
+    }
+    errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
     return errors;
@@ -556,6 +569,14 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
 
     return this.language;
+  }
+
+  getKeywords() {
+    return this.keywords || [];
+  }
+
+  getAuthor() {
+    return this.author || '';
   }
 
   getPlatforms(): Dictionary<any> {

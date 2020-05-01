@@ -21,7 +21,7 @@ export interface ValueFromParameter<T> {
   valueFrom: T;
 }
 
-export type ParameterValue = string | number | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
+export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
 
 interface RestSubscriptionData {
   uri: string;
@@ -99,6 +99,8 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getParentRef(): string | undefined;
   abstract getPrivate(): boolean;
   abstract getName(): string;
+  abstract getKeywords(): string[];
+  abstract getAuthor(): string;
   abstract getLanguage(): string;
   abstract getImage(): string;
   abstract setImage(image: string): void;

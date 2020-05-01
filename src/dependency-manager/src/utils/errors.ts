@@ -1,5 +1,5 @@
 import { ValidationError } from 'class-validator';
-import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
+import { Dictionary } from './dictionary';
 
 export class Errors {
 
@@ -29,7 +29,7 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
       res[property] = error.constraints;
     }
 
-    if (error.children.length) {
+    if (error.children && error.children.length) {
       res = {
         ...res,
         ...flattenValidationErrors(error.children, `${property}.`),

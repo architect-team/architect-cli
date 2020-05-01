@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { flattenValidationErrors } from '../../src/common/utils/errors';
-import { ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { EnvironmentConfigBuilder, ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { flattenValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation (v1 spec)', () => {
   describe('services', () => {
@@ -36,6 +36,7 @@ describe('validation (v1 spec)', () => {
 
     it('should not allow value_from vaults in service configs', async () => {
       const spec = {
+        name: 'architect/test',
         parameters: {
           SECRET: {
             value_from: {
@@ -51,7 +52,7 @@ describe('validation (v1 spec)', () => {
         groups: ['developer']
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).to.include('parameters.SECRET.default.valueFrom.vault');
+      expect(Object.keys(flattened_errors)).members(['parameters.SECRET.default.valueFrom.key', 'parameters.SECRET.default.valueFrom.vault']);
       expect(flattened_errors['parameters.SECRET.default.valueFrom.vault']).to.include({
         isEmpty: 'Services cannot hardcode references to private secret stores'
       });
@@ -59,6 +60,7 @@ describe('validation (v1 spec)', () => {
 
     it('should not allow host_paths in volume claims', async () => {
       const spec = {
+        name: 'architect/test',
         volumes: {
           image_store: {
             mount_path: '/app/images',
@@ -82,6 +84,7 @@ describe('validation (v1 spec)', () => {
 
     it('should require host paths in debug volumes', async () => {
       const spec = {
+        name: 'architect/test',
         debug: {
           volumes: {
             image_store: {
@@ -139,6 +142,109 @@ describe('validation (v1 spec)', () => {
       });
       expect(errors.length).to.equal(0);
     });
+
+    it('typos', async () => {
+      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+        name: 'test',
+        TYPO: 'typo'
+      });
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      expect(errors.length).to.equal(1);
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members(['TYPO']);
+    });
+
+    it('api config', async () => {
+      const service_config = {
+        "name": "architect/cloud-api",
+        "description": "API powering the Architect Hub and related clients and services",
+        "keywords": [
+          "architect",
+          "docker",
+          "node"
+        ],
+        "author": "Architect.io",
+        "dependencies": {
+          "architect/dep1": "latest",
+          "architect/dep2": "latest",
+        },
+        "language": "node",
+        "api": {
+          "type": "rest"
+        },
+        "interfaces": {
+          "main": 8080
+        },
+        "datastores": {
+          "primary": {
+            "image": "postgres:11",
+            "port": 5432,
+            "parameters": {
+              "POSTGRES_USER": {
+                "default": "postgres"
+              },
+              "POSTGRES_PASSWORD": {
+                "default": "architect"
+              },
+              "POSTGRES_DB": {
+                "default": "architect_cloud_api"
+              }
+            }
+          }
+        },
+        "parameters": {
+          "NODE_ENV": {
+            "build_arg": true
+          },
+          "DEFAULT_REGISTRY_HOST": {
+            "description": "Public hostname used to resolve the registry from deployment environments"
+          },
+          "DB_HOST": {
+            "default": {
+              "valueFrom": {
+                "datastore": "primary",
+                "value": "$HOST"
+              }
+            }
+          },
+          "DEFAULT_INTERNAL_REGISTRY_HOST": {
+            "default": {
+              "valueFrom": {
+                "dependency": "architect/dep1:latest",
+                "value": "$HOST:$PORT"
+              }
+            }
+          },
+          "ENABLE_SCHEDULE": {
+            "description": "Enable scheduled jobs",
+            "default": false
+          }
+        },
+        "debug": {
+          "command": "npm run start:dev",
+          "volumes": {
+            "src": {
+              "mount_path": "/src",
+              "host_path": "./src"
+            },
+            "test": {
+              "mount_path": "/test",
+              "host_path": "./test"
+            }
+          }
+        }
+      }
+
+      const parsedSpec = ServiceConfigBuilder.buildFromJSON(service_config);
+      const errors = await parsedSpec.validate({
+        groups: ['developer'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members([]);
+      expect(errors.length).to.equal(1);
+    });
   });
 
   describe('environments', () => {
@@ -154,7 +260,7 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
       let errors = await parsedSpec.validate({
         groups: ['operator']
       });
@@ -177,7 +283,7 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
       let errors = await parsedSpec.validate({
         groups: ['operator']
       });
@@ -196,12 +302,12 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
       let errors = await parsedSpec.validate({
         groups: ['operator'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(flattened_errors).to.have.key('parameters.PARAM.default.valueFrom.dependency');
+      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.default.valueFrom.dependency', 'parameters.PARAM.default.valueFrom.value']);
       expect(flattened_errors['parameters.PARAM.default.valueFrom.dependency']).to.include({
         isEmpty: 'Service values are only accessible to direct consumers'
       });
@@ -219,15 +325,166 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
       let errors = await parsedSpec.validate({
         groups: ['operator'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(flattened_errors).to.have.key('parameters.PARAM.default.valueFrom.datastore');
+      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.default.valueFrom.datastore', 'parameters.PARAM.default.valueFrom.value']);
       expect(flattened_errors['parameters.PARAM.default.valueFrom.datastore']).to.include({
         isEmpty: 'Datastore values are only accessible to direct consumers'
       });
     });
+
+    it('typo', async () => {
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON({
+        name: 'test',
+      });
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      expect(errors.length).to.equal(1);
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members(['name']);
+    });
+
+    it('nested typo', async () => {
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON({
+        services: {
+          api: {
+            parameter: {
+              TEST: 0
+            }
+          }
+        }
+      });
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      expect(errors.length).to.equal(1);
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members(['services.api.parameter']);
+    });
+
+    it('architect config', async () => {
+      const env_config = {
+        "services": {
+          "architect/registry:latest": {
+            "debug": {
+              "path": "../docker-registry/registry"
+            },
+            "parameters": {
+              "NOTIFICATION_URL": "http://architect.cloud-api.latest:8080"
+            }
+          },
+          "architect/registry-proxy:latest": {
+            "debug": {
+              "path": "../docker-registry"
+            },
+            "parameters": {
+              "CLOUD_API_BASE_URL": "http://architect.cloud-api.latest:8080",
+              "CLOUD_API_SECRET": "test",
+              "NODE_ENV": "development"
+            }
+          },
+          "architect/cloud-api:latest": {
+            "debug": {
+              "path": "../cloud-api",
+              "volumes": {
+                "src": "../cloud-api/src",
+                "test": "../cloud-api/test"
+              }
+            },
+            "ingress": {
+              "subdomain": "api"
+            },
+            "parameters": {
+              "NODE_ENV": "local",
+              "OAUTH_CLIENT_SECRET": {
+                "valueFrom": {
+                  "vault": "local_vault",
+                  "key": "architect_local/api#OAUTH_CLIENT_SECRET"
+                }
+              },
+              "SEGMENT_WRITE_KEY": "test"
+            },
+            "datastores": {
+              "primary": {
+                "host": "host.docker.internal"
+              }
+            }
+          },
+          "architect/cloud:latest": {
+            "debug": {
+              "path": "../architect-cloud",
+              "volumes": {
+                "src": "./src"
+              }
+            },
+            "ingress": {
+              "subdomain": "app"
+            },
+            "parameters": {
+              "ENVIRONMENT": "local",
+            }
+          },
+          "concourse/web:latest": {
+            "debug": {
+              "path": "../cloud-api/concourse/web"
+            },
+            "ingress": {
+              "subdomain": "ci"
+            },
+            "volumes": {
+              "web-keys": "../cloud-api/concourse/keys/web"
+            },
+            "parameters": {
+              "CONCOURSE_LOG_LEVEL": "error",
+              "CONCOURSE_VAULT_AUTH_PARAM": {
+                "valueFrom": {
+                  "vault": "local_vault",
+                  "key": "architect_local/concourse#CONCOURSE_VAULT_AUTH_PARAM"
+                }
+              }
+            },
+            "datastores": {
+              "primary": {
+                "host": "host.docker.internal"
+              }
+            }
+          },
+          "concourse/worker:latest": {
+            "debug": {
+              "path": "../cloud-api/concourse/worker"
+            },
+            "volumes": {
+              "worker-keys": "../cloud-api/concourse/keys/worker"
+            },
+            "parameters": {
+              "CONCOURSE_LOG_LEVEL": "error",
+              "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",
+              "CONCOURSE_GARDEN_LOG_LEVEL": "error"
+            }
+          }
+        },
+        "vaults": {
+          "local_vault": {
+            "host": "http://0.0.0.0",
+            "type": "hashicorp-vault",
+            "description": "Secret store for local development",
+            "role_id": "test",
+            "secret_id": "file:~/secret"
+          }
+        }
+      }
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(env_config);
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members([]);
+      expect(errors.length).to.equal(0);
+    })
   });
 });
