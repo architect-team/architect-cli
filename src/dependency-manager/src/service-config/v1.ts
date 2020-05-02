@@ -33,16 +33,20 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: { [key: string]: string | ServiceConfigV1 }) {
+export function transformServices(input: { [key: string]: string | object | ServiceConfigV1 }) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     const [name, ext] = key.split(':');
     let config;
-    if (value instanceof Object) {
-      if (ext && !value.extends) {
-        value.extends = ext;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    if (value instanceof ServiceConfigV1) {
+      config = value;
+    } else if (value instanceof Object) {
+      const casted_value = value as ServiceConfigV1;
+      if (ext && !casted_value.extends) {
+        casted_value.extends = ext;
       }
-      config = { private: !value.extends, ...value, name };
+      config = { private: !casted_value.extends || Object.keys(casted_value).length > 1, ...value, name };
     } else {
       config = { extends: value, name };
     }
@@ -61,7 +65,9 @@ const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Diction
 
   for (const [key, value] of Object.entries(input)) {
     output[key] = value instanceof Object
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       ? plainToClass(ServiceVolumeV1, value)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       : plainToClass(ServiceVolumeV1, { host_path: value });
   }
   return output;
@@ -75,7 +81,9 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
   const output: Dictionary<InterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
     output[key] = typeof value === 'object'
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       ? plainToClass(InterfaceSpecV1, value)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
       : plainToClass(InterfaceSpecV1, { port: value });
   }
   return output;
@@ -300,7 +308,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
-  @Transform(value => (transformServices(value)))
+  @Transform(value => (transformServices(value)), { toClassOnly: true })
   dependencies?: Dictionary<ServiceConfigV1>;
 
   @IsOptional({ always: true })

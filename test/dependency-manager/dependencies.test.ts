@@ -320,13 +320,14 @@ describe('dependencies', function () {
       expect((graph.nodes[0] as ServiceNode).service_config.getParameters().WORKED.default).eq(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[0] as ServiceNode).ref).eq('architect/inline-service:latest');
       expect(graph.edges).length(0);
     });
   });
 
 
-  describe('ref dependencies', function () {
-    it('simple ref dependency', async () => {
+  describe('extends dependencies', function () {
+    it('simple extends dependency', async () => {
       moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
         status: 200,
         response: { tag: '11', config: { name: 'postgres/postgres' }, service: { url: 'postgres:11' } }
@@ -362,7 +363,7 @@ describe('dependencies', function () {
       expect(graph.edges).length(1);
     });
 
-    it('ref env config with dependencies', async () => {
+    it('extends env config with dependencies', async () => {
       moxios.stubRequest(`/accounts/architect/services/checkout-service/versions/latest`, {
         status: 200,
         response: { tag: 'latest', config: { name: 'architect/checkout-service', parameters: { WORKED: 0 } }, service: { url: 'architect/checkout-service:latest' } }
@@ -399,8 +400,10 @@ describe('dependencies', function () {
 
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[0] as ServiceNode).ref).eq('architect/checkout-service:latest');
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(1);
+      expect((graph.nodes[1] as ServiceNode).ref).eq('architect/checkout-service:latest.architect/payments-service:v1');
     });
 
     it('load service and then load dependencies', async () => {
@@ -496,7 +499,7 @@ describe('dependencies', function () {
       expect((graph.nodes[1] as ServiceNode).node_config.getParameters().WORKED.default).eq(2);
     });
 
-    it('chained refs', async () => {
+    it('chained extends', async () => {
       const service_config = {
         name: 'forked/payments-service',
         extends: 'architect/payments-service:v1'
@@ -526,7 +529,42 @@ describe('dependencies', function () {
       const graph = manager.graph;
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service:v1');
       expect(graph.edges).length(0);
+    });
+
+    it('check config refs', async () => {
+      for (var i = 1; i < 5; i++) {
+        moxios.stubRequest(`/accounts/architect/services/checkouts-service/versions/v` + i, {
+          status: 200,
+          response: { tag: 'v' + i, config: { name: 'architect/checkouts-service', parameters: { WORKED: 1 } }, service: { url: 'architect/checkouts-service:v' + i } }
+        });
+      }
+      const env_config = {
+        services: {
+          'architect/checkouts-service': 'v1',
+          'architect/checkouts-service:v2': {
+            dependencies: {
+              'architect/checkouts-service:v3': {},
+              'architect/checkouts-service': 'v4'
+            }
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(4);
+      expect(graph.edges).length(2);
+
+      expect(graph.nodes[0].ref).eq('architect/checkouts-service:v1');
+      expect(graph.nodes[1].ref).eq('architect/checkouts-service:v2');
+      expect(graph.nodes[2].ref).eq('architect/checkouts-service:v3');
+      expect(graph.nodes[3].ref).eq('architect/checkouts-service:v4');
     });
   });
 });

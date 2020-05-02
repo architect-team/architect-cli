@@ -29,6 +29,9 @@ export abstract class EnvironmentConfig extends BaseSpec {
     const [parent, service] = key.split('.');
     key = service ? service : parent;
 
-    return services[key] || services[key.split(':')[0]];
+    const env_service = services[key] || services[key.split(':')[0]];
+    if (env_service && (!env_service.getExtends() || env_service.getExtends() === key)) {
+      return env_service;
+    }
   }
 }
