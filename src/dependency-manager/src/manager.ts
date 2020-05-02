@@ -356,9 +356,9 @@ export default abstract class DependencyManager {
     return new ServiceNode({
       service_config: service_config,
       node_config: node_config,
-      tag: service_config.getRef().split(':')[service_config.getRef().split(':').length - 1],
-      image: service_config.getImage(),
-      digest: service_config.getDigest(),
+      tag: node_config.getRef().split(':')[node_config.getRef().split(':').length - 1],
+      image: node_config.getImage(),
+      digest: node_config.getDigest(),
     });
   }
 

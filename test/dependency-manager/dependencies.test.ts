@@ -360,6 +360,7 @@ describe('dependencies', function () {
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/backend:latest');
       expect(graph.nodes[1].ref).eq('db:latest');
+      expect((graph.nodes[1] as ServiceNode).image).eq('postgres:11');
       expect(graph.edges).length(1);
     });
 
@@ -530,6 +531,7 @@ describe('dependencies', function () {
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service:v1');
+      expect((graph.nodes[0] as ServiceNode).image).eq('forked/payments-service:v1');
       expect(graph.edges).length(0);
     });
 
