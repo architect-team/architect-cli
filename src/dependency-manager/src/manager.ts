@@ -15,16 +15,19 @@ import VaultManager from './vault-manager';
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
   debug = false;
-  gateway_port: Promise<number>;
-  _environment: EnvironmentConfig;
-  protected vault_manager: VaultManager;
+  gateway_port!: number;
+  _environment!: EnvironmentConfig;
+  protected vault_manager!: VaultManager;
   protected _service_config_cache: { [key: string]: ServiceConfig | undefined };
 
-  constructor(environment_config?: EnvironmentConfig) {
+  protected constructor() {
+    this._service_config_cache = {};
+  }
+
+  async init(environment_config?: EnvironmentConfig): Promise<void> {
     this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.vault_manager = new VaultManager(this._environment.getVaults());
-    this.gateway_port = this.getServicePort(80);
-    this._service_config_cache = {};
+    this.gateway_port = await this.getServicePort(80);
   }
 
   getNodeConfig(service_config: ServiceConfig) {
@@ -107,7 +110,7 @@ export default abstract class DependencyManager {
 
     const env_params_to_expand: { [key: string]: string } = {};
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? await this.gateway_port : '';
+    const gateway_port = gateway_node ? this.gateway_port : '';
     for (const node of this.graph.nodes) {
       for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
         let external_host: string, internal_host: string, external_port: string, internal_port: string;

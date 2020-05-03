@@ -30,7 +30,7 @@ export default class Link extends Command {
 
     // Try to load the service from the path to ensure it exists and is valid
     try {
-      const config = ServiceConfigBuilder.buildFromPath(servicePath);
+      const config = await ServiceConfigBuilder.buildFromPath(servicePath);
       this.app.linkServicePath(config.getName(), servicePath);
       this.log(`Successfully linked ${chalk.green(config.getName())} to local system at ${chalk.green(servicePath)}.`);
     } catch (err) {

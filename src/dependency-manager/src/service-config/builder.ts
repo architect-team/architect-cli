@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import { flattenValidationErrors } from '../utils/errors';
 import { ServiceConfig } from './base';
 import { ServiceConfigV1 } from './v1';
 
@@ -24,7 +25,7 @@ export class ServiceConfigBuilder {
     ];
   }
 
-  static buildFromPath(input: string): ServiceConfig {
+  static async buildFromPath(input: string): Promise<ServiceConfig> {
     const try_files = ServiceConfigBuilder.getConfigPaths(input);
 
     // Make sure the file exists
@@ -62,12 +63,12 @@ export class ServiceConfigBuilder {
 
     try {
       const config = ServiceConfigBuilder.buildFromJSON(js_obj);
+      await config.validateOrReject({ groups: ['developer'] });
       config.setDebugPath(input);
-      config.validateOrRejectSync({ groups: ['developer'] });
       return config;
     } catch (err) {
       console.log('Invalid service config:', input);
-      throw err;
+      throw new Error(JSON.stringify(flattenValidationErrors(err), null, 2));
     }
   }
 
