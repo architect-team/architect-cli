@@ -37,8 +37,7 @@ describe('volumes', function () {
       name: "architect/backend-db",
       volumes: {
         env_volume: {
-          mount_path: "/usr/src/volume1",
-          host_path: "./src"
+          mount_path: "/usr/src/volume1"
         }
       }
     };
@@ -269,7 +268,8 @@ describe('volumes', function () {
       debug: {
         volumes: {
           src: {
-            mount_path: "/src"
+            mount_path: "/src",
+            host_path: "./src"
           }
         }
       }
