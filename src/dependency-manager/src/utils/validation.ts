@@ -8,6 +8,9 @@ export const validateNested = async <T extends Record<string, any>>(
   options?: ValidatorOptions,
 ): Promise<ValidationError[]> => {
   const value = (target as any)[property];
+  if (value === undefined) {
+    return errors;
+  }
   const error_index = errors.findIndex(err => err.property === property);
 
   let error = new ValidationError();

@@ -33,7 +33,7 @@ export default class Build extends Command {
   async run() {
     const { flags } = this.parse(Build);
 
-    let dependency_manager = new LocalDependencyManager(this.app.api);
+    let dependency_manager = await LocalDependencyManager.create(this.app.api);
     if (flags.environment) {
       const config_path = path.resolve(untildify(flags.environment));
       dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);

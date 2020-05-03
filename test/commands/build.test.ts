@@ -90,7 +90,7 @@ describe('build', function () {
 
   it('builds docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/rest');
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     expect(spy.calledOnce).to.equal(true);
@@ -99,7 +99,7 @@ describe('build', function () {
 
   it('builds gRPC docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     expect(spy.calledOnce).to.equal(true);
@@ -108,7 +108,7 @@ describe('build', function () {
 
   it('builds docker image w/ specific tag', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path, '-t', TEST_TAG]);
 
     expect(spy.calledOnce).to.equal(true);
@@ -127,7 +127,7 @@ describe('build', function () {
       if (service_file.endsWith('grpc')) {
         service_file = path.join(service_file, 'add.architect.json');
       }
-      const service_config = ServiceConfigBuilder.buildFromPath(service_file);
+      const service_config = await ServiceConfigBuilder.buildFromPath(service_file);
       testBuildArgs(service_path, service_config, call.args[0]);
     }
   });

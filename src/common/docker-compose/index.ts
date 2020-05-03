@@ -33,7 +33,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       compose.services[node.normalized_ref] = {
         image: 'registry.architect.io/architect-nginx/proxy:latest',
         restart: 'always',
-        ports: [`${await dependency_manager.gateway_port}:${node.ports[0]}`],
+        ports: [`${dependency_manager.gateway_port}:${node.ports[0]}`],
         volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
         depends_on: [],
         environment: {

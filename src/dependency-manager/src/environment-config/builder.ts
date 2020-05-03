@@ -2,6 +2,7 @@
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import { flattenValidationErrors } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -14,7 +15,7 @@ class MissingConfigFileError extends Error {
 }
 
 export class EnvironmentConfigBuilder {
-  static buildFromPath(config_path: string): EnvironmentConfig {
+  static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
     let file_contents;
 
     try {
@@ -32,7 +33,6 @@ export class EnvironmentConfigBuilder {
     let js_obj;
     try {
       js_obj = JSON.parse(file_contents);
-      return EnvironmentConfigBuilder.buildFromJSON(js_obj);
     } catch {
       try {
         // Try to parse as yaml
@@ -46,11 +46,11 @@ export class EnvironmentConfigBuilder {
 
     try {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
-      env_config.validateOrRejectSync({ groups: ['operator'] });
+      await env_config.validateOrReject({ groups: ['operator'] });
       return env_config;
     } catch (err) {
       console.log('Invalid environment config:', config_path);
-      throw err;
+      throw new Error(JSON.stringify(flattenValidationErrors(err), null, 2));
     }
   }
 

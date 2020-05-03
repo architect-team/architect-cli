@@ -208,7 +208,7 @@ export class ServiceVolumeV1 extends BaseSpec {
   @IsString({ always: true })
   mount_path?: string;
 
-  @IsOptional({ groups: ['operator'] })
+  @IsOptional({ groups: ['developer', 'operator'] })
   @IsNotEmpty({
     groups: ['debug'],
     message: 'Debug volumes require a host path to mount the volume to',
@@ -329,6 +329,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     { toClassOnly: true })
   @IsOptional({ always: true })
   @IsInstance(ServiceConfigV1, { always: true })
+  @IsEmpty({ groups: ['debug'] })
   debug?: ServiceConfigV1;
 
   @Transform(value => (transformParameters(value)))

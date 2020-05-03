@@ -13,33 +13,26 @@ import { LocalServiceNode } from './local-service-node';
 declare type LinkedServicesMap = { [serviceName: string]: string };
 
 export default class LocalDependencyManager extends DependencyManager {
-  graph: LocalDependencyGraph;
+  graph!: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
   linked_services: LinkedServicesMap;
 
-  constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
-    const env_config = config_path
-      ? EnvironmentConfigBuilder.buildFromPath(config_path)
-      : EnvironmentConfigBuilder.buildFromJSON({});
-
-    // Only include in cli since it will read files off disk
-    for (const vault of Object.values(env_config.getVaults())) {
-      vault.client_token = readIfFile(vault.client_token);
-      vault.role_id = readIfFile(vault.role_id);
-      vault.secret_id = readIfFile(vault.secret_id);
-    }
-
-    super(env_config);
-    this.graph = new LocalDependencyGraph(env_config.__version);
+  protected constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
+    super();
     this.api = api;
     this.config_path = config_path || '';
     this.linked_services = linked_services;
     this.debug = debug;
   }
 
+  static async create(api: AxiosInstance) {
+    return this.createFromPath(api, '');
+  }
+
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
+    await dependency_manager.init();
     for (const config of Object.values(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
       if (svc_node instanceof ServiceNode) {
@@ -56,6 +49,22 @@ export default class LocalDependencyManager extends DependencyManager {
     return dependency_manager;
   }
 
+  async init() {
+    const env_config = this.config_path
+      ? await EnvironmentConfigBuilder.buildFromPath(this.config_path)
+      : EnvironmentConfigBuilder.buildFromJSON({});
+
+    await super.init(env_config);
+
+    // Only include in cli since it will read files off disk
+    for (const vault of Object.values(env_config.getVaults())) {
+      vault.client_token = readIfFile(vault.client_token);
+      vault.role_id = readIfFile(vault.role_id);
+      vault.secret_id = readIfFile(vault.secret_id);
+    }
+    this.graph = new LocalDependencyGraph(env_config.__version);
+  }
+
   /**
    * @override
    */
@@ -64,7 +73,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadLocalService(service_path: string): Promise<ServiceNode> {
-    const service_config = ServiceConfigBuilder.buildFromPath(service_path);
+    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
     const node = await this.loadServiceNode(service_config);
     this.graph.addNode(node);
     return node;

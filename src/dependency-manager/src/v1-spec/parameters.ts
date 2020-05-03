@@ -4,6 +4,7 @@ import { BaseSpec } from '../utils/base-spec';
 import { validateNested } from '../utils/validation';
 
 export class ValueFromDependencySpecV1 extends BaseSpec {
+  @IsOptional({ always: true })
   @IsEmpty({
     groups: ['operator'],
     message: 'Service values are only accessible to direct consumers',
@@ -57,7 +58,7 @@ export class ValueFromVaultSpecV1 extends BaseSpec {
 
 export class ValueFromWrapperSpecV1 extends BaseSpec {
   @Transform(valueFrom => {
-    if (valueFrom.hasOwnProperty('dependency')) {
+    if (valueFrom.hasOwnProperty('dependency') || valueFrom.hasOwnProperty('interface')) {
       return plainToClass(ValueFromDependencySpecV1, valueFrom);
     } else if (valueFrom.hasOwnProperty('datastore')) {
       return plainToClass(ValueFromDatastoreSpecV1, valueFrom);
