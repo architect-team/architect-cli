@@ -2,7 +2,7 @@
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import { flattenValidationErrors } from '../utils/errors';
+import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -50,7 +50,7 @@ export class EnvironmentConfigBuilder {
       return env_config;
     } catch (err) {
       console.log('Invalid environment config:', config_path);
-      throw new Error(JSON.stringify(flattenValidationErrors(err), null, 2));
+      throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
     }
   }
 

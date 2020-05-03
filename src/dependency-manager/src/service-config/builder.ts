@@ -3,7 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { flattenValidationErrors } from '../utils/errors';
+import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { ServiceConfig } from './base';
 import { ServiceConfigV1 } from './v1';
 
@@ -68,7 +68,7 @@ export class ServiceConfigBuilder {
       return config;
     } catch (err) {
       console.log('Invalid service config:', input);
-      throw new Error(JSON.stringify(flattenValidationErrors(err), null, 2));
+      throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
     }
   }
 

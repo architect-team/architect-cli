@@ -1,9 +1,32 @@
 import { expect } from 'chai';
+import mock_fs from 'mock-fs';
 import { EnvironmentConfigBuilder, ServiceConfigBuilder } from '../../src/dependency-manager/src';
 import { flattenValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation (v1 spec)', () => {
+  afterEach(function () {
+    // Restore fs
+    mock_fs.restore();
+  });
+
   describe('services', () => {
+    it('should not allow nested debug blocks', async () => {
+      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+        name: 'test/test',
+        debug: {
+          command: 'debug',
+          debug: {
+            command: 'debug2',
+          }
+        },
+      });
+      const errors = await parsedSpec.validate({
+        groups: ['developer'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).to.include('debug.debug');
+    });
+
     it('should not allow hardcoded filesystem debug paths when publishing', async () => {
       const parsedSpec = ServiceConfigBuilder.buildFromJSON({
         name: 'test/test',
@@ -487,4 +510,176 @@ describe('validation (v1 spec)', () => {
       expect(errors.length).to.equal(0);
     })
   });
+
+  describe('file validation', () => {
+    it('should not allow nested debug blocks with line number', async () => {
+      const service_config = {
+        name: 'test/test',
+        debug: {
+          command: 'debug',
+          debug: {
+            command: 'debug2',
+          }
+        },
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['debug.debug']);
+      expect(config_err['debug.debug'].line).to.eq(5);
+    });
+
+    it('should not allow nested debug blocks with line number/single line', async () => {
+      const service_config = {
+        name: 'test/test',
+        debug: {
+          command: 'debug',
+          debug: {
+            command: 'debug2',
+          }
+        },
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['debug.debug']);
+      expect(config_err['debug.debug'].line).to.eq(1);
+    });
+
+    it('parameter value_from error', async () => {
+      const service_config = {
+        name: 'test/test',
+        debug: {
+          parameters: {
+            TEST: {
+              default: {
+                valueFrom: {
+                  dependency: "foo",
+                  value: 'bar',
+                  invalid: "baz"
+                }
+              }
+            }
+          }
+        },
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['debug.parameters.TEST.default.valueFrom.invalid']);
+      expect(config_err['debug.parameters.TEST.default.valueFrom.invalid'].line).to.eq(10);
+    });
+
+    it('multiple author keys (first invalid) line number/single line', async () => {
+      const service_config = {
+        name: 'test/test',
+        author: 5,
+        debug: {
+          author: 'debug'
+        },
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['author']);
+      expect(config_err['author'].line).to.eq(3);
+    });
+
+    it('multiple author keys (second invalid) line number/single line', async () => {
+      const service_config = {
+        name: 'test/test',
+        debug: {
+          author: 'debug'
+        },
+        author: 5,
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['author']);
+      expect(config_err['author'].line).to.eq(6);
+    });
+
+    it('multiple author keys (middle invalid) line number/single line', async () => {
+      const service_config = {
+        name: 'test/test',
+        debug: {
+          author: 'debug'
+        },
+        author: 5,
+        parameters: {
+          author: 'debug'
+        }
+      };
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).members(['author']);
+      expect(config_err['author'].line).to.eq(6);
+    });
+
+    it('should not allow nested debug blocks with line number (yaml)', async () => {
+      const service_config = `
+      name: test/test
+      debug:
+        command: debug
+        debug:
+          command: debug2
+      `;
+      mock_fs({
+        '/stack/architect.yaml': service_config,
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+      expect(Object.keys(config_err)).to.include('debug.debug');
+      expect(config_err['debug.debug'].line).to.eq(5);
+    });
+  })
 });
