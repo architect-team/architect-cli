@@ -33,7 +33,7 @@ export default class AppService {
 
     this.auth = new AuthClient(this.config, new AuthenticationClient({
       domain: this.config.oauth_domain,
-      clientId: this.config.oauth_client_id,
+      clientId: AuthClient.CLIENT_ID,
     }));
     this._api = axios.create({
       baseURL: this.config.api_host,
@@ -112,7 +112,7 @@ export default class AppService {
               Authorization: `${new_token.token_type} ${new_token.access_token}`,
             };
             const error_config = err.config;
-            error_config.headers.Authorization = this._api.defaults.headers.common.Authorization;
+            error_config.headers.Authorization = this._api.defaults.headers.Authorization;
             return this._api.request(error_config);
           }
 
