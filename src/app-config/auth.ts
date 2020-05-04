@@ -143,11 +143,13 @@ export default class AuthClient {
   async refreshToken() {
     const credential = await this.getToken();
     if (!credential) {
+      await this.logout();
       throw new LoginRequiredError();
     }
 
     const token = JSON.parse(credential.password) as AuthResults;
     if (!token.refresh_token) {
+      await this.logout();
       throw new LoginRequiredError();
     }
 
@@ -227,6 +229,7 @@ export default class AuthClient {
 
       return auth_result;
     } catch (err) {
+      await this.logout();
       throw new LoginRequiredError();
     }
   }
