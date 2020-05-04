@@ -25,6 +25,7 @@ export default class AuthClient {
   auth0_transaction: any;
 
   public static AUDIENCE = 'architect-hub-api';
+  public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, auth0: AuthenticationClient) {
@@ -86,7 +87,7 @@ export default class AuthClient {
 
   public generate_browser_url(port: number): string {
     const auth0_transaction = Auth0Shim.build_auth0_transaction(
-      this.config.oauth_client_id,
+      AuthClient.CLIENT_ID,
       this.config.oauth_domain,
       {
         redirect_uri: 'http://localhost:' + port, // this is where our callback_server will listen
@@ -106,7 +107,7 @@ export default class AuthClient {
 
     const decoded_token = Auth0Shim.verifyIdToken(
       this.config.oauth_domain,
-      this.config.oauth_client_id,
+      AuthClient.CLIENT_ID,
       auth0_results.id_token,
       this.auth0_transaction.nonce
     );
@@ -187,7 +188,7 @@ export default class AuthClient {
 
     const tokenOptions = {
       baseUrl: this.config.oauth_domain,
-      client_id: this.config.oauth_client_id,
+      client_id: AuthClient.CLIENT_ID,
       code_verifier: this.auth0_transaction.code_verifier,
       grant_type: 'authorization_code',
       code: oauth_code,
@@ -208,7 +209,7 @@ export default class AuthClient {
     const tokenOptions = {
       baseUrl: this.config.oauth_domain,
       grant_type: 'refresh_token',
-      client_id: this.config.oauth_client_id,
+      client_id: AuthClient.CLIENT_ID,
       refresh_token: refresh_token,
     };
 

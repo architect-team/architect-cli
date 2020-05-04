@@ -45,6 +45,5 @@ describe('config:set', function () {
     await verifyConfigField('registry_host', config.registry_host);
     await verifyConfigField('api_host', config.api_host);
     await verifyConfigField('oauth_domain', config.oauth_domain);
-    await verifyConfigField('oauth_client_id', config.oauth_client_id);
   });
 })

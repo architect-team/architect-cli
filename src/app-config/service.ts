@@ -33,7 +33,7 @@ export default class AppService {
 
     this.auth = new AuthClient(this.config, new AuthenticationClient({
       domain: this.config.oauth_domain,
-      clientId: this.config.oauth_client_id,
+      clientId: AuthClient.CLIENT_ID,
     }));
     this._api = axios.create({
       baseURL: this.config.api_host,
