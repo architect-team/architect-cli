@@ -33,7 +33,7 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: { [key: string]: string | object | ServiceConfigV1 }) {
+export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, check_private = false) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     const [name, ext] = key.split(':');
@@ -47,13 +47,11 @@ export function transformServices(input: { [key: string]: string | object | Serv
         casted_value.extends = ext;
       }
 
-      // The graph stores this as an obj so we need to check if there were customizations other than (private, name, extends)
-      const keys = new Set(Object.keys(casted_value));
-      keys.delete('private');
-      keys.delete('name');
-      keys.delete('extends');
+      if (check_private) {
+        casted_value.private = !casted_value.extends || Object.keys(casted_value).length > 1;
+      }
 
-      config = { private: !casted_value.extends || keys.size > 0, ...value, name };
+      config = { ...value, name };
     } else {
       config = { extends: value, name };
     }
@@ -315,7 +313,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
-  @Transform(value => (transformServices(value)), { toClassOnly: true })
+  @Transform(value => (transformServices(value, true)), { toClassOnly: true })
   dependencies?: Dictionary<ServiceConfigV1>;
 
   @IsOptional({ always: true })

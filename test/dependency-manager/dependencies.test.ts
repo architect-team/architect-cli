@@ -1,9 +1,11 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import { classToPlain, plainToClass } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
+import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
@@ -59,7 +61,18 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
       const graph = manager.graph;
       expect(graph.nodes).length(2);
+      expect(graph.nodes[0].ref).eq('architect/frontend:latest')
+      expect(graph.nodes[1].ref).eq('architect/backend:latest')
+      expect((graph.nodes[1] as ServiceNode).node_config.getPrivate()).false
       expect(graph.edges).length(1);
+
+      const plain_graph = classToPlain(graph);
+      const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
+      expect(loaded_graph.nodes).length(2);
+      expect(loaded_graph.nodes[0].ref).eq('architect/frontend:latest')
+      expect(loaded_graph.nodes[1].ref).eq('architect/backend:latest')
+      expect((loaded_graph.nodes[1] as ServiceNode).node_config.getPrivate()).false
+      expect(loaded_graph.edges).length(1);
     });
 
     it('two services that share a postgres db', async () => {
