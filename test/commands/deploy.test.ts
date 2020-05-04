@@ -83,8 +83,8 @@ describe('deploy', () => {
       expect(input.environment).not.to.be.undefined;
 
       // Test env variables
-      for (const [key, value] of Object.entries(expected.environment || {})) {
-        expect(value).to.equal(input.environment![key]);
+      for (const [key, value] of Object.entries(input.environment || {})) {
+        expect(value).to.equal(expected.environment![key]);
       }
     }
   });
