@@ -1,0 +1,43 @@
+name: examples/react-app-backend
+description: Example react-app backend
+author: Architect.io
+language: node
+interfaces:
+  main: 8080
+dependencies:
+  db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    parameters:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
+      POSTGRES_DB: test_database
+parameters:
+  POSTGRES_HOST:
+    value_from:
+      dependency: db
+      value: $INTERNAL_HOST
+  POSTGRES_PORT:
+    value_from:
+      dependency: db
+      value: $INTERNAL_PORT
+  POSTGRES_USER:
+    value_from:
+      dependency: db
+      value: $POSTGRES_USER
+  POSTGRES_PASSWORD:
+    value_from:
+      dependency: db
+      value: $POSTGRES_PASSWORD
+  POSTGRES_DB:
+    value_from:
+      dependency: db
+      value: $POSTGRES_DB
+debug:
+  dockerfile: Dockerfile.dev
+  command: npm run start:dev
+  volumes:
+    src:
+      mount_path: /usr/src/app/src
+      host_path: ./src

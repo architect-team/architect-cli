@@ -1,0 +1,23 @@
+name: examples/react-app
+description: Example react application
+author: Architect.io
+language: node
+interfaces:
+  main: 8080
+dependencies:
+  examples/react-app-backend: latest
+parameters:
+  API_ADDR:
+    value_from:
+      dependency: examples/react-app-backend
+      value: http://$EXTERNAL_HOST:$EXTERNAL_PORT
+  WORLD_TEXT:
+    description: Default greeting text for the landing page
+    default: world
+debug:
+  dockerfile: Dockerfile.dev
+  command: npm run dev
+  volumes:
+    src:
+      mount_path: /usr/src/app/src
+      host_path: ./src
