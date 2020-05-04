@@ -38,7 +38,7 @@ export default class AuthClient {
   async init() {
     await this.credentials.init();
     const token = await this.getToken();
-    if (token && token.account !== 'unknown') {
+    if (token && token.password !== 'unknown') {
       this.auth_results = JSON.parse(token.password) as AuthResults;
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
       // Refresh the token if its expired to force a docker login
@@ -143,6 +143,11 @@ export default class AuthClient {
   async refreshToken() {
     const credential = await this.getToken();
     if (!credential) {
+      await this.logout();
+      throw new LoginRequiredError();
+    }
+
+    if (credential.password === 'unknown') {
       await this.logout();
       throw new LoginRequiredError();
     }
