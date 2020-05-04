@@ -46,7 +46,14 @@ export function transformServices(input: { [key: string]: string | object | Serv
       if (ext && !casted_value.extends) {
         casted_value.extends = ext;
       }
-      config = { private: !casted_value.extends || Object.keys(casted_value).length > 1, ...value, name };
+
+      // The graph stores this as an obj so we need to check if there were customizations other than (private, name, extends)
+      const keys = new Set(Object.keys(casted_value));
+      keys.delete('private');
+      keys.delete('name');
+      keys.delete('extends');
+
+      config = { private: !casted_value.extends || keys.size > 0, ...value, name };
     } else {
       config = { extends: value, name };
     }

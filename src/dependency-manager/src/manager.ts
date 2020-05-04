@@ -163,7 +163,12 @@ export default abstract class DependencyManager {
             const param_target_datastore_name = (param_value as ValueFromParameter<DatastoreParameter>).valueFrom.datastore;
 
             if (param_target_service_name && !param_target_datastore_name) {
-              const param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
+              let param_target_service;
+              try {
+                param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
+              } catch {
+                param_target_service = this.graph.getNodeByRef(`${node.ref}.${param_target_service_name}`) as ServiceNode;
+              }
               if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in param_target_service.interfaces)) {
                 throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
               }
