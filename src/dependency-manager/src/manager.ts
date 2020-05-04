@@ -237,7 +237,7 @@ export default abstract class DependencyManager {
               skip_param = true;
             }
           }
-          if (skip_param) continue;
+          if (skip_param) continue; // avoid adding extraneous params to compose that we use for mapping internally
 
           const real_param_name = param_name.replace(`${service_prefix}_`, '');
           if (!written_env_keys.find(key => key === real_param_name)) {
