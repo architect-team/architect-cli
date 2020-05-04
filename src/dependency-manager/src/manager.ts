@@ -231,6 +231,14 @@ export default abstract class DependencyManager {
         });
 
         for (const [param_name, param_value] of service_params) {
+          let skip_param = false;
+          for (const datastore of node_datastores) {
+            if (param_name.startsWith(`${service_prefix}_${(datastore as DatastoreNode).key.toUpperCase()}`)) {
+              skip_param = true;
+            }
+          }
+          if (skip_param) continue;
+
           const real_param_name = param_name.replace(`${service_prefix}_`, '');
           if (!written_env_keys.find(key => key === real_param_name)) {
             node.parameters[real_param_name] = param_value;
