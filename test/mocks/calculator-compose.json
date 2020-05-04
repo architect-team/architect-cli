@@ -92,7 +92,7 @@
       ],
       "depends_on": [],
       "environment": {
-        "HOST": "architect.addition-service-grpc.latest.primary",
+        "HOST": "architect.addition-service-rest.latest.primary",
         "PORT": "5432",
         "POSTGRES_USER": "postgres",
         "POSTGRES_PASSWORD": "architect",
