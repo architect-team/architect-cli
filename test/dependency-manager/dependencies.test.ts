@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { ServiceConfigBuilder, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('dependencies', function () {
   beforeEach(async () => {
@@ -55,6 +55,56 @@ describe('dependencies', function () {
       mock_fs({
         '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
         '/stack/src/backend/architect.json': JSON.stringify(backend_config),
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.nodes[0].ref).eq('architect/frontend:latest')
+      expect(graph.nodes[1].ref).eq('architect/backend:latest')
+      expect((graph.nodes[1] as ServiceNode).node_config.getPrivate()).false
+      expect(graph.edges).length(1);
+
+      const plain_graph = classToPlain(graph);
+      const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
+      expect(loaded_graph.nodes).length(2);
+      expect(loaded_graph.nodes[0].ref).eq('architect/frontend:latest')
+      expect(loaded_graph.nodes[1].ref).eq('architect/backend:latest')
+      expect((loaded_graph.nodes[1] as ServiceNode).node_config.getPrivate()).false
+      expect(loaded_graph.edges).length(1);
+    });
+
+    it('simple remote frontend with backend dependency', async () => {
+      const frontend_config_json = {
+        name: 'architect/frontend',
+        dependencies: {
+          'architect/backend': 'latest'
+        }
+      };
+      const frontend_config = ServiceConfigBuilder.buildFromJSON(frontend_config_json);
+
+      moxios.stubRequest(`/accounts/architect/services/frontend/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: classToPlain(frontend_config), service: { url: 'architect/frontend:latest' } }
+      });
+
+      const backend_config = {
+        name: 'architect/backend'
+      };
+
+      moxios.stubRequest(`/accounts/architect/services/backend/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: classToPlain(backend_config), service: { url: 'architect/backend:latest' } }
+      });
+
+      const env_config = {
+        services: {
+          'architect/frontend': 'latest'
+        }
+      };
+
+      mock_fs({
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 

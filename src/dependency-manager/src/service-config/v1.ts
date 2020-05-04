@@ -48,7 +48,12 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
       }
 
       if (check_private) {
-        casted_value.private = !casted_value.extends || Object.keys(casted_value).length > 1;
+        // Check for customizations besides name, extends, __version
+        const keys = new Set(Object.keys(casted_value));
+        keys.delete('__version');
+        keys.delete('extends');
+        keys.delete('name');
+        casted_value.private = !casted_value.extends || keys.size > 0;
       }
 
       config = { ...value, name };
