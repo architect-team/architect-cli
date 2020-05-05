@@ -1,5 +1,5 @@
 {
-  "name": "demo-frontend",
+  "name": "@architect-examples/react-app-backend",
   "version": "0.1.0",
   "description": "demo backend application",
   "main": "src/index.js",
