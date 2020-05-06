@@ -7,7 +7,7 @@ import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
-declare type LinkedServicesMap = { [serviceName: string]: string };
+export declare type LinkedServicesMap = { [serviceName: string]: string };
 
 export default class AppService {
   config: AppConfig;
