@@ -389,6 +389,36 @@ describe('validation (v1 spec)', () => {
       expect(Object.keys(flattened_errors)).members(['services.api.parameter']);
     });
 
+    it('key matches', async () => {
+      const spec = {
+        parameters: {
+          'GCP*KEY': {
+            value_from: {
+              vault: 'my-vault',
+              key: 'folder/secret#key',
+            },
+          },
+          'gcp-key': {
+            value_from: {
+              vault: 'my-vault',
+              key: 'folder/secret#key',
+            },
+          }
+        },
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(spec);
+      let errors = await parsedSpec.validate({
+        groups: ['operator']
+      });
+
+      const flattened_errors = flattenValidationErrors(errors);
+      console.log(flattened_errors)
+      expect(Object.keys(flattened_errors)).members(['parameters.GCP*KEY', 'parameters.gcp-key']);
+
+      expect(errors.length).to.equal(1);
+    });
+
     it('architect config', async () => {
       const env_config = {
         "services": {
