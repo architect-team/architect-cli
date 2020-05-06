@@ -29,7 +29,7 @@ export default class Services extends Command {
     for (const row of services) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      table.push([row.name, row.created_at, row.updated_at]);
+      table.push([row.name, row.created_at, row.last_published]);
     }
 
     this.log(table.toString());
