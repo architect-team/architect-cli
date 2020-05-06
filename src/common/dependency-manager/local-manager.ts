@@ -43,7 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces[0].subdomain));
         } else if (interface_count > 1 && external_interfaces.length) {
-          throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`)
+          throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`);
         }
       }
     }
