@@ -1,4 +1,4 @@
-import { registerDecorator, ValidationArguments, ValidationError, ValidationOptions, ValidatorOptions } from 'class-validator';
+import { ValidationError, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from './base-spec';
 
 export const validateNested = async <T extends Record<string, any>>(
@@ -68,21 +68,3 @@ export const validateDictionary = async <T extends BaseSpec>(
 
   return errors;
 };
-
-export const ContainsOneOrLess = (property: string, validationOptions?: ValidationOptions) => {
-  return (object: Object, propertyName: string) => {
-    registerDecorator({
-      name: "containsOneOrLess",
-      target: object.constructor,
-      propertyName: propertyName,
-      constraints: [property],
-      options: validationOptions,
-      validator: {
-        async validate(value: any, args: ValidationArguments): Promise<boolean> {
-          const [property_name] = args.constraints;
-          return Object.values(value).filter((obj: any) => !!obj[property_name]).length <= 1;
-        }
-      }
-    });
-  };
-}

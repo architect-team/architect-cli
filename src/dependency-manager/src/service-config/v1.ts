@@ -4,7 +4,7 @@ import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOp
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
-import { ContainsOneOrLess, validateDictionary, validateNested } from '../utils/validation';
+import { validateDictionary, validateNested } from '../utils/validation';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
@@ -353,10 +353,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(value => (transformInterfaces(value)))
   @IsOptional({ always: true })
-  @ContainsOneOrLess('subdomain', {
-    groups: ['developer', 'operator'],// TODO: only works for developer or operator, find out how to make it work for local (debug) only
-    message: 'Only one subdomain per service is supported locally.'
-  })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
@@ -420,7 +416,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
-    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;
   }
 

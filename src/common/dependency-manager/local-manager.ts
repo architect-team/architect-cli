@@ -35,10 +35,12 @@ export default class LocalDependencyManager extends DependencyManager {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
       if (svc_node instanceof ServiceNode) {
         const external_interfaces = Object.values(svc_node.node_config.getInterfaces()).filter(node_interface => node_interface.subdomain);
-        if (external_interfaces.length && external_interfaces[0].subdomain) {
+        if (external_interfaces.length === 1 && external_interfaces[0].subdomain) {
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces[0].subdomain));
+        } else if (external_interfaces.length > 1) {
+          throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`)
         }
       }
     }
