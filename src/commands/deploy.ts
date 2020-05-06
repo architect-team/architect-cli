@@ -51,7 +51,7 @@ export default class Deploy extends Command {
     detached: flags.boolean({
       description: 'Run in detached mode',
       char: 'd',
-      dependsOn: ['local']
+      dependsOn: ['local'],
     }),
     auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
     lock: flags.boolean({
@@ -111,7 +111,7 @@ export default class Deploy extends Command {
     await fs.ensureFile(flags.compose_file);
     await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
-    let compose_args = ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'];
+    const compose_args = ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'];
     if (flags.detached) {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
