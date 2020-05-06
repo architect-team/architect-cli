@@ -424,7 +424,7 @@ export class ServiceConfigV1 extends ServiceConfig {
       volumes_options.groups = ['debug'];
     }
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
     return errors;
   }
