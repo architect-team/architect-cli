@@ -96,7 +96,11 @@
         "PORT": "5432",
         "POSTGRES_USER": "postgres",
         "POSTGRES_PASSWORD": "architect",
-        "POSTGRES_DB": "addition_service"
+        "POSTGRES_DB": "addition_service",
+        "INTERNAL_HOST": "architect.addition-service-rest.latest.primary",
+        "INTERNAL_PORT": "5432",
+        "EXTERNAL_HOST": "",
+        "EXTERNAL_PORT": ""
       },
       "image": "postgres:10",
       "dns_search": [
