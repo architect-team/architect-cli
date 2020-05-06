@@ -65,7 +65,7 @@ describe('parameters', function () {
 
     moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
       status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } }
+      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
     });
 
     const backend_config = {
@@ -73,6 +73,7 @@ describe('parameters', function () {
       interfaces: {
         api: 8080,
         admin: 8081,
+        primary: 8082,
       },
       parameters: {
         DB_USER: {
@@ -95,7 +96,7 @@ describe('parameters', function () {
 
     moxios.stubRequest(`/accounts/architect/services/cloud-api/versions/v1`, {
       status: 200,
-      response: { tag: 'v1', config: backend_config, service: { url: 'architect/cloud-api:v1' } }
+      response: { tag: 'v1', config: backend_config, service: { url: 'architect/cloud-api:v1' } },
     });
 
     const env_config = {
@@ -109,15 +110,19 @@ describe('parameters', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const default_keys = ['EXTERNAL_HOST', 'INTERNAL_HOST', 'EXTERNAL_PORT', 'INTERNAL_PORT', 'HOST', 'PORT']
+    const default_keys = ['EXTERNAL_HOST', 'INTERNAL_HOST', 'EXTERNAL_PORT', 'INTERNAL_PORT', 'HOST', 'PORT'];
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     await manager.loadParameters();
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'DEP_ADMIN_PORT', ...default_keys])
-    expect(frontend_node.parameters['DB_USER']).eq('root')
-    expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root')
-    expect(frontend_node.parameters['DEP_ADMIN_PORT']).eq('8081')
+    const backend_node = graph.nodes[2] as ServiceNode;
+    const backend_datastore_node = graph.nodes[1] as ServiceNode;
+    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'DEP_ADMIN_PORT', ...default_keys]);
+    expect(frontend_node.parameters['DB_USER']).eq('root');
+    expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
+    expect(frontend_node.parameters['DEP_ADMIN_PORT']).eq('8081');
+    expect(backend_node.parameters['PRIMARY_PORT']).eq('8082');
+    expect(backend_datastore_node.parameters['PORT']).eq('5432');
   });
 });
