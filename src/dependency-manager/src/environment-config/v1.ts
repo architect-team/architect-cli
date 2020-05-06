@@ -46,7 +46,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
 
   async validate(options?: ValidatorOptions) {
     let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'services', errors, undefined, options);
     return errors;
   }

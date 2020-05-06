@@ -1,4 +1,4 @@
-import { ValidationError, ValidatorOptions } from 'class-validator';
+import { matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from './base-spec';
 
 export const validateNested = async <T extends Record<string, any>>(
@@ -43,6 +43,7 @@ export const validateDictionary = async <T extends BaseSpec>(
   errors: ValidationError[] = [],
   condition?: (value: any) => boolean,
   options?: ValidatorOptions,
+  regex?: RegExp
 ): Promise<ValidationError[]> => {
   const property_value = (target as any)[property];
   const error_index = errors.findIndex(err => err.property === property);
@@ -57,8 +58,21 @@ export const validateDictionary = async <T extends BaseSpec>(
   }
 
   for (const [key, value] of Object.entries((property_value || {}))) {
+    if (regex && !matches(key, regex)) {
+      const key_error = new ValidationError();
+      key_error.property = key;
+      key_error.target = property_value;
+      key_error.value = value;
+      key_error.children = [];
+      key_error.constraints = {
+        'Matches': `${key} must match ${regex} regular expression`,
+      };
+
+      error.children.push(key_error);
+    }
+
     if (!condition || condition(value)) {
-      error.children = await validateNested(property_value, key, error.children, options);
+      error.children = error.children.concat(await validateNested(property_value, key, error.children, options));
     }
   }
 

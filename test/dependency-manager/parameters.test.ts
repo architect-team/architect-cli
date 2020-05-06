@@ -44,7 +44,7 @@ describe('parameters', function () {
             value: '$DB_USER'
           }
         },
-        DEP_ADMIN_PORT: {
+        lower_dep_ADMIN_PORT: {
           value_from: {
             dependency: 'architect/cloud-api',
             interface: 'admin',
@@ -115,9 +115,9 @@ describe('parameters', function () {
     await manager.loadParameters();
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'DEP_ADMIN_PORT', ...default_keys])
+    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys])
     expect(frontend_node.parameters['DB_USER']).eq('root')
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root')
-    expect(frontend_node.parameters['DEP_ADMIN_PORT']).eq('8081')
+    expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081')
   });
 });
