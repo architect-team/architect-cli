@@ -130,13 +130,31 @@ export default abstract class DependencyManager {
           internal_port = this.toInternalPort(node, interface_name);
         }
 
+        const port = external_host ? external_port : internal_port;
+        const host = external_host ? external_host : internal_host;
+
+        const internal_protocol = 'http';
+        const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+
+        const external_protocol = external_host ?
+          (external_host.search('localhost') > -1 ? 'http' : 'https')
+          : '';
+        const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
+
         const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
         env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
         env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = external_host ? external_host : internal_host;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = host;
+
         env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
         env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = external_host ? external_port : internal_port;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = port;
+
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = external_protocol;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = internal_protocol;
+
+        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = external_url;
+        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = internal_url;
       }
 
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params

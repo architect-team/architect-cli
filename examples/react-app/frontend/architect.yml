@@ -10,7 +10,7 @@ parameters:
   API_ADDR:
     value_from:
       dependency: examples/react-app-backend
-      value: http://$EXTERNAL_HOST:$EXTERNAL_PORT
+      value: $EXTERNAL_URL
   WORLD_TEXT:
     description: Default greeting text for the landing page
     default: world
