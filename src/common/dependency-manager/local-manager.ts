@@ -10,8 +10,6 @@ import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
 
-declare type LinkedServicesMap = { [serviceName: string]: string };
-
 export default class LocalDependencyManager extends DependencyManager {
   graph!: LocalDependencyGraph;
   api: AxiosInstance;
@@ -36,11 +34,11 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const config of Object.values(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
       if (svc_node instanceof ServiceNode) {
-        const env_ingress = svc_node.node_config.getIngress();
-        if (env_ingress) {
+        const external_interfaces = Object.values(svc_node.node_config.getInterfaces()).filter(node_interface => node_interface.subdomain);
+        if (external_interfaces.length && external_interfaces[0].subdomain) {
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
-          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, env_ingress.subdomain));
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces[0].subdomain));
         }
       }
     }
@@ -143,8 +141,8 @@ export default class LocalDependencyManager extends DependencyManager {
 
   toExternalHost(node: DependencyNode) {
     if (node instanceof ServiceNode) {
-      const ingress = node.node_config.getIngress();
-      return ingress ? `${ingress.subdomain}.localhost` : '';
+      const external_interfaces = Object.values(node.node_config.getInterfaces()).filter(node_interface => !!node_interface.subdomain);
+      return external_interfaces.length ? `${external_interfaces[0].subdomain}.localhost` : '';
     } else {
       return '';
     }

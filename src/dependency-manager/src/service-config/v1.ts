@@ -4,7 +4,7 @@ import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOp
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
-import { validateDictionary, validateNested } from '../utils/validation';
+import { ContainsOneOrLess, validateDictionary, validateNested } from '../utils/validation';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
 
@@ -211,6 +211,13 @@ class InterfaceSpecV1 extends BaseSpec {
 
   @IsNumber(undefined, { always: true })
   port!: number;
+
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a subdomain when registering services',
+  })
+  subdomain?: string;
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
@@ -237,17 +244,6 @@ export class ServiceVolumeV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsBoolean({ always: true })
   readonly?: boolean;
-}
-
-
-
-class IngressSpecV1 extends BaseSpec {
-  @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a subdomain when registering services',
-  })
-  subdomain?: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
@@ -357,6 +353,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(value => (transformInterfaces(value)))
   @IsOptional({ always: true })
+  @ContainsOneOrLess('subdomain', {
+    groups: ['developer', 'operator'],// TODO: only works for developer or operator, find out how to make it work for local (debug) only
+    message: 'Only one subdomain per service is supported locally.'
+  })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
@@ -387,11 +387,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   volumes?: Dictionary<ServiceVolumeV1>;
 
-  @Type(() => IngressSpecV1)
-  @IsOptional({ always: true })
-  @IsInstance(IngressSpecV1, { always: true })
-  ingress?: IngressSpecV1;
-
   @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
@@ -417,7 +412,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
     errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
-    errors = await validateNested(this, 'ingress', errors, options);
     // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
     const volumes_options = { ...options };
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {
@@ -426,6 +420,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
+    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;
   }
 
@@ -616,17 +611,6 @@ export class ServiceConfigV1 extends ServiceConfig {
       volumes[key] = entry as VolumeSpec;
       return volumes;
     }, {} as { [key: string]: VolumeSpec });
-  }
-
-  getIngress() {
-    if (this.ingress) {
-      return {
-        subdomain: '',
-        ...this.ingress,
-      };
-    }
-
-    return undefined;
   }
 
   getReplicas() {
