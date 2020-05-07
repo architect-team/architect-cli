@@ -22,8 +22,8 @@ export default abstract class extends Command {
   async init() {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);
-
-      if (this.auth_required() && !await this.app.auth.getToken()) {
+      const token = await this.app.auth.getToken();
+      if (this.auth_required() && (!token || (token.account === 'unknown' && token.password === 'unknown'))) {
         this.error(chalk.red(`Please log in using 'architect login'`));
       }
     }
