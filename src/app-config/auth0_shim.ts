@@ -1,7 +1,7 @@
 import atob from "atob";
 import base64url from "base64url";
 import btoa from "btoa";
-import * as Crypto from 'crypto';
+import crypto from 'crypto';
 
 export interface Auth0Transaction {
   scope: string;
@@ -46,7 +46,7 @@ export class Auth0Shim {
     const nonceIn = btoa(Auth0Shim.createRandomString());
     const code_verifier = Auth0Shim.createRandomString();
 
-    const code_challengeBuffer = Crypto.createHash('sha256').update(code_verifier).digest();
+    const code_challengeBuffer = crypto.createHash('sha256').update(code_verifier).digest();
     const code_challenge = base64url(code_challengeBuffer);
     const fragment = options.fragment ? `#${options.fragment}` : '';
 
