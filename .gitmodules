@@ -1,3 +1,6 @@
 [submodule "test/calculator"]
 	path = test/calculator
 	url = https://github.com/architect-team/calculator-sample-project.git
+[submodule "examples/gcp-microservices-demo"]
+	path = examples/gcp-microservices-demo
+	url = git@github.com:architect-team/microservices-demo.git
