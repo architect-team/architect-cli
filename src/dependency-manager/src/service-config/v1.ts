@@ -426,6 +426,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
+    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;
   }
 
@@ -466,7 +467,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getInterfaces(): Dictionary<ServiceInterfaceSpec> {
-    for (const key in Object.keys(this.interfaces || {})) { // TODO: add tests?
+    for (const key in Object.keys(this.interfaces || {})) {
       if (this.interfaces && this.interfaces[key]) {
         this.interfaces[key].liveness_probe = {
           path: '/',
