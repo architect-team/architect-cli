@@ -95,7 +95,6 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
       ? plainToClass(InterfaceSpecV1, value)
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       : plainToClass(InterfaceSpecV1, { port: value });
-    output[key].port = parseInt(output[key].port.toString());// TODO: remove
   }
   return output;
 };
@@ -200,6 +199,7 @@ class InterfaceSpecV1 extends BaseSpec {
   @IsString({ always: true })
   host?: string;
 
+  @Type(() => Number)
   @IsNumber(undefined, { always: true })
   port!: number;
 
