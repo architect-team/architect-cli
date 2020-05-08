@@ -91,6 +91,7 @@ export default abstract class DependencyManager {
     return `${prefix}__arc__${key}`;
   }
 
+  protected abstract toExternalProtocol(node: DependencyNode): string;
   protected abstract toExternalHost(node: DependencyNode): string;
   protected abstract toInternalHost(node: DependencyNode): string;
   protected toInternalPort(node: DependencyNode, interface_name: string): string {
@@ -114,7 +115,7 @@ export default abstract class DependencyManager {
     const gateway_port = gateway_node ? this.gateway_port : '';
     for (const node of this.graph.nodes) {
       for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-        let external_host: string, internal_host: string, external_port: string, internal_port: string;
+        let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
         if (node instanceof ExternalNode) {
           if (!interface_details.host) {
             throw new Error('External node needs to override the host');
@@ -123,22 +124,23 @@ export default abstract class DependencyManager {
           internal_host = interface_details.host;
           external_port = interface_details.port.toString();
           internal_port = interface_details.port.toString();
+          // external_protocol = interface_details.protocol;
+          // internal_protocol = interface_details.protofol;
+          external_protocol = 'https';
+          internal_protocol = 'http';
         } else {
           external_host = this.toExternalHost(node);
           internal_host = this.toInternalHost(node);
           external_port = gateway_port.toString();
           internal_port = this.toInternalPort(node, interface_name);
+          external_protocol = this.toExternalProtocol(node);
+          internal_protocol = 'http';
         }
 
         const port = external_host ? external_port : internal_port;
         const host = external_host ? external_host : internal_host;
 
-        const internal_protocol = 'http';
         const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
-
-        const external_protocol = external_host ?
-          (external_host.search('localhost') > -1 ? 'http' : 'https')
-          : '';
         const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
 
         const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
