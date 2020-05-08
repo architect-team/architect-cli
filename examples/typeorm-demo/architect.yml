@@ -1,0 +1,42 @@
+name: examples/typeorm-demo
+description: Example express application using typeorm to seed test data
+author: Architect.io
+language: node
+interfaces:
+  main: 3000
+dependencies:
+  my-demo-db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    parameters:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: database
+      POSTGRES_DB: typeorm_demo
+parameters:
+  DATABASE_HOST:
+    value_from:
+      dependency: my-demo-db
+      value: $INTERNAL_HOST
+  DATABASE_PORT:
+    value_from:
+      dependency: my-demo-db
+      value: $INTERNAL_PORT
+  DATABASE_USER:
+    value_from:
+      dependency: my-demo-db
+      value: $POSTGRES_USER
+  DATABASE_PASSWORD:
+    value_from:
+      dependency: my-demo-db
+      value: $POSTGRES_PASSWORD
+  DATABASE_SCHEMA:
+    value_from:
+      dependency: my-demo-db
+      value: $POSTGRES_DB
+  RUN_SEED_SCRIPT:
+    description: When set to true, will run a script on startup to seed database with data
+    default: false
+  WORLD_TEXT:
+    description: Default greeting text for the landing page
+    default: world
