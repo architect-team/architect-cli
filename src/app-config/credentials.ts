@@ -13,7 +13,6 @@ export default class CredentialManager {
   private credentials_file: string;
   private credentials: { [key: string]: Credential };
   private keytar: any;
-  private keychainWarningIssued = false;
 
   constructor(config: AppConfig) {
     this.credentials_file = path.join(config.getConfigDir(), CREDENTIALS_FILENAME);
@@ -32,12 +31,6 @@ export default class CredentialManager {
       await this.keytar.setPassword('architect', 'test', 'value');
       await this.keytar.deletePassword('architect', 'test');
     } catch {
-      // eslint-disable-next-line no-undef
-      if (!this.keychainWarningIssued) {
-        console.warn(`No system keychain found. Storing credentials in ${this.credentials_file}.`);
-        this.keychainWarningIssued = true;
-      }
-
       this.keytar = null;
     }
   }
