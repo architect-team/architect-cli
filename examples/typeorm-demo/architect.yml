@@ -34,9 +34,6 @@ parameters:
     value_from:
       dependency: my-demo-db
       value: $POSTGRES_DB
-  RUN_SEED_SCRIPT:
-    description: When set to true, will run a script on startup to seed database with data
-    default: false
-  WORLD_TEXT:
-    description: Default greeting text for the landing page
-    default: world
+  AUTO_DDL:
+    description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
+    default: none

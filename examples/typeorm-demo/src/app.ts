@@ -5,7 +5,10 @@ import { createConnection } from "typeorm";
 import { ConnectionManager } from "./connection/connection-manager";
 import { User } from "./entity/user";
 
-createConnection(ConnectionManager.getConnectionOptions()).then(connection => {
+createConnection(ConnectionManager.getConnectionOptions()).then(async connection => {
+    const manager = new ConnectionManager(connection);
+    await manager.runDatabaseDdl();
+
     const userRepository = connection.getRepository(User);
 
     const app = express();
