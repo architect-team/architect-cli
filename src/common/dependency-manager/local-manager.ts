@@ -5,7 +5,6 @@ import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import { LinkedServicesMap } from '../../dependency-manager/src/manager';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
