@@ -153,6 +153,16 @@ export default class LocalDependencyManager extends DependencyManager {
     }
   }
 
+  toExternalProtocol(node: DependencyNode) {
+    if (node instanceof ServiceNode) {
+      const host = this.toExternalHost(node);
+      if (host) {
+        return 'http';
+      }
+    }
+    return '';
+  }
+
   toInternalHost(node: DependencyNode) {
     return node.normalized_ref;
   }
