@@ -715,5 +715,44 @@ describe('validation (v1 spec)', () => {
       expect(Object.keys(config_err)).to.include('debug.debug');
       expect(config_err['debug.debug'].line).to.eq(5);
     });
+
+    it('should require a port for a developer', async () => {
+      const service_config = {
+        "name": "architect/test-service",
+        "interfaces": {
+          "main": {}
+        },
+      };
+
+      const parsedSpec = ServiceConfigBuilder.buildFromJSON(service_config);
+      const errors = await parsedSpec.validate({
+        groups: ['developer'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members(['interfaces.main.port']);
+      expect(errors.length).to.equal(1);
+    });
+
+    it('should not require a port for an operator', async () => {
+      const env_config = {
+        "services": {
+          "architect/registry:latest": {
+            "interfaces": {
+              "main": {
+                "subdomain": "test"
+              }
+            }
+          },
+        },
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(env_config);
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members([]);
+      expect(errors.length).to.equal(0);
+    });
   })
 });

@@ -62,13 +62,13 @@ export interface ServiceEventSubscriptions {
 export interface ServiceApiSpec {
   type: string;
   definitions?: string[];
-  liveness_probe?: ServiceLivenessProbe;
 }
 
 export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
-  port: number;
+  port?: number;
+  liveness_probe?: ServiceLivenessProbe;
   subdomain?: string;
 }
 

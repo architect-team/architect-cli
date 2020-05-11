@@ -184,16 +184,6 @@ class ApiSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsString({ each: true })
   definitions?: string[];
-
-  @Type(() => LivenessProbeV1)
-  @IsOptional({ always: true })
-  liveness_probe?: LivenessProbeV1;
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    errors = await validateNested(this, 'liveness_probe', errors, options);
-    return errors;
-  }
 }
 
 class InterfaceSpecV1 extends BaseSpec {
@@ -209,8 +199,13 @@ class InterfaceSpecV1 extends BaseSpec {
   @IsString({ always: true })
   host?: string;
 
+  @IsOptional({ groups: ['operator'] })
   @IsNumber(undefined, { always: true })
-  port!: number;
+  port?: number;
+
+  @Type(() => LivenessProbeV1)
+  @IsOptional({ always: true })
+  liveness_probe?: LivenessProbeV1;
 
   @IsOptional({ always: true })
   @IsEmpty({
@@ -218,6 +213,12 @@ class InterfaceSpecV1 extends BaseSpec {
     message: 'Cannot hardcode a subdomain when registering services',
   })
   subdomain?: string;
+
+  async validate(options?: ValidatorOptions) {
+    let errors = await super.validate(options);
+    errors = await validateNested(this, 'liveness_probe', errors, options);
+    return errors;
+  }
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
@@ -416,6 +417,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'datastores', errors, undefined, options);
+    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;
   }
 
@@ -452,19 +454,23 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getApiSpec(): ServiceApiSpec {
-    const spec = (this.api || { type: 'rest' }) as ServiceApiSpec;
-    spec.liveness_probe = {
-      path: '/',
-      success_threshold: 1,
-      failure_threshold: 1,
-      timeout: '5s',
-      interval: '30s',
-      ...(spec.liveness_probe || {}),
-    };
-    return spec;
+    return (this.api || { type: 'rest' }) as ServiceApiSpec;
   }
 
   getInterfaces(): Dictionary<ServiceInterfaceSpec> {
+    for (const key in Object.keys(this.interfaces || {})) {
+      if (this.interfaces && this.interfaces[key]) {
+        this.interfaces[key].liveness_probe = {
+          path: '/',
+          success_threshold: 1,
+          failure_threshold: 1,
+          timeout: '5s',
+          interval: '30s',
+          ...(this.interfaces[key].liveness_probe || {}),
+        } as LivenessProbeV1;
+      }
+    }
+
     return this.interfaces || {};
   }
 
