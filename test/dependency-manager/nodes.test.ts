@@ -30,8 +30,10 @@ describe('nodes', function () {
           }
         },
         "architect/backend:latest": {
-          "ingress": {
-            "subdomain": "api"
+          "interfaces": {
+            "main": {
+              "subdomain": "api"
+            }
           }
         }
       }
@@ -63,7 +65,9 @@ describe('nodes', function () {
           parameters: {},
           datastores: {},
           api: { type: 'rest' },
-          interfaces: {},
+          interfaces: {
+            main: '8080'
+          },
           notifications: [],
           subscriptions: {},
           platforms: {},
@@ -72,7 +76,6 @@ describe('nodes', function () {
           author: ['ryan-cahill'],
           license: 'MIT',
           language: 'node',
-          port: '8080',
           debug: 'npm run start:dev'
         },
         service:

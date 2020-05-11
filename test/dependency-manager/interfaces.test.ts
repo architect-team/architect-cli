@@ -88,6 +88,9 @@ describe('interfaces', function () {
       "interfaces": {
         "main": {
           "port": 8082
+        },
+        "secondary": {
+          "port": 8083
         }
       }
     };
@@ -115,6 +118,11 @@ describe('interfaces', function () {
         "architect/frontend-main:latest": {
           "debug": {
             "path": "./src/frontend-main",
+          },
+          "interfaces": {
+            "secondary": {
+              "subdomain": "secondary"
+            }
           }
         },
         "architect/frontend-secondary:latest": {
@@ -239,7 +247,7 @@ describe('interfaces', function () {
   it('correct compose port mappings', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50001:8080', '50002:8081', '50003:8082']);
+    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50002:8080', '50003:8081', '50004:8082']);
     expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8082']);
     expect(compose.services['architect.frontend-secondary.latest'].ports).eql([]);
   });
@@ -259,5 +267,13 @@ describe('interfaces', function () {
 
     expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
     expect(compose.services['architect.backend.latest'].environment!.CONCISE_PORT).eq('8082');
+  });
+
+  it('external interface host spec', async () => {
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
+    const compose = await DockerCompose.generate(manager);
+
+    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_HOST).eq('secondary.localhost');
+    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
   });
 });
