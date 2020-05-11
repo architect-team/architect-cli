@@ -199,7 +199,6 @@ class InterfaceSpecV1 extends BaseSpec {
   @IsString({ always: true })
   host?: string;
 
-  @Type(() => Number)
   @IsNumber(undefined, { always: true })
   port!: number;
 

@@ -87,7 +87,7 @@ describe('interfaces', function () {
       },
       "interfaces": {
         "main": {
-          "port": "8082"
+          "port": 8082
         }
       }
     };
