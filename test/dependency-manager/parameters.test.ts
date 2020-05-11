@@ -110,7 +110,18 @@ describe('parameters', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const default_keys = ['EXTERNAL_HOST', 'INTERNAL_HOST', 'EXTERNAL_PORT', 'INTERNAL_PORT', 'HOST', 'PORT'];
+    const default_keys = [
+      'EXTERNAL_HOST',
+      'INTERNAL_HOST',
+      'EXTERNAL_PORT',
+      'INTERNAL_PORT',
+      'EXTERNAL_URL',
+      'INTERNAL_URL',
+      'EXTERNAL_PROTOCOL',
+      'INTERNAL_PROTOCOL',
+      'HOST',
+      'PORT',
+    ];
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     await manager.loadParameters();
