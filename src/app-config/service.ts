@@ -3,11 +3,10 @@ import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
 import LoginRequiredError from '../common/errors/login-required';
+import { LinkedServicesMap } from '../dependency-manager/src/manager';
 import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
-
-export declare type LinkedServicesMap = { [serviceName: string]: string };
 
 export default class AppService {
   config: AppConfig;

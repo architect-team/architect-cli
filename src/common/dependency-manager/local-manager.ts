@@ -2,10 +2,10 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { LinkedServicesMap } from '../../app-config/service';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import { LinkedServicesMap } from '../../dependency-manager/src/manager';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
@@ -42,7 +42,7 @@ export default class LocalDependencyManager extends DependencyManager {
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces[0].subdomain));
-        } else if (interface_count > 1 && external_interfaces.length) {
+        } else if (interface_count > 1 && external_interfaces.length > 1) {
           throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`);
         }
       }
@@ -144,18 +144,21 @@ export default class LocalDependencyManager extends DependencyManager {
     await super.loadParameters();
   }
 
-  toExternalHost(node: DependencyNode) {
+  toExternalHost(node: DependencyNode, interface_key: string) {
     if (node instanceof ServiceNode) {
-      const external_interfaces = Object.values(node.node_config.getInterfaces()).filter(node_interface => !!node_interface.subdomain);
-      return external_interfaces.length ? `${external_interfaces[0].subdomain}.localhost` : '';
+      const external_interface = node.node_config.getInterfaces()[interface_key];
+      if (!external_interface) {
+        return '';
+      }
+      return external_interface?.subdomain ? `${external_interface.subdomain}.localhost` : '';
     } else {
       return '';
     }
   }
 
-  toExternalProtocol(node: DependencyNode) {
+  toExternalProtocol(node: DependencyNode, interface_key: string) {
     if (node instanceof ServiceNode) {
-      const host = this.toExternalHost(node);
+      const host = this.toExternalHost(node, interface_key);
       if (host) {
         return 'http';
       }
