@@ -1,4 +1,4 @@
-name: examples/typeorm-demo
+name: examples/database-seeding
 description: Example express application using typeorm to seed test data
 author: Architect.io
 language: node
@@ -11,8 +11,8 @@ dependencies:
       postgres: 5432
     parameters:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: database
-      POSTGRES_DB: typeorm_demo
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: seeding_demo
 parameters:
   DATABASE_HOST:
     value_from:

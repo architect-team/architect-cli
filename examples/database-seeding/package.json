@@ -1,5 +1,5 @@
 {
-  "name": "typeorm-demo",
+  "name": "database-seeding",
   "version": "1.0.0",
   "description": "Example app to exhibit database seeding with architect",
   "main": "index.js",

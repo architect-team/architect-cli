@@ -1,5 +1,29 @@
 ## Example Application: Database Seeding Through Parameter Configuration
 
+### Quickstart
+
+##### The 'dev' environment:
+```
+architect deploy -l arc.env.dev.yml
+```
+At http://api.localhost:3000/users, you should see an empty list of users because the AUTO_DDL parameter is set to 'migrate'.
+
+##### The 'qa' environment:
+```
+architect deploy -l arc.env.qa.yml
+```
+At http://api.localhost:3000/users, you should see a list of test users generated because the AUTO_DDL parameter is set to 'seed'.
+
+##### The 'prod' environment:
+```
+architect deploy -l arc.env.prod.yml
+```
+
+This environment is configured to connect to an existing database on `localhost:5432` (referenced by `host.docker.internal`) and has the AUTO_DDL property set to 'none'. NOTE: the `/users` endpoint will return an error unless you've preconfigured the schema in that external database.
+
+
+### Example Explained
+
 This example shows how we may use a service parameter to configure different database startup strategies.
 
 In a developer environment, it may be that we want to auto-run database migrations at application startup, while in production we may consider that to be dangerous. This is one of many examples of how an environment operator may wish to modify application behavior depending on the environment. Architect provides a straightforward approach to such configuration:
@@ -7,7 +31,7 @@ In a developer environment, it may be that we want to auto-run database migratio
 (1) The service developer declares a parameter in the `architect.yml` file:
 
 ```
-name: examples/typeorm-demo
+name: examples/database-seeding
 // ...
 parameters:
   // ...
@@ -38,7 +62,7 @@ parameters:
 At runtime, a developer might configure their local environment like this so migrations run at startup...
 ```
 services:
-  examples/typeorm-demo:latest:
+  examples/database-seeding:latest:
     // ...
     parameters:
       AUTO_DDL: migrate
@@ -47,7 +71,7 @@ services:
 ...whereas a production operator may prefer to configure the environment to run without any migrations...
 ```
 services:
-  examples/typeorm-demo:latest:
+  examples/database-seeding:latest:
     // ...
     parameters:
       AUTO_DDL: none
@@ -56,7 +80,7 @@ services:
 And the quality assurance organization may prefer to start the application up with seed data...
 ```
 services:
-  examples/typeorm-demo:latest:
+  examples/database-seeding:latest:
     // ...
     parameters:
       AUTO_DDL: seed
