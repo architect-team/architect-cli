@@ -69,6 +69,7 @@ export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
   port: number;
+  subdomain?: string;
 }
 
 export interface ServiceLivenessProbe {
@@ -84,10 +85,6 @@ export interface VolumeSpec {
   host_path?: string;
   description?: string;
   readonly?: boolean;
-}
-
-export interface IngressSpec {
-  subdomain: string;
 }
 
 export abstract class ServiceConfig extends BaseSpec {
@@ -123,7 +120,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract removeDependency(dependency_name: string): void;
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
-  abstract getIngress(): IngressSpec | undefined;
   abstract getReplicas(): number;
 
   copy() {

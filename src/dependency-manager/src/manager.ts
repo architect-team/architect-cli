@@ -91,8 +91,8 @@ export default abstract class DependencyManager {
     return `${prefix}__arc__${key}`;
   }
 
-  protected abstract toExternalProtocol(node: DependencyNode): string;
-  protected abstract toExternalHost(node: DependencyNode): string;
+  protected abstract toExternalProtocol(node: DependencyNode, interface_key: string): string;
+  protected abstract toExternalHost(node: DependencyNode, interface_key: string): string;
   protected abstract toInternalHost(node: DependencyNode): string;
   protected toInternalPort(node: DependencyNode, interface_name: string): string {
     return node.interfaces[interface_name].port.toString();
@@ -127,11 +127,11 @@ export default abstract class DependencyManager {
           external_protocol = 'https';
           internal_protocol = 'https';
         } else {
-          external_host = this.toExternalHost(node);
+          external_host = this.toExternalHost(node, interface_name);
           internal_host = this.toInternalHost(node);
           external_port = gateway_port.toString();
           internal_port = this.toInternalPort(node, interface_name);
-          external_protocol = this.toExternalProtocol(node);
+          external_protocol = this.toExternalProtocol(node, interface_name);
           internal_protocol = 'http';
         }
 

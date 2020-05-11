@@ -211,6 +211,13 @@ class InterfaceSpecV1 extends BaseSpec {
 
   @IsNumber(undefined, { always: true })
   port!: number;
+
+  @IsOptional({ always: true })
+  @IsEmpty({
+    groups: ['developer'],
+    message: 'Cannot hardcode a subdomain when registering services',
+  })
+  subdomain?: string;
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
@@ -237,17 +244,6 @@ export class ServiceVolumeV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsBoolean({ always: true })
   readonly?: boolean;
-}
-
-
-
-class IngressSpecV1 extends BaseSpec {
-  @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a subdomain when registering services',
-  })
-  subdomain?: string;
 }
 
 export class ServiceConfigV1 extends ServiceConfig {
@@ -387,11 +383,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   volumes?: Dictionary<ServiceVolumeV1>;
 
-  @Type(() => IngressSpecV1)
-  @IsOptional({ always: true })
-  @IsInstance(IngressSpecV1, { always: true })
-  ingress?: IngressSpecV1;
-
   @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
@@ -417,7 +408,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
     errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
-    errors = await validateNested(this, 'ingress', errors, options);
     // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
     const volumes_options = { ...options };
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {
@@ -616,17 +606,6 @@ export class ServiceConfigV1 extends ServiceConfig {
       volumes[key] = entry as VolumeSpec;
       return volumes;
     }, {} as { [key: string]: VolumeSpec });
-  }
-
-  getIngress() {
-    if (this.ingress) {
-      return {
-        subdomain: '',
-        ...this.ingress,
-      };
-    }
-
-    return undefined;
   }
 
   getReplicas() {
