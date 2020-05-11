@@ -6,10 +6,13 @@ import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceCon
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { LinkedServicesMap } from '../../dependency-manager/src/manager';
+import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
+
+export declare type LinkedServicesMap = Dictionary<string>;
 
 export default class LocalDependencyManager extends DependencyManager {
   graph!: LocalDependencyGraph;

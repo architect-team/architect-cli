@@ -12,8 +12,6 @@ import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
-export declare type LinkedServicesMap = { [serviceName: string]: string };
-
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
   debug = false;
