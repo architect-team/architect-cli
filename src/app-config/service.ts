@@ -2,8 +2,8 @@ import { AuthenticationClient } from 'auth0';
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
-import { LinkedServicesMap } from '../common/dependency-manager/local-manager';
 import LoginRequiredError from '../common/errors/login-required';
+import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import ARCHITECTPATHS from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
@@ -11,7 +11,7 @@ import AppConfig from './config';
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
-  linkedServices: LinkedServicesMap = {};
+  linkedServices: Dictionary<string> = {};
   _api: AxiosInstance;
 
   static async create(config_dir: string): Promise<AppService> {
@@ -40,7 +40,7 @@ export default class AppService {
 
     const linkedServicesFile = path.join(config_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
     if (fs.existsSync(linkedServicesFile)) {
-      this.linkedServices = fs.readJSONSync(linkedServicesFile) as LinkedServicesMap;
+      this.linkedServices = fs.readJSONSync(linkedServicesFile) as Dictionary<string>;
     }
   }
 
@@ -69,7 +69,7 @@ export default class AppService {
         }
 
         return linkedServices;
-      }, {} as LinkedServicesMap);
+      }, {} as Dictionary<string>);
     }
 
     this.saveLinkedServices();

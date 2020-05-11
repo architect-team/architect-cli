@@ -11,15 +11,13 @@ import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
 import { LocalServiceNode } from './local-service-node';
 
-export declare type LinkedServicesMap = Dictionary<string>;
-
 export default class LocalDependencyManager extends DependencyManager {
   graph!: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
-  linked_services: LinkedServicesMap;
+  linked_services: Dictionary<string>;
 
-  protected constructor(api: AxiosInstance, config_path = '', linked_services: LinkedServicesMap = {}, debug = false) {
+  protected constructor(api: AxiosInstance, config_path = '', linked_services: Dictionary<string> = {}, debug = false) {
     super();
     this.api = api;
     this.config_path = config_path || '';
@@ -31,7 +29,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return this.createFromPath(api, '');
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: LinkedServicesMap = {}, debug = false): Promise<LocalDependencyManager> {
+  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}, debug = false): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
     await dependency_manager.init();
     for (const config of Object.values(dependency_manager._environment.getServices())) {
