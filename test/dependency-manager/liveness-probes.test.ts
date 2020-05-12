@@ -23,17 +23,12 @@ describe('liveness probes', function () {
   it('full liveness probe override', async () => {
     const service_config = {
       name: "architect/backend",
-      interfaces: {
-        main: {
-          port: 8080,
-          liveness_probe: {
-            path: '/health',
-            success_threshold: 2,
-            failure_threshold: 3,
-            timeout: '10s',
-            interval: '90s',
-          }
-        }
+      liveness_probe: {
+        path: '/health',
+        success_threshold: 2,
+        failure_threshold: 3,
+        timeout: '10s',
+        interval: '90s',
       }
     };
 
@@ -53,27 +48,21 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
-    const interfaces = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getInterfaces();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
 
-    expect(interfaces.main.port).eq(8080);
-    expect(interfaces.main.liveness_probe!.path).eq('/health');
-    expect(interfaces.main.liveness_probe!.success_threshold).eq(2);
-    expect(interfaces.main.liveness_probe!.failure_threshold).eq(3);
-    expect(interfaces.main.liveness_probe!.timeout).eq('10s');
-    expect(interfaces.main.liveness_probe!.interval).eq('90s');
+    expect(liveness_probe.path).eq('/health');
+    expect(liveness_probe.success_threshold).eq(2);
+    expect(liveness_probe.failure_threshold).eq(3);
+    expect(liveness_probe.timeout).eq('10s');
+    expect(liveness_probe.interval).eq('90s');
   });
 
   it('partial liveness probe override', async () => {
     const service_config = {
       name: "architect/backend",
-      interfaces: {
-        secondary: {
-          port: 8081,
-          liveness_probe: {
-            path: '/test',
-            timeout: '20s'
-          }
-        }
+      liveness_probe: {
+        command: 'curl 0.0.0.0:8080 && exit 0',
+        timeout: '20s'
       }
     };
 
@@ -93,13 +82,16 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
-    const interfaces = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getInterfaces();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
 
-    expect(interfaces.secondary.port).eq(8081);
-    expect(interfaces.secondary.liveness_probe!.path).eq('/test');
-    expect(interfaces.secondary.liveness_probe!.success_threshold).eq(1);
-    expect(interfaces.secondary.liveness_probe!.failure_threshold).eq(1);
-    expect(interfaces.secondary.liveness_probe!.timeout).eq('20s');
-    expect(interfaces.secondary.liveness_probe!.interval).eq('30s');
+    expect(liveness_probe.command).eq('curl 0.0.0.0:8080 && exit 0');
+    expect(liveness_probe.success_threshold).eq(1);
+    expect(liveness_probe.failure_threshold).eq(1);
+    expect(liveness_probe.timeout).eq('20s');
+    expect(liveness_probe.interval).eq('30s');
+  });
+
+  it('liveness probe with command', async () => {
+    // TODO
   });
 });

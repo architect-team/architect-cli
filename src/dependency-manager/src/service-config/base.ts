@@ -68,7 +68,6 @@ export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
   port?: number;
-  liveness_probe?: ServiceLivenessProbe;
   subdomain?: string;
 }
 
@@ -78,6 +77,7 @@ export interface ServiceLivenessProbe {
   timeout?: string;
   path?: string;
   interval?: string;
+  command?: string;
 }
 
 export interface VolumeSpec {
@@ -121,6 +121,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getReplicas(): number;
+  abstract getLivenessProbe(): ServiceLivenessProbe;
 
   copy() {
     return classToClass(this);
