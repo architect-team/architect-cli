@@ -10,7 +10,7 @@ parameters:
   KAFKA_ADDR:
     value_from:
       dependency: examples/kafka-kafka:latest
-      interface: external
+      interface: internal
       value: $HOST:$PORT
   CONSUME_TOPIC:
     value_from:
