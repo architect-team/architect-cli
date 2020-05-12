@@ -1,0 +1,28 @@
+name: examples/kafka-kafka
+description: Kafka service powering the event architecture example
+image: wurstmeister/kafka
+language: java
+interfaces:
+  internal: 9092
+  external: 9093
+dependencies:
+  examples/kafka-zookeeper: latest
+parameters:
+  KAFKA_CREATE_TOPICS: left:1:1,right:1:1
+  KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9093
+  KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092,EXTERNAL://$EXTERNAL_HOST:$EXTERNAL_PORT
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+  KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  KAFKA_ADVERTISED_HOST_NAME:
+    required: false
+  KAFKA_TOPIC_LEFT: left
+  KAFKA_TOPIC_RIGHT: right
+  KAFKA_ZOOKEEPER_CONNECT:
+    value_from:
+      dependency: examples/kafka-zookeeper
+      value: $INTERNAL_URL
+debug:
+  volumes:
+    docker:
+      mount_path: /var/run/docker.sock
+      host_path: /var/run/docker.sock

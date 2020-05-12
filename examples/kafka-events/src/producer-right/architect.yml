@@ -1,0 +1,22 @@
+name: examples/kafka-producer-right
+language: node
+interfaces:
+  main: 8080
+dependencies:
+  examples/kafka-kafka: latest
+parameters:
+  DEBUG:
+    required: false
+  KAFKA_ADDR:
+    value_from:
+      dependency: examples/kafka-kafka:latest
+      interface: external
+      value: $HOST:$PORT
+  CONSUME_TOPIC:
+    value_from:
+      dependency: examples/kafka-kafka:latest
+      value: $KAFKA_TOPIC_LEFT
+  PRODUCE_TOPIC:
+    value_from:
+      dependency: examples/kafka-kafka:latest
+      value: $KAFKA_TOPIC_RIGHT
