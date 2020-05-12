@@ -458,20 +458,18 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getInterfaces(): Dictionary<ServiceInterfaceSpec> {
-    for (const key in Object.keys(this.interfaces || {})) {
-      if (this.interfaces && this.interfaces[key]) {
-        this.interfaces[key].liveness_probe = {
-          path: '/',
-          success_threshold: 1,
-          failure_threshold: 1,
-          timeout: '5s',
-          interval: '30s',
-          ...(this.interfaces[key].liveness_probe || {}),
-        } as LivenessProbeV1;
-      }
+    const interfaces = this.interfaces || {};
+    for (const key of Object.keys(interfaces)) {
+      interfaces[key].liveness_probe = {
+        path: '/',
+        success_threshold: 1,
+        failure_threshold: 1,
+        timeout: '5s',
+        interval: '30s',
+        ...interfaces[key].liveness_probe || {},
+      } as LivenessProbeV1;
     }
-
-    return this.interfaces || {};
+    return interfaces;
   }
 
   getImage(): string {
