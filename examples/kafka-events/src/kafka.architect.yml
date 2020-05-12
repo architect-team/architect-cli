@@ -4,7 +4,7 @@ image: wurstmeister/kafka
 language: java
 interfaces:
   internal: 9092
-  external: 9093
+  # external: 9093  # not needed locally, but needed for remote deployments
 dependencies:
   examples/kafka-zookeeper: latest
 parameters:
@@ -20,7 +20,7 @@ parameters:
   KAFKA_ZOOKEEPER_CONNECT:
     value_from:
       dependency: examples/kafka-zookeeper
-      value: $INTERNAL_URL
+      value: $INTERNAL_HOST:$INTERNAL_PORT
 debug:
   volumes:
     docker:
