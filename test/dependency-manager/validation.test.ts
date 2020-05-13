@@ -784,9 +784,7 @@ describe('validation (v1 spec)', () => {
     it('should require that a liveness probe defines either a command or a path', async () => {
       const service_config = {
         "name": "architect/test-service",
-        "liveness_probe": {
-          // "timeout": "10s"
-        }
+        "liveness_probe": {}
       };
 
       mock_fs({
