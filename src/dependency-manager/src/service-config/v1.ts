@@ -1,12 +1,11 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsDefined, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
-import { ExclusiveKeys } from '../utils/validators/exclusive-keys';
-import { RequireAtLeastOne } from '../utils/validators/require-one';
+import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
@@ -168,7 +167,8 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   timeout?: string;
 
-  @IsOptional({ always: true })
+  @ValidateIf(obj => !obj.command, { always: true })
+  @IsDefined({ always: true, message: 'Path and port should be defined if command is not defined.' })
   @IsString({ always: true })
   path?: string;
 
@@ -176,7 +176,8 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   interval?: string;
 
-  @IsOptional({ always: true })
+  @ValidateIf(obj => !obj.path, { always: true })
+  @IsDefined({ always: true, message: 'Command should be defined if path and port are not defined.' })
   @IsString({ always: true })
   command?: string;
 
@@ -358,8 +359,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Type(() => LivenessProbeV1)
   @IsOptional({ always: true })
   @IsInstance(LivenessProbeV1, { always: true })
-  @ExclusiveKeys(['path', 'command'], { groups: ['developer', 'operator'], message: 'Path and command are exclusive.' })
-  @RequireAtLeastOne(['path', 'command'], { groups: ['developer', 'operator'], message: 'A liveness probe requires that either a path or a command exists.' })
+  @Exclusive(['path', 'command'], { always: true, message: 'Path and command are exclusive.' })
   liveness_probe?: LivenessProbeV1;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
@@ -415,6 +415,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
     errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
+    errors = await validateNested(this, 'liveness_probe', errors, options);
     // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
     const volumes_options = { ...options };
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {

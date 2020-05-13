@@ -780,7 +780,9 @@ describe('validation (v1 spec)', () => {
     it('should require that a liveness probe defines either a command or a path', async () => {
       const service_config = {
         "name": "architect/test-service",
-        "liveness_probe": {}
+        "liveness_probe": {
+          "timeout": "10s"
+        }
       };
 
       mock_fs({
@@ -794,8 +796,11 @@ describe('validation (v1 spec)', () => {
         config_err = JSON.parse(err.message);
       }
 
-      expect(Object.keys(config_err)).members(['liveness_probe']);
-      expect(config_err['liveness_probe'].line).to.eq(3);
+      expect(Object.keys(config_err)).members(['liveness_probe.path', 'liveness_probe.command']);
+      expect(config_err['liveness_probe.path']).to.include({ isDefined: 'Path and port should be defined if command is not defined.' });
+      expect(config_err['liveness_probe.path']).to.include({ isString: 'path must be a string' });
+      expect(config_err['liveness_probe.command']).to.include({ isDefined: 'Command should be defined if path and port are not defined.' });
+      expect(config_err['liveness_probe.command']).to.include({ isString: 'command must be a string' });
     });
   });
 });
