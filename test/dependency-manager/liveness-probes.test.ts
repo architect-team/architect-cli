@@ -50,6 +50,7 @@ describe('liveness probes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
 
+    expect(liveness_probe.command).undefined;
     expect(liveness_probe.path).eq('/health');
     expect(liveness_probe.success_threshold).eq(2);
     expect(liveness_probe.failure_threshold).eq(3);
@@ -84,6 +85,7 @@ describe('liveness probes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
 
+    expect(liveness_probe.path).undefined;
     expect(liveness_probe.command).eq('curl 0.0.0.0:8080 && exit 0');
     expect(liveness_probe.success_threshold).eq(1);
     expect(liveness_probe.failure_threshold).eq(1);
@@ -91,7 +93,38 @@ describe('liveness probes', function () {
     expect(liveness_probe.interval).eq('30s');
   });
 
-  it('liveness probe with command', async () => {
-    // TODO
+  it('liveness probe with path', async () => {
+    const service_config = {
+      name: "architect/backend",
+      liveness_probe: {
+        path: '/test',
+        success_threshold: 7
+      }
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend": {
+          debug: {
+            path: 'src/backend'
+          }
+        },
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+
+    expect(liveness_probe.command).undefined;
+    expect(liveness_probe.path).eq('/test');
+    expect(liveness_probe.success_threshold).eq(7);
+    expect(liveness_probe.failure_threshold).eq(1);
+    expect(liveness_probe.timeout).eq('5s');
+    expect(liveness_probe.interval).eq('30s');
   });
 });

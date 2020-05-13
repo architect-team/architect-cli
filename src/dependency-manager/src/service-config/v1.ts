@@ -5,8 +5,9 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
+import { ExclusiveKeys } from '../utils/validators/exclusive-keys';
+import { RequireAtLeastOne } from '../utils/validators/require-one';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ExclusiveKeys } from '../validators/exclusive-keys';
 import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
@@ -350,11 +351,11 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
-  // TODO: add exclusive keys decorator
   @Type(() => LivenessProbeV1)
   @IsOptional({ always: true })
   @IsInstance(LivenessProbeV1, { always: true })
   @ExclusiveKeys(['path', 'command'], { groups: ['developer', 'operator'], message: 'Path and command are exclusive.' })
+  @RequireAtLeastOne(['path', 'command'], { groups: ['developer', 'operator'], message: 'A liveness probe requires that either a path or a command exists.' })
   liveness_probe?: LivenessProbeV1;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
@@ -463,15 +464,23 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getLivenessProbe(): ServiceLivenessProbe {
+    let path_or_command: { [s: string]: string } = {};
+    if (this.liveness_probe) {
+      if (this.liveness_probe.command) {
+        path_or_command = { command: this.liveness_probe.command };
+      } else if (this.liveness_probe.path) {
+        path_or_command = { path: this.liveness_probe.path };
+      }
+    }
+
     const liveness_probe = {
-      command: 'exit 0',
-      path: '/',
       success_threshold: 1,
       failure_threshold: 1,
       timeout: '5s',
       interval: '30s',
+      ...path_or_command,
       ...this.liveness_probe,
-    }
+    };
 
     return liveness_probe as ServiceLivenessProbe;
   }
