@@ -773,7 +773,11 @@ describe('validation (v1 spec)', () => {
         groups: ['operator'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['services.architect/registry:latest.liveness_probe']);
+      expect(Object.keys(flattened_errors)).members([
+        'services.architect/registry:latest.liveness_probe.command',
+        'services.architect/registry:latest.liveness_probe.path',
+        'services.architect/registry:latest.liveness_probe.port',
+      ]);
       expect(errors.length).to.equal(1);
     });
 
@@ -781,7 +785,7 @@ describe('validation (v1 spec)', () => {
       const service_config = {
         "name": "architect/test-service",
         "liveness_probe": {
-          "timeout": "10s"
+          // "timeout": "10s"
         }
       };
 
@@ -796,10 +800,10 @@ describe('validation (v1 spec)', () => {
         config_err = JSON.parse(err.message);
       }
 
-      expect(Object.keys(config_err)).members(['liveness_probe.path', 'liveness_probe.command']);
-      expect(config_err['liveness_probe.path']).to.include({ isDefined: 'Path and port should be defined if command is not defined.' });
+      expect(Object.keys(config_err)).members(['liveness_probe.path', 'liveness_probe.command', 'liveness_probe.port']);
+      console.log(config_err)
       expect(config_err['liveness_probe.path']).to.include({ isString: 'path must be a string' });
-      expect(config_err['liveness_probe.command']).to.include({ isDefined: 'Command should be defined if path and port are not defined.' });
+      expect(config_err['liveness_probe.port']).to.include({ isNumber: 'port must be a number conforming to the specified constraints' });
       expect(config_err['liveness_probe.command']).to.include({ isString: 'command must be a string' });
     });
   });

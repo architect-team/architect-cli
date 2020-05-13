@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsDefined, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
@@ -167,8 +167,8 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   timeout?: string;
 
-  @ValidateIf(obj => !obj.command, { always: true })
-  @IsDefined({ always: true, message: 'Path and port should be defined if command is not defined.' })
+  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
   @IsString({ always: true })
   path?: string;
 
@@ -176,12 +176,13 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   interval?: string;
 
-  @ValidateIf(obj => !obj.path, { always: true })
-  @IsDefined({ always: true, message: 'Command should be defined if path and port are not defined.' })
+  @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
   @IsString({ always: true })
   command?: string;
 
-  @IsOptional({ always: true })
+  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
   @IsNumber(undefined, { always: true })
   port?: number;
 }
@@ -359,7 +360,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Type(() => LivenessProbeV1)
   @IsOptional({ always: true })
   @IsInstance(LivenessProbeV1, { always: true })
-  @Exclusive(['path', 'command'], { always: true, message: 'Path and command are exclusive.' })
   liveness_probe?: LivenessProbeV1;
 
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
@@ -460,36 +460,22 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.name || '';
   }
 
-  getApiSpec(): ServiceApiSpec {
-    return (this.api || { type: 'rest' }) as ServiceApiSpec;
-  }
-
   getInterfaces(): Dictionary<ServiceInterfaceSpec> {
     return this.interfaces || {};
   }
 
-  getLivenessProbe(): ServiceLivenessProbe {
-    let path_or_command = {};
-    if (this.liveness_probe?.command) {
-      path_or_command = { command: this.liveness_probe.command };
-    } else {
-      let port;
-      if (this.liveness_probe) {
-        port = this.liveness_probe.port;
-      }
-      const interface_values = Object.values(this.interfaces || {});
-      if (!port && interface_values.length) {
-        port = interface_values[0].port;
-      }
-      path_or_command = { path: this.liveness_probe?.path || '/', port: port || 8080 };
-    }
+  getApiSpec(): ServiceApiSpec {
+    return (this.api || { type: 'rest' }) as ServiceApiSpec;
+  }
+
+  getLivenessProbe(): ServiceLivenessProbe | undefined {
+    if (!this.liveness_probe || !Object.keys(this.liveness_probe).length) { return undefined; }
 
     const liveness_probe = {
       success_threshold: 1,
       failure_threshold: 1,
       timeout: '5s',
       interval: '30s',
-      ...path_or_command,
       ...this.liveness_probe,
     };
 

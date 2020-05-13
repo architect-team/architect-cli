@@ -59,11 +59,6 @@ export interface ServiceEventSubscriptions {
   };
 }
 
-export interface ServiceApiSpec {
-  type: string;
-  definitions?: string[];
-}
-
 export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
@@ -86,6 +81,11 @@ export interface VolumeSpec {
   host_path?: string;
   description?: string;
   readonly?: boolean;
+}
+
+export interface ServiceApiSpec {
+  type: string;
+  definitions?: string[];
 }
 
 export abstract class ServiceConfig extends BaseSpec {
@@ -122,7 +122,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getReplicas(): number;
-  abstract getLivenessProbe(): ServiceLivenessProbe;
+  abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
 
   copy() {
     return classToClass(this);
