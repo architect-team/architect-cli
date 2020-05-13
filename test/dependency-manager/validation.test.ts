@@ -754,5 +754,55 @@ describe('validation (v1 spec)', () => {
       expect(Object.keys(flattened_errors)).members([]);
       expect(errors.length).to.equal(0);
     });
-  })
+
+    it('should reject the use of both a command and path in a liveness probe', async () => {
+      const env_config = {
+        "services": {
+          "architect/registry:latest": {
+            "liveness_probe": {
+              "path": "/test",
+              "command": "test",
+              "interval": "10s"
+            }
+          },
+        },
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(env_config);
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members([
+        'services.architect/registry:latest.liveness_probe.command',
+        'services.architect/registry:latest.liveness_probe.path',
+        'services.architect/registry:latest.liveness_probe.port',
+      ]);
+      expect(errors.length).to.equal(1);
+    });
+
+    it('should require that a liveness probe defines either a command or a path', async () => {
+      const service_config = {
+        "name": "architect/test-service",
+        "liveness_probe": {}
+      };
+
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(service_config, null, 2),
+      });
+
+      let config_err;
+      try {
+        await ServiceConfigBuilder.buildFromPath('/stack/')
+      } catch (err) {
+        config_err = JSON.parse(err.message);
+      }
+
+      expect(Object.keys(config_err)).members(['liveness_probe.path', 'liveness_probe.command', 'liveness_probe.port']);
+      console.log(config_err)
+      expect(config_err['liveness_probe.path']).to.include({ isString: 'path must be a string' });
+      expect(config_err['liveness_probe.port']).to.include({ isNumber: 'port must be a number conforming to the specified constraints' });
+      expect(config_err['liveness_probe.command']).to.include({ isString: 'command must be a string' });
+    });
+  });
 });

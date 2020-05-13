@@ -5,8 +5,9 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
+import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceParameter, VolumeSpec } from './base';
+import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -99,7 +100,6 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
   return output;
 };
 
-
 class NotificationSpecV1 extends BaseSpec {
   @IsString({ always: true })
   description!: string;
@@ -167,13 +167,24 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   timeout?: string;
 
-  @IsOptional({ always: true })
+  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
   @IsString({ always: true })
   path?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
   interval?: string;
+
+  @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
+  @IsString({ always: true })
+  command?: string;
+
+  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
+  @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
+  @IsNumber(undefined, { always: true })
+  port?: number;
 }
 
 class ApiSpecV1 extends BaseSpec {
@@ -203,22 +214,12 @@ class InterfaceSpecV1 extends BaseSpec {
   @IsNumber(undefined, { always: true })
   port?: number;
 
-  @Type(() => LivenessProbeV1)
-  @IsOptional({ always: true })
-  liveness_probe?: LivenessProbeV1;
-
   @IsOptional({ always: true })
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode a subdomain when registering services',
   })
   subdomain?: string;
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    errors = await validateNested(this, 'liveness_probe', errors, options);
-    return errors;
-  }
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
@@ -356,6 +357,11 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
+  @Type(() => LivenessProbeV1)
+  @IsOptional({ always: true })
+  @IsInstance(LivenessProbeV1, { always: true })
+  liveness_probe?: LivenessProbeV1;
+
   @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
   @IsOptional({ always: true })
   notifications?: Dictionary<NotificationSpecV1>;
@@ -409,6 +415,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
     errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
+    errors = await validateNested(this, 'liveness_probe', errors, options);
     // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
     const volumes_options = { ...options };
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {
@@ -453,23 +460,26 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.name || '';
   }
 
+  getInterfaces(): Dictionary<ServiceInterfaceSpec> {
+    return this.interfaces || {};
+  }
+
   getApiSpec(): ServiceApiSpec {
     return (this.api || { type: 'rest' }) as ServiceApiSpec;
   }
 
-  getInterfaces(): Dictionary<ServiceInterfaceSpec> {
-    const interfaces = this.interfaces || {};
-    for (const key of Object.keys(interfaces)) {
-      interfaces[key].liveness_probe = {
-        path: '/',
-        success_threshold: 1,
-        failure_threshold: 1,
-        timeout: '5s',
-        interval: '30s',
-        ...interfaces[key].liveness_probe || {},
-      } as LivenessProbeV1;
-    }
-    return interfaces;
+  getLivenessProbe(): ServiceLivenessProbe | undefined {
+    if (!this.liveness_probe || !Object.keys(this.liveness_probe).length) { return undefined; }
+
+    const liveness_probe = {
+      success_threshold: 1,
+      failure_threshold: 1,
+      timeout: '5s',
+      interval: '30s',
+      ...this.liveness_probe,
+    };
+
+    return liveness_probe as ServiceLivenessProbe;
   }
 
   getImage(): string {
