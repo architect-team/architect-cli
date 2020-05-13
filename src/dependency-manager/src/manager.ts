@@ -1,4 +1,5 @@
 import dotenvExpand from 'dotenv-expand';
+import Mustache from 'mustache';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
@@ -9,7 +10,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ParameterValue, ParameterValueV2, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -98,10 +99,83 @@ export default abstract class DependencyManager {
     return node.interfaces[interface_name].port.toString();
   }
 
+  private mergeParam(parent_value: ParameterValueV2, global_value: ParameterValueV2, default_value: ParameterValueV2) {
+    return this.isNullParamValue(parent_value) ? parent_value
+      : this.isNullParamValue(global_value) ? global_value
+        : this.isNullParamValue(default_value) ? default_value
+          : null;
+  }
+
+  private isNullParamValue(param_value: ParameterValueV2) {
+    return param_value === null || param_value === undefined;
+  }
+
+  private passParamValuesToChildren(node: ServiceNode, global_parameter_map: { [key: string]: string }, completed_nodes: { [key: string]: { [key: string]: ParameterValueV2 } }) {
+
+    for (const child of this.graph.getNodeDependencies(node)) {
+      const upstream_declaration = node.node_config.getDependencies()[child.ref]; //TODO:FI: this lookup doesn't work
+
+      if (completed_nodes[child.ref]) {
+        continue;
+      }
+      if (!(child instanceof ServiceNode)) {
+        completed_nodes[child.ref] = {};
+        continue;
+      }
+
+      completed_nodes[child.ref] = {};
+      for (const [param_key, param_details] of Object.entries(child.node_config.getParameters())) {
+        if (param_details.default?.valueOf) {
+          continue; //TODO:76: this can get ripped out when we remove ValueFrom support
+        }
+
+        const global_value = global_parameter_map[param_key];
+        const upstream_value = upstream_declaration.getParameters()[param_key];
+        const interpolated_upstream_value = this.interpolateParamValue((upstream_value.default as ParameterValueV2), node);
+
+        const param_value = this.mergeParam((param_details.default as ParameterValueV2), interpolated_upstream_value, global_value);
+
+        if (this.isNullParamValue(param_value) && param_details.required) {
+          throw new Error(`Required parameter doesn't have a value`);
+        }
+
+        completed_nodes[node.ref][param_key] = param_value;
+      }
+
+      // recursively pass the child's parameters down to it's own children, thereby doing a depth-first traversal of the tree
+      completed_nodes = this.passParamValuesToChildren(child, global_parameter_map, completed_nodes);
+    }
+
+    return completed_nodes;
+  }
+
+  private getTopLevelServiceNodes(graph: DependencyGraph): ServiceNode[] {
+    const top_level_nodes = [];
+    for (const node of graph.nodes) {
+      if (!(node instanceof ServiceNode)) {
+        continue;
+      }
+      if (graph.getDependentNodes(node).filter(n => n instanceof ServiceNode).length === 0) {
+        top_level_nodes.push(node);
+      }
+    }
+    return top_level_nodes;
+  }
+
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
   async loadParameters() {
+
+    const global_parameter_map: { [key: string]: string } = {};
+    let interpolated_params: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
+    const top_level_nodes = this.getTopLevelServiceNodes(this.graph);
+
+    for (const node of top_level_nodes) {
+      interpolated_params = this.passParamValuesToChildren(node, global_parameter_map, interpolated_params);
+    }
+
+
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
@@ -110,56 +184,14 @@ export default abstract class DependencyManager {
       }
     }
 
-    const env_params_to_expand: { [key: string]: string } = {};
-    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? this.gateway_port : '';
+    let all_env_params: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
-      for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-        let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
-        if (node instanceof ExternalNode) {
-          if (!interface_details.host) {
-            throw new Error('External node needs to override the host');
-          }
-          external_host = interface_details.host;
-          internal_host = interface_details.host;
-          external_port = interface_details.port.toString();
-          internal_port = interface_details.port.toString();
-          external_protocol = 'https';
-          internal_protocol = 'https';
-        } else {
-          external_host = this.toExternalHost(node, interface_name);
-          internal_host = this.toInternalHost(node);
-          external_port = gateway_port.toString();
-          internal_port = this.toInternalPort(node, interface_name);
-          external_protocol = this.toExternalProtocol(node, interface_name);
-          internal_protocol = 'http';
-        }
-
-        const port = external_host ? external_port : internal_port;
-        const host = external_host ? external_host : internal_host;
-
-        const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
-        const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
-
-        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}HOST`)] = host;
-
-        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}PORT`)] = port;
-
-        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = external_protocol;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = internal_protocol;
-
-        env_params_to_expand[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = external_url;
-        env_params_to_expand[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = internal_url;
-      }
+      const env_params_to_expand: { [key: string]: string } = {};
+      const interface_env_params = this.buildInterfaceEnvParams(node);
 
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
-          if (param_value.toString().indexOf('$') > -1) {
+          if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
@@ -216,20 +248,121 @@ export default abstract class DependencyManager {
           }
         }
       }
+      all_env_params = { ...all_env_params, ...interface_env_params, ...env_params_to_expand };
     }
 
     // ignoreProcessEnv is important otherwise it will be stored globally
-    const dotenv_config = { parsed: env_params_to_expand, ignoreProcessEnv: true };
+    const dotenv_config = { parsed: all_env_params, ignoreProcessEnv: true };
     const expanded_params = dotenvExpand(dotenv_config).parsed || {};
+
     for (const node of this.graph.nodes) {
       const prefix = this.scopeEnv(node, '');
       for (const [prefixed_key, value] of Object.entries(expanded_params)) {
         if (prefixed_key.startsWith(prefix)) {
           const key = prefixed_key.replace(prefix, '');
           node.parameters[key] = value;
+
+          if (interpolated_params[node.ref][key]) {
+            if (value != interpolated_params[node.ref][key]) {
+            }
+            node.parameters[key] = interpolated_params[node.ref][key] as ParameterValue;
+          }
         }
       }
     }
+  }
+
+  private map(node: ServiceConfig) {
+    return {
+      parameters: Object.entries(node.getParameters()).reduce((result: { [key: string]: any }, [k, v]) => {
+        result[k] = v.default;
+        return result;
+      }, {}),
+      interfaces: {
+        main: {
+          host: 'test',
+        },
+      },
+      dependencies: Object.entries(node.getDependencies()).reduce((result: { [key: string]: any }, [k, v]) => {
+        result[k] = this.map(v);
+        return result;
+      }, {}),
+    };
+  }
+
+
+  private interpolateParamValue(param_value: ParameterValueV2, node: ServiceNode): ParameterValueV2 {
+    if (typeof param_value !== 'string') {
+      return param_value;
+    }
+    if (!param_value.includes('${')) {
+      return param_value;
+    }
+
+    const context = this.map(node.node_config);
+
+    Mustache.tags = ['${', '}'];
+    const result = Mustache.render(param_value, context);
+
+    // const template = Handlebars.compile(param_value);
+    // const result = template(context);
+
+
+    if (result.includes('${')) {
+      throw new Error(`Recursive interpolation not yet supported, ${result}`);
+    }
+    return result;
+  }
+
+  private buildInterfaceEnvParams(node: DependencyNode) {
+    const interface_params: { [key: string]: string } = {};
+    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
+    const gateway_port = gateway_node ? this.gateway_port : '';
+
+    for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
+      let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
+      if (node instanceof ExternalNode) {
+        if (!interface_details.host) {
+          throw new Error('External node needs to override the host');
+        }
+        external_host = interface_details.host;
+        internal_host = interface_details.host;
+        external_port = interface_details.port.toString();
+        internal_port = interface_details.port.toString();
+        external_protocol = 'https';
+        internal_protocol = 'https';
+      } else {
+        external_host = this.toExternalHost(node, interface_name);
+        internal_host = this.toInternalHost(node);
+        external_port = gateway_port.toString();
+        internal_port = this.toInternalPort(node, interface_name);
+        external_protocol = this.toExternalProtocol(node, interface_name);
+        internal_protocol = 'http';
+      }
+
+      const port = external_host ? external_port : internal_port;
+      const host = external_host ? external_host : internal_host;
+
+      const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+      const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
+
+      const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
+      interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
+      interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
+      interface_params[this.scopeEnv(node, `${prefix}HOST`)] = host;
+
+      interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = external_port;
+      interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = internal_port;
+      interface_params[this.scopeEnv(node, `${prefix}PORT`)] = port;
+
+      interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = external_protocol;
+      interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = internal_protocol;
+
+      interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = external_url;
+      interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = internal_url;
+    }
+
+    return interface_params;
   }
 
   /**
