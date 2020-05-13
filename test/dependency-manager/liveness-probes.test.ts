@@ -134,4 +134,37 @@ describe('liveness probes', function () {
     expect(liveness_probe.timeout).eq('5s');
     expect(liveness_probe.interval).eq('30s');
   });
+
+
+  it('default liveness probe', async () => {
+    const service_config = {
+      name: "architect/backend"
+    };
+
+    const env_config = {
+      services: {
+        "architect/backend": {
+          debug: {
+            path: 'src/backend'
+          }
+        },
+      }
+    };
+
+    mock_fs({
+      '/stack/src/backend/architect.json': JSON.stringify(service_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+
+    expect(liveness_probe.command).undefined;
+    expect(liveness_probe.path).eq('/');
+    expect(liveness_probe.port).eq(8080);
+    expect(liveness_probe.success_threshold).eq(1);
+    expect(liveness_probe.failure_threshold).eq(1);
+    expect(liveness_probe.timeout).eq('5s');
+    expect(liveness_probe.interval).eq('30s');
+  });
 });

@@ -469,17 +469,18 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getLivenessProbe(): ServiceLivenessProbe {
     let path_or_command = {};
-    if (this.liveness_probe) {
-      if (this.liveness_probe.command) {
-        path_or_command = { command: this.liveness_probe.command };
-      } else if (this.liveness_probe.path) {
-        let port = this.liveness_probe.port;
-        const interface_values = Object.values(this.interfaces || {});
-        if (!port && interface_values.length) {
-          port = interface_values[0].port;
-        }
-        path_or_command = { path: this.liveness_probe.path, port: port || 8080 };
+    if (this.liveness_probe?.command) {
+      path_or_command = { command: this.liveness_probe.command };
+    } else {
+      let port;
+      if (this.liveness_probe) {
+        port = this.liveness_probe.port;
       }
+      const interface_values = Object.values(this.interfaces || {});
+      if (!port && interface_values.length) {
+        port = interface_values[0].port;
+      }
+      path_or_command = { path: this.liveness_probe?.path || '/', port: port || 8080 };
     }
 
     const liveness_probe = {
