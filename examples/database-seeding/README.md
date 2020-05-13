@@ -2,24 +2,19 @@
 
 ### Quickstart
 
-##### The 'dev' environment:
+##### For a 'dev' environment:
+In the arc.env.yml, set `AUTO_DDL:migrate`
 ```
-architect deploy -l arc.env.dev.yml
+architect deploy -l arc.env.yml
 ```
-At http://api.localhost:3000/users, you should see an empty list of users because the AUTO_DDL parameter is set to 'migrate'.
+At http://api.localhost:3000/users, you should see an empty list of users because the AUTO_DDL parameter is set to 'migrate' which migrated the schema from the Typeorm schema migration scripts in src/migrations.
 
-##### The 'qa' environment:
+##### For a 'qa' environment:
+In thje arc.env.yml, set `AUTO_DDL:seed`
 ```
-architect deploy -l arc.env.qa.yml
+architect deploy -l arc.env.yml
 ```
-At http://api.localhost:3000/users, you should see a list of test users generated because the AUTO_DDL parameter is set to 'seed'.
-
-##### The 'prod' environment:
-```
-architect deploy -l arc.env.prod.yml
-```
-
-This environment is configured to connect to an existing database on `localhost:5432` (referenced by `host.docker.internal`) and has the AUTO_DDL property set to 'none'. NOTE: the `/users` endpoint will return an error unless you've preconfigured the schema in that external database.
+At http://api.localhost:3000/users, you should see a list of test users generated because the AUTO_DDL parameter is set to 'seed' which migrated the schema and ran the populated the test fixtures from src/fixtures.
 
 
 ### Example Explained
@@ -86,6 +81,11 @@ services:
       AUTO_DDL: seed
 ```
 
+### Notes
+
+* This example uses [Typeorm](https://typeorm.io/#/) to manage the database migrations. See docs here: https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
+* You can see the fixture data that `AUTO_DDL:seed` adds here: `./src/fixtures/`.
+* You can see the migration scripts that `AUTO_DDL:migrate` runs here: `./src/fixtures/`.
 
 ## Recap
 

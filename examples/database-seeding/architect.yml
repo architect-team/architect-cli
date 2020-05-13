@@ -10,9 +10,9 @@ dependencies:
     interfaces:
       postgres: 5432
     parameters:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: seeding_demo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
 parameters:
   DATABASE_HOST:
     value_from:
