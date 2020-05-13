@@ -179,6 +179,10 @@ class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsString({ always: true })
   command?: string;
+
+  @IsOptional({ always: true })
+  @IsNumber(undefined, { always: true })
+  port?: number;
 }
 
 class ApiSpecV1 extends BaseSpec {
@@ -464,12 +468,17 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getLivenessProbe(): ServiceLivenessProbe {
-    let path_or_command: { [s: string]: string } = {};
+    let path_or_command = {};
     if (this.liveness_probe) {
       if (this.liveness_probe.command) {
         path_or_command = { command: this.liveness_probe.command };
       } else if (this.liveness_probe.path) {
-        path_or_command = { path: this.liveness_probe.path };
+        let port = this.liveness_probe.port;
+        const interface_values = Object.values(this.interfaces || {});
+        if (!port && interface_values.length) {
+          port = interface_values[0].port;
+        }
+        path_or_command = { path: this.liveness_probe.path, port: port || 8080 };
       }
     }
 

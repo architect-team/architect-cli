@@ -78,6 +78,7 @@ export interface ServiceLivenessProbe {
   path?: string;
   interval?: string;
   command?: string;
+  port?: number;
 }
 
 export interface VolumeSpec {

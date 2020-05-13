@@ -25,6 +25,7 @@ describe('liveness probes', function () {
       name: "architect/backend",
       liveness_probe: {
         path: '/health',
+        port: 8082,
         success_threshold: 2,
         failure_threshold: 3,
         timeout: '10s',
@@ -52,6 +53,7 @@ describe('liveness probes', function () {
 
     expect(liveness_probe.command).undefined;
     expect(liveness_probe.path).eq('/health');
+    expect(liveness_probe.port).eq(8082);
     expect(liveness_probe.success_threshold).eq(2);
     expect(liveness_probe.failure_threshold).eq(3);
     expect(liveness_probe.timeout).eq('10s');
@@ -86,6 +88,7 @@ describe('liveness probes', function () {
     const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
 
     expect(liveness_probe.path).undefined;
+    expect(liveness_probe.port).undefined;
     expect(liveness_probe.command).eq('curl 0.0.0.0:8080 && exit 0');
     expect(liveness_probe.success_threshold).eq(1);
     expect(liveness_probe.failure_threshold).eq(1);
@@ -99,6 +102,9 @@ describe('liveness probes', function () {
       liveness_probe: {
         path: '/test',
         success_threshold: 7
+      },
+      interfaces: {
+        main: 8081
       }
     };
 
@@ -122,6 +128,7 @@ describe('liveness probes', function () {
 
     expect(liveness_probe.command).undefined;
     expect(liveness_probe.path).eq('/test');
+    expect(liveness_probe.port).eq(8081);
     expect(liveness_probe.success_threshold).eq(7);
     expect(liveness_probe.failure_threshold).eq(1);
     expect(liveness_probe.timeout).eq('5s');
