@@ -799,7 +799,6 @@ describe('validation (v1 spec)', () => {
       }
 
       expect(Object.keys(config_err)).members(['liveness_probe.path', 'liveness_probe.command', 'liveness_probe.port']);
-      console.log(config_err)
       expect(config_err['liveness_probe.path']).to.include({ isString: 'path must be a string' });
       expect(config_err['liveness_probe.port']).to.include({ isNumber: 'port must be a number conforming to the specified constraints' });
       expect(config_err['liveness_probe.command']).to.include({ isArray: 'command must be an array' });
