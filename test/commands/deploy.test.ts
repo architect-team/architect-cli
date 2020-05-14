@@ -79,7 +79,12 @@ describe('deploy', () => {
       expect(expected.image).to.equal(input.image);
       expect(expected.depends_on).to.have.members(input.depends_on);
       expect(expected.build).to.eql(input.build);
-      expect(expected.command).members(input.command);
+      expect((expected.command || []).length).to.equal((input.command || []).length);
+      if (expected.command && input.command) {
+        for (const [index, _] of expected.command.entries()) {
+          expect(expected.command[index]).to.equal(input.command[index]);
+        }
+      }
       expect(input.environment).not.to.be.undefined;
 
       // Test env variables
