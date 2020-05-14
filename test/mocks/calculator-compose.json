@@ -25,7 +25,9 @@
         "context": "/test/calculator/division-service",
         "args": []
       },
-      "command": "npm run debug",
+      "command": [
+        "npm run debug"
+      ],
       "volumes": [
         "/test/calculator/division-service/src:/usr/src/app/src"
       ],
