@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsArray, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
@@ -179,7 +179,7 @@ class LivenessProbeV1 extends BaseSpec {
   @Transform(value => value instanceof Array ? value : [value])
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
-  @IsArray({ always: true })
+  @IsString({ always: true, each: true })
   command?: string[];
 
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
@@ -308,12 +308,12 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(value => value instanceof Array ? value : [value])
   @IsOptional({ always: true })
-  @IsArray({ always: true })
+  @IsString({ always: true, each: true })
   command?: string[];
 
   @Transform(value => value instanceof Array ? value : [value])
   @IsOptional({ always: true })
-  @IsArray({ always: true })
+  @IsString({ always: true, each: true })
   entrypoint?: string[];
 
   @IsOptional({ always: true })
