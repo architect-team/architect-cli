@@ -11,9 +11,9 @@ export interface DockerService {
   depends_on: string[];
   build?: DockerServiceBuild;
   volumes?: string[];
-  command?: string | string[];
+  command?: string[];
   restart?: string;
-  entrypoint?: string | string[];
+  entrypoint?: string[];
   dns_search?: string | string[];
 }
 

@@ -72,7 +72,7 @@ export interface ServiceLivenessProbe {
   timeout?: string;
   path?: string;
   interval?: string;
-  command?: string;
+  command?: string[];
   port?: number;
 }
 
@@ -104,8 +104,8 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract setImage(image: string): void;
   abstract getDigest(): string | undefined;
   abstract setDigest(digest: string): void;
-  abstract getCommand(): string | string[];
-  abstract getEntrypoint(): string | string[];
+  abstract getCommand(): string[];
+  abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;
   abstract getDependencies(): { [s: string]: ServiceConfig };
   abstract getParameters(): { [s: string]: ServiceParameter };
