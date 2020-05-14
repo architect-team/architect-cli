@@ -16,10 +16,7 @@ dependencies:
 parameters:
   POSTGRES_HOST: ${ dependencies.db.interfaces.postgres.internal.host }
   POSTGRES_PORT: ${ dependencies['db'].interfaces.postgres.internal.port }
-  POSTGRES_USER:
-    value_from:
-      dependency: db
-      value: $POSTGRES_USER
+  POSTGRES_USER: ${ dependencies.db.parameters.POSTGRES_USER }
   POSTGRES_PASSWORD:
     value_from:
       dependency: db
