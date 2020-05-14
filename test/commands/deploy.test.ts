@@ -81,7 +81,7 @@ describe('deploy', () => {
       expect(expected.build).to.eql(input.build);
       expect((expected.command || []).length).to.equal((input.command || []).length);
       if (expected.command && input.command) {
-        for (const [index, _] of expected.command.entries()) {
+        for (const index of expected.command.keys()) {
           expect(expected.command[index]).to.equal(input.command[index]);
         }
       }
