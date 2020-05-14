@@ -64,7 +64,7 @@ describe('liveness probes', function () {
     const service_config = {
       name: "architect/backend",
       liveness_probe: {
-        command: 'curl 0.0.0.0:8080 && exit 0',
+        command: ['curl 0.0.0.0:8080 && exit 0'],
         timeout: '20s'
       }
     };
@@ -89,7 +89,7 @@ describe('liveness probes', function () {
 
     expect(liveness_probe!.path).undefined;
     expect(liveness_probe!.port).undefined;
-    expect(liveness_probe!.command).eq('curl 0.0.0.0:8080 && exit 0');
+    expect(liveness_probe!.command).members(['curl 0.0.0.0:8080 && exit 0']);
     expect(liveness_probe!.success_threshold).eq(1);
     expect(liveness_probe!.failure_threshold).eq(1);
     expect(liveness_probe!.timeout).eq('20s');

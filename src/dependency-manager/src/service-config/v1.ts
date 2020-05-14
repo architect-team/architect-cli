@@ -176,10 +176,11 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   interval?: string;
 
+  @Transform(value => value instanceof Array ? value : [value])
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
-  @IsString({ always: true })
-  command?: string;
+  @IsString({ always: true, each: true })
+  command?: string[];
 
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
@@ -305,11 +306,15 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   port?: string;
 
+  @Transform(value => value instanceof Array ? value : [value])
   @IsOptional({ always: true })
-  command?: string | string[];
+  @IsString({ always: true, each: true })
+  command?: string[];
 
+  @Transform(value => value instanceof Array ? value : [value])
   @IsOptional({ always: true })
-  entrypoint?: string | string[];
+  @IsString({ always: true, each: true })
+  entrypoint?: string[];
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -499,11 +504,11 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getCommand() {
-    return this.command || '';
+    return this.command || [];
   }
 
   getEntrypoint() {
-    return this.entrypoint || '';
+    return this.entrypoint || [];
   }
 
   getDockerfile() {

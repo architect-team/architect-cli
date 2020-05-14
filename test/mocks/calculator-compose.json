@@ -25,7 +25,9 @@
         "context": "/test/calculator/division-service",
         "args": []
       },
-      "command": "npm run debug",
+      "command": [
+        "npm run debug"
+      ],
       "volumes": [
         "/test/calculator/division-service/src:/usr/src/app/src"
       ],
@@ -57,7 +59,9 @@
         "context": "/test/calculator/subtraction-services/go/rest",
         "args": []
       },
-      "command": "sh -c 'go run main.go'",
+      "command": [
+        "sh -c 'go run main.go'"
+      ],
       "dns_search": [
         "testdomain.com"
       ]
@@ -90,7 +94,9 @@
         "context": "/test/calculator/addition-service/rest",
         "args": []
       },
-      "command": "npm run dev",
+      "command": [
+        "npm run dev"
+      ],
       "volumes": [
         "/test/calculator/addition-service/rest/src:/usr/src/app/src"
       ],

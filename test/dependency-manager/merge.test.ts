@@ -145,7 +145,7 @@ describe('service config merge', function () {
     expect(node_config.getDatastores()['override'].parameters).keys('POSTGRES_USER', 'POSTGRES_PASS', 'POSTGRES_DB');
     expect(node_config.getDatastores()['override'].parameters.POSTGRES_USER.default).eq('override');
 
-    expect(node_config.getDebugOptions()!.getCommand()).eq('./test.ts');
+    expect(node_config.getDebugOptions()!.getCommand()).members(['./test.ts']);
 
     expect(node_config.getVolumes()).keys('simple', 'db_data', 'new_db_data')
     expect(node_config.getVolumes().db_data.mount_path).eq('/db')
