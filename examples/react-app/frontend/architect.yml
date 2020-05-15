@@ -16,10 +16,7 @@ parameters:
     default: world
 debug:
   dockerfile: Dockerfile.dev
-  command:
-    - npm
-    - run
-    - dev
+  command: npm run dev
   volumes:
     src:
       mount_path: /usr/src/app/src

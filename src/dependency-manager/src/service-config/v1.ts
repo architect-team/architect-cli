@@ -1,6 +1,7 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
@@ -306,12 +307,12 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   port?: string;
 
-  @Transform(value => value instanceof Array ? value : [value])
+  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
   command?: string[];
 
-  @Transform(value => value instanceof Array ? value : [value])
+  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
   entrypoint?: string[];
@@ -340,7 +341,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (value instanceof Array) {
       return plainToClass(ServiceConfigV1, { command: value });
     } if (typeof value === 'string') {
-      return plainToClass(ServiceConfigV1, { command: [value] });
+      console.log(shell_parse(value))
+      return plainToClass(ServiceConfigV1, { command: shell_parse(value) });
     } else {
       return plainToClass(ServiceConfigV1, value);
     }
