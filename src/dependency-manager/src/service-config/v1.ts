@@ -177,7 +177,7 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   interval?: string;
 
-  @Transform(value => value instanceof Array ? value : [value])
+  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
   @IsString({ always: true, each: true })
