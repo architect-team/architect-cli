@@ -10,6 +10,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
+import { InterpolationContext } from './interpolation/interpolation-context';
 import { DatastoreParameter, DependencyParameter, ParameterValue, ParameterValueV2, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import VaultManager from './vault-manager';
 
@@ -99,65 +100,6 @@ export default abstract class DependencyManager {
     return node.interfaces[interface_name].port.toString();
   }
 
-  private passParamValuesToChildren(node: ServiceNode, global_parameter_map: { [key: string]: string }, completed_nodes: { [key: string]: { [key: string]: ParameterValueV2 } }) {
-    console.log(`looping through children of ${node.ref} to assign parameters`);
-
-    for (const child of this.graph.getNodeDependencies(node)) {
-      console.log(child.ref);
-      console.log(node.node_config.getDependencies());
-      const upstream_declaration = node.node_config.getDependencies()[child.ref]; //TODO:FI: this lookup doesn't work
-      console.log('Parent declares child here: ' + upstream_declaration);
-
-      if (completed_nodes[child.ref]) {
-        console.log('Skipping node, we already covered it');
-        continue;
-      }
-      if (!(child instanceof ServiceNode)) {
-        console.log('Node is not a ServiceNode, skipping');
-        completed_nodes[child.ref] = {};
-        continue;
-      }
-
-      completed_nodes[child.ref] = {};
-      for (const [param_key, param_details] of Object.entries(child.node_config.getParameters())) {
-        if (param_details.default?.valueOf) {
-          continue; //TODO:76: this can get ripped out when we remove ValueFrom support
-        }
-
-        const global_value = global_parameter_map[param_key];
-        const upstream_value = upstream_declaration.getParameters()[param_key];
-        const interpolated_upstream_value = this.interpolateParamValue((upstream_value.default as ParameterValueV2), node);
-
-        const param_value = this.mergeParam((param_details.default as ParameterValueV2), interpolated_upstream_value, global_value);
-
-        if (this.isNullParamValue(param_value) && param_details.required) {
-          throw new Error(`Required parameter doesn't have a value`);
-        }
-
-        completed_nodes[node.ref][param_key] = param_value;
-      }
-
-      console.log(`recursively diving into ${child.ref} to assign parameters`);
-      // recursively pass the child's parameters down to it's own children, thereby doing a depth-first traversal of the tree
-      completed_nodes = this.passParamValuesToChildren(child, global_parameter_map, completed_nodes);
-    }
-
-    return completed_nodes;
-  }
-
-  private getTopLevelServiceNodes(graph: DependencyGraph): ServiceNode[] {
-    const top_level_nodes = [];
-    for (const node of graph.nodes) {
-      if (!(node instanceof ServiceNode)) {
-        continue;
-      }
-      if (graph.getDependentNodes(node).filter(n => n instanceof ServiceNode).length === 0) {
-        top_level_nodes.push(node);
-      }
-    }
-    return top_level_nodes;
-  }
-
   /*
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
@@ -165,11 +107,10 @@ export default abstract class DependencyManager {
     const global_parameter_map: { [key: string]: any } = {};
     const environment_context = this.mapToDataContext(this.graph);
     const all_parameters = this.mapToParameterSet(this.graph, global_parameter_map);
-
     const interpolated_parameters = this.interpolateAllParameters(all_parameters, environment_context);
-
-    console.log(all_parameters, JSON.stringify(all_parameters));
-    console.log(interpolated_parameters, JSON.stringify(interpolated_parameters));
+    console.log('environment_context: ', JSON.stringify(environment_context));
+    console.log('all_parameters: ', JSON.stringify(all_parameters));
+    console.log('interpolated_parameters: ', JSON.stringify(interpolated_parameters));
 
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
@@ -256,18 +197,18 @@ export default abstract class DependencyManager {
           const key = prefixed_key.replace(prefix, '');
           node.parameters[key] = value;
 
-          if (interpolated_parameters[node.ref][key]) {
-            if (value != interpolated_parameters[node.ref][key]) {
+          if (interpolated_parameters[node.namespace_ref][key]) {
+            if (value != interpolated_parameters[node.namespace_ref][key]) {
               console.log(`new value for param: ${value}`);
             }
-            node.parameters[key] = interpolated_parameters[node.ref][key] as ParameterValue;
+            node.parameters[key] = interpolated_parameters[node.namespace_ref][key] as ParameterValue;
           }
         }
       }
     }
   }
 
-  private interpolateAllParameters(all_parameters: { [key: string]: { [key: string]: ParameterValueV2 } }, environment_context: { [key: string]: any }): { [key: string]: { [key: string]: ParameterValueV2 } } { //TODO:76:type environment_context
+  private interpolateAllParameters(all_parameters: { [key: string]: { [key: string]: ParameterValueV2 } }, environment_context: { [key: string]: InterpolationContext }): { [key: string]: { [key: string]: ParameterValueV2 } } { //TODO:76:type environment_context
 
     // this illustrates the drawback with not using the structure of the graph to traverse this more efficiently
     let change_detected = true;
@@ -278,14 +219,16 @@ export default abstract class DependencyManager {
 
       change_detected = false;
       for (const [node_ref, parameters] of Object.entries(all_parameters)) {
+
+        interpolated_parameters[node_ref] = {};
         for (const [param_key, param_value] of Object.entries(parameters)) {
           const interpolated_value = this.interpolateParamValue(param_value, environment_context);
 
           // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
           // going to want to do another pass and set the updated value in the environment_context
-          if (environment_context[node_ref].parameters.value !== interpolated_value) {
+          if (environment_context[node_ref].parameters[param_key] !== interpolated_value) {
             change_detected = true;
-            environment_context[node_ref].parameters.value = interpolated_value;
+            environment_context[node_ref].parameters[param_key] = interpolated_value;
           }
           interpolated_parameters[node_ref][param_key] = interpolated_value;
         }
@@ -296,50 +239,69 @@ export default abstract class DependencyManager {
     if (passes >= MAX_DEPTH) {
       throw new Error('Stack Overflow Error'); //TODO:76: specify error
     }
-    console.log(`interpolated in ${passes}`);
+    console.log(`interpolated in ${passes} passes`);
 
     return interpolated_parameters;
   }
 
+  private build_friendly_name_map(): { [key: string]: { [key: string]: string } } {
+    const friendly_name_map: { [key: string]: { [key: string]: string } } = {};
+    for (const node of this.graph.nodes) {
+      friendly_name_map[node.ref] = {};
+      if (!(node instanceof ServiceNode)) {
+        continue;
+      }
+      for (const friendly_name of Object.keys(node.node_config.getDependencies())) {
+        const top_level_node = this.graph.nodes
+          .filter(n => (n instanceof ServiceNode))
+          .map(n => n as ServiceNode)
+          .find(n => n.node_config.getName() === friendly_name);
+
+        if (top_level_node) {
+          friendly_name_map[node.ref][friendly_name] = top_level_node.namespace_ref;
+        }
+      }
+    }
+    return friendly_name_map;
+  }
+
   private mapToParameterSet(graph: DependencyGraph, global_parameter_map: { [key: string]: string }): { [key: string]: { [key: string]: ParameterValueV2 } } {
 
+    const friendly_name_map = this.build_friendly_name_map();
+    console.log('friendly_name_map', friendly_name_map)
     const parameter_set: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
     for (const node of graph.nodes) {
-      console.log(node.ref);
-
-      if (parameter_set[node.ref]) {
-        console.log('Skipping node, we already covered it');
-        continue;
-      }
+      console.log('working on ' + node.namespace_ref);
       if (!(node instanceof ServiceNode)) {
         console.log('Node is not a ServiceNode, skipping');
-        parameter_set[node.ref] = {};
+        parameter_set[node.namespace_ref] = {};
         continue;
       }
-
-      parameter_set[node.ref] = {};
+      parameter_set[node.namespace_ref] = {};
       for (const [param_key, param_details] of Object.entries(node.node_config.getParameters())) {
-        if (param_details.default?.valueOf) {
+        console.log('working on ' + param_key);
+        if (typeof param_details.default === 'object' && param_details.default !== null) {
+          console.log('this is a valueFrom param, skipping...');
           continue; //TODO:76: this can get ripped out when we remove ValueFrom support
         }
 
         const global_value = global_parameter_map[param_key];
-        const upstream_value = null; // this.namespaceParameter(upstream_node, upstream_node.normalized_ref); namespace it to the node that declared it!
-        const param_default = this.namespaceParameter(node.normalized_ref, (param_details.default as ParameterValueV2));
-        const param_value = this.mergeParam(param_default, upstream_value, global_value);
+        const upstream_value = null; // this.namespaceParameter(upstream_node.namespace_ref, upstream_node.dependencies[node.ref].parameters[param_key]); namespace it to the node that declared it!
+        const param_default = this.namespaceParameter(node.namespace_ref, (param_details.default as ParameterValueV2), friendly_name_map[node.ref]);
+        const param_value = this.mergeParam(upstream_value, global_value, param_default);
 
         if (this.isNullParamValue(param_value) && param_details.required) {
           throw new Error(`Required parameter doesn't have a value`);
         }
 
-        parameter_set[node.ref][param_key] = param_value;
+        parameter_set[node.namespace_ref][param_key] = param_value;
       }
     }
 
     return parameter_set;
   }
 
-  private mapToDataContext(graph: DependencyGraph): { [key: string]: any } {
+  private mapToDataContext(graph: DependencyGraph): { [key: string]: InterpolationContext } {
 
     const environment_context: { [key: string]: any } = {};
 
@@ -349,35 +311,29 @@ export default abstract class DependencyManager {
       }
 
       const service_context = this.map(node.service_config);
-      environment_context[node.normalized_ref] = service_context;
+      environment_context[node.namespace_ref] = service_context;
     }
 
     return environment_context;
   }
 
-
-  private map(node: ServiceConfig) {
+  private map(node: ServiceConfig): InterpolationContext {
     return {
       parameters: Object.entries(node.getParameters()).reduce((result: { [key: string]: any }, [k, v]) => {
         result[k] = v.default;
         return result;
       }, {}),
-      interfaces: {
-        main: {
-          host: 'test',
-        },
-      },
-      dependencies: Object.entries(node.getDependencies()).reduce((result: { [key: string]: any }, [k, v]) => {
-        result[k] = this.map(v);
+      interfaces: Object.entries(node.getInterfaces()).reduce((result: { [key: string]: any }, [k, v]) => {
+        result[k] = v;
         return result;
       }, {}),
     };
   }
 
   private mergeParam(parent_value: ParameterValueV2, global_value: ParameterValueV2, default_value: ParameterValueV2) {
-    return this.isNullParamValue(parent_value) ? parent_value
-      : this.isNullParamValue(global_value) ? global_value
-        : this.isNullParamValue(default_value) ? default_value
+    return !this.isNullParamValue(parent_value) ? parent_value
+      : !this.isNullParamValue(global_value) ? global_value
+        : !this.isNullParamValue(default_value) ? default_value
           : null;
   }
 
@@ -385,21 +341,69 @@ export default abstract class DependencyManager {
     return param_value === null || param_value === undefined;
   }
 
-  private namespaceParameter(node_ref: string, param_value: ParameterValueV2): ParameterValueV2 {
+  private namespaceParameter(node_ref: string, param_value: ParameterValueV2, friendly_name_map: { [key: string]: string }) {
     if (typeof param_value !== 'string') {
       return param_value;
     }
+    if (!param_value.includes('${')) {
+      return param_value;
+    }
 
-    const dependencies_search_string = new RegExp('.*\\$\\{.* dependencies\\..*\\}');
-    param_value.replace(dependencies_search_string, `${node_ref}.dependencies`);
+    let namespaced_value = param_value;
 
-    const interfaces_search_string = new RegExp('.*\\$\\{.* interfaces\\..*\\}');
-    param_value.replace(interfaces_search_string, `${node_ref}.interfaces`);
+    const interfaces_search_string = /\$\{\s*interfaces/g;
+    namespaced_value = namespaced_value.replace(interfaces_search_string, `$\{ ${node_ref}.interfaces`);
 
-    const parameters_search_string = new RegExp('.*\\$\\{.* parameters\\..*\\}');
-    param_value.replace(parameters_search_string, `${node_ref}.parameters`);
+    const parameters_search_string = /\$\{\s*parameters/g;
+    namespaced_value = namespaced_value.replace(parameters_search_string, `$\{ ${node_ref}.parameters`);
 
-    return param_value;
+    return this.namespaceDependency(node_ref, param_value, friendly_name_map);
+  }
+
+  private namespaceDependency(node_ref: string, param_value: string, friendly_name_map: { [key: string]: string }): string {
+
+    const bracket_notation_matcher = /\$\{\s*dependencies\[(.*?)\]\./g;
+    const dot_notation_matcher = /\$\{\s*dependencies\.(.*?)\./g;
+
+    console.log('namespacing...');
+    console.log(param_value);
+    let namespaced_dependency = param_value;
+    namespaced_dependency = namespaced_dependency.replace(bracket_notation_matcher, (m) => {
+      console.log(m);
+      const dep = this.extract_friendly_name_from_brackets(m);
+      console.log(dep);
+      return '${ ' + friendly_name_map[dep] + '.';
+    });
+    console.log(namespaced_dependency);
+
+    namespaced_dependency = namespaced_dependency.replace(dot_notation_matcher, (m) => {
+      console.log(m);
+      const dep = this.extract_friendly_name_from_dot_notation(m);
+      console.log(dep);
+      return '${ ' + friendly_name_map[dep] + '.';
+    });
+
+    return namespaced_dependency;
+  }
+
+  private extract_friendly_name_from_brackets(match: string) {
+    const matches = match.match(/dependencies\['([\s\S]*?)'\]/);
+    if (matches && matches.length > 1) {
+      console.log(matches[1]);
+      return matches[1];
+    } else {
+      throw new Error('Bad format for dependency:' + match);
+    }
+  }
+
+  private extract_friendly_name_from_dot_notation(match: string) {
+    const matches = match.match(/dependencies\.([\s\S]*?)\./);
+    if (matches && matches.length > 1) {
+      console.log(matches[1]);
+      return matches[1];
+    } else {
+      throw new Error('Bad format for dependency:' + match);
+    }
   }
 
   private interpolateParamValue(param_value: ParameterValueV2, environment_context: { [key: string]: any }): ParameterValueV2 {
