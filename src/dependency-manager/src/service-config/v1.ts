@@ -336,10 +336,15 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   author?: string;
 
-  @Transform(value => (value instanceof Object
-    ? plainToClass(ServiceConfigV1, value)
-    : (value ? plainToClass(ServiceConfigV1, { command: value }) : value)),
-    { toClassOnly: true })
+  @Transform(value => {
+    if (value instanceof Array) {
+      return plainToClass(ServiceConfigV1, { command: value });
+    } if (typeof value === 'string') {
+      return plainToClass(ServiceConfigV1, { command: [value] });
+    } else {
+      return plainToClass(ServiceConfigV1, value);
+    }
+  }, { toClassOnly: true })
   @IsOptional({ always: true })
   @IsInstance(ServiceConfigV1, { always: true })
   @IsEmpty({ groups: ['debug'] })

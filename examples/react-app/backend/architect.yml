@@ -36,7 +36,10 @@ parameters:
       value: $POSTGRES_DB
 debug:
   dockerfile: Dockerfile.dev
-  command: npm run start:dev
+  command:
+    - npm
+    - run
+    - start:dev
   volumes:
     src:
       mount_path: /usr/src/app/src

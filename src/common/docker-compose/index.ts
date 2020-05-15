@@ -62,7 +62,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (node instanceof ServiceNode) {
       compose.services[node.normalized_ref].command = node.node_config.getCommand();
-      if (node.node_config.getEntrypoint()) {
+      if (node.node_config.getEntrypoint().length) {
         compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
       }
 
