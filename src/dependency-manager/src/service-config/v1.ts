@@ -341,7 +341,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (value instanceof Array) {
       return plainToClass(ServiceConfigV1, { command: value });
     } if (typeof value === 'string') {
-      console.log(shell_parse(value))
       return plainToClass(ServiceConfigV1, { command: shell_parse(value) });
     } else {
       return plainToClass(ServiceConfigV1, value);

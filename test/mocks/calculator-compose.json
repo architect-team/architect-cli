@@ -26,7 +26,9 @@
         "args": []
       },
       "command": [
-        "npm run debug"
+        "npm",
+        "run",
+        "debug"
       ],
       "volumes": [
         "/test/calculator/division-service/src:/usr/src/app/src"
@@ -60,7 +62,9 @@
         "args": []
       },
       "command": [
-        "sh -c 'go run main.go'"
+        "sh",
+        "-c",
+        "go run main.go"
       ],
       "dns_search": [
         "testdomain.com"
@@ -95,7 +99,9 @@
         "args": []
       },
       "command": [
-        "npm run dev"
+        "npm",
+        "run",
+        "dev"
       ],
       "volumes": [
         "/test/calculator/addition-service/rest/src:/usr/src/app/src"
