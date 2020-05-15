@@ -19,6 +19,10 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       .replace(/\//g, '.');
   }
 
+  get namespace_ref() {
+    return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
+  }
+
   abstract get ref(): string;
 
   get parameters(): { [key: string]: ParameterValue } {
