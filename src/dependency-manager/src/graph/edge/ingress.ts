@@ -1,15 +1,12 @@
-import { Transform } from 'class-transformer';
 import DependencyEdge from '.';
+import { ServiceInterfaceSpec } from '../../service-config/base';
 
 export default class IngressEdge extends DependencyEdge {
   __type = 'ingress';
-  @Transform(value => (value ? value.toLowerCase() : value))
-  subdomain!: string;
+  interfaces: { [s: string]: ServiceInterfaceSpec };
 
-  constructor(from: string, to: string, subdomain: string) {
+  constructor(from: string, to: string, interfaces: { [s: string]: ServiceInterfaceSpec }) {
     super(from, to);
-    if (subdomain) {
-      this.subdomain = subdomain.toLowerCase();
-    }
+    this.interfaces = interfaces;
   }
 }

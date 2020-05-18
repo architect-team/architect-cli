@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
@@ -36,12 +36,17 @@ export default class LocalDependencyManager extends DependencyManager {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
       if (svc_node instanceof ServiceNode) {
         const interfaces = svc_node.node_config.getInterfaces();
-        const external_interfaces = Object.values(interfaces).filter(i => i.subdomain);
+        const external_interfaces: { [s: string]: ServiceInterfaceSpec } = {};
+        for (const [name, details] of Object.entries(interfaces)) {
+          if (details.subdomain) {
+            external_interfaces[name] = details;
+          }
+        }
         const interface_count = Object.keys(interfaces).length;
-        if (interface_count === 1 && external_interfaces.length && external_interfaces[0].subdomain) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
+        if (interface_count === 1 && Object.keys(external_interfaces).length && Object.values(external_interfaces)[0].subdomain) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
-          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces[0].subdomain));
+          dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces));
         } else if (interface_count > 1 && external_interfaces.length > 1) {
           throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`);
         }

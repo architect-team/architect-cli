@@ -145,7 +145,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     if (edge instanceof IngressEdge) {
       const service_to = compose.services[node_to.normalized_ref];
       service_to.environment = service_to.environment || {};
-      service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
+      service_to.environment.VIRTUAL_HOST = `${edge.interfaces[0].subdomain}.localhost`;
       service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
