@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
@@ -215,7 +216,7 @@ export default class Deploy extends Command {
     }
 
     const all_answers = { ...args, ...flags, ...answers, ...env_answers };
-    const config_payload = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+    const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
 
     cli.action.start(chalk.blue('Creating deployment'));
     const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
