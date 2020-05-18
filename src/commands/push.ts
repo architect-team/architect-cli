@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import { cli } from 'cli-ux';
 import path from 'path';
 import untildify from 'untildify';
@@ -76,7 +77,7 @@ export default class Push extends Command {
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config: node.service_config,
+          config: classToPlain(node.service_config),
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);
