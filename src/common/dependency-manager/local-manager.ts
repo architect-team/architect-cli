@@ -43,7 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
           }
         }
         const interface_count = Object.keys(interfaces).length;
-        if (interface_count === 1 && Object.keys(external_interfaces).length && Object.values(external_interfaces)[0].subdomain) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
+        if (interface_count === 1 && Object.keys(external_interfaces).length) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref, external_interfaces));
