@@ -4,7 +4,6 @@ import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
-import yaml from 'js-yaml';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
@@ -14,6 +13,7 @@ import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { OfflineUtils } from '../common/utils/offline';
 import { ValidationClient, ValidationResult } from '../common/utils/validation';
+import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 import DependencyGraph from '../dependency-manager/src/graph';
 
 
@@ -215,13 +215,7 @@ export default class Deploy extends Command {
     }
 
     const all_answers = { ...args, ...flags, ...answers, ...env_answers };
-    let config_payload;
-    if (env_config_path.endsWith('.yml') || env_config_path.endsWith('.yaml')) {
-      const file_contents = fs.readFileSync(env_config_path, 'utf-8');
-      config_payload = yaml.safeLoad(file_contents);
-    } else {
-      config_payload = fs.readJSONSync(env_config_path) as object;
-    }
+    const config_payload = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
 
     cli.action.start(chalk.blue('Creating deployment'));
     const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
