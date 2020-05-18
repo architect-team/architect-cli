@@ -4,6 +4,7 @@ import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import yaml from 'js-yaml';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
@@ -214,10 +215,16 @@ export default class Deploy extends Command {
     }
 
     const all_answers = { ...args, ...flags, ...answers, ...env_answers };
-    const configPayload = fs.readJSONSync(env_config_path) as object;
+    let config_payload;
+    if (env_config_path.endsWith('.yml') || env_config_path.endsWith('.yaml')) {
+      const file_contents = fs.readFileSync(env_config_path, 'utf-8');
+      config_payload = yaml.safeLoad(file_contents);
+    } else {
+      config_payload = fs.readJSONSync(env_config_path) as object;
+    }
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: configPayload });
+    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
