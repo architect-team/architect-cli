@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import path from 'path';
@@ -125,7 +126,7 @@ export default class ServiceRegister extends Command {
           tag: flags.tag,
           digest: digest,
           config: {
-            ...node.service_config,
+            ...classToPlain(node.service_config),
             image: image_without_tag,
           },
         };
