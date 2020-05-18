@@ -5,8 +5,8 @@ export default class IngressEdge extends DependencyEdge {
   __type = 'ingress';
   to_interfaces: { [s: string]: ServiceInterfaceSpec };
 
-  constructor(from: string, to: string, interfaces: { [s: string]: ServiceInterfaceSpec }) {
+  constructor(from: string, to: string, to_interfaces: { [s: string]: ServiceInterfaceSpec }) {
     super(from, to);
-    this.to_interfaces = interfaces;
+    this.to_interfaces = to_interfaces;
   }
 }
