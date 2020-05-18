@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
@@ -13,6 +14,7 @@ import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { OfflineUtils } from '../common/utils/offline';
 import { ValidationClient, ValidationResult } from '../common/utils/validation';
+import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 import DependencyGraph from '../dependency-manager/src/graph';
 
 
@@ -214,10 +216,10 @@ export default class Deploy extends Command {
     }
 
     const all_answers = { ...args, ...flags, ...answers, ...env_answers };
-    const configPayload = fs.readJSONSync(env_config_path) as object;
+    const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: configPayload });
+    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
