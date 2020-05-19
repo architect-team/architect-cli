@@ -73,11 +73,4 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
     return this._parameters;
   }
-
-  /**
-   * @override
-   */
-  get protocol() {
-    return this.node_config.getApiSpec().type === 'grpc' ? '' : 'http://';
-  }
 }

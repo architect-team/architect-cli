@@ -8,7 +8,7 @@ import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceApiSpec, ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -189,16 +189,6 @@ class LivenessProbeV1 extends BaseSpec {
   port?: number;
 }
 
-class ApiSpecV1 extends BaseSpec {
-  @IsString({ always: true })
-  @IsIn(['rest', 'grpc'], { always: true })
-  type = 'rest';
-
-  @IsOptional({ always: true })
-  @IsString({ each: true })
-  definitions?: string[];
-}
-
 class InterfaceSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -359,11 +349,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   datastores?: Dictionary<ServiceDatastoreV1>;
 
-  @Type(() => ApiSpecV1)
-  @IsOptional({ always: true })
-  @IsInstance(ApiSpecV1, { always: true })
-  api?: ApiSpecV1;
-
   @Transform(value => (transformInterfaces(value)))
   @IsOptional({ always: true })
   interfaces?: Dictionary<InterfaceSpecV1>;
@@ -473,10 +458,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getInterfaces(): Dictionary<ServiceInterfaceSpec> {
     return this.interfaces || {};
-  }
-
-  getApiSpec(): ServiceApiSpec {
-    return (this.api || { type: 'rest' }) as ServiceApiSpec;
   }
 
   getLivenessProbe(): ServiceLivenessProbe | undefined {
