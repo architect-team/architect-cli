@@ -83,11 +83,6 @@ export interface VolumeSpec {
   readonly?: boolean;
 }
 
-export interface ServiceApiSpec {
-  type: string;
-  definitions?: string[];
-}
-
 export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
   abstract getPath(): string | undefined;
@@ -110,7 +105,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getDependencies(): { [s: string]: ServiceConfig };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
-  abstract getApiSpec(): ServiceApiSpec;
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getNotifications(): ServiceEventNotifications;
   abstract getSubscriptions(): ServiceEventSubscriptions;

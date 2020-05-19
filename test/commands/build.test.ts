@@ -34,17 +34,13 @@ const testBuildArgs = (service_path: string, service_config: ServiceConfig, buil
         i++;
         break;
       case '--label':
-        expect(build_args[i + 1]).to.satisfy((val: string) => val.startsWith('architect.json=') || val.startsWith('api_definitions='));
+        expect(build_args[i + 1]).to.satisfy((val: string) => val.startsWith('architect.json='));
         if (build_args[i + 1].startsWith('architect.json')) {
           const val = JSON.parse(build_args[i + 1].slice('architect.json='.length));
           expect(service_config.getName()).to.equal(val.name);
         } else {
           const val = JSON.parse(build_args[i + 1].slice('api_definitions='.length));
-          if (service_config.getApiSpec() && service_config.getApiSpec().type.toLowerCase() === 'grpc') {
-            // TODO: test gRPC api_definitions
-          } else {
-            expect(Object.keys(val).length).to.equal(0);
-          }
+          expect(Object.keys(val).length).to.equal(0);
         }
 
         i++;

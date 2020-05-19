@@ -11,10 +11,6 @@ describe('service config builder', function () {
         "dependencies": {},
         "parameters": {},
         "datastores": {},
-        "api": {
-          "type": "grpc",
-          "definitions": []
-        },
         "subscriptions": {},
         "keywords": [],
       };

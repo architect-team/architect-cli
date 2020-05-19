@@ -1,7 +1,4 @@
 import execa, { Options } from 'execa';
-import fs from 'fs-extra';
-import path from 'path';
-import { ServiceConfig } from '../../dependency-manager/src';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerNotInstalledError from '../errors/docker-not-installed';
 
@@ -23,19 +20,6 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
 };
 
-export const getServiceApiDefinitionContents = (service_path: string, service_config: ServiceConfig) => {
-  const definitionsContents: { [filename: string]: string } = {};
-
-  const spec = service_config.getApiSpec();
-  if (spec.definitions) {
-    for (const filepath of spec.definitions) {
-      definitionsContents[filepath] = fs.readFileSync(path.join(service_path, filepath)).toString('utf-8');
-    }
-  }
-
-  return definitionsContents;
-};
-
 export const buildImage = async (node: LocalServiceNode, registry_host: string, tag_name = 'latest') => {
   const config = node.node_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
@@ -45,7 +29,6 @@ export const buildImage = async (node: LocalServiceNode, registry_host: string, 
     '--build-arg', `SERVICE_LANGUAGE=${config.getLanguage()}`,
     '-t', image_tag,
     '--label', `architect.json=${JSON.stringify(config)}`,
-    '--label', `api_definitions=${JSON.stringify(getServiceApiDefinitionContents(node.service_path, config))}`,
     node.service_path,
   ]);
   return image_tag;

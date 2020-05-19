@@ -194,9 +194,6 @@ describe('validation (v1 spec)', () => {
           "architect/dep2": "latest",
         },
         "language": "node",
-        "api": {
-          "type": "rest"
-        },
         "interfaces": {
           "main": 8080
         },
