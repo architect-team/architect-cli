@@ -27,6 +27,14 @@ USAGE
 ...
 ```
 <!-- usagestop -->
+
+_Note: the CLI uses the [keytar](http://atom.github.io/node-keytar/) library to store
+your Architect Cloud credentials securely on your machine. If your OS doesn't support
+keytar (like many linux systems) you will see an install error in the logs during NPM
+install. Keytar is an optional dependency and the install will complete successfully
+despite this error, but [you may hide it](https://github.com/nodejs/node-gyp/issues/1236)
+by running npm install with the `--unsafe` flag._
+
 # Commands
 <!-- commands -->
 * [`architect build`](#architect-build)
