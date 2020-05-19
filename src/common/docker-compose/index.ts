@@ -1,6 +1,6 @@
 import pLimit from 'p-limit';
 import path from 'path';
-import { DatastoreNode, ServiceNode } from '../../dependency-manager/src';
+import { DatastoreNode, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
@@ -144,8 +144,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (edge instanceof IngressEdge) {
       const service_to = compose.services[node_to.normalized_ref];
+      const to_interface = Object.values(node_to.interfaces).find((i: ServiceInterfaceSpec) => i.subdomain);
       service_to.environment = service_to.environment || {};
-      service_to.environment.VIRTUAL_HOST = `${edge.subdomain}.localhost`;
+      service_to.environment.VIRTUAL_HOST = `${to_interface.subdomain}.localhost`;
       service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
