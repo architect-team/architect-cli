@@ -1,5 +1,4 @@
 import dotenvExpand from 'dotenv-expand';
-import Mustache from 'mustache';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
@@ -10,8 +9,8 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { InterpolationContext } from './interpolation/interpolation-context';
-import { DatastoreParameter, DependencyParameter, ParameterValue, ParameterValueV2, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ParameterValue, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { ParameterInterpolator } from './utils/parameter-interpolator';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -104,13 +103,16 @@ export default abstract class DependencyManager {
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
   async loadParameters() {
+    let all_interface_params: { [key: string]: string } = {};
+    for (const node of this.graph.nodes) {
+      const interface_env_params = this.buildInterfaceEnvParams(node);
+      all_interface_params = { ...all_interface_params, ...interface_env_params };
+    }
+
     const global_parameter_map: { [key: string]: any } = {};
-    const environment_context = this.mapToDataContext(this.graph);
-    const all_parameters = this.mapToParameterSet(this.graph, global_parameter_map);
-    const interpolated_parameters = this.interpolateAllParameters(all_parameters, environment_context);
-    console.log('environment_context: ', JSON.stringify(environment_context));
-    console.log('all_parameters: ', JSON.stringify(all_parameters));
-    console.log('interpolated_parameters: ', JSON.stringify(interpolated_parameters));
+    const environment_context = ParameterInterpolator.mapToDataContext(this.graph);
+    const all_parameters = ParameterInterpolator.mapToParameterSet(this.graph, global_parameter_map);
+    const interpolated_parameters = ParameterInterpolator.interpolateAllParameters(all_parameters, environment_context);
 
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
@@ -123,11 +125,13 @@ export default abstract class DependencyManager {
     let all_env_params: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
       const env_params_to_expand: { [key: string]: string } = {};
-      const interface_env_params = this.buildInterfaceEnvParams(node);
 
+      // TODO:76: we can kill this section once we remove support for valueFroms
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
-          if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
+          if (interpolated_parameters[node.namespace_ref] && !ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][param_name])) {
+            env_params_to_expand[this.scopeEnv(node, param_name)] = interpolated_parameters[node.namespace_ref][param_name]!.toString();
+          } else if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
@@ -135,6 +139,7 @@ export default abstract class DependencyManager {
         }
       }
 
+      // TODO:76: we can kill this section once we remove support for valueFroms
       if (node instanceof ServiceNode) {
         const node_dependency_names = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
 
@@ -184,9 +189,11 @@ export default abstract class DependencyManager {
           }
         }
       }
-      all_env_params = { ...all_env_params, ...interface_env_params, ...env_params_to_expand };
+      all_env_params = { ...all_env_params, ...all_interface_params, ...env_params_to_expand };
     }
 
+    //TODO:76: we can get rid of this entire block when we remove valueFrom
+    console.log('all_env_params', JSON.stringify(all_env_params));
     // ignoreProcessEnv is important otherwise it will be stored globally
     const dotenv_config = { parsed: all_env_params, ignoreProcessEnv: true };
     const expanded_params = dotenvExpand(dotenv_config).parsed || {};
@@ -197,227 +204,12 @@ export default abstract class DependencyManager {
           const key = prefixed_key.replace(prefix, '');
           node.parameters[key] = value;
 
-          if (interpolated_parameters[node.namespace_ref][key]) {
-            if (value != interpolated_parameters[node.namespace_ref][key]) {
-              console.log(`new value for param: ${value}`);
-            }
+          if (!ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][key])) {
             node.parameters[key] = interpolated_parameters[node.namespace_ref][key] as ParameterValue;
           }
         }
       }
     }
-  }
-
-  private interpolateAllParameters(all_parameters: { [key: string]: { [key: string]: ParameterValueV2 } }, environment_context: { [key: string]: InterpolationContext }): { [key: string]: { [key: string]: ParameterValueV2 } } { //TODO:76:type environment_context
-
-    // this illustrates the drawback with not using the structure of the graph to traverse this more efficiently
-    let change_detected = true;
-    let passes = 0;
-    const MAX_DEPTH = 100; //TODO:76
-    const interpolated_parameters: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
-    while (change_detected && passes < MAX_DEPTH) {
-
-      change_detected = false;
-      for (const [node_ref, parameters] of Object.entries(all_parameters)) {
-
-        interpolated_parameters[node_ref] = {};
-        for (const [param_key, param_value] of Object.entries(parameters)) {
-          const interpolated_value = this.interpolateParamValue(param_value, environment_context);
-
-          // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
-          // going to want to do another pass and set the updated value in the environment_context
-          if (environment_context[node_ref].parameters[param_key] !== interpolated_value) {
-            change_detected = true;
-            environment_context[node_ref].parameters[param_key] = interpolated_value;
-          }
-          interpolated_parameters[node_ref][param_key] = interpolated_value;
-        }
-      }
-      passes++;
-    }
-
-    if (passes >= MAX_DEPTH) {
-      throw new Error('Stack Overflow Error'); //TODO:76: specify error
-    }
-    console.log(`interpolated in ${passes} passes`);
-
-    return interpolated_parameters;
-  }
-
-  private build_friendly_name_map(): { [key: string]: { [key: string]: string } } {
-    const friendly_name_map: { [key: string]: { [key: string]: string } } = {};
-    for (const node of this.graph.nodes) {
-      friendly_name_map[node.ref] = {};
-      if (!(node instanceof ServiceNode)) {
-        continue;
-      }
-      for (const friendly_name of Object.keys(node.node_config.getDependencies())) {
-        const top_level_node = this.graph.nodes
-          .filter(n => (n instanceof ServiceNode))
-          .map(n => n as ServiceNode)
-          .find(n => n.node_config.getName() === friendly_name);
-
-        if (top_level_node) {
-          friendly_name_map[node.ref][friendly_name] = top_level_node.namespace_ref;
-        }
-      }
-    }
-    return friendly_name_map;
-  }
-
-  private mapToParameterSet(graph: DependencyGraph, global_parameter_map: { [key: string]: string }): { [key: string]: { [key: string]: ParameterValueV2 } } {
-
-    const friendly_name_map = this.build_friendly_name_map();
-    console.log('friendly_name_map', friendly_name_map)
-    const parameter_set: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
-    for (const node of graph.nodes) {
-      console.log('working on ' + node.namespace_ref);
-      if (!(node instanceof ServiceNode)) {
-        console.log('Node is not a ServiceNode, skipping');
-        parameter_set[node.namespace_ref] = {};
-        continue;
-      }
-      parameter_set[node.namespace_ref] = {};
-      for (const [param_key, param_details] of Object.entries(node.node_config.getParameters())) {
-        console.log('working on ' + param_key);
-        if (typeof param_details.default === 'object' && param_details.default !== null) {
-          console.log('this is a valueFrom param, skipping...');
-          continue; //TODO:76: this can get ripped out when we remove ValueFrom support
-        }
-
-        const global_value = global_parameter_map[param_key];
-        const upstream_value = null; // this.namespaceParameter(upstream_node.namespace_ref, upstream_node.dependencies[node.ref].parameters[param_key]); namespace it to the node that declared it!
-        const param_default = this.namespaceParameter(node.namespace_ref, (param_details.default as ParameterValueV2), friendly_name_map[node.ref]);
-        const param_value = this.mergeParam(upstream_value, global_value, param_default);
-
-        if (this.isNullParamValue(param_value) && param_details.required) {
-          throw new Error(`Required parameter doesn't have a value`);
-        }
-
-        parameter_set[node.namespace_ref][param_key] = param_value;
-      }
-    }
-
-    return parameter_set;
-  }
-
-  private mapToDataContext(graph: DependencyGraph): { [key: string]: InterpolationContext } {
-
-    const environment_context: { [key: string]: any } = {};
-
-    for (const node of graph.nodes) {
-      if (!(node instanceof ServiceNode)) {
-        continue;
-      }
-
-      const service_context = this.map(node.service_config);
-      environment_context[node.namespace_ref] = service_context;
-    }
-
-    return environment_context;
-  }
-
-  private map(node: ServiceConfig): InterpolationContext {
-    return {
-      parameters: Object.entries(node.getParameters()).reduce((result: { [key: string]: any }, [k, v]) => {
-        result[k] = v.default;
-        return result;
-      }, {}),
-      interfaces: Object.entries(node.getInterfaces()).reduce((result: { [key: string]: any }, [k, v]) => {
-        result[k] = v;
-        return result;
-      }, {}),
-    };
-  }
-
-  private mergeParam(parent_value: ParameterValueV2, global_value: ParameterValueV2, default_value: ParameterValueV2) {
-    return !this.isNullParamValue(parent_value) ? parent_value
-      : !this.isNullParamValue(global_value) ? global_value
-        : !this.isNullParamValue(default_value) ? default_value
-          : null;
-  }
-
-  private isNullParamValue(param_value: ParameterValueV2) {
-    return param_value === null || param_value === undefined;
-  }
-
-  private namespaceParameter(node_ref: string, param_value: ParameterValueV2, friendly_name_map: { [key: string]: string }) {
-    if (typeof param_value !== 'string') {
-      return param_value;
-    }
-    if (!param_value.includes('${')) {
-      return param_value;
-    }
-
-    let namespaced_value = param_value;
-
-    const interfaces_search_string = /\$\{\s*interfaces/g;
-    namespaced_value = namespaced_value.replace(interfaces_search_string, `$\{ ${node_ref}.interfaces`);
-
-    const parameters_search_string = /\$\{\s*parameters/g;
-    namespaced_value = namespaced_value.replace(parameters_search_string, `$\{ ${node_ref}.parameters`);
-
-    return this.namespaceDependency(node_ref, param_value, friendly_name_map);
-  }
-
-  private namespaceDependency(node_ref: string, param_value: string, friendly_name_map: { [key: string]: string }): string {
-
-    const bracket_notation_matcher = /\$\{\s*dependencies\[(.*?)\]\./g;
-    const dot_notation_matcher = /\$\{\s*dependencies\.(.*?)\./g;
-
-    console.log('namespacing...');
-    console.log(param_value);
-    let namespaced_dependency = param_value;
-    namespaced_dependency = namespaced_dependency.replace(bracket_notation_matcher, (m) => {
-      console.log(m);
-      const dep = this.extract_friendly_name_from_brackets(m);
-      console.log(dep);
-      return '${ ' + friendly_name_map[dep] + '.';
-    });
-    console.log(namespaced_dependency);
-
-    namespaced_dependency = namespaced_dependency.replace(dot_notation_matcher, (m) => {
-      console.log(m);
-      const dep = this.extract_friendly_name_from_dot_notation(m);
-      console.log(dep);
-      return '${ ' + friendly_name_map[dep] + '.';
-    });
-
-    return namespaced_dependency;
-  }
-
-  private extract_friendly_name_from_brackets(match: string) {
-    const matches = match.match(/dependencies\['([\s\S]*?)'\]/);
-    if (matches && matches.length > 1) {
-      console.log(matches[1]);
-      return matches[1];
-    } else {
-      throw new Error('Bad format for dependency:' + match);
-    }
-  }
-
-  private extract_friendly_name_from_dot_notation(match: string) {
-    const matches = match.match(/dependencies\.([\s\S]*?)\./);
-    if (matches && matches.length > 1) {
-      console.log(matches[1]);
-      return matches[1];
-    } else {
-      throw new Error('Bad format for dependency:' + match);
-    }
-  }
-
-  private interpolateParamValue(param_value: ParameterValueV2, environment_context: { [key: string]: any }): ParameterValueV2 {
-    if (typeof param_value !== 'string') {
-      return param_value;
-    }
-    if (!param_value.includes('${')) {
-      return param_value;
-    }
-
-    console.log(`interpolating: ${param_value}`);
-
-    Mustache.tags = ['${', '}'];
-    return Mustache.render(param_value, environment_context);
   }
 
   private buildInterfaceEnvParams(node: DependencyNode) {
@@ -452,8 +244,10 @@ export default abstract class DependencyManager {
       const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
       const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
 
+
       const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
       interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = external_host;
+
       interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = internal_host;
       interface_params[this.scopeEnv(node, `${prefix}HOST`)] = host;
 
@@ -466,6 +260,26 @@ export default abstract class DependencyManager {
 
       interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = external_url;
       interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = internal_url;
+
+      //TODO:76: we should break this process out before loadParams() at all
+      node.interfaces[interface_name].host = host;
+      node.interfaces[interface_name].port = port;
+      node.interfaces[interface_name].protocol = external_host ? external_protocol : internal_protocol;
+      node.interfaces[interface_name].url = external_host ? external_url : internal_url;
+
+      node.interfaces[interface_name].external = {
+        host: external_host,
+        port: external_port,
+        url: external_url,
+        protocol: external_protocol
+      };
+
+      node.interfaces[interface_name].internal = {
+        host: internal_host,
+        port: internal_port,
+        url: internal_url,
+        protocol: internal_protocol
+      };
     }
 
     return interface_params;
