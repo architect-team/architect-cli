@@ -4,7 +4,7 @@ architect-cli
 Command-line interface for Architect.io
 
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Version](https://img.shields.io/npm/v/architect-cli.svg)](https://npmjs.org/package/architect-cli)
+[![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/architect-cli)
 [![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
 [![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
 
