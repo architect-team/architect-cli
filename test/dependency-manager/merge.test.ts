@@ -57,10 +57,6 @@ describe('service config merge', function () {
           'mount_path': '/db'
         }
       },
-      'api': {
-        'type': 'grpc',
-        'definitions': []
-      },
       'subscriptions': {},
       'keywords': [],
       'debug': './test.ts'

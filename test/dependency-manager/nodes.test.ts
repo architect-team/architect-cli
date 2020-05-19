@@ -64,7 +64,6 @@ describe('nodes', function () {
           dependencies: {},
           parameters: {},
           datastores: {},
-          api: { type: 'rest' },
           interfaces: {
             main: '8080'
           },
