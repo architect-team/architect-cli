@@ -29,11 +29,10 @@ describe('parameter-interpolation', function () {
         app: '${ parameters.APP_PORT }'
       },
       dependencies: {
-        'architect/cloud-api': '${ parameters.API_TAG }'
+        'architect/cloud-api': 'v1'
       },
       parameters: {
         APP_PORT: 8080,
-        API_TAG: 'v1',
         DB_USER: {
           value_from: {
             datastore: 'db',
@@ -117,7 +116,6 @@ describe('parameter-interpolation', function () {
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
     expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'API_TAG', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
     expect(frontend_node.interfaces.app.port).eq(8080);
-    expect(frontend_node.node_config.getDependencies()['architect/cloud-api']).eq('v1');
     expect(frontend_node.parameters['APP_PORT']).eq(8080);
     expect(frontend_node.parameters['DB_USER']).eq('root');
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
