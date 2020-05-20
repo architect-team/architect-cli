@@ -45,16 +45,10 @@ export class ParameterInterpolator {
 
   public static build_friendly_name_map(graph: DependencyGraph): { [key: string]: { [key: string]: string } } {
     const friendly_name_map: { [key: string]: { [key: string]: string } } = {};
-    for (const node of graph.nodes) {
+    for (const node of graph.getServiceNodes()) {
       friendly_name_map[node.ref] = {};
-      if (!(node instanceof ServiceNode)) {
-        continue;
-      }
       for (const friendly_name of Object.keys(node.node_config.getDependencies())) {
-        const top_level_node = graph.nodes
-          .filter(n => (n instanceof ServiceNode))
-          .map(n => n as ServiceNode)
-          .find(n => n.node_config.getName() === friendly_name);
+        const top_level_node = graph.getServiceNodes().find(n => n.node_config.getName() === friendly_name);
 
         if (top_level_node) {
           friendly_name_map[node.ref][friendly_name] = top_level_node.namespace_ref;
@@ -65,22 +59,15 @@ export class ParameterInterpolator {
   }
 
   public static mapToParameterSet(graph: DependencyGraph, global_parameter_map: { [key: string]: string }): EnvironmentParameterMap {
-
     const friendly_name_map = ParameterInterpolator.build_friendly_name_map(graph);
-    console.log('friendly_name_map', friendly_name_map)
     const parameter_set: EnvironmentParameterMap = {};
     for (const node of graph.nodes) {
-      console.log('working on ' + node.namespace_ref);
+      parameter_set[node.namespace_ref] = {};
       if (!(node instanceof ServiceNode)) {
-        console.log('Node is not a ServiceNode, skipping');
-        parameter_set[node.namespace_ref] = {};
         continue;
       }
-      parameter_set[node.namespace_ref] = {};
       for (const [param_key, param_details] of Object.entries(node.node_config.getParameters())) {
-        console.log('working on ' + param_key);
         if (typeof param_details.default === 'object' && param_details.default !== null) {
-          console.log('this is a valueFrom param, skipping...');
           continue; //TODO:76: this can get ripped out when we remove ValueFrom support
         }
 
@@ -103,11 +90,7 @@ export class ParameterInterpolator {
   public static mapToDataContext(graph: DependencyGraph): EnvironmentInterpolationContext {
     const environment_context: EnvironmentInterpolationContext = {};
 
-    for (const node of graph.nodes) {
-      if (!(node instanceof ServiceNode)) {
-        continue;
-      }
-
+    for (const node of graph.getServiceNodes()) {
       const service_context = ParameterInterpolator.map(node);
       environment_context[node.namespace_ref] = service_context;
     }
@@ -168,7 +151,6 @@ export class ParameterInterpolator {
       const dep = ParameterInterpolator.extract_friendly_name_from_brackets(m);
       return '${ ' + friendly_name_map[dep] + '.';
     });
-    console.log(namespaced_dependency);
 
     namespaced_dependency = namespaced_dependency.replace(dot_notation_matcher, (m) => {
       const dep = ParameterInterpolator.extract_friendly_name_from_dot_notation(m);
@@ -203,8 +185,6 @@ export class ParameterInterpolator {
     if (!param_value.includes('${')) {
       return param_value;
     }
-
-    console.log(`interpolating: ${param_value}`);
 
     Mustache.tags = ['${', '}'];
     return Mustache.render(param_value, environment_context);
