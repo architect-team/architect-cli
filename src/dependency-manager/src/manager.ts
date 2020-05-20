@@ -10,7 +10,7 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ParameterValue, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
-import { ParameterInterpolator } from './utils/parameter-interpolator';
+import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {

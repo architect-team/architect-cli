@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import DependencyEdge from './edge';
 import { DependencyNode } from './node';
+import { ServiceNode } from './node/service';
 
 export default abstract class DependencyGraph {
   version: string;
@@ -122,5 +123,9 @@ export default abstract class DependencyGraph {
     }
 
     return Array.from(nodes.values());
+  }
+
+  getServiceNodes(): ServiceNode[] {
+    return this.nodes.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
   }
 }

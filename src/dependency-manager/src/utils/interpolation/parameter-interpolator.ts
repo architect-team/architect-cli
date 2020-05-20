@@ -1,19 +1,20 @@
 import Mustache from 'mustache';
-import { ServiceNode } from '..';
-import DependencyGraph from '../graph';
-import { InterpolationContext } from '../interpolation/interpolation-context';
-import { ParameterValueV2 } from '../service-config/base';
+import { ServiceNode } from '../..';
+import DependencyGraph from '../../graph';
+import { InterpolationContext } from '../../interpolation/interpolation-context';
+import { ParameterValueV2 } from '../../service-config/base';
+import { EnvironmentInterpolationContext, EnvironmentParameterMap } from './interpolation-context';
 
 
 export class ParameterInterpolator {
 
-  public static interpolateAllParameters(all_parameters: { [key: string]: { [key: string]: ParameterValueV2 } }, environment_context: { [key: string]: InterpolationContext }): { [key: string]: { [key: string]: ParameterValueV2 } } { //TODO:76:type environment_context
+  public static interpolateAllParameters(all_parameters: EnvironmentParameterMap, environment_context: EnvironmentInterpolationContext): EnvironmentParameterMap { //TODO:76:type environment_context
 
     // this illustrates the drawback with not using the structure of the graph to traverse this more efficiently
     let change_detected = true;
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
-    const interpolated_parameters: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
+    const interpolated_parameters: EnvironmentParameterMap = {};
     while (change_detected && passes < MAX_DEPTH) {
 
       change_detected = false;
@@ -63,11 +64,11 @@ export class ParameterInterpolator {
     return friendly_name_map;
   }
 
-  public static mapToParameterSet(graph: DependencyGraph, global_parameter_map: { [key: string]: string }): { [key: string]: { [key: string]: ParameterValueV2 } } {
+  public static mapToParameterSet(graph: DependencyGraph, global_parameter_map: { [key: string]: string }): EnvironmentParameterMap {
 
     const friendly_name_map = ParameterInterpolator.build_friendly_name_map(graph);
     console.log('friendly_name_map', friendly_name_map)
-    const parameter_set: { [key: string]: { [key: string]: ParameterValueV2 } } = {};
+    const parameter_set: EnvironmentParameterMap = {};
     for (const node of graph.nodes) {
       console.log('working on ' + node.namespace_ref);
       if (!(node instanceof ServiceNode)) {
@@ -99,8 +100,8 @@ export class ParameterInterpolator {
     return parameter_set;
   }
 
-  public static mapToDataContext(graph: DependencyGraph): { [key: string]: InterpolationContext } {
-    const environment_context: { [key: string]: any } = {};
+  public static mapToDataContext(graph: DependencyGraph): EnvironmentInterpolationContext {
+    const environment_context: EnvironmentInterpolationContext = {};
 
     for (const node of graph.nodes) {
       if (!(node instanceof ServiceNode)) {
@@ -154,10 +155,10 @@ export class ParameterInterpolator {
     const parameters_search_string = /\$\{\s*parameters/g;
     namespaced_value = namespaced_value.replace(parameters_search_string, `$\{ ${node_ref}.parameters`);
 
-    return ParameterInterpolator.namespaceDependency(node_ref, param_value, friendly_name_map);
+    return ParameterInterpolator.namespaceDependency(param_value, friendly_name_map);
   }
 
-  public static namespaceDependency(node_ref: string, param_value: string, friendly_name_map: { [key: string]: string }): string {
+  public static namespaceDependency(param_value: string, friendly_name_map: { [key: string]: string }): string {
 
     const bracket_notation_matcher = /\$\{\s*dependencies\[(.*?)\]\./g;
     const dot_notation_matcher = /\$\{\s*dependencies\.(.*?)\./g;
@@ -177,25 +178,25 @@ export class ParameterInterpolator {
     return namespaced_dependency;
   }
 
-  public static extract_friendly_name_from_brackets(match: string) {
-    const matches = match.match(/dependencies\['([\s\S]*?)'\]/);
+  public static extract_friendly_name_from_brackets(dependency_substring: string) {
+    const matches = dependency_substring.match(/dependencies\['([\s\S]*?)'\]/);
     if (matches && matches.length > 1) {
       return matches[1];
     } else {
-      throw new Error('Bad format for dependency:' + match);
+      throw new Error('Bad format for parameter:' + dependency_substring);
     }
   }
 
-  public static extract_friendly_name_from_dot_notation(match: string) {
-    const matches = match.match(/dependencies\.([\s\S]*?)\./);
+  public static extract_friendly_name_from_dot_notation(dependency_substring: string) {
+    const matches = dependency_substring.match(/dependencies\.([\s\S]*?)\./);
     if (matches && matches.length > 1) {
       return matches[1];
     } else {
-      throw new Error('Bad format for dependency:' + match);
+      throw new Error('Bad format for parameter:' + dependency_substring);
     }
   }
 
-  public static interpolateParamValue(param_value: ParameterValueV2, environment_context: { [key: string]: any }): ParameterValueV2 {
+  public static interpolateParamValue(param_value: ParameterValueV2, environment_context: EnvironmentInterpolationContext): ParameterValueV2 {
     if (typeof param_value !== 'string') {
       return param_value;
     }
