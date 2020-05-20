@@ -32,12 +32,17 @@ describe('parameter-interpolation', function () {
         'architect/cloud-api': 'v1'
       },
       parameters: {
-        DB_USER: '${ datastore.primary.parameters.DB_USER }',
-        DEP_DB_USER: '${ dependency[\'architect/cloud-api\'].parameters.DB_USER }',
-        lower_dep_ADMIN_PORT: '${ dependency[\'architect/cloud-api\'].interfaces.admin.port }',
+        DB_USER: {
+          value_from: {
+            datastore: 'db',
+            value: '$DB_USER'
+          }
+        },
+        DEP_DB_USER: "${ dependencies['architect/cloud-api'].parameters.DB_USER }",
+        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].interfaces.admin.port }",
       },
       datastores: {
-        primary: {
+        db: {
           image: 'postgres:11',
           port: 5432,
           parameters: {
@@ -60,9 +65,9 @@ describe('parameter-interpolation', function () {
         primary: 8082,
       },
       parameters: {
-        DB_USER: '${ datastore.primary.parameters.DB_USER }',
+        DB_USER: '${ dependencies.primary.parameters.DB_USER }',
       },
-      datastores: {
+      dependencies: {
         primary: {
           image: 'postgres:11',
           port: 5432,

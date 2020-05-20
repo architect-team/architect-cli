@@ -4,31 +4,30 @@ export type EnvironmentParameterMap = { [key: string]: ParameterContext };
 
 export interface InterpolationContext {
   parameters: ParameterContext;
-  interfaces: InterfaceContext;
+  interfaces: ServiceInterfaceContext;
 }
 
 export type ParameterContext = { [key: string]: ParameterValueV2 };
 
 export type EnvironmentInterpolationContext = { [key: string]: InterpolationContext };
 
-export type InterfaceContext = { [key: string]: ServiceInterfaceContext };
+export type ServiceInterfaceContext = { [key: string]: InterfaceContext };
 
-export interface ServiceInterfaceContext {
+export type EnvironmentInterfaceContext = { [key: string]: ServiceInterfaceContext };
+
+export interface InterfaceContext {
   port: string;
-  subdomain: string;
   host: string;
   protocol: string;
   url: string;
   external: {
     port: string;
-    subdomain: string;
     host: string;
     protocol: string;
     url: string;
   };
   internal: {
     port: string;
-    subdomain: string;
     host: string;
     protocol: string;
     url: string;
