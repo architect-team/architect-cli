@@ -37,13 +37,10 @@ export default class LocalDependencyManager extends DependencyManager {
       if (svc_node instanceof ServiceNode) {
         const interfaces = svc_node.node_config.getInterfaces();
         const external_interfaces_count = Object.values(interfaces).filter(i => i.subdomain).length;
-        const interface_count = Object.keys(interfaces).length;
-        if (interface_count === 1 && external_interfaces_count) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
+        if (external_interfaces_count) {
           const gateway = new GatewayNode();
           dependency_manager.graph.addNode(gateway);
           dependency_manager.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref));
-        } else if (interface_count > 1 && external_interfaces_count > 1) {
-          throw new Error(`Error in service definition for ${svc_node.ref}. Only one ingress per service is supported locally.`);
         }
       }
     }

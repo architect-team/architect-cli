@@ -142,6 +142,12 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       continue;
     }
 
+    const external_interfaces_count = Object.values(node_to.interfaces).filter(i => i.subdomain).length;
+    const interface_count = Object.keys(node_to.interfaces).length;
+    if (interface_count > 1 && external_interfaces_count > 1) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
+      throw new Error(`Error in service definition for ${node_to.ref}. Only one ingress per service is supported locally.`);
+    }
+
     if (edge instanceof IngressEdge) {
       const service_to = compose.services[node_to.normalized_ref];
       const to_interface = Object.values(node_to.interfaces).find((i: ServiceInterfaceSpec) => i.subdomain);
