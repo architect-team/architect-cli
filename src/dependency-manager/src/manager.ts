@@ -192,8 +192,7 @@ export default abstract class DependencyManager {
       all_env_params = { ...all_env_params, ...all_interface_params, ...env_params_to_expand };
     }
 
-    //TODO:76: we can get rid of this entire block when we remove valueFrom
-    console.log('all_env_params', JSON.stringify(all_env_params));
+    //TODO:76: we can get rid of most of this block when we remove valueFrom
     // ignoreProcessEnv is important otherwise it will be stored globally
     const dotenv_config = { parsed: all_env_params, ignoreProcessEnv: true };
     const expanded_params = dotenvExpand(dotenv_config).parsed || {};
@@ -210,6 +209,7 @@ export default abstract class DependencyManager {
         }
       }
     }
+    console.log('after:', JSON.stringify(this.graph));
   }
 
   private buildInterfaceEnvParams(node: DependencyNode) {
