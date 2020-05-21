@@ -1,16 +1,32 @@
+import { deserialize, serialize } from 'class-transformer';
 import Mustache from 'mustache';
 import { ServiceNode } from '../..';
 import DependencyGraph from '../../graph';
 import { InterpolationContext } from '../../interpolation/interpolation-context';
-import { ParameterValueV2 } from '../../service-config/base';
+import { ParameterValueV2, ServiceConfig } from '../../service-config/base';
+import { ServiceConfigV1 } from '../../service-config/v1';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, EnvironmentParameterMap, ServiceInterfaceContext } from './interpolation-context';
 
 
 export class ParameterInterpolator {
 
-  public static interpolateAllParameters(all_parameters: EnvironmentParameterMap, environment_context: EnvironmentInterpolationContext): EnvironmentParameterMap { //TODO:76:type environment_context
+  public static interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): ServiceConfig {
+    const serial_config = serialize(node.node_config);
 
-    // this illustrates the drawback with not using the structure of the graph to traverse this more efficiently
+    const namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
+    const result = ParameterInterpolator.interpolateString(namespaced_serial_config, environment_context);
+
+    return deserialize(ServiceConfigV1, result); //TODO:76:we shouldn't be using the versioned ServiceConfig if we can help it
+  }
+
+  public static interpolateString(param_value: string, environment_context: EnvironmentInterpolationContext): string {
+    Mustache.tags = ['${', '}']; // sets custom delimiters
+    Mustache.escape = function (text) { return text; } // turns off HTML escaping
+    //TODO:76: add validation logic https://codepen.io/TJHiggins/pen/yLYEppY
+    return Mustache.render(param_value, environment_context);
+  }
+
+  public static interpolateAllParameters(all_parameters: EnvironmentParameterMap, environment_context: EnvironmentInterpolationContext): EnvironmentParameterMap {
     let change_detected = true;
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
@@ -72,8 +88,8 @@ export class ParameterInterpolator {
         }
 
         const global_value = global_parameter_map[param_key];
-        const upstream_value = undefined; // ParameterInterpolator.namespaceParameter(upstream_node.namespace_ref, upstream_node.dependencies[node.ref].parameters[param_key]); namespace it to the node that declared it!
-        const param_default = ParameterInterpolator.namespaceParameter(node.namespace_ref, (param_details.default as ParameterValueV2), friendly_name_map[node.ref]);
+        const upstream_value = undefined; // ParameterInterpolator.namespaceExpressions(upstream_node.namespace_ref, upstream_node.dependencies[node.ref].parameters[param_key]); namespace it to the node that declared it!
+        const param_default = ParameterInterpolator.namespaceExpressions(node.namespace_ref, (param_details.default as string), friendly_name_map[node.ref]); //TODO:76: remove type cast and only call if parameter is string
         const param_value = ParameterInterpolator.mergeParam(upstream_value, global_value, param_default);
 
         if (ParameterInterpolator.isNullParamValue(param_value) && param_details.required) {
@@ -127,15 +143,15 @@ export class ParameterInterpolator {
     return param_value === null || param_value === undefined;
   }
 
-  public static namespaceParameter(node_ref: string, param_value: ParameterValueV2, friendly_name_map: { [key: string]: string }) {
-    if (typeof param_value !== 'string') {
-      return param_value;
+  public static namespaceExpressions(node_ref: string, expression_string: string, friendly_name_map: { [key: string]: string }) {
+    if (typeof expression_string !== 'string') {
+      return expression_string;
     }
-    if (!param_value.includes('${')) {
-      return param_value;
+    if (!expression_string.includes('${')) {
+      return expression_string;
     }
 
-    let namespaced_value = param_value;
+    let namespaced_value = expression_string;
 
     const interfaces_search_string = /\$\{\s*interfaces/g;
     namespaced_value = namespaced_value.replace(interfaces_search_string, `$\{ ${node_ref}.interfaces`);
@@ -143,26 +159,20 @@ export class ParameterInterpolator {
     const parameters_search_string = /\$\{\s*parameters/g;
     namespaced_value = namespaced_value.replace(parameters_search_string, `$\{ ${node_ref}.parameters`);
 
-    return ParameterInterpolator.namespaceDependency(param_value, friendly_name_map);
-  }
-
-  public static namespaceDependency(param_value: string, friendly_name_map: { [key: string]: string }): string {
-
     const bracket_notation_matcher = /\$\{\s*dependencies\[(.*?)\]\./g;
     const dot_notation_matcher = /\$\{\s*dependencies\.(.*?)\./g;
 
-    let namespaced_dependency = param_value;
-    namespaced_dependency = namespaced_dependency.replace(bracket_notation_matcher, (m) => {
+    namespaced_value = namespaced_value.replace(bracket_notation_matcher, (m) => {
       const dep = ParameterInterpolator.extract_friendly_name_from_brackets(m);
       return '${ ' + friendly_name_map[dep] + '.';
     });
 
-    namespaced_dependency = namespaced_dependency.replace(dot_notation_matcher, (m) => {
+    namespaced_value = namespaced_value.replace(dot_notation_matcher, (m) => {
       const dep = ParameterInterpolator.extract_friendly_name_from_dot_notation(m);
       return '${ ' + friendly_name_map[dep] + '.';
     });
 
-    return namespaced_dependency;
+    return namespaced_value;
   }
 
   public static extract_friendly_name_from_brackets(dependency_substring: string) {
@@ -191,9 +201,6 @@ export class ParameterInterpolator {
       return param_value;
     }
 
-    Mustache.tags = ['${', '}']; // sets custom delimiters
-    Mustache.escape = function (text) { return text; } // turns off HTML escaping
-    //TODO:76: add validation logic https://codepen.io/TJHiggins/pen/yLYEppY
-    return Mustache.render(param_value, environment_context);
+    return ParameterInterpolator.interpolateString(param_value, environment_context);
   }
 }

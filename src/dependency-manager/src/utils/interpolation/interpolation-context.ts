@@ -20,16 +20,19 @@ export interface InterfaceContext {
   host: string;
   protocol: string;
   url: string;
+  subdomain?: string;
   external: {
     port: string;
     host: string;
     protocol: string;
     url: string;
+    subdomain?: string;
   };
   internal: {
     port: string;
     host: string;
     protocol: string;
     url: string;
+    subdomain?: string;
   };
 }

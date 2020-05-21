@@ -9,7 +9,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { DatastoreParameter, DependencyParameter, ParameterValue, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import { EnvironmentInterfaceContext } from './utils/interpolation/interpolation-context';
 import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
 import VaultManager from './vault-manager';
@@ -105,12 +105,26 @@ export default abstract class DependencyManager {
   */
   async loadParameters() {
     let interface_context = this.mapToInterfaceContext(this.graph);
-    const all_interface_params = this.buildInterfaceEnvParams(this.graph, interface_context);
 
-    const global_parameter_map: { [key: string]: any } = {};
+    const global_parameter_map: { [key: string]: any } = {}; //TODO:76: set to environment params
     const environment_context = ParameterInterpolator.mapToDataContext(this.graph, interface_context);
     const all_parameters = ParameterInterpolator.mapToParameterSet(this.graph, global_parameter_map);
     const interpolated_parameters = ParameterInterpolator.interpolateAllParameters(all_parameters, environment_context);
+
+    const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
+
+    for (const node of this.graph.nodes) {
+      for (const interface_name of Object.keys(node.interfaces)) {
+        node.interfaces[interface_name] = interface_context[node.ref][interface_name];
+      }
+    }
+
+    for (const node of this.graph.getServiceNodes()) {
+      const interpolated_config = ParameterInterpolator.interpolateNodeConfig(node, environment_context, friendly_name_map);
+      node.node_config = interpolated_config;
+    }
+
+    const all_interface_params = this.buildInterfaceEnvParams(this.graph);
 
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
@@ -201,34 +215,40 @@ export default abstract class DependencyManager {
           const key = prefixed_key.replace(prefix, '');
           node.parameters[key] = value;
 
-          if (!ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][key])) {
-            node.parameters[key] = interpolated_parameters[node.namespace_ref][key] as ParameterValue;
-          }
+          // if (!ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][key])) {
+          //   node.parameters[key] = interpolated_parameters[node.namespace_ref][key] as ParameterValue;
+          // }
         }
       }
     }
+
+    console.log(JSON.stringify(this.graph));
   }
 
-  private buildInterfaceEnvParams(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): { [key: string]: string } {
+  private buildInterfaceEnvParams(graph: DependencyGraph): { [key: string]: string } {
     const interface_params: { [key: string]: string } = {};
 
     for (const node of graph.nodes) {
+      if (node instanceof GatewayNode) {
+        // gateway nodes have a default interface preset on them
+        continue;
+      }
       for (const interface_name of Object.keys(node.interfaces)) {
         const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = interface_context[node.ref][interface_name].external.host;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = node.interfaces[interface_name].external.host;
 
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = interface_context[node.ref][interface_name].internal.host;
-        interface_params[this.scopeEnv(node, `${prefix}HOST`)] = interface_context[node.ref][interface_name].host;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = node.interfaces[interface_name].internal.host;
+        interface_params[this.scopeEnv(node, `${prefix}HOST`)] = node.interfaces[interface_name].host;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = interface_context[node.ref][interface_name].external.port;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = interface_context[node.ref][interface_name].internal.port;
-        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = interface_context[node.ref][interface_name].port;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = node.interfaces[interface_name].external.port;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = node.interfaces[interface_name].internal.port;
+        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = node.interfaces[interface_name].port;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = interface_context[node.ref][interface_name].external.protocol;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = interface_context[node.ref][interface_name].internal.protocol;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = node.interfaces[interface_name].external.protocol;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = node.interfaces[interface_name].internal.protocol;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context[node.ref][interface_name].external.url;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = interface_context[node.ref][interface_name].internal.url;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = node.interfaces[interface_name].external.url;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = node.interfaces[interface_name].internal.url;
       }
     }
     return interface_params;
@@ -261,26 +281,30 @@ export default abstract class DependencyManager {
           external_protocol = this.toExternalProtocol(node, interface_name);
           internal_protocol = 'http';
         }
+        const subdomain = interface_details.subdomain;
 
         const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
         const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
 
         interface_context[node.ref][interface_name] = {
-          host: external_host ? external_host : internal_host,
-          port: external_host ? external_port : internal_port,
-          protocol: external_host ? external_protocol : internal_protocol,
-          url: external_host ? external_url : internal_url,
+          host: internal_host,
+          port: internal_port,
+          protocol: internal_protocol,
+          url: internal_url,
+          subdomain: subdomain,
           external: {
             host: external_host,
             port: external_port,
             url: external_url,
             protocol: external_protocol,
+            subdomain: subdomain,
           },
           internal: {
             host: internal_host,
             port: internal_port,
             url: internal_url,
             protocol: internal_protocol,
+            subdomain: subdomain,
           }
         };
       }
