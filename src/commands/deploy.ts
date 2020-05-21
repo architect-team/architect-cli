@@ -16,6 +16,7 @@ import { OfflineUtils } from '../common/utils/offline';
 import { ValidationClient, ValidationResult } from '../common/utils/validation';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 import DependencyGraph from '../dependency-manager/src/graph';
+import { flattenValidationErrors } from '../dependency-manager/src/utils/errors';
 
 
 class EnvConfigRequiredError extends Error {
@@ -219,7 +220,16 @@ export default class Deploy extends Command {
     const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
+
+    let deployment;
+    try {
+      deployment = (await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload })).data;
+    } catch (err) {
+      if (err.response.status === 400) {
+        throw new Error(JSON.stringify(flattenValidationErrors(JSON.parse(err.response.data.message)), null, 2));
+      }
+      throw new Error(err.response.data.message);
+    }
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
