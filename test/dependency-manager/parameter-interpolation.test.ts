@@ -22,7 +22,7 @@ describe('parameter-interpolation', function () {
     moxios.uninstall();
   });
 
-  it('loadParameters', async () => {
+  it('loadParameters-with-expressions', async () => {
     const frontend_config = {
       name: 'architect/cloud',
       interfaces: {
@@ -98,14 +98,14 @@ describe('parameter-interpolation', function () {
     const default_keys = [
       'EXTERNAL_HOST',
       'INTERNAL_HOST',
+      'HOST',
       'EXTERNAL_PORT',
       'INTERNAL_PORT',
-      'EXTERNAL_URL',
-      'INTERNAL_URL',
+      'PORT',
       'EXTERNAL_PROTOCOL',
       'INTERNAL_PROTOCOL',
-      'HOST',
-      'PORT',
+      'EXTERNAL_URL',
+      'INTERNAL_URL',
     ];
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
@@ -114,8 +114,8 @@ describe('parameter-interpolation', function () {
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'API_TAG', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
-    expect(frontend_node.interfaces.app.port).eq(8080);
+    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
+    expect(frontend_node.interfaces.app.port).eq('8080');
     expect(frontend_node.parameters['APP_PORT']).eq(8080);
     expect(frontend_node.parameters['DB_USER']).eq('root');
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
@@ -124,5 +124,5 @@ describe('parameter-interpolation', function () {
     expect(backend_datastore_node.parameters['PORT']).eq('5432');
   });
 
-  // TODO:76:
+  // TODO:76:recursive test
 });

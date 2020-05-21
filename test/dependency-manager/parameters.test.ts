@@ -22,7 +22,7 @@ describe('parameters', function () {
     moxios.uninstall();
   });
 
-  it('loadParameters', async () => {
+  it('loadParameters-with-valueFrom', async () => {
     const frontend_config = {
       name: 'architect/cloud',
       interfaces: {

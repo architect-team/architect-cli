@@ -107,7 +107,9 @@ export default abstract class DependencyManager {
   */
   async loadParameters() {
 
-    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
+    console.log('before', JSON.stringify(this.graph));
+
+    //TODO:76:order these and add comments
     for (const node of this.graph.nodes) {
       for (const interface_name of Object.keys(node.interfaces)) {
         node.interfaces[interface_name] = this.mapToInterfaceContext(node, interface_name);
@@ -206,28 +208,36 @@ export default abstract class DependencyManager {
 
           // TODO:76: we can remove this when we get rid of valueFrom
           // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
-          if ((node as any)?.node_config?.parameters[key]?.default && !((node as any).node_config?.parameters[key]?.default?.valueFrom)) {
+          const params_from_node_config = (node as any)?.node_config?.parameters;
+          if (params_from_node_config && params_from_node_config[key]?.default && !params_from_node_config[key].default?.valueFrom) {
             node.parameters[key] = (node as any).node_config.parameters[key].default;
           } else {
             node.parameters[key] = value;
           }
 
+          // TODO:76: we can remove this when we get rid of valueFrom
+          // we copy the new parameter value into the node_config if it doesn't already have it
           if (node instanceof ServiceNode) {
+            (node.node_config as any).parameters = (node.node_config as any).parameters || {};
             (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
             (node.node_config as any).parameters[key].default = node.parameters[key];
           } else if (node instanceof DatastoreNode) {
+            node.node_config.parameters = node.node_config.parameters || {};
             node.node_config.parameters[key] = node.node_config.parameters[key] || {};
             node.node_config.parameters[key].default = node.parameters[key];
           } else if (node instanceof ExternalNode && node.node_config instanceof ServiceConfig) {
+            (node.node_config as any).parameters = (node.node_config as any).parameters || {};
             (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
             (node.node_config as any).parameters[key].default = node.parameters[key];
           } else if (node instanceof ExternalNode) {
+            (node.node_config as ServiceDatastore).parameters = (node.node_config as ServiceDatastore).parameters || {};
             (node.node_config as ServiceDatastore).parameters[key] = (node.node_config as ServiceDatastore).parameters[key] || {};
             (node.node_config as ServiceDatastore).parameters[key].default = node.parameters[key];
           }
         }
       }
     }
+    console.log('after', JSON.stringify(this.graph));
   }
 
   private interpolateAllNodeConfigs(graph: DependencyGraph): void {
@@ -304,23 +314,39 @@ export default abstract class DependencyManager {
       if (node instanceof GatewayNode) {
         // gateway nodes have a default interface preset on them
         continue;
-      }
-      for (const interface_name of Object.keys(node.interfaces)) {
-        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = node.interfaces[interface_name].external.host;
+      } else if (node instanceof DatastoreNode || (node instanceof ExternalNode && !(node.node_config instanceof ServiceConfig))) {
+        interface_params[this.scopeEnv(node, `EXTERNAL_HOST`)] = node.interfaces._default.host || '';
 
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = node.interfaces[interface_name].internal.host;
-        interface_params[this.scopeEnv(node, `${prefix}HOST`)] = node.interfaces[interface_name].host;
+        interface_params[this.scopeEnv(node, `INTERNAL_HOST`)] = node.interfaces._default.host || '';
+        interface_params[this.scopeEnv(node, `HOST`)] = node.interfaces._default.host || '';
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = node.interfaces[interface_name].external.port;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = node.interfaces[interface_name].internal.port;
-        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = node.interfaces[interface_name].port;
+        interface_params[this.scopeEnv(node, `EXTERNAL_PORT`)] = node.interfaces._default.port?.toString() || '';
+        interface_params[this.scopeEnv(node, `INTERNAL_PORT`)] = node.interfaces._default.port?.toString() || '';
+        interface_params[this.scopeEnv(node, `PORT`)] = node.interfaces._default.port?.toString() || '';
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = node.interfaces[interface_name].external.protocol;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = node.interfaces[interface_name].internal.protocol;
+        interface_params[this.scopeEnv(node, `EXTERNAL_PROTOCOL`)] = '';
+        interface_params[this.scopeEnv(node, `INTERNAL_PROTOCOL`)] = '';
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = node.interfaces[interface_name].external.url;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = node.interfaces[interface_name].internal.url;
+        interface_params[this.scopeEnv(node, `EXTERNAL_URL`)] = '';
+        interface_params[this.scopeEnv(node, `INTERNAL_URL`)] = '';
+      } else {
+        for (const interface_name of Object.keys(node.interfaces)) {
+          const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
+          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = node.interfaces[interface_name].external.host;
+
+          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = node.interfaces[interface_name].internal.host;
+          interface_params[this.scopeEnv(node, `${prefix}HOST`)] = node.interfaces[interface_name].host;
+
+          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = node.interfaces[interface_name].external.port;
+          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = node.interfaces[interface_name].internal.port;
+          interface_params[this.scopeEnv(node, `${prefix}PORT`)] = node.interfaces[interface_name].port;
+
+          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = node.interfaces[interface_name].external.protocol;
+          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = node.interfaces[interface_name].internal.protocol;
+
+          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = node.interfaces[interface_name].external.url;
+          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = node.interfaces[interface_name].internal.url;
+        }
       }
     }
     return interface_params;

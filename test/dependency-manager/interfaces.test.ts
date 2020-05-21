@@ -230,8 +230,8 @@ describe('interfaces', function () {
     const graph: LocalDependencyGraph = manager.graph;
 
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ExternalNode;
-    expect(backend_node.interfaces!.main.port).eq(8080);
-    expect(backend_node.interfaces!.secondary.port).eq(8081);
+    expect(backend_node.interfaces!.main.port).eq('8080');
+    expect(backend_node.interfaces!.secondary.port).eq('8081');
 
     const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as LocalServiceNode;
     const interfaced_main_value_from = frontend_main_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
