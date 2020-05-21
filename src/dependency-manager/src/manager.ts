@@ -1,3 +1,4 @@
+import { deserialize, serialize } from 'class-transformer';
 import dotenvExpand from 'dotenv-expand';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
@@ -10,7 +11,8 @@ import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
-import { EnvironmentInterfaceContext } from './utils/interpolation/interpolation-context';
+import { ServiceConfigV1 } from './service-config/v1';
+import { EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
 import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
 import VaultManager from './vault-manager';
 
@@ -104,23 +106,19 @@ export default abstract class DependencyManager {
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
   async loadParameters() {
-    let interface_context = this.mapToInterfaceContext(this.graph);
-
-    const global_parameter_map: { [key: string]: any } = {}; //TODO:76: set to environment params
-    const environment_context = ParameterInterpolator.mapToDataContext(this.graph, interface_context);
-    const all_parameters = ParameterInterpolator.mapToParameterSet(this.graph, global_parameter_map);
-    const interpolated_parameters = ParameterInterpolator.interpolateAllParameters(all_parameters, environment_context);
 
     const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
 
+    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
     for (const node of this.graph.nodes) {
       for (const interface_name of Object.keys(node.interfaces)) {
-        node.interfaces[interface_name] = interface_context[node.ref][interface_name];
+        node.interfaces[interface_name] = this.mapToInterfaceContext(node, interface_name);
       }
     }
 
+    const environment_context = ParameterInterpolator.mapToDataContext(this.graph);
     for (const node of this.graph.getServiceNodes()) {
-      const interpolated_config = ParameterInterpolator.interpolateNodeConfig(node, environment_context, friendly_name_map);
+      const interpolated_config = this.interpolateNodeConfig(node, environment_context, friendly_name_map);
       node.node_config = interpolated_config;
     }
 
@@ -226,6 +224,44 @@ export default abstract class DependencyManager {
     console.log(JSON.stringify(this.graph));
   }
 
+  private interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): ServiceConfig {
+    let change_detected = true;
+    let passes = 0;
+    const MAX_DEPTH = 100; //TODO:76
+
+    const serial_config = serialize(node.node_config);
+    let namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
+
+    while (change_detected && passes < MAX_DEPTH) {
+      change_detected = false;
+
+      console.log(`         before`, JSON.stringify(JSON.parse(namespaced_serial_config)));
+      console.log(`         context`, JSON.stringify(environment_context));
+      const interpolated_serial_config = ParameterInterpolator.interpolateString(namespaced_serial_config, environment_context);
+      console.log(`         after ${passes}`, JSON.stringify(JSON.parse(interpolated_serial_config)));
+      // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
+      // going to want to do another pass and set update the environment_context, which requires a full deserialization
+      if (interpolated_serial_config !== namespaced_serial_config) {
+        change_detected = true;
+
+        const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
+        node.node_config = deserialized_config;
+        for (const node of this.graph.nodes) {
+          for (const interface_name of Object.keys(node.interfaces)) {
+            node.interfaces[interface_name] = this.mapToInterfaceContext(node, interface_name);
+          }
+        }
+        environment_context[node.ref] = ParameterInterpolator.map(node);
+        namespaced_serial_config = serialize(node.node_config);
+      } else {
+        return deserialize(ServiceConfigV1, interpolated_serial_config);
+      }
+      passes++;
+    }
+
+    throw new Error('Stack Overflow Error'); //TODO:76: better message
+  }
+
   private buildInterfaceEnvParams(graph: DependencyGraph): { [key: string]: string } {
     const interface_params: { [key: string]: string } = {};
 
@@ -255,63 +291,56 @@ export default abstract class DependencyManager {
     return interface_params;
   }
 
-  private mapToInterfaceContext(graph: DependencyGraph): EnvironmentInterfaceContext {
-    const interface_context: EnvironmentInterfaceContext = {};
-    const gateway_node = graph.nodes.find((node) => (node instanceof GatewayNode));
+  private mapToInterfaceContext(node: DependencyNode, interface_name: string): InterfaceContext {
+    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
     const gateway_port = gateway_node ? this.gateway_port : '';
+    const interface_details = node.interfaces[interface_name];
 
-    for (const node of graph.nodes) {
-      interface_context[node.ref] = {};
-      for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
-        let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
-        if (node instanceof ExternalNode) {
-          if (!interface_details.host) {
-            throw new Error('External node needs to override the host');
-          }
-          external_host = interface_details.host;
-          internal_host = interface_details.host;
-          external_port = interface_details.port.toString();
-          internal_port = interface_details.port.toString();
-          external_protocol = 'https';
-          internal_protocol = 'https';
-        } else {
-          external_host = this.toExternalHost(node, interface_name);
-          internal_host = this.toInternalHost(node);
-          external_port = gateway_port.toString();
-          internal_port = this.toInternalPort(node, interface_name);
-          external_protocol = this.toExternalProtocol(node, interface_name);
-          internal_protocol = 'http';
-        }
-        const subdomain = interface_details.subdomain;
-
-        const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
-        const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
-
-        interface_context[node.ref][interface_name] = {
-          host: internal_host,
-          port: internal_port,
-          protocol: internal_protocol,
-          url: internal_url,
-          subdomain: subdomain,
-          external: {
-            host: external_host,
-            port: external_port,
-            url: external_url,
-            protocol: external_protocol,
-            subdomain: subdomain,
-          },
-          internal: {
-            host: internal_host,
-            port: internal_port,
-            url: internal_url,
-            protocol: internal_protocol,
-            subdomain: subdomain,
-          }
-        };
+    let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
+    if (node instanceof ExternalNode) {
+      if (!interface_details.host) {
+        throw new Error('External node needs to override the host');
       }
+      external_host = interface_details.host;
+      internal_host = interface_details.host;
+      external_port = interface_details.port.toString();
+      internal_port = interface_details.port.toString();
+      external_protocol = 'https';
+      internal_protocol = 'https';
+    } else {
+      external_host = this.toExternalHost(node, interface_name);
+      internal_host = this.toInternalHost(node);
+      external_port = gateway_port.toString();
+      internal_port = this.toInternalPort(node, interface_name);
+      external_protocol = this.toExternalProtocol(node, interface_name);
+      internal_protocol = 'http';
     }
+    const subdomain = interface_details.subdomain;
 
-    return interface_context;
+    const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+    const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
+
+    return {
+      host: internal_host,
+      port: internal_port,
+      protocol: internal_protocol,
+      url: internal_url,
+      subdomain: subdomain,
+      external: {
+        host: external_host,
+        port: external_port,
+        url: external_url,
+        protocol: external_protocol,
+        subdomain: subdomain,
+      },
+      internal: {
+        host: internal_host,
+        port: internal_port,
+        url: internal_url,
+        protocol: internal_protocol,
+        subdomain: subdomain,
+      }
+    };
   }
 
   /**

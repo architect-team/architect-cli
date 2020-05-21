@@ -1,23 +1,12 @@
-import { deserialize, serialize } from 'class-transformer';
 import Mustache from 'mustache';
 import { ServiceNode } from '../..';
 import DependencyGraph from '../../graph';
 import { InterpolationContext } from '../../interpolation/interpolation-context';
-import { ParameterValueV2, ServiceConfig } from '../../service-config/base';
-import { ServiceConfigV1 } from '../../service-config/v1';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, EnvironmentParameterMap, ServiceInterfaceContext } from './interpolation-context';
+import { ParameterValueV2 } from '../../service-config/base';
+import { EnvironmentInterpolationContext, EnvironmentParameterMap } from './interpolation-context';
 
 
 export class ParameterInterpolator {
-
-  public static interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): ServiceConfig {
-    const serial_config = serialize(node.node_config);
-
-    const namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
-    const result = ParameterInterpolator.interpolateString(namespaced_serial_config, environment_context);
-
-    return deserialize(ServiceConfigV1, result); //TODO:76:we shouldn't be using the versioned ServiceConfig if we can help it
-  }
 
   public static interpolateString(param_value: string, environment_context: EnvironmentInterpolationContext): string {
     Mustache.tags = ['${', '}']; // sets custom delimiters
@@ -103,29 +92,26 @@ export class ParameterInterpolator {
     return parameter_set;
   }
 
-  public static mapToDataContext(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): EnvironmentInterpolationContext {
+  public static mapToDataContext(graph: DependencyGraph): EnvironmentInterpolationContext {
     const environment_context: EnvironmentInterpolationContext = {};
 
     for (const node of graph.getServiceNodes()) {
-      const service_context = ParameterInterpolator.map(node, interface_context[node.ref]);
+      const service_context = ParameterInterpolator.map(node);
       environment_context[node.namespace_ref] = service_context;
     }
 
     return environment_context;
   }
 
-  public static map(node: ServiceNode, interface_context: ServiceInterfaceContext): InterpolationContext {
+  public static map(node: ServiceNode): InterpolationContext {
     return {
-      parameters: Object.entries(node.service_config.getParameters())
+      parameters: Object.entries(node.node_config.getParameters())
         .reduce((result: { [key: string]: any }, [k, v]) => {
           result[k] = v.default;
           return result;
         }, {}),
-      interfaces: Object.keys(node.interfaces)
-        .map(i => {
-          return { key: i, value: interface_context[i] };
-        })
-        .reduce((result: { [key: string]: any }, { key, value }) => {
+      interfaces: Object.entries(node.interfaces)
+        .reduce((result: { [key: string]: any }, [key, value]) => {
           result[key] = value;
           return result;
         }, {}),
