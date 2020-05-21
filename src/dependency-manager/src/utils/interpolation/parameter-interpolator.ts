@@ -193,6 +193,7 @@ export class ParameterInterpolator {
 
     Mustache.tags = ['${', '}']; // sets custom delimiters
     Mustache.escape = function (text) { return text; } // turns off HTML escaping
+    //TODO:76: add validation logic https://codepen.io/TJHiggins/pen/yLYEppY
     return Mustache.render(param_value, environment_context);
   }
 }
