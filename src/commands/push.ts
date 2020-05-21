@@ -9,6 +9,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage } from '../common/utils/docker';
+import { flattenValidationErrors } from '../dependency-manager/src/utils/errors';
 import { CreateServiceVersionInput } from './register';
 
 
@@ -74,10 +75,14 @@ export default class Push extends Command {
         });
         cli.action.stop(chalk.green(`Image verified`));
 
+        const config = classToPlain(node.service_config); // debug block data for local should not be posted
+        if ((config as any).debug) {
+          (config as any).debug.path = undefined;
+        }
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config: classToPlain(node.service_config),
+          config,
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);
@@ -87,7 +92,14 @@ export default class Push extends Command {
   }
 
   private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
-    const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
-    return service_digest;
+    try {
+      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+      return service_digest;
+    } catch (err) {
+      if (err.response.status === 400) {
+        throw new Error(JSON.stringify(flattenValidationErrors(JSON.parse(err.response.data.message)), null, 2));
+      }
+      throw new Error(err.response.data.message);
+    }
   }
 }

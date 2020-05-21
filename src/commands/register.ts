@@ -10,6 +10,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
+import { flattenValidationErrors } from '../dependency-manager/src/utils/errors';
 
 export interface CreateServiceVersionInput {
   tag: string;
@@ -122,11 +123,15 @@ export default class ServiceRegister extends Command {
 
         const image_without_tag = strip_tag_from_image(image); // we don't need the tag on our image because we use the digest as the key.
 
+        const service_config = classToPlain(node.service_config); // debug block data for local should not be posted
+        if ((service_config as any).debug) {
+          (service_config as any).debug.path = undefined;
+        }
         const service_dto = {
           tag: flags.tag,
           digest: digest,
           config: {
-            ...classToPlain(node.service_config),
+            ...service_config,
             image: image_without_tag,
           },
         };
@@ -138,7 +143,20 @@ export default class ServiceRegister extends Command {
   }
 
   private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
-    const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
-    return service_digest;
+    try {
+      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+      return service_digest;
+    } catch (err) {
+      if (err.response.status === 400) {
+        let response_json;
+        try {
+          response_json = JSON.parse(err.response.data.message);
+        } catch{ }
+        if (response_json) { // skip if error is a service existing with a different repository than the one being pushed
+          throw new Error(JSON.stringify(flattenValidationErrors(response_json), null, 2));
+        }
+      }
+      throw new Error(err.response.data.message);
+    }
   }
 }
