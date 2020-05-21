@@ -125,6 +125,7 @@ export default abstract class DependencyGraph {
     return Array.from(nodes.values());
   }
 
+  //TODO:76:remove this in favor of a tech debt story; make sure ExternalNode
   getServiceNodes(): ServiceNode[] {
     return this.nodes.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
   }

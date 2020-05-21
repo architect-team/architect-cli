@@ -19,6 +19,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       .replace(/\//g, '.');
   }
 
+  //TODO:76:consolidate with normalized_ref and find
   get namespace_ref() {
     return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
   }
