@@ -203,9 +203,8 @@ class InterfaceSpecV1 extends BaseSpec {
   host?: string;
 
   @IsOptional({ groups: ['operator'] })
-  // @IsNumber(undefined, { always: true }) TODO:76:add back in
-  @IsNotEmpty({ always: true })
-  port?: number | string;
+  @IsNumber(undefined, { always: true })
+  port?: number;
 
   @IsOptional({ always: true })
   @IsEmpty({

@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ParameterValue, ServiceConfig, ServiceDatastore } from '../../service-config/base';
+import { ServiceConfig, ServiceDatastore } from '../../service-config/base';
 
 interface ExternalNodeOptions {
   parent_ref?: string;
@@ -27,13 +27,15 @@ export class ExternalNode extends DependencyNode {
   }
 
   get parameters(): { [key: string]: any } {
-    const param_map: { [key: string]: ParameterValue } = {};
-    for (const [key, value] of Object.entries(this.node_config instanceof ServiceConfig ? this.node_config.getParameters() : this.node_config.parameters)) {
-      if ('default' in value && value.default !== undefined) {
-        param_map[key] = value.default;
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config instanceof ServiceConfig ? this.node_config.getParameters() : this.node_config.parameters)) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
       }
     }
-    return param_map;
+    return this._parameters;
   }
 
   get interfaces(): { [key: string]: any } {

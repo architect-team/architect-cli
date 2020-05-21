@@ -10,7 +10,7 @@ import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ServiceConfig, ServiceDatastore, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
 import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
@@ -204,12 +204,27 @@ export default abstract class DependencyManager {
         if (prefixed_key.startsWith(prefix)) {
           const key = prefixed_key.replace(prefix, '');
 
-          // TODO:76: this method is problematic, but we can remove this when we remove valueFroms and magic parameters
-          if (node instanceof ServiceNode || node instanceof DatastoreNode || node instanceof ExternalNode) {
-            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
-            (node.node_config as any).parameters[key].default = value;
+          // TODO:76: we can remove this when we get rid of valueFrom
+          // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
+          if ((node as any)?.node_config?.parameters[key]?.default && !((node as any).node_config?.parameters[key]?.default?.valueFrom)) {
+            node.parameters[key] = (node as any).node_config.parameters[key].default;
+          } else {
+            node.parameters[key] = value;
           }
 
+          if (node instanceof ServiceNode) {
+            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
+            (node.node_config as any).parameters[key].default = node.parameters[key];
+          } else if (node instanceof DatastoreNode) {
+            node.node_config.parameters[key] = node.node_config.parameters[key] || {};
+            node.node_config.parameters[key].default = node.parameters[key];
+          } else if (node instanceof ExternalNode && node.node_config instanceof ServiceConfig) {
+            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
+            (node.node_config as any).parameters[key].default = node.parameters[key];
+          } else if (node instanceof ExternalNode) {
+            (node.node_config as ServiceDatastore).parameters[key] = (node.node_config as ServiceDatastore).parameters[key] || {};
+            (node.node_config as ServiceDatastore).parameters[key].default = node.parameters[key];
+          }
         }
       }
     }

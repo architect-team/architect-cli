@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ParameterValue, ServiceConfig } from '../../service-config/base';
+import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
@@ -63,12 +63,14 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get parameters() {
-    const param_map: { [key: string]: ParameterValue } = {};
-    for (const [key, value] of Object.entries(this.node_config.getParameters())) {
-      if ('default' in value && value.default !== undefined) {
-        param_map[key] = value.default;
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config.getParameters())) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
       }
     }
-    return param_map;
+    return this._parameters;
   }
 }

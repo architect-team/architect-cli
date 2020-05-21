@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ParameterValue, ServiceDatastore } from '../../service-config/base';
+import { ServiceDatastore } from '../../service-config/base';
 
 interface DatastoreNodeOptions {
   parent_ref: string;
@@ -36,12 +36,14 @@ export class DatastoreNode extends DependencyNode {
   }
 
   get parameters() {
-    const param_map: { [key: string]: ParameterValue } = {};
-    for (const [key, value] of Object.entries(this.node_config.parameters)) {
-      if ('default' in value && value.default !== undefined) {
-        param_map[key] = value.default;
+    if (!this._parameters) {
+      this._parameters = {};
+      for (const [key, value] of Object.entries(this.node_config.parameters)) {
+        if ('default' in value && value.default !== undefined) {
+          this._parameters[key] = value.default;
+        }
       }
     }
-    return param_map;
+    return this._parameters;
   }
 }

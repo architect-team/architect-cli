@@ -3,13 +3,11 @@ description: Example react application
 author: Architect.io
 language: node
 interfaces:
-  main: ${ parameters.API_PORT }
+  main: 8080
 dependencies:
   examples/react-app-backend: latest
 parameters:
   API_ADDR: ${ dependencies['examples/react-app-backend'].interfaces.main.external.url }
-  API_PORT:
-    description: The port the API should run out of
   WORLD_TEXT:
     description: Default greeting text for the landing page
     default: world
