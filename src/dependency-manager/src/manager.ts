@@ -107,8 +107,6 @@ export default abstract class DependencyManager {
   */
   async loadParameters() {
 
-    const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
-
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
     for (const node of this.graph.nodes) {
       for (const interface_name of Object.keys(node.interfaces)) {
@@ -116,11 +114,7 @@ export default abstract class DependencyManager {
       }
     }
 
-    const environment_context = ParameterInterpolator.mapToDataContext(this.graph);
-    for (const node of this.graph.getServiceNodes()) {
-      const interpolated_config = this.interpolateNodeConfig(node, environment_context, friendly_name_map);
-      node.node_config = interpolated_config;
-    }
+    this.interpolateAllNodeConfigs(this.graph);
 
     const all_interface_params = this.buildInterfaceEnvParams(this.graph);
 
@@ -138,7 +132,6 @@ export default abstract class DependencyManager {
 
       // TODO:76: we can kill this section once we remove support for valueFroms
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
-        console.log(node.ref, JSON.stringify(node.parameters));
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
           if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
@@ -220,11 +213,40 @@ export default abstract class DependencyManager {
         }
       }
     }
-
-    console.log(JSON.stringify(this.graph));
   }
 
-  private interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): ServiceConfig {
+  private interpolateAllNodeConfigs(graph: DependencyGraph): void {
+    // map of dependency name (as it is in service config) to normalized_ref
+    // used for lookups in expressions like this: ${ dependencies['friendly/name'].parameters... }
+    const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
+
+    let change_detected = true;
+    let passes = 0;
+    const MAX_DEPTH = 100; //TODO:76
+
+    let environment_context = ParameterInterpolator.mapToDataContext(this.graph);
+
+    // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass
+    while (change_detected && passes < MAX_DEPTH) {
+      change_detected = false;
+      for (const node of this.graph.getServiceNodes()) {
+
+        const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map);
+
+        if (serialize(environment_context) !== serialize(new_environment_context)) {
+          change_detected = true;
+        }
+        environment_context = new_environment_context;
+      }
+      passes++;
+    }
+
+    if (passes >= MAX_DEPTH) {
+      throw new Error('Stack Overflow Error'); //TODO:76: better message
+    }
+  }
+
+  private interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): EnvironmentInterpolationContext {
     let change_detected = true;
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
@@ -235,10 +257,7 @@ export default abstract class DependencyManager {
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
 
-      console.log(`         before`, JSON.stringify(JSON.parse(namespaced_serial_config)));
-      console.log(`         context`, JSON.stringify(environment_context));
       const interpolated_serial_config = ParameterInterpolator.interpolateString(namespaced_serial_config, environment_context);
-      console.log(`         after ${passes}`, JSON.stringify(JSON.parse(interpolated_serial_config)));
       // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
       // going to want to do another pass and set update the environment_context, which requires a full deserialization
       if (interpolated_serial_config !== namespaced_serial_config) {
@@ -254,7 +273,8 @@ export default abstract class DependencyManager {
         environment_context[node.ref] = ParameterInterpolator.map(node);
         namespaced_serial_config = serialize(node.node_config);
       } else {
-        return deserialize(ServiceConfigV1, interpolated_serial_config);
+        node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
+        return environment_context;
       }
       passes++;
     }
