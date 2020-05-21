@@ -7,6 +7,8 @@ export interface DependencyNodeOptions { }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
+
+  //TODO:76:remove
   @Exclude()
   protected _parameters?: { [key: string]: ParameterValue };
 

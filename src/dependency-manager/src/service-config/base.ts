@@ -119,6 +119,9 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getReplicas(): number;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
 
+  //TODO:76: we should be typing the node_config with something other than ServiceConfig; when we do we should remove this method
+  abstract setParameter(key: string, value: ServiceParameter): void;
+
   copy() {
     return classToClass(this);
   }

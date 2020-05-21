@@ -140,10 +140,9 @@ export default abstract class DependencyManager {
 
       // TODO:76: we can kill this section once we remove support for valueFroms
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
+        console.log(node.ref, JSON.stringify(node.parameters));
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
-          if (interpolated_parameters[node.namespace_ref] && !ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][param_name])) {
-            env_params_to_expand[this.scopeEnv(node, param_name)] = interpolated_parameters[node.namespace_ref][param_name]!.toString();
-          } else if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
+          if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
           } else {
             env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
@@ -213,11 +212,13 @@ export default abstract class DependencyManager {
       for (const [prefixed_key, value] of Object.entries(expanded_params)) {
         if (prefixed_key.startsWith(prefix)) {
           const key = prefixed_key.replace(prefix, '');
-          node.parameters[key] = value;
 
-          // if (!ParameterInterpolator.isNullParamValue(interpolated_parameters[node.namespace_ref][key])) {
-          //   node.parameters[key] = interpolated_parameters[node.namespace_ref][key] as ParameterValue;
-          // }
+          // TODO:76: this method is problematic, but we can remove this when we remove valueFroms and magic parameters
+          if (node instanceof ServiceNode || node instanceof DatastoreNode || node instanceof ExternalNode) {
+            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
+            (node.node_config as any).parameters[key].default = value;
+          }
+
         }
       }
     }
