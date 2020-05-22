@@ -249,12 +249,13 @@ export default abstract class DependencyManager {
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
 
-
     for (const node of this.graph.nodes) {
-      if (node instanceof ServiceNode || node instanceof ExternalNode) {
+      if (node instanceof ServiceNode || (node instanceof ExternalNode && node.node_config instanceof ServiceConfig)) {
         const serial_config = serialize(node.node_config);
         const namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
         node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
+      } else if (node instanceof ExternalNode) {
+        //TODO:76: we can't support interpolation of datastore nodes unless we make ServiceDatastore serializable
       }
     }
 
