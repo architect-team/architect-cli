@@ -151,6 +151,7 @@ export default class ServiceRegister extends Command {
         let response_json;
         try {
           response_json = JSON.parse(err.response.data.message);
+          // eslint-disable-next-line no-empty
         } catch{ }
         if (response_json) { // skip if error is a service existing with a different repository than the one being pushed
           throw new Error(JSON.stringify(flattenValidationErrors(response_json), null, 2));
