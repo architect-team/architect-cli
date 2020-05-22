@@ -106,10 +106,10 @@ export default abstract class DependencyManager {
    * Expand all valueFrom parameters into real values that can be used inside of services and datastores
   */
   async loadParameters() {
-
-    //TODO:76:order these and add comments
+    // (1) first we construct the interface_context, a map of node_ref:interface_name:interface_block for use in mapping
     const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
 
+    // (2) we attach the interfac_context to the node_config of each node
     for (const node of this.graph.nodes) {
       const service_interfaces = interface_context[node.ref];
       for (const [interface_name, interface_block] of Object.entries(service_interfaces)) {
@@ -117,8 +117,10 @@ export default abstract class DependencyManager {
       }
     }
 
+    // (3) we interpolate all mustache expressions and replace the node_config of every node inline
     this.interpolateAllNodeConfigs(this.graph, interface_context);
 
+    // (4) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
     const all_interface_params = this.buildInterfaceEnvParams(interface_context);
 
     for (const node of this.graph.nodes) {
@@ -133,7 +135,6 @@ export default abstract class DependencyManager {
     for (const node of this.graph.nodes) {
       const env_params_to_expand: { [key: string]: string } = {};
 
-      // TODO:76: we can kill this section once we remove support for valueFroms
       for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
         if (typeof param_value === 'string' || typeof param_value === 'boolean') {
           if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
@@ -144,7 +145,6 @@ export default abstract class DependencyManager {
         }
       }
 
-      // TODO:76: we can kill this section once we remove support for valueFroms
       if (node instanceof ServiceNode) {
         const node_dependency_names = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
 
@@ -197,7 +197,6 @@ export default abstract class DependencyManager {
       all_env_params = { ...all_env_params, ...all_interface_params, ...env_params_to_expand };
     }
 
-    //TODO:76: we can get rid of most of this block when we remove valueFrom
     // ignoreProcessEnv is important otherwise it will be stored globally
     const dotenv_config = { parsed: all_env_params, ignoreProcessEnv: true };
     const expanded_params = dotenvExpand(dotenv_config).parsed || {};
@@ -207,7 +206,6 @@ export default abstract class DependencyManager {
         if (prefixed_key.startsWith(prefix)) {
           const key = prefixed_key.replace(prefix, '');
 
-          // TODO:76: we can remove this when we get rid of valueFrom
           // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
           const params_from_node_config = (node as any)?.node_config?.parameters;
           if (params_from_node_config && !ParameterInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
@@ -216,7 +214,6 @@ export default abstract class DependencyManager {
             node.parameters[key] = value;
           }
 
-          // TODO:76: we can remove this when we get rid of valueFrom
           // we copy the new parameter value into the node_config if it doesn't already have it
           if (node instanceof ServiceNode) {
             (node.node_config as any).parameters = (node.node_config as any).parameters || {};
@@ -247,7 +244,7 @@ export default abstract class DependencyManager {
 
     let change_detected = true;
     let passes = 0;
-    const MAX_DEPTH = 100; //TODO:76
+    const MAX_DEPTH = 100;
 
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode || (node instanceof ExternalNode && node.node_config instanceof ServiceConfig)) {
@@ -261,7 +258,7 @@ export default abstract class DependencyManager {
 
     let environment_context = ParameterInterpolator.mapToDataContext(graph, interface_context);
 
-    // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass
+    // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass at the entire graph
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
       for (const node of this.graph.nodes) {
@@ -278,7 +275,7 @@ export default abstract class DependencyManager {
     }
 
     if (passes >= MAX_DEPTH) {
-      throw new Error('Stack Overflow Error'); //TODO:76: better message
+      throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
     }
   }
 
@@ -290,7 +287,7 @@ export default abstract class DependencyManager {
   ): EnvironmentInterpolationContext {
     let change_detected = true;
     let passes = 0;
-    const MAX_DEPTH = 100; //TODO:76
+    const MAX_DEPTH = 100;
 
     let serial_config = serialize(node.node_config);
 
@@ -299,7 +296,7 @@ export default abstract class DependencyManager {
 
       const interpolated_serial_config = ParameterInterpolator.interpolateString(serial_config, environment_context);
       // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
-      // going to want to do another pass and set update the environment_context, which requires a full deserialization
+      // going to want to do another pass and set update the environment_context, which requires a full deserialization/serialization
       if (interpolated_serial_config !== serial_config) {
         change_detected = true;
 
@@ -315,7 +312,7 @@ export default abstract class DependencyManager {
       passes++;
     }
 
-    throw new Error('Stack Overflow Error'); //TODO:76: better message
+    throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
   }
 
   private buildInterfaceEnvParams(interface_context: EnvironmentInterfaceContext): { [key: string]: string } {

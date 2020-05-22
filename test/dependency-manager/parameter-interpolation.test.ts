@@ -123,5 +123,43 @@ describe('parameter-interpolation', function () {
     expect(backend_datastore_node.parameters['PORT']).eq('5432');
   });
 
-  // TODO:76:recursive test
+  it('loadParameters-with-expressions-circular-dependency', async () => {
+    const frontend_config = {
+      name: 'architect/cloud',
+      interfaces: {
+        app: 8080
+      },
+      dependencies: {
+      },
+      parameters: {
+        PARAM_A: "${ parameters.PARAM_B }",
+        PARAM_B: "${ parameters.PARAM_A }",
+      }
+    };
+
+    moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+      status: 200,
+      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
+    });
+
+    const env_config = {
+      services: {
+        'architect/cloud:v1': {}
+      }
+    };
+
+    mock_fs({
+      '/stack/src/cloud/architect.json': JSON.stringify(frontend_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const start_time = Date.now();
+    await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true)
+      .catch(error => {
+        expect(error.toString()).to.contain('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack');
+        const duration = Date.now() - start_time;
+        console.log(duration);
+        expect(duration).to.be.lessThan(500); // the worst case scenario (stack overflow) shouldn't take longer than half a second
+      });
+  });
 });

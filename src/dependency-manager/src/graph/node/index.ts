@@ -8,7 +8,6 @@ export interface DependencyNodeOptions { }
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
 
-  //TODO:76:remove
   @Exclude()
   protected _parameters?: { [key: string]: ParameterValue };
 
@@ -21,7 +20,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       .replace(/\//g, '.');
   }
 
-  //TODO:76:consolidate with normalized_ref and find
+  //TODO:87:consolidate with normalized_ref
   get namespace_ref() {
     return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
   }

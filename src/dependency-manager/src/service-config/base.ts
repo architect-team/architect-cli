@@ -22,7 +22,7 @@ export interface ValueFromParameter<T> {
 }
 
 export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
-export type ParameterValueV2 = string | number | boolean | undefined; //TODO:76: switch this over when we remove valueFrom
+export type ParameterValueV2 = string | number | boolean | undefined; //TODO:86: switch over to use this when we remove support for valueFrom syntax
 
 interface RestSubscriptionData {
   uri: string;
