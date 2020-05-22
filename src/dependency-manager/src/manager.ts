@@ -249,19 +249,29 @@ export default abstract class DependencyManager {
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
 
+
+    for (const node of this.graph.nodes) {
+      if (node instanceof ServiceNode || node instanceof ExternalNode) {
+        const serial_config = serialize(node.node_config);
+        const namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
+        node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
+      }
+    }
+
     let environment_context = ParameterInterpolator.mapToDataContext(graph, interface_context);
 
     // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
-      for (const node of graph.getServiceNodes()) {
+      for (const node of this.graph.nodes) {
+        if (node instanceof ServiceNode) {
+          const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map, interface_context);
 
-        const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map, interface_context);
-
-        if (serialize(environment_context) !== serialize(new_environment_context)) {
-          change_detected = true;
+          if (serialize(environment_context) !== serialize(new_environment_context)) {
+            change_detected = true;
+          }
+          environment_context = new_environment_context;
         }
-        environment_context = new_environment_context;
       }
       passes++;
     }
@@ -281,23 +291,22 @@ export default abstract class DependencyManager {
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
 
-    const serial_config = serialize(node.node_config);
-    let namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
+    let serial_config = serialize(node.node_config);
 
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
 
-      const interpolated_serial_config = ParameterInterpolator.interpolateString(namespaced_serial_config, environment_context);
+      const interpolated_serial_config = ParameterInterpolator.interpolateString(serial_config, environment_context);
       // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
       // going to want to do another pass and set update the environment_context, which requires a full deserialization
-      if (interpolated_serial_config !== namespaced_serial_config) {
+      if (interpolated_serial_config !== serial_config) {
         change_detected = true;
 
         const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
         node.node_config = deserialized_config;
         interface_context = this.buildEnvironmentInterfaceContext(this.graph);
         environment_context[node.ref] = ParameterInterpolator.map(node, interface_context[node.ref]);
-        namespaced_serial_config = serialize(node.node_config);
+        serial_config = serialize(node.node_config);
       } else {
         node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
         return environment_context;
