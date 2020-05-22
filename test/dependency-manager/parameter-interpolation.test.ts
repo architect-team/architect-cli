@@ -109,7 +109,6 @@ describe('parameter-interpolation', function () {
     ];
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
-    await manager.loadParameters();
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;

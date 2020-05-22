@@ -121,7 +121,6 @@ export default abstract class DependencyManager {
 
     const all_interface_params = this.buildInterfaceEnvParams(interface_context);
 
-
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
@@ -211,7 +210,7 @@ export default abstract class DependencyManager {
           // TODO:76: we can remove this when we get rid of valueFrom
           // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
           const params_from_node_config = (node as any)?.node_config?.parameters;
-          if (params_from_node_config && params_from_node_config[key]?.default && !params_from_node_config[key].default?.valueFrom) {
+          if (params_from_node_config && !ParameterInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
             node.parameters[key] = (node as any).node_config.parameters[key].default;
           } else {
             node.parameters[key] = value;
