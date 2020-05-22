@@ -142,11 +142,7 @@ export default class ServiceRegister extends Command {
   }
 
   private async post_service_to_api(dto: CreateServiceVersionInput, account_id: string): Promise<any> {
-    try {
-      const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
-      return service_digest;
-    } catch (err) {
-      throw new Error(err.response.data.message);
-    }
+    const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
+    return service_digest;
   }
 }

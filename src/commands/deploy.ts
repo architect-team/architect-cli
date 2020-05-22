@@ -220,12 +220,7 @@ export default class Deploy extends Command {
 
     cli.action.start(chalk.blue('Creating deployment'));
 
-    let deployment;
-    try {
-      deployment = (await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload })).data;
-    } catch (err) {
-      throw new Error(err.response.data.message);
-    }
+    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
