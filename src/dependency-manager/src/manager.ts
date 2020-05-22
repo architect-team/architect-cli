@@ -12,7 +12,7 @@ import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ServiceConfig, ServiceDatastore, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
-import { EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
 import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
 import VaultManager from './vault-manager';
 
@@ -107,18 +107,20 @@ export default abstract class DependencyManager {
   */
   async loadParameters() {
 
-    console.log('before', JSON.stringify(this.graph));
-
     //TODO:76:order these and add comments
+    const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
+
     for (const node of this.graph.nodes) {
-      for (const interface_name of Object.keys(node.interfaces)) {
-        node.interfaces[interface_name] = this.mapToInterfaceContext(node, interface_name);
+      const service_interfaces = interface_context[node.ref];
+      for (const [interface_name, interface_block] of Object.entries(service_interfaces)) {
+        node.interfaces[interface_name] = interface_block;
       }
     }
 
-    this.interpolateAllNodeConfigs(this.graph);
+    this.interpolateAllNodeConfigs(this.graph, interface_context);
 
-    const all_interface_params = this.buildInterfaceEnvParams(this.graph);
+    const all_interface_params = this.buildInterfaceEnvParams(interface_context);
+
 
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
@@ -237,10 +239,9 @@ export default abstract class DependencyManager {
         }
       }
     }
-    console.log('after', JSON.stringify(this.graph));
   }
 
-  private interpolateAllNodeConfigs(graph: DependencyGraph): void {
+  private interpolateAllNodeConfigs(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): void {
     // map of dependency name (as it is in service config) to normalized_ref
     // used for lookups in expressions like this: ${ dependencies['friendly/name'].parameters... }
     const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
@@ -249,14 +250,14 @@ export default abstract class DependencyManager {
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
 
-    let environment_context = ParameterInterpolator.mapToDataContext(this.graph);
+    let environment_context = ParameterInterpolator.mapToDataContext(graph, interface_context);
 
     // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
-      for (const node of this.graph.getServiceNodes()) {
+      for (const node of graph.getServiceNodes()) {
 
-        const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map);
+        const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map, interface_context);
 
         if (serialize(environment_context) !== serialize(new_environment_context)) {
           change_detected = true;
@@ -271,7 +272,12 @@ export default abstract class DependencyManager {
     }
   }
 
-  private interpolateNodeConfig(node: ServiceNode, environment_context: EnvironmentInterpolationContext, friendly_name_map: { [key: string]: { [key: string]: string } }): EnvironmentInterpolationContext {
+  private interpolateNodeConfig(
+    node: ServiceNode,
+    environment_context: EnvironmentInterpolationContext,
+    friendly_name_map: { [key: string]: { [key: string]: string } },
+    interface_context: EnvironmentInterfaceContext,
+  ): EnvironmentInterpolationContext {
     let change_detected = true;
     let passes = 0;
     const MAX_DEPTH = 100; //TODO:76
@@ -290,12 +296,8 @@ export default abstract class DependencyManager {
 
         const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
         node.node_config = deserialized_config;
-        for (const node of this.graph.nodes) {
-          for (const interface_name of Object.keys(node.interfaces)) {
-            node.interfaces[interface_name] = this.mapToInterfaceContext(node, interface_name);
-          }
-        }
-        environment_context[node.ref] = ParameterInterpolator.map(node);
+        interface_context = this.buildEnvironmentInterfaceContext(this.graph);
+        environment_context[node.ref] = ParameterInterpolator.map(node, interface_context[node.ref]);
         namespaced_serial_config = serialize(node.node_config);
       } else {
         node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
@@ -307,49 +309,42 @@ export default abstract class DependencyManager {
     throw new Error('Stack Overflow Error'); //TODO:76: better message
   }
 
-  private buildInterfaceEnvParams(graph: DependencyGraph): { [key: string]: string } {
+  private buildInterfaceEnvParams(interface_context: EnvironmentInterfaceContext): { [key: string]: string } {
     const interface_params: { [key: string]: string } = {};
 
-    for (const node of graph.nodes) {
-      if (node instanceof GatewayNode) {
-        // gateway nodes have a default interface preset on them
-        continue;
-      } else if (node instanceof DatastoreNode || (node instanceof ExternalNode && !(node.node_config instanceof ServiceConfig))) {
-        interface_params[this.scopeEnv(node, `EXTERNAL_HOST`)] = node.interfaces._default.host || '';
+    for (const [node_ref, service_interface_context] of Object.entries(interface_context)) {
+      const node = this.graph.getNodeByRef(node_ref);
+      for (const [interface_name, interface_context] of Object.entries(service_interface_context)) {
+        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = interface_context.external.host;
 
-        interface_params[this.scopeEnv(node, `INTERNAL_HOST`)] = node.interfaces._default.host || '';
-        interface_params[this.scopeEnv(node, `HOST`)] = node.interfaces._default.host || '';
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = interface_context.internal.host;
+        interface_params[this.scopeEnv(node, `${prefix}HOST`)] = interface_context.host;
 
-        interface_params[this.scopeEnv(node, `EXTERNAL_PORT`)] = node.interfaces._default.port?.toString() || '';
-        interface_params[this.scopeEnv(node, `INTERNAL_PORT`)] = node.interfaces._default.port?.toString() || '';
-        interface_params[this.scopeEnv(node, `PORT`)] = node.interfaces._default.port?.toString() || '';
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = interface_context.external.port;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = interface_context.internal.port;
+        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = interface_context.port;
 
-        interface_params[this.scopeEnv(node, `EXTERNAL_PROTOCOL`)] = '';
-        interface_params[this.scopeEnv(node, `INTERNAL_PROTOCOL`)] = '';
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = interface_context.external.protocol;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = interface_context.internal.protocol;
 
-        interface_params[this.scopeEnv(node, `EXTERNAL_URL`)] = '';
-        interface_params[this.scopeEnv(node, `INTERNAL_URL`)] = '';
-      } else {
-        for (const interface_name of Object.keys(node.interfaces)) {
-          const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = node.interfaces[interface_name].external.host;
-
-          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = node.interfaces[interface_name].internal.host;
-          interface_params[this.scopeEnv(node, `${prefix}HOST`)] = node.interfaces[interface_name].host;
-
-          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = node.interfaces[interface_name].external.port;
-          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = node.interfaces[interface_name].internal.port;
-          interface_params[this.scopeEnv(node, `${prefix}PORT`)] = node.interfaces[interface_name].port;
-
-          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = node.interfaces[interface_name].external.protocol;
-          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = node.interfaces[interface_name].internal.protocol;
-
-          interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = node.interfaces[interface_name].external.url;
-          interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = node.interfaces[interface_name].internal.url;
-        }
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context.external.url;
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = interface_context.internal.url;
       }
     }
+
     return interface_params;
+  }
+
+  private buildEnvironmentInterfaceContext(graph: DependencyGraph): EnvironmentInterfaceContext {
+    const environment_interface_context: EnvironmentInterfaceContext = {};
+    for (const node of this.graph.nodes) {
+      environment_interface_context[node.ref] = {};
+      for (const interface_name of Object.keys(node.interfaces)) {
+        environment_interface_context[node.ref][interface_name] = this.mapToInterfaceContext(node, interface_name);
+      }
+    }
+    return environment_interface_context;
   }
 
   private mapToInterfaceContext(node: DependencyNode, interface_name: string): InterfaceContext {

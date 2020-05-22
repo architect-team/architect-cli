@@ -3,7 +3,7 @@ import { ServiceNode } from '../..';
 import DependencyGraph from '../../graph';
 import { InterpolationContext } from '../../interpolation/interpolation-context';
 import { ParameterValueV2 } from '../../service-config/base';
-import { EnvironmentInterpolationContext, EnvironmentParameterMap } from './interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, EnvironmentParameterMap, ServiceInterfaceContext } from './interpolation-context';
 
 
 export class ParameterInterpolator {
@@ -92,26 +92,29 @@ export class ParameterInterpolator {
     return parameter_set;
   }
 
-  public static mapToDataContext(graph: DependencyGraph): EnvironmentInterpolationContext {
+  public static mapToDataContext(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): EnvironmentInterpolationContext {
     const environment_context: EnvironmentInterpolationContext = {};
 
     for (const node of graph.getServiceNodes()) {
-      const service_context = ParameterInterpolator.map(node);
+      const service_context = ParameterInterpolator.map(node, interface_context[node.ref]);
       environment_context[node.namespace_ref] = service_context;
     }
 
     return environment_context;
   }
 
-  public static map(node: ServiceNode): InterpolationContext {
+  public static map(node: ServiceNode, interface_context: ServiceInterfaceContext): InterpolationContext {
     return {
       parameters: Object.entries(node.node_config.getParameters())
         .reduce((result: { [key: string]: any }, [k, v]) => {
           result[k] = v.default;
           return result;
         }, {}),
-      interfaces: Object.entries(node.interfaces)
-        .reduce((result: { [key: string]: any }, [key, value]) => {
+      interfaces: Object.keys(node.interfaces)
+        .map(interface_name => {
+          return { key: interface_name, value: interface_context[interface_name] }
+        })
+        .reduce((result: { [key: string]: any }, { key, value }) => {
           result[key] = value;
           return result;
         }, {}),
