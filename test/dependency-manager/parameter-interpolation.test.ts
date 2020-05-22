@@ -6,6 +6,8 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../src/dependency-manager/src';
+import { EnvironmentInterpolationContext } from '../../src/dependency-manager/src/utils/interpolation/interpolation-context';
+import { ParameterInterpolator } from '../../src/dependency-manager/src/utils/interpolation/parameter-interpolator';
 
 describe('parameter-interpolation', function () {
   beforeEach(async () => {
@@ -161,5 +163,180 @@ describe('parameter-interpolation', function () {
         console.log(duration);
         expect(duration).to.be.lessThan(500); // the worst case scenario (stack overflow) shouldn't take longer than half a second
       });
+  });
+
+  it('ParameterInterpolator.interpolateString works in happy path', async () => {
+    const data_context: EnvironmentInterpolationContext = {
+      service: {
+        parameters: {
+          PARAM_A: 'VALUE_A',
+        },
+        interfaces: {},
+      }
+    };
+
+    const expression = '${ service.parameters.PARAM_A }';
+    const result = ParameterInterpolator.interpolateString(expression, data_context);
+    expect(result).to.equal('VALUE_A');
+  });
+
+  it('ParameterInterpolator.interpolateString observes dollar syntax and not default syntax', async () => {
+    const data_context: EnvironmentInterpolationContext = {
+      service: {
+        parameters: {
+          PARAM_A: 'VALUE_A',
+        },
+        interfaces: {},
+      }
+    };
+
+    const expression = '{{ service.parameters.PARAM_A }}';
+    const result = ParameterInterpolator.interpolateString(expression, data_context);
+    expect(result).to.equal('{{ service.parameters.PARAM_A }}');
+  });
+
+  //TODO:77: this test should start failing when we add validation
+  it('ParameterInterpolator.interpolateString fails silently if expression resolves to empty string', async () => {
+    const data_context: EnvironmentInterpolationContext = {
+      service: {
+        parameters: {
+          PARAM_A: 'VALUE_A',
+        },
+        interfaces: {},
+      }
+    };
+
+    const expression = '${ service.parameters.PARAM_B }';
+    const result = ParameterInterpolator.interpolateString(expression, data_context);
+    expect(result).to.equal('');
+  });
+
+  //TODO:77: this test should start failing when we add validation
+  it('ParameterInterpolator.interpolateString fails silently if expression refers to invalid object', async () => {
+    const data_context: EnvironmentInterpolationContext = {
+      service: {
+        parameters: {
+          PARAM_A: 'VALUE_A',
+        },
+        interfaces: {},
+      }
+    };
+
+    const expression = '${ service.invalidobject.PARAM_A }';
+    const result = ParameterInterpolator.interpolateString(expression, data_context);
+    expect(result).to.equal('');
+  });
+
+  //TODO:77: this test should NOT fail when we add validation
+  it('ParameterInterpolator.interpolateString works if expression references valid empty string', async () => {
+    const data_context: EnvironmentInterpolationContext = {
+      service: {
+        parameters: {
+          PARAM_A: 'VALUE_A',
+          EMPTY_STRING_PARAM: '',
+        },
+        interfaces: {},
+      }
+    };
+
+    const expression = '${ service.parameters.EMPTY_STRING_PARAM }';
+    const result = ParameterInterpolator.interpolateString(expression, data_context);
+    expect(result).to.equal('');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions replaces dependencies with correct node_ref in dot notation', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = '${ dependencies.child1.parameters.PARAM_A }';
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_child1_latest.parameters.PARAM_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions replaces dependencies with correct node_ref in bracket notation', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ dependencies['child1'].parameters.PARAM_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_child1_latest.parameters.PARAM_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions namespaces parameters with node_ref', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ parameters.PARAM_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_serviceA_latest.parameters.PARAM_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions namespaces interfaces with node_ref', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ interfaces.INTERFACE_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_serviceA_latest.interfaces.INTERFACE_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions namespaces interfaces with node_ref', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ interfaces.INTERFACE_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_serviceA_latest.interfaces.INTERFACE_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions namespaces multiple references in the same expression', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ interfaces.INTERFACE_A } other text ${ dependencies['child1'].parameters.PARAM_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_serviceA_latest.interfaces.INTERFACE_A } other text ${ account_child1_latest.parameters.PARAM_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions namespaces references to different dependencies in the same expression', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "${ dependencies['child1'].parameters.PARAM_A } other text ${ dependencies['child2'].parameters.PARAM_A }";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal('${ account_child1_latest.parameters.PARAM_A } other text ${ account_child2_latest.parameters.PARAM_A }');
+  });
+
+  it('ParameterInterpolator.namespaceExpressions does not accidentally match other uses of keywords', async () => {
+    const node_ref = 'account_serviceA_latest';
+    const friendly_name_map: { [key: string]: string } = {
+      child1: 'account_child1_latest',
+      child2: 'account_child2_latest',
+    };
+
+    const expression = "dependencies.notinexpression.shouldnotchange interfaces.text dependencies['plaintext'].noexpression parameters.text";
+    const namespaced_expression = ParameterInterpolator.namespaceExpressions(node_ref, expression, friendly_name_map);
+    expect(namespaced_expression).to.equal("dependencies.notinexpression.shouldnotchange interfaces.text dependencies['plaintext'].noexpression parameters.text");
   });
 });

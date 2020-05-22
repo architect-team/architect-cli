@@ -34,18 +34,18 @@ export class ParameterInterpolator {
     return friendly_name_map;
   }
 
-  public static mapToDataContext(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): EnvironmentInterpolationContext {
+  public static mapGraphToInterpolationContext(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): EnvironmentInterpolationContext {
     const environment_context: EnvironmentInterpolationContext = {};
 
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode)) {
-      const service_context = ParameterInterpolator.map(node, interface_context[node.ref]);
+      const service_context = ParameterInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
       environment_context[node.namespace_ref] = service_context;
     }
 
     return environment_context;
   }
 
-  public static map(node: ServiceNode, interface_context: ServiceInterfaceContext): InterpolationContext {
+  public static mapNodeToInterpolationContext(node: ServiceNode, interface_context: ServiceInterfaceContext): InterpolationContext {
     return {
       parameters: Object.entries(node.node_config.getParameters())
         .reduce((result: { [key: string]: any }, [k, v]) => {
@@ -99,7 +99,7 @@ export class ParameterInterpolator {
     return namespaced_value;
   }
 
-  public static extract_friendly_name_from_brackets(dependency_substring: string) {
+  private static extract_friendly_name_from_brackets(dependency_substring: string) {
     const matches = dependency_substring.match(/dependencies\['([\s\S]*?)'\]/);
     if (matches && matches.length > 1) {
       return matches[1];
@@ -108,7 +108,7 @@ export class ParameterInterpolator {
     }
   }
 
-  public static extract_friendly_name_from_dot_notation(dependency_substring: string) {
+  private static extract_friendly_name_from_dot_notation(dependency_substring: string) {
     const matches = dependency_substring.match(/dependencies\.([\s\S]*?)\./);
     if (matches && matches.length > 1) {
       return matches[1];

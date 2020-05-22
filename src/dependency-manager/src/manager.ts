@@ -256,7 +256,7 @@ export default abstract class DependencyManager {
       }
     }
 
-    let environment_context = ParameterInterpolator.mapToDataContext(graph, interface_context);
+    let environment_context = ParameterInterpolator.mapGraphToInterpolationContext(graph, interface_context);
 
     // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass at the entire graph
     while (change_detected && passes < MAX_DEPTH) {
@@ -303,7 +303,7 @@ export default abstract class DependencyManager {
         const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
         node.node_config = deserialized_config;
         interface_context = this.buildEnvironmentInterfaceContext(this.graph);
-        environment_context[node.ref] = ParameterInterpolator.map(node, interface_context[node.ref]);
+        environment_context[node.ref] = ParameterInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
         serial_config = serialize(node.node_config);
       } else {
         node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
