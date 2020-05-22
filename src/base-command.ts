@@ -33,7 +33,8 @@ export default abstract class extends Command {
     if (err.oclif && err.oclif.exit === 0) return;
 
     if (err.response && err.response.data) {
-      this.error(chalk.red(this.getFormattedJSON(err.response.data)));
+      const error_data = err.response.data;
+      this.error(chalk.red(`\nstatus: ${error_data.statusCode}\npath: ${error_data.path}\nmessage: ${error_data.message}`));
     }
     if (this.app?.config?.log_level === 'debug') {
       throw err;
