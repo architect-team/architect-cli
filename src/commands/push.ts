@@ -74,14 +74,10 @@ export default class Push extends Command {
         });
         cli.action.stop(chalk.green(`Image verified`));
 
-        const config = classToPlain(node.service_config); // debug block data for local should not be posted
-        if ((config as any).debug) {
-          (config as any).debug.path = undefined;
-        }
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config,
+          config: classToPlain(node.service_config),
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);

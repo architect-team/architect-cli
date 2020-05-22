@@ -219,7 +219,6 @@ export default class Deploy extends Command {
     const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
 
     cli.action.start(chalk.blue('Creating deployment'));
-
     const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
 
     if (!flags.auto_approve) {

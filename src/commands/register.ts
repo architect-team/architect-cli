@@ -122,15 +122,11 @@ export default class ServiceRegister extends Command {
 
         const image_without_tag = strip_tag_from_image(image); // we don't need the tag on our image because we use the digest as the key.
 
-        const service_config = classToPlain(node.service_config); // debug block data for local should not be posted
-        if ((service_config as any).debug) {
-          (service_config as any).debug.path = undefined;
-        }
         const service_dto = {
           tag: flags.tag,
           digest: digest,
           config: {
-            ...service_config,
+            ...classToPlain(node.service_config),
             image: image_without_tag,
           },
         };
