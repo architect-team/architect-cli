@@ -10,7 +10,6 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
-import { flattenValidationErrors } from '../dependency-manager/src/utils/errors';
 
 export interface CreateServiceVersionInput {
   tag: string;
@@ -147,16 +146,6 @@ export default class ServiceRegister extends Command {
       const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
       return service_digest;
     } catch (err) {
-      if (err.response.status === 400) {
-        let response_json;
-        try {
-          response_json = JSON.parse(err.response.data.message);
-          // eslint-disable-next-line no-empty
-        } catch{ }
-        if (response_json) { // skip if error is a service existing with a different repository than the one being pushed
-          throw new Error(JSON.stringify(flattenValidationErrors(response_json), null, 2));
-        }
-      }
       throw new Error(err.response.data.message);
     }
   }

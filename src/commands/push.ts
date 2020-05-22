@@ -9,7 +9,6 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage } from '../common/utils/docker';
-import { flattenValidationErrors } from '../dependency-manager/src/utils/errors';
 import { CreateServiceVersionInput } from './register';
 
 
@@ -96,9 +95,6 @@ export default class Push extends Command {
       const { data: service_digest } = await this.app.api.post(`/accounts/${account_id}/services`, dto);
       return service_digest;
     } catch (err) {
-      if (err.response.status === 400) {
-        throw new Error(JSON.stringify(flattenValidationErrors(JSON.parse(err.response.data.message)), null, 2));
-      }
       throw new Error(err.response.data.message);
     }
   }
