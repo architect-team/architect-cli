@@ -12,8 +12,8 @@ import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ServiceConfig, ServiceDatastore, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
+import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
-import { ParameterInterpolator } from './utils/interpolation/parameter-interpolator';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -208,7 +208,7 @@ export default abstract class DependencyManager {
 
           // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
           const params_from_node_config = (node as any)?.node_config?.parameters;
-          if (params_from_node_config && !ParameterInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
+          if (params_from_node_config && !ExpressionInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
             node.parameters[key] = (node as any).node_config.parameters[key].default;
           } else {
             node.parameters[key] = value;
@@ -240,7 +240,7 @@ export default abstract class DependencyManager {
   private interpolateAllNodeConfigs(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): void {
     // map of dependency name (as it is in service config) to normalized_ref
     // used for lookups in expressions like this: ${ dependencies['friendly/name'].parameters... }
-    const friendly_name_map = ParameterInterpolator.build_friendly_name_map(this.graph);
+    const friendly_name_map = ExpressionInterpolator.build_friendly_name_map(this.graph);
 
     let change_detected = true;
     let passes = 0;
@@ -249,14 +249,14 @@ export default abstract class DependencyManager {
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode || (node instanceof ExternalNode && node.node_config instanceof ServiceConfig)) {
         const serial_config = serialize(node.node_config);
-        const namespaced_serial_config = ParameterInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
+        const namespaced_serial_config = ExpressionInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
         node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
       } else if (node instanceof ExternalNode) {
         //TODO:76: we can't support interpolation of datastore nodes unless we make ServiceDatastore serializable
       }
     }
 
-    let environment_context = ParameterInterpolator.mapGraphToInterpolationContext(graph, interface_context);
+    let environment_context = ExpressionInterpolator.mapGraphToInterpolationContext(graph, interface_context);
 
     // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass at the entire graph
     while (change_detected && passes < MAX_DEPTH) {
@@ -294,7 +294,7 @@ export default abstract class DependencyManager {
     while (change_detected && passes < MAX_DEPTH) {
       change_detected = false;
 
-      const interpolated_serial_config = ParameterInterpolator.interpolateString(serial_config, environment_context);
+      const interpolated_serial_config = ExpressionInterpolator.interpolateString(serial_config, environment_context);
       // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
       // going to want to do another pass and set update the environment_context, which requires a full deserialization/serialization
       if (interpolated_serial_config !== serial_config) {
@@ -303,7 +303,7 @@ export default abstract class DependencyManager {
         const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
         node.node_config = deserialized_config;
         interface_context = this.buildEnvironmentInterfaceContext(this.graph);
-        environment_context[node.ref] = ParameterInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
+        environment_context[node.ref] = ExpressionInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
         serial_config = serialize(node.node_config);
       } else {
         node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
@@ -401,7 +401,7 @@ export default abstract class DependencyManager {
         url: internal_url,
         protocol: internal_protocol,
         subdomain: subdomain,
-      }
+      },
     };
   }
 

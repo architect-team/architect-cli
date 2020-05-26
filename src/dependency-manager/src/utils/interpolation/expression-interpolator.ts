@@ -1,15 +1,19 @@
 import Mustache from 'mustache';
 import { ServiceNode } from '../..';
 import DependencyGraph from '../../graph';
-import { InterpolationContext } from '../../interpolation/interpolation-context';
 import { ParameterValueV2 } from '../../service-config/base';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, ServiceInterfaceContext } from './interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterpolationContext, ServiceInterfaceContext } from './interpolation-context';
 
-export class ParameterInterpolator {
+export class ExpressionInterpolator {
+
+  public static TOP_LEVEL_EXPRESSION_KEYS = [
+    'interfaces',
+    'parameters'
+  ];
 
   public static interpolateString(param_value: string, environment_context: EnvironmentInterpolationContext): string {
     Mustache.tags = ['${', '}']; // sets custom delimiters
-    Mustache.escape = function (text) { return text; } // turns off HTML escaping
+    Mustache.escape = function (text) { return text; }; // turns off HTML escaping
     //TODO:77: add validation logic to catch expressions that don't refer to an existing path
     return Mustache.render(param_value, environment_context);
   }
@@ -38,7 +42,7 @@ export class ParameterInterpolator {
     const environment_context: EnvironmentInterpolationContext = {};
 
     for (const node of graph.nodes.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode)) {
-      const service_context = ParameterInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
+      const service_context = ExpressionInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
       environment_context[node.namespace_ref] = service_context;
     }
 
@@ -54,7 +58,7 @@ export class ParameterInterpolator {
         }, {}),
       interfaces: Object.keys(node.interfaces)
         .map(interface_name => {
-          return { key: interface_name, value: interface_context[interface_name] }
+          return { key: interface_name, value: interface_context[interface_name] };
         })
         .reduce((result: { [key: string]: any }, { key, value }) => {
           result[key] = value;
@@ -77,43 +81,22 @@ export class ParameterInterpolator {
 
     let namespaced_value = expression_string;
 
-    const interfaces_search_string = /\$\{\s*interfaces/g;
-    namespaced_value = namespaced_value.replace(interfaces_search_string, `$\{ ${node_ref}.interfaces`);
+    for (const key of ExpressionInterpolator.TOP_LEVEL_EXPRESSION_KEYS) {
+      const search_string = new RegExp('\\$\\{\\s*' + key, 'g');
+      namespaced_value = namespaced_value.replace(search_string, `$\{ ${node_ref}.${key}`);
+    }
 
-    const parameters_search_string = /\$\{\s*parameters/g;
-    namespaced_value = namespaced_value.replace(parameters_search_string, `$\{ ${node_ref}.parameters`);
+    const bracket_notation_matcher = /\$\{\s*dependencies\['([\s\S]*?)'\]\./g;
+    const dot_notation_matcher = /\$\{\s*dependencies\.([\s\S]*?)\./g;
 
-    const bracket_notation_matcher = /\$\{\s*dependencies\[(.*?)\]\./g;
-    const dot_notation_matcher = /\$\{\s*dependencies\.(.*?)\./g;
-
-    namespaced_value = namespaced_value.replace(bracket_notation_matcher, (m) => {
-      const dep = ParameterInterpolator.extract_friendly_name_from_brackets(m);
-      return '${ ' + friendly_name_map[dep] + '.';
+    namespaced_value = namespaced_value.replace(bracket_notation_matcher, (_, match) => {
+      return '${ ' + friendly_name_map[match] + '.';
     });
 
-    namespaced_value = namespaced_value.replace(dot_notation_matcher, (m) => {
-      const dep = ParameterInterpolator.extract_friendly_name_from_dot_notation(m);
-      return '${ ' + friendly_name_map[dep] + '.';
+    namespaced_value = namespaced_value.replace(dot_notation_matcher, (_, match) => {
+      return '${ ' + friendly_name_map[match] + '.';
     });
 
     return namespaced_value;
-  }
-
-  private static extract_friendly_name_from_brackets(dependency_substring: string) {
-    const matches = dependency_substring.match(/dependencies\['([\s\S]*?)'\]/);
-    if (matches && matches.length > 1) {
-      return matches[1];
-    } else {
-      throw new Error('Bad format for parameter:' + dependency_substring);
-    }
-  }
-
-  private static extract_friendly_name_from_dot_notation(dependency_substring: string) {
-    const matches = dependency_substring.match(/dependencies\.([\s\S]*?)\./);
-    if (matches && matches.length > 1) {
-      return matches[1];
-    } else {
-      throw new Error('Bad format for parameter:' + dependency_substring);
-    }
   }
 }
