@@ -1,4 +1,4 @@
-import { deserialize, serialize } from 'class-transformer';
+import { deserialize, plainToClass, serialize } from 'class-transformer';
 import dotenvExpand from 'dotenv-expand';
 import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
@@ -98,8 +98,8 @@ export default abstract class DependencyManager {
   protected abstract toExternalProtocol(node: DependencyNode, interface_key: string): string;
   protected abstract toExternalHost(node: DependencyNode, interface_key: string): string;
   protected abstract toInternalHost(node: DependencyNode): string;
-  protected toInternalPort(node: DependencyNode, interface_name: string): string {
-    return node.interfaces[interface_name].port.toString();
+  protected toInternalPort(node: DependencyNode, interface_name: string): number {
+    return node.interfaces[interface_name].port;
   }
 
   /*
@@ -306,7 +306,7 @@ export default abstract class DependencyManager {
         environment_context[node.ref] = ExpressionInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
         serial_config = serialize(node.node_config);
       } else {
-        node.node_config = deserialize(ServiceConfigV1, interpolated_serial_config);
+        node.node_config = plainToClass(ServiceConfigV1, deserialize(ServiceConfigV1, interpolated_serial_config), { enableImplicitConversion: true });
         return environment_context;
       }
       passes++;
@@ -322,19 +322,19 @@ export default abstract class DependencyManager {
       const node = this.graph.getNodeByRef(node_ref);
       for (const [interface_name, interface_context] of Object.entries(service_interface_context)) {
         const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = interface_context.external.host;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = interface_context.external.host || '';
 
         interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = interface_context.internal.host;
         interface_params[this.scopeEnv(node, `${prefix}HOST`)] = interface_context.host;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = interface_context.external.port;
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = interface_context.internal.port;
-        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = interface_context.port;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = interface_context.external.port ? interface_context.external.port.toString() : '';
+        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = interface_context.internal.port ? interface_context.internal.port.toString() : '';
+        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = interface_context.port.toString();
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = interface_context.external.protocol;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = interface_context.external.protocol || '';
         interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = interface_context.internal.protocol;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context.external.url;
+        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context.external.url || '';
         interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = interface_context.internal.url;
       }
     }
@@ -355,24 +355,24 @@ export default abstract class DependencyManager {
 
   private mapToInterfaceContext(node: DependencyNode, interface_name: string): InterfaceContext {
     const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? this.gateway_port : '';
+    const gateway_port = gateway_node ? this.gateway_port : undefined;
     const interface_details = node.interfaces[interface_name];
 
-    let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
+    let external_host: string, internal_host: string, external_port: number | undefined, internal_port: number, external_protocol: string | undefined, internal_protocol: string;
     if (node instanceof ExternalNode) {
       if (!interface_details.host) {
         throw new Error('External node needs to override the host');
       }
       external_host = interface_details.host;
       internal_host = interface_details.host;
-      external_port = interface_details.port.toString();
-      internal_port = interface_details.port.toString();
+      external_port = interface_details.port;
+      internal_port = interface_details.port;
       external_protocol = 'https';
       internal_protocol = 'https';
     } else {
       external_host = this.toExternalHost(node, interface_name);
       internal_host = this.toInternalHost(node);
-      external_port = gateway_port.toString();
+      external_port = gateway_port;
       internal_port = this.toInternalPort(node, interface_name);
       external_protocol = this.toExternalProtocol(node, interface_name);
       internal_protocol = 'http';

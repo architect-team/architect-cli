@@ -59,7 +59,7 @@ describe('external nodes', function () {
     expect(graph.nodes).length(1);
     expect(graph.nodes[0]).instanceOf(ExternalNode);
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq('80');
+    expect(graph.nodes[0].interfaces.app.port).eq(80);
     expect(graph.edges).length(0);
   });
 
@@ -102,7 +102,7 @@ describe('external nodes', function () {
     expect(graph.nodes).length(1);
     expect(graph.nodes[0]).instanceOf(ExternalNode);
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq('80');
+    expect(graph.nodes[0].interfaces.app.port).eq(80);
     expect(graph.edges).length(0);
   });
 
@@ -147,7 +147,7 @@ describe('external nodes', function () {
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[1]).instanceOf(ExternalNode);
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq('80');
+    expect(graph.nodes[1].interfaces.api.port).eq(80);
     expect(graph.edges).length(1);
   });
 
@@ -209,7 +209,7 @@ describe('external nodes', function () {
     expect(graph.nodes[1]).instanceOf(ExternalNode);
     expect(graph.nodes[1].ref).eq('architect/frontend:v1.architect/backend:v2')
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq('80');
+    expect(graph.nodes[1].interfaces.api.port).eq(80);
     expect(graph.edges).length(1);
   });
 
