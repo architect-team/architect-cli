@@ -160,7 +160,6 @@ describe('expression-interpolation', function () {
       .catch(error => {
         expect(error.toString()).to.contain('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack');
         const duration = Date.now() - start_time;
-        console.log(duration);
         expect(duration).to.be.lessThan(500); // the worst case scenario (stack overflow) shouldn't take longer than half a second
       });
   });

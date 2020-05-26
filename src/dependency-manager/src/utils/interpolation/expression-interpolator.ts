@@ -6,9 +6,15 @@ import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, Interpola
 
 export class ExpressionInterpolator {
 
+  /**
+   * Keys available for top level use in expressions excludes `dependencies` which is handled as a unique case.
+   *
+   * ie ${ interfaces.X }  or ${ parameters.Y }
+   */
   public static TOP_LEVEL_EXPRESSION_KEYS = [
     'interfaces',
     'parameters'
+    // do not include 'dependencies'
   ];
 
   public static interpolateString(param_value: string, environment_context: EnvironmentInterpolationContext): string {
