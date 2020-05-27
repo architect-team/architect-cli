@@ -3,7 +3,6 @@ import path from 'path';
 import { DatastoreNode, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
-import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
@@ -43,7 +42,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
     }
 
-    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
+    if ((node instanceof ServiceNode && !node.is_external) || (node instanceof DatastoreNode && !node.is_external)) {
       const ports = [];
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
@@ -60,7 +59,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
     }
 
-    if (node instanceof ServiceNode) {
+    if (node instanceof ServiceNode && !node.is_external) {
       compose.services[node.normalized_ref].command = node.node_config.getCommand();
       if (node.node_config.getEntrypoint().length) {
         compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
@@ -138,7 +137,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     const node_from = dependency_manager.graph.getNodeByRef(edge.from);
     const node_to = dependency_manager.graph.getNodeByRef(edge.to);
 
-    if (node_to instanceof ExternalNode) {
+    if ((node_to instanceof ServiceNode && node_to.is_external) || (node_to instanceof DatastoreNode && node_to.is_external)) {
       continue;
     }
 

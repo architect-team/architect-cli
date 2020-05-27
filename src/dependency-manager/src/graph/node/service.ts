@@ -1,10 +1,10 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceConfig } from '../../service-config/base';
+import { ServiceConfig, ServiceInterfaceSpec } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
-  image: string;
+  image?: string;
   tag?: string;
   digest?: string;
   service_config: ServiceConfig;
@@ -14,7 +14,7 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  image!: string;
+  image?: string;
   tag!: string;
   digest?: string;
   @Type(() => ServiceConfig, {
@@ -72,5 +72,9 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       }
     }
     return this._parameters;
+  }
+
+  get is_external() {
+    return Object.values(this.node_config.getInterfaces() || {}).filter((i: ServiceInterfaceSpec) => i.host).length > 0;
   }
 }
