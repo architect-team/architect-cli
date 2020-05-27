@@ -45,6 +45,13 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   }
 
   get is_external() {
-    return false;
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => {
+      // Interpolation modifies the node.interfaces
+      if (i.internal && i.external) {
+        return i.internal.host === i.external.host;
+      } else {
+        return i.host;
+      }
+    });
   }
 }

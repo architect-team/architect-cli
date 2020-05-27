@@ -73,8 +73,4 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
     return this._parameters;
   }
-
-  get is_external() {
-    return Object.keys(this.node_config.getInterfaces()).length > 0 && Object.values(this.node_config.getInterfaces()).every((i) => (i.host));
-  }
 }
