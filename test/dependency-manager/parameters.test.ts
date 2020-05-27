@@ -50,6 +50,10 @@ describe('parameters', function () {
             interface: 'admin',
             value: '$PORT'
           }
+        },
+        SOME_BOOLEAN_PARAM: {
+          description: "A boolean param that should end up as a string",
+          default: false,
         }
       },
       datastores: {
@@ -129,7 +133,9 @@ describe('parameters', function () {
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
+    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', ...default_keys]);
+    expect(frontend_node.parameters['SOME_BOOLEAN_PARAM']).eq('false');
+    expect(frontend_node.parameters['SOME_BOOLEAN_PARAM']).not.eq(false);
     expect(frontend_node.parameters['DB_USER']).eq('root');
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081');

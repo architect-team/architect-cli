@@ -209,7 +209,8 @@ export default abstract class DependencyManager {
           // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
           const params_from_node_config = (node as any)?.node_config?.parameters;
           if (params_from_node_config && !ExpressionInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
-            node.parameters[key] = (node as any).node_config.parameters[key].default;
+            const interpolated_value = (node as any).node_config.parameters[key].default;
+            node.parameters[key] = typeof interpolated_value == 'boolean' ? interpolated_value.toString() : interpolated_value;
           } else {
             node.parameters[key] = value;
           }
