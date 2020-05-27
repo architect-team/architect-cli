@@ -3,7 +3,6 @@ import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
-import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
@@ -65,24 +64,6 @@ export default abstract class DependencyManager {
       node_config = node_config.merge(debug_options);
     }
     return node_config;
-  }
-
-  /**
-   * Loop through the nodes and enrich the graph with edges between notifiers and subscribers
-   */
-  protected loadSubscriptions() {
-    for (const node of this.graph.nodes) {
-      if (node instanceof ServiceNode) {
-        for (const svc_name of Object.keys(node.node_config.getSubscriptions())) {
-          const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
-
-          if (ref && this.graph.nodes_map.has(ref)) {
-            const edge = new NotificationEdge(ref, node.ref);
-            this.graph.addEdge(edge);
-          }
-        }
-      }
-    }
   }
 
   protected scopeEnv(node: DependencyNode, key: string) {

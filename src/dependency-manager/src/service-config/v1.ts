@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsIn, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
@@ -8,7 +8,7 @@ import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceConfig, ServiceDatastore, ServiceEventNotifications, ServiceEventSubscriptions, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { ServiceConfig, ServiceDatastore, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -100,36 +100,6 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
   }
   return output;
 };
-
-class NotificationSpecV1 extends BaseSpec {
-  @IsString({ always: true })
-  description!: string;
-}
-
-class RestSubscriptionDataV1 extends BaseSpec {
-  @IsString({ always: true })
-  uri!: string;
-
-  @IsOptional({ always: true })
-  headers?: Dictionary<string>;
-}
-
-class SubscriptionSpecV1 extends BaseSpec {
-  @IsString({ always: true })
-  @IsIn(['rest', 'grpc'], { always: true })
-  type!: string;
-
-  @Type(() => RestSubscriptionDataV1)
-  @ValidateIf(obj => obj.type === 'rest', { always: true })
-  @IsInstance(RestSubscriptionDataV1, { always: true })
-  data?: RestSubscriptionDataV1;
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    errors = await validateNested(this, 'data', errors, options);
-    return errors;
-  }
-}
 
 class ServiceDatastoreV1 extends BaseSpec {
   @IsOptional({ always: true })
@@ -358,27 +328,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsInstance(LivenessProbeV1, { always: true })
   liveness_probe?: LivenessProbeV1;
 
-  @Transform(Dict(() => NotificationSpecV1), { toClassOnly: true })
-  @IsOptional({ always: true })
-  notifications?: Dictionary<NotificationSpecV1>;
-
-  @Transform((subscriptions: Dictionary<Dictionary<any>> | undefined) => {
-    if (!subscriptions) {
-      return undefined;
-    }
-
-    const res = {} as Dictionary<Dictionary<SubscriptionSpecV1>>;
-    for (const [service_name, events] of Object.entries(subscriptions)) {
-      res[service_name] = {};
-      for (const [event_name, data] of Object.entries(events)) {
-        res[service_name][event_name] = plainToClass(SubscriptionSpecV1, data);
-      }
-    }
-    return res;
-  }, { toClassOnly: true })
-  @IsOptional({ always: true })
-  subscriptions?: Dictionary<Dictionary<SubscriptionSpecV1>>;
-
   @IsOptional({ always: true })
   platforms?: Dictionary<any>;
 
@@ -541,29 +490,6 @@ export class ServiceConfigV1 extends ServiceConfig {
         }
 
         throw new Error('Missing datastore docker config which is required for provisioning');
-      }, {});
-  }
-
-  getNotifications(): ServiceEventNotifications {
-    return this.notifications || {};
-  }
-
-  getSubscriptions(): ServiceEventSubscriptions {
-    const subscriptions = this.subscriptions || {};
-    return Object.keys(subscriptions)
-      .reduce((res: ServiceEventSubscriptions, service_name: string) => {
-        const events = subscriptions[service_name];
-        Object.entries(events).forEach(([event_name, event_config]) => {
-          res[service_name] = res[service_name] || {};
-          res[service_name][event_name] = {
-            type: event_config.type,
-            data: {
-              uri: event_config.data?.uri || '',
-              headers: event_config.data?.headers,
-            },
-          };
-        });
-        return res;
       }, {});
   }
 

@@ -44,7 +44,6 @@ export default class LocalDependencyManager extends DependencyManager {
         }
       }
     }
-    dependency_manager.loadSubscriptions();
     await dependency_manager.loadParameters();
     return dependency_manager;
   }

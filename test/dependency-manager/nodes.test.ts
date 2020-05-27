@@ -66,8 +66,6 @@ describe('nodes', function () {
           interfaces: {
             main: '8080'
           },
-          notifications: [],
-          subscriptions: {},
           platforms: {},
           description: 'backend for test stack',
           keywords: [''],
