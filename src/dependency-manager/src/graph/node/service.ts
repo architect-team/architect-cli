@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceConfig, ServiceInterfaceSpec } from '../../service-config/base';
+import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
@@ -75,6 +75,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get is_external() {
-    return Object.values(this.node_config.getInterfaces() || {}).filter((i: ServiceInterfaceSpec) => i.host).length > 0;
+    return Object.keys(this.node_config.getInterfaces()).length > 0 && Object.values(this.node_config.getInterfaces()).every((i) => (i.host));
   }
 }

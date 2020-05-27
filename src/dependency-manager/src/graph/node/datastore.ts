@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceDatastore, ServiceInterfaceSpec } from '../../service-config/base';
+import { ServiceDatastore } from '../../service-config/base';
 
 interface DatastoreNodeOptions {
   parent_ref: string;
@@ -48,8 +48,6 @@ export class DatastoreNode extends DependencyNode {
   }
 
   get is_external() {
-    console.log('ext check**********')
-    console.log(Object.values(this.interfaces || {}).filter((i: ServiceInterfaceSpec) => i.host).length > 0)
-    return Object.values(this.interfaces || {}).filter((i: ServiceInterfaceSpec) => i.host).length > 0;
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => (i.host))
   }
 }

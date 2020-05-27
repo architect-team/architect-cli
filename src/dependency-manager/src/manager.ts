@@ -316,8 +316,14 @@ export default abstract class DependencyManager {
     if (existing_node) {
       return existing_node as ServiceNode;
     }
+
     if (Object.keys(config.getInterfaces()).length > 0 && Object.values(config?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(config, service_ref);
+      const external_node = new ServiceNode({
+        service_config: config,
+        node_config: config,
+      });
+      this.graph.addNode(external_node);
+      return external_node;
     }
 
     const service_node = await this.loadServiceNode(config);
@@ -341,17 +347,5 @@ export default abstract class DependencyManager {
       image: node_config.getImage(),
       digest: node_config.getDigest(),
     });
-  }
-
-  /**
-   * Create an external node and add it to the graph
-   */
-  async loadExternalService(env_service_config: ServiceConfig, service_ref: string) {
-    const node = new ServiceNode({
-      service_config: env_service_config,
-      node_config: env_service_config,
-    });
-    this.graph.addNode(node);
-    return node;
   }
 }
