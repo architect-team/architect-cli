@@ -8,8 +8,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { DependencyParameter, ValueFromParameter } from '../../src/dependency-manager/src';
-import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
+import { DependencyParameter, ServiceNode, ValueFromParameter } from '../../src/dependency-manager/src';
 
 describe('interfaces', function () {
 
@@ -229,7 +228,7 @@ describe('interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json')
     const graph: LocalDependencyGraph = manager.graph;
 
-    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ExternalNode;
+    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ServiceNode;
     expect(backend_node.interfaces!.main.port).eq(8080);
     expect(backend_node.interfaces!.secondary.port).eq(8081);
 

@@ -3,7 +3,6 @@ import path from 'path';
 import { DatastoreNode, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
-import { ExternalNode } from '../../dependency-manager/src/graph/node/external';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import { LocalServiceNode } from '../dependency-manager/local-service-node';
@@ -19,16 +18,17 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   const limit = pLimit(5);
   const port_promises = [];
   for (const node of dependency_manager.graph.nodes) {
-    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
-      for (const _ of node.ports) {
-        port_promises.push(limit(() => dependency_manager.getServicePort()));
-      }
+    if (node.is_external) continue;
+    for (const _ of node.ports) {
+      port_promises.push(limit(() => dependency_manager.getServicePort()));
     }
   }
   const available_ports = (await Promise.all(port_promises)).sort();
 
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
+    if (node.is_external) continue;
+
     if (node instanceof GatewayNode) {
       compose.services[node.normalized_ref] = {
         image: 'registry.architect.io/architect-nginx/proxy:latest',
@@ -138,7 +138,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     const node_from = dependency_manager.graph.getNodeByRef(edge.from);
     const node_to = dependency_manager.graph.getNodeByRef(edge.to);
 
-    if (node_to instanceof ExternalNode) {
+    if (node_to.is_external) {
       continue;
     }
 

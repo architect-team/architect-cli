@@ -34,7 +34,7 @@ export default class LocalDependencyManager extends DependencyManager {
     await dependency_manager.init();
     for (const config of Object.values(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
-      if (svc_node instanceof ServiceNode) {
+      if (!svc_node.is_external) {
         const interfaces = svc_node.node_config.getInterfaces();
         const external_interfaces_count = Object.values(interfaces).filter(i => i.subdomain).length;
         if (external_interfaces_count) {

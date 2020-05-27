@@ -37,4 +37,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   get protocol() {
     return '';
   }
+
+  get is_external() {
+    return false;
+  }
 }

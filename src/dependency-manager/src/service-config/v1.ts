@@ -202,7 +202,7 @@ class InterfaceSpecV1 extends BaseSpec {
   @IsString({ always: true })
   host?: string;
 
-  @IsOptional({ groups: ['operator'] })
+  @ValidateIf(obj => obj.host, { groups: ['operator'] })
   @IsNumber(undefined, { always: true })
   port?: number;
 
