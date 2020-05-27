@@ -122,7 +122,7 @@ export default abstract class DependencyManager {
           }
           external_host = interface_details.host;
           internal_host = interface_details.host;
-          external_port = interface_details.port.toString();
+          external_port = interface_details.port.toString(); // TODO: validation to require both host and port for external interface if host exists
           internal_port = interface_details.port.toString();
           external_protocol = 'https';
           internal_protocol = 'https';

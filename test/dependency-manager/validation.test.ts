@@ -800,5 +800,29 @@ describe('validation (v1 spec)', () => {
       expect(config_err['liveness_probe.port']).to.include({ isNumber: 'port must be a number conforming to the specified constraints' });
       expect(config_err['liveness_probe.command']).to.include({ isString: 'each value in command must be a string' });
     });
+
+    it('should require an operator to specify a port if a host is specified', async () => {
+      const env_config = {
+        "services": {
+          "architect/registry:latest": {
+            "interfaces": {
+              "main": {
+                "host": "172.0.1.2"
+              },
+            },
+          },
+        },
+      };
+
+      const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(env_config);
+      const errors = await parsedSpec.validate({
+        groups: ['operator'],
+      });
+      const flattened_errors = flattenValidationErrors(errors);
+      expect(Object.keys(flattened_errors)).members([
+        'services.architect/registry:latest.interfaces.main.port',
+      ]);
+      expect(errors.length).to.equal(1);
+    });
   });
 });
