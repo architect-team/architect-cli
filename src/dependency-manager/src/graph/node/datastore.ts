@@ -48,6 +48,6 @@ export class DatastoreNode extends DependencyNode {
   }
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => (i.host))
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => (i.host));
   }
 }
