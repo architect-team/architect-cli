@@ -57,7 +57,6 @@ describe('service config merge', function () {
           'mount_path': '/db'
         }
       },
-      'subscriptions': {},
       'keywords': [],
       'debug': './test.ts'
     };

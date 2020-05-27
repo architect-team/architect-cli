@@ -36,6 +36,7 @@ export default class AppService {
     }));
     this._api = axios.create({
       baseURL: this.config.api_host,
+      timeout: 10000,
     });
 
     const linkedServicesFile = path.join(config_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);

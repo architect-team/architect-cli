@@ -7,7 +7,6 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
 import GatewayNode from '../../src/dependency-manager/src/graph/node/gateway';
 import { ServiceNode } from '../../src/dependency-manager/src/graph/node/service';
 
@@ -67,8 +66,6 @@ describe('nodes', function () {
           interfaces: {
             main: '8080'
           },
-          notifications: [],
-          subscriptions: {},
           platforms: {},
           description: 'backend for test stack',
           keywords: [''],
@@ -122,7 +119,7 @@ describe('nodes', function () {
 
   it('load ExternalNode', async () => {
     const external_node = graph.getNodeByRef('architect/frontend:latest');
-    expect(external_node instanceof ExternalNode).true;
+    expect((external_node as ServiceNode).is_external).true;
   });
 
   it('load GatewayNode', async () => {

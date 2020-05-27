@@ -5,8 +5,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ServiceNode } from '../../src/dependency-manager/src';
-import { ExternalNode } from '../../src/dependency-manager/src/graph/node/external';
+import { DatastoreNode, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('external nodes', function () {
   beforeEach(async () => {
@@ -57,7 +56,7 @@ describe('external nodes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     const graph = manager.graph;
     expect(graph.nodes).length(1);
-    expect(graph.nodes[0]).instanceOf(ExternalNode);
+    expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
     expect(graph.nodes[0].interfaces.app.port).eq(80);
     expect(graph.edges).length(0);
@@ -100,7 +99,7 @@ describe('external nodes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
     const graph = manager.graph;
     expect(graph.nodes).length(1);
-    expect(graph.nodes[0]).instanceOf(ExternalNode);
+    expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
     expect(graph.nodes[0].interfaces.app.port).eq(80);
     expect(graph.edges).length(0);
@@ -145,7 +144,7 @@ describe('external nodes', function () {
     const graph = manager.graph;
     expect(graph.nodes).length(2);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[1]).instanceOf(ExternalNode);
+    expect((graph.nodes[1] as ServiceNode).is_external).true;
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
     expect(graph.nodes[1].interfaces.api.port).eq(80);
     expect(graph.edges).length(1);
@@ -206,7 +205,7 @@ describe('external nodes', function () {
     expect(graph.nodes).length(2);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[0].ref).eq('architect/frontend:v1')
-    expect(graph.nodes[1]).instanceOf(ExternalNode);
+    expect((graph.nodes[1] as ServiceNode).is_external).true;
     expect(graph.nodes[1].ref).eq('architect/frontend:v1.architect/backend:v2')
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
     expect(graph.nodes[1].interfaces.api.port).eq(80);
@@ -274,7 +273,7 @@ describe('external nodes', function () {
     expect(graph.nodes).length(3);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[1]).instanceOf(ServiceNode);
-    expect(graph.nodes[2]).instanceOf(ExternalNode);
+    expect((graph.nodes[2] as DatastoreNode).is_external).true;
     expect(graph.nodes[2].interfaces._default.host).eq('db.localhost');
     expect(graph.nodes[2].interfaces._default.port).eq(80);
     expect(graph.edges).length(2);

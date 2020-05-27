@@ -24,11 +24,6 @@ export interface ValueFromParameter<T> {
 export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
 export type ParameterValueV2 = string | number | undefined; //TODO:86: switch over to use this when we remove support for valueFrom syntax
 
-interface RestSubscriptionData {
-  uri: string;
-  headers?: { [key: string]: string };
-}
-
 export interface ServiceParameter {
   description: string;
   default?: ParameterValue;
@@ -42,21 +37,6 @@ export interface ServiceDatastore {
   image?: string;
   parameters: {
     [key: string]: ServiceParameter;
-  };
-}
-
-export interface ServiceEventNotifications {
-  [notification_name: string]: {
-    description: string;
-  };
-}
-
-export interface ServiceEventSubscriptions {
-  [service_ref: string]: {
-    [event_name: string]: {
-      type: string;
-      data: RestSubscriptionData;
-    };
   };
 }
 
@@ -107,8 +87,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
-  abstract getNotifications(): ServiceEventNotifications;
-  abstract getSubscriptions(): ServiceEventSubscriptions;
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };

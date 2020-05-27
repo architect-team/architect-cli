@@ -4,7 +4,7 @@ import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
-  image: string;
+  image?: string;
   tag?: string;
   digest?: string;
   service_config: ServiceConfig;
@@ -14,7 +14,7 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  image!: string;
+  image?: string;
   tag!: string;
   digest?: string;
   @Type(() => ServiceConfig, {
@@ -72,5 +72,9 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       }
     }
     return this._parameters;
+  }
+
+  get is_external() {
+    return Object.keys(this.node_config.getInterfaces()).length > 0 && Object.values(this.node_config.getInterfaces()).every((i) => (i.host));
   }
 }

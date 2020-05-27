@@ -11,7 +11,6 @@ describe('service config builder', function () {
         "dependencies": {},
         "parameters": {},
         "datastores": {},
-        "subscriptions": {},
         "keywords": [],
       };
       const serviceConfigWithConfigPort = { ...serviceConfigWithNoPort, port: '8081' };

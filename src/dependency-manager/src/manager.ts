@@ -4,13 +4,11 @@ import { ServiceConfigBuilder, ServiceNode } from '.';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
-import NotificationEdge from './graph/edge/notification';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
-import { ExternalNode } from './graph/node/external';
 import GatewayNode from './graph/node/gateway';
-import { DatastoreParameter, DependencyParameter, ServiceConfig, ServiceDatastore, ValueFromParameter, VaultParameter } from './service-config/base';
+import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
@@ -70,24 +68,6 @@ export default abstract class DependencyManager {
       node_config = node_config.merge(debug_options);
     }
     return node_config;
-  }
-
-  /**
-   * Loop through the nodes and enrich the graph with edges between notifiers and subscribers
-   */
-  protected loadSubscriptions() {
-    for (const node of this.graph.nodes) {
-      if (node instanceof ServiceNode) {
-        for (const svc_name of Object.keys(node.node_config.getSubscriptions())) {
-          const ref = Array.from(this.graph.nodes_map.keys()).find(key => key.startsWith(svc_name));
-
-          if (ref && this.graph.nodes_map.has(ref)) {
-            const edge = new NotificationEdge(ref, node.ref);
-            this.graph.addEdge(edge);
-          }
-        }
-      }
-    }
   }
 
   protected scopeEnv(node: DependencyNode, key: string) {
@@ -216,22 +196,10 @@ export default abstract class DependencyManager {
           }
 
           // we copy the new parameter value into the node_config if it doesn't already have it
-          if (node instanceof ServiceNode) {
+          if (node instanceof ServiceNode || node instanceof DatastoreNode) {
             (node.node_config as any).parameters = (node.node_config as any).parameters || {};
             (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
             (node.node_config as any).parameters[key].default = node.parameters[key];
-          } else if (node instanceof DatastoreNode) {
-            node.node_config.parameters = node.node_config.parameters || {};
-            node.node_config.parameters[key] = node.node_config.parameters[key] || {};
-            node.node_config.parameters[key].default = node.parameters[key];
-          } else if (node instanceof ExternalNode && node.node_config instanceof ServiceConfig) {
-            (node.node_config as any).parameters = (node.node_config as any).parameters || {};
-            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
-            (node.node_config as any).parameters[key].default = node.parameters[key];
-          } else if (node instanceof ExternalNode) {
-            (node.node_config as ServiceDatastore).parameters = (node.node_config as ServiceDatastore).parameters || {};
-            (node.node_config as ServiceDatastore).parameters[key] = (node.node_config as ServiceDatastore).parameters[key] || {};
-            (node.node_config as ServiceDatastore).parameters[key].default = node.parameters[key];
           }
         }
       }
@@ -248,11 +216,11 @@ export default abstract class DependencyManager {
     const MAX_DEPTH = 100;
 
     for (const node of this.graph.nodes) {
-      if (node instanceof ServiceNode || (node instanceof ExternalNode && node.node_config instanceof ServiceConfig)) {
+      if (node instanceof ServiceNode) {
         const serial_config = serialize(node.node_config);
         const namespaced_serial_config = ExpressionInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
         node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
-      } else if (node instanceof ExternalNode) {
+      } else if (node instanceof DatastoreNode) {
         //TODO:76: we can't support interpolation of datastore nodes unless we make ServiceDatastore serializable
       }
     }
@@ -360,7 +328,7 @@ export default abstract class DependencyManager {
     const interface_details = node.interfaces[interface_name];
 
     let external_host: string, internal_host: string, external_port: number | undefined, internal_port: number, external_protocol: string | undefined, internal_protocol: string;
-    if (node instanceof ExternalNode) {
+    if (node.is_external) {
       if (!interface_details.host) {
         throw new Error('External node needs to override the host');
       }
@@ -418,24 +386,14 @@ export default abstract class DependencyManager {
    * Similar to `loadDependencies()`, but iterates over the datastores instead
    */
   protected async loadDatastores(parent_node: ServiceNode) {
-    if (parent_node instanceof ExternalNode) { return; }
+    if (parent_node.is_external) { return; }
 
     for (const [ds_name, ds_config] of Object.entries(parent_node.node_config.getDatastores())) {
-      let dep_node;
-
-      if (ds_config.host) {
-        dep_node = new ExternalNode({
-          parent_ref: parent_node.ref,
-          key: ds_name,
-          node_config: ds_config,
-        });
-      } else {
-        dep_node = new DatastoreNode({
-          parent_ref: parent_node.ref,
-          key: ds_name,
-          node_config: ds_config,
-        });
-      }
+      const dep_node = new DatastoreNode({
+        parent_ref: parent_node.ref,
+        key: ds_name,
+        node_config: ds_config,
+      });
 
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
@@ -448,7 +406,7 @@ export default abstract class DependencyManager {
    * dependencies and datastores
    */
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
-    if (parent_node instanceof ExternalNode) { return; }
+    if (parent_node.is_external) { return; }
 
     for (const dep_config of Object.values(parent_node.node_config.getDependencies())) {
       if (dep_config.getPrivate()) {
@@ -489,7 +447,7 @@ export default abstract class DependencyManager {
     return service_config;
   }
 
-  async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode | ExternalNode> {
+  async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode> {
     const env_service = this._environment.getServiceDetails(config.getRef());
     if (env_service) {
       config = config.merge(env_service);
@@ -498,10 +456,16 @@ export default abstract class DependencyManager {
     const service_ref = config.getRef();
     const existing_node = this.graph.nodes_map.get(service_ref);
     if (existing_node) {
-      return existing_node as ServiceNode | ExternalNode;
+      return existing_node as ServiceNode;
     }
+
     if (Object.keys(config.getInterfaces()).length > 0 && Object.values(config?.getInterfaces()).every((i) => (i.host))) {
-      return this.loadExternalService(config, service_ref);
+      const external_node = new ServiceNode({
+        service_config: config,
+        node_config: config,
+      });
+      this.graph.addNode(external_node);
+      return external_node;
     }
 
     const service_node = await this.loadServiceNode(config);
@@ -519,33 +483,11 @@ export default abstract class DependencyManager {
     // Allow for inline overrides of services in dependencies/env
     const node_config = this.getNodeConfig(service_config.merge(initial_config));
     return new ServiceNode({
-      service_config: service_config,
-      node_config: node_config,
+      service_config,
+      node_config,
       tag: node_config.getRef().split(':')[node_config.getRef().split(':').length - 1],
       image: node_config.getImage(),
       digest: node_config.getDigest(),
     });
-  }
-
-  /**
-   * Create an external node and add it to the graph
-   */
-  async loadExternalService(env_service_config: ServiceConfig, service_ref: string) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const interfaces = env_service_config.getInterfaces()!;
-    if (interfaces) {
-      for (const [name, interface_details] of Object.entries(interfaces)) {
-        if (!interface_details.host || !interface_details.port) {
-          throw new Error(`As an interface specified in the environment config, interface ${name} requires that both a host and port be declared.`);
-        }
-      }
-    }
-
-    const node = new ExternalNode({
-      key: service_ref,
-      node_config: env_service_config,
-    });
-    this.graph.addNode(node);
-    return node;
   }
 }
