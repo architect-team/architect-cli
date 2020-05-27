@@ -18,16 +18,17 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   const limit = pLimit(5);
   const port_promises = [];
   for (const node of dependency_manager.graph.nodes) {
-    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
-      for (const _ of node.ports) {
-        port_promises.push(limit(() => dependency_manager.getServicePort()));
-      }
+    if (node.is_external) continue;
+    for (const _ of node.ports) {
+      port_promises.push(limit(() => dependency_manager.getServicePort()));
     }
   }
   const available_ports = (await Promise.all(port_promises)).sort();
 
   // Enrich base service details
   for (const node of dependency_manager.graph.nodes) {
+    if (node.is_external) continue;
+
     if (node instanceof GatewayNode) {
       compose.services[node.normalized_ref] = {
         image: 'registry.architect.io/architect-nginx/proxy:latest',
@@ -42,7 +43,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
     }
 
-    if ((node instanceof ServiceNode && !node.is_external) || (node instanceof DatastoreNode && !node.is_external)) {
+    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
       const ports = [];
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
@@ -59,7 +60,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
     }
 
-    if (node instanceof ServiceNode && !node.is_external) {
+    if (node instanceof ServiceNode) {
       compose.services[node.normalized_ref].command = node.node_config.getCommand();
       if (node.node_config.getEntrypoint().length) {
         compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
@@ -137,7 +138,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     const node_from = dependency_manager.graph.getNodeByRef(edge.from);
     const node_to = dependency_manager.graph.getNodeByRef(edge.to);
 
-    if ((node_to instanceof ServiceNode && node_to.is_external) || (node_to instanceof DatastoreNode && node_to.is_external)) {
+    if (node_to.is_external) {
       continue;
     }
 

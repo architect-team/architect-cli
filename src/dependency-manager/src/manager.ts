@@ -116,7 +116,7 @@ export default abstract class DependencyManager {
       for (const [interface_name, interface_details] of Object.entries(node.interfaces)) {
         let external_host: string, internal_host: string, external_port: string, internal_port: string, external_protocol: string, internal_protocol: string;
 
-        if ((node instanceof ServiceNode && node.is_external) || (node instanceof DatastoreNode && node.is_external)) {
+        if (node.is_external) {
           if (!interface_details.host) {
             throw new Error('External node needs to override the host');
           }
