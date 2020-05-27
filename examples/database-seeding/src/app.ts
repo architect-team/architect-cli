@@ -14,6 +14,17 @@ createConnection(ConnectionManager.getConnectionOptions()).then(async connection
     const app = express();
     app.use(bodyParser.json());
 
+    app.get("/", async function (req: Request, res: Response) {
+        const users = await userRepository.find();
+        const title = `<h3>Demo is working!</h3>`
+        const userList = users.map(u => `<li>${u.lastName}, ${u.firstName}</li>`).reduce((a, b) => a + b);
+        const userSection = `<p>Found ${users.length} users in database:</p><ul>${userList}</ul>`;
+        const apiSection = `<p>API endpoints: <ul><li>GET /users</li><li>GET /users/:id</li><li>POST /users</li><li>PUT /users/:id</li><li>DELETE /users/:id</li></ul>`;
+        const disclaimer = `<small>This application is purely for demo purposes. See <a href="https://github.com/architect-team/architect-cli/tree/master/examples/database-seeding">README</a> for more.</small>`;
+        const response = `<html><body>${title}${disclaimer}${userSection}${apiSection}</body></html>`
+        res.send(response);
+    });
+
     app.get("/users", async function (req: Request, res: Response) {
         const users = await userRepository.find();
         res.json(users);

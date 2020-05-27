@@ -272,7 +272,7 @@ describe('interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_HOST).eq('secondary.localhost');
+    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_HOST).eq('architect.frontend-main.latest');
     expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
   });
 });

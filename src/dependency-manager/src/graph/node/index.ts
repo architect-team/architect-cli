@@ -7,6 +7,7 @@ export interface DependencyNodeOptions { }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
+
   @Exclude()
   protected _parameters?: { [key: string]: ParameterValue };
 
@@ -17,6 +18,11 @@ export abstract class DependencyNode implements DependencyNodeOptions {
     return this.ref
       .replace(/:/g, '.')
       .replace(/\//g, '.');
+  }
+
+  //TODO:87:consolidate with normalized_ref
+  get namespace_ref() {
+    return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
   }
 
   abstract get ref(): string;
@@ -39,6 +45,13 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   }
 
   get is_external() {
-    return false;
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => {
+      // Interpolation modifies the node.interfaces
+      if (i.internal && i.external) {
+        return i.internal.host === i.external.host;
+      } else {
+        return i.host;
+      }
+    });
   }
 }
