@@ -59,6 +59,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
+        working-directory: ./src/dependency-manager
+      - run: npm run build
+        working-directory: ./src/dependency-manager
+      - run: rm -r node_modules
+        working-directory: ./src/dependency-manager
+      - run: npm install
+      - run: npm run build
       - run: npm test
   cut_release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
