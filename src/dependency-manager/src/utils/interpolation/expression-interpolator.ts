@@ -13,7 +13,7 @@ export class ExpressionInterpolator {
    */
   public static TOP_LEVEL_EXPRESSION_KEYS = [
     'interfaces',
-    'parameters'
+    'parameters',
     // do not include 'dependencies'
   ];
 
