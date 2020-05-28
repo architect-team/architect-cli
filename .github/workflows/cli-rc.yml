@@ -62,6 +62,8 @@ jobs:
         working-directory: ./src/dependency-manager
       - run: npm run build
         working-directory: ./src/dependency-manager
+      - run: rm -rf node_modules
+        working-directory: ./src/dependency-manager
       - run: npm install
       - run: npm run build
       - run: npm test
