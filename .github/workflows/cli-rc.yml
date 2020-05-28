@@ -60,6 +60,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm install
       - run: npm test
+      - run: npm run build
+        working-directory: ./src/dependency-manager
   cut_release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [lint, test]
