@@ -120,8 +120,7 @@ export default class AuthClient {
       throw new Error('Login Failed with Invalid JWT Token');
     }
 
-    const username = decoded_token.user['https://architect.io/username'];
-
+    const username = decoded_token.user.email;
     await this.setToken(username, auth0_results);
     await this.dockerLogin(username);
   }
