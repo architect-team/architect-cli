@@ -7,8 +7,9 @@ import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
+import { EnvironmentVariableSpecV1 } from '../v1-spec/environment-variables';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceConfig, ServiceDatastore, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { EnvironmentVariable, ServiceConfig, ServiceDatastore, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -315,6 +316,9 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
+  @IsOptional({ always: true })
+  environment?: Dictionary<EnvironmentVariableSpecV1>;
+
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional({ always: true })
   datastores?: Dictionary<ServiceDatastoreV1>;
@@ -455,6 +459,30 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getParameters(): Dictionary<ServiceParameter> {
     return this.normalizeParameters(this.parameters || {});
+  }
+
+  getEnvironmentVariables(): { [s: string]: EnvironmentVariable } {
+    if (!this.environment) {
+      return {};
+    }
+    console.log(JSON.stringify(this.environment));
+    const normalized_env_variables: { [s: string]: EnvironmentVariable } = {};
+    for (const [env_name, env_value] of Object.entries(this.environment)) {
+      console.log('key: ', env_name);
+      console.log('value: ', env_value);
+      if (env_value === null || env_value === undefined) {
+        throw new Error(`An environment variable must have a value, but ${env_name} is set to null or undefined`);
+      }
+      normalized_env_variables[env_name] = env_value ? env_value.toString() : '';
+    }
+    return normalized_env_variables;
+  }
+
+  setEnvironmentVariable(key: string, value: string) {
+    if (!this.environment) {
+      this.environment = {};
+    }
+    this.environment[key] = value;
   }
 
   getDatastores(): Dictionary<ServiceDatastore> {

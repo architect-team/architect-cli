@@ -11,7 +11,7 @@ import GatewayNode from './graph/node/gateway';
 import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, ServiceInterfaceContext } from './utils/interpolation/interpolation-context';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -93,8 +93,17 @@ export default abstract class DependencyManager {
     // (3) we interpolate all mustache expressions and replace the node_config of every node inline
     this.interpolateAllNodeConfigs(this.graph, interface_context);
 
-    // (4) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
-    const all_interface_params = this.buildInterfaceEnvParams(interface_context);
+    // (4) we set the interface environment variables
+    for (const node of this.graph.nodes) {
+      if (node instanceof ServiceNode) {
+        const interface_env_variables = this.buildInterfaceEnvVariables(interface_context[node.ref]);
+        for (const [env_key, env_value] of Object.entries(interface_env_variables)) {
+          node.node_config.setEnvironmentVariable(env_key, env_value);
+        }
+      }
+    }
+
+    // (5) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
 
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
@@ -167,7 +176,7 @@ export default abstract class DependencyManager {
           }
         }
       }
-      all_env_params = { ...all_env_params, ...all_interface_params, ...env_params_to_expand };
+      all_env_params = { ...all_env_params, ...env_params_to_expand };
     }
 
     // ignoreProcessEnv is important otherwise it will be stored globally
@@ -277,28 +286,25 @@ export default abstract class DependencyManager {
     throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
   }
 
-  private buildInterfaceEnvParams(interface_context: EnvironmentInterfaceContext): { [key: string]: string } {
+  private buildInterfaceEnvVariables(service_interface_context: ServiceInterfaceContext): { [key: string]: string } {
     const interface_params: { [key: string]: string } = {};
 
-    for (const [node_ref, service_interface_context] of Object.entries(interface_context)) {
-      const node = this.graph.getNodeByRef(node_ref);
-      for (const [interface_name, interface_context] of Object.entries(service_interface_context)) {
-        const prefix = interface_name === '_default' || Object.keys(node.interfaces).length === 1 ? '' : `${interface_name}_`.toUpperCase();
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_HOST`)] = interface_context.external.host || '';
+    for (const [interface_name, interface_context] of Object.entries(service_interface_context)) {
+      const prefix = interface_name === '_default' || Object.keys(service_interface_context).length === 1 ? '' : `${interface_name}_`.toUpperCase();
+      interface_params[`${prefix}EXTERNAL_HOST`] = interface_context.external.host || '';
 
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_HOST`)] = interface_context.internal.host;
-        interface_params[this.scopeEnv(node, `${prefix}HOST`)] = interface_context.host;
+      interface_params[`${prefix}INTERNAL_HOST`] = interface_context.internal.host;
+      interface_params[`${prefix}HOST`] = interface_context.host;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PORT`)] = interface_context.external.port ? interface_context.external.port.toString() : '';
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PORT`)] = interface_context.internal.port ? interface_context.internal.port.toString() : '';
-        interface_params[this.scopeEnv(node, `${prefix}PORT`)] = interface_context.port.toString();
+      interface_params[`${prefix}EXTERNAL_PORT`] = interface_context.external.port ? interface_context.external.port.toString() : '';
+      interface_params[`${prefix}INTERNAL_PORT`] = interface_context.internal.port ? interface_context.internal.port.toString() : '';
+      interface_params[`${prefix}PORT`] = interface_context.port.toString();
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_PROTOCOL`)] = interface_context.external.protocol || '';
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_PROTOCOL`)] = interface_context.internal.protocol;
+      interface_params[`${prefix}EXTERNAL_PROTOCOL`] = interface_context.external.protocol || '';
+      interface_params[`${prefix}INTERNAL_PROTOCOL`] = interface_context.internal.protocol;
 
-        interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context.external.url || '';
-        interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = interface_context.internal.url;
-      }
+      interface_params[`${prefix}EXTERNAL_URL`] = interface_context.external.url || '';
+      interface_params[`${prefix}INTERNAL_URL`] = interface_context.internal.url;
     }
 
     return interface_params;

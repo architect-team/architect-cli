@@ -13,18 +13,12 @@ dependencies:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: architect
       POSTGRES_DB: test_database
-parameters:
+environment:
   POSTGRES_HOST: ${ dependencies.db.interfaces.postgres.internal.host }
   POSTGRES_PORT: ${ dependencies['db'].interfaces.postgres.internal.port }
   POSTGRES_USER: ${ dependencies.db.parameters.POSTGRES_USER }
-  POSTGRES_PASSWORD:
-    value_from:
-      dependency: db
-      value: $POSTGRES_PASSWORD
-  POSTGRES_DB:
-    value_from:
-      dependency: db
-      value: $POSTGRES_DB
+  POSTGRES_PASSWORD: ${ dependencies.db.parameters.POSTGRES_PASSWORD }
+  POSTGRES_DB: ${ dependencies.db.parameters.POSTGRES_DB }
 debug:
   dockerfile: Dockerfile.dev
   command: npm run start:dev

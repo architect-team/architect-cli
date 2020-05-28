@@ -43,7 +43,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
     }
 
-    if (node instanceof ServiceNode || node instanceof DatastoreNode) {
+    if (node instanceof DatastoreNode) {
       const ports = [];
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
@@ -54,6 +54,25 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         depends_on: [],
         environment: {
           ...node.parameters,
+          HOST: node.normalized_ref,
+          PORT: node.ports[0] && node.ports[0].toString(),
+        },
+      };
+    }
+
+    if (node instanceof ServiceNode) {
+      const ports = [];
+      for (const port of node.ports) {
+        ports.push(`${available_ports.shift()}:${port}`);
+      }
+      console.log('env: ', JSON.stringify(node.node_config.getEnvironmentVariables()));
+      console.log('params: ', JSON.stringify(node.parameters));
+      compose.services[node.normalized_ref] = {
+        image: node.image ? node.image : undefined,
+        ports,
+        depends_on: [],
+        environment: {
+          ...node.node_config.getEnvironmentVariables(),
           HOST: node.normalized_ref,
           PORT: node.ports[0] && node.ports[0].toString(),
         },
