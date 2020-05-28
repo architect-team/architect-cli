@@ -17,7 +17,7 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
 
   const output: Dictionary<ParameterDefinitionSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    if (typeof value === 'object') {
+    if (value && typeof value === 'object') {
       if (value.value_from || value.valueFrom) {
         value.valueFrom = value.valueFrom || value.value_from;
         value.default = value.default || { valueFrom: value.valueFrom };
