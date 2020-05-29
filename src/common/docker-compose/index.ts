@@ -65,13 +65,12 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
       }
-      console.log('env: ', JSON.stringify(node.node_config.getEnvironmentVariables()));
-      console.log('params: ', JSON.stringify(node.parameters));
       compose.services[node.normalized_ref] = {
         image: node.image ? node.image : undefined,
         ports,
         depends_on: [],
         environment: {
+          ...node.parameters, // TODO:86: we can remove parameters from this block once we remove valueFrom
           ...node.node_config.getEnvironmentVariables(),
           HOST: node.normalized_ref,
           PORT: node.ports[0] && node.ports[0].toString(),

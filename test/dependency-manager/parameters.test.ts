@@ -114,7 +114,7 @@ describe('parameters', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const default_keys = [
+    const interface_env_variables = [
       'EXTERNAL_HOST',
       'INTERNAL_HOST',
       'EXTERNAL_PORT',
@@ -133,10 +133,14 @@ describe('parameters', function () {
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', ...default_keys]);
+    expect(Object.keys(frontend_node.parameters)).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM']);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members([...interface_env_variables]);
     expect(frontend_node.parameters['SOME_BOOLEAN_PARAM']).eq('false');
+    expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
     expect(frontend_node.parameters['SOME_BOOLEAN_PARAM']).not.eq(false);
+    expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).not.eq(false);
     expect(frontend_node.parameters['DB_USER']).eq('root');
+    expect(frontend_node.node_config.getEnvironmentVariables()['DB_USER']).eq('root');
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081');
     expect(backend_node.parameters['PRIMARY_PORT']).eq('8082');

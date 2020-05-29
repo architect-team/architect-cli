@@ -104,7 +104,7 @@ describe('expression-interpolation', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const default_keys = [
+    const interface_env_variables = [
       'EXTERNAL_HOST',
       'INTERNAL_HOST',
       'HOST',
@@ -122,7 +122,8 @@ describe('expression-interpolation', function () {
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
+    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members([...interface_env_variables]);
     expect(frontend_node.interfaces.app.port).eq(8080);
     expect(frontend_node.parameters['APP_PORT']).eq(8080);
     expect(frontend_node.parameters['DB_USER']).eq('root');
