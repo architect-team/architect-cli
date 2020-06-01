@@ -7,9 +7,9 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
-import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
+import { ServiceNode } from '../dependency-manager/src';
 
 export interface CreateServiceVersionInput {
   tag: string;
@@ -66,7 +66,7 @@ export default class ServiceRegister extends Command {
     this.accounts = await this.get_accounts();
 
     for (const node of dependency_manager.graph.nodes) {
-      if (node instanceof LocalServiceNode) {
+      if (node.is_local && node instanceof ServiceNode) {
 
         let image;
         // if both image flag and image in service_config are set, warn and prompt user
@@ -93,7 +93,7 @@ export default class ServiceRegister extends Command {
             image = await buildImage(node, this.app.config.registry_host, flags.tag);
           } catch (err) {
             cli.action.stop(chalk.red(`Build failed`));
-            this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.service_path}`);
+            this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.node_config.getPath()}`);
             throw new Error(err);
           }
 

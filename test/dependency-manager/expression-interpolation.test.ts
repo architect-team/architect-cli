@@ -110,7 +110,7 @@ describe('expression-interpolation', function () {
       'INTERNAL_URL',
     ];
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
@@ -156,7 +156,7 @@ describe('expression-interpolation', function () {
     });
 
     const start_time = Date.now();
-    await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true)
+    await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json')
       .catch(error => {
         expect(error.toString()).to.contain('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack');
         const duration = Date.now() - start_time;

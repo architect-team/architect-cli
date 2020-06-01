@@ -2,6 +2,7 @@
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import path from 'path';
 import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
@@ -47,6 +48,17 @@ export class EnvironmentConfigBuilder {
     try {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
+
+      for (const service of Object.values(env_config.getServices())) {
+        const service_path = service.getDebugOptions()?.getPath();
+        if (service_path) {
+          // Load local service config
+          if (config_path) {
+            service.setDebugPath(path.resolve(path.dirname(config_path), service_path));
+          }
+        }
+      }
+
       return env_config;
     } catch (err) {
       console.log('Invalid environment config:', config_path);

@@ -16,7 +16,6 @@ import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
-  debug = false;
   gateway_port!: number;
   _environment!: EnvironmentConfig;
   protected vault_manager!: VaultManager;
@@ -60,12 +59,6 @@ export default abstract class DependencyManager {
     const env_service = this._environment.getServiceDetails(service_config.getRef());
     if (env_service) {
       node_config = node_config.merge(env_service);
-    }
-
-    // If debug is enabled merge in debug options ex. debug.command -> command
-    const debug_options = node_config.getDebugOptions();
-    if (this.debug && debug_options) {
-      node_config = node_config.merge(debug_options);
     }
     return node_config;
   }

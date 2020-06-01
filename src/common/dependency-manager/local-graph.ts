@@ -5,14 +5,12 @@ import DependencyEdge from '../../dependency-manager/src/graph/edge';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import { LocalServiceNode } from './local-service-node';
 
 export default class LocalDependencyGraph extends DependencyGraph {
   @Type(() => DependencyNode, {
     discriminator: {
       property: '__type',
       subTypes: [
-        { value: LocalServiceNode, name: 'local' },
         { value: DatastoreNode, name: 'datastore' },
         { value: ServiceNode, name: 'service' },
         { value: GatewayNode, name: 'gateway' },

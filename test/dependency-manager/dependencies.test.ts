@@ -58,7 +58,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/frontend:latest')
@@ -108,7 +108,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/frontend:latest')
@@ -166,7 +166,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(3);
       expect(graph.edges).length(2);
@@ -217,7 +217,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(4);
       expect(graph.edges).length(2);
@@ -251,7 +251,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.edges).length(1);
@@ -303,7 +303,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(4);
       expect(graph.edges).length(2);
@@ -355,7 +355,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(4);
       expect(graph.edges).length(2);
@@ -376,7 +376,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).service_config.getParameters()).keys(['WORKED']);
@@ -418,7 +418,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/backend:latest');
@@ -457,7 +457,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.edges).length(1);
@@ -500,7 +500,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.edges).length(1);
@@ -547,7 +547,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
       expect(graph.edges).length(1);
@@ -589,7 +589,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
@@ -621,7 +621,7 @@ describe('dependencies', function () {
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(4);
       expect(graph.edges).length(2);

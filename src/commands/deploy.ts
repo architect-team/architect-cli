@@ -138,7 +138,6 @@ export default class Deploy extends Command {
       this.app.api,
       path.resolve(untildify(args.environment_config)),
       this.app.linkedServices,
-      !flags.build_prod,
     );
 
     await this.validate_graph(dependency_manager.graph);
