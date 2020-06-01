@@ -180,15 +180,12 @@ describe('external nodes', function () {
 
     const env_config = {
       services: {
-        'architect/frontend:v1': {
-          dependencies: {
-            'architect/backend': {
-              interfaces: {
-                api: {
-                  host: 'api.localhost',
-                  port: 80
-                }
-              }
+        'architect/frontend:v1': {},
+        'architect/backend:v2': {
+          interfaces: {
+            api: {
+              host: 'api.localhost',
+              port: 80
             }
           }
         }
@@ -206,7 +203,7 @@ describe('external nodes', function () {
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[0].ref).eq('architect/frontend:v1')
     expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].ref).eq('architect/frontend:v1.architect/backend:v2')
+    expect(graph.nodes[1].ref).eq('architect/backend:v2')
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
     expect(graph.nodes[1].interfaces.api.port).eq(80);
     expect(graph.edges).length(1);
@@ -248,15 +245,12 @@ describe('external nodes', function () {
 
     const env_config = {
       services: {
-        'architect/frontend:v1': {
-          dependencies: {
-            'architect/backend': {
-              datastores: {
-                primary: {
-                  host: 'db.localhost',
-                  port: 80
-                }
-              }
+        'architect/frontend:v1': {},
+        'architect/backend:v1': {
+          datastores: {
+            primary: {
+              host: 'db.localhost',
+              port: 80
             }
           }
         }

@@ -60,6 +60,19 @@ describe('expression-interpolation', function () {
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
     });
 
+    const postgres_config = {
+      image: 'postgres:11',
+      port: 5432,
+      parameters: {
+        DB_USER: 'dep-root'
+      }
+    };
+
+    moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
+      status: 200,
+      response: { tag: 'v1', config: postgres_config, service: { url: 'architect/cloud:v1' } },
+    });
+
     const backend_config = {
       name: 'architect/cloud-api',
       interfaces: {
@@ -71,13 +84,7 @@ describe('expression-interpolation', function () {
         DB_USER: '${ dependencies.primary.parameters.DB_USER }',
       },
       dependencies: {
-        primary: {
-          image: 'postgres:11',
-          port: 5432,
-          parameters: {
-            DB_USER: 'dep-root'
-          }
-        }
+        primary: 'postgres/postgres:11'
       }
     };
 

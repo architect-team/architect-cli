@@ -35,7 +35,7 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, check_private = false) {
+export function transformServices(input: Dictionary<string | object | ServiceConfigV1>) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     const [name, ext] = key.split(':');
@@ -49,15 +49,6 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
         casted_value.extends = ext;
       }
 
-      if (check_private) {
-        // Check for customizations besides name, extends, __version
-        const keys = new Set(Object.keys(casted_value));
-        keys.delete('__version');
-        keys.delete('extends');
-        keys.delete('name');
-        casted_value.private = !casted_value.extends || keys.size > 0;
-      }
-
       config = { ...value, name };
     } else {
       config = { extends: value, name };
@@ -67,6 +58,23 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
   }
   return output;
 }
+
+const transformDependencies = (input?: Dictionary<string | Dictionary<any>>): Dictionary<string> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<string> = {};
+  for (const [key, value] of Object.entries(input)) {
+    // Backwards compat for old inline dependencies
+    if (value instanceof Object) {
+      output[key] = value.extends || 'latest';
+    } else {
+      output[key] = value;
+    }
+  }
+  return output;
+};
 
 const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
   if (!input) {
@@ -241,14 +249,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @IsOptional({ always: true })
   @IsString({ always: true })
-  parent_ref?: string;
-
-  @IsOptional({ always: true })
-  @IsBoolean({ always: true })
-  private?: boolean;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
   description?: string;
 
   @IsOptional({ always: true })
@@ -282,8 +282,8 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
-  @Transform(value => (transformServices(value, true)), { toClassOnly: true })
-  dependencies?: Dictionary<ServiceConfigV1>;
+  @Transform(value => (transformDependencies(value)), { toClassOnly: true })
+  dependencies?: Dictionary<string>;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -385,20 +385,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getRef() {
     const tag = this.extends && this.extends.includes(':') ? 'latest' : this.extends || 'latest';
-    const ref = `${this.getName()}:${tag}`;
-    return this.parent_ref ? `${this.parent_ref}.${ref}` : ref;
-  }
-
-  setParentRef(ref: string) {
-    this.parent_ref = ref;
-  }
-
-  getParentRef() {
-    return this.parent_ref;
-  }
-
-  getPrivate(): boolean {
-    return this.private || false;
+    return `${this.getName()}:${tag}`;
   }
 
   getName(): string {
@@ -457,9 +444,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   addDependency(name: string, tag: string) {
     this.dependencies = this.getDependencies();
-    this.dependencies[name] = new ServiceConfigV1();
-    this.dependencies[name].name = name;
-    this.dependencies[name].extends = tag;
+    this.dependencies[name] = tag;
   }
 
   removeDependency(dependency_name: string) {

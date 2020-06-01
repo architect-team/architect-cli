@@ -104,28 +104,21 @@ describe('service config merge', function () {
 
     const service_config = ServiceConfigBuilder.buildFromJSON(service_config_json);
 
-    (service_config.getDependencies()['override'] as any).author = 'before';
     const copied_service_config = service_config.copy();
     copied_service_config.addDependency('new-dep', 'newest');
     expect(copied_service_config.getDependencies()).keys(['no_override', 'override', 'new-dep']);
     expect(service_config.getDependencies()).keys(['no_override', 'override']);
 
-    expect((service_config.getDependencies()['override'] as any).author).eq('before');
-    expect((copied_service_config.getDependencies()['override'] as any).author).eq('before');
-    (copied_service_config.getDependencies()['override'] as any).author = 'after';
-    expect((service_config.getDependencies()['override'] as any).author).eq('before');
-    expect((copied_service_config.getDependencies()['override'] as any).author).eq('after');
-
     const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
 
     const node_config = service_config.merge(env_config);
-    expect(service_config.getDependencies()['override'].getRef()).eq('override:old');  // Make sure we don't mutate the initial config
+    expect(service_config.getDependencies()['override']).eq('old');  // Make sure we don't mutate the initial config
 
     expect(node_config.getName()).eq('foo/service');
 
     expect(node_config.getDependencies()).keys('override', 'no_override');
-    expect(node_config.getDependencies()['override'].getRef()).eq('override:new');
-    expect(node_config.getDependencies()['no_override'].getRef()).eq('no_override:old');
+    expect(node_config.getDependencies()['override']).eq('new');
+    expect(node_config.getDependencies()['no_override']).eq('old');
 
     expect(node_config.getParameters()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
     expect(node_config.getParameters()['override'].default).eq('new');

@@ -69,9 +69,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getPath(): string | undefined;
   abstract getExtends(): string | undefined;
   abstract getRef(): string;
-  abstract setParentRef(ref: string): void;
-  abstract getParentRef(): string | undefined;
-  abstract getPrivate(): boolean;
   abstract getName(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;
@@ -83,7 +80,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;
-  abstract getDependencies(): { [s: string]: ServiceConfig };
+  abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
   abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
