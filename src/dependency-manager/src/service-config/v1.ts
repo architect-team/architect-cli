@@ -35,10 +35,11 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: Dictionary<string | object | ServiceConfigV1>) {
+export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     const [name, ext] = key.split(':');
+    const full_name = parent ? `${parent.name}/${name}` : name;
     let config;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     if (value instanceof ServiceConfigV1) {
@@ -49,9 +50,9 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
         casted_value.extends = ext;
       }
 
-      config = { ...value, name };
+      config = { ...value, name: full_name };
     } else {
-      config = { extends: value, name };
+      config = { extends: value, name: full_name };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
@@ -231,16 +232,18 @@ export class ServiceConfigV1 extends ServiceConfig {
   path?: string;
 
   @IsOptional({
-    groups: ['operator', 'debug'],
+    groups: ['operator', 'debug', 'component'],
   })
   @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
+  /*
   @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
     groups: ['developer'],
   })
+  */
   name?: string;
 
   @IsOptional({ always: true })
@@ -282,6 +285,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
+  @IsEmpty({ groups: ['component'] })
   @Transform(value => (transformDependencies(value)), { toClassOnly: true })
   dependencies?: Dictionary<string>;
 
@@ -317,6 +321,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional({ always: true })
+  @IsEmpty({ groups: ['component'] })
   datastores?: Dictionary<ServiceDatastoreV1>;
 
   @Transform(value => (transformInterfaces(value)))

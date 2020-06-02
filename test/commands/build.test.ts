@@ -8,19 +8,22 @@ import CredentialManager from '../../src/app-config/credentials';
 import AppService from '../../src/app-config/service';
 import Build from '../../src/commands/build';
 import * as DockerUtil from '../../src/common/utils/docker';
-import { ServiceConfig, ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfig } from '../../src/dependency-manager/src/component-config/base';
+import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
 import ARCHITECTPATHS from '../../src/paths';
 
 
 const REGISTRY_HOST = 'registry.architect.test';
 const TEST_TAG = `test-tag-${Date.now()}`;
 
-const testBuildArgs = (service_path: string, service_config: ServiceConfig, build_args: string[], expected_tag = 'latest') => {
+const testBuildArgs = (service_path: string, component_config: ComponentConfig, build_args: string[], expected_tag = 'latest') => {
   expect(build_args[0]).to.equal('build');
   build_args = build_args.slice(1);
 
   expect(build_args[build_args.length - 1]).to.equal(service_path);
   build_args.splice(build_args.length - 1, 1);
+
+  const service_config = component_config.getServices()[0];
 
   for (let i = 0; i < build_args.length; i++) {
     switch (build_args[i]) {
@@ -81,29 +84,29 @@ describe('build', function () {
 
   it('builds docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/rest');
-    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
+    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path, service_config, spy.getCall(0).args[0]);
+    testBuildArgs(service_path, component_config, spy.getCall(0).args[0]);
   });
 
   it('builds gRPC docker image', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
-    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
+    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path]);
 
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, service_config, spy.getCall(0).args[0]);
+    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, component_config, spy.getCall(0).args[0]);
   });
 
   it('builds docker image w/ specific tag', async () => {
     const service_path = path.join(__dirname, '../calculator/addition-service/grpc/add.architect.json');
-    const service_config = await ServiceConfigBuilder.buildFromPath(service_path);
+    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
     await Build.run(['-s', service_path, '-t', TEST_TAG]);
 
     expect(spy.calledOnce).to.equal(true);
-    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, service_config, spy.getCall(0).args[0], TEST_TAG);
+    testBuildArgs(service_path.endsWith('.json') ? path.dirname(service_path) : service_path, component_config, spy.getCall(0).args[0], TEST_TAG);
   });
 
   it('builds local images from environment config', async () => {
@@ -118,8 +121,8 @@ describe('build', function () {
       if (service_file.endsWith('grpc')) {
         service_file = path.join(service_file, 'add.architect.json');
       }
-      const service_config = await ServiceConfigBuilder.buildFromPath(service_file);
-      testBuildArgs(service_path, service_config, call.args[0]);
+      const component_config = await ComponentConfigBuilder.buildFromPath(service_file);
+      testBuildArgs(service_path, component_config, call.args[0]);
     }
   });
 });

@@ -53,9 +53,16 @@ export class EnvironmentConfigBuilder {
         const service_path = service.getDebugOptions()?.getPath();
         if (service_path) {
           // Load local service config
-          if (config_path) {
-            service.setDebugPath(path.resolve(path.dirname(config_path), service_path));
-          }
+          service.setDebugPath(path.resolve(path.dirname(config_path), service_path));
+        }
+      }
+
+      for (const component of Object.values(env_config.getComponents())) {
+        const component_extends = component.getExtends();
+        if (component_extends?.startsWith('file:')) {
+          // Load local component config
+          const component_path = component_extends.substr('file:'.length);
+          component.setExtends(`file:${path.resolve(path.dirname(config_path), component_path)}`);
         }
       }
 
