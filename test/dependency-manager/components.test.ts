@@ -55,7 +55,7 @@ describe('dependencies', function () {
       const env_config = {
         components: {
           'architect/cloud': {
-            'path': '.'
+            'extends': 'file:.'
           }
         }
       };

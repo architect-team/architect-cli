@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { Allow, IsEmpty, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Allow, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { ServiceConfig } from '..';
 import { ParameterValueV2 } from '../service-config/base';
 import { transformParameters, transformServices } from '../service-config/v1';
@@ -23,14 +23,6 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['developer'],
   })
   name?: string;
-
-  @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a filesystem location when registering a service',
-  })
-  @IsString({ always: true })
-  path?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -60,14 +52,10 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getExtends() {
-    if (this.path) {
-      return `file:${this.path}`;
-    }
     return this.extends;
   }
 
   setExtends(ext: string) {
-    this.path = undefined;
     this.extends = ext;
   }
 
