@@ -91,25 +91,19 @@ export default abstract class DependencyManager {
     }
 
     // (3) we interpolate all mustache expressions and replace the node_config of every node inline
-    console.log('before:', JSON.stringify(this.graph));
     this.interpolateAllNodeConfigs(this.graph, interface_context);
 
     // (4) we set the interface environment variables
     for (const node of this.graph.nodes) {
-      console.log(`setting on ${node.ref}...`);
       if (node instanceof ServiceNode) {
-        console.log(`setting on ${node.ref}...`);
-        console.log('interface_context:', JSON.stringify(interface_context[node.ref]));
         const interface_env_variables = this.buildInterfaceEnvVariables(interface_context[node.ref]);
         for (const [env_key, env_value] of Object.entries(interface_env_variables)) {
           node.node_config.setEnvironmentVariable(env_key, env_value);
         }
       }
     }
-    console.log('after:', JSON.stringify(this.graph));
 
     // (5) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
-
     const all_interface_params = this.buildInterfaceEnvParams(interface_context);
 
     for (const node of this.graph.nodes) {

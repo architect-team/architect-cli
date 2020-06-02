@@ -479,8 +479,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!this.environment) {
       this.environment = {};
     }
-    console.log('setting key', key);
-    console.log('setting value:', value);
     this.environment[key] = value;
   }
 

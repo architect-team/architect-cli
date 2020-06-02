@@ -142,6 +142,5 @@ describe('parameters', function () {
     expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081');
     expect(backend_node.parameters['PRIMARY_PORT']).eq('8082');
     expect(backend_node.node_config.getEnvironmentVariables()['PRIMARY_PORT']).eq('8082');
-    expect(backend_datastore_node.node_config.getEnvironmentVariables()['PORT']).eq('5432');
   });
 });
