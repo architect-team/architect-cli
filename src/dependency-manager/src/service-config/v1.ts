@@ -465,11 +465,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!this.environment) {
       return {};
     }
-    console.log(JSON.stringify(this.environment));
     const normalized_env_variables: { [s: string]: EnvironmentVariable } = {};
     for (const [env_name, env_value] of Object.entries(this.environment)) {
-      console.log('key: ', env_name);
-      console.log('value: ', env_value);
       if (env_value === null || env_value === undefined) {
         throw new Error(`An environment variable must have a value, but ${env_name} is set to null or undefined`);
       }
@@ -482,6 +479,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!this.environment) {
       this.environment = {};
     }
+    console.log('setting key', key);
+    console.log('setting value:', value);
     this.environment[key] = value;
   }
 
