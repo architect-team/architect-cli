@@ -244,6 +244,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     groups: ['developer'],
   })
   */
+  // TODO: Enforce naming for component services
   name?: string;
 
   @IsOptional({ always: true })

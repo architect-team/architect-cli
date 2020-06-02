@@ -63,20 +63,30 @@ export default abstract class DependencyManager {
   async loadComponent(component: ComponentConfig) {
     // Load dependencies
 
-    for (const service_config of Object.values(component.getServices())) {
-
-      /*
-      // Load the service config without merging in environment overrides
-      const service_config = await this.loadComponentConfigWrapper(initial_config);
-      // Allow for inline overrides of services in dependencies/env
-      const node_config = this.getNodeConfig(service_config.merge(initial_config));
-      */
+    const ref_map: Dictionary<string> = {};
+    for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config, component.getParameters());
       const node = this.loadServiceNode(service_config, node_config);
       this.graph.addNode(node);
 
+      ref_map[service_name] = node.ref;
+
       // TODO Support old dependencies
       this.loadServiceDependencies(node);
+    }
+
+    // Add edges to services inside component
+    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+      const service_string = serialize(service_config);
+      const services_regex = /\$\{\s*services\.(\w+)?\./g;
+      const from = ref_map[service_name];
+
+      let matches;
+      while ((matches = services_regex.exec(service_string)) != null) {
+        const to = ref_map[matches[1]];
+        const edge = new ServiceEdge(from, to);
+        this.graph.addEdge(edge);
+      }
     }
   }
 
@@ -256,7 +266,10 @@ export default abstract class DependencyManager {
 
     let change_detected = true;
     let passes = 0;
-    const MAX_DEPTH = 100;
+    // Limiting to depth of 1
+    // We are going to use interpolation to determine edges and other metadata between services
+    // We might eventually support, but for the initial implementation chaining makes it too difficult
+    const MAX_DEPTH = 1;
 
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode) {
@@ -286,7 +299,7 @@ export default abstract class DependencyManager {
       passes++;
     }
 
-    if (passes >= MAX_DEPTH) {
+    if (passes >= MAX_DEPTH && MAX_DEPTH !== 1) {
       throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
     }
   }
