@@ -65,7 +65,9 @@ export class ComponentConfigBuilder {
     if (!js_obj.services) {
       js_obj = {
         name: js_obj.name,
-        services: { [js_obj.name]: js_obj },
+        parameters: js_obj.parameters,
+        dependencies: js_obj.dependencies,
+        services: { 'service': js_obj },
       };
     }
 

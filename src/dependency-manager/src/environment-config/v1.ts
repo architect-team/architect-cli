@@ -20,7 +20,11 @@ export const transformComponents = (input?: Dictionary<any>): Dictionary<Compone
 
   const output: Dictionary<ComponentConfig> = {};
   for (const [key, value] of Object.entries(input)) {
-    output[key] = plainToClass(ComponentConfigV1, value);
+    if (value instanceof Object) {
+      output[key] = plainToClass(ComponentConfigV1, { extends: key, ...value, name: key });
+    } else {
+      output[key] = plainToClass(ComponentConfigV1, { extends: value.includes(':') ? value : `${key}:${value}`, name: key });
+    }
   }
   return output;
 };

@@ -8,7 +8,7 @@ import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceConfig, ServiceDatastore, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -57,6 +57,12 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
   }
+
+  // Support datastores as services
+  if (parent) {
+
+  }
+
   return output;
 }
 
@@ -444,25 +450,11 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies() {
-    return this.dependencies || {};
-  }
-
-  addDependency(name: string, tag: string) {
-    this.dependencies = this.getDependencies();
-    this.dependencies[name] = tag;
-  }
-
-  removeDependency(dependency_name: string) {
-    if (this.dependencies) {
-      delete this.dependencies[dependency_name];
-    }
-  }
-
   getParameters(): Dictionary<ServiceParameter> {
     return this.normalizeParameters(this.parameters || {});
   }
 
+  /*
   getDatastores(): Dictionary<ServiceDatastore> {
     const datastores = this.datastores || {};
     return Object.keys(datastores)
@@ -483,6 +475,7 @@ export class ServiceConfigV1 extends ServiceConfig {
         throw new Error('Missing datastore docker config which is required for provisioning');
       }, {});
   }
+  */
 
   getDebugOptions(): ServiceConfig | undefined {
     return this.debug;

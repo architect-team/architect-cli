@@ -1,11 +1,9 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
-import { classToPlain, plainToClass } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 
 describe('dependencies', function () {
@@ -24,7 +22,85 @@ describe('dependencies', function () {
   });
 
   describe('standard components', function () {
-    it('simple component', async () => {
+    it('simple local component', async () => {
+      const component_config = {
+        name: 'architect/cloud',
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            }
+          },
+          api: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        }
+      };
+
+      const env_config = {
+        components: {
+          'architect/cloud': {
+            'extends': 'file:.'
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(component_config),
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
+      expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
+      expect(graph.edges).length(0);
+    });
+
+    it('simple remote component', async () => {
+      const component_config = {
+        name: 'architect/cloud',
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            }
+          },
+          api: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        }
+      };
+
+      moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+      });
+
+      const env_config = {
+        components: {
+          'architect/cloud': 'v1'
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const graph = manager.graph;
+      expect(graph.nodes).length(2);
+      expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
+      expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
+      expect(graph.edges).length(0);
+    });
+
+    it('local component with edges', async () => {
       const component_config = {
         name: 'architect/cloud',
         services: {
@@ -72,14 +148,13 @@ describe('dependencies', function () {
       expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
       expect(graph.nodes[2].ref).eq('architect/cloud/db:latest')
       expect(graph.edges).length(2);
-
-      const plain_graph = classToPlain(graph);
-      const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
-      expect(loaded_graph.nodes).length(3);
-      expect(loaded_graph.nodes[0].ref).eq('architect/cloud/app:latest')
-      expect(loaded_graph.nodes[1].ref).eq('architect/cloud/api:latest')
-      expect(loaded_graph.nodes[2].ref).eq('architect/cloud/db:latest')
-      expect(loaded_graph.edges).length(2);
+      expect(graph.edges[0].from).eq('architect/cloud/app:latest')
+      expect(graph.edges[0].to).eq('architect/cloud/api:latest')
+      expect(graph.edges[1].from).eq('architect/cloud/api:latest')
+      expect(graph.edges[1].to).eq('architect/cloud/db:latest')
+      // Test parameter values
+      expect(graph.nodes[0].parameters.API_ADDR).eq('architect/cloud/app:latest')
+      expect(graph.nodes[1].parameters.DB_ADDR).eq('architect/cloud/app:latest')
     });
   });
 });

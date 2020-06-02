@@ -14,6 +14,7 @@ export class ExpressionInterpolator {
   public static TOP_LEVEL_EXPRESSION_KEYS = [
     'interfaces',
     'parameters',
+    'services',
     // do not include 'dependencies'
   ];
 
@@ -29,6 +30,7 @@ export class ExpressionInterpolator {
     for (const node of graph.nodes) {
       if (node instanceof ServiceNode) {
         friendly_name_map[node.ref] = {};
+        /* TODO
         for (const friendly_name of Object.keys(node.node_config.getDependencies())) {
           const top_level_node = graph.nodes
             .filter(n => n instanceof ServiceNode)
@@ -39,6 +41,7 @@ export class ExpressionInterpolator {
             friendly_name_map[node.ref][friendly_name] = top_level_node.namespace_ref;
           }
         }
+        */
       }
     }
     return friendly_name_map;

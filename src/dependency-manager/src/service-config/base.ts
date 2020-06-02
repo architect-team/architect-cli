@@ -80,15 +80,11 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;
-  abstract getDependencies(): { [s: string]: string };
   abstract getParameters(): { [s: string]: ServiceParameter };
-  abstract getDatastores(): { [s: string]: ServiceDatastore };
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };
-  abstract addDependency(dependency_name: string, dependency_tag: string): void;
-  abstract removeDependency(dependency_name: string): void;
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getReplicas(): number;
