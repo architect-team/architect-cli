@@ -1,7 +1,7 @@
 import Mustache from 'mustache';
 import { ServiceNode } from '../..';
 import DependencyGraph from '../../graph';
-import { ParameterValueV2 } from '../../service-config/base';
+import { ParameterValue } from '../../service-config/base';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterpolationContext, ServiceInterfaceContext } from './interpolation-context';
 
 export class ExpressionInterpolator {
@@ -59,6 +59,8 @@ export class ExpressionInterpolator {
   }
 
   public static mapNodeToInterpolationContext(node: ServiceNode, interface_context: ServiceInterfaceContext): InterpolationContext {
+    return { parameters: {}, interfaces: {} };
+    /*
     return {
       parameters: Object.entries(node.node_config.getParameters())
         .reduce((result: { [key: string]: any }, [k, v]) => {
@@ -74,9 +76,10 @@ export class ExpressionInterpolator {
           return result;
         }, {}),
     };
+    */
   }
 
-  public static isNullParamValue(param_value: ParameterValueV2) {
+  public static isNullParamValue(param_value: ParameterValue) {
     return param_value === null || param_value === undefined;
   }
 

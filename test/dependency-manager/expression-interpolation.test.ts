@@ -114,13 +114,13 @@ describe('expression-interpolation', function () {
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
     expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
     expect(frontend_node.interfaces.app.port).eq(8080);
-    expect(frontend_node.parameters['APP_PORT']).eq(8080);
-    expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
+    expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq(8080);
     expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
-    expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081');
+    expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
+    expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
     expect(backend_node.node_config.getEnvironmentVariables()['PRIMARY_PORT']).eq('8082');
   });

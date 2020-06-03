@@ -63,12 +63,7 @@ export class ComponentConfigBuilder {
 
     // Transform to component syntax
     if (!js_obj.services) {
-      js_obj = {
-        name: js_obj.name,
-        parameters: js_obj.parameters,
-        dependencies: js_obj.dependencies,
-        services: { 'service': js_obj },
-      };
+      js_obj = ComponentConfigBuilder.transformServiceToComponent(js_obj);
     }
 
     try {
@@ -81,6 +76,57 @@ export class ComponentConfigBuilder {
       console.log('Invalid service config:', input);
       throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
     }
+  }
+
+  static transformServiceToComponent(config: any) {
+    const parameters = config.parameters;
+    const dependencies = config.dependencies;
+    for (const [key, value] of Object.entries(dependencies)) {
+      // Flatten any inline dependencies
+      if (value instanceof Object) {
+        dependencies[key] = (value as any).extends || 'latest';
+      } else {
+        dependencies[key] = value;
+      }
+    }
+    delete config.parameters;
+    delete config.dependencies;
+    if (!config.environment) {
+      config.environment = parameters;
+    }
+
+    const services: any = {};
+
+    // Support datastores as services
+    if (config?.datastores) {
+      for (const [datastore_key, datastore_unknown] of Object.entries(config.datastores)) {
+        const datastore = datastore_unknown as any;
+        const datastore_name = `datastore-${datastore_key}`;
+        const datastore_service = {
+          name: datastore_name,
+          image: datastore.image,
+          parameters: datastore.parameters,
+          interfaces: {
+            main: {
+              host: datastore.host,
+              port: datastore.port,
+            },
+          },
+        };
+        services[datastore_name] = datastore_service;
+      }
+    }
+    delete config.datastores;
+
+    // Finally set service to services block
+    services['service'] = config;
+
+    return {
+      name: config.name,
+      parameters: parameters,
+      dependencies: dependencies,
+      services: services,
+    };
   }
 
   static buildFromJSON(obj: object): ComponentConfig {

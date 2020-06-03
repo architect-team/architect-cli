@@ -1,5 +1,4 @@
-import { Exclude, Type } from 'class-transformer';
-import { ParameterValue } from '../../service-config/base';
+import { Type } from 'class-transformer';
 import { DependencyState } from '../state';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -7,9 +6,6 @@ export interface DependencyNodeOptions { }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-
-  @Exclude()
-  protected _parameters?: { [key: string]: ParameterValue };
 
   @Type(() => DependencyState)
   state?: DependencyState;
@@ -26,13 +22,6 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   }
 
   abstract get ref(): string;
-
-  get parameters(): { [key: string]: ParameterValue } {
-    if (!this._parameters) {
-      this._parameters = {};
-    }
-    return this._parameters;
-  }
 
   abstract get interfaces(): { [key: string]: any };
 

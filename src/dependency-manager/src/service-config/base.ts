@@ -1,45 +1,18 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { BaseSpec } from '../utils/base-spec';
+import { Dictionary } from '../utils/dictionary';
 
 export interface VaultParameter {
   vault: string;
   key: string;
 }
 
-export interface DependencyParameter {
-  dependency: string;
-  value: string;
-  interface?: string;
-}
-
-export interface DatastoreParameter {
-  datastore: string;
-  value: string;
-}
-
-export interface ValueFromParameter<T> {
-  valueFrom: T;
-}
-
-export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
-export type ParameterValueV2 = string | number | undefined; //TODO:86: switch over to use this when we remove support for valueFrom syntax
-
-export type EnvironmentVariable = string;
+export type ParameterValue = string | number | boolean | undefined;
 
 export interface ServiceParameter {
   description: string;
   default?: ParameterValue;
   required: boolean;
-  build_arg?: boolean;
-}
-
-export interface ServiceDatastore {
-  host?: string;
-  port?: number;
-  image?: string;
-  parameters: {
-    [key: string]: ServiceParameter;
-  };
 }
 
 export interface ServiceInterfaceSpec {
@@ -82,8 +55,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;
-  abstract getParameters(): { [s: string]: ServiceParameter };
-  abstract getEnvironmentVariables(): { [s: string]: EnvironmentVariable };
+  abstract getEnvironmentVariables(): Dictionary<string>;
   abstract setEnvironmentVariable(key: string, value: string): void;
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getDebugOptions(): ServiceConfig | undefined;

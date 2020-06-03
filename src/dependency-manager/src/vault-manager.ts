@@ -1,7 +1,8 @@
 import axios from 'axios';
 import https from 'https';
 import { EnvironmentVault } from './environment-config/base';
-import { ValueFromParameter, VaultParameter } from './service-config/base';
+import { VaultParameter } from './service-config/base';
+import { Dictionary } from './utils/dictionary';
 
 export default class VaultManager {
   protected vaults: { [key: string]: EnvironmentVault };
@@ -17,7 +18,8 @@ export default class VaultManager {
     }
   }
 
-  public async getSecret(parameter: ValueFromParameter<VaultParameter>): Promise<string> {
+  // TODO: Support vault
+  public async getSecret(parameter: Dictionary<VaultParameter>): Promise<string> {
     const vault_name = parameter.valueFrom.vault;
     const key = parameter.valueFrom.key;
     const vault = this.vaults[vault_name];

@@ -5,6 +5,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('components', function () {
   beforeEach(async () => {
@@ -153,8 +154,8 @@ describe('components', function () {
       expect(graph.edges[1].from).eq('architect/cloud/api:latest')
       expect(graph.edges[1].to).eq('architect/cloud/db:latest')
       // Test parameter values
-      expect(graph.nodes[0].parameters.API_ADDR).eq('architect/cloud/app:latest')
-      expect(graph.nodes[1].parameters.DB_ADDR).eq('architect/cloud/app:latest')
+      expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().API_ADDR).eq('architect/cloud/app:latest')
+      expect((graph.nodes[1] as ServiceNode).node_config.getEnvironmentVariables().DB_ADDR).eq('architect/cloud/app:latest')
     });
 
     it('local component with local dependency', async () => {
@@ -222,8 +223,8 @@ describe('components', function () {
       expect(graph.edges[1].from).eq('architect/cloud/api:latest')
       expect(graph.edges[1].to).eq('concourse/ci/web:latest')
       // Test parameter values
-      expect(graph.nodes[0].parameters.API_ADDR).eq('architect/cloud/app:latest')
-      expect(graph.nodes[1].parameters.DB_ADDR).eq('architect/cloud/app:latest')
+      expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('architect/cloud/app:latest')
+      expect((graph.nodes[2] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('architect/cloud/app:latest')
     });
   });
 });

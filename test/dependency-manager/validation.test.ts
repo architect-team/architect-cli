@@ -216,9 +216,7 @@ describe('validation (v1 spec)', () => {
           }
         },
         "parameters": {
-          "NODE_ENV": {
-            "build_arg": true
-          },
+          "NODE_ENV": {},
           "DEFAULT_REGISTRY_HOST": {
             "description": "Public hostname used to resolve the registry from deployment environments"
           },

@@ -8,7 +8,7 @@ import DependencyGraph from './graph';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
@@ -100,9 +100,9 @@ export default abstract class DependencyManager {
     // Merge in global parameters
     const overrides: any = {
       parameters: {},
-      datastores: {},
     };
     const global_parameters = this._environment.getParameters();
+    /* TODO: Fix parameter passdown
     for (const key of Object.keys(service_config.getParameters())) {
       if (key in additional_parameters) {
         overrides.parameters[key] = additional_parameters[key];
@@ -110,6 +110,7 @@ export default abstract class DependencyManager {
         overrides.parameters[key] = global_parameters[key];
       }
     }
+    */
     let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...overrides }));
     // Merge in service overrides in the environment
     const env_service = this._environment.getServiceDetails(service_config.getRef());
@@ -132,7 +133,7 @@ export default abstract class DependencyManager {
   }
 
   /*
-   * Expand all valueFrom parameters into real values that can be used inside of services and datastores
+   * Expand all valueFrom parameters into real values that can be used inside of services
   */
   async loadParameters() {
     // (1) first we construct the interface_context, a map of node_ref:interface_name:interface_block for use in mapping
@@ -162,6 +163,7 @@ export default abstract class DependencyManager {
     // (5) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
     const all_interface_params = this.buildInterfaceEnvParams(interface_context);
 
+    /* TODO: Support vault
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
@@ -169,6 +171,7 @@ export default abstract class DependencyManager {
         }
       }
     }
+    */
 
     /*
     let all_env_params: { [key: string]: string } = {};

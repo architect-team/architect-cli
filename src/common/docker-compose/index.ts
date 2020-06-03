@@ -53,7 +53,6 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports,
         depends_on: [],
         environment: {
-          ...node.parameters, // TODO:86: we can remove parameters from this block once we remove valueFrom
           ...node.node_config.getEnvironmentVariables(),
           HOST: node.normalized_ref,
           PORT: node.ports[0] && node.ports[0].toString(),
@@ -82,12 +81,14 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       const node_path = node.node_config.getPath()!;
       const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
       if (!node.image) {
+        /* TODO: Build args
         const build_parameter_keys = Object.entries(node.node_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
         const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
+        */
         // Setup build context
         compose.services[node.normalized_ref].build = {
           context: service_path,
-          args: [...build_args],
+          args: [], //[...build_args],
         };
 
         if (node.node_config.getDockerfile()) {
@@ -99,13 +100,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       const volumes: string[] = [];
       for (const [key, spec] of Object.entries(node.volumes)) {
         let service_volume;
-        if (spec.mount_path?.startsWith('$')) {
-          const volume_path = node.parameters[spec.mount_path.substr(1)];
-          if (!volume_path) {
-            throw new Error(`Parameter ${spec.mount_path} could not be found for node ${node.ref}`);
-          }
-          service_volume = volume_path.toString();
-        } else if (spec.mount_path) {
+        if (spec.mount_path) {
           service_volume = spec.mount_path;
         } else {
           throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);

@@ -86,10 +86,6 @@ export class ParameterDefinitionSpecV1 extends BaseSpec {
   @IsString({ always: true })
   description?: string;
 
-  @IsOptional({ always: true })
-  @IsBoolean({ always: true })
-  build_arg?: boolean;
-
   @Transform(value => {
     if (value instanceof Object) {
       const value_from = value.valueFrom;

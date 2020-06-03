@@ -8,7 +8,7 @@ import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { EnvironmentVariable, ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -58,46 +58,8 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
     output[key] = plainToClass(ServiceConfigV1, config);
   }
 
-  // Backwards compat: Support datastores as services
-  if (parent?.datastores) {
-    for (const [datastore_key, datastore_unknown] of Object.entries(parent.datastores)) {
-      const datastore = datastore_unknown as any;
-      const datastore_name = `datastore-${datastore_key}`;
-      const datastore_service = {
-        name: datastore_name,
-        image: datastore.image,
-        parameters: datastore.parameters,
-        interfaces: {
-          main: {
-            host: datastore.host,
-            port: datastore.port,
-          },
-        },
-      };
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      output[datastore_name] = plainToClass(ServiceConfigV1, datastore_service);
-    }
-  }
-
   return output;
 }
-
-const transformDependencies = (input?: Dictionary<string | Dictionary<any>>): Dictionary<string> | undefined => {
-  if (!input) {
-    return undefined;
-  }
-
-  const output: Dictionary<string> = {};
-  for (const [key, value] of Object.entries(input)) {
-    // Backwards compat for old inline dependencies
-    if (value instanceof Object) {
-      output[key] = value.extends || 'latest';
-    } else {
-      output[key] = value;
-    }
-  }
-  return output;
-};
 
 const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
   if (!input) {
@@ -309,11 +271,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
-  @IsEmpty({ groups: ['component'] })
-  @Transform(value => (transformDependencies(value)), { toClassOnly: true })
-  dependencies?: Dictionary<string>;
-
-  @IsOptional({ always: true })
   @IsString({ always: true })
   language?: string;
 
@@ -340,6 +297,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   debug?: ServiceConfigV1;
 
   @Transform(value => (transformParameters(value)))
+  @IsEmpty({ groups: ['component'] })
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
@@ -383,19 +341,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   })
   @IsNumber(undefined, { always: true })
   replicas?: number;
-
-  private normalizeParameters(parameters: Dictionary<ParameterDefinitionSpecV1>): Dictionary<ServiceParameter> {
-    return Object.keys(parameters).reduce((res: { [s: string]: ServiceParameter }, key: string) => {
-      const param = parameters[key];
-      res[key] = {
-        default: param.default,
-        required: param.required !== false && !('default' in param),
-        description: param.description || '',
-        build_arg: param.build_arg,
-      };
-      return res;
-    }, {});
-  }
 
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
@@ -479,22 +424,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getParameters(): Dictionary<ServiceParameter> {
-    return this.normalizeParameters(this.parameters || {});
-  }
-
-  getEnvironmentVariables(): { [s: string]: EnvironmentVariable } {
-    if (!this.environment) {
-      return {};
-    }
-    const normalized_env_variables: { [s: string]: EnvironmentVariable } = {};
-    for (const [env_name, env_value] of Object.entries(this.environment)) {
-      if (env_value === null || env_value === undefined) {
-        throw new Error(`An environment variable must have a value, but ${env_name} is set to null or undefined`);
-      }
-      normalized_env_variables[env_name] = env_value ? env_value.toString() : '';
-    }
-    return normalized_env_variables;
+  getEnvironmentVariables(): Dictionary<string> {
+    return this.environment || {};
   }
 
   setEnvironmentVariable(key: string, value: string) {
@@ -503,29 +434,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
     this.environment[key] = value;
   }
-
-  /*
-  getDatastores(): Dictionary<ServiceDatastore> {
-    const datastores = this.datastores || {};
-    return Object.keys(datastores)
-      .reduce((res: { [s: string]: ServiceDatastore }, key: string) => {
-        const ds_config = datastores[key];
-        if (ds_config.image) {
-          if (!ds_config.port) {
-            throw new Error('Missing datastore port which is required for provisioning');
-          }
-
-          res[key] = {
-            ...ds_config,
-            parameters: this.normalizeParameters(ds_config.parameters || {}),
-          };
-          return res;
-        }
-
-        throw new Error('Missing datastore docker config which is required for provisioning');
-      }, {});
-  }
-  */
 
   getDebugOptions(): ServiceConfig | undefined {
     return this.debug;

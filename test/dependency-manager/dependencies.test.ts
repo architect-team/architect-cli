@@ -293,7 +293,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(1);
-      expect((graph.nodes[0] as ServiceNode).node_config.getParameters()).keys(['WORKED']);
+      expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service:v1');
       expect((graph.nodes[0] as ServiceNode).image).eq('forked/payments-service:v1');
       expect(graph.edges).length(0);

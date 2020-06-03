@@ -1,4 +1,4 @@
-import { ParameterValueV2 } from '../../service-config/base';
+import { ParameterValue } from '../../service-config/base';
 
 export type EnvironmentParameterMap = { [key: string]: ParameterContext };
 
@@ -7,7 +7,7 @@ export interface InterpolationContext {
   interfaces: ServiceInterfaceContext;
 }
 
-export type ParameterContext = { [key: string]: ParameterValueV2 };
+export type ParameterContext = { [key: string]: ParameterValue };
 
 export type EnvironmentInterpolationContext = { [key: string]: InterpolationContext };
 
