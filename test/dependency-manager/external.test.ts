@@ -5,7 +5,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { DatastoreNode, ServiceNode } from '../../src/dependency-manager/src';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('external nodes', function () {
   beforeEach(async () => {
@@ -267,7 +267,7 @@ describe('external nodes', function () {
     expect(graph.nodes).length(3);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[1]).instanceOf(ServiceNode);
-    expect((graph.nodes[2] as DatastoreNode).is_external).true;
+    expect((graph.nodes[2] as ServiceNode).is_external).true;
     expect(graph.nodes[2].interfaces._default.host).eq('db.localhost');
     expect(graph.nodes[2].interfaces._default.port).eq(80);
     expect(graph.edges).length(2);

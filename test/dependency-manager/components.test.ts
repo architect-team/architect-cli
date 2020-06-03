@@ -108,7 +108,7 @@ describe('dependencies', function () {
             interfaces: {
               main: 8080
             },
-            parameters: {
+            environment: {
               API_ADDR: '${ services.api.interfaces.main.url }'
             }
           },
@@ -116,7 +116,7 @@ describe('dependencies', function () {
             interfaces: {
               main: 8080
             },
-            parameters: {
+            environment: {
               DB_ADDR: '${ services.db.interfaces.main.url }'
             }
           },

@@ -7,7 +7,6 @@ import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
-import { DatastoreNode } from './graph/node/datastore';
 import GatewayNode from './graph/node/gateway';
 import { ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
@@ -254,7 +253,7 @@ export default abstract class DependencyManager {
           }
 
           // we copy the new parameter value into the node_config if it doesn't already have it
-          if (node instanceof ServiceNode || node instanceof DatastoreNode) {
+          if (node instanceof ServiceNode) {
             (node.node_config as any).parameters = (node.node_config as any).parameters || {};
             (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
             (node.node_config as any).parameters[key].default = node.parameters[key];
@@ -282,8 +281,6 @@ export default abstract class DependencyManager {
         const serial_config = serialize(node.node_config);
         const namespaced_serial_config = ExpressionInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
         node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
-      } else if (node instanceof DatastoreNode) {
-        //TODO:76: we can't support interpolation of datastore nodes unless we make ServiceDatastore serializable
       }
     }
 

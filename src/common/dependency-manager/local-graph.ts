@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { DatastoreNode, DependencyNode, ServiceNode } from '../../dependency-manager/src';
+import { DependencyNode, ServiceNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import DependencyEdge from '../../dependency-manager/src/graph/edge';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -11,7 +11,6 @@ export default class LocalDependencyGraph extends DependencyGraph {
     discriminator: {
       property: '__type',
       subTypes: [
-        { value: DatastoreNode, name: 'datastore' },
         { value: ServiceNode, name: 'service' },
         { value: GatewayNode, name: 'gateway' },
       ],

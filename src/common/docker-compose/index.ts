@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import pLimit from 'p-limit';
 import path from 'path';
-import { DatastoreNode, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
+import { ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -39,23 +39,6 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         environment: {
           HTTPS_METHOD: 'noredirect',
           DISABLE_ACCESS_LOGS: 'true',
-        },
-      };
-    }
-
-    if (node instanceof DatastoreNode) {
-      const ports = [];
-      for (const port of node.ports) {
-        ports.push(`${available_ports.shift()}:${port}`);
-      }
-      compose.services[node.normalized_ref] = {
-        image: node.image ? node.image : undefined,
-        ports,
-        depends_on: [],
-        environment: {
-          ...node.parameters,
-          HOST: node.normalized_ref,
-          PORT: node.ports[0] && node.ports[0].toString(),
         },
       };
     }
