@@ -64,8 +64,6 @@ export default abstract class DependencyManager {
   }
 
   async loadComponent(component: ComponentConfig) {
-    // Load dependencies
-
     const ref_map: Dictionary<string> = {};
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config, component.getParameters());

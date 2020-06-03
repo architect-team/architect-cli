@@ -1,8 +1,8 @@
-import { plainToClass, Transform } from 'class-transformer';
-import { IsBoolean, IsDefined, IsEmpty, IsOptional, IsString, ValidatorOptions } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { BaseSpec } from '../utils/base-spec';
-import { validateNested } from '../utils/validation';
 
+/*
 export class ValueFromDependencySpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsEmpty({
@@ -75,6 +75,7 @@ export class ValueFromWrapperSpecV1 extends BaseSpec {
     return errors;
   }
 }
+*/
 
 export class ParameterDefinitionSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
@@ -91,21 +92,22 @@ export class ParameterDefinitionSpecV1 extends BaseSpec {
 
   @Transform(value => {
     if (value instanceof Object) {
-      return plainToClass(ValueFromWrapperSpecV1, value);
+      const value_from = value.valueFrom;
+      if (value_from.dependency) {
+        return `\${ dependencies['${value_from.dependency}'].services.service.parameters.${value_from.value} }`;
+      } else if (value_from.interface) {
+        return '';
+      } else if (value_from.datastore) {
+        return `\${ services['datastore-${value_from.datastore}'].parameters.${value_from.value} }`;
+      } else {
+        return 'TODO: support vault';
+      }
     } else {
       return value;
     }
   })
   @IsOptional({ always: true })
-  default?: string | number | boolean | ValueFromWrapperSpecV1;
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    if (this.default instanceof ValueFromWrapperSpecV1) {
-      errors = await validateNested(this, 'default', errors, options);
-    }
-    return errors;
-  }
+  default?: string | number | boolean;
 }
 
 export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;

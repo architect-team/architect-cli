@@ -58,9 +58,25 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
     output[key] = plainToClass(ServiceConfigV1, config);
   }
 
-  // Support datastores as services
-  if (parent) {
-
+  // Backwards compat: Support datastores as services
+  if (parent?.datastores) {
+    for (const [datastore_key, datastore_unknown] of Object.entries(parent.datastores)) {
+      const datastore = datastore_unknown as any;
+      const datastore_name = `datastore-${datastore_key}`;
+      const datastore_service = {
+        name: datastore_name,
+        image: datastore.image,
+        parameters: datastore.parameters,
+        interfaces: {
+          main: {
+            host: datastore.host,
+            port: datastore.port,
+          },
+        },
+      };
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      output[datastore_name] = plainToClass(ServiceConfigV1, datastore_service);
+    }
   }
 
   return output;
