@@ -207,7 +207,8 @@ describe('interfaces', function () {
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ServiceNode;
     expect(backend_node.is_local).true;
     expect(backend_node!.parameters.MAIN_PORT).eq('8080');
-    expect(backend_node!.parameters.SECONDARY_PORT).eq('8081');
+    expect(backend_node!.node_config.getEnvironmentVariables().MAIN_PORT).eq('8080');
+    expect(backend_node!.node_config.getEnvironmentVariables().SECONDARY_PORT).eq('8081');
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8081').length).eq(1);
     expect(backend_node!.service_config.getInterfaces().main.port).eq(8080);

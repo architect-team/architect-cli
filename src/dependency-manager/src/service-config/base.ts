@@ -24,6 +24,8 @@ export interface ValueFromParameter<T> {
 export type ParameterValue = string | number | boolean | ValueFromParameter<DependencyParameter | VaultParameter | DatastoreParameter>;
 export type ParameterValueV2 = string | number | undefined; //TODO:86: switch over to use this when we remove support for valueFrom syntax
 
+export type EnvironmentVariable = string;
+
 export interface ServiceParameter {
   description: string;
   default?: ParameterValue;
@@ -81,6 +83,8 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;
   abstract getParameters(): { [s: string]: ServiceParameter };
+  abstract getEnvironmentVariables(): { [s: string]: EnvironmentVariable };
+  abstract setEnvironmentVariable(key: string, value: string): void;
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugPath(debug_path: string): void;

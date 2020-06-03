@@ -8,7 +8,7 @@ import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { EnvironmentVariable, ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -342,6 +342,18 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
+  @IsOptional({ always: true })
+  @Transform(value => {
+    if (value) {
+      const output: Dictionary<string> = {};
+      for (const [k, v] of Object.entries(value)) {
+        output[k] = `${v}`;
+      }
+      return output;
+    }
+  })
+  environment?: Dictionary<string>;
+
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional({ always: true })
   @IsEmpty({ groups: ['component'] })
@@ -468,6 +480,27 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getParameters(): Dictionary<ServiceParameter> {
     return this.normalizeParameters(this.parameters || {});
+  }
+
+  getEnvironmentVariables(): { [s: string]: EnvironmentVariable } {
+    if (!this.environment) {
+      return {};
+    }
+    const normalized_env_variables: { [s: string]: EnvironmentVariable } = {};
+    for (const [env_name, env_value] of Object.entries(this.environment)) {
+      if (env_value === null || env_value === undefined) {
+        throw new Error(`An environment variable must have a value, but ${env_name} is set to null or undefined`);
+      }
+      normalized_env_variables[env_name] = env_value ? env_value.toString() : '';
+    }
+    return normalized_env_variables;
+  }
+
+  setEnvironmentVariable(key: string, value: string) {
+    if (!this.environment) {
+      this.environment = {};
+    }
+    this.environment[key] = value;
   }
 
   /*

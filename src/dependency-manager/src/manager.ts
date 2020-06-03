@@ -13,7 +13,7 @@ import { ServiceConfig, ValueFromParameter, VaultParameter } from './service-con
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, ServiceInterfaceContext } from './utils/interpolation/interpolation-context';
 import { ParameterDefinitionSpecV1 } from './v1-spec/parameters';
 import VaultManager from './vault-manager';
 
@@ -147,7 +147,17 @@ export default abstract class DependencyManager {
     // (3) we interpolate all mustache expressions and replace the node_config of every node inline
     this.interpolateAllNodeConfigs(this.graph, interface_context);
 
-    // (4) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
+    // (4) we set the interface environment variables
+    for (const node of this.graph.nodes) {
+      if (node instanceof ServiceNode) {
+        const interface_env_variables = this.buildInterfaceEnvVariables(interface_context[node.ref]);
+        for (const [env_key, env_value] of Object.entries(interface_env_variables)) {
+          node.node_config.setEnvironmentVariable(env_key, env_value);
+        }
+      }
+    }
+
+    // (5) TODO:86: most of what comes after this goes away when we kill valueFrom and add environment block
     const all_interface_params = this.buildInterfaceEnvParams(interface_context);
 
     for (const node of this.graph.nodes) {
@@ -357,6 +367,30 @@ export default abstract class DependencyManager {
         interface_params[this.scopeEnv(node, `${prefix}EXTERNAL_URL`)] = interface_context.external.url || '';
         interface_params[this.scopeEnv(node, `${prefix}INTERNAL_URL`)] = interface_context.internal.url;
       }
+    }
+
+    return interface_params;
+  }
+
+  private buildInterfaceEnvVariables(service_interface_context: ServiceInterfaceContext): { [key: string]: string } {
+    const interface_params: { [key: string]: string } = {};
+
+    for (const [interface_name, interface_context] of Object.entries(service_interface_context)) {
+      const prefix = interface_name === '_default' || Object.keys(service_interface_context).length === 1 ? '' : `${interface_name}_`.toUpperCase();
+      interface_params[`${prefix}EXTERNAL_HOST`] = interface_context.external.host || '';
+
+      interface_params[`${prefix}INTERNAL_HOST`] = interface_context.internal.host;
+      interface_params[`${prefix}HOST`] = interface_context.host;
+
+      interface_params[`${prefix}EXTERNAL_PORT`] = interface_context.external.port ? interface_context.external.port.toString() : '';
+      interface_params[`${prefix}INTERNAL_PORT`] = interface_context.internal.port ? interface_context.internal.port.toString() : '';
+      interface_params[`${prefix}PORT`] = interface_context.port.toString();
+
+      interface_params[`${prefix}EXTERNAL_PROTOCOL`] = interface_context.external.protocol || '';
+      interface_params[`${prefix}INTERNAL_PROTOCOL`] = interface_context.internal.protocol;
+
+      interface_params[`${prefix}EXTERNAL_URL`] = interface_context.external.url || '';
+      interface_params[`${prefix}INTERNAL_URL`] = interface_context.internal.url;
     }
 
     return interface_params;

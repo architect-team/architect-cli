@@ -33,25 +33,15 @@ describe('expression-interpolation', function () {
       dependencies: {
         'architect/cloud-api': 'v1'
       },
+      environment: {
+        APP_PORT: "${ parameters.APP_PORT }",
+        DEP_DB_USER: "${ parameters.DEP_DB_USER }",
+        lower_dep_ADMIN_PORT: "${ parameters.lower_dep_ADMIN_PORT }",
+      },
       parameters: {
         APP_PORT: 8080,
-        DB_USER: {
-          value_from: {
-            datastore: 'db',
-            value: '$DB_USER'
-          }
-        },
         DEP_DB_USER: "${ dependencies['architect/cloud-api'].parameters.DB_USER }",
         lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].interfaces.admin.port }",
-      },
-      datastores: {
-        db: {
-          image: 'postgres:11',
-          port: 5432,
-          parameters: {
-            DB_USER: 'root'
-          }
-        }
       }
     };
 
@@ -80,6 +70,9 @@ describe('expression-interpolation', function () {
         admin: 8081,
         primary: 8082,
       },
+      environment: {
+        DB_USER: "${ parameters.DB_USER }",
+      },
       parameters: {
         DB_USER: '${ dependencies.primary.parameters.DB_USER }',
       },
@@ -104,7 +97,7 @@ describe('expression-interpolation', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const default_keys = [
+    const interface_env_variables = [
       'EXTERNAL_HOST',
       'INTERNAL_HOST',
       'HOST',
@@ -120,16 +113,16 @@ describe('expression-interpolation', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
-    const backend_node = graph.nodes[2] as ServiceNode;
-    const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...default_keys]);
+    const backend_node = graph.nodes[1] as ServiceNode;
+    expect(Object.keys(frontend_node.parameters)).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
     expect(frontend_node.interfaces.app.port).eq(8080);
     expect(frontend_node.parameters['APP_PORT']).eq(8080);
-    expect(frontend_node.parameters['DB_USER']).eq('root');
     expect(frontend_node.parameters['DEP_DB_USER']).eq('dep-root');
+    expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.parameters['lower_dep_ADMIN_PORT']).eq('8081');
-    expect(backend_node.parameters['PRIMARY_PORT']).eq('8082');
-    expect(backend_datastore_node.parameters['PORT']).eq('5432');
+    expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
+    expect(backend_node.node_config.getEnvironmentVariables()['PRIMARY_PORT']).eq('8082');
   });
 
   it('loadParameters-with-expressions-circular-dependency', async () => {
