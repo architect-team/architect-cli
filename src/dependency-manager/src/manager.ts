@@ -1,6 +1,7 @@
 import { deserialize, plainToClass, serialize } from 'class-transformer';
-import dotenvExpand from 'dotenv-expand';
 import { ServiceConfigBuilder, ServiceNode } from '.';
+import { ComponentConfig } from './component-config/base';
+import { ComponentConfigBuilder } from './component-config/builder';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
@@ -8,10 +9,12 @@ import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import { DatastoreNode } from './graph/node/datastore';
 import GatewayNode from './graph/node/gateway';
-import { DatastoreParameter, DependencyParameter, ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
+import { ServiceConfig, ValueFromParameter, VaultParameter } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
+import { Dictionary } from './utils/dictionary';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, ServiceInterfaceContext } from './utils/interpolation/interpolation-context';
+import { ParameterDefinitionSpecV1 } from './v1-spec/parameters';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -19,10 +22,10 @@ export default abstract class DependencyManager {
   gateway_port!: number;
   _environment!: EnvironmentConfig;
   protected vault_manager!: VaultManager;
-  protected _service_config_cache: { [key: string]: ServiceConfig | undefined };
+  protected _component_config_cache: { [key: string]: ComponentConfig | undefined };
 
   protected constructor() {
-    this._service_config_cache = {};
+    this._component_config_cache = {};
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
@@ -31,30 +34,81 @@ export default abstract class DependencyManager {
     this.gateway_port = await this.getServicePort(80);
   }
 
-  getNodeConfig(service_config: ServiceConfig) {
+  async loadComponents(): Promise<void> {
+    /*
+    // Backwards compat to load the old services block
+    for (const config of Object.values(this._environment.getServices())) {
+      const svc_node = await this.loadServiceFromConfig(config);
+      if (!svc_node.is_external) {
+        const interfaces = svc_node.node_config.getInterfaces();
+        const external_interfaces_count = Object.values(interfaces).filter(i => i.subdomain).length;
+        if (external_interfaces_count) {
+          const gateway = new GatewayNode();
+          this.graph.addNode(gateway);
+          this.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref));
+        }
+      }
+    }
+    */
+
+    // Backwards compat to load the old services block
+    const services_component = ComponentConfigBuilder.buildFromJSON({
+      name: '',
+      services: this._environment.getServices(),
+    });
+    const components = Object.values(this._environment.getComponents()).concat(services_component);
+    for (const component of components) {
+      const component_config = await this.loadComponentConfigWrapper(component);
+      await this.loadComponent(component_config);
+    }
+  }
+
+  async loadComponent(component: ComponentConfig) {
+    const ref_map: Dictionary<string> = {};
+    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+      const node_config = this.getNodeConfig(service_config, component.getParameters());
+      const node = this.loadServiceNode(service_config, node_config);
+      this.graph.addNode(node);
+
+      ref_map[service_name] = node.ref;
+    }
+
+    for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
+      const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
+      const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_key });
+      await this.loadComponent(dep_component);
+    }
+
+    // Add edges to services inside component
+    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+      const service_string = serialize(service_config);
+      const services_regex = /\$\{\s*services\.(\w+)?\./g;
+      const from = ref_map[service_name];
+
+      let matches;
+      while ((matches = services_regex.exec(service_string)) != null) {
+        const to = ref_map[matches[1]];
+        const edge = new ServiceEdge(from, to);
+        this.graph.addEdge(edge);
+      }
+    }
+  }
+
+  getNodeConfig(service_config: ServiceConfig, additional_parameters: Dictionary<ParameterDefinitionSpecV1>) {
     // Merge in global parameters
-    const global_overrides: any = {
+    const overrides: any = {
       parameters: {},
       datastores: {},
     };
     const global_parameters = this._environment.getParameters();
     for (const key of Object.keys(service_config.getParameters())) {
-      if (key in global_parameters) {
-        global_overrides.parameters[key] = global_parameters[key];
+      if (key in additional_parameters) {
+        overrides.parameters[key] = additional_parameters[key];
+      } else if (key in global_parameters) {
+        overrides.parameters[key] = global_parameters[key];
       }
     }
-    for (const [datastore_name, datastore] of Object.entries(service_config.getDatastores())) {
-      for (const key of Object.keys(datastore.parameters)) {
-        if (key in global_parameters) {
-          if (!global_overrides.datastores[datastore_name]) {
-            global_overrides.datastores[datastore_name] = { parameters: {} };
-          }
-          global_overrides.datastores[datastore_name].parameters[key] = global_parameters[key];
-        }
-      }
-    }
-    let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...global_overrides }));
-
+    let node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...overrides }));
     // Merge in service overrides in the environment
     const env_service = this._environment.getServiceDetails(service_config.getRef());
     if (env_service) {
@@ -114,6 +168,7 @@ export default abstract class DependencyManager {
       }
     }
 
+    /*
     let all_env_params: { [key: string]: string } = {};
     for (const node of this.graph.nodes) {
       const env_params_to_expand: { [key: string]: string } = {};
@@ -207,6 +262,7 @@ export default abstract class DependencyManager {
         }
       }
     }
+    */
   }
 
   private interpolateAllNodeConfigs(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): void {
@@ -216,7 +272,10 @@ export default abstract class DependencyManager {
 
     let change_detected = true;
     let passes = 0;
-    const MAX_DEPTH = 100;
+    // Limiting to depth of 1
+    // We are going to use interpolation to determine edges and other metadata between services
+    // We might eventually support, but for the initial implementation chaining makes it too difficult
+    const MAX_DEPTH = 1;
 
     for (const node of this.graph.nodes) {
       if (node instanceof ServiceNode) {
@@ -235,7 +294,7 @@ export default abstract class DependencyManager {
       change_detected = false;
       for (const node of this.graph.nodes) {
         if (node instanceof ServiceNode) {
-          const new_environment_context = this.interpolateNodeConfig(node, environment_context, friendly_name_map, interface_context);
+          const new_environment_context = this.interpolateNodeConfig(node, environment_context, interface_context);
 
           if (serialize(environment_context) !== serialize(new_environment_context)) {
             change_detected = true;
@@ -246,7 +305,7 @@ export default abstract class DependencyManager {
       passes++;
     }
 
-    if (passes >= MAX_DEPTH) {
+    if (passes >= MAX_DEPTH && MAX_DEPTH !== 1) {
       throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
     }
   }
@@ -254,7 +313,6 @@ export default abstract class DependencyManager {
   private interpolateNodeConfig(
     node: ServiceNode,
     environment_context: EnvironmentInterpolationContext,
-    friendly_name_map: { [key: string]: { [key: string]: string } },
     interface_context: EnvironmentInterfaceContext,
   ): EnvironmentInterpolationContext {
     let change_detected = true;
@@ -409,72 +467,29 @@ export default abstract class DependencyManager {
     return Promise.resolve(starting_port || 80);
   }
 
-  /**
-   * Similar to `loadDependencies()`, but iterates over the datastores instead
-   */
-  protected async loadDatastores(parent_node: ServiceNode) {
-    if (parent_node.is_external) { return; }
+  abstract async loadComponentConfig(initial_config: ComponentConfig): Promise<ComponentConfig>;
 
-    for (const [ds_name, ds_config] of Object.entries(parent_node.node_config.getDatastores())) {
-      const dep_node = new DatastoreNode({
-        parent_ref: parent_node.ref,
-        key: ds_name,
-        node_config: ds_config,
-      });
-
-      this.graph.addNode(dep_node);
-      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-      this.graph.addEdge(edge);
-    }
-  }
-
-  /**
-   * Load the dependency graph with nodes and edges associated with a services
-   * dependencies and datastores
-   */
-  async loadDependencies(parent_node: ServiceNode, recursive = true) {
-    if (parent_node.is_external) { return; }
-
-    for (const [dep_name, dep_tag] of Object.entries(parent_node.node_config.getDependencies())) {
-      const dep_config = ServiceConfigBuilder.buildFromJSON({
-        name: dep_name,
-        extends: dep_tag,
-      });
-      const dep_node = await this.loadServiceFromConfig(dep_config, recursive);
-      this.graph.addNode(dep_node);
-      const edge = new ServiceEdge(parent_node.ref, dep_node.ref);
-      this.graph.addEdge(edge);
-    }
-  }
-
-  abstract async loadServiceConfig(initial_config: ServiceConfig): Promise<ServiceConfig>;
-
-  protected async loadServiceConfigWrapper(initial_config: ServiceConfig): Promise<ServiceConfig> {
+  protected async loadComponentConfigWrapper(initial_config: ComponentConfig): Promise<ComponentConfig> {
     let service_extends = initial_config.getExtends();
-    if (!service_extends) {
-      return this.loadServiceConfig(initial_config);
-    }
-
     const seen_extends = new Set();
-    let service_config;
+    let component_config;
     while (service_extends) {
       if (seen_extends.has(service_extends)) {
         throw new Error(`Circular service extends detected: ${service_extends}`);
       }
       seen_extends.add(service_extends);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      let cached_config = this._service_config_cache[service_extends];
+      let cached_config = this._component_config_cache[service_extends];
       if (!cached_config) {
-        cached_config = await this.loadServiceConfig(service_config || initial_config);
-        this._service_config_cache[service_extends] = cached_config;
+        cached_config = await this.loadComponentConfig(component_config || initial_config);
+        this._component_config_cache[service_extends] = cached_config;
       }
       service_extends = cached_config.getExtends();
-      service_config = service_config ? cached_config.merge(service_config) : cached_config;
+      component_config = component_config ? cached_config.merge(component_config) : cached_config;
     }
-    return service_config;
+    return component_config || initial_config;
   }
 
+  /*
   async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode> {
     const env_service = this._environment.getServiceDetails(config.getRef());
     if (env_service) {
@@ -504,12 +519,9 @@ export default abstract class DependencyManager {
     }
     return service_node;
   }
+  */
 
-  async loadServiceNode(initial_config: ServiceConfig): Promise<ServiceNode> {
-    // Load the service config without merging in environment overrides
-    const service_config = await this.loadServiceConfigWrapper(initial_config);
-    // Allow for inline overrides of services in dependencies/env
-    const node_config = this.getNodeConfig(service_config.merge(initial_config));
+  loadServiceNode(service_config: ServiceConfig, node_config: ServiceConfig): ServiceNode {
     return new ServiceNode({
       service_config,
       node_config,

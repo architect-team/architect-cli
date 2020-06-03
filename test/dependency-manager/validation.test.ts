@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
 import { EnvironmentConfigBuilder, ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
 import { flattenValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation (v1 spec)', () => {
@@ -559,7 +560,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -583,7 +584,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -614,7 +615,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -636,7 +637,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -658,7 +659,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -683,7 +684,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -705,7 +706,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
@@ -790,7 +791,7 @@ describe('validation (v1 spec)', () => {
 
       let config_err;
       try {
-        await ServiceConfigBuilder.buildFromPath('/stack/')
+        await ComponentConfigBuilder.buildFromPath('/stack/')
       } catch (err) {
         config_err = JSON.parse(err.message);
       }

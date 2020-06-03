@@ -9,7 +9,7 @@ import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { EnvironmentVariableSpecV1 } from '../v1-spec/environment-variables';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
-import { EnvironmentVariable, ServiceConfig, ServiceDatastore, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
+import { EnvironmentVariable, ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
@@ -36,10 +36,11 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: Dictionary<string | object | ServiceConfigV1>) {
+export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     const [name, ext] = key.split(':');
+    const full_name = parent ? `${parent.name}/${name}` : name;
     let config;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     if (value instanceof ServiceConfigV1) {
@@ -50,13 +51,35 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
         casted_value.extends = ext;
       }
 
-      config = { ...value, name };
+      config = { ...value, name: full_name };
     } else {
-      config = { extends: value, name };
+      config = { extends: value, name: full_name };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
   }
+
+  // Backwards compat: Support datastores as services
+  if (parent?.datastores) {
+    for (const [datastore_key, datastore_unknown] of Object.entries(parent.datastores)) {
+      const datastore = datastore_unknown as any;
+      const datastore_name = `datastore-${datastore_key}`;
+      const datastore_service = {
+        name: datastore_name,
+        image: datastore.image,
+        parameters: datastore.parameters,
+        interfaces: {
+          main: {
+            host: datastore.host,
+            port: datastore.port,
+          },
+        },
+      };
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      output[datastore_name] = plainToClass(ServiceConfigV1, datastore_service);
+    }
+  }
+
   return output;
 }
 
@@ -232,16 +255,19 @@ export class ServiceConfigV1 extends ServiceConfig {
   path?: string;
 
   @IsOptional({
-    groups: ['operator', 'debug'],
+    groups: ['operator', 'debug', 'component'],
   })
   @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
+  /*
   @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
     groups: ['developer'],
   })
+  */
+  // TODO: Enforce naming for component services
   name?: string;
 
   @IsOptional({ always: true })
@@ -283,6 +309,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   dockerfile?: string;
 
   @IsOptional({ always: true })
+  @IsEmpty({ groups: ['component'] })
   @Transform(value => (transformDependencies(value)), { toClassOnly: true })
   dependencies?: Dictionary<string>;
 
@@ -321,6 +348,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional({ always: true })
+  @IsEmpty({ groups: ['component'] })
   datastores?: Dictionary<ServiceDatastoreV1>;
 
   @Transform(value => (transformInterfaces(value)))
@@ -442,21 +470,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.dockerfile;
   }
 
-  getDependencies() {
-    return this.dependencies || {};
-  }
-
-  addDependency(name: string, tag: string) {
-    this.dependencies = this.getDependencies();
-    this.dependencies[name] = tag;
-  }
-
-  removeDependency(dependency_name: string) {
-    if (this.dependencies) {
-      delete this.dependencies[dependency_name];
-    }
-  }
-
   getParameters(): Dictionary<ServiceParameter> {
     return this.normalizeParameters(this.parameters || {});
   }
@@ -482,6 +495,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     this.environment[key] = value;
   }
 
+  /*
   getDatastores(): Dictionary<ServiceDatastore> {
     const datastores = this.datastores || {};
     return Object.keys(datastores)
@@ -502,6 +516,7 @@ export class ServiceConfigV1 extends ServiceConfig {
         throw new Error('Missing datastore docker config which is required for provisioning');
       }, {});
   }
+  */
 
   getDebugOptions(): ServiceConfig | undefined {
     return this.debug;
