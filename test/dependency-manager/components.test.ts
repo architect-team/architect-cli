@@ -159,7 +159,7 @@ describe('components', function () {
     });
 
     it('local component with local dependency', async () => {
-      const web_component_config = {
+      const cloud_component_config = {
         name: 'architect/cloud',
         services: {
           api: {
@@ -199,14 +199,14 @@ describe('components', function () {
           'architect/cloud': {
             extends: 'file:./cloud'
           },
-          'concourse/ci': {
+          'concourse/ci:6.2': {
             extends: 'file:./concourse/architect.json'
           }
         }
       };
 
       mock_fs({
-        '/stack/cloud/architect.json': JSON.stringify(web_component_config),
+        '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
         '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
         '/stack/arc.env.json': JSON.stringify(env_config),
       });
@@ -215,13 +215,13 @@ describe('components', function () {
       const graph = manager.graph;
       expect(graph.nodes).length(3);
       expect(graph.nodes[0].ref).eq('architect/cloud/api:latest')
-      expect(graph.nodes[1].ref).eq('concourse/ci/web:latest')
-      expect(graph.nodes[2].ref).eq('concourse/ci/worker:latest')
+      expect(graph.nodes[1].ref).eq('concourse/ci/web:6.2')
+      expect(graph.nodes[2].ref).eq('concourse/ci/worker:6.2')
       expect(graph.edges).length(2);
-      expect(graph.edges[0].from).eq('concourse/ci/worker:latest')
-      expect(graph.edges[0].to).eq('concourse/ci/web:latest')
+      expect(graph.edges[0].from).eq('concourse/ci/worker:6.2')
+      expect(graph.edges[0].to).eq('concourse/ci/web:6.2')
       expect(graph.edges[1].from).eq('architect/cloud/api:latest')
-      expect(graph.edges[1].to).eq('concourse/ci/web:latest')
+      expect(graph.edges[1].to).eq('concourse/ci/web:6.2')
       // Test parameter values
       expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('architect/cloud/app:latest')
       expect((graph.nodes[2] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('architect/cloud/app:latest')

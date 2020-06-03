@@ -26,7 +26,7 @@ export const buildImage = async (node: ServiceNode, registry_host: string, tag_n
   const config = node.node_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const node_path = node.node_config.getPath()!;
+  const node_path = ''; // TODO build context node.node_config.getPath()!;
   const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
   await docker([
     'build',

@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
@@ -38,21 +38,14 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
 export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    const [name, ext] = key.split(':');
-    const full_name = parent ? `${parent.name}/${name}` : name;
     let config;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     if (value instanceof ServiceConfigV1) {
       config = value;
     } else if (value instanceof Object) {
-      const casted_value = value as ServiceConfigV1;
-      if (ext && !casted_value.extends) {
-        casted_value.extends = ext;
-      }
-
-      config = { ...value, name: full_name };
+      config = { ...value, name: key };
     } else {
-      config = { extends: value, name: full_name };
+      config = { name: key };
     }
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     output[key] = plainToClass(ServiceConfigV1, config);
@@ -207,34 +200,11 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Allow({ always: true })
   __version = '1.0.0';
 
-  @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a filesystem location when registering a service',
-  })
-  @IsString({ always: true })
-  path?: string;
-
-  @IsOptional({
-    groups: ['operator', 'debug', 'component'],
-  })
-
-  /* TODO
   @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
-    message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
-    groups: ['developer'],
-  })
-  */
-  // TODO: Enforce naming for component services
   name?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  extends?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -359,21 +329,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     return errors;
   }
 
-  getPath() {
-    return this.path;
-  }
-
-  getExtends() {
-    if (this.extends) {
-      return this.extends.includes(':') ? this.extends : `${this.getName()}:${this.extends}`;
-    }
-  }
-
-  getRef() {
-    const tag = this.extends && this.extends.includes(':') ? 'latest' : this.extends || 'latest';
-    return `${this.getName()}:${tag}`;
-  }
-
   getName(): string {
     return this.name || '';
   }
@@ -437,13 +392,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDebugOptions(): ServiceConfig | undefined {
     return this.debug;
-  }
-
-  setDebugPath(debug_path: string) {
-    if (!this.debug) {
-      this.debug = new ServiceConfigV1();
-    }
-    this.debug.path = debug_path;
   }
 
   getLanguage(): string {

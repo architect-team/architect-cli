@@ -22,7 +22,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
     groups: ['developer'],
   })
-  name?: string;
+  name!: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -57,7 +57,11 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getName() {
-    return this.name || '';
+    return this.name.split(':')[0];
+  }
+
+  getRef() {
+    return this.name.includes(':') ? this.name : `${this.name}:latest`;
   }
 
   getExtends() {

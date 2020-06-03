@@ -23,17 +23,4 @@ export abstract class EnvironmentConfig extends BaseSpec {
   abstract getServices(): Dictionary<ServiceConfig>;
   abstract getComponents(): Dictionary<ComponentConfig>;
   abstract getDnsConfig(): DnsConfig;
-
-  getServiceDetails(key: string): ServiceConfig | undefined {
-    const services = this.getServices();
-
-    // Remove parent ref if it exists
-    const [parent, service] = key.split('.');
-    key = service ? service : parent;
-
-    const env_service = services[key] || services[key.split(':')[0]];
-    if (env_service && (!env_service.getExtends() || env_service.getExtends() === key)) {
-      return env_service;
-    }
-  }
 }

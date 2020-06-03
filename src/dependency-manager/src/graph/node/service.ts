@@ -51,7 +51,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get ref() {
-    return this.node_config.getRef();
+    return this.node_config.getName();
   }
 
   get volumes() {
@@ -63,6 +63,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get is_local() {
-    return this.node_config.getPath() !== undefined;
+    return false; // TODO build context
+    //return this.node_config.getPath() !== undefined;
   }
 }

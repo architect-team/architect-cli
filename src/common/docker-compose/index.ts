@@ -78,7 +78,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (node.is_local && node instanceof ServiceNode) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const node_path = node.node_config.getPath()!;
+      const node_path = ''; // TODO: build context node.node_config.getPath()!;
       const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
       if (!node.image) {
         /* TODO: Build args
@@ -107,7 +107,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         }
 
         const service_volumes = node.service_config.getDebugOptions()?.getVolumes();
-        const env_volumes = dependency_manager._environment.getServiceDetails(node.ref)?.getDebugOptions()?.getVolumes();
+        const env_volumes: any = {}; // TODO: volumes dependency_manager._environment.getServiceDetails(node.ref)?.getDebugOptions()?.getVolumes();
         const env_volume_unset = !env_volumes || env_volumes && !env_volumes[key];
         let volume;
         if (service_volumes && service_volumes[key] && service_volumes[key].host_path && env_volume_unset) {

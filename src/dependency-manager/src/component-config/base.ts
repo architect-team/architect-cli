@@ -8,6 +8,7 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract __version: string;
 
   abstract getName(): string;
+  abstract getRef(): string;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;
   abstract getParameters(): Dictionary<ParameterDefinitionSpecV1>;

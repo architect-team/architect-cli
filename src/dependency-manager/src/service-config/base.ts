@@ -41,9 +41,6 @@ export interface VolumeSpec {
 
 export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
-  abstract getPath(): string | undefined;
-  abstract getExtends(): string | undefined;
-  abstract getRef(): string;
   abstract getName(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;
@@ -59,7 +56,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract setEnvironmentVariable(key: string, value: string): void;
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getDebugOptions(): ServiceConfig | undefined;
-  abstract setDebugPath(debug_path: string): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
