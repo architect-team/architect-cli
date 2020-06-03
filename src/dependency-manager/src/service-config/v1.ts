@@ -7,7 +7,6 @@ import { Dictionary } from '../utils/dictionary';
 import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
-import { EnvironmentVariableSpecV1 } from '../v1-spec/environment-variables';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { EnvironmentVariable, ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, ServiceParameter, VolumeSpec } from './base';
 
@@ -344,7 +343,16 @@ export class ServiceConfigV1 extends ServiceConfig {
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @IsOptional({ always: true })
-  environment?: Dictionary<EnvironmentVariableSpecV1>;
+  @Transform(value => {
+    if (value) {
+      const output: Dictionary<string> = {};
+      for (const [k, v] of Object.entries(value)) {
+        output[k] = `${v}`;
+      }
+      return output;
+    }
+  })
+  environment?: Dictionary<string>;
 
   @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
   @IsOptional({ always: true })
