@@ -13,6 +13,7 @@ import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, ServiceInterfaceContext } from './utils/interpolation/interpolation-context';
+import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import { ParameterDefinitionSpecV1 } from './v1-spec/parameters';
 import VaultManager from './vault-manager';
 
@@ -34,36 +35,25 @@ export default abstract class DependencyManager {
   }
 
   async loadComponents(): Promise<void> {
-    /*
-    // Backwards compat to load the old services block
-    for (const config of Object.values(this._environment.getServices())) {
-      const svc_node = await this.loadServiceFromConfig(config);
-      if (!svc_node.is_external) {
-        const interfaces = svc_node.node_config.getInterfaces();
-        const external_interfaces_count = Object.values(interfaces).filter(i => i.subdomain).length;
-        if (external_interfaces_count) {
-          const gateway = new GatewayNode();
-          this.graph.addNode(gateway);
-          this.graph.addEdge(new IngressEdge(gateway.ref, svc_node.ref));
-        }
-      }
-    }
-    */
-
-    // Backwards compat to load the old services block
+    // Backwards compat: Load the old services block
     const services_component = ComponentConfigBuilder.buildFromJSON({
       name: '',
       services: this._environment.getServices(),
     });
     const components = Object.values(this._environment.getComponents()).concat(services_component);
     for (const component of components) {
-      const component_config = await this.loadComponentConfigWrapper(component);
-      await this.loadComponent(component_config);
+      await this.loadComponent(component);
     }
   }
 
-  async loadComponent(component: ComponentConfig) {
+  async loadComponent(component_config: ComponentConfig) {
+    if (component_config.getName() in this._environment.getComponents()) {
+      component_config = component_config.merge(this._environment.getComponents()[component_config.getName()]);
+    }
+    const component = await this.loadComponentConfigWrapper(component_config);
+
     const ref_map: Dictionary<string> = {};
+    // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config, component.getParameters());
       const node = this.loadServiceNode(service_config, node_config);
@@ -72,6 +62,7 @@ export default abstract class DependencyManager {
       ref_map[service_name] = node.ref;
     }
 
+    // Load component dependencies
     for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
       const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_key });
@@ -81,12 +72,24 @@ export default abstract class DependencyManager {
     // Add edges to services inside component
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const service_string = serialize(service_config);
-      const services_regex = /\$\{\s*services\.(\w+)?\./g;
+
+      const start_regex = `(?:\\[\\s*\\\\"|\\[\\s*\\'|\\.)`;
+      const end_regex = `(?:\\\\"\\s*\\]|\\'\\s*\\])?\\.`;
+
+      const services_regex = new RegExp(`\\\${\\s*services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
       const from = ref_map[service_name];
 
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const to = ref_map[matches[1]];
+        const edge = new ServiceEdge(from, to);
+        this.graph.addEdge(edge);
+      }
+
+      const dependencies_regex = new RegExp(`\\\${\\s*dependencies${start_regex}(${REPOSITORY_REGEX})?${end_regex}services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
+      while ((matches = dependencies_regex.exec(service_string)) != null) {
+        // TODO match tag?
+        const to = `${matches[1]}/${matches[2]}:latest`;
         const edge = new ServiceEdge(from, to);
         this.graph.addEdge(edge);
       }

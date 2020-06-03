@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
@@ -256,11 +256,12 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({
     groups: ['operator', 'debug', 'component'],
   })
+
+  /* TODO
   @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  /*
   @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
     groups: ['developer'],

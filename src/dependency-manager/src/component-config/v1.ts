@@ -3,7 +3,7 @@ import { Allow, IsOptional, IsString, Matches, ValidatorOptions } from 'class-va
 import { ServiceConfig } from '..';
 import { transformParameters, transformServices } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
-import { validateDictionary } from '../utils/validation';
+import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary } from '../utils/validation';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ComponentConfig } from './base';
 
@@ -15,10 +15,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['operator'],
   })
   @IsString({ always: true })
-  @Matches(/^[a-zA-Z0-9-_]+$/, {
+  @Matches(new RegExp(IMAGE_NAME_REGEX), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(/^[a-zA-Z0-9-_]+\/[a-zA-Z0-9-_]+$/, {
+  @Matches(new RegExp(REPOSITORY_NAME_REGEX), {
     message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
     groups: ['developer'],
   })
@@ -37,6 +37,15 @@ export class ComponentConfigV1 extends ComponentConfig {
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
+  @Transform(value => {
+    if (value) {
+      const output: Dictionary<string> = {};
+      for (const [k, v] of Object.entries(value)) {
+        output[k] = `${v}`;
+      }
+      return output;
+    }
+  })
   dependencies?: Dictionary<string>;
 
   async validate(options?: ValidatorOptions) {
