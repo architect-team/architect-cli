@@ -4,7 +4,6 @@ import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceCon
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { ParameterDefinitionSpecV1 } from '../../dependency-manager/src/v1-spec/parameters';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
@@ -30,7 +29,8 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
     await dependency_manager.init();
     await dependency_manager.loadComponents();
-    await dependency_manager.loadParameters();
+    await dependency_manager.loadParameters2();
+    // await dependency_manager.loadParameters();
     return dependency_manager;
   }
 
@@ -135,8 +135,8 @@ export default class LocalDependencyManager extends DependencyManager {
     return node.normalized_ref;
   }
 
-  getNodeConfig(service_config: ServiceConfig, additional_parameters: Dictionary<ParameterDefinitionSpecV1>) {
-    let node_config = super.getNodeConfig(service_config, additional_parameters);
+  getNodeConfig(service_config: ServiceConfig) {
+    let node_config = super.getNodeConfig(service_config);
     // If debug is enabled merge in debug options ex. debug.command -> command
     const debug_options = node_config.getDebugOptions();
     if (debug_options) {

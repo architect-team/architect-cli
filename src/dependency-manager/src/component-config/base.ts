@@ -16,6 +16,10 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract getDependencies(): Dictionary<string>;
   abstract getContext(): any;
 
+  getServiceRef(service_name: string) {
+    return `${this.getName()}/${service_name}:${this.getRef().split(':')[1]}`;
+  }
+
   copy() {
     return classToClass(this);
   }

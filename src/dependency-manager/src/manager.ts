@@ -1,5 +1,5 @@
 import { deserialize, plainToClass, serialize } from 'class-transformer';
-import { ServiceConfigBuilder, ServiceNode } from '.';
+import { ServiceNode } from '.';
 import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
 import { EnvironmentConfig } from './environment-config/base';
@@ -8,13 +8,12 @@ import DependencyGraph from './graph';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig } from './service-config/base';
+import { ParameterValue, ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
 import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
 import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
-import { ParameterDefinitionSpecV1 } from './v1-spec/parameters';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -22,10 +21,12 @@ export default abstract class DependencyManager {
   gateway_port!: number;
   _environment!: EnvironmentConfig;
   protected vault_manager!: VaultManager;
-  protected _component_config_cache: { [key: string]: ComponentConfig | undefined };
+  protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
+  protected _component_map: Dictionary<ComponentConfig>;
 
   protected constructor() {
-    this._component_config_cache = {};
+    this.__component_config_cache = {};
+    this._component_map = {};
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
@@ -56,19 +57,20 @@ export default abstract class DependencyManager {
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
+    this._component_map[component.getRef()] = component;
 
     const ref_map: Dictionary<string> = {};
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
-      const node_config = this.getNodeConfig(service_config, component.getParameters());
+      const node_config = this.getNodeConfig(service_config);
 
       // TODO: Cleanup this is terrible
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      service_config.name = `${component.getName()}/${service_config.getName()}:${component.getRef().split(':')[1]}`;
+      service_config.name = component.getServiceRef(service_config.getName());
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      node_config.name = `${component.getName()}/${node_config.getName()}:${component.getRef().split(':')[1]}`;
+      node_config.name = component.getServiceRef(node_config.getName());
 
       const node = this.loadServiceNode(service_config, node_config);
       this.graph.addNode(node);
@@ -109,30 +111,62 @@ export default abstract class DependencyManager {
     }
   }
 
-  getNodeConfig(service_config: ServiceConfig, additional_parameters: Dictionary<ParameterDefinitionSpecV1>) {
-    // Merge in global parameters
-    const overrides: any = {
-      parameters: {},
-    };
-    const global_parameters = this._environment.getParameters();
-    /* TODO: Fix parameter passdown
-    for (const key of Object.keys(service_config.getParameters())) {
-      if (key in additional_parameters) {
-        overrides.parameters[key] = additional_parameters[key];
-      } else if (key in global_parameters) {
-        overrides.parameters[key] = global_parameters[key];
+  async loadParameters2() {
+    const env_parameters = this._environment.getParameters();
+    const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
+    const node_component_map: Dictionary<string> = {};
+
+    // TODO define type
+    const component_context_map: any = {};
+    for (const component of Object.values(this._component_map) as Array<ComponentConfig>) {
+      const parameters: Dictionary<ParameterValue> = {};
+      for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
+        parameters[parameter_key] = parameter.default;
       }
+      for (const parameter_key of Object.keys(parameters)) {
+        if (parameter_key in env_parameters) {
+          parameters[parameter_key] = env_parameters[parameter_key];
+        }
+      }
+
+      const services: any = {};
+      for (const [service_key, service] of Object.entries(component.getServices())) {
+        services[service_key] = {
+          interfaces: interface_context[component.getServiceRef(service_key)],
+        };
+        node_component_map[component.getServiceRef(service_key)] = component.getRef();
+      }
+
+      component_context_map[component.getRef()] = {
+        parameters,
+        services,
+      };
     }
-    */
-    const node_config = service_config.merge(ServiceConfigBuilder.buildFromJSON({ __version: service_config.__version, ...overrides }));
-    // Merge in service overrides in the environment
-    /*
-    const env_service = this._environment.getServiceDetails(service_config.getRef());
-    if (env_service) {
-      node_config = node_config.merge(env_service);
+
+    // Loop through dependencies and set contexts
+    for (const component of Object.values(this._component_map) as Array<ComponentConfig>) {
+      const dependencies: any = {};
+      for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
+        dependencies[dep_key] = { ...component_context_map[`${dep_key}:${dep_tag}`] };
+        delete dependencies[dep_key].dependencies;
+      }
+      component_context_map[component.getRef()].dependencies = dependencies;
     }
-    */
-    return node_config;
+
+    for (const node of this.graph.nodes) {
+      if (!(node instanceof ServiceNode)) continue;
+
+      const component_ref = node_component_map[node.ref];
+      const component_context = component_context_map[component_ref];
+
+      // TODO: Support brackets ${ dependencies['concourse/ci'].services... }
+      const interpolated_node_config_string = ExpressionInterpolator.interpolateString(serialize(node.node_config), component_context);
+      node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
+    }
+  }
+
+  getNodeConfig(service_config: ServiceConfig) {
+    return service_config.copy();
   }
 
   protected scopeEnv(node: DependencyNode, key: string) {
@@ -432,10 +466,10 @@ export default abstract class DependencyManager {
         throw new Error(`Circular service extends detected: ${service_extends}`);
       }
       seen_extends.add(service_extends);
-      let cached_config = this._component_config_cache[service_extends];
+      let cached_config = this.__component_config_cache[service_extends];
       if (!cached_config) {
         cached_config = await this.loadComponentConfig(component_config);
-        this._component_config_cache[service_extends] = cached_config;
+        this.__component_config_cache[service_extends] = cached_config;
       }
       service_extends = cached_config.getExtends();
       component_config = component_config ? cached_config.merge(component_config) : cached_config;
