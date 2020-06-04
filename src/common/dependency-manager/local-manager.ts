@@ -29,8 +29,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
     await dependency_manager.init();
     await dependency_manager.loadComponents();
-    await dependency_manager.loadParameters2();
-    // await dependency_manager.loadParameters();
+    await dependency_manager.loadParameters();
     return dependency_manager;
   }
 
@@ -98,7 +97,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadParameters() {
-    /*
+    /* TODO: Support file refs
     for (const node of this.graph.nodes) {
       for (const [key, value] of Object.entries(node.parameters)) {
         // Only include in cli since it will read files off disk

@@ -83,22 +83,4 @@ export class ComponentConfigV1 extends ComponentConfig {
   getDependencies() {
     return this.dependencies || {};
   }
-
-  getContext() {
-    const flat_parameters: any = {};
-    for (const [parameter_key, parameter] of Object.entries(this.getParameters())) {
-      flat_parameters[parameter_key] = parameter.default;
-    }
-
-    let flat_interfaces: any = {}; // Backwards compat for old service architect.json
-    for (const service of Object.values(this.getServices())) {
-      flat_interfaces = { ...flat_interfaces, ...service.getInterfaces() };
-    }
-
-    return {
-      interfaces: flat_interfaces,
-      parameters: flat_parameters,
-      services: this.getServices(),
-    };
-  }
 }

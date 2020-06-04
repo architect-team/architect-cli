@@ -14,7 +14,6 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract getParameters(): Dictionary<ParameterDefinitionSpecV1>;
   abstract getServices(): Dictionary<ServiceConfig>;
   abstract getDependencies(): Dictionary<string>;
-  abstract getContext(): any;
 
   getServiceRef(service_name: string) {
     return `${this.getName()}/${service_name}:${this.getRef().split(':')[1]}`;

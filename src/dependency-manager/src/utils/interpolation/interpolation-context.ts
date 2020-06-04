@@ -1,10 +1,14 @@
 import { ParameterValue } from '../../service-config/base';
+import { Dictionary } from '../dictionary';
 
 export type EnvironmentParameterMap = { [key: string]: ParameterContext };
 
 export interface InterpolationContext {
   parameters: ParameterContext;
-  interfaces: ServiceInterfaceContext;
+  services: {
+    interfaces: ServiceInterfaceContext;
+  };
+  dependencies: Dictionary<InterpolationContext>;
 }
 
 export type ParameterContext = { [key: string]: ParameterValue };

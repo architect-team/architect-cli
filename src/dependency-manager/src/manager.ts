@@ -1,4 +1,5 @@
-import { deserialize, plainToClass, serialize } from 'class-transformer';
+import { deserialize, serialize } from 'class-transformer';
+import Mustache from 'mustache';
 import { ServiceNode } from '.';
 import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
@@ -11,8 +12,7 @@ import GatewayNode from './graph/node/gateway';
 import { ParameterValue, ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
-import { ExpressionInterpolator } from './utils/interpolation/expression-interpolator';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, InterpolationContext } from './utils/interpolation/interpolation-context';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -111,13 +111,19 @@ export default abstract class DependencyManager {
     }
   }
 
-  async loadParameters2() {
+  public interpolateString(param_value: string, component_context: InterpolationContext): string {
+    Mustache.tags = ['${', '}']; // sets custom delimiters
+    Mustache.escape = function (text) { return text; }; // turns off HTML escaping
+    //TODO:77: add validation logic to catch expressions that don't refer to an existing path
+    return Mustache.render(param_value, component_context);
+  }
+
+  async loadParameters() {
     const env_parameters = this._environment.getParameters();
     const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
     const node_component_map: Dictionary<string> = {};
 
-    // TODO define type
-    const component_context_map: any = {};
+    const component_context_map: EnvironmentInterpolationContext = {};
     for (const component of Object.values(this._component_map) as Array<ComponentConfig>) {
       const parameters: Dictionary<ParameterValue> = {};
       for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
@@ -130,7 +136,7 @@ export default abstract class DependencyManager {
       }
 
       const services: any = {};
-      for (const [service_key, service] of Object.entries(component.getServices())) {
+      for (const service_key of Object.keys(component.getServices())) {
         services[service_key] = {
           interfaces: interface_context[component.getServiceRef(service_key)],
         };
@@ -140,6 +146,7 @@ export default abstract class DependencyManager {
       component_context_map[component.getRef()] = {
         parameters,
         services,
+        dependencies: {},
       };
     }
 
@@ -160,7 +167,7 @@ export default abstract class DependencyManager {
       const component_context = component_context_map[component_ref];
 
       // TODO: Support brackets ${ dependencies['concourse/ci'].services... }
-      const interpolated_node_config_string = ExpressionInterpolator.interpolateString(serialize(node.node_config), component_context);
+      const interpolated_node_config_string = this.interpolateString(serialize(node.node_config), component_context);
       node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
     }
   }
@@ -179,209 +186,6 @@ export default abstract class DependencyManager {
   protected abstract toInternalHost(node: DependencyNode): string;
   protected toInternalPort(node: DependencyNode, interface_name: string): number {
     return node.interfaces[interface_name].port;
-  }
-
-  /*
-   * Expand all valueFrom parameters into real values that can be used inside of services
-  */
-  async loadParameters() {
-    // (1) first we construct the interface_context, a map of node_ref:interface_name:interface_block for use in mapping
-    const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
-
-    // (2) we attach the interfac_context to the node_config of each node
-    for (const node of this.graph.nodes) {
-      const service_interfaces = interface_context[node.ref];
-      for (const [interface_name, interface_block] of Object.entries(service_interfaces)) {
-        node.interfaces[interface_name] = interface_block;
-      }
-    }
-
-    // (3) we interpolate all mustache expressions and replace the node_config of every node inline
-    this.interpolateAllNodeConfigs(this.graph, interface_context);
-
-    /* TODO: Support vault
-    for (const node of this.graph.nodes) {
-      for (const [key, value] of Object.entries(node.parameters)) {
-        if (value instanceof Object && value.valueFrom && 'vault' in value.valueFrom) {
-          node.parameters[key] = await this.vault_manager.getSecret(value as ValueFromParameter<VaultParameter>);
-        }
-      }
-    }
-    */
-
-    /*
-    let all_env_params: { [key: string]: string } = {};
-    for (const node of this.graph.nodes) {
-      const env_params_to_expand: { [key: string]: string } = {};
-
-      for (const [param_name, param_value] of Object.entries(node.parameters)) { // load the service's own params
-        if (typeof param_value === 'string' || typeof param_value === 'boolean') {
-          if (param_value.toString().indexOf('$') > -1 && param_value.toString().indexOf('${') === -1) {
-            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString().replace(/\$/g, `$${this.scopeEnv(node, '')}`);
-          } else {
-            env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.toString();
-          }
-        }
-      }
-
-      if (node instanceof ServiceNode) {
-        const node_dependency_names = new Set([...Object.keys(node.node_config.getDependencies()), node.node_config.getName()]);
-
-        for (const [param_name, param_value] of Object.entries(node.parameters)) { // load param references
-          if (param_value instanceof Object && param_value.valueFrom && !('vault' in param_value.valueFrom)) {
-            const value_from_param = param_value as ValueFromParameter<DependencyParameter>;
-            let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
-            // Support dep ref with or without tag
-            if (param_target_service_name in node.node_config.getDependencies()) {
-              const dep_tag = node.node_config.getDependencies()[param_target_service_name];
-              param_target_service_name = `${param_target_service_name}:${dep_tag}`;
-            }
-            const param_target_datastore_name = (param_value as ValueFromParameter<DatastoreParameter>).valueFrom.datastore;
-
-            if (param_target_service_name && !param_target_datastore_name) {
-              let param_target_service;
-              try {
-                param_target_service = this.graph.getNodeByRef(param_target_service_name) as ServiceNode;
-              } catch {
-                param_target_service = this.graph.getNodeByRef(`${node.ref}.${param_target_service_name}`) as ServiceNode;
-              }
-              if (value_from_param.valueFrom.interface && !(value_from_param.valueFrom.interface in param_target_service.interfaces)) {
-                throw new Error(`Interface ${value_from_param.valueFrom.interface} is not defined on service ${param_target_service_name}.`);
-              }
-              if (!param_target_service || !node_dependency_names.has(param_target_service.node_config.getName())) {
-                throw new Error(`Service ${param_target_service_name} not found for config of ${node.ref}`);
-              }
-
-              if (value_from_param.valueFrom.interface && Object.keys(param_target_service.interfaces).length > 1) {
-                env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, value_from_param.valueFrom.interface.toUpperCase())}_`);
-              } else {
-                if (!(this.scopeEnv(node, param_name) in env_params_to_expand)) { // prevent circular relationship
-                  env_params_to_expand[this.scopeEnv(node, param_name)] = param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_service, '')}`);
-                }
-              }
-            } else if (param_target_datastore_name) {
-              const param_target_datastore = this.graph.getNodeByRef(`${node.ref}.${param_target_datastore_name}`);
-              const datastore_names = Object.keys(node.node_config.getDatastores());
-              if (!param_target_datastore || !datastore_names.includes(param_target_datastore_name)) {
-                throw new Error(`Datastore ${param_target_datastore_name} not found for service ${node.ref}`);
-              }
-              env_params_to_expand[this.scopeEnv(node, param_name)] =
-                param_value.valueFrom.value.replace(/\$/g, `$${this.scopeEnv(param_target_datastore, '')}`);
-            } else {
-              throw new Error(`Error creating parameter ${param_name} of ${node.ref}. A valueFrom reference must specify a dependency or datastore.`);
-            }
-          }
-        }
-      }
-      all_env_params = { ...all_env_params, ...all_interface_params, ...env_params_to_expand };
-    }
-
-    // ignoreProcessEnv is important otherwise it will be stored globally
-    const dotenv_config = { parsed: all_env_params, ignoreProcessEnv: true };
-    const expanded_params = dotenvExpand(dotenv_config).parsed || {};
-    for (const node of this.graph.nodes) {
-      const prefix = this.scopeEnv(node, '');
-      for (const [prefixed_key, value] of Object.entries(expanded_params)) {
-        if (prefixed_key.startsWith(prefix)) {
-          const key = prefixed_key.replace(prefix, '');
-
-          // if the node_config has this parameter already on it and it isn't a valueFrom, take that one, otherwise take the one from the dotenv_expansion (used for valueFroms)
-          const params_from_node_config = (node as any)?.node_config?.parameters;
-          if (params_from_node_config && !ExpressionInterpolator.isNullParamValue(params_from_node_config[key]?.default) && !params_from_node_config[key].default?.valueFrom) {
-            const interpolated_value = (node as any).node_config.parameters[key].default;
-            node.parameters[key] = typeof interpolated_value == 'boolean' ? interpolated_value.toString() : interpolated_value;
-          } else {
-            node.parameters[key] = value;
-          }
-
-          // we copy the new parameter value into the node_config if it doesn't already have it
-          if (node instanceof ServiceNode) {
-            (node.node_config as any).parameters = (node.node_config as any).parameters || {};
-            (node.node_config as any).parameters[key] = (node.node_config as any).parameters[key] || {};
-            (node.node_config as any).parameters[key].default = node.parameters[key];
-          }
-        }
-      }
-    }
-    */
-  }
-
-  private interpolateAllNodeConfigs(graph: DependencyGraph, interface_context: EnvironmentInterfaceContext): void {
-    // map of dependency name (as it is in service config) to normalized_ref
-    // used for lookups in expressions like this: ${ dependencies['friendly/name'].parameters... }
-    const friendly_name_map = ExpressionInterpolator.build_friendly_name_map(this.graph);
-
-    let change_detected = true;
-    let passes = 0;
-    // Limiting to depth of 1
-    // We are going to use interpolation to determine edges and other metadata between services
-    // We might eventually support, but for the initial implementation chaining makes it too difficult
-    const MAX_DEPTH = 1;
-
-    for (const node of this.graph.nodes) {
-      if (node instanceof ServiceNode) {
-        const serial_config = serialize(node.node_config);
-        const namespaced_serial_config = ExpressionInterpolator.namespaceExpressions(node.namespace_ref, serial_config, friendly_name_map[node.ref]);
-        node.node_config = deserialize(ServiceConfigV1, namespaced_serial_config);
-      }
-    }
-
-    let environment_context = ExpressionInterpolator.mapGraphToInterpolationContext(graph, interface_context);
-
-    // if there are any changes detected in the environment config in the course of interpolating every node, we need to do another pass at the entire graph
-    while (change_detected && passes < MAX_DEPTH) {
-      change_detected = false;
-      for (const node of this.graph.nodes) {
-        if (node instanceof ServiceNode) {
-          const new_environment_context = this.interpolateNodeConfig(node, environment_context, interface_context);
-
-          if (serialize(environment_context) !== serialize(new_environment_context)) {
-            change_detected = true;
-          }
-          environment_context = new_environment_context;
-        }
-      }
-      passes++;
-    }
-
-    if (passes >= MAX_DEPTH && MAX_DEPTH !== 1) {
-      throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
-    }
-  }
-
-  private interpolateNodeConfig(
-    node: ServiceNode,
-    environment_context: EnvironmentInterpolationContext,
-    interface_context: EnvironmentInterfaceContext,
-  ): EnvironmentInterpolationContext {
-    let change_detected = true;
-    let passes = 0;
-    const MAX_DEPTH = 100;
-
-    let serial_config = serialize(node.node_config);
-
-    while (change_detected && passes < MAX_DEPTH) {
-      change_detected = false;
-
-      const interpolated_serial_config = ExpressionInterpolator.interpolateString(serial_config, environment_context);
-      // check to see if the interpolated value is different from the one listed in the environment_context. if it is, we're
-      // going to want to do another pass and set update the environment_context, which requires a full deserialization/serialization
-      if (interpolated_serial_config !== serial_config) {
-        change_detected = true;
-
-        const deserialized_config = deserialize(ServiceConfigV1, interpolated_serial_config);
-        node.node_config = deserialized_config;
-        interface_context = this.buildEnvironmentInterfaceContext(this.graph);
-        environment_context[node.ref] = ExpressionInterpolator.mapNodeToInterpolationContext(node, interface_context[node.ref]);
-        serial_config = serialize(node.node_config);
-      } else {
-        node.node_config = plainToClass(ServiceConfigV1, deserialize(ServiceConfigV1, interpolated_serial_config), { enableImplicitConversion: true });
-        return environment_context;
-      }
-      passes++;
-    }
-
-    throw new Error('Stack Overflow Error: You might have a circular reference in your ServiceConfig expression stack.');
   }
 
   private buildEnvironmentInterfaceContext(graph: DependencyGraph): EnvironmentInterfaceContext {
