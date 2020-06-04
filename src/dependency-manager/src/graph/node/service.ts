@@ -5,7 +5,6 @@ import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
   image?: string;
-  tag?: string;
   digest?: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
@@ -15,7 +14,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
   image?: string;
-  tag!: string;
   digest?: string;
   @Type(() => ServiceConfig, {
     discriminator: {
@@ -43,7 +41,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     super();
     if (options) {
       this.image = options.image;
-      this.tag = options.tag || 'latest';
       this.digest = options.digest;
       this.service_config = options.service_config;
       this.node_config = options.node_config;

@@ -275,43 +275,10 @@ export default abstract class DependencyManager {
     return component_config;
   }
 
-  /*
-  async loadServiceFromConfig(config: ServiceConfig, recursive = true): Promise<ServiceNode> {
-    const env_service = this._environment.getServiceDetails(config.getRef());
-    if (env_service) {
-      config = config.merge(env_service);
-    }
-
-    const service_ref = config.getRef();
-    const existing_node = this.graph.nodes_map.get(service_ref);
-    if (existing_node) {
-      return existing_node as ServiceNode;
-    }
-
-    if (Object.keys(config.getInterfaces()).length > 0 && Object.values(config?.getInterfaces()).every((i) => (i.host))) {
-      const external_node = new ServiceNode({
-        service_config: config,
-        node_config: config,
-      });
-      this.graph.addNode(external_node);
-      return external_node;
-    }
-
-    const service_node = await this.loadServiceNode(config);
-    this.graph.addNode(service_node);
-    await this.loadDatastores(service_node);
-    if (recursive) {
-      await this.loadDependencies(service_node, recursive);
-    }
-    return service_node;
-  }
-  */
-
   loadServiceNode(service_config: ServiceConfig, node_config: ServiceConfig): ServiceNode {
     return new ServiceNode({
       service_config,
       node_config,
-      tag: '', // TODO: remove tag? node_config.getRef().split(':')[node_config.getRef().split(':').length - 1],
       image: node_config.getImage(),
       digest: node_config.getDigest(),
     });
