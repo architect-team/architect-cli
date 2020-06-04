@@ -49,16 +49,6 @@ export class EnvironmentConfigBuilder {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
 
-      /*
-      for (const service of Object.values(env_config.getServices())) {
-        const service_path = service.getDebugOptions()?.getPath();
-        if (service_path) {
-          // Load local service config
-          service.setDebugPath(path.resolve(path.dirname(config_path), service_path));
-        }
-      }
-      */
-
       for (const component of Object.values(env_config.getComponents())) {
         const component_extends = component.getExtends();
         if (component_extends?.startsWith('file:')) {
@@ -75,7 +65,16 @@ export class EnvironmentConfigBuilder {
     }
   }
 
-  static buildFromJSON(obj: object): EnvironmentConfig {
+  static buildFromJSON(obj: any): EnvironmentConfig {
+    // Support old services block in environment config
+    if (obj.services) {
+      if (!obj.components) obj.components = {};
+      for (const [service_key, service] of Object.entries(obj.services)) {
+        obj.components[service_key] = service;
+      }
+      delete obj.services;
+    }
+
     return plainToClass(EnvironmentConfigV1, obj);
   }
 

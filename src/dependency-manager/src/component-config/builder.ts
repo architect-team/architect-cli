@@ -61,11 +61,6 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    // Transform to component syntax
-    if (!js_obj.services) {
-      js_obj = ComponentConfigBuilder.transformServiceToComponent(js_obj);
-    }
-
     try {
       const config = ComponentConfigBuilder.buildFromJSON(js_obj);
       await config.validateOrReject({ groups: ['developer'] });
@@ -79,8 +74,8 @@ export class ComponentConfigBuilder {
   }
 
   static transformServiceToComponent(config: any) {
-    const parameters = config.parameters;
-    const dependencies = config.dependencies;
+    const parameters = config.parameters || {};
+    const dependencies = config.dependencies || {};
     for (const [key, value] of Object.entries(dependencies)) {
       // Flatten any inline dependencies
       if (value instanceof Object) {
@@ -96,6 +91,13 @@ export class ComponentConfigBuilder {
     }
 
     const services: any = {};
+    let ext = config.extends;
+    delete config.extends;
+    // Convert old debug.path to new extends syntax
+    if (config.debug?.path) {
+      ext = `file:${config.debug?.path}`;
+      delete config.debug.path;
+    }
 
     // Support datastores as services
     if (config?.datastores) {
@@ -126,10 +128,16 @@ export class ComponentConfigBuilder {
       parameters: parameters,
       dependencies: dependencies,
       services: services,
+      extends: ext,
     };
   }
 
-  static buildFromJSON(obj: object): ComponentConfig {
+  static buildFromJSON(obj: any): ComponentConfig {
+    // TODO: figure out a better check
+    // Transform to component syntax
+    if (!obj.services && (obj.interfaces || obj.debug)) {
+      obj = ComponentConfigBuilder.transformServiceToComponent(obj);
+    }
     return plainToClass(ComponentConfigV1, obj);
   }
 

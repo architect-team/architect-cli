@@ -1,10 +1,9 @@
-import { plainToClass } from 'class-transformer';
 import { Transform } from 'class-transformer/decorators';
 import { Allow, IsOptional, ValidatorOptions } from 'class-validator';
 import { ComponentConfig } from '../component-config/base';
-import { ComponentConfigV1 } from '../component-config/v1';
-import { ParameterValue, ServiceConfig } from '../service-config/base';
-import { transformParameters, transformServices } from '../service-config/v1';
+import { ComponentConfigBuilder } from '../component-config/builder';
+import { ParameterValue } from '../service-config/base';
+import { transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary } from '../utils/validation';
 import { EnvironmentConfig, EnvironmentVault } from './base';
@@ -13,7 +12,7 @@ interface DnsConfigSpec {
   searches?: string | string[];
 }
 
-export const transformComponents = (input?: Dictionary<any>): Dictionary<ComponentConfig> | undefined => {
+export const transformComponents = (input?: Dictionary<any>, parent?: any): Dictionary<ComponentConfig> | undefined => {
   if (!input) {
     return undefined;
   }
@@ -21,9 +20,9 @@ export const transformComponents = (input?: Dictionary<any>): Dictionary<Compone
   const output: Dictionary<ComponentConfig> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value instanceof Object) {
-      output[key] = plainToClass(ComponentConfigV1, { extends: key, ...value, name: key });
+      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: key, ...value, name: key });
     } else {
-      output[key] = plainToClass(ComponentConfigV1, { extends: value.includes(':') ? value : `${key}:${value}`, name: key });
+      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: value.includes(':') ? value : `${key}:${value}`, name: key });
     }
   }
   return output;
@@ -37,11 +36,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @IsOptional({ always: true })
   protected parameters?: Dictionary<ParameterValue>;
 
-  @Transform(value => (transformServices(value)))
-  @IsOptional({ always: true })
-  protected services?: Dictionary<ServiceConfig>;
-
-  @Transform(value => (transformComponents(value)))
+  @Transform(transformComponents)
   @IsOptional({ always: true })
   protected components?: Dictionary<ComponentConfig>;
 
@@ -59,10 +54,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return this.parameters || {};
   }
 
-  getServices() {
-    return this.services || {};
-  }
-
   getComponents() {
     return this.components || {};
   }
@@ -74,7 +65,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   async validate(options?: ValidatorOptions) {
     let errors = await super.validate(options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(this, 'services', errors, undefined, options);
     errors = await validateDictionary(this, 'components', errors, undefined, options);
     return errors;
   }

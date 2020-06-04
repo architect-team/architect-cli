@@ -200,6 +200,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Allow({ always: true })
   __version = '1.0.0';
 
+  @IsOptional({ always: true })
   @IsString({ always: true })
   @Matches(/^[a-zA-Z0-9-_]+$/, {
     message: 'Names must only include letters, numbers, dashes, and underscores',

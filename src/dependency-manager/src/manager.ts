@@ -36,12 +36,6 @@ export default abstract class DependencyManager {
   }
 
   async loadComponents(): Promise<void> {
-    // TODO support old services block
-    // Backwards compat: Load the old services block
-    const services_component = ComponentConfigBuilder.buildFromJSON({
-      name: '',
-      services: this._environment.getServices(),
-    });
     const components = Object.values(this._environment.getComponents());
     for (const component of components) {
       await this.loadComponent(component);
