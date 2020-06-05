@@ -87,7 +87,48 @@ export class ComponentConfigBuilder {
     delete config.parameters;
     delete config.dependencies;
     if (!config.environment) {
-      config.environment = parameters;
+      /*
+  @Transform(value => {
+    if (value instanceof Object) {
+      const value_from = value.valueFrom;
+      if (value_from.dependency) {
+        return `\${ dependencies['${value_from.dependency}'].services.service.parameters.${value_from.value} }`;
+      } else if (value_from.interface) {
+        return '';
+      } else if (value_from.datastore) {
+        return `\${ services['datastore-${value_from.datastore}'].parameters.${value_from.value} }`;
+      } else {
+        return 'TODO: support vault';
+      }
+    } else {
+      return value;
+    }
+  })
+      */
+      config.environment = {};
+      for (const [parameter_key, parameter_unknown] of Object.entries({ ...parameters })) {
+        const parameter = parameter_unknown as any;
+        let value;
+        // Check for valueFrom
+        if (parameter instanceof Object) {
+          value = parameter.default || parameter;
+
+          if (value.value_from) {
+            value = value.value_from;
+          } else if (value.valueFrom) {
+            value = value.valueFrom;
+          }
+        } else {
+          value = parameter;
+        }
+        // If value is a valueFrom convert to interpolation syntax
+        if (value instanceof Object) {
+          // This also means it doesn't need to be a top level parameter
+          delete parameters[parameter_key];
+        } else {
+          config.environment[parameter_key] = `\${ parameters.${parameter_key} }`;
+        }
+      }
     }
 
     const services: any = {};
