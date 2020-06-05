@@ -49,7 +49,7 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend/service:latest') as ServiceNode).node_config.getLivenessProbe();
 
     expect(liveness_probe!.command).undefined;
     expect(liveness_probe!.path).eq('/health');
@@ -85,7 +85,7 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend/service:latest') as ServiceNode).node_config.getLivenessProbe();
 
     expect(liveness_probe!.path).undefined;
     expect(liveness_probe!.port).undefined;
@@ -122,7 +122,7 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend/service:latest') as ServiceNode).node_config.getLivenessProbe();
 
     expect(liveness_probe!.command).undefined;
     expect(liveness_probe!.path).eq('/test');
@@ -154,7 +154,7 @@ describe('liveness probes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const liveness_probe = (manager.graph.getNodeByRef('architect/backend:latest') as ServiceNode).node_config.getLivenessProbe();
+    const liveness_probe = (manager.graph.getNodeByRef('architect/backend/service:latest') as ServiceNode).node_config.getLivenessProbe();
 
     expect(liveness_probe).undefined;
   });

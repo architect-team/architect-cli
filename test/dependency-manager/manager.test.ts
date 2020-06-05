@@ -43,13 +43,11 @@ describe('manager', function () {
 
   it('create ServiceNode', async () => {
     const node = new ServiceNode({
-      tag: 'test',
       image: 'image',
       digest: '56546546',
       service_config: new ServiceConfigV1(),
       node_config: new ServiceConfigV1(),
     });
-    expect(node.tag).eq('test');
 
     node.state = {
       action: 'update',

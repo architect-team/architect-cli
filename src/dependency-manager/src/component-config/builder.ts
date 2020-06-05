@@ -135,7 +135,7 @@ export class ComponentConfigBuilder {
   static buildFromJSON(obj: any): ComponentConfig {
     // TODO: figure out a better check
     // Transform to component syntax
-    if (!obj.services && (obj.interfaces || obj.debug)) {
+    if (obj instanceof Object && !obj.services && (obj.interfaces || obj.debug)) {
       obj = ComponentConfigBuilder.transformServiceToComponent(obj);
     }
     return plainToClass(ComponentConfigV1, obj);

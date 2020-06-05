@@ -113,12 +113,12 @@ describe('nodes', function () {
   });
 
   it('load ServiceNode', async () => {
-    const service_node = graph.getNodeByRef('architect/backend:latest');
+    const service_node = graph.getNodeByRef('architect/backend/service:latest');
     expect(service_node instanceof ServiceNode).true;
   });
 
   it('load ExternalNode', async () => {
-    const external_node = graph.getNodeByRef('architect/frontend:latest');
+    const external_node = graph.getNodeByRef('architect/frontend/service:latest');
     expect((external_node as ServiceNode).is_external).true;
   });
 

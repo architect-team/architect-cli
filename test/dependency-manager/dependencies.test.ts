@@ -61,16 +61,16 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/frontend:latest')
-      expect(graph.nodes[1].ref).eq('architect/backend:latest')
-      expect(graph.edges).length(1);
+      expect(graph.nodes[0].ref).eq('architect/frontend/service:latest')
+      expect(graph.nodes[1].ref).eq('architect/backend/service:latest')
+      expect(graph.edges).length(0);
 
       const plain_graph = classToPlain(graph);
       const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
       expect(loaded_graph.nodes).length(2);
-      expect(loaded_graph.nodes[0].ref).eq('architect/frontend:latest')
-      expect(loaded_graph.nodes[1].ref).eq('architect/backend:latest')
-      expect(loaded_graph.edges).length(1);
+      expect(loaded_graph.nodes[0].ref).eq('architect/frontend/service:latest')
+      expect(loaded_graph.nodes[1].ref).eq('architect/backend/service:latest')
+      expect(loaded_graph.edges).length(0);
     });
 
     it('simple remote frontend with backend dependency', async () => {
@@ -84,7 +84,7 @@ describe('dependencies', function () {
 
       moxios.stubRequest(`/accounts/architect/services/frontend/versions/latest`, {
         status: 200,
-        response: { tag: 'latest', config: classToPlain(frontend_config), service: { url: 'architect/frontend:latest' } }
+        response: { tag: 'latest', config: classToPlain(frontend_config), service: { url: 'architect/frontend/service:latest' } }
       });
 
       const backend_config = {
@@ -93,7 +93,7 @@ describe('dependencies', function () {
 
       moxios.stubRequest(`/accounts/architect/services/backend/versions/latest`, {
         status: 200,
-        response: { tag: 'latest', config: classToPlain(backend_config), service: { url: 'architect/backend:latest' } }
+        response: { tag: 'latest', config: classToPlain(backend_config), service: { url: 'architect/backend/service:latest' } }
       });
 
       const env_config = {
@@ -109,16 +109,16 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/frontend:latest')
-      expect(graph.nodes[1].ref).eq('architect/backend:latest')
-      expect(graph.edges).length(1);
+      expect(graph.nodes[0].ref).eq('architect/frontend/service:latest')
+      expect(graph.nodes[1].ref).eq('architect/backend/service:latest')
+      expect(graph.edges).length(0);
 
       const plain_graph = classToPlain(graph);
       const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
       expect(loaded_graph.nodes).length(2);
-      expect(loaded_graph.nodes[0].ref).eq('architect/frontend:latest')
-      expect(loaded_graph.nodes[1].ref).eq('architect/backend:latest')
-      expect(loaded_graph.edges).length(1);
+      expect(loaded_graph.nodes[0].ref).eq('architect/frontend/service:latest')
+      expect(loaded_graph.nodes[1].ref).eq('architect/backend/service:latest')
+      expect(loaded_graph.edges).length(0);
     });
 
     it('two services that share a postgres db', async () => {
@@ -258,7 +258,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/backend:latest');
+      expect(graph.nodes[0].ref).eq('architect/backend/service:latest');
       expect(graph.nodes[1].ref).eq('db:latest');
       expect((graph.nodes[1] as ServiceNode).image).eq('postgres:11');
       expect(graph.edges).length(1);
