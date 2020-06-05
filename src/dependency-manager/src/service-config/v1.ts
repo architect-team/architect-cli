@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
@@ -273,7 +273,8 @@ export class ServiceConfigV1 extends ServiceConfig {
   environment?: Dictionary<string>;
 
   @Transform(value => (transformInterfaces(value)))
-  @IsOptional({ always: true })
+  @IsOptional({ groups: ['operator'] })
+  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
   interfaces?: Dictionary<InterfaceSpecV1>;
 
   @Type(() => LivenessProbeV1)

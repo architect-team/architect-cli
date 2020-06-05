@@ -186,6 +186,7 @@ describe('components', function () {
             image: 'concourse/concourse:6.2'
           },
           worker: {
+            interfaces: {},
             image: 'concourse/concourse:6.2',
             environment: {
               CONCOURSE_TSA_HOST: '${ services.web.interfaces.main.host }'

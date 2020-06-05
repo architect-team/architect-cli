@@ -33,7 +33,8 @@ export class ComponentConfigV1 extends ComponentConfig {
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(transformServices)
-  @IsNotEmptyObject({ always: true })
+  @IsOptional({ groups: ['operator'] })
+  @IsNotEmptyObject({ groups: ['developer'] })
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
