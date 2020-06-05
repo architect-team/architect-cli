@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { Allow, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Allow, IsNotEmptyObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { ServiceConfig } from '..';
 import { transformParameters, transformServices } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
@@ -33,7 +33,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(transformServices)
-  @IsOptional({ always: true })
+  @IsNotEmptyObject({ always: true })
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })

@@ -107,7 +107,7 @@ export class ComponentConfigBuilder {
         const datastore_service = {
           name: datastore_name,
           image: datastore.image,
-          parameters: datastore.parameters,
+          environment: datastore.parameters,
           interfaces: {
             main: {
               host: datastore.host,
@@ -135,7 +135,7 @@ export class ComponentConfigBuilder {
   static buildFromJSON(obj: any): ComponentConfig {
     // TODO: figure out a better check
     // Transform to component syntax
-    if (obj instanceof Object && !obj.services && (obj.interfaces || obj.debug)) {
+    if (obj instanceof Object && !obj.services) {
       obj = ComponentConfigBuilder.transformServiceToComponent(obj);
     }
     return plainToClass(ComponentConfigV1, obj);

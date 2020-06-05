@@ -165,7 +165,7 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(3);
-      expect(graph.edges).length(2);
+      expect(graph.edges).length(0);
     });
 
     it('two services that use different postgres dbs', async () => {
@@ -217,53 +217,16 @@ describe('dependencies', function () {
       const graph = manager.graph;
       expect(graph.nodes).length(4);
       expect(graph.nodes.map((n) => n.ref)).members([
-        'architect/service1:latest',
-        'architect/service2:latest',
-        'postgres/postgres:11',
-        'postgres/postgres:12'
+        'architect/service1/service:latest',
+        'architect/service2/service:latest',
+        'postgres/postgres/service:11',
+        'postgres/postgres/service:12'
       ]);
-      expect(graph.edges).length(2);
+      expect(graph.edges).length(0);
     });
   });
 
   describe('extends dependencies', function () {
-    it('simple extends dependency', async () => {
-      moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
-        status: 200,
-        response: { tag: '11', config: { name: 'postgres/postgres' }, service: { url: 'postgres:11' } }
-      });
-
-      const backend_config = {
-        name: 'architect/backend',
-        dependencies: {
-          'db': 'postgres/postgres:11'
-        }
-      };
-
-      const env_config = {
-        services: {
-          'architect/backend': {
-            debug: {
-              path: './src/backend'
-            }
-          }
-        }
-      };
-
-      mock_fs({
-        '/stack/src/backend/architect.json': JSON.stringify(backend_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
-      });
-
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
-      expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/backend/service:latest');
-      expect(graph.nodes[1].ref).eq('db:latest');
-      expect((graph.nodes[1] as ServiceNode).image).eq('postgres:11');
-      expect(graph.edges).length(1);
-    });
-
     it('chained extends', async () => {
       const service_config = {
         name: 'forked/payments-service',
@@ -324,11 +287,11 @@ describe('dependencies', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = manager.graph;
       expect(graph.nodes).length(3);
-      expect(graph.edges).length(1);
+      expect(graph.edges).length(0);
 
-      expect(graph.nodes[0].ref).eq('architect/checkouts-service:v1');
-      expect(graph.nodes[1].ref).eq('architect/checkouts-service:v2');
-      expect(graph.nodes[2].ref).eq('architect/checkouts-service:v3');
+      expect(graph.nodes[0].ref).eq('architect/checkouts-service/service:v1');
+      expect(graph.nodes[1].ref).eq('architect/checkouts-service/service:v2');
+      expect(graph.nodes[2].ref).eq('architect/checkouts-service/service:v3');
     });
   });
 });

@@ -4,7 +4,6 @@ import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsOptional
 import { parse as shell_parse } from 'shell-quote';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { Dict } from '../utils/transform';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
@@ -86,30 +85,6 @@ const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dict
   }
   return output;
 };
-
-class ServiceDatastoreV1 extends BaseSpec {
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  host?: string;
-
-  @IsOptional({ always: true })
-  @IsNumber(undefined, { always: true })
-  port?: number;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  image?: string;
-
-  @Transform(value => (transformParameters(value)))
-  @IsOptional({ always: true })
-  parameters?: Dictionary<ParameterDefinitionSpecV1>;
-
-  async validate(options?: ValidatorOptions) {
-    let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options);
-    return errors;
-  }
-}
 
 class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
@@ -196,6 +171,24 @@ export class ServiceVolumeV1 extends BaseSpec {
   readonly?: boolean;
 }
 
+export class BuildSpecV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  context?: string;
+
+  @IsOptional({ always: true })
+  @Transform(value => {
+    if (value) {
+      const output: Dictionary<string> = {};
+      for (const [k, v] of Object.entries(value)) {
+        output[k] = `${v}`;
+      }
+      return output;
+    }
+  })
+  args?: Dictionary<string>;
+}
+
 export class ServiceConfigV1 extends ServiceConfig {
   @Allow({ always: true })
   __version = '1.0.0';
@@ -267,11 +260,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsEmpty({ groups: ['debug'] })
   debug?: ServiceConfigV1;
 
-  @Transform(value => (transformParameters(value)))
-  @IsEmpty({ groups: ['component'] })
-  @IsOptional({ always: true })
-  parameters?: Dictionary<ParameterDefinitionSpecV1>;
-
   @IsOptional({ always: true })
   @Transform(value => {
     if (value) {
@@ -283,11 +271,6 @@ export class ServiceConfigV1 extends ServiceConfig {
     }
   })
   environment?: Dictionary<string>;
-
-  @Transform(Dict(() => ServiceDatastoreV1), { toClassOnly: true })
-  @IsOptional({ always: true })
-  @IsEmpty({ groups: ['component'] })
-  datastores?: Dictionary<ServiceDatastoreV1>;
 
   @Transform(value => (transformInterfaces(value)))
   @IsOptional({ always: true })
@@ -313,6 +296,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsNumber(undefined, { always: true })
   replicas?: number;
 
+  @IsOptional({ always: true })
+  @Type(() => BuildSpecV1)
+  build?: BuildSpecV1;
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
@@ -324,8 +311,6 @@ export class ServiceConfigV1 extends ServiceConfig {
       volumes_options.groups = ['debug'];
     }
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(this, 'datastores', errors, undefined, options);
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;
   }
@@ -433,5 +418,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getReplicas() {
     return this.replicas || 1;
+  }
+
+  getBuild() {
+    return this.build || {};
   }
 }

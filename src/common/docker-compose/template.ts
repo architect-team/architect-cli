@@ -1,6 +1,6 @@
 export interface DockerServiceBuild {
-  context: string;
-  args: string[];
+  context?: string;
+  args?: string[];
   dockerfile?: string;
 }
 

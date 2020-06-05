@@ -81,14 +81,15 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       const node_path = ''; // TODO: build context node.node_config.getPath()!;
       const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
       if (!node.image) {
-        /* TODO: Build args
-        const build_parameter_keys = Object.entries(node.node_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
-        const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
-        */
+        const build = node.node_config.getBuild();
+        const args = [];
+        for (const [arg_key, arg] of Object.entries(build.args || {})) {
+          args.push(`${arg_key}=${arg}`);
+        }
         // Setup build context
         compose.services[node.normalized_ref].build = {
-          context: service_path,
-          args: [], //[...build_args],
+          context: build.context,
+          args: args,
         };
 
         if (node.node_config.getDockerfile()) {

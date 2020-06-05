@@ -39,6 +39,11 @@ export interface VolumeSpec {
   readonly?: boolean;
 }
 
+export interface BuildSpec {
+  context?: string;
+  args?: Dictionary<string>;
+}
+
 export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
   abstract getName(): string;
@@ -61,6 +66,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getReplicas(): number;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
+  abstract getBuild(): BuildSpec;
 
   copy() {
     return classToClass(this);
