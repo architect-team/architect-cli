@@ -15,10 +15,6 @@ export default abstract class extends Command {
     help: flags.help({ char: 'h' }),
   };
 
-  private getFormattedJSON(obj: object) {
-    return JSON.stringify(obj, null, 2);
-  }
-
   async init() {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir);

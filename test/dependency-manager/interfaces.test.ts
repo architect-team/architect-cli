@@ -37,8 +37,13 @@ describe('interfaces', function () {
         "secondary": {
           "description": "secondary port",
           "port": 8081
-        },
-        "concise": 8082
+        }
+      },
+      "datastores": {
+        "primary": {
+          "image": "postgres:11",
+          "port": 5432
+        }
       },
       "parameters": {
         "CHECKOUT_ADDR": {
@@ -63,7 +68,29 @@ describe('interfaces', function () {
               "value": "$HOST"
             }
           }
-        }
+        },
+        "MAIN_PORT": {
+          "default": {
+            "valueFrom": {
+              "interface": "main",
+              "value": "$PORT"
+            }
+          }
+        },
+        "SECONDARY_PORT": {
+          "default": {
+            "valueFrom": {
+              "interface": "secondary",
+              "value": "$PORT"
+            }
+          }
+        },
+        "DB_ADDR": {
+          "valueFrom": {
+            "datastore": "primary",
+            "value": "$URL"
+          }
+        },
       }
     };
 
@@ -79,6 +106,22 @@ describe('interfaces', function () {
               "dependency": "architect/backend",
               "interface": "main",
               "value": "$HOST:$PORT"
+            }
+          }
+        },
+        "SECONDARY_HOST": {
+          "default": {
+            "valueFrom": {
+              "interface": "secondary",
+              "value": "$HOST"
+            }
+          }
+        },
+        "SECONDARY_EXTERNAL_HOST": {
+          "default": {
+            "valueFrom": {
+              "interface": "secondary",
+              "value": "$EXTERNAL_HOST"
             }
           }
         }
@@ -98,6 +141,7 @@ describe('interfaces', function () {
       "dependencies": {
         "architect/backend": "latest"
       },
+      "interfaces": {},
       "parameters": {
         "API_ADDR": {
           "default": {
@@ -168,6 +212,12 @@ describe('interfaces', function () {
               "host": "secondary.host",
               "port": 8081
             }
+          },
+          "datastores": {
+            "primary": {
+              "host": "db.host",
+              "port": 5432
+            }
           }
         }
       }
@@ -196,8 +246,9 @@ describe('interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR).eq('architect.checkout.latest:7000');
-    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR_DEFAULT).eq('architect.checkout.latest:7000');
+    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR).eq('architect.checkout.service.latest:7000');
+    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR_DEFAULT).eq('architect.checkout.service.latest:7000');
+    expect(compose.services['architect.backend.service.latest'].environment!.DB_ADDR).eq('http://architect.backend.datastore-primary.latest:5432');
   });
 
   it('valueFrom port from service interfaces', async () => {
@@ -206,7 +257,6 @@ describe('interfaces', function () {
 
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend/service:latest') as ServiceNode;
     expect(backend_node.is_local).true;
-    expect(backend_node!.node_config.getEnvironmentVariables().MAIN_PORT).eq('8080');
     expect(backend_node!.node_config.getEnvironmentVariables().MAIN_PORT).eq('8080');
     expect(backend_node!.node_config.getEnvironmentVariables().SECONDARY_PORT).eq('8081');
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
@@ -243,33 +293,16 @@ describe('interfaces', function () {
   it('correct compose port mappings', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50002:8080', '50003:8081', '50004:8082']);
+    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50003:8080', '50004:8081']);
     expect(compose.services['architect.frontend-main.service.latest'].ports).to.include.members(['50000:8082']);
     expect(compose.services['architect.frontend-secondary.service.latest'].ports).eql([]);
-  });
-
-  it('correct interface environment variables in compose', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
-
-    expect(compose.services['architect.backend.service.latest'].environment!.HOST).eq('architect.backend.latest');
-    expect(compose.services['architect.backend.service.latest'].environment!.MAIN_PORT).eq('8080');
-    expect(compose.services['architect.backend.service.latest'].environment!.SECONDARY_PORT).eq('8081');
-  });
-
-  it('concise interface port spec', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
-
-    expect(compose.services['architect.backend.service.latest'].environment!.HOST).eq('architect.backend.latest');
-    expect(compose.services['architect.backend.service.latest'].environment!.CONCISE_PORT).eq('8082');
   });
 
   it('external interface host spec', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.frontend-main.service.latest'].environment!.SECONDARY_HOST).eq('architect.frontend-main.latest');
+    expect(compose.services['architect.frontend-main.service.latest'].environment!.SECONDARY_HOST).eq('architect.frontend-main.service.latest');
     expect(compose.services['architect.frontend-main.service.latest'].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
   });
 });

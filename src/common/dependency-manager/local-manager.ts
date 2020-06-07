@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceNode } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
+import { ServiceConfigV1 } from '../../dependency-manager/src/service-config/v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
@@ -56,11 +57,12 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort(starting_port);
   }
 
-  // TODO
   async loadLocalService(service_path: string): Promise<ServiceNode> {
-    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
-    const service_config = component_config.getServices()[0];
-    const node = await this.loadServiceNode(service_config, service_config);
+    // TODO: loadLocalService
+    const node = new ServiceNode({
+      service_config: new ServiceConfigV1(),
+      node_config: new ServiceConfigV1(),
+    });
     this.graph.addNode(node);
     return node;
   }
@@ -81,7 +83,10 @@ export default class LocalDependencyManager extends DependencyManager {
       // Load remote service config
       const [service_name, service_tag] = component_extends.split(':');
       const [account_name, svc_name] = service_name.split('/');
-      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`);
+      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`).catch((err) => {
+        err.message = `Could not download service for ${component_extends}\n${err.message}`;
+        throw err;
+      });
 
       const config = ComponentConfigBuilder.buildFromJSON(service_digest.config);
       /* TODO

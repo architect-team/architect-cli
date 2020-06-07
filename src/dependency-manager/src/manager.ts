@@ -6,6 +6,7 @@ import { ComponentConfigBuilder } from './component-config/builder';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
+import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
@@ -54,6 +55,8 @@ export default abstract class DependencyManager {
     this._component_map[component.getRef()] = component;
 
     const ref_map: Dictionary<string> = {};
+
+    let load_dependencies = false;
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config);
@@ -66,28 +69,48 @@ export default abstract class DependencyManager {
       // @ts-ignore
       node_config.name = component.getServiceRef(node_config.getName());
 
-      const node = this.loadServiceNode(service_config, node_config);
+      const node = new ServiceNode({
+        service_config,
+        node_config,
+        image: node_config.getImage(),
+        digest: node_config.getDigest(),
+        local: component.getExtends()?.startsWith('file:'),
+      });
       this.graph.addNode(node);
+
+      if (node.is_external) {
+        const gateway = new GatewayNode();
+        this.graph.addNode(gateway);
+        this.graph.addEdge(new IngressEdge(gateway.ref, node.ref));
+      } else {
+        load_dependencies = true;
+      }
 
       ref_map[service_name] = node.ref;
     }
 
-    // Load component dependencies
-    for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
-      const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: `${dep_key}:${dep_value}`, name: `${dep_key}:${dep_value}` });
-      await this.loadComponent(dep_component);
+    if (load_dependencies) {
+      // Load component dependencies
+      for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
+        const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: `${dep_key}:${dep_value}`, name: `${dep_key}:${dep_value}` });
+        await this.loadComponent(dep_component);
+      }
     }
 
     // Add edges to services inside component
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
+      const from = ref_map[service_name];
+      const from_node = this.graph.getNodeByRef(from);
+      if (from_node.is_external) {
+        continue;
+      }
+
       const service_string = serialize(service_config);
 
       const start_regex = `(?:\\[\\s*\\\\"|\\[\\s*\\'|\\.)`;
       const end_regex = `(?:\\\\"\\s*\\]|\\'\\s*\\])?\\.`;
 
       const services_regex = new RegExp(`\\\${\\s*services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
-      const from = ref_map[service_name];
-
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const to = ref_map[matches[1]];
@@ -273,14 +296,5 @@ export default abstract class DependencyManager {
       component_config = component_config ? cached_config.merge(component_config) : cached_config;
     }
     return component_config;
-  }
-
-  loadServiceNode(service_config: ServiceConfig, node_config: ServiceConfig): ServiceNode {
-    return new ServiceNode({
-      service_config,
-      node_config,
-      image: node_config.getImage(),
-      digest: node_config.getDigest(),
-    });
   }
 }

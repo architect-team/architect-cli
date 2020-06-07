@@ -123,6 +123,33 @@ export class ComponentConfigBuilder {
         }
         // If value is a valueFrom convert to interpolation syntax
         if (value instanceof Object) {
+          let prefix = '';
+          if (value.dependency) {
+            prefix = `dependencies.${value.dependency.split(':')[0]}.services.service.`;
+          } else if (value.datastore) {
+            prefix = `services.datastore-${value.datastore}.`;
+          }
+
+          let interpolated = '<error>';
+          if (value.value) {
+            interpolated = value.value;
+            const matches = interpolated.match(/\${?([a-zA-Z0-9_]+)?}?/g) || [];
+            for (const match of matches) {
+              const lower_match = match.substr(1).toLowerCase();
+              let suffix;
+              if (lower_match.includes('host') || lower_match.includes('port') || lower_match === 'url') {
+                suffix = `interfaces.${value.interface || 'main'}.${lower_match.replace('_', '.')}`;
+                if (!prefix) {
+                  suffix = `services.service.${suffix}`;
+                }
+              } else {
+                suffix = `parameters.${match.substr(1)}`;
+              }
+              interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
+            }
+          }
+          config.environment[parameter_key] = interpolated;
+
           // This also means it doesn't need to be a top level parameter
           delete parameters[parameter_key];
         } else {
@@ -176,7 +203,7 @@ export class ComponentConfigBuilder {
   static buildFromJSON(obj: any): ComponentConfig {
     // TODO: figure out a better check
     // Transform to component syntax
-    if (obj instanceof Object && !obj.services && (obj.debug || obj.datastores || obj.interfaces || obj.image)) {
+    if (obj instanceof Object && !obj.services) {
       obj = ComponentConfigBuilder.transformServiceToComponent(obj);
     }
     return plainToClass(ComponentConfigV1, obj);

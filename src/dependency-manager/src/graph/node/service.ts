@@ -8,6 +8,7 @@ export interface ServiceNodeOptions {
   digest?: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
+  local?: boolean;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -37,6 +38,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   })
   node_config!: ServiceConfig;
 
+  local = false;
+
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
     if (options) {
@@ -44,6 +47,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       this.digest = options.digest;
       this.service_config = options.service_config;
       this.node_config = options.node_config;
+      this.local = options.local || false;
     }
   }
 
@@ -60,7 +64,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get is_local() {
-    return false; // TODO build context
-    //return this.node_config.getPath() !== undefined;
+    return this.local;
   }
 }

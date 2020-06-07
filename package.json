@@ -113,7 +113,8 @@
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
+    "coverage": "nyc --extension .ts npm test",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
