@@ -88,7 +88,7 @@ export default class LocalDependencyManager extends DependencyManager {
         throw err;
       });
 
-      const config = ComponentConfigBuilder.buildFromJSON(service_digest.config);
+      const config = ComponentConfigBuilder.buildFromJSONCompat(service_digest.config);
       /* TODO
       if (!config.getImage()) {
         config.setImage(service_digest.service.url.replace(/(^\w+:|^)\/\//, ''));

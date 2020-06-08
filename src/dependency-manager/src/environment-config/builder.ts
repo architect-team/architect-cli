@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import { ComponentConfigBuilder } from '../component-config/builder';
 import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
@@ -70,7 +71,7 @@ export class EnvironmentConfigBuilder {
     if (obj.services) {
       if (!obj.components) obj.components = {};
       for (const [service_key, service] of Object.entries(obj.services)) {
-        obj.components[service_key] = service;
+        obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat(service);
       }
       delete obj.services;
     }

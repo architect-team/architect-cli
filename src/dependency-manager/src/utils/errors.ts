@@ -12,8 +12,11 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
     throw errors;
   }
   errors.forEach(error => {
-    const property = `${property_prefix}${error.property}`;
+    let property = `${property_prefix}${error.property}`;
     if (error.constraints && Object.keys(error.constraints).length) {
+      if (property.includes('services.service.')) {
+        property = property.split('services.service.')[1];
+      }
       res[property] = { ...error.constraints, value: error.value };
     }
 

@@ -62,10 +62,9 @@ export class ComponentConfigBuilder {
     }
 
     try {
-      const config = ComponentConfigBuilder.buildFromJSON(js_obj);
+      // TODO: Figure out how to enforce services block for components
+      const config = ComponentConfigBuilder.buildFromJSONCompat(js_obj);
       await config.validateOrReject({ groups: ['developer'] });
-      // TODO
-      // config.setExtends(`file:${input}`);
       return config;
     } catch (err) {
       console.log('Invalid service config:', input);
@@ -87,24 +86,6 @@ export class ComponentConfigBuilder {
     delete config.parameters;
     delete config.dependencies;
     if (!config.environment) {
-      /*
-  @Transform(value => {
-    if (value instanceof Object) {
-      const value_from = value.valueFrom;
-      if (value_from.dependency) {
-        return `\${ dependencies['${value_from.dependency}'].services.service.parameters.${value_from.value} }`;
-      } else if (value_from.interface) {
-        return '';
-      } else if (value_from.datastore) {
-        return `\${ services['datastore-${value_from.datastore}'].parameters.${value_from.value} }`;
-      } else {
-        return 'TODO: support vault';
-      }
-    } else {
-      return value;
-    }
-  })
-      */
       config.environment = {};
       for (const [parameter_key, parameter_unknown] of Object.entries({ ...parameters })) {
         const parameter = parameter_unknown as any;
@@ -188,6 +169,10 @@ export class ComponentConfigBuilder {
     }
     delete config.datastores;
 
+    if (!config.interfaces) {
+      config.interfaces = {};
+    }
+
     // Finally set service to services block
     services['service'] = config;
 
@@ -201,12 +186,16 @@ export class ComponentConfigBuilder {
   }
 
   static buildFromJSON(obj: any): ComponentConfig {
+    return plainToClass(ComponentConfigV1, obj);
+  }
+
+  static buildFromJSONCompat(obj: any): ComponentConfig {
     // TODO: figure out a better check
     // Transform to component syntax
     if (obj instanceof Object && !obj.services) {
       obj = ComponentConfigBuilder.transformServiceToComponent(obj);
     }
-    return plainToClass(ComponentConfigV1, obj);
+    return ComponentConfigBuilder.buildFromJSON(obj);
   }
 
   static saveToPath(config_path: string, config: ComponentConfig) {

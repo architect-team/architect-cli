@@ -55,6 +55,8 @@ describe('external nodes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = manager.graph;
+
+    console.log('WTF', graph.nodes.map((n) => n.ref))
     expect(graph.nodes).length(1);
     expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
