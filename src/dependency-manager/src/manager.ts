@@ -78,11 +78,13 @@ export default abstract class DependencyManager {
       });
       this.graph.addNode(node);
 
-      if (node.is_external) {
-        const gateway = new GatewayNode();
-        this.graph.addNode(gateway);
-        this.graph.addEdge(new IngressEdge(gateway.ref, node.ref));
-      } else {
+      if (!node.is_external) {
+        const exposed_interfaces_count = Object.values(node.interfaces).filter(i => i.subdomain).length;
+        if (exposed_interfaces_count) {
+          const gateway = new GatewayNode();
+          this.graph.addNode(gateway);
+          this.graph.addEdge(new IngressEdge(gateway.ref, node.ref));
+        }
         load_dependencies = true;
       }
 

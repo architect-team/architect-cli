@@ -56,7 +56,6 @@ describe('external nodes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = manager.graph;
 
-    console.log('WTF', graph.nodes.map((n) => n.ref))
     expect(graph.nodes).length(1);
     expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
@@ -113,6 +112,9 @@ describe('external nodes', function () {
       interfaces: {
         app: 8080
       },
+      environment: {
+        BACKEND_ADDR: '${ dependencies.architect/backend.services.service.interfaces.api.url }'
+      },
       dependencies: {
         'architect/backend': 'v1'
       }
@@ -121,6 +123,11 @@ describe('external nodes', function () {
     moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
+    });
+
+    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
+      status: 200,
+      response: { tag: 'v1', config: {}, service: { url: 'architect/backend:v1' } }
     });
 
     const env_config = {
@@ -203,12 +210,11 @@ describe('external nodes', function () {
     const graph = manager.graph;
     expect(graph.nodes).length(2);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[0].ref).eq('architect/frontend:v1')
+    expect(graph.nodes[0].ref).eq('architect/frontend/service:v1')
     expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].ref).eq('architect/backend:v2')
+    expect(graph.nodes[1].ref).eq('architect/backend/service:v2')
     expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
     expect(graph.nodes[1].interfaces.api.port).eq(80);
-    expect(graph.edges).length(1);
   });
 
   it('external datastore', async () => {
@@ -268,10 +274,9 @@ describe('external nodes', function () {
     const graph = manager.graph;
     expect(graph.nodes).length(3);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[1]).instanceOf(ServiceNode);
-    expect((graph.nodes[2] as ServiceNode).is_external).true;
-    expect(graph.nodes[2].interfaces._default.host).eq('db.localhost');
-    expect(graph.nodes[2].interfaces._default.port).eq(80);
-    expect(graph.edges).length(2);
+    expect((graph.nodes[1] as ServiceNode).is_external).true;
+    expect(graph.nodes[1].interfaces.main.host).eq('db.localhost');
+    expect(graph.nodes[1].interfaces.main.port).eq(80);
+    expect(graph.nodes[2]).instanceOf(ServiceNode);
   });
 });
