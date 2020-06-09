@@ -38,12 +38,6 @@ describe('parameters', function () {
             value: '$DB_USER'
           }
         },
-        DEP_DB_USER: {
-          value_from: {
-            dependency: 'architect/cloud-api',
-            value: '$DB_USER'
-          }
-        },
         lower_dep_ADMIN_PORT: {
           value_from: {
             dependency: 'architect/cloud-api',
@@ -117,16 +111,17 @@ describe('parameters', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     await manager.loadParameters();
     const graph = manager.graph;
-    const frontend_node = graph.nodes[0] as ServiceNode;
-    const backend_node = graph.nodes[2] as ServiceNode;
-    const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM']);
+    const cloud_db_node = graph.nodes[0] as ServiceNode;
+    expect(cloud_db_node.ref).eq('architect/cloud/datastore-primary:v1')
+    const frontend_node = graph.nodes[1] as ServiceNode;
+    expect(frontend_node.ref).eq('architect/cloud/service:v1')
+    const backend_db_node = graph.nodes[2] as ServiceNode;
+    expect(backend_db_node.ref).eq('architect/cloud-api/datastore-primary:v1')
+    const backend_node = graph.nodes[3] as ServiceNode;
+    expect(backend_node.ref).eq('architect/cloud-api/service:v1')
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM']);
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
-    expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).not.eq(false);
     expect(frontend_node.node_config.getEnvironmentVariables()['DB_USER']).eq('root');
-    expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
-    expect(backend_node.node_config.getEnvironmentVariables()['PRIMARY_PORT']).eq('8082');
-    expect(backend_node.node_config.getEnvironmentVariables()['PRIMARY_PORT']).eq('8082');
   });
 });

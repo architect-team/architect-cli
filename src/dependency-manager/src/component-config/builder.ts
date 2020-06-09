@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { ComponentConfig } from './base';
 import { ComponentConfigV1 } from './v1';
@@ -92,8 +93,7 @@ export class ComponentConfigBuilder {
         let value;
         // Check for valueFrom
         if (parameter instanceof Object) {
-          value = parameter.default || parameter;
-
+          value = 'default' in parameter ? parameter.default : parameter;
           if (value.value_from) {
             value = value.value_from;
           } else if (value.valueFrom) {
@@ -123,10 +123,13 @@ export class ComponentConfigBuilder {
                 if (!prefix) {
                   suffix = `services.service.${suffix}`;
                 }
+                interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
+              } else if (value.datastore) {
+                interpolated = config.datastores[value.datastore].parameters[match.substr(1)];
               } else {
                 suffix = `parameters.${match.substr(1)}`;
+                interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
               }
-              interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
             }
           }
           config.environment[parameter_key] = interpolated;
@@ -153,10 +156,14 @@ export class ComponentConfigBuilder {
       for (const [datastore_key, datastore_unknown] of Object.entries(config.datastores)) {
         const datastore = datastore_unknown as any;
         const datastore_name = `datastore-${datastore_key}`;
+        const datastore_environment: Dictionary<string> = {};
+        for (const [pk, pv] of Object.entries(datastore.parameters || {}) as any) {
+          datastore_environment[pk] = pv instanceof Object && 'default' in pv ? pv.default : pv;
+        }
         const datastore_service = {
           name: datastore_name,
           image: datastore.image,
-          environment: datastore.parameters,
+          environment: datastore_environment,
           interfaces: {
             main: {
               host: datastore.host,

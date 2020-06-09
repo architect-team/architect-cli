@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
-import { EnvironmentConfigBuilder, ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
 import { flattenValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
@@ -12,7 +12,7 @@ describe('validation (v1 spec)', () => {
 
   describe('services', () => {
     it('should not allow nested debug blocks', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test/test',
         debug: {
           command: 'debug',
@@ -29,7 +29,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('should not allow hardcoded filesystem debug paths when publishing', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test/test',
         debug: {
           path: '/some/path'
@@ -39,14 +39,14 @@ describe('validation (v1 spec)', () => {
         groups: ['developer'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).to.include('debug.path');
-      expect(flattened_errors['debug.path']).to.include({
-        isEmpty: 'Cannot hardcode a filesystem location when registering a service',
+      expect(Object.keys(flattened_errors)).to.include('extends');
+      expect(flattened_errors['extends']).to.include({
+        matches: 'Cannot hardcode a filesystem location when registering a component',
       });
     });
 
     it('should allow debug paths when operating', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test/test',
         debug: {
           path: '/some/path'
@@ -71,7 +71,7 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat(spec);
       let errors = await parsedSpec.validate({
         groups: ['developer']
       });
@@ -95,7 +95,7 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat(spec);
       let errors = await parsedSpec.validate({
         groups: ['developer']
       });
@@ -120,7 +120,7 @@ describe('validation (v1 spec)', () => {
         }
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(spec);
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat(spec);
       let errors = await parsedSpec.validate({
         groups: ['developer']
       });
@@ -132,7 +132,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('should reject service names with bad characters', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test/test$$test',
       });
       const errors = await parsedSpec.validate();
@@ -144,7 +144,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('should reject services being published without an account namespace', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test',
       });
       const errors = await parsedSpec.validate({
@@ -158,7 +158,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('should allow services being operated without an account namespace', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test',
       });
       const errors = await parsedSpec.validate({
@@ -168,7 +168,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('typos', async () => {
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test',
         TYPO: 'typo'
       });
@@ -256,7 +256,7 @@ describe('validation (v1 spec)', () => {
         }
       }
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(service_config);
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat(service_config);
       const errors = await parsedSpec.validate({
         groups: ['developer'],
       });
@@ -720,7 +720,7 @@ describe('validation (v1 spec)', () => {
         },
       };
 
-      const parsedSpec = ServiceConfigBuilder.buildFromJSON(service_config);
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat(service_config);
       const errors = await parsedSpec.validate({
         groups: ['developer'],
       });

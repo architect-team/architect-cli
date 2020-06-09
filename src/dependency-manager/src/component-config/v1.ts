@@ -26,6 +26,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   @IsOptional({ always: true })
   @IsString({ always: true })
+  @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
 
   @Transform(value => (transformParameters(value)))
