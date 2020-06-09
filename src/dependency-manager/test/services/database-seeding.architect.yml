@@ -1,0 +1,25 @@
+name: architect-ci/database-seeding
+description: Example express application using typeorm to seed test data
+author: Architect.io
+image: architectio/database-seeding
+language: node
+interfaces:
+  main: 3000
+dependencies:
+  my-demo-db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    parameters:
+      POSTGRES_DB: seeding_demo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
+parameters:
+  DATABASE_HOST: ${ dependencies['my-demo-db'].interfaces.postgres.internal.host }
+  DATABASE_PORT: ${ dependencies['my-demo-db'].interfaces.postgres.internal.port }
+  DATABASE_USER: ${ dependencies['my-demo-db'].parameters.POSTGRES_USER }
+  DATABASE_PASSWORD: ${ dependencies['my-demo-db'].parameters.POSTGRES_PASSWORD }
+  DATABASE_SCHEMA: ${ dependencies['my-demo-db'].parameters.POSTGRES_DB }
+  AUTO_DDL:
+    description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
+    default: none

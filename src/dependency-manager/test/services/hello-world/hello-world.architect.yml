@@ -1,0 +1,8 @@
+name: architect-ci/hello-world
+description: test external image
+language: javascript
+keywords:
+  - nodejs
+  - hello-world
+interfaces:
+  main: 3000

@@ -1,0 +1,10 @@
+name: architect-ci/external-image
+description: test external image
+language: javascript
+keywords:
+  - nodejs
+  - hello-world
+  - external-image
+image: heroku/nodejs-hello-world
+interfaces:
+  main: 3000
