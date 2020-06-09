@@ -58,6 +58,7 @@ describe('validation (v1 spec)', () => {
       expect(errors.length).to.equal(0);
     });
 
+    /*
     it('should not allow value_from vaults in service configs', async () => {
       const spec = {
         name: 'architect/test',
@@ -81,6 +82,7 @@ describe('validation (v1 spec)', () => {
         isEmpty: 'Services cannot hardcode references to private secret stores'
       });
     });
+    */
 
     it('should not allow host_paths in volume claims', async () => {
       const spec = {
@@ -144,8 +146,13 @@ describe('validation (v1 spec)', () => {
     });
 
     it('should reject services being published without an account namespace', async () => {
-      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSON({
         name: 'test',
+        services: {
+          api: {
+            interfaces: {}
+          }
+        }
       });
       const errors = await parsedSpec.validate({
         groups: ['developer'],
@@ -153,7 +160,7 @@ describe('validation (v1 spec)', () => {
       const flattened_errors = flattenValidationErrors(errors);
       expect(flattened_errors).to.have.key('name');
       expect(flattened_errors['name']).to.include({
-        matches: 'Names must be prefixed with an account name (e.g. architect/service-name)',
+        matches: 'Names must be prefixed with an account name (e.g. architect/component-name)',
       });
     });
 
@@ -267,6 +274,7 @@ describe('validation (v1 spec)', () => {
   });
 
   describe('environments', () => {
+    /*
     it('should support value_from vault from global parameters', async () => {
       const spec = {
         parameters: {
@@ -308,6 +316,7 @@ describe('validation (v1 spec)', () => {
       });
       expect(errors.length).to.equal(0);
     });
+    */
 
     it('should reject value_from dependency from global parameters', async () => {
       const spec = {
@@ -326,8 +335,8 @@ describe('validation (v1 spec)', () => {
         groups: ['operator'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.default.valueFrom.dependency', 'parameters.PARAM.default.valueFrom.value']);
-      expect(flattened_errors['parameters.PARAM.default.valueFrom.dependency']).to.include({
+      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.value_from']);
+      expect(flattened_errors['parameters.PARAM.value_from']).to.include({
         isEmpty: 'Service values are only accessible to direct consumers'
       });
     });
@@ -349,8 +358,8 @@ describe('validation (v1 spec)', () => {
         groups: ['operator'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.default.valueFrom.datastore', 'parameters.PARAM.default.valueFrom.value']);
-      expect(flattened_errors['parameters.PARAM.default.valueFrom.datastore']).to.include({
+      expect(Object.keys(flattened_errors)).members(['parameters.PARAM.value_from']);
+      expect(flattened_errors['parameters.PARAM.value_from']).to.include({
         isEmpty: 'Datastore values are only accessible to direct consumers'
       });
     });
@@ -369,7 +378,7 @@ describe('validation (v1 spec)', () => {
 
     it('nested typo', async () => {
       const parsedSpec = EnvironmentConfigBuilder.buildFromJSON({
-        services: {
+        components: {
           api: {
             parameter: {
               TEST: 0
@@ -382,24 +391,14 @@ describe('validation (v1 spec)', () => {
       });
       expect(errors.length).to.equal(1);
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['services.api.parameter']);
+      expect(Object.keys(flattened_errors)).members(['components.api.parameter']);
     });
 
     it('key matches', async () => {
       const spec = {
         parameters: {
-          'GCP*KEY': {
-            value_from: {
-              vault: 'my-vault',
-              key: 'folder/secret#key',
-            },
-          },
-          'gcp-key': {
-            value_from: {
-              vault: 'my-vault',
-              key: 'folder/secret#key',
-            },
-          }
+          'GCP*KEY': 'invalid',
+          'gcp-key': 'invalid'
         },
       };
 

@@ -14,8 +14,9 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
   errors.forEach(error => {
     let property = `${property_prefix}${error.property}`;
     if (error.constraints && Object.keys(error.constraints).length) {
+      // Hack to attempt semi-reasonable validation msging for old syntax
       if (property.includes('services.service.')) {
-        property = property.split('services.service.')[1];
+        property = property.replace('services.service.', '').replace('components.', 'services.');
       }
       res[property] = { ...error.constraints, value: error.value };
     }

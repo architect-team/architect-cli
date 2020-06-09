@@ -19,7 +19,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
   @Matches(new RegExp(REPOSITORY_NAME_REGEX), {
-    message: 'Names must be prefixed with an account name (e.g. architect/service-name)',
+    message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
   name!: string;

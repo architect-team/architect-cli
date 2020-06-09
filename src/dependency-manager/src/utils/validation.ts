@@ -3,7 +3,7 @@ import { BaseSpec } from './base-spec';
 
 export const IMAGE_REGEX = '[a-zA-Z0-9-_]+';
 export const IMAGE_NAME_REGEX = `^${IMAGE_REGEX}$`;
-export const REPOSITORY_REGEX = `${IMAGE_REGEX}\\/?${IMAGE_REGEX}`;
+export const REPOSITORY_REGEX = `${IMAGE_REGEX}\\/${IMAGE_REGEX}`;
 export const REPOSITORY_NAME_REGEX = `^${REPOSITORY_REGEX}$`;
 
 export const validateNested = async <T extends Record<string, any>>(
