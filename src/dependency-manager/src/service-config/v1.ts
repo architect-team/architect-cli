@@ -203,10 +203,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @IsOptional({ always: true })
   @IsString({ always: true })
-  digest?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
   host?: string;
 
   @IsOptional({ always: true })
@@ -337,14 +333,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   setImage(image: string) {
     this.image = image;
-  }
-
-  getDigest(): string | undefined {
-    return this.digest;
-  }
-
-  setDigest(digest: string) {
-    this.digest = digest;
   }
 
   getCommand() {

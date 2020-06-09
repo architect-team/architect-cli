@@ -43,8 +43,6 @@ describe('manager', function () {
 
   it('create ServiceNode', async () => {
     const node = new ServiceNode({
-      image: 'image',
-      digest: '56546546',
       service_config: new ServiceConfigV1(),
       node_config: new ServiceConfigV1(),
     });

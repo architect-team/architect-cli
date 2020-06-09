@@ -114,27 +114,13 @@ describe('parameters', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const interface_env_variables = [
-      'EXTERNAL_HOST',
-      'INTERNAL_HOST',
-      'EXTERNAL_PORT',
-      'INTERNAL_PORT',
-      'EXTERNAL_URL',
-      'INTERNAL_URL',
-      'EXTERNAL_PROTOCOL',
-      'INTERNAL_PROTOCOL',
-      'HOST',
-      'PORT',
-    ];
-
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     await manager.loadParameters();
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[2] as ServiceNode;
     const backend_datastore_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', ...interface_env_variables]);
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members([...interface_env_variables]);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM']);
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).not.eq(false);
     expect(frontend_node.node_config.getEnvironmentVariables()['DB_USER']).eq('root');

@@ -72,8 +72,6 @@ export default abstract class DependencyManager {
       const node = new ServiceNode({
         service_config,
         node_config,
-        image: node_config.getImage(),
-        digest: node_config.getDigest(),
         local: component.getExtends()?.startsWith('file:'),
       });
       this.graph.addNode(node);
@@ -283,7 +281,7 @@ export default abstract class DependencyManager {
   protected async loadComponentConfigWrapper(initial_config: ComponentConfig): Promise<ComponentConfig> {
     let service_extends = initial_config.getExtends();
     const seen_extends = new Set();
-    let component_config = initial_config;
+    const configs = [initial_config];
     while (service_extends) {
       if (seen_extends.has(service_extends)) {
         throw new Error(`Circular service extends detected: ${service_extends}`);
@@ -291,12 +289,17 @@ export default abstract class DependencyManager {
       seen_extends.add(service_extends);
       let cached_config = this.__component_config_cache[service_extends];
       if (!cached_config) {
-        cached_config = await this.loadComponentConfig(component_config);
+        cached_config = await this.loadComponentConfig(configs[0]);
         this.__component_config_cache[service_extends] = cached_config;
       }
       service_extends = cached_config.getExtends();
-      component_config = component_config ? cached_config.merge(component_config) : cached_config;
+      configs.unshift(cached_config);
     }
-    return component_config;
+
+    let res;
+    for (const config of configs) {
+      res = res ? res.merge(config) : config;
+    }
+    return res as ComponentConfig;
   }
 }

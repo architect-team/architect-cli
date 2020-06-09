@@ -106,15 +106,8 @@ describe('service config merge', function () {
     const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
 
     const node_config = service_config.merge(env_config);
-    //expect(service_config.getDependencies()['override']).eq('old');  // Make sure we don't mutate the initial config
 
     expect(node_config.getName()).eq('foo/service');
-
-    /*
-    expect(node_config.getDependencies()).keys('override', 'no_override');
-    expect(node_config.getDependencies()['override']).eq('new');
-    expect(node_config.getDependencies()['no_override']).eq('old');
-    */
 
     expect(node_config.getEnvironmentVariables()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
     expect(node_config.getEnvironmentVariables()['override']).eq('new');
@@ -122,14 +115,6 @@ describe('service config merge', function () {
     expect(node_config.getEnvironmentVariables()['overrideValueFrom2']!.toString()).eq({ 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'override' } } }.toString());
     expect(node_config.getEnvironmentVariables()['simple']).eq('old');
     expect(node_config.getEnvironmentVariables()['valueFrom']!.toString()).eq({ 'valueFrom': { 'dependency': 'override', 'value': 'old' } }.toString());
-
-    /*
-    expect(node_config.getDatastores()).keys('primary', 'override', 'new');
-    expect(node_config.getDatastores()['override'].host).eq('override');
-    expect(node_config.getDatastores()['override'].image).eq('postgres:10');
-    expect(node_config.getDatastores()['override'].parameters).keys('POSTGRES_USER', 'POSTGRES_PASS', 'POSTGRES_DB');
-    expect(node_config.getDatastores()['override'].parameters.POSTGRES_USER.default).eq('override');
-    */
 
     expect(node_config.getDebugOptions()!.getCommand()).members(['./test.ts']);
 

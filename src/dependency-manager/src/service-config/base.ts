@@ -52,8 +52,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getLanguage(): string;
   abstract getImage(): string;
   abstract setImage(image: string): void;
-  abstract getDigest(): string | undefined;
-  abstract setDigest(digest: string): void;
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
   abstract getDockerfile(): string | undefined;

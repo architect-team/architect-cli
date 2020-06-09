@@ -240,7 +240,7 @@ describe('dependencies', function () {
 
       moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
         status: 200,
-        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 1 } }, service: { url: 'architect/payments-service:v1' } }
+        response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 1 }, environment: { WORKED: '${ parameters.WORKED }' } }, service: { url: 'architect/payments-service:v1' } }
       });
 
       const env_config = {
@@ -257,8 +257,8 @@ describe('dependencies', function () {
       const graph = manager.graph;
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables()).keys(['WORKED']);
-      expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service:v1');
-      expect((graph.nodes[0] as ServiceNode).image).eq('forked/payments-service:v1');
+      expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service/service:v1');
+      expect((graph.nodes[0] as ServiceNode).node_config.getImage()).eq('forked/payments-service/service:v1');
       expect(graph.edges).length(0);
     });
 

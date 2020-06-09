@@ -95,25 +95,11 @@ describe('expression-interpolation', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const interface_env_variables = [
-      'EXTERNAL_HOST',
-      'INTERNAL_HOST',
-      'HOST',
-      'EXTERNAL_PORT',
-      'INTERNAL_PORT',
-      'PORT',
-      'EXTERNAL_PROTOCOL',
-      'INTERNAL_PROTOCOL',
-      'EXTERNAL_URL',
-      'INTERNAL_URL',
-    ];
-
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[1] as ServiceNode;
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', ...interface_env_variables]);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);
     expect(frontend_node.interfaces.app.port).eq(8080);
     expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq(8080);
     expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');

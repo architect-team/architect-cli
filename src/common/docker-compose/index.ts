@@ -49,7 +49,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports.push(`${available_ports.shift()}:${port}`);
       }
       compose.services[node.normalized_ref] = {
-        image: node.image ? node.image : undefined,
+        image: node.node_config.getImage(),
         ports,
         depends_on: [],
         environment: {
@@ -80,7 +80,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node_path = ''; // TODO: build context node.node_config.getPath()!;
       const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
-      if (!node.image) {
+      if (!node.node_config.getImage()) {
         const build = node.node_config.getBuild();
         const args = [];
         for (const [arg_key, arg] of Object.entries(build.args || {})) {

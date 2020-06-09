@@ -4,8 +4,6 @@ import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
-  image?: string;
-  digest?: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
   local?: boolean;
@@ -14,8 +12,6 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  image?: string;
-  digest?: string;
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',
@@ -43,8 +39,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
     if (options) {
-      this.image = options.image;
-      this.digest = options.digest;
       this.service_config = options.service_config;
       this.node_config = options.node_config;
       this.local = options.local || false;
