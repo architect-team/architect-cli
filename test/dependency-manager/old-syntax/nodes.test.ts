@@ -4,11 +4,11 @@ import { deserialize, serialize } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import GatewayNode from '../../src/dependency-manager/src/graph/node/gateway';
-import { ServiceNode } from '../../src/dependency-manager/src/graph/node/service';
+import Build from '../../../src/commands/build';
+import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import GatewayNode from '../../../src/dependency-manager/src/graph/node/gateway';
+import { ServiceNode } from '../../../src/dependency-manager/src/graph/node/service';
 
 describe('nodes', function () {
   let graph: LocalDependencyGraph;

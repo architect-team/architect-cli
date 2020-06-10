@@ -5,6 +5,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import * as DockerCompose from '../../src/common/docker-compose';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('components', function () {
@@ -59,6 +60,34 @@ describe('components', function () {
       expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
       expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
       expect(graph.edges).length(0);
+
+      const template = await DockerCompose.generate(manager);
+      expect(template).to.be.deep.equal({
+        "services": {
+          "architect.cloud.api.latest": {
+            "depends_on": [],
+            "environment": {
+              "HOST": "architect.cloud.api.latest",
+              "PORT": "8080"
+            },
+            "ports": [
+              "50001:8080",
+            ],
+          },
+          "architect.cloud.app.latest": {
+            "depends_on": [],
+            "environment": {
+              "HOST": "architect.cloud.app.latest",
+              "PORT": "8080"
+            },
+            "ports": [
+              "50000:8080"
+            ]
+          },
+        },
+        "version": "3",
+        "volumes": {},
+      })
     });
 
     it('simple remote component', async () => {

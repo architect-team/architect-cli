@@ -3,13 +3,13 @@ import axios from 'axios';
 import { deserialize, serialize } from 'class-transformer';
 import path from 'path';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ServiceNode } from '../../src/dependency-manager/src';
-import DependencyGraph from '../../src/dependency-manager/src/graph';
-import ServiceEdge from '../../src/dependency-manager/src/graph/edge/service';
-import { ServiceConfigV1 } from '../../src/dependency-manager/src/service-config/v1';
+import Build from '../../../src/commands/build';
+import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import { ServiceNode } from '../../../src/dependency-manager/src';
+import DependencyGraph from '../../../src/dependency-manager/src/graph';
+import ServiceEdge from '../../../src/dependency-manager/src/graph/edge/service';
+import { ServiceConfigV1 } from '../../../src/dependency-manager/src/service-config/v1';
 
 describe('manager', function () {
   let graph: DependencyGraph;
@@ -58,7 +58,7 @@ describe('manager', function () {
 
   it('remove serviceNode', async () => {
     expect(graph.nodes).lengthOf(4);
-    graph.removeNodeByRef('architect/addition-service-rest:latest');
+    graph.removeNodeByRef('architect/addition-service-rest/service:latest');
     expect(graph.nodes).lengthOf(3);
   });
 
@@ -69,19 +69,19 @@ describe('manager', function () {
   });
 
   it('get dependent nodes', async () => {
-    const dependent_nodes = graph.getDependentNodes(graph.getNodeByRef('architect/addition-service-rest:latest'));
+    const dependent_nodes = graph.getDependentNodes(graph.getNodeByRef('architect/addition-service-rest/service:latest'));
     expect(dependent_nodes).lengthOf(1);
-    expect(dependent_nodes[0].ref).eq('architect/subtraction-service-rest:latest');
+    expect(dependent_nodes[0].ref).eq('architect/subtraction-service-rest/service:latest');
   });
 
   it('remove service with cleanup', async () => {
-    graph.removeNode('architect/subtraction-service-rest:latest', true);
+    graph.removeNode('architect/subtraction-service-rest/service:latest', true);
     expect(graph.nodes).lengthOf(1);
-    expect(graph.nodes[0].ref).eq('architect/division-service-grpc:latest');
+    expect(graph.nodes[0].ref).eq('architect/division-service-grpc/service:latest');
   });
 
   it('remove service without cleanup', async () => {
-    graph.removeNode('architect/subtraction-service-rest:latest', false);
+    graph.removeNode('architect/subtraction-service-rest/service:latest', false);
     expect(graph.nodes).lengthOf(3);
   });
 });

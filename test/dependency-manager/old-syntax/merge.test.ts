@@ -1,5 +1,5 @@
 import { expect } from '@oclif/test';
-import { ServiceConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfigBuilder } from '../../../src/dependency-manager/src/component-config/builder';
 
 describe('service config merge', function () {
   it('merge configs', function () {
@@ -102,19 +102,18 @@ describe('service config merge', function () {
       }
     };
 
-    const service_config = ServiceConfigBuilder.buildFromJSON(service_config_json);
-    const env_config = ServiceConfigBuilder.buildFromJSON(env_config_json);
+    const component_config = ComponentConfigBuilder.buildFromJSONCompat(service_config_json);
+    const env_config = ComponentConfigBuilder.buildFromJSONCompat(env_config_json);
 
-    const node_config = service_config.merge(env_config);
+    const merged_component_config = component_config.merge(env_config);
 
-    expect(node_config.getName()).eq('foo/service');
+    expect(merged_component_config.getParameters()).keys('override', 'simple', 'overrideValueFrom');
+    expect(merged_component_config.getParameters()['override'].default).eq('new');
+    expect(merged_component_config.getParameters()['overrideValueFrom'].default).eq('new');
+    expect(merged_component_config.getParameters()['simple'].default).eq('old');
 
-    expect(node_config.getEnvironmentVariables()).keys('override', 'simple', 'overrideValueFrom', 'overrideValueFrom2', 'valueFrom');
-    expect(node_config.getEnvironmentVariables()['override']).eq('new');
-    expect(node_config.getEnvironmentVariables()['overrideValueFrom']).eq('new');
-    expect(node_config.getEnvironmentVariables()['overrideValueFrom2']!.toString()).eq({ 'default': { 'valueFrom': { 'dependency': 'override', 'value': 'override' } } }.toString());
-    expect(node_config.getEnvironmentVariables()['simple']).eq('old');
-    expect(node_config.getEnvironmentVariables()['valueFrom']!.toString()).eq({ 'valueFrom': { 'dependency': 'override', 'value': 'old' } }.toString());
+    const node_config = merged_component_config.getServices()['service'];
+    expect(node_config.getName()).eq('service');
 
     expect(node_config.getDebugOptions()!.getCommand()).members(['./test.ts']);
 

@@ -2,12 +2,12 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
-import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import Build from '../../../src/commands/build';
+import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import * as DockerCompose from '../../../src/common/docker-compose';
+import PortUtil from '../../../src/common/utils/port';
+import { ServiceNode } from '../../../src/dependency-manager/src';
 
 describe('interfaces', function () {
 

@@ -75,7 +75,10 @@ export class ComponentConfigBuilder {
 
   static transformServiceToComponent(config: any) {
     const parameters = config.parameters || {};
+    delete config.parameters;
+
     const dependencies = config.dependencies || {};
+    delete config.dependencies;
     for (const [key, value] of Object.entries(dependencies)) {
       // Flatten any inline dependencies
       if (value instanceof Object) {
@@ -84,73 +87,31 @@ export class ComponentConfigBuilder {
         dependencies[key] = value;
       }
     }
-    delete config.parameters;
-    delete config.dependencies;
+
     if (!config.environment) {
-      config.environment = {};
-      for (const [parameter_key, parameter_unknown] of Object.entries({ ...parameters })) {
-        const parameter = parameter_unknown as any;
-        let value;
-        // Check for valueFrom
-        if (parameter instanceof Object) {
-          value = 'default' in parameter ? parameter.default : parameter;
-          if (value.value_from) {
-            value = value.value_from;
-          } else if (value.valueFrom) {
-            value = value.valueFrom;
-          }
-        } else {
-          value = parameter;
-        }
-        // If value is a valueFrom convert to interpolation syntax
-        if (value instanceof Object) {
-          let prefix = '';
-          if (value.dependency) {
-            prefix = `dependencies.${value.dependency.split(':')[0]}.services.service.`;
-          } else if (value.datastore) {
-            prefix = `services.datastore-${value.datastore}.`;
-          }
-
-          let interpolated = '<error>';
-          if (value.value) {
-            interpolated = value.value;
-            const matches = interpolated.match(/\${?([a-zA-Z0-9_]+)?}?/g) || [];
-            for (const match of matches) {
-              const lower_match = match.substr(1).toLowerCase();
-              let suffix;
-              if (lower_match.includes('host') || lower_match.includes('port') || lower_match === 'url') {
-                suffix = `interfaces.${value.interface || 'main'}.${lower_match.replace('_', '.')}`;
-                if (!prefix) {
-                  suffix = `services.service.${suffix}`;
-                }
-                interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
-              } else if (value.datastore) {
-                interpolated = config.datastores[value.datastore].parameters[match.substr(1)];
-              } else {
-                suffix = `parameters.${match.substr(1)}`;
-                interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
-              }
-            }
-          }
-          config.environment[parameter_key] = interpolated;
-
-          // This also means it doesn't need to be a top level parameter
-          delete parameters[parameter_key];
-        } else {
-          config.environment[parameter_key] = `\${ parameters.${parameter_key} }`;
-        }
-      }
+      config.environment = ComponentConfigBuilder.transformParametersToEnvironment(parameters, config.datastores);
     }
 
-    const services: any = {};
+    if (config.debug?.parameters) {
+      config.debug.environment = ComponentConfigBuilder.transformParametersToEnvironment(parameters);
+      delete config.debug.parameters;
+    }
+
     let ext = config.extends;
     delete config.extends;
     // Convert old debug.path to new extends syntax
     if (config.debug?.path) {
       ext = `file:${config.debug?.path}`;
       delete config.debug.path;
+
+      if (!config.image && !config.build) {
+        config.build = {
+          context: '.',
+        };
+      }
     }
 
+    const services: any = {};
     // Support datastores as services
     if (config?.datastores) {
       for (const [datastore_key, datastore_unknown] of Object.entries(config.datastores)) {
@@ -192,12 +153,68 @@ export class ComponentConfigBuilder {
     };
   }
 
+  static transformParametersToEnvironment(parameters: any, datastores?: any) {
+    const environment: Dictionary<string> = {};
+    for (const [parameter_key, parameter_unknown] of Object.entries({ ...parameters })) {
+      const parameter = parameter_unknown as any;
+      let value;
+      // Check for valueFrom
+      if (parameter instanceof Object) {
+        value = 'default' in parameter ? parameter.default : parameter;
+        if (value.value_from) {
+          value = value.value_from;
+        } else if (value.valueFrom) {
+          value = value.valueFrom;
+        }
+      } else {
+        value = parameter;
+      }
+      // If value is a valueFrom convert to interpolation syntax
+      if (value instanceof Object) {
+        let prefix = '';
+        if (value.dependency) {
+          prefix = `dependencies.${value.dependency.split(':')[0]}.services.service.`;
+        } else if (value.datastore) {
+          prefix = `services.datastore-${value.datastore}.`;
+        }
+
+        let interpolated = '<error>';
+        if (value.value) {
+          interpolated = value.value;
+          const matches = interpolated.match(/\${?([a-zA-Z0-9_]+)?}?/g) || [];
+          for (const match of matches) {
+            const lower_match = match.substr(1).toLowerCase();
+            let suffix;
+            if (lower_match.includes('host') || lower_match.includes('port') || lower_match === 'url') {
+              suffix = `interfaces.${value.interface || 'main'}.${lower_match.replace('_', '.')}`;
+              if (!prefix) {
+                suffix = `services.service.${suffix}`;
+              }
+              interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
+            } else if (value.datastore) {
+              interpolated = datastores[value.datastore].parameters[match.substr(1)];
+            } else {
+              suffix = `parameters.${match.substr(1)}`;
+              interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
+            }
+          }
+        }
+        environment[parameter_key] = interpolated;
+
+        // This also means it doesn't need to be a top level parameter
+        delete parameters[parameter_key];
+      } else {
+        environment[parameter_key] = `\${ parameters.${parameter_key} }`;
+      }
+    }
+    return environment;
+  }
+
   static buildFromJSON(obj: any): ComponentConfig {
     return plainToClass(ComponentConfigV1, obj);
   }
 
   static buildFromJSONCompat(obj: any): ComponentConfig {
-    // TODO: figure out a better check
     // Transform to component syntax
     if (obj instanceof Object && !obj.services) {
       obj = ComponentConfigBuilder.transformServiceToComponent(obj);

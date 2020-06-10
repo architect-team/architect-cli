@@ -4,10 +4,10 @@ import { classToPlain, plainToClass } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ServiceConfigBuilder, ServiceNode } from '../../src/dependency-manager/src';
+import Build from '../../../src/commands/build';
+import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import { ServiceConfigBuilder, ServiceNode } from '../../../src/dependency-manager/src';
 
 describe('dependencies', function () {
   beforeEach(async () => {

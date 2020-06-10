@@ -3,9 +3,9 @@ import axios from 'axios';
 import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import Build from '../../../src/commands/build';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import * as DockerCompose from '../../../src/common/docker-compose';
 
 describe('volumes', function () {
   beforeEach(async () => {

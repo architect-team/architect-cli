@@ -2,9 +2,9 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import sinon from 'sinon';
-import Build from '../../src/commands/build';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import Build from '../../../src/commands/build';
+import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import { ServiceNode } from '../../../src/dependency-manager/src';
 
 
 describe('liveness probes', function () {

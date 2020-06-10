@@ -49,7 +49,6 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports.push(`${available_ports.shift()}:${port}`);
       }
       compose.services[node.normalized_ref] = {
-        image: node.node_config.getImage(),
         ports,
         depends_on: [],
         environment: {
@@ -58,13 +57,13 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           PORT: node.ports[0] && node.ports[0].toString(),
         },
       };
+
+      if (node.node_config.getImage()) compose.services[node.normalized_ref].image = node.node_config.getImage();
     }
 
     if (node instanceof ServiceNode) {
-      compose.services[node.normalized_ref].command = node.node_config.getCommand();
-      if (node.node_config.getEntrypoint().length) {
-        compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
-      }
+      if (node.node_config.getCommand().length) compose.services[node.normalized_ref].command = node.node_config.getCommand();
+      if (node.node_config.getEntrypoint().length) compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
 
       const platforms = node.node_config.getPlatforms();
       const docker_compose_config = platforms['docker-compose'];
@@ -87,11 +86,13 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         for (const [arg_key, arg] of Object.entries(build.args || {})) {
           args.push(`${arg_key}=${arg}`);
         }
-        // Setup build context
-        compose.services[node.normalized_ref].build = {
-          context: build.context,
-          args: args,
-        };
+
+        if (build.context || args.length) {
+          const compose_build: any = {};
+          if (build.context) compose_build.context = build.context;
+          if (args.length) compose_build.args = args;
+          compose.services[node.normalized_ref].build = compose_build;
+        }
 
         if (node.node_config.getDockerfile()) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -120,7 +121,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         }
         volumes.push(volume);
       }
-      compose.services[node.normalized_ref].volumes = volumes;
+      if (volumes.length) compose.services[node.normalized_ref].volumes = volumes;
     }
 
     // Append the dns_search value if it was provided in the environment config

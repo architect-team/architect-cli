@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
-import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
-import { flattenValidationErrors } from '../../src/dependency-manager/src/utils/errors';
+import { EnvironmentConfigBuilder } from '../../../src/dependency-manager/src';
+import { ComponentConfigBuilder } from '../../../src/dependency-manager/src/component-config/builder';
+import { flattenValidationErrors } from '../../../src/dependency-manager/src/utils/errors';
 
 describe('validation (v1 spec)', () => {
   afterEach(function () {
@@ -589,19 +589,13 @@ describe('validation (v1 spec)', () => {
       expect(config_err['debug.debug'].line).to.eq(1);
     });
 
-    it('parameter value_from error', async () => {
+    it('debug parameter value', async () => {
       const service_config = {
         name: 'test/test',
         debug: {
           parameters: {
             TEST: {
-              default: {
-                valueFrom: {
-                  dependency: "foo",
-                  value: 'bar',
-                  invalid: "baz"
-                }
-              }
+              default: 'test'
             }
           }
         },
@@ -610,14 +604,7 @@ describe('validation (v1 spec)', () => {
         '/stack/architect.json': JSON.stringify(service_config, null, 2),
       });
 
-      let config_err;
-      try {
-        await ComponentConfigBuilder.buildFromPath('/stack/')
-      } catch (err) {
-        config_err = JSON.parse(err.message);
-      }
-      expect(Object.keys(config_err)).members(['debug.parameters.TEST.default.valueFrom.invalid']);
-      expect(config_err['debug.parameters.TEST.default.valueFrom.invalid'].line).to.eq(10);
+      await ComponentConfigBuilder.buildFromPath('/stack/');
     });
 
     it('multiple author keys (first invalid) line number/single line', async () => {
