@@ -96,7 +96,7 @@ describe('expression-interpolation', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[1] as ServiceNode;
     expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);

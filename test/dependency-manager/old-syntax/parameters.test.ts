@@ -109,8 +109,7 @@ describe('parameters', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    await manager.loadParameters();
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     const cloud_db_node = graph.nodes[0] as ServiceNode;
     expect(cloud_db_node.ref).eq('architect/cloud/datastore-primary:v1')
     const frontend_node = graph.nodes[1] as ServiceNode;

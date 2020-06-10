@@ -45,7 +45,8 @@ export default class Build extends Command {
     } else {
       throw new MissingContextError();
     }
-    for (const node of dependency_manager.graph.nodes) {
+    const graph = await dependency_manager.getGraph();
+    for (const node of graph.nodes) {
       if (node.is_local && node instanceof ServiceNode) {
         await buildImage(node, this.app.config.registry_host, flags.tag);
       }

@@ -6,6 +6,7 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
+import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('components', function () {
@@ -13,6 +14,7 @@ describe('components', function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    PortUtil.reset();
   });
 
   afterEach(function () {
@@ -55,7 +57,7 @@ describe('components', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
       expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
@@ -123,7 +125,7 @@ describe('components', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
       expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
@@ -172,7 +174,7 @@ describe('components', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(3);
       expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
       expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
@@ -286,7 +288,7 @@ describe('components', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(3);
       expect(graph.nodes[0].ref).eq('architect/cloud/api:latest')
       expect(graph.nodes[1].ref).eq('concourse/ci/web:6.2')

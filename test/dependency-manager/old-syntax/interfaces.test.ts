@@ -3,7 +3,6 @@ import axios from 'axios';
 import mock_fs from 'mock-fs';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
-import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../../src/common/docker-compose';
 import PortUtil from '../../../src/common/utils/port';
@@ -253,7 +252,7 @@ describe('interfaces', function () {
 
   it('valueFrom port from service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json')
-    const graph: LocalDependencyGraph = manager.graph;
+    const graph = await manager.getGraph();
 
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend/service:latest') as ServiceNode;
     expect(backend_node.is_local).true;
@@ -275,7 +274,7 @@ describe('interfaces', function () {
 
   it('valueFrom port from environment interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json')
-    const graph: LocalDependencyGraph = manager.graph;
+    const graph = await manager.getGraph();
 
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend/service:latest') as ServiceNode;
     expect(backend_node.interfaces!.main.port).eq(8080);

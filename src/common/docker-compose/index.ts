@@ -17,7 +17,10 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
   const limit = pLimit(5);
   const port_promises = [];
-  for (const node of dependency_manager.graph.nodes) {
+  const graph = await dependency_manager.getGraph();
+  const environment = await dependency_manager.getInterpolatedEnvironment();
+
+  for (const node of graph.nodes) {
     if (node.is_external) continue;
     for (const _ of node.ports) {
       port_promises.push(limit(() => dependency_manager.getServicePort()));
@@ -26,7 +29,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   const available_ports = (await Promise.all(port_promises)).sort();
 
   // Enrich base service details
-  for (const node of dependency_manager.graph.nodes) {
+  for (const node of graph.nodes) {
     if (node.is_external) continue;
 
     if (node instanceof GatewayNode) {
@@ -76,7 +79,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     if (node.is_local && node instanceof ServiceNode) {
-      const environment_component = dependency_manager.environment.getComponentByServiceRef(node.ref);
+      const environment_component = environment.getComponentByServiceRef(node.ref);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node_path = environment_component?.getExtends()?.startsWith('file:') ? environment_component?.getExtends()!.substr('file:'.length) : '';
       const component_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
@@ -125,7 +128,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     // Append the dns_search value if it was provided in the environment config
-    const dns_config = dependency_manager.environment.getDnsConfig();
+    const dns_config = environment.getDnsConfig();
     if (dns_config.searches) {
       compose.services[node.normalized_ref].dns_search = dns_config.searches;
     }
@@ -133,9 +136,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
   const seen_edges = new Set();
   // Enrich service relationships
-  for (const edge of dependency_manager.graph.edges) {
-    const node_from = dependency_manager.graph.getNodeByRef(edge.from);
-    const node_to = dependency_manager.graph.getNodeByRef(edge.to);
+  for (const edge of graph.edges) {
+    const node_from = graph.getNodeByRef(edge.from);
+    const node_to = graph.getNodeByRef(edge.to);
 
     if (node_to.is_external) {
       continue;

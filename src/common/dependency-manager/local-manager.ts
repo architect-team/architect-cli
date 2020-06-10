@@ -1,16 +1,16 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceNode } from '../../dependency-manager/src';
+import fs from 'fs-extra';
+import path from 'path';
+import untildify from 'untildify';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceConfig, ServiceNode } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import { ServiceConfigV1 } from '../../dependency-manager/src/service-config/v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
-import LocalDependencyGraph from './local-graph';
 
 export default class LocalDependencyManager extends DependencyManager {
-  graph!: LocalDependencyGraph;
   api: AxiosInstance;
   config_path: string;
   linked_services: Dictionary<string>;
@@ -29,8 +29,6 @@ export default class LocalDependencyManager extends DependencyManager {
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
     await dependency_manager.init();
-    await dependency_manager.loadComponents();
-    await dependency_manager.loadParameters();
     return dependency_manager;
   }
 
@@ -40,14 +38,6 @@ export default class LocalDependencyManager extends DependencyManager {
       : EnvironmentConfigBuilder.buildFromJSON({});
 
     await super.init(env_config);
-
-    // Only include in cli since it will read files off disk
-    for (const vault of Object.values(env_config.getVaults())) {
-      vault.client_token = readIfFile(vault.client_token);
-      vault.role_id = readIfFile(vault.role_id);
-      vault.secret_id = readIfFile(vault.secret_id);
-    }
-    this.graph = new LocalDependencyGraph(env_config.__version);
   }
 
   /**
@@ -63,7 +53,7 @@ export default class LocalDependencyManager extends DependencyManager {
       service_config: new ServiceConfigV1(),
       node_config: new ServiceConfigV1(),
     });
-    this.graph.addNode(node);
+    // this.graph.addNode(node);
     return node;
   }
 
@@ -101,16 +91,30 @@ export default class LocalDependencyManager extends DependencyManager {
     }
   }
 
-  async loadParameters() {
-    /* TODO: Support file refs
-    for (const node of this.graph.nodes) {
-      for (const [key, value] of Object.entries(node.parameters)) {
-        // Only include in cli since it will read files off disk
-        node.parameters[key] = readIfFile(value);
+  readIfFile(any_or_path: any): any {
+    if (any_or_path && any_or_path.startsWith && any_or_path.startsWith('file:')) {
+      const file_path = untildify(any_or_path.slice('file:'.length));
+      const res = fs.readFileSync(path.resolve(path.dirname(this.config_path), file_path), 'utf-8');
+      return res.trim();
+    } else {
+      return any_or_path;
+    }
+  }
+
+  async interpolateEnvironment(environment: EnvironmentConfig) {
+    const interpolated_environment = await super.interpolateEnvironment(environment);
+    // Only include in cli since it will read files off disk
+    for (const vault of Object.values(interpolated_environment.getVaults())) {
+      vault.client_token = this.readIfFile(vault.client_token);
+      vault.role_id = this.readIfFile(vault.role_id);
+      vault.secret_id = this.readIfFile(vault.secret_id);
+    }
+    for (const component of Object.values(interpolated_environment.getComponents()) as Array<ComponentConfig>) {
+      for (const pv of Object.values(component.getParameters())) {
+        if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
     }
-    */
-    await super.loadParameters();
+    return interpolated_environment;
   }
 
   toExternalHost(node: DependencyNode, interface_key: string) {

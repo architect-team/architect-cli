@@ -54,7 +54,7 @@ describe('external nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
 
     expect(graph.nodes).length(1);
     expect((graph.nodes[0] as ServiceNode).is_external).true;
@@ -98,7 +98,7 @@ describe('external nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     expect(graph.nodes).length(1);
     expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
@@ -150,7 +150,7 @@ describe('external nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     expect(graph.nodes).length(2);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect((graph.nodes[1] as ServiceNode).is_external).true;
@@ -207,7 +207,7 @@ describe('external nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     expect(graph.nodes).length(2);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[0].ref).eq('architect/frontend/service:v1')
@@ -271,7 +271,7 @@ describe('external nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
+    const graph = await manager.getGraph();
     expect(graph.nodes).length(3);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect((graph.nodes[1] as ServiceNode).is_external).true;

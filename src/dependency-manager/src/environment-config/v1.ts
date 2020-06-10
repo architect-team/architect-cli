@@ -6,6 +6,7 @@ import { ParameterValue } from '../service-config/base';
 import { transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary } from '../utils/validation';
+import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
 interface DnsConfigSpec {
@@ -34,7 +35,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
 
   @Transform(value => (transformParameters(value)))
   @IsOptional({ always: true })
-  protected parameters?: Dictionary<ParameterValue>;
+  protected parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(transformComponents)
   @IsOptional({ always: true })
@@ -51,7 +52,11 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getParameters() {
-    return this.parameters || {};
+    const res: Dictionary<ParameterValue> = {};
+    for (const [pk, pv] of Object.entries(this.parameters || {})) {
+      if (pv.default !== undefined) res[pk] = pv.default;
+    }
+    return res;
   }
 
   getComponents() {

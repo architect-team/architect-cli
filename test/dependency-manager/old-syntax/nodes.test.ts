@@ -5,13 +5,13 @@ import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
-import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
+import DependencyGraph from '../../../src/dependency-manager/src/graph';
 import GatewayNode from '../../../src/dependency-manager/src/graph/node/gateway';
 import { ServiceNode } from '../../../src/dependency-manager/src/graph/node/service';
 
 describe('nodes', function () {
-  let graph: LocalDependencyGraph;
+  let graph: DependencyGraph;
 
   before(async function () {
     // Stub the logger
@@ -101,8 +101,8 @@ describe('nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
-    const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
+    const serialized_graph = serialize(manager.getGraph());
+    graph = deserialize(DependencyGraph, serialized_graph);
   });
 
   after(function () {

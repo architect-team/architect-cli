@@ -4,7 +4,6 @@ import { deserialize, serialize } from 'class-transformer';
 import path from 'path';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
-import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../../src/dependency-manager/src';
 import DependencyGraph from '../../../src/dependency-manager/src/graph';
@@ -20,8 +19,8 @@ describe('manager', function () {
 
     const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
     const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.graph);
-    graph = deserialize(LocalDependencyGraph, serialized_graph);
+    const serialized_graph = serialize(manager.getGraph());
+    graph = deserialize(DependencyGraph, serialized_graph);
   });
 
   afterEach(function () {
@@ -30,8 +29,6 @@ describe('manager', function () {
   });
 
   it('serialize/deserialize graph', async () => {
-
-    expect(graph.version).eq('1.0.0')
     expect(graph.nodes).lengthOf(4);
     expect(graph.nodes[0]).instanceOf(ServiceNode);
     expect(graph.nodes[0].is_local).true;

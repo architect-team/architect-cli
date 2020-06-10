@@ -5,9 +5,9 @@ import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
-import LocalDependencyGraph from '../../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceConfigBuilder, ServiceNode } from '../../../src/dependency-manager/src';
+import DependencyGraph from '../../../src/dependency-manager/src/graph';
 
 describe('dependencies', function () {
   beforeEach(async () => {
@@ -59,14 +59,14 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/frontend/service:latest')
       expect(graph.nodes[1].ref).eq('architect/backend/service:latest')
       expect(graph.edges).length(0);
 
       const plain_graph = classToPlain(graph);
-      const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
+      const loaded_graph = plainToClass(DependencyGraph, plain_graph);
       expect(loaded_graph.nodes).length(2);
       expect(loaded_graph.nodes[0].ref).eq('architect/frontend/service:latest')
       expect(loaded_graph.nodes[1].ref).eq('architect/backend/service:latest')
@@ -107,14 +107,14 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(2);
       expect(graph.nodes[0].ref).eq('architect/frontend/service:latest')
       expect(graph.nodes[1].ref).eq('architect/backend/service:latest')
       expect(graph.edges).length(0);
 
       const plain_graph = classToPlain(graph);
-      const loaded_graph = plainToClass(LocalDependencyGraph, plain_graph);
+      const loaded_graph = plainToClass(DependencyGraph, plain_graph);
       expect(loaded_graph.nodes).length(2);
       expect(loaded_graph.nodes[0].ref).eq('architect/frontend/service:latest')
       expect(loaded_graph.nodes[1].ref).eq('architect/backend/service:latest')
@@ -163,7 +163,7 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(3);
       expect(graph.edges).length(0);
     });
@@ -214,7 +214,7 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(4);
       expect(graph.nodes.map((n) => n.ref)).members([
         'architect/service1/service:latest',
@@ -254,7 +254,7 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(1);
       expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables()).keys(['WORKED']);
       expect((graph.nodes[0] as ServiceNode).ref).eq('forked/payments-service/service:v1');
@@ -285,7 +285,7 @@ describe('dependencies', function () {
       });
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-      const graph = manager.graph;
+      const graph = await manager.getGraph();
       expect(graph.nodes).length(3);
       expect(graph.edges).length(0);
 

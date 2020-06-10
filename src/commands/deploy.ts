@@ -140,7 +140,8 @@ export default class Deploy extends Command {
       this.app.linkedServices,
     );
 
-    await this.validate_graph(dependency_manager.graph);
+    const graph = await dependency_manager.getGraph();
+    await this.validate_graph(graph);
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);

@@ -12,6 +12,7 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
+  // TODO: Remove
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',

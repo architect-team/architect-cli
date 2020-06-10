@@ -5,6 +5,7 @@ import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
+import { EnvironmentConfigV1 } from './environment-config/v1';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
@@ -13,46 +14,61 @@ import GatewayNode from './graph/node/gateway';
 import { ParameterValue, ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext, InterpolationContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
-  abstract graph: DependencyGraph;
   gateway_port!: number;
-  environment!: EnvironmentConfig;
-  protected vault_manager!: VaultManager;
+  protected __environment!: EnvironmentConfig;
+  protected __interpolated_environment?: EnvironmentConfig;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
-  protected _component_map: Dictionary<ComponentConfig>;
+  component_map: Dictionary<ComponentConfig>;
 
   protected constructor() {
     this.__component_config_cache = {};
-    this._component_map = {};
+    this.component_map = {};
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
-    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
-    this.vault_manager = new VaultManager(this.environment.getVaults());
+    this.__environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
   }
 
-  async loadComponents(): Promise<void> {
-    const components = Object.values(this.environment.getComponents());
+  async getInterpolatedEnvironment(): Promise<EnvironmentConfig> {
+    if (!this.__interpolated_environment) {
+      this.__interpolated_environment = await this.interpolateEnvironment(this.__environment);
+    }
+    return this.__interpolated_environment;
+  }
+
+  async getGraph(): Promise<DependencyGraph> {
+    const graph = new DependencyGraph();
+    await this.loadComponents(graph);
+    await this.loadParameters(graph);
+    return graph;
+  }
+
+  async loadComponents(graph: DependencyGraph): Promise<void> {
+    const environment = await this.getInterpolatedEnvironment();
+    const components = Object.values(environment.getComponents());
     for (const component of components) {
-      await this.loadComponent(component);
+      await this.loadComponent(graph, component);
     }
   }
 
-  async loadComponent(component_config: ComponentConfig) {
+  async loadComponent(graph: DependencyGraph, component_config: ComponentConfig) {
+    const environment = await this.getInterpolatedEnvironment();
+
     const ref = component_config.getRef();
-    if (ref in this.environment.getComponents()) {
-      component_config = component_config.merge(this.environment.getComponents()[ref]);
-    } else if (ref.split(':')[1] === 'latest' && component_config.getName() in this.environment.getComponents()) {
-      component_config = component_config.merge(this.environment.getComponents()[component_config.getName()]);
+    if (ref in environment.getComponents()) {
+      component_config = component_config.merge(environment.getComponents()[ref]);
+    } else if (ref.split(':')[1] === 'latest' && component_config.getName() in environment.getComponents()) {
+      component_config = component_config.merge(environment.getComponents()[component_config.getName()]);
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
-    this._component_map[component.getRef()] = component;
+    this.component_map[component.getRef()] = component;
 
     const ref_map: Dictionary<string> = {};
 
@@ -74,14 +90,14 @@ export default abstract class DependencyManager {
         node_config,
         local: component.getExtends()?.startsWith('file:'),
       });
-      this.graph.addNode(node);
+      graph.addNode(node);
 
       if (!node.is_external) {
         const exposed_interfaces_count = Object.values(node.interfaces).filter(i => i.subdomain).length;
         if (exposed_interfaces_count) {
           const gateway = new GatewayNode();
-          this.graph.addNode(gateway);
-          this.graph.addEdge(new IngressEdge(gateway.ref, node.ref));
+          graph.addNode(gateway);
+          graph.addEdge(new IngressEdge(gateway.ref, node.ref));
         }
         load_dependencies = true;
       }
@@ -93,14 +109,14 @@ export default abstract class DependencyManager {
       // Load component dependencies
       for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
         const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: `${dep_key}:${dep_value}`, name: `${dep_key}:${dep_value}` });
-        await this.loadComponent(dep_component);
+        await this.loadComponent(graph, dep_component);
       }
     }
 
     // Add edges to services inside component
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const from = ref_map[service_name];
-      const from_node = this.graph.getNodeByRef(from);
+      const from_node = graph.getNodeByRef(from);
       if (from_node.is_external) {
         continue;
       }
@@ -115,7 +131,7 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         const to = ref_map[matches[1]];
         const edge = new ServiceEdge(from, to);
-        this.graph.addEdge(edge);
+        graph.addEdge(edge);
       }
 
       const dependencies_regex = new RegExp(`\\\${\\s*dependencies${start_regex}(${REPOSITORY_REGEX})?${end_regex}services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
@@ -123,25 +139,48 @@ export default abstract class DependencyManager {
         const tag = component.getDependencies()[matches[1]];
         const to = `${matches[1]}/${matches[2]}:${tag}`;
         const edge = new ServiceEdge(from, to);
-        this.graph.addEdge(edge);
+        graph.addEdge(edge);
       }
     }
   }
 
-  public interpolateString(param_value: string, component_context: InterpolationContext): string {
+  public interpolateString(param_value: string, context: any): string {
     Mustache.tags = ['${', '}']; // sets custom delimiters
     Mustache.escape = function (text) { return text; }; // turns off HTML escaping
     //TODO:77: add validation logic to catch expressions that don't refer to an existing path
-    return Mustache.render(param_value, component_context);
+    return Mustache.render(param_value, context);
   }
 
-  async loadParameters() {
-    const env_parameters = this.environment.getParameters();
-    const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
+  async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
+    const vault_manager = new VaultManager(environment.getVaults());
+
+    let environment_string = serialize(environment);
+
+    // Interpolate vault separately before mustache
+    const vaults_regex = new RegExp(`\\\${\\s*vaults\\.(.*?)\\s*}`, 'g');
+    let matches;
+    while ((matches = vaults_regex.exec(environment_string)) != null) {
+      const [vault_name, key] = matches[1].split('.');
+      environment_string = environment_string.replace(matches[0], await vault_manager.getSecret(vault_name, key));
+    }
+
+    environment = deserialize(EnvironmentConfigV1, environment_string);
+    const environment_context = {
+      parameters: environment.getParameters(),
+    };
+    const interpolated_environment_string = this.interpolateString(environment_string, environment_context);
+    return deserialize(EnvironmentConfigV1, interpolated_environment_string, { enableImplicitConversion: true });
+  }
+
+  async loadParameters(graph: DependencyGraph) {
+    const environment = await this.getInterpolatedEnvironment();
+
+    const env_parameters = environment.getParameters();
+    const interface_context = this.buildEnvironmentInterfaceContext(graph);
     const node_component_map: Dictionary<string> = {};
 
     const component_context_map: EnvironmentInterpolationContext = {};
-    for (const component of Object.values(this._component_map) as Array<ComponentConfig>) {
+    for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
       const parameters: Dictionary<ParameterValue> = {};
       for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
         parameters[parameter_key] = parameter.default;
@@ -168,7 +207,7 @@ export default abstract class DependencyManager {
     }
 
     // Loop through dependencies and set contexts
-    for (const component of Object.values(this._component_map) as Array<ComponentConfig>) {
+    for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
       const dependencies: any = {};
       for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
         dependencies[dep_key] = { ...component_context_map[`${dep_key}:${dep_tag}`] };
@@ -177,14 +216,15 @@ export default abstract class DependencyManager {
       component_context_map[component.getRef()].dependencies = dependencies;
     }
 
-    for (const node of this.graph.nodes) {
+    for (const node of graph.nodes) {
       if (!(node instanceof ServiceNode)) continue;
 
       const component_ref = node_component_map[node.ref];
       const component_context = component_context_map[component_ref];
 
+      const config_string = serialize(node.node_config);
       // TODO: Support brackets ${ dependencies['concourse/ci'].services... }
-      const interpolated_node_config_string = this.interpolateString(serialize(node.node_config), component_context);
+      const interpolated_node_config_string = this.interpolateString(config_string, component_context);
       node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
     }
   }
@@ -207,17 +247,17 @@ export default abstract class DependencyManager {
 
   private buildEnvironmentInterfaceContext(graph: DependencyGraph): EnvironmentInterfaceContext {
     const environment_interface_context: EnvironmentInterfaceContext = {};
-    for (const node of this.graph.nodes) {
+    for (const node of graph.nodes) {
       environment_interface_context[node.ref] = {};
       for (const interface_name of Object.keys(node.interfaces)) {
-        environment_interface_context[node.ref][interface_name] = this.mapToInterfaceContext(node, interface_name);
+        environment_interface_context[node.ref][interface_name] = this.mapToInterfaceContext(graph, node, interface_name);
       }
     }
     return environment_interface_context;
   }
 
-  private mapToInterfaceContext(node: DependencyNode, interface_name: string): InterfaceContext {
-    const gateway_node = this.graph.nodes.find((node) => (node instanceof GatewayNode));
+  private mapToInterfaceContext(graph: DependencyGraph, node: DependencyNode, interface_name: string): InterfaceContext {
+    const gateway_node = graph.nodes.find((node) => (node instanceof GatewayNode));
     const gateway_port = gateway_node ? this.gateway_port : undefined;
     const interface_details = node.interfaces[interface_name];
 
