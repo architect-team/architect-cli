@@ -49,10 +49,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return this.node_config.getName();
   }
 
-  get volumes() {
-    return this.node_config.getVolumes();
-  }
-
   get interfaces(): { [key: string]: any } {
     return this.node_config.getInterfaces();
   }

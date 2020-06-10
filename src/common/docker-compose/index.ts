@@ -77,9 +77,10 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     if (node.is_local && node instanceof ServiceNode) {
+      const environment_component = dependency_manager.environment.getComponentByServiceRef(node.ref);
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const node_path = ''; // TODO: build context node.node_config.getPath()!;
-      const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
+      const node_path = environment_component?.getExtends()?.startsWith('file:') ? environment_component?.getExtends()!.substr('file:'.length) : '';
+      const component_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
       if (!node.node_config.getImage()) {
         const build = node.node_config.getBuild();
         const args = [];
@@ -99,7 +100,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
 
       const volumes: string[] = [];
-      for (const [key, spec] of Object.entries(node.volumes)) {
+      for (const [key, spec] of Object.entries(node.node_config.getVolumes())) {
         let service_volume;
         if (spec.mount_path) {
           service_volume = spec.mount_path;
@@ -107,18 +108,15 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
         }
 
-        const service_volumes = node.service_config.getDebugOptions()?.getVolumes();
-        const env_volumes: any = {}; // TODO: volumes dependency_manager._environment.getServiceDetails(node.ref)?.getDebugOptions()?.getVolumes();
-        const env_volume_unset = !env_volumes || env_volumes && !env_volumes[key];
+        const environment_service = environment_component?.getServiceByRef(node.ref);
+        const environment_volume = environment_service?.getVolumes()[key] || environment_service?.getDebugOptions()?.getVolumes()[key];
         let volume;
-        if (service_volumes && service_volumes[key] && service_volumes[key].host_path && env_volume_unset) {
-          const host_path = service_volumes[key].host_path;
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          volume = `${path.resolve(service_path, host_path!)}:${service_volume}`;
+        if (environment_volume?.host_path) {
+          volume = `${path.resolve(path.dirname(dependency_manager.config_path), environment_volume?.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else if (spec.host_path) {
-          volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+          volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else {
-          volume = path.resolve(service_path, service_volume);
+          volume = service_volume;
         }
         volumes.push(volume);
       }
@@ -126,7 +124,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     // Append the dns_search value if it was provided in the environment config
-    const dns_config = dependency_manager._environment.getDnsConfig();
+    const dns_config = dependency_manager.environment.getDnsConfig();
     if (dns_config.searches) {
       compose.services[node.normalized_ref].dns_search = dns_config.searches;
     }

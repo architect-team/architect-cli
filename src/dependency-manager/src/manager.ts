@@ -20,7 +20,7 @@ import VaultManager from './vault-manager';
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
   gateway_port!: number;
-  _environment!: EnvironmentConfig;
+  environment!: EnvironmentConfig;
   protected vault_manager!: VaultManager;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
   protected _component_map: Dictionary<ComponentConfig>;
@@ -31,13 +31,13 @@ export default abstract class DependencyManager {
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
-    this._environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
-    this.vault_manager = new VaultManager(this._environment.getVaults());
+    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.vault_manager = new VaultManager(this.environment.getVaults());
     this.gateway_port = await this.getServicePort(80);
   }
 
   async loadComponents(): Promise<void> {
-    const components = Object.values(this._environment.getComponents());
+    const components = Object.values(this.environment.getComponents());
     for (const component of components) {
       await this.loadComponent(component);
     }
@@ -45,10 +45,10 @@ export default abstract class DependencyManager {
 
   async loadComponent(component_config: ComponentConfig) {
     const ref = component_config.getRef();
-    if (ref in this._environment.getComponents()) {
-      component_config = component_config.merge(this._environment.getComponents()[ref]);
-    } else if (ref.split(':')[1] === 'latest' && component_config.getName() in this._environment.getComponents()) {
-      component_config = component_config.merge(this._environment.getComponents()[component_config.getName()]);
+    if (ref in this.environment.getComponents()) {
+      component_config = component_config.merge(this.environment.getComponents()[ref]);
+    } else if (ref.split(':')[1] === 'latest' && component_config.getName() in this.environment.getComponents()) {
+      component_config = component_config.merge(this.environment.getComponents()[component_config.getName()]);
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
@@ -136,7 +136,7 @@ export default abstract class DependencyManager {
   }
 
   async loadParameters() {
-    const env_parameters = this._environment.getParameters();
+    const env_parameters = this.environment.getParameters();
     const interface_context = this.buildEnvironmentInterfaceContext(this.graph);
     const node_component_map: Dictionary<string> = {};
 

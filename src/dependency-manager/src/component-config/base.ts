@@ -15,8 +15,21 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract getServices(): Dictionary<ServiceConfig>;
   abstract getDependencies(): Dictionary<string>;
 
+  getComponentVersion() {
+    return this.getRef().split(':')[1];
+  }
+
   getServiceRef(service_name: string) {
-    return `${this.getName()}/${service_name}:${this.getRef().split(':')[1]}`;
+    return `${this.getName()}/${service_name}:${this.getComponentVersion()}`;
+  }
+
+  getServiceByRef(service_ref: string): ServiceConfig | undefined {
+    if (service_ref.startsWith(this.getName())) {
+      const [service_name, component_tag] = service_ref.substr(this.getName().length + 1).split(':');
+      if (component_tag === this.getComponentVersion()) {
+        return this.getServices()[service_name];
+      }
+    }
   }
 
   copy() {

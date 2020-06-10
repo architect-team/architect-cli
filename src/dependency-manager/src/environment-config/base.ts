@@ -22,4 +22,12 @@ export abstract class EnvironmentConfig extends BaseSpec {
   abstract getVaults(): Dictionary<EnvironmentVault>;
   abstract getComponents(): Dictionary<ComponentConfig>;
   abstract getDnsConfig(): DnsConfig;
+
+  getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {
+    for (const component of Object.values(this.getComponents())) {
+      if (component.getServiceByRef(service_ref)) {
+        return component;
+      }
+    }
+  }
 }
