@@ -185,6 +185,50 @@ describe('components', function () {
       // Test parameter values
       expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().API_ADDR).eq('http://architect.cloud.api.latest:8080')
       expect((graph.nodes[1] as ServiceNode).node_config.getEnvironmentVariables().DB_ADDR).eq('http://architect.cloud.db.latest:5432')
+
+      const template = await DockerCompose.generate(manager);
+      expect(template).to.be.deep.equal({
+        "services": {
+          "architect.cloud.api.latest": {
+            "depends_on": [
+              "architect.cloud.db.latest"
+            ],
+            "environment": {
+              "DB_ADDR": "http://architect.cloud.db.latest:5432",
+              "HOST": "architect.cloud.api.latest",
+              "PORT": "8080"
+            },
+            "ports": [
+              "50001:8080",
+            ],
+          },
+          "architect.cloud.app.latest": {
+            "depends_on": [
+              "architect.cloud.api.latest"
+            ],
+            "environment": {
+              "API_ADDR": "http://architect.cloud.api.latest:8080",
+              "HOST": "architect.cloud.app.latest",
+              "PORT": "8080"
+            },
+            "ports": [
+              "50000:8080"
+            ]
+          },
+          "architect.cloud.db.latest": {
+            "depends_on": [],
+            "environment": {
+              "HOST": "architect.cloud.db.latest",
+              "PORT": "5432"
+            },
+            "ports": [
+              "50002:5432"
+            ],
+          }
+        },
+        "version": "3",
+        "volumes": {},
+      })
     });
 
     it('local component with local dependency', async () => {
