@@ -12,7 +12,7 @@ class MissingConfigFileError extends Error {
   constructor(filepath: string) {
     super();
     this.name = 'missing_config_file';
-    this.message = `No environment config file found at ${filepath}`;
+    this.message = `No component config file found at ${filepath}`;
   }
 }
 

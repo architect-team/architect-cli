@@ -17,9 +17,9 @@ describe('manager', function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
 
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment.json');
+    const calculator_env_config_path = path.join(__dirname, '../../mocks/calculator-environment.json');
     const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
-    const serialized_graph = serialize(manager.getGraph());
+    const serialized_graph = serialize(await manager.getGraph());
     graph = deserialize(DependencyGraph, serialized_graph);
   });
 

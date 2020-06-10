@@ -45,7 +45,8 @@ export default abstract class DependencyManager {
   async getGraph(): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
     await this.loadComponents(graph);
-    await this.loadParameters(graph);
+    // TODO: Switch to interpolating components
+    await this.interpolateNodes(graph);
     return graph;
   }
 
@@ -68,11 +69,10 @@ export default abstract class DependencyManager {
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
+    const load_dependencies = !(component.getRef() in this.component_map); // Detect circular dependencies
     this.component_map[component.getRef()] = component;
 
     const ref_map: Dictionary<string> = {};
-
-    let load_dependencies = false;
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config);
@@ -99,7 +99,8 @@ export default abstract class DependencyManager {
           graph.addNode(gateway);
           graph.addEdge(new IngressEdge(gateway.ref, node.ref));
         }
-        load_dependencies = true;
+        // TODO: Figure out when to load dependencies with external nodes
+        // load_dependencies = true;
       }
 
       ref_map[service_name] = node.ref;
@@ -172,7 +173,7 @@ export default abstract class DependencyManager {
     return deserialize(EnvironmentConfigV1, interpolated_environment_string, { enableImplicitConversion: true });
   }
 
-  async loadParameters(graph: DependencyGraph) {
+  async interpolateNodes(graph: DependencyGraph) {
     const environment = await this.getInterpolatedEnvironment();
 
     const env_parameters = environment.getParameters();

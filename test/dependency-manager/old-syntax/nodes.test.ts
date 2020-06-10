@@ -101,7 +101,7 @@ describe('nodes', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json');
-    const serialized_graph = serialize(manager.getGraph());
+    const serialized_graph = serialize(await manager.getGraph());
     graph = deserialize(DependencyGraph, serialized_graph);
   });
 

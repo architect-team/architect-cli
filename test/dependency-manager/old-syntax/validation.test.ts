@@ -3,6 +3,7 @@ import mock_fs from 'mock-fs';
 import { EnvironmentConfigBuilder } from '../../../src/dependency-manager/src';
 import { ComponentConfigBuilder } from '../../../src/dependency-manager/src/component-config/builder';
 import { flattenValidationErrors } from '../../../src/dependency-manager/src/utils/errors';
+import { ARC_ENV_CONFIG } from './architect-components.test';
 
 describe('validation (v1 spec)', () => {
   afterEach(function () {
@@ -413,122 +414,7 @@ describe('validation (v1 spec)', () => {
     });
 
     it('architect config', async () => {
-      const env_config = {
-        "services": {
-          "architect/registry:latest": {
-            "debug": {
-              "path": "../docker-registry/registry"
-            },
-            "parameters": {
-              "NOTIFICATION_URL": "http://architect.cloud-api.latest:8080"
-            }
-          },
-          "architect/registry-proxy:latest": {
-            "debug": {
-              "path": "../docker-registry"
-            },
-            "parameters": {
-              "CLOUD_API_BASE_URL": "http://architect.cloud-api.latest:8080",
-              "CLOUD_API_SECRET": "test",
-              "NODE_ENV": "development"
-            }
-          },
-          "architect/cloud-api:latest": {
-            "debug": {
-              "path": "../cloud-api",
-              "volumes": {
-                "src": "../cloud-api/src",
-                "test": "../cloud-api/test"
-              }
-            },
-            "interfaces": {
-              "main": {
-                "subdomain": "api"
-              }
-            },
-            "parameters": {
-              "NODE_ENV": "local",
-              "OAUTH_CLIENT_SECRET": {
-                "valueFrom": {
-                  "vault": "local_vault",
-                  "key": "architect_local/api#OAUTH_CLIENT_SECRET"
-                }
-              },
-              "SEGMENT_WRITE_KEY": "test"
-            },
-            "datastores": {
-              "primary": {
-                "host": "host.docker.internal"
-              }
-            }
-          },
-          "architect/cloud:latest": {
-            "debug": {
-              "path": "../architect-cloud",
-              "volumes": {
-                "src": "./src"
-              }
-            },
-            "interfaces": {
-              "main": {
-                "subdomain": "app"
-              }
-            },
-            "parameters": {
-              "ENVIRONMENT": "local",
-            }
-          },
-          "concourse/web:latest": {
-            "debug": {
-              "path": "../cloud-api/concourse/web"
-            },
-            "interfaces": {
-              "main": {
-                "subdomain": "ci"
-              }
-            },
-            "volumes": {
-              "web-keys": "../cloud-api/concourse/keys/web"
-            },
-            "parameters": {
-              "CONCOURSE_LOG_LEVEL": "error",
-              "CONCOURSE_VAULT_AUTH_PARAM": {
-                "valueFrom": {
-                  "vault": "local_vault",
-                  "key": "architect_local/concourse#CONCOURSE_VAULT_AUTH_PARAM"
-                }
-              }
-            },
-            "datastores": {
-              "primary": {
-                "host": "host.docker.internal"
-              }
-            }
-          },
-          "concourse/worker:latest": {
-            "debug": {
-              "path": "../cloud-api/concourse/worker"
-            },
-            "volumes": {
-              "worker-keys": "../cloud-api/concourse/keys/worker"
-            },
-            "parameters": {
-              "CONCOURSE_LOG_LEVEL": "error",
-              "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",
-              "CONCOURSE_GARDEN_LOG_LEVEL": "error"
-            }
-          }
-        },
-        "vaults": {
-          "local_vault": {
-            "host": "http://0.0.0.0",
-            "type": "hashicorp-vault",
-            "description": "Secret store for local development",
-            "role_id": "test",
-            "secret_id": "file:~/secret"
-          }
-        }
-      }
+      const env_config = ARC_ENV_CONFIG;
 
       const parsedSpec = EnvironmentConfigBuilder.buildFromJSON(env_config);
       const errors = await parsedSpec.validate({
