@@ -75,8 +75,9 @@ export default class EnvironmentCreate extends Command {
   };
 
   async run() {
-    await this.create_environment();
+    const environment = await this.create_environment();
     this.log(chalk.green('Environment created successfully'));
+    this.log(`${this.app.config.app_host}/${environment.account.name}/environments/${environment.name}/`);
   }
 
   private async create_environment() {
