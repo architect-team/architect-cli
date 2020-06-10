@@ -171,12 +171,13 @@ export class KubernetesPlatformUtils {
       const nodes = await execa('kubectl', [
         'get', 'nodes',
         '-o', 'json',
-        `--request-timeout='2s'`
+        `--request-timeout='2s'`,
       ]);
 
       if (JSON.parse(nodes.stdout).items.length === 0) {
         console.log(chalk.yellow('Warning: The cluster does not have any running nodes.'));
       }
+      // eslint-disable-next-line no-empty
     } catch (err) { }
 
     await execa('kubectl', [
