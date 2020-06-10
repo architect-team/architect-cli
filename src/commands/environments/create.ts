@@ -1,4 +1,5 @@
 import { flags } from '@oclif/command';
+import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -74,9 +75,8 @@ export default class EnvironmentCreate extends Command {
   };
 
   async run() {
-    const environment = await this.create_environment();
-
-    this.log(environment);
+    await this.create_environment();
+    this.log(chalk.green('Environment created successfully'));
   }
 
   private async create_environment() {
