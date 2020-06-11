@@ -148,28 +148,39 @@ export default abstract class DependencyManager {
   public interpolateString(param_value: string, context: any): string {
     Mustache.tags = ['${', '}']; // sets custom delimiters
     Mustache.escape = function (text) { return text; }; // turns off HTML escaping
+
+    // Interpolate vault separately before mustache
+    const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
+    let matches;
+    let res = param_value;
+    while ((matches = mustache_regex.exec(param_value)) != null) {
+      const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '');
+      res = res.replace(matches[0], sanitized_value);
+    }
+
     //TODO:77: add validation logic to catch expressions that don't refer to an existing path
-    return Mustache.render(param_value, context);
+    return Mustache.render(res, context);
   }
 
   async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
     const vault_manager = new VaultManager(environment.getVaults());
 
-    let environment_string = serialize(environment);
+    const environment_string = serialize(environment);
 
     // Interpolate vault separately before mustache
     const vaults_regex = new RegExp(`\\\${\\s*vaults\\.(.*?)\\s*}`, 'g');
     let matches;
+    let res = environment_string;
     while ((matches = vaults_regex.exec(environment_string)) != null) {
       const [vault_name, key] = matches[1].split('.');
-      environment_string = environment_string.replace(matches[0], await vault_manager.getSecret(vault_name, key));
+      res = res.replace(matches[0], await vault_manager.getSecret(vault_name, key));
     }
 
-    environment = deserialize(EnvironmentConfigV1, environment_string);
+    environment = deserialize(EnvironmentConfigV1, res);
     const environment_context = {
       parameters: environment.getParameters(),
     };
-    const interpolated_environment_string = this.interpolateString(environment_string, environment_context);
+    const interpolated_environment_string = this.interpolateString(res, environment_context);
     return deserialize(EnvironmentConfigV1, interpolated_environment_string, { enableImplicitConversion: true });
   }
 
@@ -224,8 +235,10 @@ export default abstract class DependencyManager {
       const component_context = component_context_map[component_ref];
 
       const config_string = serialize(node.node_config);
-      // TODO: Support brackets ${ dependencies['concourse/ci'].services... }
-      const interpolated_node_config_string = this.interpolateString(config_string, component_context);
+      let interpolated_node_config_string = this.interpolateString(config_string, component_context);
+
+      // Interpolate again
+      interpolated_node_config_string = this.interpolateString(interpolated_node_config_string, component_context);
       node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
     }
   }

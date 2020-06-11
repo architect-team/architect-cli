@@ -72,7 +72,8 @@ export class EnvironmentConfigBuilder {
       if (!obj.components) obj.components = {};
       for (const [service_key, service] of Object.entries(obj.services)) {
         if (service instanceof Object) {
-          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...(service as object) });
+          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...(service as object), name: service_key });
+          delete obj.components[service_key].services.service.environment;
         } else {
           obj.components[`${service_key}:${service}`] = {};
         }

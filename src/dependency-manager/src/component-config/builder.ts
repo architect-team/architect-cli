@@ -178,7 +178,7 @@ export class ComponentConfigBuilder {
           prefix = `services.datastore-${value.datastore}.`;
         }
 
-        let interpolated = '<error>';
+        let interpolated = `\${ parameters.${parameter_key} }`;
         if (value.value) {
           interpolated = value.value;
           const matches = interpolated.match(/\${?([a-zA-Z0-9_]+)?}?/g) || [];
