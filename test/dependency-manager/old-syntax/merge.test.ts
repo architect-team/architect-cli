@@ -1,7 +1,7 @@
 import { expect } from '@oclif/test';
 import { ComponentConfigBuilder } from '../../../src/dependency-manager/src/component-config/builder';
 
-describe('service config merge', function () {
+describe('old service config merge', function () {
   it('merge configs', function () {
     const service_config_json = {
       'name': 'foo/service',

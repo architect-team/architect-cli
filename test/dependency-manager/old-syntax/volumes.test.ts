@@ -7,7 +7,7 @@ import Build from '../../../src/commands/build';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../../src/common/docker-compose';
 
-describe('volumes', function () {
+describe('old volumes', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());

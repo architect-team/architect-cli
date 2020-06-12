@@ -74,7 +74,7 @@ export default class LocalDependencyManager extends DependencyManager {
       const [service_name, service_tag] = component_extends.split(':');
       const [account_name, svc_name] = service_name.split('/');
       const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`).catch((err) => {
-        err.message = `Could not download service for ${component_extends}\n${err.message}`;
+        err.message = `Could not download component for ${component_extends}\n${err.message}`;
         throw err;
       });
 

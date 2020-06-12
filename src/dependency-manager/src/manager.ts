@@ -151,10 +151,18 @@ export default abstract class DependencyManager {
       return escapeJSON(text);
     }; // turns off HTML escaping
 
-    param_value = replaceBrackets(param_value);
+    const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
+    const MAX_DEPTH = 10;
+    let depth = 0;
+    while (depth < MAX_DEPTH) {
+      param_value = replaceBrackets(param_value);
+      param_value = Mustache.render(param_value, context);
+      if (!mustache_regex.test(param_value)) break;
+      depth += 1;
+    }
 
     //TODO:77: add validation logic to catch expressions that don't refer to an existing path
-    return Mustache.render(param_value, context);
+    return param_value;
   }
 
   async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
@@ -232,10 +240,7 @@ export default abstract class DependencyManager {
       const component_context = component_context_map[component_ref];
 
       const config_string = serialize(node.node_config);
-      let interpolated_node_config_string = this.interpolateString(config_string, component_context);
-
-      // Interpolate again
-      interpolated_node_config_string = this.interpolateString(interpolated_node_config_string, component_context);
+      const interpolated_node_config_string = this.interpolateString(config_string, component_context);
       node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
     }
   }

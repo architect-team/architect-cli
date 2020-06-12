@@ -5,7 +5,7 @@ import { ComponentConfigBuilder } from '../../../src/dependency-manager/src/comp
 import { flattenValidationErrors } from '../../../src/dependency-manager/src/utils/errors';
 import { ARC_ENV_CONFIG } from './architect-components.test';
 
-describe('validation (v1 spec)', () => {
+describe('old validation (v1 spec)', () => {
   afterEach(function () {
     // Restore fs
     mock_fs.restore();
@@ -338,7 +338,7 @@ describe('validation (v1 spec)', () => {
       const flattened_errors = flattenValidationErrors(errors);
       expect(Object.keys(flattened_errors)).members(['parameters.PARAM.value_from']);
       expect(flattened_errors['parameters.PARAM.value_from']).to.include({
-        isEmpty: 'Service values are only accessible to direct consumers'
+        whitelistValidation: 'property value_from should not exist'
       });
     });
 
@@ -361,7 +361,7 @@ describe('validation (v1 spec)', () => {
       const flattened_errors = flattenValidationErrors(errors);
       expect(Object.keys(flattened_errors)).members(['parameters.PARAM.value_from']);
       expect(flattened_errors['parameters.PARAM.value_from']).to.include({
-        isEmpty: 'Datastore values are only accessible to direct consumers'
+        whitelistValidation: 'property value_from should not exist'
       });
     });
 

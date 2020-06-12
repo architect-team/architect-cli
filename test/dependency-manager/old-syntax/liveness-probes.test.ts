@@ -7,7 +7,7 @@ import LocalDependencyManager from '../../../src/common/dependency-manager/local
 import { ServiceNode } from '../../../src/dependency-manager/src';
 
 
-describe('liveness probes', function () {
+describe('old liveness probes', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());

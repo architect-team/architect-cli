@@ -9,7 +9,7 @@ import LocalDependencyManager from '../../../src/common/dependency-manager/local
 import { ServiceConfigBuilder, ServiceNode } from '../../../src/dependency-manager/src';
 import DependencyGraph from '../../../src/dependency-manager/src/graph';
 
-describe('dependencies', function () {
+describe('old dependencies', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());

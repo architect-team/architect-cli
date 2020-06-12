@@ -10,7 +10,7 @@ import DependencyGraph from '../../../src/dependency-manager/src/graph';
 import GatewayNode from '../../../src/dependency-manager/src/graph/node/gateway';
 import { ServiceNode } from '../../../src/dependency-manager/src/graph/node/service';
 
-describe('nodes', function () {
+describe('old nodes', function () {
   let graph: DependencyGraph;
 
   before(async function () {

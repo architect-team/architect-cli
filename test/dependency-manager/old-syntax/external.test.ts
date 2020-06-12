@@ -7,11 +7,17 @@ import Build from '../../../src/commands/build';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../../src/dependency-manager/src';
 
-describe('external nodes', function () {
+describe('old external nodes', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      request.respondWith({
+        status: 404,
+      })
+    })
   });
 
   afterEach(function () {

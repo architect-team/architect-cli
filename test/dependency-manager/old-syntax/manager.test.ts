@@ -10,7 +10,7 @@ import DependencyGraph from '../../../src/dependency-manager/src/graph';
 import ServiceEdge from '../../../src/dependency-manager/src/graph/edge/service';
 import { ServiceConfigV1 } from '../../../src/dependency-manager/src/service-config/v1';
 
-describe('manager', function () {
+describe('old manager', function () {
   let graph: DependencyGraph;
 
   beforeEach(async function () {

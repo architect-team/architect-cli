@@ -7,7 +7,7 @@ import Build from '../../../src/commands/build';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../../src/dependency-manager/src';
 
-describe('expression-interpolation', function () {
+describe('old expression-interpolation', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());

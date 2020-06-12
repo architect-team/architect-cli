@@ -8,7 +8,7 @@ import * as DockerCompose from '../../../src/common/docker-compose';
 import PortUtil from '../../../src/common/utils/port';
 import { ServiceNode } from '../../../src/dependency-manager/src';
 
-describe('interfaces', function () {
+describe('old interfaces', function () {
 
   beforeEach(async () => {
     // Stub the logger
