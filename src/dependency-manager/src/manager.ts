@@ -14,7 +14,7 @@ import GatewayNode from './graph/node/gateway';
 import { ParameterValue, ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, InterfaceContext } from './utils/interpolation/interpolation-context';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, escapeJSON, InterfaceContext, replaceBrackets } from './utils/interpolation';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -147,25 +147,21 @@ export default abstract class DependencyManager {
 
   public interpolateString(param_value: string, context: any): string {
     Mustache.tags = ['${', '}']; // sets custom delimiters
-    Mustache.escape = function (text) { return text; }; // turns off HTML escaping
+    Mustache.escape = function (text) {
+      return escapeJSON(text);
+    }; // turns off HTML escaping
 
-    // Interpolate vault separately before mustache
-    const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
-    let matches;
-    let res = param_value;
-    while ((matches = mustache_regex.exec(param_value)) != null) {
-      const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '');
-      res = res.replace(matches[0], sanitized_value);
-    }
+    param_value = replaceBrackets(param_value);
 
     //TODO:77: add validation logic to catch expressions that don't refer to an existing path
-    return Mustache.render(res, context);
+    return Mustache.render(param_value, context);
   }
 
   async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
     const vault_manager = new VaultManager(environment.getVaults());
 
-    const environment_string = serialize(environment);
+    let environment_string = serialize(environment);
+    environment_string = replaceBrackets(environment_string);
 
     // Interpolate vault separately before mustache
     const vaults_regex = new RegExp(`\\\${\\s*vaults\\.(.*?)\\s*}`, 'g');
@@ -173,7 +169,8 @@ export default abstract class DependencyManager {
     let res = environment_string;
     while ((matches = vaults_regex.exec(environment_string)) != null) {
       const [vault_name, key] = matches[1].split('.');
-      res = res.replace(matches[0], await vault_manager.getSecret(vault_name, key));
+      const secret = await vault_manager.getSecret(vault_name, key);
+      res = res.replace(matches[0], escapeJSON(secret));
     }
 
     environment = deserialize(EnvironmentConfigV1, res);

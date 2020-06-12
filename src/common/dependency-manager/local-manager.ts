@@ -102,19 +102,18 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async interpolateEnvironment(environment: EnvironmentConfig) {
-    const interpolated_environment = await super.interpolateEnvironment(environment);
     // Only include in cli since it will read files off disk
-    for (const vault of Object.values(interpolated_environment.getVaults())) {
+    for (const vault of Object.values(environment.getVaults())) {
       vault.client_token = this.readIfFile(vault.client_token);
       vault.role_id = this.readIfFile(vault.role_id);
       vault.secret_id = this.readIfFile(vault.secret_id);
     }
-    for (const component of Object.values(interpolated_environment.getComponents()) as Array<ComponentConfig>) {
+    for (const component of Object.values(environment.getComponents()) as Array<ComponentConfig>) {
       for (const pv of Object.values(component.getParameters())) {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
     }
-    return interpolated_environment;
+    return super.interpolateEnvironment(environment);
   }
 
   toExternalHost(node: DependencyNode, interface_key: string) {

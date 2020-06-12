@@ -6,6 +6,7 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
+import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interpolation', () => {
@@ -13,6 +14,9 @@ describe('interpolation', () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
+    PortUtil.reset();
 
     moxios.stubRequest(`/v1/auth/approle/login`, {
       status: 200,
@@ -32,9 +36,10 @@ describe('interpolation', () => {
     const component_config = {
       name: 'architect/cloud',
       parameters: {
-        auth0_secret_id: {
-          required: true
-        }
+        auth0_secret_id: {},
+        json: {},
+        single_quote: {},
+        double_quote: {}
       },
       services: {
         app: {
@@ -42,7 +47,10 @@ describe('interpolation', () => {
             main: 8080
           },
           environment: {
-            AUTH0_SECRET_ID: '${ parameters.auth0_secret_id }'
+            AUTH0_SECRET_ID: '${ parameters.auth0_secret_id }',
+            JSON: '${ parameters.json }',
+            SINGLE_QUOTE: '${ parameters.single_quote }',
+            DOUBLE_QUOTE: '${ parameters.double_quote }',
           }
         }
       }
@@ -50,13 +58,16 @@ describe('interpolation', () => {
 
     const env_config = {
       parameters: {
-        cloud_auth0_secret_id: '${ vaults.local_vault.secrets/keys#auth0_secret_id }'
+        cloud_auth0_secret_id: '${ vaults.local_vault.secrets/keys#auth0_secret_id }',
       },
       components: {
         'architect/cloud': {
           extends: 'file:.',
           parameters: {
-            auth0_secret_id: '${ parameters.cloud_auth0_secret_id }'
+            auth0_secret_id: '${ parameters.cloud_auth0_secret_id }',
+            single_quote: "${ vaults.local_vault['secrets/keys#single_quote'] }",
+            double_quote: '${ vaults.local_vault["secrets/keys#double_quote"] }',
+            json: '${ vaults.local_vault.secrets/keys#json }',
           }
         }
       },
@@ -73,7 +84,16 @@ describe('interpolation', () => {
 
     moxios.stubRequest(`/v1/secrets/data/keys`, {
       status: 200,
-      response: { data: { data: { auth0_secret_id: 'worked' } } }
+      response: {
+        data: {
+          data: {
+            auth0_secret_id: 'worked',
+            single_quote: 'single',
+            double_quote: 'double',
+            json: '{ "first": "value",\n"second": "value" }'
+          }
+        }
+      }
     });
 
     mock_fs({
@@ -97,6 +117,9 @@ describe('interpolation', () => {
           'depends_on': [],
           'environment': {
             'AUTH0_SECRET_ID': 'worked',
+            'SINGLE_QUOTE': 'single',
+            'DOUBLE_QUOTE': 'double',
+            'JSON': '{ \"first\": \"value\",\n\"second\": \"value\" }',
             'HOST': 'architect.cloud.app.latest',
             'PORT': '8080'
           },
