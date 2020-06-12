@@ -238,6 +238,7 @@ describe('interfaces', function () {
     // Restore fs
     mock_fs.restore();
     // reset port range between simulated processes
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
   });
 

@@ -160,7 +160,7 @@ export class ComponentConfigBuilder {
       let value;
       // Check for valueFrom
       if (parameter instanceof Object) {
-        value = 'default' in parameter ? parameter.default : parameter;
+        value = parameter.default !== undefined ? parameter.default : parameter;
         if (value.value_from) {
           value = value.value_from;
         } else if (value.valueFrom) {
@@ -192,7 +192,8 @@ export class ComponentConfigBuilder {
               }
               interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
             } else if (value.datastore) {
-              interpolated = datastores[value.datastore].parameters[match.substr(1)];
+              const datastore_parameter = datastores[value.datastore].parameters[match.substr(1)];
+              interpolated = datastore_parameter.default !== undefined ? datastore_parameter.default : datastore_parameter;
             } else {
               suffix = `parameters.${match.substr(1)}`;
               interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);

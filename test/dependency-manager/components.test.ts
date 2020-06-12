@@ -14,6 +14,7 @@ describe('components', function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
   });
 

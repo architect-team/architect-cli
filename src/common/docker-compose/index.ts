@@ -92,7 +92,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
         if (build.context || args.length) {
           const compose_build: any = {};
-          if (build.context) compose_build.context = build.context;
+          if (build.context) compose_build.context = path.resolve(component_path, build.context);
           if (args.length) compose_build.args = args;
           compose.services[node.normalized_ref].build = compose_build;
         }

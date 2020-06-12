@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
+import path from 'path';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
@@ -14,6 +15,8 @@ describe('old architect components', () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
   });
 
@@ -55,7 +58,7 @@ describe('old architect components', () => {
         "PORT": "8080"
       },
       "build": {
-        "context": "."
+        "context": path.resolve('/docker-registry/registry')
       }
     });
 
@@ -78,19 +81,19 @@ describe('old architect components', () => {
         "start:dev"
       ],
       "build": {
-        "context": ".",
+        "context": path.resolve('/docker-registry'),
         "args": [
           "NODE_ENV=development"
         ]
       },
       "volumes": [
-        "/docker-registry/src:/usr/src/app/src"
+        `${path.resolve('/docker-registry/src')}:/usr/src/app/src`
       ]
     });
 
     expect(template.services['architect.cloud-api.service.latest']).to.be.deep.equal({
       "ports": [
-        "50005:8080"
+        "50002:8080"
       ],
       "depends_on": [
         "gateway"
@@ -101,9 +104,9 @@ describe('old architect components', () => {
         "CONCOURSE_PASSWORD": "test",
         "DB_HOST": "host.docker.internal",
         "DB_PORT": "5432",
-        "DB_USER": "<TODO>",
-        "DB_PASS": "<TODO>",
-        "DB_NAME": "<TODO>",
+        "DB_USER": "postgres",
+        "DB_PASS": "architect",
+        "DB_NAME": "architect_cloud_api",
         "DEFAULT_INTERNAL_REGISTRY_HOST": "architect.registry-proxy.service.latest:8080",
         "DEFAULT_INSECURE_REGISTRY_HOST": "architect.registry.service.latest:8080",
         "DEFAULT_CONCOURSE_HOST": "http://concourse.web.service.latest:8080",
@@ -112,7 +115,7 @@ describe('old architect components', () => {
         "HOST": "architect.cloud-api.service.latest",
         "PORT": "8080",
         "VIRTUAL_HOST": "api.localhost",
-        "VIRTUAL_PORT": "50005"
+        "VIRTUAL_PORT": "50002"
       },
       "command": [
         "npm",
@@ -120,14 +123,14 @@ describe('old architect components', () => {
         "start:dev"
       ],
       "build": {
-        "context": ".",
+        "context": path.resolve('/cloud-api'),
         "args": [
           "NODE_ENV=local"
         ]
       },
       "volumes": [
-        "/cloud-api/src:/usr/src/app/src",
-        "/cloud-api/test:/usr/src/app/test"
+        `${path.resolve('/cloud-api/src')}:/usr/src/app/src`,
+        `${path.resolve('/cloud-api/test')}:/usr/src/app/test`,
       ],
       "restart": "always"
     });
@@ -156,11 +159,10 @@ describe('old architect components', () => {
         "gateway"
       ],
       "environment": {
-        "AUTH0_CLIENT_ID": "<TODO>",
-        "ENVIRONMENT": "",
+        "ENVIRONMENT": "local",
         "NODE_ENV": "production",
-        "SEGMENT_WRITE_KEY": "",
-        "CLOUD_API_BASE_URL": "<TODO>",
+        "SEGMENT_WRITE_KEY": "test",
+        "CLOUD_API_BASE_URL": "http://architect.cloud-api.service.latest:8080",
         "HOST": "architect.cloud.service.latest",
         "PORT": "8080",
         "VIRTUAL_HOST": "app.localhost",
@@ -172,13 +174,13 @@ describe('old architect components', () => {
         "dev"
       ],
       "build": {
-        "context": ".",
+        "context": path.resolve('/architect-cloud'),
         "args": [
           "NODE_ENV=production"
         ]
       },
       "volumes": [
-        "C:\\stack\\src:/usr/src/app/src"
+        `${path.resolve('/stack/src')}:/usr/src/app/src`,
       ],
       "restart": "always"
     });
@@ -191,21 +193,16 @@ describe('old architect components', () => {
         "gateway"
       ],
       "environment": {
-        "CONCOURSE_LOG_LEVEL": "",
+        "CONCOURSE_LOG_LEVEL": "error",
         "CONCOURSE_TSA_LOG_LEVEL": "debug",
         "CONCOURSE_POSTGRES_HOST": "host.docker.internal",
-        "CONCOURSE_POSTGRES_USER": "<TODO>",
-        "CONCOURSE_POSTGRES_PASSWORD": "<TODO>",
-        "CONCOURSE_POSTGRES_DATABASE": "<TODO>",
-        "CONCOURSE_EXTERNAL_URL": "<TODO>",
+        "CONCOURSE_POSTGRES_USER": "postgres",
+        "CONCOURSE_POSTGRES_PASSWORD": "architect",
+        "CONCOURSE_POSTGRES_DATABASE": "concourse",
         "CONCOURSE_ADD_LOCAL_USER": "test:test",
         "CONCOURSE_MAIN_TEAM_LOCAL_USER": "test",
         "CONCOURSE_CLUSTER_NAME": "dev",
         "CONCOURSE_VAULT_AUTH_BACKEND": "approle",
-        "CONCOURSE_VAULT_URL": "<TODO>",
-        "CONCOURSE_VAULT_AUTH_BACKEND_MAX_TTL": "<TODO>",
-        "CONCOURSE_VAULT_AUTH_PARAM": "<TODO>",
-        "CONCOURSE_VAULT_INSECURE_SKIP_VERIFY": "<TODO>",
         "CONCOURSE_ENABLE_REDACT_SECRETS": "true",
         "CONCOURSE_BUILD_TRACKER_INTERVAL": "1s",
         "CONCOURSE_LIDAR_SCANNER_INTERVAL": "1s",
@@ -221,7 +218,7 @@ describe('old architect components', () => {
         "web"
       ],
       "volumes": [
-        "C:\\cloud-api\\concourse\\keys\\web:/concourse-keys"
+        `${path.resolve('/cloud-api/concourse/keys/web')}:/concourse-keys`,
       ],
       "restart": "always"
     });
@@ -232,10 +229,10 @@ describe('old architect components', () => {
       "ports": [],
       "depends_on": [],
       "environment": {
-        "CONCOURSE_LOG_LEVEL": "",
-        "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "",
-        "CONCOURSE_GARDEN_LOG_LEVEL": "",
-        "CONCOURSE_TSA_HOST": "<TODO>:2222",
+        "CONCOURSE_LOG_LEVEL": "error",
+        "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",
+        "CONCOURSE_GARDEN_LOG_LEVEL": "error",
+        "CONCOURSE_TSA_HOST": "concourse.web.service.latest:2222",
         "CONCOURSE_BAGGAGECLAIM_DRIVER": "overlay",
         "CONCOURSE_BIND_IP": "0.0.0.0",
         "CONCOURSE_BAGGAGECLAIM_BIND_IP": "0.0.0.0",
@@ -247,7 +244,7 @@ describe('old architect components', () => {
         "worker"
       ],
       "volumes": [
-        "C:\\cloud-api\\concourse\\keys\\worker:/concourse-keys"
+        `${path.resolve('/cloud-api/concourse/keys/worker')}:/concourse-keys`,
       ]
     });
   });
@@ -499,7 +496,6 @@ export const CONCOURSE_WEB_CONFIG = {
         }
       }
     },
-    "CONCOURSE_EXTERNAL_URL": {},
     "CONCOURSE_ADD_LOCAL_USER": {
       "default": "test:test"
     },
@@ -512,10 +508,6 @@ export const CONCOURSE_WEB_CONFIG = {
     "CONCOURSE_VAULT_AUTH_BACKEND": {
       "default": "approle"
     },
-    "CONCOURSE_VAULT_URL": {},
-    "CONCOURSE_VAULT_AUTH_BACKEND_MAX_TTL": {},
-    "CONCOURSE_VAULT_AUTH_PARAM": {},
-    "CONCOURSE_VAULT_INSECURE_SKIP_VERIFY": {},
     "CONCOURSE_ENABLE_REDACT_SECRETS": {
       "default": "true"
     },
@@ -610,10 +602,6 @@ const ARC_CLOUD_CONFIG = {
     }
   },
   "parameters": {
-    "AUTH0_CLIENT_ID": {
-      "description": "Client ID referencing an Auth0 application",
-      "required": false
-    },
     "ENVIRONMENT": {},
     "NODE_ENV": {
       "default": "production"
@@ -699,6 +687,7 @@ export const ARC_ENV_CONFIG = {
       },
       "parameters": {
         "ENVIRONMENT": "local",
+        "SEGMENT_WRITE_KEY": "test"
       }
     },
     "concourse/web:latest": {
