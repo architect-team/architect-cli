@@ -10,7 +10,7 @@ import ConfigGet from '../../../src/commands/config/get';
 import ARCHITECTPATHS from '../../../src/paths';
 
 const expectValueForField = async (tmp_config_dir: string, key: string, value: string) => {
-  const app_config_stub = sinon.stub().resolves(new AppService(tmp_config_dir));
+  const app_config_stub = sinon.stub().resolves(new AppService(tmp_config_dir, '0.0.1'));
   const logSpy = sinon.fake.returns(null);
   sinon.replace(ConfigGet.prototype, 'log', logSpy);
   sinon.replace(AppService, 'create', app_config_stub);

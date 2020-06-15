@@ -19,7 +19,7 @@ describe('logout', function () {
     const config = new AppConfig('', {});
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir));
+    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
     sinon.replace(AppService, 'create', app_config_stub);
 
     const credential_spy = sinon.fake.returns('token');
