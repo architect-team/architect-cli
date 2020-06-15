@@ -98,7 +98,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
 
     const result = render.bind(this)(template, view, partials);
     if (errors.length > 0) {
-      throw { message: "Unknown symbols: " + errors.join(", ") };
+      throw new Error("Unknown symbols: " + errors.join(", "));
     }
     return result;
   };
