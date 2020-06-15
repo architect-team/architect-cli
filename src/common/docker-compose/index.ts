@@ -41,8 +41,8 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           DISABLE_ACCESS_LOGS: 'true',
         },
         logging: {
-          driver: 'none'
-        }
+          driver: 'none',
+        },
       };
     }
 
