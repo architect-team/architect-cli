@@ -1,5 +1,4 @@
 import { deserialize, serialize } from 'class-transformer';
-import Mustache from 'mustache';
 import { ServiceNode } from '.';
 import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
@@ -11,10 +10,10 @@ import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import { ParameterValue, ServiceConfig } from './service-config/base';
+import { ServiceConfig } from './service-config/base';
 import { ServiceConfigV1 } from './service-config/v1';
 import { Dictionary } from './utils/dictionary';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, escapeJSON, InterfaceContext, replaceBrackets } from './utils/interpolation';
+import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, escapeJSON, InterfaceContext, interpolateString, replaceBrackets } from './utils/interpolation';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -145,26 +144,6 @@ export default abstract class DependencyManager {
     }
   }
 
-  public interpolateString(param_value: string, context: any): string {
-    Mustache.tags = ['${', '}']; // sets custom delimiters
-    Mustache.escape = function (text) {
-      return escapeJSON(text);
-    }; // turns off HTML escaping
-
-    const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
-    const MAX_DEPTH = 10;
-    let depth = 0;
-    while (depth < MAX_DEPTH) {
-      param_value = replaceBrackets(param_value);
-      param_value = Mustache.render(param_value, context);
-      if (!mustache_regex.test(param_value)) break;
-      depth += 1;
-    }
-
-    //TODO:77: add validation logic to catch expressions that don't refer to an existing path
-    return param_value;
-  }
-
   async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
     const vault_manager = new VaultManager(environment.getVaults());
 
@@ -182,10 +161,7 @@ export default abstract class DependencyManager {
     }
 
     environment = deserialize(EnvironmentConfigV1, res);
-    const environment_context = {
-      parameters: environment.getParameters(),
-    };
-    const interpolated_environment_string = this.interpolateString(res, environment_context);
+    const interpolated_environment_string = interpolateString(res, environment.getContext());
     return deserialize(EnvironmentConfigV1, interpolated_environment_string, { enableImplicitConversion: true });
   }
 
@@ -198,29 +174,18 @@ export default abstract class DependencyManager {
 
     const component_context_map: EnvironmentInterpolationContext = {};
     for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
-      const parameters: Dictionary<ParameterValue> = {};
-      for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
-        parameters[parameter_key] = parameter.default;
-      }
-      for (const parameter_key of Object.keys(parameters)) {
-        if (parameter_key in env_parameters) {
-          parameters[parameter_key] = env_parameters[parameter_key];
+      const component_context = component.getContext();
+      for (const parameter_key of Object.keys(component_context.parameters)) {
+        if (env_parameters[parameter_key]?.default !== undefined) {
+          component_context.parameters[parameter_key] = env_parameters[parameter_key].default;
         }
       }
-
-      const services: any = {};
       for (const service_key of Object.keys(component.getServices())) {
-        services[service_key] = {
-          interfaces: interface_context[component.getServiceRef(service_key)],
-        };
+        component_context.services[service_key].interfaces = interface_context[component.getServiceRef(service_key)];
         node_component_map[component.getServiceRef(service_key)] = component.getRef();
       }
 
-      component_context_map[component.getRef()] = {
-        parameters,
-        services,
-        dependencies: {},
-      };
+      component_context_map[component.getRef()] = component_context;
     }
 
     // Loop through dependencies and set contexts
@@ -240,7 +205,7 @@ export default abstract class DependencyManager {
       const component_context = component_context_map[component_ref];
 
       const config_string = serialize(node.node_config);
-      const interpolated_node_config_string = this.interpolateString(config_string, component_context);
+      const interpolated_node_config_string = interpolateString(config_string, component_context);
       node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
     }
   }

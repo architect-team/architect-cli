@@ -2,11 +2,11 @@ import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
+import { ParameterDefinitionSpecV1 } from '../component-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
-import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, VolumeSpec } from './base';
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
@@ -136,6 +136,9 @@ class InterfaceSpecV1 extends BaseSpec {
     message: 'Cannot hardcode a subdomain when registering services',
   })
   subdomain?: string;
+
+  @IsOptional({ always: true })
+  protocol?: string;
 }
 
 export class ServiceVolumeV1 extends BaseSpec {

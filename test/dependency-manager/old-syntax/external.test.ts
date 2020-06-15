@@ -14,10 +14,12 @@ describe('old external nodes', function () {
     moxios.install();
     moxios.wait(function () {
       let request = moxios.requests.mostRecent()
-      request.respondWith({
-        status: 404,
-      })
-    })
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    });
   });
 
   afterEach(function () {

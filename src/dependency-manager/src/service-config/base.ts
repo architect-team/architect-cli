@@ -20,6 +20,7 @@ export interface ServiceInterfaceSpec {
   host?: string;
   port?: number;
   subdomain?: string;
+  protocol?: string;
 }
 
 export interface ServiceLivenessProbe {

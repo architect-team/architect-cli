@@ -1,3 +1,4 @@
+import Mustache, { Context, Writer } from 'mustache';
 import { ParameterValue } from '../service-config/base';
 import { Dictionary } from './dictionary';
 
@@ -69,3 +70,56 @@ export const escapeJSON = (value: string) => {
   } catch { }
   return value;
 };
+
+Mustache.escape = function (text) {
+  return escapeJSON(text);
+}; // turns off HTML escaping
+Mustache.tags = ['${', '}']; // sets custom delimiters
+
+export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = []): string => {
+  const writer = new Writer();
+  let errors: any = [];
+
+  const render = writer.render;
+  writer.render = function (template, view, partials) {
+
+    view = new Context(view, undefined);
+    const lookup = view.lookup;
+    view.lookup = function (name: string) {
+      const value = lookup.bind(this)(name);
+      if (value === undefined) {
+        const ignored = ignore_keys.some((k) => name.startsWith(k));
+        if (!ignored) {
+          errors.push(name);
+        }
+      }
+      return value;
+    };
+
+    const result = render.bind(this)(template, view, partials);
+    if (errors.length > 0) {
+      throw { message: "Unknown symbols: " + errors.join(", ") };
+    }
+    return result;
+  };
+
+  const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
+  const MAX_DEPTH = 10;
+  let depth = 0;
+  while (depth < MAX_DEPTH) {
+    param_value = replaceBrackets(param_value);
+    param_value = writer.render(param_value, context);
+    if (!mustache_regex.test(param_value)) break;
+    depth += 1;
+  }
+
+  if (errors.length) {
+    errors = [];
+    throw new Error(errors);
+  }
+
+  //TODO:77: add validation logic to catch expressions that don't refer to an existing path
+  return param_value;
+};
+
+

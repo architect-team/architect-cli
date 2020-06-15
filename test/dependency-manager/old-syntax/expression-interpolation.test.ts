@@ -9,15 +9,20 @@ import { ServiceNode } from '../../../src/dependency-manager/src';
 
 describe('old expression-interpolation', function () {
   beforeEach(async () => {
-    // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    });
   });
 
   afterEach(function () {
-    // Restore stubs
     sinon.restore();
-    // Restore fs
     mock_fs.restore();
     moxios.uninstall();
   });

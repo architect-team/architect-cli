@@ -1,11 +1,38 @@
-import { Transform } from 'class-transformer';
-import { Allow, IsNotEmptyObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
-import { ServiceConfig } from '..';
+import { serialize, Transform } from 'class-transformer';
+import { Allow, IsBoolean, IsNotEmptyObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { ParameterValue, ServiceConfig } from '..';
 import { transformParameters, transformServices } from '../service-config/v1';
+import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
+import { InterfaceContext, interpolateString } from '../utils/interpolation';
 import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary } from '../utils/validation';
-import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { ComponentConfig } from './base';
+
+export class ParameterDefinitionSpecV1 extends BaseSpec {
+  @IsOptional({ always: true })
+  @IsBoolean({ always: true })
+  required?: boolean;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  description?: string;
+
+  @IsOptional({ always: true })
+  default?: string | number | boolean;
+}
+
+export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;
+
+
+interface ServiceContextV1 {
+  interfaces: Dictionary<InterfaceContext>;
+}
+
+interface ComponentContextV1 {
+  dependencies: Dictionary<ComponentContextV1>;
+  parameters: Dictionary<ParameterValue>;
+  services: Dictionary<ServiceContextV1>;
+}
 
 export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
@@ -50,14 +77,6 @@ export class ComponentConfigV1 extends ComponentConfig {
   })
   dependencies?: Dictionary<string>;
 
-  async validate(options?: ValidatorOptions) {
-    if (!options) options = {};
-    let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') });
-    return errors;
-  }
-
   getName() {
     return this.name.split(':')[0];
   }
@@ -84,5 +103,57 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getDependencies() {
     return this.dependencies || {};
+  }
+
+  getContext(): ComponentContextV1 {
+    const dependencies: Dictionary<any> = {};
+    for (const dk of Object.keys(this.getDependencies())) {
+      dependencies[dk] = {};
+    }
+
+    const parameters: Dictionary<ParameterValue> = {};
+    for (const [pk, pv] of Object.entries(this.getParameters())) {
+      parameters[pk] = pv.default === undefined ? '' : pv.default;
+    }
+
+    const services: Dictionary<ServiceContextV1> = {};
+    for (const [sk, sv] of Object.entries(this.getServices())) {
+      const interfaces: Dictionary<InterfaceContext> = {};
+      for (const [ik, iv] of Object.entries(sv.getInterfaces())) {
+        const interface_filler = {
+          port: 8080,
+          host: '',
+          protocol: '',
+          url: '',
+          subdomain: '',
+        };
+        interfaces[ik] = {
+          ...interface_filler,
+          ...iv,
+          internal: interface_filler,
+          external: interface_filler,
+        };
+      }
+      services[sk] = {
+        interfaces,
+      };
+    }
+
+    return {
+      dependencies,
+      parameters,
+      services,
+    };
+  }
+
+  async validate(options?: ValidatorOptions) {
+    if (!options) options = {};
+    let errors = await super.validate(options);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
+    errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') });
+    if ('developer' in (options.groups || [])) {
+      interpolateString(serialize(this), this.getContext(), ['dependencies.', 'interfaces.']);
+    }
+    return errors;
   }
 }

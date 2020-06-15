@@ -127,7 +127,7 @@ export class ComponentConfigBuilder {
           environment: datastore_environment,
           interfaces: {
             main: {
-              host: datastore.host,
+              host: datastore.host || '',
               port: datastore.port,
             },
           },
@@ -199,11 +199,10 @@ export class ComponentConfigBuilder {
               interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
             }
           }
+          // This also means it doesn't need to be a top level parameter
+          delete parameters[parameter_key];
         }
         environment[parameter_key] = interpolated;
-
-        // This also means it doesn't need to be a top level parameter
-        delete parameters[parameter_key];
       } else {
         environment[parameter_key] = `\${ parameters.${parameter_key} }`;
       }

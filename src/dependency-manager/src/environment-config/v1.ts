@@ -1,12 +1,14 @@
+import { serialize } from 'class-transformer';
 import { Transform } from 'class-transformer/decorators';
 import { Allow, IsOptional, ValidatorOptions } from 'class-validator';
+import { ParameterValue } from '..';
 import { ComponentConfig } from '../component-config/base';
 import { ComponentConfigBuilder } from '../component-config/builder';
-import { ParameterValue } from '../service-config/base';
+import { ParameterDefinitionSpecV1 } from '../component-config/v1';
 import { transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
+import { interpolateString } from '../utils/interpolation';
 import { validateDictionary } from '../utils/validation';
-import { ParameterDefinitionSpecV1 } from '../v1-spec/parameters';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
 interface DnsConfigSpec {
@@ -28,6 +30,10 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
   }
   return output;
 };
+
+interface EnvironmentContextV1 {
+  parameters: Dictionary<ParameterValue>;
+}
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   @Allow({ always: true })
@@ -52,11 +58,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getParameters() {
-    const res: Dictionary<ParameterValue> = {};
-    for (const [pk, pv] of Object.entries(this.parameters || {})) {
-      if (pv.default !== undefined) res[pk] = pv.default;
-    }
-    return res;
+    return this.parameters || {};
   }
 
   getComponents() {
@@ -67,10 +69,25 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return this.vaults || {};
   }
 
+  getContext(): EnvironmentContextV1 {
+    const parameters: Dictionary<ParameterValue> = {};
+    for (const [pk, pv] of Object.entries(this.getParameters())) {
+      parameters[pk] = pv.default === undefined ? '' : pv.default;
+    }
+
+    return {
+      parameters,
+    };
+  }
+
   async validate(options?: ValidatorOptions) {
+    if (!options) options = {};
     let errors = await super.validate(options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'components', errors, undefined, options);
+    if ('operator' in (options.groups || [])) {
+      interpolateString(serialize(this), this.getContext(), ['vaults.']);
+    }
     return errors;
   }
 }
