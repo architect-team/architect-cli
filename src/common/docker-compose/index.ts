@@ -40,6 +40,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           HTTPS_METHOD: 'noredirect',
           DISABLE_ACCESS_LOGS: 'true',
         },
+        logging: {
+          driver: 'none'
+        }
       };
     }
 
