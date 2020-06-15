@@ -91,7 +91,6 @@ export default class AppService {
   get api(): AxiosInstance {
     if (this.auth.auth_results) {
       const { token_type, access_token } = this.auth.auth_results;
-
       this._api.defaults.headers = {
         Authorization: `${token_type} ${access_token}`,
         'Cli-Version': this.version,
