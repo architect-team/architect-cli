@@ -1,6 +1,7 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
+import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../../src/commands/build';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
@@ -13,6 +14,15 @@ describe('old interfaces', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
+    moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    });
 
     const checkout_json = {
       "name": "architect/checkout",
@@ -230,13 +240,24 @@ describe('old interfaces', function () {
       '/stack/arc.env.internal.json': JSON.stringify(env_config_internal),
       '/stack/arc.env.external.json': JSON.stringify(env_config_external),
     });
+
+    const checkout_config = {
+      name: 'architect/checkout',
+      interfaces: {
+        main: 8080
+      }
+    }
+
+    moxios.stubRequest(`/accounts/architect/services/checkout/versions/latest`, {
+      status: 200,
+      response: { tag: 'latest', config: checkout_config, service: { url: 'architect/checkout:latest' } }
+    });
   });
 
   afterEach(function () {
-    // Restore stubs
     sinon.restore();
-    // Restore fs
     mock_fs.restore();
+    moxios.uninstall();
     // reset port range between simulated processes
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();

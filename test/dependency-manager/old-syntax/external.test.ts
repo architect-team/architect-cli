@@ -71,7 +71,7 @@ describe('old external nodes', function () {
     expect(graph.edges).length(0);
   });
 
-  it('external service - no dependencies created', async () => {
+  it('external service with dependency', async () => {
     const frontend_config = {
       name: 'architect/frontend',
       interfaces: {
@@ -105,9 +105,14 @@ describe('old external nodes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
+    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
+      status: 200,
+      response: { tag: 'v1', config: {}, service: { url: 'architect/backend:v1' } }
+    });
+
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(1);
+    expect(graph.nodes).length(2);
     expect((graph.nodes[0] as ServiceNode).is_external).true;
     expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
     expect(graph.nodes[0].interfaces.app.port).eq(80);

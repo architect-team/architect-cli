@@ -61,7 +61,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract getPlatforms(): { [s: string]: any };
-  abstract getPort(): number | undefined;
   abstract getVolumes(): { [s: string]: VolumeSpec };
   abstract getReplicas(): number;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;

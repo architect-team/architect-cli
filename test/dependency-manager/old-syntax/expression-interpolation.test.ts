@@ -44,7 +44,7 @@ describe('old expression-interpolation', function () {
       parameters: {
         APP_PORT: 8080,
         DEP_DB_USER: "${ dependencies['architect/cloud-api'].parameters.DB_USER }",
-        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].interfaces.admin.port }",
+        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].services.service.interfaces.admin.port }",
       }
     };
 
@@ -63,7 +63,7 @@ describe('old expression-interpolation', function () {
 
     moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
       status: 200,
-      response: { tag: 'v1', config: postgres_config, service: { url: 'architect/cloud:v1' } },
+      response: { tag: '11', config: postgres_config, service: { url: 'architect/cloud:11' } },
     });
 
     const backend_config = {
@@ -102,11 +102,12 @@ describe('old expression-interpolation', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
+    expect(graph.nodes[0].ref).eq('architect/cloud/service:v1');
     const frontend_node = graph.nodes[0] as ServiceNode;
     const backend_node = graph.nodes[1] as ServiceNode;
     expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);
     expect(frontend_node.interfaces.app.port).eq(8080);
-    expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq(8080);
+    expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq('8080');
     expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');

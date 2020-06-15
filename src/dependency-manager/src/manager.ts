@@ -98,8 +98,6 @@ export default abstract class DependencyManager {
           graph.addNode(gateway);
           graph.addEdge(new IngressEdge(gateway.ref, node.ref));
         }
-        // TODO: Figure out when to load dependencies with external nodes
-        // load_dependencies = true;
       }
 
       ref_map[service_name] = node.ref;
@@ -108,7 +106,9 @@ export default abstract class DependencyManager {
     if (load_dependencies) {
       // Load component dependencies
       for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
-        const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: `${dep_key}:${dep_value}`, name: `${dep_key}:${dep_value}` });
+        const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
+        const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
+        const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
         await this.loadComponent(graph, dep_component);
       }
     }
@@ -192,7 +192,8 @@ export default abstract class DependencyManager {
     for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
       const dependencies: any = {};
       for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
-        dependencies[dep_key] = { ...component_context_map[`${dep_key}:${dep_tag}`] };
+        const dep_name = dep_tag.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_tag}`;
+        dependencies[dep_key] = { ...component_context_map[dep_name] };
         delete dependencies[dep_key].dependencies;
       }
       component_context_map[component.getRef()].dependencies = dependencies;

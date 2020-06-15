@@ -126,10 +126,8 @@ export default class ServiceRegister extends Command {
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config: {
-            ...classToPlain(node.service_config),
-            image: image_without_tag,
-          },
+          image: image_without_tag,
+          config: classToPlain(node.service_config),
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);

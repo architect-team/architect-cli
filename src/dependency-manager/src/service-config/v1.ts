@@ -9,76 +9,6 @@ import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
 import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, VolumeSpec } from './base';
 
-export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
-  if (!input) {
-    return undefined;
-  }
-
-  const output: Dictionary<ParameterDefinitionSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value && typeof value === 'object') {
-      output[key] = plainToClass(ParameterDefinitionSpecV1, value);
-    } else {
-      output[key] = plainToClass(ParameterDefinitionSpecV1, {
-        default: value,
-      });
-    }
-  }
-  return output;
-};
-
-export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
-  const output: any = {};
-  for (const [key, value] of Object.entries(input)) {
-    let config;
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    if (value instanceof ServiceConfigV1) {
-      config = value;
-    } else if (value instanceof Object) {
-      config = { ...value, name: key };
-    } else {
-      config = { name: key };
-    }
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    output[key] = plainToClass(ServiceConfigV1, config);
-  }
-
-  return output;
-}
-
-const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
-  if (!input) {
-    return undefined;
-  }
-
-  const output: Dictionary<ServiceVolumeV1> = {};
-
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      ? plainToClass(ServiceVolumeV1, value)
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      : plainToClass(ServiceVolumeV1, { host_path: value });
-  }
-  return output;
-};
-
-const transformInterfaces = (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined => {
-  if (!input) {
-    return undefined;
-  }
-
-  const output: Dictionary<InterfaceSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = typeof value === 'object'
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      ? plainToClass(InterfaceSpecV1, value)
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      : plainToClass(InterfaceSpecV1, { port: value });
-  }
-  return output;
-};
-
 class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsNumber(undefined, { always: true })
@@ -185,6 +115,72 @@ export class BuildSpecV1 extends BaseSpec {
   args?: Dictionary<string>;
 }
 
+export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<ParameterDefinitionSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value && typeof value === 'object') {
+      output[key] = plainToClass(ParameterDefinitionSpecV1, value);
+    } else {
+      output[key] = plainToClass(ParameterDefinitionSpecV1, {
+        default: value,
+      });
+    }
+  }
+  return output;
+};
+
+export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    let config;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    if (value instanceof ServiceConfigV1) {
+      config = value;
+    } else if (value instanceof Object) {
+      config = { ...value, name: key };
+    } else {
+      config = { name: key };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    output[key] = plainToClass(ServiceConfigV1, config);
+  }
+
+  return output;
+}
+
+const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<ServiceVolumeV1> = {};
+
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = value instanceof Object
+      ? plainToClass(ServiceVolumeV1, value)
+      : plainToClass(ServiceVolumeV1, { host_path: value });
+  }
+  return output;
+};
+
+const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+  if (!input) {
+    return undefined;
+  }
+
+  const output: Dictionary<InterfaceSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = typeof value === 'object'
+      ? plainToClass(InterfaceSpecV1, value)
+      : plainToClass(InterfaceSpecV1, { port: value });
+  }
+  return output;
+};
+
 export class ServiceConfigV1 extends ServiceConfig {
   @Allow({ always: true })
   __version = '1.0.0';
@@ -203,14 +199,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   @IsString({ always: true })
   image?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  host?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  port?: string;
 
   @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
@@ -264,7 +252,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   })
   environment?: Dictionary<string>;
 
-  @Transform(value => (transformInterfaces(value)))
+  @Transform(transformInterfaces)
   @IsOptional({ groups: ['operator', 'debug'] })
   @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
   interfaces?: Dictionary<InterfaceSpecV1>;
@@ -383,10 +371,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getPlatforms(): Dictionary<any> {
     return this.platforms || {};
-  }
-
-  getPort(): number | undefined {
-    return this.port ? Number(this.port) : undefined;
   }
 
   getVolumes(): { [s: string]: VolumeSpec } {
