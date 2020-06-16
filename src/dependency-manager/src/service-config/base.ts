@@ -18,19 +18,19 @@ export interface ServiceParameter {
 export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
-  port?: number;
+  port?: string;
   subdomain?: string;
   protocol?: string;
 }
 
 export interface ServiceLivenessProbe {
-  success_threshold?: number;
-  failure_threshold?: number;
+  success_threshold?: string;
+  failure_threshold?: string;
   timeout?: string;
   path?: string;
   interval?: string;
   command?: string[];
-  port?: number;
+  port?: string;
 }
 
 export interface VolumeSpec {
@@ -62,7 +62,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract getPlatforms(): { [s: string]: any };
   abstract getVolumes(): { [s: string]: VolumeSpec };
-  abstract getReplicas(): number;
+  abstract getReplicas(): string;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
   abstract getBuild(): BuildSpec;
 

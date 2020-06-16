@@ -223,7 +223,7 @@ export default abstract class DependencyManager {
   protected abstract toExternalProtocol(node: DependencyNode, interface_key: string): string;
   protected abstract toExternalHost(node: DependencyNode, interface_key: string): string;
   protected abstract toInternalHost(node: DependencyNode): string;
-  protected toInternalPort(node: DependencyNode, interface_name: string): number {
+  protected toInternalPort(node: DependencyNode, interface_name: string): string {
     return node.interfaces[interface_name].port;
   }
 
@@ -243,7 +243,7 @@ export default abstract class DependencyManager {
     const gateway_port = gateway_node ? this.gateway_port : undefined;
     const interface_details = node.interfaces[interface_name];
 
-    let external_host: string, internal_host: string, external_port: number | undefined, internal_port: number, external_protocol: string | undefined, internal_protocol: string;
+    let external_host: string, internal_host: string, external_port: string | undefined, internal_port: string, external_protocol: string | undefined, internal_protocol: string;
     if (node.is_external) {
       if (!interface_details.host) {
         throw new Error('External node needs to override the host');
@@ -257,7 +257,7 @@ export default abstract class DependencyManager {
     } else {
       external_host = this.toExternalHost(node, interface_name);
       internal_host = this.toInternalHost(node);
-      external_port = gateway_port;
+      external_port = `${gateway_port}`;
       internal_port = this.toInternalPort(node, interface_name);
       external_protocol = this.toExternalProtocol(node, interface_name);
       internal_protocol = 'http';

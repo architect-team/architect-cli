@@ -121,7 +121,7 @@ export class ComponentConfigV1 extends ComponentConfig {
       const interfaces: Dictionary<InterfaceContext> = {};
       for (const [ik, iv] of Object.entries(sv.getInterfaces())) {
         const interface_filler = {
-          port: 8080,
+          port: '',
           host: '',
           protocol: '',
           url: '',

@@ -282,8 +282,8 @@ describe('old interfaces', function () {
     expect(backend_node!.node_config.getEnvironmentVariables().SECONDARY_PORT).eq('8081');
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8081').length).eq(1);
-    expect(backend_node!.service_config.getInterfaces().main.port).eq(8080);
-    expect(backend_node!.service_config.getInterfaces().secondary.port).eq(8081);
+    expect(backend_node!.service_config.getInterfaces().main.port).eq('8080');
+    expect(backend_node!.service_config.getInterfaces().secondary.port).eq('8081');
 
     const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;
@@ -299,8 +299,8 @@ describe('old interfaces', function () {
     const graph = await manager.getGraph();
 
     const backend_node = graph.nodes.find(node => node.ref === 'architect/backend/service:latest') as ServiceNode;
-    expect(backend_node.interfaces!.main.port).eq(8080);
-    expect(backend_node.interfaces!.secondary.port).eq(8081);
+    expect(backend_node.interfaces!.main.port).eq('8080');
+    expect(backend_node.interfaces!.secondary.port).eq('8081');
 
     const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;

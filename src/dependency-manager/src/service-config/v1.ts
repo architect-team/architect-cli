@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { ParameterDefinitionSpecV1 } from '../component-config/v1';
 import { BaseSpec } from '../utils/base-spec';
@@ -11,12 +11,12 @@ import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, VolumeSpec }
 
 class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
-  @IsNumber(undefined, { always: true })
-  success_threshold?: number;
+  @Type(() => String)
+  success_threshold?: string;
 
   @IsOptional({ always: true })
-  @IsNumber(undefined, { always: true })
-  failure_threshold?: number;
+  @Type(() => String)
+  failure_threshold?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -39,8 +39,9 @@ class LivenessProbeV1 extends BaseSpec {
 
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
-  @IsNumber(undefined, { always: true })
-  port?: number;
+  @IsNotEmpty({ always: true })
+  @Type(() => String)
+  port?: string;
 }
 
 class InterfaceSpecV1 extends BaseSpec {
@@ -57,8 +58,9 @@ class InterfaceSpecV1 extends BaseSpec {
   host?: string;
 
   @ValidateIf(obj => obj.host, { groups: ['operator'] })
-  @IsNumber(undefined, { always: true })
-  port?: number;
+  @IsNotEmpty({ always: true })
+  @Type(() => String)
+  port?: string;
 
   @IsOptional({ always: true })
   @IsEmpty({
@@ -274,8 +276,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     groups: ['developer'],
     message: 'Cannot hardcode a replica count when registering services',
   })
-  @IsNumber(undefined, { always: true })
-  replicas?: number;
+  @Type(() => String)
+  replicas?: string;
 
   @IsOptional({ always: true })
   @Type(() => BuildSpecV1)
@@ -308,8 +310,8 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (!this.liveness_probe || !Object.keys(this.liveness_probe).length) { return undefined; }
 
     const liveness_probe = {
-      success_threshold: 1,
-      failure_threshold: 1,
+      success_threshold: '1',
+      failure_threshold: '1',
       timeout: '5s',
       interval: '30s',
       ...this.liveness_probe,
@@ -386,7 +388,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getReplicas() {
-    return this.replicas || 1;
+    return this.replicas || '1';
   }
 
   getBuild() {

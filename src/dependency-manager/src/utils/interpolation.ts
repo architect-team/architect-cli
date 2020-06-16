@@ -21,20 +21,20 @@ export type ServiceInterfaceContext = { [key: string]: InterfaceContext };
 export type EnvironmentInterfaceContext = { [key: string]: ServiceInterfaceContext };
 
 export interface InterfaceContext {
-  port: number;
+  port: string;
   host: string;
   protocol: string;
   url: string;
   subdomain?: string;
   external: {
-    port?: number;
+    port?: string;
     host?: string;
     protocol?: string;
     url?: string;
     subdomain?: string;
   };
   internal: {
-    port: number;
+    port: string;
     host: string;
     protocol: string;
     url: string;

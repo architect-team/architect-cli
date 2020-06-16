@@ -54,9 +54,9 @@ describe('old liveness probes', function () {
 
     expect(liveness_probe!.command).undefined;
     expect(liveness_probe!.path).eq('/health');
-    expect(liveness_probe!.port).eq(8082);
-    expect(liveness_probe!.success_threshold).eq(2);
-    expect(liveness_probe!.failure_threshold).eq(3);
+    expect(liveness_probe!.port).eq('8082');
+    expect(liveness_probe!.success_threshold).eq('2');
+    expect(liveness_probe!.failure_threshold).eq('3');
     expect(liveness_probe!.timeout).eq('10s');
     expect(liveness_probe!.interval).eq('90s');
   });
@@ -92,8 +92,8 @@ describe('old liveness probes', function () {
     expect(liveness_probe!.path).undefined;
     expect(liveness_probe!.port).undefined;
     expect(liveness_probe!.command).members(['curl 0.0.0.0:8080 && exit 0']);
-    expect(liveness_probe!.success_threshold).eq(1);
-    expect(liveness_probe!.failure_threshold).eq(1);
+    expect(liveness_probe!.success_threshold).eq('1');
+    expect(liveness_probe!.failure_threshold).eq('1');
     expect(liveness_probe!.timeout).eq('20s');
     expect(liveness_probe!.interval).eq('30s');
   });
@@ -129,9 +129,9 @@ describe('old liveness probes', function () {
 
     expect(liveness_probe!.command).undefined;
     expect(liveness_probe!.path).eq('/test');
-    expect(liveness_probe!.port).eq(8080);
-    expect(liveness_probe!.success_threshold).eq(7);
-    expect(liveness_probe!.failure_threshold).eq(1);
+    expect(liveness_probe!.port).eq('8080');
+    expect(liveness_probe!.success_threshold).eq('7');
+    expect(liveness_probe!.failure_threshold).eq('1');
     expect(liveness_probe!.timeout).eq('5s');
     expect(liveness_probe!.interval).eq('30s');
   });
