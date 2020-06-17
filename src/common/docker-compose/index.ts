@@ -43,6 +43,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           DISABLE_ACCESS_LOGS: 'true',
           HTTP_PORT: dependency_manager.gateway_port,
         },
+        logging: {
+          driver: 'none',
+        },
       };
     }
 
