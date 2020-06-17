@@ -45,6 +45,7 @@ describe('interfaces', () => {
         },
         api: {
           image: 'api:latest',
+          interfaces: {},
           environment: {
             DB_PROTOCOL: '${ services.db.interfaces.postgres.protocol }',
             DB_HOST: '${ services.db.interfaces.postgres.host }',
@@ -59,7 +60,7 @@ describe('interfaces', () => {
       '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       '/stack/environment.json': JSON.stringify({
         components: {
-          'test/leaf': 'latest',
+          'test/leaf': 'file:/stack/leaf/',
         },
       }),
     });
@@ -70,8 +71,8 @@ describe('interfaces', () => {
     );
     const graph = await manager.getGraph();
     expect(graph.nodes).length(2);
-    expect(graph.nodes[0].ref).eq('test/leaf/api:latest');
-    expect(graph.nodes[1].ref).eq('test/leaf/db:latest');
+    expect(graph.nodes[0].ref).eq('test/leaf/db:latest');
+    expect(graph.nodes[1].ref).eq('test/leaf/api:latest');
     expect(graph.edges).length(1);
     expect(graph.edges[0].from).eq('test/leaf/api:latest');
     expect(graph.edges[0].to).eq('test/leaf/db:latest');
@@ -94,6 +95,7 @@ describe('interfaces', () => {
       services: {
         api: {
           image: 'branch:latest',
+          interfaces: {},
           environment: {
             LEAF_PROTOCOL:
               '${ dependencies.test/leaf.interfaces.main.protocol }',
@@ -110,7 +112,8 @@ describe('interfaces', () => {
       '/stack/branch/architect.json': JSON.stringify(branch_component),
       '/stack/environment.json': JSON.stringify({
         components: {
-          'test/branch': 'latest',
+          'test/branch': 'file:/stack/branch/',
+          'test/leaf': 'file:/stack/leaf/',
         },
       }),
     });
@@ -148,7 +151,8 @@ describe('interfaces', () => {
           public: '${ components.architect/branch.interfaces.main.url }',
         },
         components: {
-          'architect/branch': 'latest',
+          'architect/branch': 'file:/stack/branch/',
+          'architect/leaf': 'file:/stack/leaf/',
         },
       }),
     });
