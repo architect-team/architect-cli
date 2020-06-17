@@ -263,7 +263,7 @@ describe('old interfaces', function () {
     PortUtil.reset();
   });
 
-  it('non-interface valueFrom', async () => {
+  it('can use valueFrom to reference services without specifying an interface', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
@@ -272,7 +272,7 @@ describe('old interfaces', function () {
     expect(compose.services['architect.backend.service.latest'].environment!.DB_ADDR).eq('http://architect.backend.datastore-primary.latest:5432');
   });
 
-  it('valueFrom port from service interfaces', async () => {
+  it('can use valueFrom to reference service\'s own interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json')
     const graph = await manager.getGraph();
 
@@ -294,7 +294,7 @@ describe('old interfaces', function () {
     expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${backend_node.normalized_ref}:8081`);
   });
 
-  it('valueFrom port from environment interfaces', async () => {
+  it('can use valueFrom to reference dependency interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json')
     const graph = await manager.getGraph();
 
@@ -311,7 +311,7 @@ describe('old interfaces', function () {
     expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`secondary.host:8081`);
   });
 
-  it('correct compose port mappings', async () => {
+  it('generates correct compose port mappings for service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50003:8080', '50004:8081']);
@@ -319,7 +319,7 @@ describe('old interfaces', function () {
     expect(compose.services['architect.frontend-secondary.service.latest'].ports).eql([]);
   });
 
-  it('external interface host spec', async () => {
+  it('properly sets external host address for exposed service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 

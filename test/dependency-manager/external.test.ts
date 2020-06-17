@@ -93,7 +93,7 @@ describe('external interfaces', () => {
           },
           environment: {
             API_ADDR: '${ services.api.interfaces.main.url }',
-            EXTERNAL_API_ADDR: '${ services.api.interfaces.main.external.url }'
+            EXTERNAL_API_ADDR: '${ services.api.interfaces.main.url }'
           }
         },
         api: {
