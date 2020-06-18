@@ -79,12 +79,13 @@ describe('interfaces spec v1', () => {
       '/stack/environment.json',
     );
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0].ref).eq('test/leaf/db:latest');
-    expect(graph.nodes[1].ref).eq('test/leaf/api:latest');
-    expect(graph.edges).length(1);
-    expect(graph.edges[0].from).eq('test/leaf/api:latest');
-    expect(graph.edges[0].to).eq('test/leaf/db:latest');
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
+    ])
   });
 
   it('should connect services to dependency interfaces', async () => {
@@ -132,18 +133,19 @@ describe('interfaces spec v1', () => {
       '/stack/environment.json',
     );
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(4);
-    expect(graph.nodes[0].ref).eq('test/branch/api:latest');
-    expect(graph.nodes[1].ref).eq('test/leaf:latest-interfaces');
-    expect(graph.nodes[2].ref).eq('test/leaf/db:latest');
-    expect(graph.nodes[3].ref).eq('test/leaf/api:latest');
-    expect(graph.edges).length(3);
-    expect(graph.edges[0].from).eq('test/leaf/api:latest');
-    expect(graph.edges[0].to).eq('test/leaf/db:latest');
-    expect(graph.edges[1].from).eq('test/leaf:latest-interfaces');
-    expect(graph.edges[1].to).eq('test/leaf/api:latest');
-    expect(graph.edges[2].from).eq('test/branch/api:latest');
-    expect(graph.edges[2].to).eq('test/leaf:latest-interfaces');
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'test/branch/api:latest',
+
+      'test/leaf:latest-interfaces',
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
+
+      'test/branch/api:latest -> test/leaf:latest-interfaces [main]',
+    ])
   });
 
   it('should expose environment interfaces via a gateway', async () => {
@@ -175,8 +177,9 @@ describe('interfaces spec v1', () => {
     );
     const graph = await manager.getGraph();
 
-    expect(graph.nodes).length(5);
     expect(graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
+
       'test/branch:latest-interfaces',
       'test/branch/api:latest',
 
@@ -184,9 +187,9 @@ describe('interfaces spec v1', () => {
       'test/leaf/db:latest',
       'test/leaf/api:latest'
     ])
-
-    expect(graph.edges).length(4);
     expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+      'gateway -> test/branch:latest-interfaces [main]',
+
       'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
       'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
 

@@ -35,9 +35,30 @@ export default abstract class DependencyManager {
   async getGraph(): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
     const component_map = await this.loadComponents(graph);
+    this.addIngressEdges(graph);
     const interpolated_environment = await this.interpolateEnvironment(this.environment, component_map);
     await this.interpolateComponents(graph, interpolated_environment, component_map);
     return graph;
+  }
+
+  // Add edges between gateway and component interfaces nodes
+  addIngressEdges(graph: DependencyGraph): void {
+    let interfaces_string = serialize(this.environment.getInterfaces());
+    interfaces_string = replaceBrackets(interfaces_string);
+    const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+    const component_edge_map: Dictionary<Set<string>> = {};
+    let matches;
+    while ((matches = components_regex.exec(interfaces_string)) != null) {
+      const [_, component_name, interface_name] = matches;
+      const to = this.environment.getComponents()[component_name].getInterfacesRef();
+      if (!component_edge_map[to]) component_edge_map[to] = new Set();
+      component_edge_map[to].add(interface_name);
+    }
+    for (const [to, interface_names] of Object.entries(component_edge_map)) {
+      const gateway = new GatewayNode();
+      graph.addNode(gateway);
+      graph.addEdge(new IngressEdge(gateway.ref, to, interface_names));
+    }
   }
 
   async loadComponents(graph: DependencyGraph): Promise<Dictionary<ComponentConfig>> {
@@ -83,14 +104,6 @@ export default abstract class DependencyManager {
       });
       graph.addNode(node);
 
-      if (!node.is_external) {
-        const exposed_interfaces_count = Object.values(node.interfaces).filter(i => i.subdomain).length;
-        if (exposed_interfaces_count) {
-          const gateway = new GatewayNode();
-          graph.addNode(gateway);
-          graph.addEdge(new IngressEdge(gateway.ref, node.ref, new Set('TODO')));
-        }
-      }
       ref_map[service_name] = node.ref;
     }
 
