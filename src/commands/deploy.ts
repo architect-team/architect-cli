@@ -39,7 +39,7 @@ export default class Deploy extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -48,7 +48,7 @@ export default class Deploy extends Command {
         os.tmpdir(),
         `architect-deployment-${Date.now().toString()}.json`,
       ),
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     detached: flags.boolean({
       description: 'Run in detached mode',
@@ -67,6 +67,12 @@ export default class Deploy extends Command {
       hidden: true,
       exclusive: ['local', 'compose_file'],
     }),
+    refresh: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose_file'],
+    }),
     account: flags.string({
       char: 'a',
       description: 'Account to deploy the services with',
@@ -80,7 +86,7 @@ export default class Deploy extends Command {
     build_prod: flags.boolean({
       description: 'Build without debug config',
       hidden: true,
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock'],
+      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
   };
 
@@ -132,7 +138,6 @@ export default class Deploy extends Command {
       this.app.api,
       path.resolve(untildify(args.environment_config)),
       this.app.linkedServices,
-      !flags.build_prod,
     );
 
     await this.validate_graph(dependency_manager.graph);
@@ -165,7 +170,7 @@ export default class Deploy extends Command {
     });
   }
 
-  private async runRemote() {
+  protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
     if (!args.environment_config) {
@@ -237,7 +242,7 @@ export default class Deploy extends Command {
     }
 
     cli.action.start(chalk.blue('Deploying'));
-    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock } });
+    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
     await this.poll(deployment.id);
     cli.action.stop(chalk.green(`Deployed`));
   }

@@ -19,7 +19,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.4.8-rc.27 linux-x64 node-v12.16.3
+@architect-io/cli/0.4.10-rc.2 linux-x64 node-v12.18.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -42,6 +42,7 @@ by running npm install with the `--unsafe` flag._
 * [`architect config:view`](#architect-configview)
 * [`architect deploy [ENVIRONMENT_CONFIG]`](#architect-deploy-environment_config)
 * [`architect environments [QUERY]`](#architect-environments-query)
+* [`architect environments:clear`](#architect-environmentsclear)
 * [`architect environments:create [NAME]`](#architect-environmentscreate-name)
 * [`architect environments:destroy NAMESPACED_ENVIRONMENT`](#architect-environmentsdestroy-namespaced_environment)
 * [`architect environments:update NAMESPACED_ENVIRONMENT`](#architect-environmentsupdate-namespaced_environment)
@@ -56,6 +57,7 @@ by running npm install with the `--unsafe` flag._
 * [`architect register`](#architect-register)
 * [`architect services [QUERY]`](#architect-services-query)
 * [`architect unlink [SERVICEPATHORNAME]`](#architect-unlink-servicepathorname)
+* [`architect whoami`](#architect-whoami)
 
 ## `architect build`
 
@@ -72,7 +74,7 @@ OPTIONS
   -t, --tag=tag                  [default: latest] Tag to give to the new Docker image(s)
 ```
 
-_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/build.ts)_
+_See code: [src/commands/build.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/build.ts)_
 
 ## `architect config:get OPTION`
 
@@ -89,7 +91,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -107,7 +109,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -124,7 +126,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/config/view.ts)_
 
 ## `architect deploy [ENVIRONMENT_CONFIG]`
 
@@ -144,13 +146,13 @@ OPTIONS
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1590706934135.json] Path where the compose file
+  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1592356986234.json] Path where the compose file
                                    should be written to
 
   --auto_approve
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/deploy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -175,7 +177,34 @@ ALIASES
   $ architect env:list
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/environments/index.ts)_
+
+## `architect environments:clear`
+
+Clear services from an environment
+
+```
+USAGE
+  $ architect environments:clear
+
+OPTIONS
+  -a, --account=account            Account to deploy the services with
+  -d, --detached                   Run in detached mode
+  -e, --environment=environment    Environment to deploy the services to
+  -h, --help                       show CLI help
+  -l, --local                      Deploy the stack locally instead of via Architect Cloud
+
+  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1592356986234.json] Path where the compose file
+                                   should be written to
+
+  --auto_approve
+
+ALIASES
+  $ architect environment:clear
+  $ architect env:clear
+```
+
+_See code: [src/commands/environments/clear.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/environments/clear.ts)_
 
 ## `architect environments:create [NAME]`
 
@@ -210,7 +239,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy NAMESPACED_ENVIRONMENT`
 
@@ -234,7 +263,7 @@ ALIASES
   $ architect env:destroy
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/environments/destroy.ts)_
 
 ## `architect environments:update NAMESPACED_ENVIRONMENT`
 
@@ -257,7 +286,7 @@ ALIASES
   $ architect env:update
 ```
 
-_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/environments/update.ts)_
+_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/environments/update.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -308,7 +337,7 @@ EXAMPLE
        Success! A manifest for this service has been added at `architect.json`.
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/init.ts)_
 
 ## `architect link [SERVICEPATH]`
 
@@ -322,7 +351,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -338,7 +367,7 @@ OPTIONS
   -u, --username=username  Username
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -352,7 +381,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -373,7 +402,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/platforms/index.ts)_
 
 ## `architect platforms:destroy NAMESPACED_PLATFORM`
 
@@ -394,7 +423,7 @@ ALIASES
   $ architect platform:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/platforms/destroy.ts)_
 
 ## `architect push`
 
@@ -411,7 +440,7 @@ OPTIONS
   -t, --tag=tag                  [default: latest] Tag to give to the new Docker image(s)
 ```
 
-_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/push.ts)_
+_See code: [src/commands/push.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/push.ts)_
 
 ## `architect register`
 
@@ -435,7 +464,7 @@ ALIASES
   $ architect svc:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/register.ts)_
 
 ## `architect services [QUERY]`
 
@@ -456,7 +485,7 @@ ALIASES
   $ architect services:search
 ```
 
-_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/services/index.ts)_
+_See code: [src/commands/services/index.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/services/index.ts)_
 
 ## `architect unlink [SERVICEPATHORNAME]`
 
@@ -471,5 +500,22 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.4.8-rc.27/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/unlink.ts)_
+
+## `architect whoami`
+
+Get the logged in user
+
+```
+USAGE
+  $ architect whoami
+
+OPTIONS
+  -h, --help  show CLI help
+
+ALIASES
+  $ architect whoami
+```
+
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.4.10-rc.2/src/commands/whoami.ts)_
 <!-- commandsstop -->

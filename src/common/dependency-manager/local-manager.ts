@@ -1,7 +1,5 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import fs from 'fs-extra';
-import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfigBuilder, ServiceConfig, ServiceConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -9,7 +7,6 @@ import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { readIfFile } from '../utils/file';
 import PortUtil from '../utils/port';
 import LocalDependencyGraph from './local-graph';
-import { LocalServiceNode } from './local-service-node';
 
 export default class LocalDependencyManager extends DependencyManager {
   graph!: LocalDependencyGraph;
@@ -17,20 +14,19 @@ export default class LocalDependencyManager extends DependencyManager {
   config_path: string;
   linked_services: Dictionary<string>;
 
-  protected constructor(api: AxiosInstance, config_path = '', linked_services: Dictionary<string> = {}, debug = false) {
+  protected constructor(api: AxiosInstance, config_path = '', linked_services: Dictionary<string> = {}) {
     super();
     this.api = api;
     this.config_path = config_path || '';
     this.linked_services = linked_services;
-    this.debug = debug;
   }
 
   static async create(api: AxiosInstance) {
     return this.createFromPath(api, '');
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}, debug = false): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services, debug);
+  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}): Promise<LocalDependencyManager> {
+    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
     await dependency_manager.init();
     for (const config of Object.values(dependency_manager._environment.getServices())) {
       const svc_node = await dependency_manager.loadServiceFromConfig(config);
@@ -79,14 +75,10 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadServiceConfig(initial_config: ServiceConfig) {
-    let debug_path = initial_config.getDebugOptions()?.getPath();
+    const debug_path = initial_config.getDebugOptions()?.getPath();
     const service_name = initial_config.getName();
 
     if (debug_path) {
-      // Load local service config
-      if (this.config_path) {
-        debug_path = path.resolve(path.dirname(this.config_path), debug_path);
-      }
       return ServiceConfigBuilder.buildFromPath(debug_path);
     } else if (this.linked_services.hasOwnProperty(service_name)) {
       // Load locally linked service config
@@ -110,24 +102,6 @@ export default class LocalDependencyManager extends DependencyManager {
     } else {
       return initial_config;
     }
-  }
-
-  /**
-   * @override
-   */
-  async loadServiceNode(initial_config: ServiceConfig) {
-    let node = await super.loadServiceNode(initial_config);
-
-    // TODO: Kill LocalServiceNode
-    const debug_path = node.service_config.getDebugOptions()?.getPath();
-    if (debug_path) {
-      const lstat = fs.lstatSync(debug_path);
-      node = new LocalServiceNode({
-        service_path: lstat.isFile() ? path.dirname(debug_path) : debug_path,
-        ...node,
-      });
-    }
-    return node;
   }
 
   async loadParameters() {
@@ -164,5 +138,15 @@ export default class LocalDependencyManager extends DependencyManager {
 
   toInternalHost(node: DependencyNode) {
     return node.normalized_ref;
+  }
+
+  getNodeConfig(service_config: ServiceConfig) {
+    let node_config = super.getNodeConfig(service_config);
+    // If debug is enabled merge in debug options ex. debug.command -> command
+    const debug_options = node_config.getDebugOptions();
+    if (debug_options) {
+      node_config = node_config.merge(debug_options);
+    }
+    return node_config;
   }
 }

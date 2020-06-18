@@ -16,7 +16,6 @@ import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
   abstract graph: DependencyGraph;
-  debug = false;
   gateway_port!: number;
   _environment!: EnvironmentConfig;
   protected vault_manager!: VaultManager;
@@ -60,12 +59,6 @@ export default abstract class DependencyManager {
     const env_service = this._environment.getServiceDetails(service_config.getRef());
     if (env_service) {
       node_config = node_config.merge(env_service);
-    }
-
-    // If debug is enabled merge in debug options ex. debug.command -> command
-    const debug_options = node_config.getDebugOptions();
-    if (this.debug && debug_options) {
-      node_config = node_config.merge(debug_options);
     }
     return node_config;
   }
@@ -134,8 +127,8 @@ export default abstract class DependencyManager {
             let param_target_service_name = value_from_param.valueFrom.dependency || node.ref;
             // Support dep ref with or without tag
             if (param_target_service_name in node.node_config.getDependencies()) {
-              const dep_config = node.node_config.getDependencies()[param_target_service_name];
-              param_target_service_name = dep_config.getRef();
+              const dep_tag = node.node_config.getDependencies()[param_target_service_name];
+              param_target_service_name = `${param_target_service_name}:${dep_tag}`;
             }
             const param_target_datastore_name = (param_value as ValueFromParameter<DatastoreParameter>).valueFrom.datastore;
 
@@ -408,10 +401,11 @@ export default abstract class DependencyManager {
   async loadDependencies(parent_node: ServiceNode, recursive = true) {
     if (parent_node.is_external) { return; }
 
-    for (const dep_config of Object.values(parent_node.node_config.getDependencies())) {
-      if (dep_config.getPrivate()) {
-        dep_config.setParentRef(parent_node.ref);
-      }
+    for (const [dep_name, dep_tag] of Object.entries(parent_node.node_config.getDependencies())) {
+      const dep_config = ServiceConfigBuilder.buildFromJSON({
+        name: dep_name,
+        extends: dep_tag,
+      });
       const dep_node = await this.loadServiceFromConfig(dep_config, recursive);
       this.graph.addNode(dep_node);
       const edge = new ServiceEdge(parent_node.ref, dep_node.ref);

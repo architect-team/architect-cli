@@ -6,9 +6,9 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
-import { LocalServiceNode } from '../common/dependency-manager/local-service-node';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage } from '../common/utils/docker';
+import { ServiceNode } from '../dependency-manager/src';
 import { CreateServiceVersionInput } from './register';
 
 
@@ -54,7 +54,7 @@ export default class Push extends Command {
     this.accounts = await this.get_accounts();
 
     for (const node of dependency_manager.graph.nodes) {
-      if (node instanceof LocalServiceNode) {
+      if (node.is_local && node instanceof ServiceNode) {
         const tag = await buildImage(node, this.app.config.registry_host, flags.tag);
         cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));
         try {

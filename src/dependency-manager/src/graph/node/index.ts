@@ -54,4 +54,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
       }
     });
   }
+
+  get is_local() {
+    return false;
+  }
 }

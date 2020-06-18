@@ -78,7 +78,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1')}:/usr/src/volume1`]);
   });
@@ -111,7 +111,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/relative-volume')}:/usr/src/volume1`]);
   });
@@ -153,7 +153,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
 
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume2')}:/my/custom/path`]);
@@ -219,7 +219,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
   });
@@ -257,7 +257,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
     expect(compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/env_volume`]);
   });
@@ -293,11 +293,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, false);
-    const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].volumes).empty;
-
-    const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const debug_compose = await DockerCompose.generate(debug_manager);
     expect(debug_compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/src')}:/src`]);
   });
@@ -330,7 +326,7 @@ describe('volumes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const debug_compose = await DockerCompose.generate(debug_manager);
     expect(debug_compose.services['architect.backend.latest'].volumes).to.include.members([`${path.resolve('/stack/src/backend/src')}:/usr/src`]);
   });

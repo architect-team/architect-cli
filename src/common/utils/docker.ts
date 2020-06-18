@@ -1,5 +1,7 @@
 import execa, { Options } from 'execa';
-import { LocalServiceNode } from '../dependency-manager/local-service-node';
+import fs from 'fs-extra';
+import path from 'path';
+import { ServiceNode } from '../../dependency-manager/src';
 import DockerNotInstalledError from '../errors/docker-not-installed';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
@@ -20,16 +22,19 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
 };
 
-export const buildImage = async (node: LocalServiceNode, registry_host: string, tag_name = 'latest') => {
+export const buildImage = async (node: ServiceNode, registry_host: string, tag_name = 'latest') => {
   const config = node.node_config;
   const image_tag = `${registry_host}/${config.getName()}:${tag_name}`;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const node_path = node.node_config.getPath()!;
+  const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
   await docker([
     'build',
     '--compress',
     '--build-arg', `SERVICE_LANGUAGE=${config.getLanguage()}`,
     '-t', image_tag,
     '--label', `architect.json=${JSON.stringify(config)}`,
-    node.service_path,
+    service_path,
   ]);
   return image_tag;
 };

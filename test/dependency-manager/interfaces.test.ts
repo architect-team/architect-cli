@@ -5,7 +5,6 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { LocalServiceNode } from '../../src/common/dependency-manager/local-service-node';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { DependencyParameter, ServiceNode, ValueFromParameter } from '../../src/dependency-manager/src';
@@ -205,7 +204,8 @@ describe('interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json')
     const graph: LocalDependencyGraph = manager.graph;
 
-    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as LocalServiceNode;
+    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ServiceNode;
+    expect(backend_node.is_local).true;
     expect(backend_node!.parameters.MAIN_PORT).eq('8080');
     expect(backend_node!.parameters.SECONDARY_PORT).eq('8081');
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
@@ -213,12 +213,14 @@ describe('interfaces', function () {
     expect(backend_node!.service_config.getInterfaces().main.port).eq(8080);
     expect(backend_node!.service_config.getInterfaces().secondary.port).eq(8081);
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as LocalServiceNode;
+    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as ServiceNode;
+    expect(frontend_main_node.is_local).true;
     const interfaced_main_value_from = frontend_main_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
     expect(interfaced_main_value_from.valueFrom.interface).eq('main');
     expect(frontend_main_node!.parameters.API_ADDR).eq(`${backend_node.normalized_ref}:8080`);
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as LocalServiceNode;
+    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as ServiceNode;
+    expect(frontend_secondary_node.is_local).true;
     const interfaced_secondary_value_from = frontend_secondary_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
     expect(interfaced_secondary_value_from.valueFrom.interface).eq('secondary');
     expect(frontend_secondary_node!.parameters.API_ADDR).eq(`${backend_node.normalized_ref}:8081`);
@@ -232,12 +234,14 @@ describe('interfaces', function () {
     expect(backend_node.interfaces!.main.port).eq(8080);
     expect(backend_node.interfaces!.secondary.port).eq(8081);
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as LocalServiceNode;
+    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as ServiceNode;
+    expect(frontend_main_node.is_local).true;
     const interfaced_main_value_from = frontend_main_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
     expect(interfaced_main_value_from.valueFrom.interface).eq('main');
     expect(frontend_main_node!.parameters.API_ADDR).eq(`main.host:8080`);
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as LocalServiceNode;
+    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as ServiceNode;
+    expect(frontend_secondary_node.is_local).true;
     const interfaced_secondary_value_from = frontend_secondary_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
     expect(interfaced_secondary_value_from.valueFrom.interface).eq('secondary');
     expect(frontend_secondary_node!.parameters.API_ADDR).eq(`secondary.host:8081`);

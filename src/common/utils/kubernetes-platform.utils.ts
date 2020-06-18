@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
@@ -165,6 +166,19 @@ export class KubernetesPlatformUtils {
     const service_token = sa_token_buffer.toString('utf-8');
 
     cli.action.stop();
+
+    try {
+      const nodes = await execa('kubectl', [
+        'get', 'nodes',
+        '-o', 'json',
+        `--request-timeout='2s'`,
+      ]);
+
+      if (JSON.parse(nodes.stdout).items.length === 0) {
+        console.log(chalk.yellow('Warning: The cluster does not have any running nodes.'));
+      }
+      // eslint-disable-next-line no-empty
+    } catch (err) { }
 
     await execa('kubectl', [
       ...set_kubeconfig,

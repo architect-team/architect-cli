@@ -1,3 +1,4 @@
+import fs from 'fs-extra';
 import pLimit from 'p-limit';
 import path from 'path';
 import { DatastoreNode, ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
@@ -5,7 +6,6 @@ import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import LocalDependencyManager from '../dependency-manager/local-manager';
-import { LocalServiceNode } from '../dependency-manager/local-service-node';
 import DockerComposeTemplate from './template';
 
 export const generate = async (dependency_manager: LocalDependencyManager): Promise<DockerComposeTemplate> => {
@@ -43,6 +43,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           DISABLE_ACCESS_LOGS: 'true',
           HTTP_PORT: dependency_manager.gateway_port,
         },
+        logging: {
+          driver: 'none',
+        },
       };
     }
 
@@ -79,13 +82,16 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
     }
 
-    if (node instanceof LocalServiceNode) {
+    if (node.is_local && node instanceof ServiceNode) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const node_path = node.node_config.getPath()!;
+      const service_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
       if (!node.image) {
         const build_parameter_keys = Object.entries(node.node_config.getParameters()).filter(([_, value]) => (value && value.build_arg)).map(([key, _]) => key);
         const build_args = build_parameter_keys.map((key: any) => `${key}=${node.parameters[key]}`);
         // Setup build context
         compose.services[node.normalized_ref].build = {
-          context: node.service_path,
+          context: service_path,
           args: [...build_args],
         };
 
@@ -117,11 +123,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         if (service_volumes && service_volumes[key] && service_volumes[key].host_path && env_volume_unset) {
           const host_path = service_volumes[key].host_path;
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          volume = `${path.resolve(node.service_path, host_path!)}:${service_volume}`;
+          volume = `${path.resolve(service_path, host_path!)}:${service_volume}`;
         } else if (spec.host_path) {
           volume = `${path.resolve(path.dirname(dependency_manager.config_path), spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
         } else {
-          volume = path.resolve(node.service_path, service_volume);
+          volume = path.resolve(service_path, service_volume);
         }
         volumes.push(volume);
       }

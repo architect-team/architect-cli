@@ -127,7 +127,7 @@ describe('parameters', function () {
       'PORT',
     ];
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json', undefined, true);
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     await manager.loadParameters();
     const graph = manager.graph;
     const frontend_node = graph.nodes[0] as ServiceNode;

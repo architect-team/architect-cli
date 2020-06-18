@@ -73,4 +73,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
     return this._parameters;
   }
+
+  get is_local() {
+    return this.node_config.getPath() !== undefined;
+  }
 }
