@@ -4,6 +4,7 @@ import IngressEdge from './edge/ingress';
 import ServiceEdge from './edge/service';
 import { DependencyNode } from './node';
 import GatewayNode from './node/gateway';
+import InterfacesNode from './node/interfaces';
 import { ServiceNode } from './node/service';
 
 export default class DependencyGraph {
@@ -12,6 +13,7 @@ export default class DependencyGraph {
       property: '__type',
       subTypes: [
         { value: ServiceNode, name: 'service' },
+        { value: InterfacesNode, name: 'interfaces' },
         { value: GatewayNode, name: 'gateway' },
       ],
     },

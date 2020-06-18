@@ -19,7 +19,7 @@ export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
   port?: string;
-  subdomain?: string;
+  url?: string;
   protocol?: string;
 }
 

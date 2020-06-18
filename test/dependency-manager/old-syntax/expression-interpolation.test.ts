@@ -44,7 +44,7 @@ describe('old expression-interpolation', function () {
       parameters: {
         APP_PORT: 8080,
         DEP_DB_USER: "${ dependencies['architect/cloud-api'].parameters.DB_USER }",
-        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].services.service.interfaces.admin.port }",
+        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].interfaces.admin.port }",
       }
     };
 

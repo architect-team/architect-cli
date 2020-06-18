@@ -4,16 +4,15 @@ import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
 import { EnvironmentConfig } from './environment-config/base';
 import { EnvironmentConfigBuilder } from './environment-config/builder';
-import { EnvironmentConfigV1 } from './environment-config/v1';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import { ServiceConfig } from './service-config/base';
-import { ServiceConfigV1 } from './service-config/v1';
+import InterfacesNode from './graph/node/interfaces';
+import { ServiceConfig, ServiceInterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
-import { EnvironmentInterfaceContext, EnvironmentInterpolationContext, escapeJSON, InterfaceContext, interpolateString, replaceBrackets } from './utils/interpolation';
+import { escapeJSON, interpolateString, prefixExpressions, replaceBrackets } from './utils/interpolation';
 import { IMAGE_REGEX, REPOSITORY_REGEX } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -44,8 +43,7 @@ export default abstract class DependencyManager {
   async getGraph(): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
     await this.loadComponents(graph);
-    // TODO: Switch to interpolating components
-    await this.interpolateNodes(graph);
+    await this.interpolateComponents(graph);
     return graph;
   }
 
@@ -71,20 +69,19 @@ export default abstract class DependencyManager {
     const load_dependencies = !(component.getRef() in this.component_map); // Detect circular dependencies
     this.component_map[component.getRef()] = component;
 
+    // Create interfaces node for component
+    if (Object.keys(component.getInterfaces()).length > 0) {
+      const node = new InterfacesNode(component.getInterfacesRef());
+      graph.addNode(node);
+    }
+
     const ref_map: Dictionary<string> = {};
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node_config = this.getNodeConfig(service_config);
 
-      // TODO: Cleanup this is terrible
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      service_config.name = component.getServiceRef(service_config.getName());
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      node_config.name = component.getServiceRef(node_config.getName());
-
       const node = new ServiceNode({
+        ref: component.getServiceRef(node_config.getName()),
         service_config,
         node_config,
         local: component.getExtends()?.startsWith('file:'),
@@ -96,15 +93,14 @@ export default abstract class DependencyManager {
         if (exposed_interfaces_count) {
           const gateway = new GatewayNode();
           graph.addNode(gateway);
-          graph.addEdge(new IngressEdge(gateway.ref, node.ref));
+          graph.addEdge(new IngressEdge(gateway.ref, node.ref, ['TODO']));
         }
       }
-
       ref_map[service_name] = node.ref;
     }
 
+    // Load component dependencies
     if (load_dependencies) {
-      // Load component dependencies
       for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
         const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
         const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
@@ -121,26 +117,59 @@ export default abstract class DependencyManager {
         continue;
       }
 
-      const service_string = serialize(service_config);
+      let service_string = serialize(service_config);
+      service_string = replaceBrackets(service_string);
 
-      const start_regex = `(?:\\[\\s*\\\\"|\\[\\s*\\'|\\.)`;
-      const end_regex = `(?:\\\\"\\s*\\]|\\'\\s*\\])?\\.`;
-
-      const services_regex = new RegExp(`\\\${\\s*services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
+      // Add edges between services inside the component
+      const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+      const service_edge_map: Dictionary<string[]> = {};
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
-        const to = ref_map[matches[1]];
-        const edge = new ServiceEdge(from, to);
+        const [_, service_name, interface_name] = matches;
+        const to = ref_map[service_name];
+        if (!service_edge_map[to]) service_edge_map[to] = [];
+        service_edge_map[to].push(interface_name);
+      }
+      for (const [to, interface_names] of Object.entries(service_edge_map)) {
+        const edge = new ServiceEdge(from, to, interface_names);
         graph.addEdge(edge);
       }
 
-      const dependencies_regex = new RegExp(`\\\${\\s*dependencies${start_regex}(${REPOSITORY_REGEX})?${end_regex}services${start_regex}(${IMAGE_REGEX})?${end_regex}`, 'g');
+      // Add edges between services and dependencies inside the component
+      const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+      const dep_edge_map: Dictionary<string[]> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
-        const tag = component.getDependencies()[matches[1]];
-        const to = `${matches[1]}/${matches[2]}:${tag}`;
-        const edge = new ServiceEdge(from, to);
+        const [_, dep_name, interface_name] = matches;
+        const dep_tag = component.getDependencies()[dep_name];
+
+        const dep_component = this.component_map[`${dep_name}:${dep_tag}`];
+        const to = dep_component.getInterfacesRef();
+
+        if (!dep_edge_map[to]) dep_edge_map[to] = [];
+        dep_edge_map[to].push(interface_name);
+      }
+
+      for (const [to, interface_names] of Object.entries(dep_edge_map)) {
+        const edge = new ServiceEdge(from, to, interface_names);
         graph.addEdge(edge);
       }
+    }
+
+    // Add edges between services and the component's interfaces node
+    let interfaces_string = serialize(component.getInterfaces());
+    interfaces_string = replaceBrackets(interfaces_string);
+    const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+    const service_edge_map: Dictionary<string[]> = {};
+    let matches;
+    while ((matches = services_regex.exec(interfaces_string)) != null) {
+      const [_, service_name, interface_name] = matches;
+      const to = ref_map[service_name];
+      if (!service_edge_map[to]) service_edge_map[to] = [];
+      service_edge_map[to].push(interface_name);
+    }
+    for (const [to, interface_names] of Object.entries(service_edge_map)) {
+      const edge = new ServiceEdge(component.getInterfacesRef(), to, interface_names);
+      graph.addEdge(edge);
     }
   }
 
@@ -160,64 +189,65 @@ export default abstract class DependencyManager {
       res = res.replace(matches[0], escapeJSON(secret));
     }
 
-    environment = deserialize(EnvironmentConfigV1, res);
+    environment = deserialize(environment.getClass(), res);
     const interpolated_environment_string = interpolateString(res, environment.getContext());
-    return deserialize(EnvironmentConfigV1, interpolated_environment_string, { enableImplicitConversion: true });
+    return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
   }
 
-  async interpolateNodes(graph: DependencyGraph) {
-    const environment = await this.getInterpolatedEnvironment();
+  async interpolateComponents(graph: DependencyGraph) {
+    function normalizeRef(ref: string) {
+      return ref.replace(/\./g, '__arc__');
+    }
 
-    const env_parameters = environment.getParameters();
-    const interface_context = this.buildEnvironmentInterfaceContext(graph);
-    const node_component_map: Dictionary<string> = {};
+    const components: ComponentConfig[] = [];
+    // Prefix interpolation expressions with components.<name>.
+    for (const component of Object.values(this.component_map)) {
+      let component_string = serialize(component);
+      component_string = replaceBrackets(component_string);
+      component_string = prefixExpressions(component_string, normalizeRef(component.getRef()));
+      components.push(deserialize(component.getClass(), component_string));
+    }
 
-    const component_context_map: EnvironmentInterpolationContext = {};
-    for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
-      const component_context = component.getContext();
-      for (const parameter_key of Object.keys(component_context.parameters)) {
-        if (env_parameters[parameter_key]?.default !== undefined) {
-          component_context.parameters[parameter_key] = env_parameters[parameter_key].default;
+    const context: Dictionary<any> = {};
+    // Set contexts for all components
+    for (const component of components) {
+      context[normalizeRef(component.getRef())] = component.getContext();
+      for (const [service_name, service] of Object.entries(component.getServices())) {
+        const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
+        for (const interface_name of Object.keys(service.getInterfaces())) {
+          const interface_context = this.mapToInterfaceContext(graph, node, interface_name);
+          context[normalizeRef(component.getRef())].services[service_name].interfaces[interface_name] = interface_context;
         }
       }
-      for (const service_key of Object.keys(component.getServices())) {
-        component_context.services[service_key].interfaces = interface_context[component.getServiceRef(service_key)];
-        node_component_map[component.getServiceRef(service_key)] = component.getRef();
-      }
-
-      component_context_map[component.getRef()] = component_context;
     }
-
-    // Loop through dependencies and set contexts
-    for (const component of Object.values(this.component_map) as Array<ComponentConfig>) {
-      const dependencies: any = {};
+    // Set contexts for all component dependencies (Important to show correct interpolation errors)
+    // Ex. ${ dependencies.api.interfaces.invalid }
+    for (const component of components) {
       for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
-        const dep_name = dep_tag.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_tag}`;
-        dependencies[dep_key] = { ...component_context_map[dep_name] };
-        delete dependencies[dep_key].dependencies;
+        const dep_ref = dep_tag.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_tag}`;
+        context[normalizeRef(component.getRef())].dependencies[dep_key] = { ...context[normalizeRef(dep_ref)] };
+        // Remove dependencies of dependencies
+        delete context[normalizeRef(component.getRef())].dependencies[dep_key].dependencies;
       }
-      component_context_map[component.getRef()].dependencies = dependencies;
     }
 
-    for (const node of graph.nodes) {
-      if (!(node instanceof ServiceNode)) continue;
+    const full_environment: any = { components: {} };
+    for (const component of components) {
+      full_environment.components[component.getRef()] = component;
+    }
 
-      const component_ref = node_component_map[node.ref];
-      const component_context = component_context_map[component_ref];
-
-      const config_string = serialize(node.node_config);
-      const interpolated_node_config_string = interpolateString(config_string, component_context);
-      node.node_config = deserialize(ServiceConfigV1, interpolated_node_config_string, { enableImplicitConversion: true });
+    const interpolated_environment_string = interpolateString(JSON.stringify(full_environment), context);
+    const environment = deserialize(this.__environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
+    for (const component of Object.values(environment.getComponents())) {
+      for (const [service_name, service] of Object.entries(component.getServices())) {
+        const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
+        node.node_config = service;
+      }
     }
   }
 
   getNodeConfig(service_config: ServiceConfig) {
     return service_config.copy();
-  }
-
-  protected scopeEnv(node: DependencyNode, key: string) {
-    const prefix = node.normalized_ref.replace(/[.-]/g, '_');
-    return `${prefix}__arc__${key}`;
   }
 
   protected abstract toExternalProtocol(node: DependencyNode, interface_key: string): string;
@@ -227,18 +257,7 @@ export default abstract class DependencyManager {
     return node.interfaces[interface_name].port;
   }
 
-  private buildEnvironmentInterfaceContext(graph: DependencyGraph): EnvironmentInterfaceContext {
-    const environment_interface_context: EnvironmentInterfaceContext = {};
-    for (const node of graph.nodes) {
-      environment_interface_context[node.ref] = {};
-      for (const interface_name of Object.keys(node.interfaces)) {
-        environment_interface_context[node.ref][interface_name] = this.mapToInterfaceContext(graph, node, interface_name);
-      }
-    }
-    return environment_interface_context;
-  }
-
-  private mapToInterfaceContext(graph: DependencyGraph, node: DependencyNode, interface_name: string): InterfaceContext {
+  private mapToInterfaceContext(graph: DependencyGraph, node: DependencyNode, interface_name: string): ServiceInterfaceSpec {
     const gateway_node = graph.nodes.find((node) => (node instanceof GatewayNode));
     const gateway_port = gateway_node ? this.gateway_port : undefined;
     const interface_details = node.interfaces[interface_name];
@@ -272,21 +291,6 @@ export default abstract class DependencyManager {
       port: internal_port,
       protocol: internal_protocol,
       url: internal_url,
-      subdomain: subdomain,
-      external: {
-        host: external_host,
-        port: external_port,
-        url: external_url,
-        protocol: external_protocol,
-        subdomain: subdomain,
-      },
-      internal: {
-        host: internal_host,
-        port: internal_port,
-        url: internal_url,
-        protocol: internal_protocol,
-        subdomain: subdomain,
-      },
     };
   }
 

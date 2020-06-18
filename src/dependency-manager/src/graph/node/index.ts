@@ -21,16 +21,12 @@ export abstract class DependencyNode implements DependencyNodeOptions {
     return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
   }
 
-  abstract get ref(): string;
+  abstract ref: string;
 
   abstract get interfaces(): { [key: string]: any };
 
   get ports(): number[] {
     return Object.values(this.interfaces).map((i) => (i.port));
-  }
-
-  get protocol() {
-    return '';
   }
 
   get is_external() {

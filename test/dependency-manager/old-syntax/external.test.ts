@@ -126,7 +126,7 @@ describe('old external nodes', function () {
         app: 8080
       },
       environment: {
-        BACKEND_ADDR: '${ dependencies.architect/backend.services.service.interfaces.api.url }'
+        BACKEND_ADDR: '${ dependencies.architect/backend.interfaces.api.url }'
       },
       dependencies: {
         'architect/backend': 'v1'

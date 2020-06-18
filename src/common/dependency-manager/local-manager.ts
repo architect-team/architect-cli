@@ -50,6 +50,7 @@ export default class LocalDependencyManager extends DependencyManager {
   async loadLocalService(service_path: string): Promise<ServiceNode> {
     // TODO: loadLocalService
     const node = new ServiceNode({
+      ref: 'TODO',
       service_config: new ServiceConfigV1(),
       node_config: new ServiceConfigV1(),
     });
@@ -122,7 +123,8 @@ export default class LocalDependencyManager extends DependencyManager {
       if (!external_interface) {
         return '';
       }
-      return external_interface?.subdomain ? `${external_interface.subdomain}.localhost` : '';
+      return 'TODO';
+      // return external_interface?.subdomain ? `${external_interface.subdomain}.localhost` : '';
     } else {
       return '';
     }

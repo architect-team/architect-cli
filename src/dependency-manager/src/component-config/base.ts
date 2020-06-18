@@ -1,5 +1,5 @@
 import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { ServiceConfig } from '../service-config/base';
+import { ServiceConfig, ServiceInterfaceSpec } from '../service-config/base';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
@@ -19,7 +19,12 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract getServices(): Dictionary<ServiceConfig>;
   abstract getDependencies(): Dictionary<string>;
+  abstract getInterfaces(): Dictionary<ServiceInterfaceSpec>;
   abstract getContext(): any;
+
+  getInterfacesRef() {
+    return `${this.getRef()}-interfaces`;
+  }
 
   getComponentVersion() {
     return this.getRef().split(':')[1];

@@ -1,46 +1,4 @@
 import Mustache, { Context, Writer } from 'mustache';
-import { ParameterValue } from '../service-config/base';
-import { Dictionary } from './dictionary';
-
-export type EnvironmentParameterMap = { [key: string]: ParameterContext };
-
-export interface InterpolationContext {
-  parameters: ParameterContext;
-  services: {
-    interfaces: ServiceInterfaceContext;
-  };
-  dependencies: Dictionary<InterpolationContext>;
-}
-
-export type ParameterContext = { [key: string]: ParameterValue };
-
-export type EnvironmentInterpolationContext = { [key: string]: InterpolationContext };
-
-export type ServiceInterfaceContext = { [key: string]: InterfaceContext };
-
-export type EnvironmentInterfaceContext = { [key: string]: ServiceInterfaceContext };
-
-export interface InterfaceContext {
-  port: string;
-  host: string;
-  protocol: string;
-  url: string;
-  subdomain?: string;
-  external: {
-    port?: string;
-    host?: string;
-    protocol?: string;
-    url?: string;
-    subdomain?: string;
-  };
-  internal: {
-    port: string;
-    host: string;
-    protocol: string;
-    url: string;
-    subdomain?: string;
-  };
-}
 
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
@@ -58,8 +16,23 @@ export const replaceBrackets = (value: string) => {
   return res;
 };
 
+export const prefixExpressions = (value: string, prefix: string) => {
+  const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\s*}`, 'g');
+  let matches;
+  let res = value;
+  while ((matches = mustache_regex.exec(value)) != null) {
+    const prefixed_value = matches[0].replace(matches[1], `${prefix}.${matches[1]}`);
+    res = res.replace(matches[0], prefixed_value);
+  }
+  return res;
+};
 
-export const escapeJSON = (value: string) => {
+export const escapeJSON = (value: any) => {
+  if (value instanceof Object) {
+    value = JSON.stringify(value);
+    // return '__obj__' + value + '__obj__';
+  }
+
   // Support json strings
   try {
     const escaped = JSON.stringify(value);
@@ -104,11 +77,11 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
   };
 
   const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
-  const MAX_DEPTH = 10;
+  const MAX_DEPTH = 25;
   let depth = 0;
   while (depth < MAX_DEPTH) {
-    param_value = replaceBrackets(param_value);
     param_value = writer.render(param_value, context);
+    // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;
     depth += 1;
   }
@@ -118,7 +91,6 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
     throw new Error(errors);
   }
 
-  //TODO:77: add validation logic to catch expressions that don't refer to an existing path
   return param_value;
 };
 

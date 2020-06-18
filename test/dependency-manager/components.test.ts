@@ -9,7 +9,7 @@ import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('components', function () {
+describe('components spec v1', function () {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
@@ -41,7 +41,8 @@ describe('components', function () {
               main: 8080
             }
           }
-        }
+        },
+        interfaces: {}
       };
 
       const env_config = {
@@ -158,7 +159,8 @@ describe('components', function () {
               main: 5432
             }
           }
-        }
+        },
+        interfaces: {}
       };
 
       const env_config = {
@@ -243,13 +245,14 @@ describe('components', function () {
               main: 8080
             },
             environment: {
-              CONCOURSE_ADDR: '${ dependencies.concourse/ci.services.web.interfaces.main.url }'
+              CONCOURSE_ADDR: '${ dependencies.concourse/ci.interfaces.web.url }'
             }
           }
         },
         dependencies: {
           'concourse/ci': 6.2
-        }
+        },
+        interfaces: {}
       };
 
       const concourse_component_config = {
@@ -257,7 +260,7 @@ describe('components', function () {
         services: {
           web: {
             interfaces: {
-              main: 8080
+              main: 8080,
             },
             image: 'concourse/concourse:6.2'
           },
@@ -268,6 +271,9 @@ describe('components', function () {
               CONCOURSE_TSA_HOST: '${ services.web.interfaces.main.host }'
             }
           }
+        },
+        interfaces: {
+          web: '${ services.web.interfaces.main.url }'
         }
       }
 
@@ -290,18 +296,25 @@ describe('components', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes).length(3);
+      expect(graph.nodes).length(4);
       expect(graph.nodes[0].ref).eq('architect/cloud/api:latest')
-      expect(graph.nodes[1].ref).eq('concourse/ci/web:6.2')
-      expect(graph.nodes[2].ref).eq('concourse/ci/worker:6.2')
-      expect(graph.edges).length(2);
+      expect(graph.nodes[1].ref).eq('concourse/ci:6.2-interfaces')
+      expect(graph.nodes[2].ref).eq('concourse/ci/web:6.2')
+      expect(graph.nodes[3].ref).eq('concourse/ci/worker:6.2')
+      const api_node = graph.nodes[0] as ServiceNode;
+      const worker_node = graph.nodes[3] as ServiceNode;
+
+      expect(graph.edges).length(3);
       expect(graph.edges[0].from).eq('concourse/ci/worker:6.2')
       expect(graph.edges[0].to).eq('concourse/ci/web:6.2')
-      expect(graph.edges[1].from).eq('architect/cloud/api:latest')
+      expect(graph.edges[1].from).eq('concourse/ci:6.2-interfaces')
       expect(graph.edges[1].to).eq('concourse/ci/web:6.2')
+      expect(graph.edges[2].from).eq('architect/cloud/api:latest')
+      expect(graph.edges[2].to).eq('concourse/ci:6.2-interfaces')
+
       // Test parameter values
-      expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('http://concourse.ci.web.6.2:8080')
-      expect((graph.nodes[2] as ServiceNode).node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('concourse.ci.web.6.2')
+      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('http://concourse.ci.web.6.2:8080')
+      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('concourse.ci.web.6.2')
     });
   });
 });

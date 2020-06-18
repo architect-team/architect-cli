@@ -44,7 +44,7 @@ class LivenessProbeV1 extends BaseSpec {
   port?: string;
 }
 
-class InterfaceSpecV1 extends BaseSpec {
+export class InterfaceSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsString({ always: true })
   description?: string;
@@ -63,14 +63,10 @@ class InterfaceSpecV1 extends BaseSpec {
   port?: string;
 
   @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a subdomain when registering services',
-  })
-  subdomain?: string;
+  protocol?: string;
 
   @IsOptional({ always: true })
-  protocol?: string;
+  url?: string;
 }
 
 export class ServiceVolumeV1 extends BaseSpec {
@@ -169,14 +165,14 @@ const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Diction
   return output;
 };
 
-const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
     return undefined;
   }
 
   const output: Dictionary<InterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    output[key] = typeof value === 'object'
+    output[key] = value instanceof Object
       ? plainToClass(InterfaceSpecV1, value)
       : plainToClass(InterfaceSpecV1, { port: value });
   }

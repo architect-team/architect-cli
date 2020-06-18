@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import pLimit from 'p-limit';
 import path from 'path';
-import { ServiceInterfaceSpec, ServiceNode } from '../../dependency-manager/src';
+import { ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -152,7 +152,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (edge instanceof IngressEdge) {
       const service_to = compose.services[node_to.normalized_ref];
-      const to_interface = Object.values(node_to.interfaces).find((i: ServiceInterfaceSpec) => i.subdomain);
+      const to_interface = { subdomain: 'TODO' }; // TODO: Object.values(node_to.interfaces).find((i: ServiceInterfaceSpec) => i.subdomain);
       service_to.environment = service_to.environment || {};
       service_to.environment.VIRTUAL_HOST = `${to_interface.subdomain}.localhost`;
       service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];

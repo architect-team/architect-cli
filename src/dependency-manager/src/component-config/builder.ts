@@ -141,6 +141,11 @@ export class ComponentConfigBuilder {
       config.interfaces = {};
     }
 
+    const interfaces: Dictionary<string> = {};
+    for (const ik of Object.keys(config.interfaces)) {
+      interfaces[ik] = `\${ services.service.interfaces.${ik}.url }`;
+    }
+
     // Finally set service to services block
     services['service'] = config;
 
@@ -149,6 +154,7 @@ export class ComponentConfigBuilder {
       parameters: parameters,
       dependencies: dependencies,
       services: services,
+      interfaces: interfaces,
       extends: ext,
     };
   }
@@ -173,7 +179,7 @@ export class ComponentConfigBuilder {
       if (value instanceof Object) {
         let prefix = '';
         if (value.dependency) {
-          prefix = `dependencies.${value.dependency.split(':')[0]}.services.service.`;
+          prefix = `dependencies.${value.dependency.split(':')[0]}.`;
         } else if (value.datastore) {
           prefix = `services.datastore-${value.datastore}.`;
         }
