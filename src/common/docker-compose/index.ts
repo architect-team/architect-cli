@@ -31,7 +31,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (node instanceof GatewayNode) {
       compose.services[node.normalized_ref] = {
-        image: 'registry.architect.io/architect-nginx/proxy:latest',
+        image: 'jwilder/nginx-proxy:latest',
         restart: 'always',
         ports: [`${dependency_manager.gateway_port}:${dependency_manager.gateway_port}`],
         volumes: [
