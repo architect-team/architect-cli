@@ -1,20 +1,28 @@
 /**
  * @format
  */
-import moxios from 'moxios';
-import axios from 'axios';
-import sinon from 'sinon';
-import mock_fs from 'mock-fs';
-import PortUtil from '../../src/common/utils/port';
-import Build from '../../src/commands/build';
 import { expect } from '@oclif/test';
+import axios from 'axios';
+import mock_fs from 'mock-fs';
+import moxios from 'moxios';
+import sinon from 'sinon';
+import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import PortUtil from '../../src/common/utils/port';
 
-describe('interfaces', () => {
+describe('interfaces spec v1', () => {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
   });
@@ -54,6 +62,7 @@ describe('interfaces', () => {
           },
         },
       },
+      interfaces: {}
     };
 
     mock_fs({
@@ -97,14 +106,14 @@ describe('interfaces', () => {
           image: 'branch:latest',
           interfaces: {},
           environment: {
-            LEAF_PROTOCOL:
-              '${ dependencies.test/leaf.interfaces.main.protocol }',
+            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.main.protocol }',
             LEAF_HOST: '${ dependencies.test/leaf.interfaces.main.host }',
             LEAF_PORT: '${ dependencies.test/leaf.interfaces.main.port }',
             LEAF_URL: '${ dependencies.test/leaf.interfaces.main.url }',
           },
         },
       },
+      interfaces: {}
     };
 
     mock_fs({
@@ -123,15 +132,18 @@ describe('interfaces', () => {
       '/stack/environment.json',
     );
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(3);
-    expect(graph.nodes[0].ref).eq('test/leaf/api:latest');
-    expect(graph.nodes[1].ref).eq('test/leaf/db:latest');
-    expect(graph.nodes[2].ref).eq('test/branch/api:latest');
-    expect(graph.edges).length(2);
+    expect(graph.nodes).length(4);
+    expect(graph.nodes[0].ref).eq('test/branch/api:latest');
+    expect(graph.nodes[1].ref).eq('test/leaf:latest-interfaces');
+    expect(graph.nodes[2].ref).eq('test/leaf/db:latest');
+    expect(graph.nodes[3].ref).eq('test/leaf/api:latest');
+    expect(graph.edges).length(3);
     expect(graph.edges[0].from).eq('test/leaf/api:latest');
     expect(graph.edges[0].to).eq('test/leaf/db:latest');
-    expect(graph.edges[0].from).eq('test/branch/api:latest');
-    expect(graph.edges[0].to).eq('test/leaf/api:latest');
+    expect(graph.edges[1].from).eq('test/leaf:latest-interfaces');
+    expect(graph.edges[1].to).eq('test/leaf/api:latest');
+    expect(graph.edges[2].from).eq('test/branch/api:latest');
+    expect(graph.edges[2].to).eq('test/leaf:latest-interfaces');
   });
 
   it('should expose environment interfaces via a gateway', async () => {
@@ -148,11 +160,11 @@ describe('interfaces', () => {
       '/stack/branch/architect.json': JSON.stringify(branch_component),
       '/stack/environment.json': JSON.stringify({
         interfaces: {
-          public: '${ components.architect/branch.interfaces.main.url }',
+          public: '${ components.test/branch.interfaces.main.url }',
         },
         components: {
-          'architect/branch': 'file:/stack/branch/',
-          'architect/leaf': 'file:/stack/leaf/',
+          'test/branch': 'file:/stack/branch/',
+          'test/leaf': 'file:/stack/leaf/',
         },
       }),
     });
@@ -163,16 +175,23 @@ describe('interfaces', () => {
     );
     const graph = await manager.getGraph();
 
-    // TODO: not entirely sure how to test this, but I would assume the nginx
-    // gateway would have an edge to the test/branch/api
     expect(graph.nodes).length(5);
-    expect(graph.nodes[0].ref).eq('test/leaf/api:latest');
-    expect(graph.nodes[1].ref).eq('test/leaf/db:latest');
-    expect(graph.nodes[2].ref).eq('test/branch/api:latest');
-    expect(graph.edges).length(3);
-    expect(graph.edges[0].from).eq('test/leaf/api:latest');
-    expect(graph.edges[0].to).eq('test/leaf/db:latest');
-    expect(graph.edges[0].from).eq('test/branch/api:latest');
-    expect(graph.edges[0].to).eq('test/leaf/api:latest');
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'test/branch:latest-interfaces',
+      'test/branch/api:latest',
+
+      'test/leaf:latest-interfaces',
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+
+    expect(graph.edges).length(4);
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
+
+      'test/branch/api:latest -> test/leaf:latest-interfaces [main]',
+      'test/branch:latest-interfaces -> test/branch/api:latest [main]',
+    ])
   });
 });

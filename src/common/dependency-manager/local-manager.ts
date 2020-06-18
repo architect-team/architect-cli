@@ -102,7 +102,7 @@ export default class LocalDependencyManager extends DependencyManager {
     }
   }
 
-  async interpolateEnvironment(environment: EnvironmentConfig) {
+  async interpolateEnvironment(environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     // Only include in cli since it will read files off disk
     for (const vault of Object.values(environment.getVaults())) {
       vault.client_token = this.readIfFile(vault.client_token);
@@ -114,7 +114,7 @@ export default class LocalDependencyManager extends DependencyManager {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
     }
-    return super.interpolateEnvironment(environment);
+    return super.interpolateEnvironment(environment, component_map);
   }
 
   toExternalHost(node: DependencyNode, interface_key: string) {

@@ -1,4 +1,4 @@
-import { deserialize, serialize } from 'class-transformer';
+import { deserialize, plainToClass, serialize } from 'class-transformer';
 import { ServiceNode } from '.';
 import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
@@ -18,45 +18,39 @@ import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
   gateway_port!: number;
-  protected __environment!: EnvironmentConfig;
-  protected __interpolated_environment?: EnvironmentConfig;
+  environment!: EnvironmentConfig;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
-  component_map: Dictionary<ComponentConfig>;
+  protected _component_map: Dictionary<ComponentConfig>;
 
   protected constructor() {
     this.__component_config_cache = {};
-    this.component_map = {};
+    this._component_map = {};
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
-    this.__environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
+    this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
-  }
-
-  async getInterpolatedEnvironment(): Promise<EnvironmentConfig> {
-    if (!this.__interpolated_environment) {
-      this.__interpolated_environment = await this.interpolateEnvironment(this.__environment);
-    }
-    return this.__interpolated_environment;
   }
 
   async getGraph(): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
-    await this.loadComponents(graph);
-    await this.interpolateComponents(graph);
+    const component_map = await this.loadComponents(graph);
+    const interpolated_environment = await this.interpolateEnvironment(this.environment, component_map);
+    await this.interpolateComponents(graph, interpolated_environment, component_map);
     return graph;
   }
 
-  async loadComponents(graph: DependencyGraph): Promise<void> {
-    const environment = await this.getInterpolatedEnvironment();
-    const components = Object.values(environment.getComponents());
+  async loadComponents(graph: DependencyGraph): Promise<Dictionary<ComponentConfig>> {
+    const components = Object.values(this.environment.getComponents());
     for (const component of components) {
       await this.loadComponent(graph, component);
     }
+    // TODO: Remove component map and use an aggregator
+    return this._component_map;
   }
 
   async loadComponent(graph: DependencyGraph, component_config: ComponentConfig) {
-    const environment = await this.getInterpolatedEnvironment();
+    const environment = this.environment;
 
     const ref = component_config.getRef();
     if (ref in environment.getComponents()) {
@@ -65,9 +59,10 @@ export default abstract class DependencyManager {
       component_config = component_config.merge(environment.getComponents()[component_config.getName()]);
     }
 
-    const component = await this.loadComponentConfigWrapper(component_config);
-    const load_dependencies = !(component.getRef() in this.component_map); // Detect circular dependencies
-    this.component_map[component.getRef()] = component;
+    const load_component = ComponentConfigBuilder.buildFromJSON({ extends: component_config.getExtends(), name: component_config.getRef() });
+    const component = await this.loadComponentConfigWrapper(load_component);
+    const load_dependencies = !(component.getRef() in this._component_map); // Detect circular dependencies
+    this._component_map[component.getRef()] = component;
 
     // Create interfaces node for component
     if (Object.keys(component.getInterfaces()).length > 0) {
@@ -93,7 +88,7 @@ export default abstract class DependencyManager {
         if (exposed_interfaces_count) {
           const gateway = new GatewayNode();
           graph.addNode(gateway);
-          graph.addEdge(new IngressEdge(gateway.ref, node.ref, ['TODO']));
+          graph.addEdge(new IngressEdge(gateway.ref, node.ref, new Set('TODO')));
         }
       }
       ref_map[service_name] = node.ref;
@@ -122,13 +117,13 @@ export default abstract class DependencyManager {
 
       // Add edges between services inside the component
       const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-      const service_edge_map: Dictionary<string[]> = {};
+      const service_edge_map: Dictionary<Set<string>> = {};
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
         const to = ref_map[service_name];
-        if (!service_edge_map[to]) service_edge_map[to] = [];
-        service_edge_map[to].push(interface_name);
+        if (!service_edge_map[to]) service_edge_map[to] = new Set();
+        service_edge_map[to].add(interface_name);
       }
       for (const [to, interface_names] of Object.entries(service_edge_map)) {
         const edge = new ServiceEdge(from, to, interface_names);
@@ -137,16 +132,16 @@ export default abstract class DependencyManager {
 
       // Add edges between services and dependencies inside the component
       const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-      const dep_edge_map: Dictionary<string[]> = {};
+      const dep_edge_map: Dictionary<Set<string>> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
 
-        const dep_component = this.component_map[`${dep_name}:${dep_tag}`];
+        const dep_component = this._component_map[`${dep_name}:${dep_tag}`];
         const to = dep_component.getInterfacesRef();
 
-        if (!dep_edge_map[to]) dep_edge_map[to] = [];
-        dep_edge_map[to].push(interface_name);
+        if (!dep_edge_map[to]) dep_edge_map[to] = new Set();
+        dep_edge_map[to].add(interface_name);
       }
 
       for (const [to, interface_names] of Object.entries(dep_edge_map)) {
@@ -159,13 +154,13 @@ export default abstract class DependencyManager {
     let interfaces_string = serialize(component.getInterfaces());
     interfaces_string = replaceBrackets(interfaces_string);
     const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-    const service_edge_map: Dictionary<string[]> = {};
+    const service_edge_map: Dictionary<Set<string>> = {};
     let matches;
     while ((matches = services_regex.exec(interfaces_string)) != null) {
       const [_, service_name, interface_name] = matches;
       const to = ref_map[service_name];
-      if (!service_edge_map[to]) service_edge_map[to] = [];
-      service_edge_map[to].push(interface_name);
+      if (!service_edge_map[to]) service_edge_map[to] = new Set();
+      service_edge_map[to].add(interface_name);
     }
     for (const [to, interface_names] of Object.entries(service_edge_map)) {
       const edge = new ServiceEdge(component.getInterfacesRef(), to, interface_names);
@@ -173,7 +168,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  async interpolateEnvironment(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
+  async interpolateVaults(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
     const vault_manager = new VaultManager(environment.getVaults());
 
     let environment_string = serialize(environment);
@@ -189,19 +184,35 @@ export default abstract class DependencyManager {
       res = res.replace(matches[0], escapeJSON(secret));
     }
 
-    environment = deserialize(environment.getClass(), res);
-    const interpolated_environment_string = interpolateString(res, environment.getContext());
+    return deserialize(environment.getClass(), res);
+  }
+
+  async interpolateEnvironment(environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
+    environment = await this.interpolateVaults(environment);
+
+    // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
+    const environment_components: Dictionary<ComponentConfig> = {};
+    for (const [component_name, component] of Object.entries(environment.getComponents())) {
+      environment_components[component_name] = component_map[component.getRef()];
+    }
+    let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
+    enriched_environment = enriched_environment.merge(environment);
+
+    const environment_string = serialize(environment);
+
+    // TODO: Include in interpolation for components so that we don't have to ignore services
+    const interpolated_environment_string = interpolateString(environment_string, enriched_environment.getContext(), ['services.']);
     return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
   }
 
-  async interpolateComponents(graph: DependencyGraph) {
+  async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     function normalizeRef(ref: string) {
       return ref.replace(/\./g, '__arc__');
     }
 
     const components: ComponentConfig[] = [];
     // Prefix interpolation expressions with components.<name>.
-    for (const component of Object.values(this.component_map)) {
+    for (const component of Object.values(component_map)) {
       let component_string = serialize(component);
       component_string = replaceBrackets(component_string);
       component_string = prefixExpressions(component_string, normalizeRef(component.getRef()));
@@ -231,13 +242,15 @@ export default abstract class DependencyManager {
       }
     }
 
-    const full_environment: any = { components: {} };
+    const full_environment_json: any = { components: {} };
     for (const component of components) {
-      full_environment.components[component.getRef()] = component;
+      full_environment_json.components[component.getRef()] = component;
     }
 
-    const interpolated_environment_string = interpolateString(JSON.stringify(full_environment), context);
-    const environment = deserialize(this.__environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
+    const full_environment = plainToClass(this.environment.getClass(), full_environment_json).merge(interpolated_environment);
+
+    const interpolated_environment_string = interpolateString(serialize(full_environment), context);
+    const environment = deserialize(this.environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
     for (const component of Object.values(environment.getComponents())) {
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;

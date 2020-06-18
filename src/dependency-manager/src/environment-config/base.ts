@@ -1,3 +1,5 @@
+import { classToClass, plainToClassFromExist } from 'class-transformer';
+import { ServiceInterfaceSpec } from '..';
 import { ComponentConfig, ParameterDefinitionSpec } from '../component-config/base';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
@@ -21,6 +23,7 @@ export abstract class EnvironmentConfig extends BaseSpec {
   abstract getVaults(): Dictionary<EnvironmentVault>;
   abstract getComponents(): Dictionary<ComponentConfig>;
   abstract getDnsConfig(): DnsConfig;
+  abstract getInterfaces(): Dictionary<ServiceInterfaceSpec>;
   abstract getContext(): any;
 
   getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {
@@ -31,5 +34,13 @@ export abstract class EnvironmentConfig extends BaseSpec {
         return component;
       }
     }
+  }
+
+  copy() {
+    return classToClass(this);
+  }
+
+  merge(other_environment: EnvironmentConfig): EnvironmentConfig {
+    return plainToClassFromExist(this.copy(), other_environment);
   }
 }

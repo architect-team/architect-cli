@@ -28,7 +28,7 @@ interface ServiceContextV1 {
   interfaces: Dictionary<ServiceInterfaceSpec>;
 }
 
-interface ComponentContextV1 {
+export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
   interfaces: Dictionary<ServiceInterfaceSpec>;

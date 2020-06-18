@@ -4,18 +4,18 @@ import { DependencyState } from '../state';
 export default class DependencyEdge {
   from: string;
   to: string;
-  interfaces: string[];
+  interfaces: Set<string>;
 
   @Type(() => DependencyState)
   state?: DependencyState;
 
-  constructor(from: string, to: string, interfaces: string[]) {
+  constructor(from: string, to: string, interfaces: Set<string>) {
     this.from = from;
     this.to = to;
     this.interfaces = interfaces;
   }
 
   get ref() {
-    return `${this.from}.${this.to}.${this.interfaces.join('.')}`;
+    return `${this.from}.${this.to}.${[...this.interfaces].join('.')}`;
   }
 }
