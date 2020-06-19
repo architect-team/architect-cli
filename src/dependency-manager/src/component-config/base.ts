@@ -26,6 +26,10 @@ export abstract class ComponentConfig extends BaseSpec {
     return `${this.getRef()}-interfaces`;
   }
 
+  getNormalizedRef() {
+    return this.getRef().replace(/\./g, '__arc__');
+  }
+
   getComponentVersion() {
     return this.getRef().split(':')[1];
   }

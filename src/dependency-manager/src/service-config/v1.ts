@@ -50,10 +50,12 @@ export class InterfaceSpecV1 extends BaseSpec {
   description?: string;
 
   @IsOptional({ always: true })
+  /* TODO: Figure out if we should share the interface spec
   @IsEmpty({
     groups: ['developer'],
     message: 'Cannot hardcode interface hosts when publishing services',
   })
+  */
   @IsString({ always: true })
   host?: string;
 
