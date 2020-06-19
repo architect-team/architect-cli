@@ -60,10 +60,11 @@ describe('components spec v1', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-      expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
-      expect(graph.edges).length(0);
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/app:latest',
+        'architect/cloud/api:latest',
+      ])
+      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
 
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
@@ -128,10 +129,11 @@ describe('components spec v1', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes).length(2);
-      expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-      expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
-      expect(graph.edges).length(0);
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/app:latest',
+        'architect/cloud/api:latest',
+      ])
+      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
     });
 
     it('local component with edges', async () => {
@@ -178,18 +180,20 @@ describe('components spec v1', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes).length(3);
-      expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-      expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
-      expect(graph.nodes[2].ref).eq('architect/cloud/db:latest')
-      expect(graph.edges).length(2);
-      expect(graph.edges[0].from).eq('architect/cloud/app:latest')
-      expect(graph.edges[0].to).eq('architect/cloud/api:latest')
-      expect(graph.edges[1].from).eq('architect/cloud/api:latest')
-      expect(graph.edges[1].to).eq('architect/cloud/db:latest')
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/app:latest',
+        'architect/cloud/api:latest',
+        'architect/cloud/db:latest'
+      ])
+      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+        'architect/cloud/app:latest -> architect/cloud/api:latest [main]',
+        'architect/cloud/api:latest -> architect/cloud/db:latest [main]'
+      ])
       // Test parameter values
-      expect((graph.nodes[0] as ServiceNode).node_config.getEnvironmentVariables().API_ADDR).eq('http://architect.cloud.api.latest:8080')
-      expect((graph.nodes[1] as ServiceNode).node_config.getEnvironmentVariables().DB_ADDR).eq('http://architect.cloud.db.latest:5432')
+      const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq('http://architect.cloud.api.latest:8080')
+      const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq('http://architect.cloud.db.latest:5432')
 
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
@@ -296,24 +300,24 @@ describe('components spec v1', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes).length(4);
-      expect(graph.nodes[0].ref).eq('architect/cloud/api:latest')
-      expect(graph.nodes[1].ref).eq('concourse/ci:6.2-interfaces')
-      expect(graph.nodes[2].ref).eq('concourse/ci/web:6.2')
-      expect(graph.nodes[3].ref).eq('concourse/ci/worker:6.2')
-      const api_node = graph.nodes[0] as ServiceNode;
-      const worker_node = graph.nodes[3] as ServiceNode;
 
-      expect(graph.edges).length(3);
-      expect(graph.edges[0].from).eq('concourse/ci/worker:6.2')
-      expect(graph.edges[0].to).eq('concourse/ci/web:6.2')
-      expect(graph.edges[1].from).eq('concourse/ci:6.2-interfaces')
-      expect(graph.edges[1].to).eq('concourse/ci/web:6.2')
-      expect(graph.edges[2].from).eq('architect/cloud/api:latest')
-      expect(graph.edges[2].to).eq('concourse/ci:6.2-interfaces')
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/api:latest',
+
+        'concourse/ci:6.2-interfaces',
+        'concourse/ci/web:6.2',
+        'concourse/ci/worker:6.2'
+      ])
+      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+        'concourse/ci/worker:6.2 -> concourse/ci/web:6.2 [main]',
+        'concourse/ci:6.2-interfaces -> concourse/ci/web:6.2 [main]',
+        'architect/cloud/api:latest -> concourse/ci:6.2-interfaces [web]'
+      ])
 
       // Test parameter values
+      const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
       expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('http://concourse.ci.web.6.2:8080')
+      const worker_node = graph.getNodeByRef('concourse/ci/worker:6.2') as ServiceNode;
       expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('concourse.ci.web.6.2')
     });
   });

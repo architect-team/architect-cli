@@ -105,10 +105,11 @@ describe('interpolation spec v1', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(1);
-    expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-    expect(graph.edges).length(0);
-    const app_node = graph.nodes[0] as ServiceNode;
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'architect/cloud/app:latest',
+    ])
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.node_config.getEnvironmentVariables()['AUTH0_SECRET_ID']).eq('worked')
 
     const template = await DockerCompose.generate(manager);

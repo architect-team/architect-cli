@@ -70,10 +70,11 @@ describe('external interfaces spec v1', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(1);
-    expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-    expect(graph.edges).length(0);
-    const app_node = graph.nodes[0] as ServiceNode;
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'architect/cloud/app:latest',
+    ])
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.true;
 
     const template = await DockerCompose.generate(manager);
@@ -131,12 +132,17 @@ describe('external interfaces spec v1', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0].ref).eq('architect/cloud/app:latest')
-    expect(graph.nodes[0].is_external).to.be.false;
-    expect(graph.nodes[1].ref).eq('architect/cloud/api:latest')
-    expect(graph.nodes[1].is_external).to.be.true;
-    expect(graph.edges).length(1);
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'architect/cloud/app:latest',
+      'architect/cloud/api:latest'
+    ])
+    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
+      'architect/cloud/app:latest -> architect/cloud/api:latest [main]'
+    ])
+    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+    expect(app_node.is_external).to.be.false;
+    const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+    expect(api_node.is_external).to.be.true;
 
     const template = await DockerCompose.generate(manager);
     expect(template).to.be.deep.equal({
