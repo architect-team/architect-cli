@@ -120,7 +120,9 @@ describe('interfaces spec v1', () => {
 
   it('should connect services to dependency interfaces', async () => {
     leaf_component.interfaces = {
-      api: '${ services.api.interfaces.main.url }',
+      api: {
+        url: '${ services.api.interfaces.main.url }',
+      }
     };
 
     mock_fs({

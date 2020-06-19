@@ -45,12 +45,13 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
 
   const output: Dictionary<InterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
-    let host, port, protocol, url;
-    if (value instanceof Object) {
-      // TODO: figure out validation rules
+    if (value instanceof Object && 'host' in value && 'port' in value) {
       output[key] = plainToClass(InterfaceSpecV1, value);
     } else {
-      const matches = url_regex.exec(value);
+      let host, port, protocol;
+      let url = value instanceof Object ? value.url : value;
+
+      const matches = url_regex.exec(url);
       if (matches) {
         host = `\${ ${matches[1]}.host }`;
         port = `\${ ${matches[1]}.port }`;
@@ -64,7 +65,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
           url,
         });
       } else {
-        throw new Error(`Invalid interface regex ${value}`);
+        throw new Error(`Invalid interface regex ${JSON.stringify(value)}`);
       }
     }
   }
