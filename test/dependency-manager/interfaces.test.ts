@@ -9,6 +9,7 @@ import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interfaces spec v1', () => {
   beforeEach(async () => {
@@ -86,6 +87,13 @@ describe('interfaces spec v1', () => {
     expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
       'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
     ])
+    const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
+    expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'DB_PROTOCOL=postgres',
+      'DB_HOST=test.leaf.db.latest',
+      'DB_PORT=5432',
+      'DB_URL=postgres://test.leaf.db.latest:5432'
+    ])
   });
 
   it('should connect services to dependency interfaces', async () => {
@@ -94,7 +102,7 @@ describe('interfaces spec v1', () => {
     };
 
     leaf_component.interfaces = {
-      main: '${ services.api.interfaces.main.url }',
+      api: '${ services.api.interfaces.main.url }',
     };
 
     branch_component = {
@@ -107,10 +115,10 @@ describe('interfaces spec v1', () => {
           image: 'branch:latest',
           interfaces: {},
           environment: {
-            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.main.protocol }',
-            LEAF_HOST: '${ dependencies.test/leaf.interfaces.main.host }',
-            LEAF_PORT: '${ dependencies.test/leaf.interfaces.main.port }',
-            LEAF_URL: '${ dependencies.test/leaf.interfaces.main.url }',
+            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.api.protocol }',
+            LEAF_HOST: '${ dependencies.test/leaf.interfaces.api.host }',
+            LEAF_PORT: '${ dependencies.test/leaf.interfaces.api.port }',
+            LEAF_URL: '${ dependencies.test/leaf.interfaces.api.url }',
           },
         },
       },
@@ -144,25 +152,24 @@ describe('interfaces spec v1', () => {
       'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
       'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
 
-      'test/branch/api:latest -> test/leaf:latest-interfaces [main]',
+      'test/branch/api:latest -> test/leaf:latest-interfaces [api]',
+    ])
+    const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+    expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'LEAF_PROTOCOL=http',
+      'LEAF_HOST=test.leaf.api.latest',
+      'LEAF_PORT=8080',
+      'LEAF_URL=http://test.leaf.api.latest:8080'
     ])
   });
 
   it('should expose environment interfaces via a gateway', async () => {
-    branch_component.services.api.interfaces = {
-      main: 8081,
-    };
-
-    branch_component.interfaces = {
-      main: '${ services.api.interfaces.main.url }',
-    };
-
     mock_fs({
       '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       '/stack/branch/architect.json': JSON.stringify(branch_component),
       '/stack/environment.json': JSON.stringify({
         interfaces: {
-          public: '${ components.test/branch.interfaces.main.url }',
+          public: '${ components.test/leaf.interfaces.api.url }',
         },
         components: {
           'test/branch': 'file:/stack/branch/',
@@ -180,7 +187,6 @@ describe('interfaces spec v1', () => {
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
 
-      'test/branch:latest-interfaces',
       'test/branch/api:latest',
 
       'test/leaf:latest-interfaces',
@@ -188,13 +194,19 @@ describe('interfaces spec v1', () => {
       'test/leaf/api:latest'
     ])
     expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-      'gateway -> test/branch:latest-interfaces [main]',
+      'gateway -> test/leaf:latest-interfaces [api]',
 
       'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
       'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
 
-      'test/branch/api:latest -> test/leaf:latest-interfaces [main]',
-      'test/branch:latest-interfaces -> test/branch/api:latest [main]',
+      'test/branch/api:latest -> test/leaf:latest-interfaces [api]',
+    ])
+    const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+    expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'LEAF_PROTOCOL=http',
+      'LEAF_HOST=public.localhost',
+      'LEAF_PORT=80',
+      'LEAF_URL=http://public.localhost:80'
     ])
   });
 });
