@@ -117,27 +117,12 @@ export default class LocalDependencyManager extends DependencyManager {
     return super.interpolateEnvironment(environment, component_map);
   }
 
-  toExternalHost(node: DependencyNode, interface_key: string) {
-    if (node instanceof ServiceNode) {
-      const external_interface = node.node_config.getInterfaces()[interface_key];
-      if (!external_interface) {
-        return '';
-      }
-      return 'TODO';
-      // return external_interface?.subdomain ? `${external_interface.subdomain}.localhost` : '';
-    } else {
-      return '';
-    }
+  toExternalHost() {
+    return 'localhost';
   }
 
-  toExternalProtocol(node: DependencyNode, interface_key: string) {
-    if (node instanceof ServiceNode) {
-      const host = this.toExternalHost(node, interface_key);
-      if (host) {
-        return 'http';
-      }
-    }
-    return '';
+  toExternalProtocol() {
+    return 'http';
   }
 
   toInternalHost(node: DependencyNode) {

@@ -12,6 +12,9 @@ import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interfaces spec v1', () => {
+  let leaf_component = {} as any,
+    branch_component = {} as any;
+
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
@@ -26,20 +29,7 @@ describe('interfaces spec v1', () => {
     })
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
-  });
 
-  afterEach(function () {
-    // Restore stubs
-    sinon.restore();
-    // Restore fs
-    mock_fs.restore();
-    moxios.uninstall();
-  });
-
-  let leaf_component = {} as any,
-    branch_component = {} as any;
-
-  it('should connect two services together', async () => {
     leaf_component = {
       name: 'test/leaf',
       services: {
@@ -54,7 +44,9 @@ describe('interfaces spec v1', () => {
         },
         api: {
           image: 'api:latest',
-          interfaces: {},
+          interfaces: {
+            main: 8080
+          },
           environment: {
             DB_PROTOCOL: '${ services.db.interfaces.postgres.protocol }',
             DB_HOST: '${ services.db.interfaces.postgres.host }',
@@ -66,6 +58,36 @@ describe('interfaces spec v1', () => {
       interfaces: {}
     };
 
+    branch_component = {
+      name: 'test/branch',
+      dependencies: {
+        'test/leaf': 'latest',
+      },
+      services: {
+        api: {
+          image: 'branch:latest',
+          interfaces: {},
+          environment: {
+            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.api.protocol }',
+            LEAF_HOST: '${ dependencies.test/leaf.interfaces.api.host }',
+            LEAF_PORT: '${ dependencies.test/leaf.interfaces.api.port }',
+            LEAF_URL: '${ dependencies.test/leaf.interfaces.api.url }',
+          },
+        },
+      },
+      interfaces: {}
+    };
+  });
+
+  afterEach(function () {
+    // Restore stubs
+    sinon.restore();
+    // Restore fs
+    mock_fs.restore();
+    moxios.uninstall();
+  });
+
+  it('should connect two services together', async () => {
     mock_fs({
       '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       '/stack/environment.json': JSON.stringify({
@@ -97,32 +119,8 @@ describe('interfaces spec v1', () => {
   });
 
   it('should connect services to dependency interfaces', async () => {
-    leaf_component.services.api.interfaces = {
-      main: 8080,
-    };
-
     leaf_component.interfaces = {
       api: '${ services.api.interfaces.main.url }',
-    };
-
-    branch_component = {
-      name: 'test/branch',
-      dependencies: {
-        'test/leaf': 'latest',
-      },
-      services: {
-        api: {
-          image: 'branch:latest',
-          interfaces: {},
-          environment: {
-            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.api.protocol }',
-            LEAF_HOST: '${ dependencies.test/leaf.interfaces.api.host }',
-            LEAF_PORT: '${ dependencies.test/leaf.interfaces.api.port }',
-            LEAF_URL: '${ dependencies.test/leaf.interfaces.api.url }',
-          },
-        },
-      },
-      interfaces: {}
     };
 
     mock_fs({
@@ -164,6 +162,10 @@ describe('interfaces spec v1', () => {
   });
 
   it('should expose environment interfaces via a gateway', async () => {
+    leaf_component.interfaces = {
+      api: '${ services.api.interfaces.main.url }',
+    };
+
     mock_fs({
       '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       '/stack/branch/architect.json': JSON.stringify(branch_component),

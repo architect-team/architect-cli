@@ -50,7 +50,12 @@ export default abstract class DependencyManager {
     let matches;
     while ((matches = components_regex.exec(interfaces_string)) != null) {
       const [_, component_name, interface_name] = matches;
-      const to = this.environment.getComponents()[component_name].getInterfacesRef();
+      const component = this.environment.getComponents()[component_name];
+      if (!component) continue;
+
+      const to = component.getInterfacesRef();
+      if (!graph.nodes_map.has(to)) continue;
+
       if (!component_edge_map[to]) component_edge_map[to] = new Set();
       component_edge_map[to].add(interface_name);
     }
@@ -80,8 +85,7 @@ export default abstract class DependencyManager {
       component_config = component_config.merge(environment.getComponents()[component_config.getName()]);
     }
 
-    const load_component = ComponentConfigBuilder.buildFromJSON({ extends: component_config.getExtends(), name: component_config.getRef() });
-    const component = await this.loadComponentConfigWrapper(load_component);
+    const component = await this.loadComponentConfigWrapper(component_config);
     const load_dependencies = !(component.getRef() in this._component_map); // Detect circular dependencies
     this._component_map[component.getRef()] = component;
 
@@ -152,6 +156,7 @@ export default abstract class DependencyManager {
 
         const dep_component = this._component_map[`${dep_name}:${dep_tag}`];
         const to = dep_component.getInterfacesRef();
+        if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = new Set();
         dep_edge_map[to].add(interface_name);
@@ -211,10 +216,33 @@ export default abstract class DependencyManager {
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
 
-    const environment_string = serialize(environment);
+    // Inject external host/port/protocol for exposed interfaces
+    // TODO: Consolidate with addIngressEdges
+    for (const [env_interface, component_interface] of Object.entries(environment.getInterfaces())) {
+      const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const matches = components_regex.exec(component_interface.url!);
+      if (!matches) continue;
+
+      const [_, component_name, interface_name] = matches;
+      const component = environment.getComponents()[component_name];
+      if (!component) continue;
+
+      if (!component.getInterfaces()[interface_name]) {
+        component.getInterfaces()[interface_name] = {};
+      }
+      const inter = component.getInterfaces()[interface_name];
+
+      inter.host = `${env_interface}.${this.toExternalHost()}`;
+      inter.port = this.gateway_port.toString();
+      inter.protocol = this.toExternalProtocol();
+      inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+    }
 
     // TODO: Include in interpolation for components so that we don't have to ignore services
-    const interpolated_environment_string = interpolateString(environment_string, enriched_environment.getContext(), ['services.']);
+    const interpolated_environment_string = interpolateString(serialize(environment), enriched_environment.getContext(), ['services.']);
+
     return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
   }
 
@@ -256,13 +284,19 @@ export default abstract class DependencyManager {
       let component_string = serialize(component);
       component_string = replaceBrackets(component_string);
       component_string = prefixExpressions(component_string, component.getNormalizedRef());
-      prefixed_component_map[component.getRef()] = deserialize(component.getClass(), component_string);
+
+      let prefixed_component = deserialize(component.getClass(), component_string);
+      const environment_component = interpolated_environment.getComponents()[component.getRef()] || interpolated_environment.getComponents()[component.getName()];
+      if (environment_component) {
+        prefixed_component = prefixed_component.merge(environment_component);
+      }
+      prefixed_component_map[component.getRef()] = prefixed_component;
     }
 
     const context = this.buildComponentsContext(graph, prefixed_component_map);
 
     const full_environment_json: any = { components: prefixed_component_map };
-    const full_environment = plainToClass(this.environment.getClass(), full_environment_json).merge(interpolated_environment);
+    const full_environment = plainToClass(this.environment.getClass(), full_environment_json);
 
     const interpolated_environment_string = interpolateString(serialize(full_environment), context);
     const environment = deserialize(this.environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
@@ -278,40 +312,31 @@ export default abstract class DependencyManager {
     return service_config.copy();
   }
 
-  protected abstract toExternalProtocol(node: DependencyNode, interface_key: string): string;
-  protected abstract toExternalHost(node: DependencyNode, interface_key: string): string;
+  protected abstract toExternalProtocol(): string;
+  protected abstract toExternalHost(): string;
   protected abstract toInternalHost(node: DependencyNode): string;
   protected toInternalPort(node: DependencyNode, interface_name: string): string {
     return node.interfaces[interface_name].port;
   }
 
   private mapToInterfaceContext(graph: DependencyGraph, node: ServiceNode, interface_name: string): ServiceInterfaceSpec {
-    const gateway_node = graph.nodes.find((node) => (node instanceof GatewayNode));
-    const gateway_port = gateway_node ? this.gateway_port : undefined;
     const interface_details = node.interfaces[interface_name];
 
-    let external_host: string, internal_host: string, external_port: string | undefined, internal_port: string, external_protocol: string | undefined, internal_protocol: string;
+    let internal_host: string, internal_port: string, internal_protocol: string;
     if (node.is_external) {
       if (!interface_details.host) {
         throw new Error('External node needs to override the host');
       }
-      external_host = interface_details.host;
       internal_host = interface_details.host;
-      external_port = interface_details.port;
       internal_port = interface_details.port;
-      external_protocol = 'https';
       internal_protocol = 'https';
     } else {
-      external_host = this.toExternalHost(node, interface_name);
       internal_host = this.toInternalHost(node);
-      external_port = `${gateway_port}`;
       internal_port = this.toInternalPort(node, interface_name);
-      external_protocol = this.toExternalProtocol(node, interface_name);
       internal_protocol = interface_details.protocol || 'http';
     }
 
     const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
-    const external_url = external_host ? (external_protocol + '://' + external_host + ':' + external_port) : '';
 
     return {
       host: internal_host,

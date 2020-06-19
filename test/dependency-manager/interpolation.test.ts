@@ -9,7 +9,7 @@ import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('interpolation', () => {
+describe('interpolation spec v1', () => {
   beforeEach(() => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
@@ -53,7 +53,8 @@ describe('interpolation', () => {
             DOUBLE_QUOTE: '${ parameters.double_quote }',
           }
         }
-      }
+      },
+      interfaces: {}
     };
 
     const env_config = {

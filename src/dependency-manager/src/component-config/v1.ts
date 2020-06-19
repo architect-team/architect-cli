@@ -149,7 +149,10 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getInterfaces() {
-    return this.interfaces || {};
+    if (!this.interfaces) {
+      this.interfaces = {};
+    }
+    return this.interfaces;
   }
 
   getContext(): ComponentContextV1 {

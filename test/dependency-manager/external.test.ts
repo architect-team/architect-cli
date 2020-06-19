@@ -9,7 +9,7 @@ import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('external interfaces', () => {
+describe('external interfaces spec v1', () => {
   beforeEach(() => {
     moxios.install();
     moxios.wait(function () {
@@ -41,7 +41,8 @@ describe('external interfaces', () => {
             main: 8080
           }
         }
-      }
+      },
+      interfaces: {}
     };
 
     const env_config = {
@@ -101,7 +102,8 @@ describe('external interfaces', () => {
             main: 8080
           }
         }
-      }
+      },
+      interfaces: {}
     };
 
     const env_config = {
