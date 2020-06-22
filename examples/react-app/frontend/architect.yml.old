@@ -7,7 +7,7 @@ interfaces:
 dependencies:
   examples/react-app-backend: latest
 environment:
-  API_ADDR: ${ dependencies['examples/react-app-backend'].interfaces.main.external.url }
+  API_ADDR: ${ dependencies['examples/react-app-backend'].interfaces.main.url }
   WORLD_TEXT: ${ parameters.WORLD_TEXT }
 parameters:
   WORLD_TEXT:

@@ -43,15 +43,12 @@ export default abstract class DependencyManager {
 
   // Add edges between gateway and component interfaces nodes
   addIngressEdges(graph: DependencyGraph): void {
-    let interfaces_string = serialize(this.environment.getInterfaces());
-    interfaces_string = replaceBrackets(interfaces_string);
-
     const component_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
       const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = components_regex.exec(component_interface.url!);
+      const matches = components_regex.exec(replaceBrackets(component_interface.url!));
       if (!matches) continue;
 
       const [_, component_name, interface_name] = matches;
@@ -145,6 +142,7 @@ export default abstract class DependencyManager {
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
         const to = ref_map[service_name];
+        if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to]['service'] = interface_name;
       }

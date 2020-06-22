@@ -25,6 +25,7 @@ export class ParameterDefinitionSpecV1 extends BaseSpec {
 export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;
 
 interface ServiceContextV1 {
+  environment: Dictionary<string>;
   interfaces: Dictionary<ServiceInterfaceSpec>;
 }
 
@@ -41,8 +42,6 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
   }
 
   // TODO: Be more flexible than just url ref
-  const url_regex = new RegExp(`\\\${\\s*(.*?)\\.url\\s*}`, 'g');
-
   const output: Dictionary<InterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value instanceof Object && 'host' in value && 'port' in value) {
@@ -51,6 +50,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
       let host, port, protocol;
       let url = value instanceof Object ? value.url : value;
 
+      const url_regex = new RegExp(`\\\${\\s*(.*?)\\.url\\s*}`, 'g');
       const matches = url_regex.exec(url);
       if (matches) {
         host = `\${ ${matches[1]}.host }`;
@@ -65,7 +65,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
           url,
         });
       } else {
-        throw new Error(`Invalid interface regex ${JSON.stringify(value)}`);
+        throw new Error(`Invalid interface regex: ${url}`);
       }
     }
   }
@@ -193,6 +193,7 @@ export class ComponentConfigV1 extends ComponentConfig {
       }
       services[sk] = {
         interfaces,
+        environment: sv.getEnvironmentVariables(),
       };
     }
 

@@ -400,7 +400,7 @@ export const ARC_API_CONFIG = {
     },
     "DEFAULT_INTERNAL_REGISTRY_HOST": "${ dependencies['architect/registry-proxy'].interfaces.main.host }:${ dependencies['architect/registry-proxy'].interfaces.main.port }",
     "DEFAULT_INSECURE_REGISTRY_HOST": "${ dependencies['architect/registry'].interfaces.main.host }:${ dependencies['architect/registry'].interfaces.main.port }",
-    "DEFAULT_CONCOURSE_HOST": "${ dependencies['concourse/web'].interfaces.main.internal.url }",
+    "DEFAULT_CONCOURSE_HOST": "${ dependencies['concourse/web'].interfaces.main.url }",
     "ENABLE_SCHEDULE": {
       "description": "Enable scheduled jobs",
       "default": false
@@ -558,7 +558,7 @@ export const CONCOURSE_WORKER_CONFIG = {
     "CONCOURSE_GARDEN_LOG_LEVEL": {
       "default": "debug"
     },
-    "CONCOURSE_TSA_HOST": "${ dependencies['concourse/web'].interfaces.main.internal.host }:2222",
+    "CONCOURSE_TSA_HOST": "${ dependencies['concourse/web'].interfaces.main.host }:2222",
     "CONCOURSE_BAGGAGECLAIM_DRIVER": {
       "default": "overlay"
     },
@@ -610,7 +610,7 @@ const ARC_CLOUD_CONFIG = {
       "description": "Write key for source on segment.com",
       "default": ""
     },
-    "CLOUD_API_BASE_URL": "http://${ dependencies['architect/cloud-api'].interfaces.main.internal.host }:${ dependencies['architect/cloud-api'].interfaces.main.internal.port }"
+    "CLOUD_API_BASE_URL": "http://${ dependencies['architect/cloud-api'].interfaces.main.host }:${ dependencies['architect/cloud-api'].interfaces.main.port }"
   },
   "debug": {
     "command": "npm run dev",
