@@ -80,10 +80,18 @@ describe('interpolation spec v1', () => {
       }
     };
 
+    const public_env_config = {
+      ...env_config,
+      interfaces: {
+        public: '${ components.concourse/web:latest.interfaces.main.url }'
+      }
+    }
+
     mock_fs({
       '/stack/web.json': JSON.stringify(web_component_config),
       '/stack/worker.json': JSON.stringify(worker_component_config),
       '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/public.arc.env.json': JSON.stringify(public_env_config),
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
@@ -119,6 +127,41 @@ describe('interpolation spec v1', () => {
       },
       'version': '3',
       'volumes': {},
+    })
+
+    const public_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/public.arc.env.json');
+    const public_graph = await public_manager.getGraph();
+    expect(public_graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
+      'concourse/web:latest-interfaces',
+      'concourse/web/web:latest',
+      'concourse/worker/worker:latest'
+    ])
+    expect(public_graph.edges.map((e) => e.toString())).has.members([
+      'gateway [public] -> concourse/web:latest-interfaces [main]',
+      'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]',
+    ])
+
+    const public_template = await DockerCompose.generate(public_manager);
+    expect(public_template.services['concourse.web.web.latest']).to.be.deep.equal({
+      'depends_on': ['gateway'],
+      'environment': {
+        'VIRTUAL_HOST': 'public.localhost',
+        'VIRTUAL_PORT': '50001'
+      },
+      'ports': [
+        '50001:8080'
+      ],
+      'restart': 'always'
+    })
+    expect(public_template.services['concourse.worker.worker.latest']).to.be.deep.equal({
+      'depends_on': [],
+      'environment': {
+        'REGULAR': 'public.localhost:2222',
+        'SINGLE_QUOTE': 'public.localhost:2222',
+        'DOUBLE_QUOTE': 'public.localhost:2222',
+      },
+      'ports': []
     })
   });
 

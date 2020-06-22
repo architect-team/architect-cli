@@ -151,8 +151,10 @@ export class ComponentConfigBuilder {
     }
 
     const interfaces: Dictionary<string> = {};
-    for (const ik of Object.keys(config.interfaces)) {
-      interfaces[ik] = `\${ services.service.interfaces.${ik}.url }`;
+    for (const [ik, iv] of Object.entries(config.interfaces) as any) {
+      if (iv instanceof Object ? iv.port : iv) {
+        interfaces[ik] = `\${ services.service.interfaces.${ik}.url }`;
+      }
     }
 
     // Finally set service to services block

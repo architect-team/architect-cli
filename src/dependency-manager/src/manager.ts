@@ -10,7 +10,7 @@ import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
-import { ServiceConfig, ServiceInterfaceSpec } from './service-config/base';
+import { ServiceInterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { escapeJSON, interpolateString, prefixExpressions, replaceBrackets } from './utils/interpolation';
 import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_WITH_TAG_REGEX } from './utils/validation';
@@ -101,8 +101,8 @@ export default abstract class DependencyManager {
     const ref_map: Dictionary<string> = {};
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
-      const node_config = this.getNodeConfig(service_config);
-
+      // TODO: Kill service_config on node?
+      const node_config = service_config.copy();
       const node = new ServiceNode({
         ref: component.getServiceRef(node_config.getName()),
         service_config,
@@ -310,10 +310,6 @@ export default abstract class DependencyManager {
         node.node_config = service;
       }
     }
-  }
-
-  getNodeConfig(service_config: ServiceConfig) {
-    return service_config.copy();
   }
 
   protected abstract toExternalProtocol(): string;

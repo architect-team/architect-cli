@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceConfig, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceNode } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import DependencyGraph from '../../dependency-manager/src/graph';
@@ -130,13 +130,17 @@ export default class LocalDependencyManager extends DependencyManager {
     return node.normalized_ref;
   }
 
-  getNodeConfig(service_config: ServiceConfig) {
-    let node_config = super.getNodeConfig(service_config);
-    // If debug is enabled merge in debug options ex. debug.command -> command
-    const debug_options = node_config.getDebugOptions();
-    if (debug_options) {
-      node_config = node_config.merge(debug_options);
+  async loadComponents(graph: DependencyGraph) {
+    const components_map = await super.loadComponents(graph);
+    for (const component of Object.values(components_map)) {
+      for (const [sk, sv] of Object.entries(component.getServices())) {
+        // If debug is enabled merge in debug options ex. debug.command -> command
+        const debug_options = sv.getDebugOptions();
+        if (debug_options) {
+          component.getServices()[sk] = sv.merge(debug_options);
+        }
+      }
     }
-    return node_config;
+    return components_map;
   }
 }

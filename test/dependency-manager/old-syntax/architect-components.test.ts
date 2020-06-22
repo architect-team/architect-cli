@@ -42,8 +42,45 @@ describe('old architect components', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(9);
-    expect(graph.edges).length(5);
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
+
+      'architect/registry:latest-interfaces',
+      'architect/registry/service:latest',
+
+      'architect/registry-proxy:latest-interfaces',
+      'architect/registry-proxy/service:latest',
+
+      'architect/cloud-api:latest-interfaces',
+      'architect/cloud-api/datastore-primary:latest',
+      'architect/cloud-api/service:latest',
+
+      'concourse/web:latest-interfaces',
+      'concourse/web/datastore-primary:latest',
+      'concourse/web/service:latest',
+
+      'concourse/worker/service:latest',
+
+      'architect/cloud:latest-interfaces',
+      'architect/cloud/service:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'architect/registry:latest-interfaces [main] -> architect/registry/service:latest [main]',
+
+      'architect/registry-proxy:latest-interfaces [main] -> architect/registry-proxy/service:latest [main]',
+
+      'concourse/web/service:latest [service] -> concourse/web/datastore-primary:latest [main]',
+      'concourse/web:latest-interfaces [main] -> concourse/web/service:latest [main]',
+
+      'architect/cloud-api/service:latest [service] -> architect/cloud-api/datastore-primary:latest [main]',
+      'architect/cloud-api:latest-interfaces [main] -> architect/cloud-api/service:latest [main]',
+
+      'architect/cloud:latest-interfaces [main] -> architect/cloud/service:latest [main]',
+
+      'gateway [api] -> architect/cloud-api:latest-interfaces [main]',
+      'gateway [app] -> architect/cloud:latest-interfaces [main]',
+      'gateway [ci] -> concourse/web:latest-interfaces [main]',
+    ])
 
     const template = await DockerCompose.generate(manager);
 
@@ -109,7 +146,7 @@ describe('old architect components', () => {
         "DB_NAME": "architect_cloud_api",
         "DEFAULT_INTERNAL_REGISTRY_HOST": "architect.registry-proxy.service.latest:8080",
         "DEFAULT_INSECURE_REGISTRY_HOST": "architect.registry.service.latest:8080",
-        "DEFAULT_CONCOURSE_HOST": "http://concourse.web.service.latest:8080",
+        "DEFAULT_CONCOURSE_HOST": "http://ci.localhost:80",
         "ENABLE_SCHEDULE": "false",
         "SEGMENT_WRITE_KEY": "test",
         "HOST": "architect.cloud-api.service.latest",
@@ -136,7 +173,7 @@ describe('old architect components', () => {
     });
 
     expect(template.services['gateway']).to.be.deep.equal({
-      "image": "registry.architect.io/architect-nginx/proxy:latest",
+      "image": "jwilder/nginx-proxy:latest",
       "restart": "always",
       "ports": [
         "80:80"
@@ -145,9 +182,13 @@ describe('old architect components', () => {
         "/var/run/docker.sock:/tmp/docker.sock:ro"
       ],
       "depends_on": [],
+      "logging": {
+        "driver": "none"
+      },
       "environment": {
         "HTTPS_METHOD": "noredirect",
-        "DISABLE_ACCESS_LOGS": "true"
+        "DISABLE_ACCESS_LOGS": "true",
+        "HTTP_PORT": 80
       }
     });
 
@@ -162,7 +203,7 @@ describe('old architect components', () => {
         "ENVIRONMENT": "local",
         "NODE_ENV": "production",
         "SEGMENT_WRITE_KEY": "test",
-        "CLOUD_API_BASE_URL": "http://architect.cloud-api.service.latest:8080",
+        "CLOUD_API_BASE_URL": "http://api.localhost:80",
         "HOST": "architect.cloud.service.latest",
         "PORT": "8080",
         "VIRTUAL_HOST": "app.localhost",
@@ -232,12 +273,10 @@ describe('old architect components', () => {
         "CONCOURSE_LOG_LEVEL": "error",
         "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",
         "CONCOURSE_GARDEN_LOG_LEVEL": "error",
-        "CONCOURSE_TSA_HOST": "concourse.web.service.latest:2222",
+        "CONCOURSE_TSA_HOST": "ci.localhost:2222",
         "CONCOURSE_BAGGAGECLAIM_DRIVER": "overlay",
         "CONCOURSE_BIND_IP": "0.0.0.0",
         "CONCOURSE_BAGGAGECLAIM_BIND_IP": "0.0.0.0",
-        "HOST": "concourse.worker.service.latest",
-        "PORT": undefined
       },
       "image": "concourse/concourse:6.1.0",
       "command": [
