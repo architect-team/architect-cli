@@ -34,14 +34,20 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (node instanceof GatewayNode) {
       compose.services[node.normalized_ref] = {
-        image: 'registry.architect.io/architect-nginx/proxy:latest',
+        image: 'jwilder/nginx-proxy:latest',
         restart: 'always',
-        ports: [`${dependency_manager.gateway_port}:${node.ports[0]}`],
-        volumes: ['/var/run/docker.sock:/tmp/docker.sock:ro'],
+        ports: [`${dependency_manager.gateway_port}:${dependency_manager.gateway_port}`],
+        volumes: [
+          '/var/run/docker.sock:/tmp/docker.sock:ro',
+        ],
         depends_on: [],
         environment: {
           HTTPS_METHOD: 'noredirect',
           DISABLE_ACCESS_LOGS: 'true',
+          HTTP_PORT: dependency_manager.gateway_port,
+        },
+        logging: {
+          driver: 'none',
         },
       };
     }

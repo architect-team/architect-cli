@@ -171,7 +171,7 @@ export default class Deploy extends Command {
     });
   }
 
-  private async runRemote() {
+  protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
     if (!args.environment_config) {
