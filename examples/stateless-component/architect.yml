@@ -1,0 +1,33 @@
+name: examples/stateless-component
+# description: |
+#   Component built from Architect's stateless component guide (https://architect.io/docs/guides/stateless-component)
+# keywords:
+#   - architect-examples
+#   - stateless
+
+parameters:
+  LOG_LEVEL:
+    default: debug
+    description: |
+      Applied as an environment variable to each service in the component (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
+  PORT:
+    default: 8080
+    description: Port to listen for traffic on
+
+dependencies:
+  examples/echo: latest
+
+services:
+  stateless-app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    interfaces:
+      http: ${ parameters.PORT }
+    environment:
+      PORT: ${ parameters.PORT }
+      LOG_LEVEL: ${ parameters.LOG_LEVEL }
+      ECHO_ADDR: ${ dependencies['examples/echo'].interfaces.echo.url }
+
+interfaces:
+  frontend: ${ services.stateless-app.interfaces.http.url }
