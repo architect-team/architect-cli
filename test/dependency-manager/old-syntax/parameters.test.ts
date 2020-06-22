@@ -110,15 +110,8 @@ describe('old parameters', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    const cloud_db_node = graph.nodes[0] as ServiceNode;
-    expect(cloud_db_node.ref).eq('architect/cloud/datastore-primary:v1')
-    const frontend_node = graph.nodes[1] as ServiceNode;
-    expect(frontend_node.ref).eq('architect/cloud/service:v1')
-    const backend_db_node = graph.nodes[2] as ServiceNode;
-    expect(backend_db_node.ref).eq('architect/cloud-api/datastore-primary:v1')
-    const backend_node = graph.nodes[3] as ServiceNode;
-    expect(backend_node.ref).eq('architect/cloud-api/service:v1')
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM']);
+    const frontend_node = graph.getNodeByRef('architect/cloud/service:v1') as ServiceNode
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', 'HOST', 'PORT']);
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
     expect(frontend_node.node_config.getEnvironmentVariables()['DB_USER']).eq('root');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');

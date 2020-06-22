@@ -152,6 +152,9 @@ export class ComponentConfigBuilder {
 
     const interfaces: Dictionary<string> = {};
     for (const [ik, iv] of Object.entries(config.interfaces) as any) {
+      if (iv instanceof Object && iv.host) {
+        continue;
+      }
       if (iv instanceof Object ? iv.port : iv) {
         interfaces[ik] = `\${ services.service.interfaces.${ik}.url }`;
       }
@@ -203,10 +206,7 @@ export class ComponentConfigBuilder {
             const lower_match = match.substr(1).toLowerCase();
             let suffix;
             if (lower_match.includes('host') || lower_match.includes('port') || lower_match === 'url') {
-              suffix = `interfaces.${value.interface || 'main'}.${lower_match.replace('_', '.')}`;
-              if (!prefix) {
-                suffix = `services.service.${suffix}`;
-              }
+              suffix = `interfaces.${value.interface || 'main'}.${lower_match.replace('internal_', '').replace('external_', '')}`;
               interpolated = interpolated.replace(match, `\${ ${prefix}${suffix} }`);
             } else if (value.datastore) {
               const datastore_parameter = datastores[value.datastore].parameters[match.substr(1)];

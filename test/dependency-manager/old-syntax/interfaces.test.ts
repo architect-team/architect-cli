@@ -118,10 +118,19 @@ describe('old interfaces', function () {
             }
           }
         },
+        "API_URL": {
+          "default": {
+            "valueFrom": {
+              "dependency": "architect/backend",
+              "interface": "main",
+              "value": "$URL"
+            }
+          }
+        },
         "SECONDARY_HOST": {
           "default": {
             "valueFrom": {
-              "interface": "secondary",
+              "interface": "secondary_internal",
               "value": "$HOST"
             }
           }
@@ -141,7 +150,8 @@ describe('old interfaces', function () {
         },
         "secondary": {
           "port": 8083
-        }
+        },
+        "secondary_internal": 8083
       }
     };
 
@@ -285,11 +295,11 @@ describe('old interfaces', function () {
     expect(backend_node!.service_config.getInterfaces().main.port).eq('8080');
     expect(backend_node!.service_config.getInterfaces().secondary.port).eq('8081');
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main/service:latest') as ServiceNode;
+    const frontend_main_node = graph.getNodeByRef('architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;
     expect(frontend_main_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${backend_node.normalized_ref}:8080`);
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary/service:latest') as ServiceNode;
+    const frontend_secondary_node = graph.getNodeByRef('architect/frontend-secondary/service:latest') as ServiceNode;
     expect(frontend_secondary_node.is_local).true;
     expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${backend_node.normalized_ref}:8081`);
   });
@@ -298,15 +308,16 @@ describe('old interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json')
     const graph = await manager.getGraph();
 
-    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend/service:latest') as ServiceNode;
+    const backend_node = graph.getNodeByRef('architect/backend/service:latest') as ServiceNode;
     expect(backend_node.interfaces!.main.port).eq('8080');
     expect(backend_node.interfaces!.secondary.port).eq('8081');
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main/service:latest') as ServiceNode;
+    const frontend_main_node = graph.getNodeByRef('architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;
     expect(frontend_main_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`main.host:8080`);
+    expect(frontend_main_node!.node_config.getEnvironmentVariables().API_URL).eq(`https://main.host:8080`);
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary/service:latest') as ServiceNode;
+    const frontend_secondary_node = graph.getNodeByRef('architect/frontend-secondary/service:latest') as ServiceNode;
     expect(frontend_secondary_node.is_local).true;
     expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`secondary.host:8081`);
   });
@@ -314,7 +325,7 @@ describe('old interfaces', function () {
   it('generates correct compose port mappings for service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50003:8080', '50004:8081']);
+    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50004:8080', '50005:8081']);
     expect(compose.services['architect.frontend-main.service.latest'].ports).to.include.members(['50000:8082']);
     expect(compose.services['architect.frontend-secondary.service.latest'].ports).eql([]);
   });

@@ -147,19 +147,14 @@ describe('old validation (v1 spec)', () => {
     });
 
     it('should reject services being published without an account namespace', async () => {
-      const parsedSpec = ComponentConfigBuilder.buildFromJSON({
+      const parsedSpec = ComponentConfigBuilder.buildFromJSONCompat({
         name: 'test',
-        services: {
-          api: {
-            interfaces: {}
-          }
-        }
       });
       const errors = await parsedSpec.validate({
         groups: ['developer'],
       });
       const flattened_errors = flattenValidationErrors(errors);
-      expect(flattened_errors).to.have.key('name');
+      expect(Object.keys(flattened_errors)).to.include('name');
       expect(flattened_errors['name']).to.include({
         matches: 'Names must be prefixed with an account name (e.g. architect/component-name)',
       });

@@ -116,7 +116,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   })
   dependencies?: Dictionary<string>;
 
-  @Transform(transformInterfaces)
+  @Transform(transformInterfaces, { toClassOnly: true })
   @IsOptional({ groups: ['operator', 'debug'] })
   @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
   interfaces?: Dictionary<InterfaceSpecV1>;
