@@ -107,8 +107,8 @@ describe('interfaces spec v1', () => {
       'test/leaf/db:latest',
       'test/leaf/api:latest'
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
     ])
     const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
     expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -149,11 +149,11 @@ describe('interfaces spec v1', () => {
       'test/leaf/db:latest',
       'test/leaf/api:latest'
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
-      'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-      'test/branch/api:latest -> test/leaf:latest-interfaces [api]',
+      'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
     ])
     const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
     expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -198,13 +198,13 @@ describe('interfaces spec v1', () => {
       'test/leaf/db:latest',
       'test/leaf/api:latest'
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-      'gateway -> test/leaf:latest-interfaces [api]',
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'gateway [public] -> test/leaf:latest-interfaces [api]',
 
-      'test/leaf/api:latest -> test/leaf/db:latest [postgres]',
-      'test/leaf:latest-interfaces -> test/leaf/api:latest [main]',
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-      'test/branch/api:latest -> test/leaf:latest-interfaces [api]',
+      'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
     ])
     const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
     expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -242,15 +242,18 @@ describe('interfaces spec v1', () => {
     });
 
     expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
-      depends_on: ['test.leaf.db.latest'],
+      depends_on: ['test.leaf.db.latest', 'gateway'],
       environment: {
         DB_HOST: 'test.leaf.db.latest',
         DB_PORT: '5432',
         DB_PROTOCOL: 'postgres',
-        DB_URL: 'postgres://test.leaf.db.latest:5432'
+        DB_URL: 'postgres://test.leaf.db.latest:5432',
+        VIRTUAL_HOST: 'public.localhost',
+        VIRTUAL_PORT: '50001'
       },
       image: 'api:latest',
-      ports: ['50001:8080']
+      ports: ['50001:8080'],
+      restart: 'always'
     });
   });
 });

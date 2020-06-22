@@ -73,7 +73,7 @@ describe('external interfaces spec v1', () => {
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+    expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.true;
 
@@ -136,8 +136,8 @@ describe('external interfaces spec v1', () => {
       'architect/cloud/app:latest',
       'architect/cloud/api:latest'
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-      'architect/cloud/app:latest -> architect/cloud/api:latest [main]'
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]'
     ])
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.false;

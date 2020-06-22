@@ -6,6 +6,7 @@ import untildify from 'untildify';
 import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceConfig, ServiceNode } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
+import DependencyGraph from '../../dependency-manager/src/graph';
 import { ServiceConfigV1 } from '../../dependency-manager/src/service-config/v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
@@ -102,7 +103,7 @@ export default class LocalDependencyManager extends DependencyManager {
     }
   }
 
-  async interpolateEnvironment(environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
+  async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     // Only include in cli since it will read files off disk
     for (const vault of Object.values(environment.getVaults())) {
       vault.client_token = this.readIfFile(vault.client_token);
@@ -114,7 +115,7 @@ export default class LocalDependencyManager extends DependencyManager {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
     }
-    return super.interpolateEnvironment(environment, component_map);
+    return super.interpolateEnvironment(graph, environment, component_map);
   }
 
   toExternalHost() {

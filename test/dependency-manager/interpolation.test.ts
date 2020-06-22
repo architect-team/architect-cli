@@ -108,7 +108,7 @@ describe('interpolation spec v1', () => {
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
     ])
-    expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+    expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.node_config.getEnvironmentVariables()['AUTH0_SECRET_ID']).eq('worked')
 

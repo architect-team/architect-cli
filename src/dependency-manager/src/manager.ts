@@ -36,7 +36,7 @@ export default abstract class DependencyManager {
     const graph = new DependencyGraph();
     const component_map = await this.loadComponents(graph);
     this.addIngressEdges(graph);
-    const interpolated_environment = await this.interpolateEnvironment(this.environment, component_map);
+    const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
     await this.interpolateComponents(graph, interpolated_environment, component_map);
     return graph;
   }
@@ -45,10 +45,15 @@ export default abstract class DependencyManager {
   addIngressEdges(graph: DependencyGraph): void {
     let interfaces_string = serialize(this.environment.getInterfaces());
     interfaces_string = replaceBrackets(interfaces_string);
-    const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-    const component_edge_map: Dictionary<Set<string>> = {};
-    let matches;
-    while ((matches = components_regex.exec(interfaces_string)) != null) {
+
+    const component_edge_map: Dictionary<Dictionary<string>> = {};
+    for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
+      const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const matches = components_regex.exec(component_interface.url!);
+      if (!matches) continue;
+
       const [_, component_name, interface_name] = matches;
       const component = this.environment.getComponents()[component_name];
       if (!component) continue;
@@ -56,13 +61,14 @@ export default abstract class DependencyManager {
       const to = component.getInterfacesRef();
       if (!graph.nodes_map.has(to)) continue;
 
-      if (!component_edge_map[to]) component_edge_map[to] = new Set();
-      component_edge_map[to].add(interface_name);
+      if (!component_edge_map[to]) component_edge_map[to] = {};
+      component_edge_map[to][env_interface] = interface_name;
     }
-    for (const [to, interface_names] of Object.entries(component_edge_map)) {
+
+    for (const [to, interfaces_map] of Object.entries(component_edge_map)) {
       const gateway = new GatewayNode();
       graph.addNode(gateway);
-      graph.addEdge(new IngressEdge(gateway.ref, to, interface_names));
+      graph.addEdge(new IngressEdge(gateway.ref, to, interfaces_map));
     }
   }
 
@@ -134,22 +140,22 @@ export default abstract class DependencyManager {
 
       // Add edges between services inside the component
       const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-      const service_edge_map: Dictionary<Set<string>> = {};
+      const service_edge_map: Dictionary<Dictionary<string>> = {};
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
         const to = ref_map[service_name];
-        if (!service_edge_map[to]) service_edge_map[to] = new Set();
-        service_edge_map[to].add(interface_name);
+        if (!service_edge_map[to]) service_edge_map[to] = {};
+        service_edge_map[to]['service'] = interface_name;
       }
-      for (const [to, interface_names] of Object.entries(service_edge_map)) {
-        const edge = new ServiceEdge(from, to, interface_names);
+      for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+        const edge = new ServiceEdge(from, to, interfaces_map);
         graph.addEdge(edge);
       }
 
       // Add edges between services and dependencies inside the component
       const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Set<string>> = {};
+      const dep_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
@@ -158,30 +164,33 @@ export default abstract class DependencyManager {
         const to = dep_component.getInterfacesRef();
         if (!graph.nodes_map.has(to)) continue;
 
-        if (!dep_edge_map[to]) dep_edge_map[to] = new Set();
-        dep_edge_map[to].add(interface_name);
+        if (!dep_edge_map[to]) dep_edge_map[to] = {};
+        dep_edge_map[to]['service'] = interface_name;
       }
 
-      for (const [to, interface_names] of Object.entries(dep_edge_map)) {
-        const edge = new ServiceEdge(from, to, interface_names);
+      for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
+        const edge = new ServiceEdge(from, to, interfaces_map);
         graph.addEdge(edge);
       }
     }
 
     // Add edges between services and the component's interfaces node
-    let interfaces_string = serialize(component.getInterfaces());
-    interfaces_string = replaceBrackets(interfaces_string);
-    const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-    const service_edge_map: Dictionary<Set<string>> = {};
-    let matches;
-    while ((matches = services_regex.exec(interfaces_string)) != null) {
+    const service_edge_map: Dictionary<Dictionary<string>> = {};
+    for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
+      const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const matches = services_regex.exec(component_interface.url!);
+      if (!matches) continue;
+
       const [_, service_name, interface_name] = matches;
       const to = ref_map[service_name];
-      if (!service_edge_map[to]) service_edge_map[to] = new Set();
-      service_edge_map[to].add(interface_name);
+      if (!service_edge_map[to]) service_edge_map[to] = {};
+      service_edge_map[to][component_interface_name] = interface_name;
     }
-    for (const [to, interface_names] of Object.entries(service_edge_map)) {
-      const edge = new ServiceEdge(component.getInterfacesRef(), to, interface_names);
+
+    for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+      const edge = new ServiceEdge(component.getInterfacesRef(), to, interfaces_map);
       graph.addEdge(edge);
     }
   }
@@ -205,39 +214,36 @@ export default abstract class DependencyManager {
     return deserialize(environment.getClass(), res);
   }
 
-  async interpolateEnvironment(environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
+  async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
     environment = await this.interpolateVaults(environment);
 
     // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
     const environment_components: Dictionary<ComponentConfig> = {};
+    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       environment_components[component_name] = component_map[component.getRef()];
+
+      component_interfaces_ref_map[environment_components[component_name].getInterfacesRef()] = environment_components[component_name];
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
 
     // Inject external host/port/protocol for exposed interfaces
-    // TODO: Consolidate with addIngressEdges
-    for (const [env_interface, component_interface] of Object.entries(environment.getInterfaces())) {
-      const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = components_regex.exec(component_interface.url!);
-      if (!matches) continue;
-
-      const [_, component_name, interface_name] = matches;
-      const component = environment.getComponents()[component_name];
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      const component = component_interfaces_ref_map[edge.to];
       if (!component) continue;
 
-      if (!component.getInterfaces()[interface_name]) {
-        component.getInterfaces()[interface_name] = {};
-      }
-      const inter = component.getInterfaces()[interface_name];
+      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
+        if (!component.getInterfaces()[interface_name]) {
+          component.getInterfaces()[interface_name] = {};
+        }
+        const inter = component.getInterfaces()[interface_name];
 
-      inter.host = `${env_interface}.${this.toExternalHost()}`;
-      inter.port = this.gateway_port.toString();
-      inter.protocol = this.toExternalProtocol();
-      inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+        inter.host = `${env_interface}.${this.toExternalHost()}`;
+        inter.port = this.gateway_port.toString();
+        inter.protocol = this.toExternalProtocol();
+        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+      }
     }
 
     // TODO: Include in interpolation for components so that we don't have to ignore services

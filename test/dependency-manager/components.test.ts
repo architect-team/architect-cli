@@ -64,7 +64,7 @@ describe('components spec v1', function () {
         'architect/cloud/app:latest',
         'architect/cloud/api:latest',
       ])
-      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+      expect(graph.edges.map((e) => e.toString())).has.members([])
 
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
@@ -127,7 +127,7 @@ describe('components spec v1', function () {
         'architect/cloud/app:latest',
         'architect/cloud/api:latest',
       ])
-      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([])
+      expect(graph.edges.map((e) => e.toString())).has.members([])
     });
 
     it('local component with edges', async () => {
@@ -179,9 +179,9 @@ describe('components spec v1', function () {
         'architect/cloud/api:latest',
         'architect/cloud/db:latest'
       ])
-      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-        'architect/cloud/app:latest -> architect/cloud/api:latest [main]',
-        'architect/cloud/api:latest -> architect/cloud/db:latest [main]'
+      expect(graph.edges.map((e) => e.toString())).has.members([
+        'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]',
+        'architect/cloud/api:latest [service] -> architect/cloud/db:latest [main]'
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
@@ -295,10 +295,10 @@ describe('components spec v1', function () {
         'concourse/ci/web:6.2',
         'concourse/ci/worker:6.2'
       ])
-      expect(graph.edges.map((e) => `${e.from} -> ${e.to} [${[...e.interfaces].join(', ')}]`)).has.members([
-        'concourse/ci/worker:6.2 -> concourse/ci/web:6.2 [main]',
-        'concourse/ci:6.2-interfaces -> concourse/ci/web:6.2 [main]',
-        'architect/cloud/api:latest -> concourse/ci:6.2-interfaces [web]'
+      expect(graph.edges.map((e) => e.toString())).has.members([
+        'concourse/ci/worker:6.2 [service] -> concourse/ci/web:6.2 [main]',
+        'concourse/ci:6.2-interfaces [web] -> concourse/ci/web:6.2 [main]',
+        'architect/cloud/api:latest [service] -> concourse/ci:6.2-interfaces [web]'
       ])
 
       // Test parameter values
