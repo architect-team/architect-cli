@@ -32,6 +32,96 @@ describe('interpolation spec v1', () => {
     moxios.uninstall();
   });
 
+  it('interpolation dependencies', async () => {
+    const web_component_config = {
+      name: 'concourse/web',
+      interfaces: {
+        main: '${ services.web.interfaces.main.url }'
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          }
+        }
+      }
+    }
+    const worker_component_config = {
+      name: 'concourse/worker',
+      parameters: {
+        regular: "${ dependencies.concourse/web.interfaces.main.host }:2222",
+        single_quote: "${ dependencies['concourse/web'].interfaces.main.host }:2222",
+        double_quote: '${ dependencies["concourse/web"].interfaces.main.host }:2222'
+      },
+      dependencies: {
+        'concourse/web': 'latest'
+      },
+      services: {
+        worker: {
+          environment: {
+            REGULAR: '${ parameters.regular }',
+            SINGLE_QUOTE: '${ parameters.single_quote }',
+            DOUBLE_QUOTE: '${ parameters.double_quote }',
+          },
+          interfaces: {}
+        }
+      },
+      interfaces: {}
+    };
+
+    const env_config = {
+      components: {
+        'concourse/web:latest': {
+          extends: 'file:./web.json'
+        },
+        'concourse/worker:latest': {
+          extends: 'file:./worker.json'
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/web.json': JSON.stringify(web_component_config),
+      '/stack/worker.json': JSON.stringify(worker_component_config),
+      '/stack/arc.env.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const graph = await manager.getGraph();
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'concourse/web:latest-interfaces',
+      'concourse/web/web:latest',
+      'concourse/worker/worker:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]'
+    ])
+
+    const template = await DockerCompose.generate(manager);
+    expect(template).to.be.deep.equal({
+      'services': {
+        'concourse.web.web.latest': {
+          'depends_on': [],
+          'environment': {},
+          'ports': [
+            '50000:8080'
+          ]
+        },
+        'concourse.worker.worker.latest': {
+          'depends_on': [],
+          'environment': {
+            'REGULAR': 'concourse.web.web.latest:2222',
+            'SINGLE_QUOTE': 'concourse.web.web.latest:2222',
+            'DOUBLE_QUOTE': 'concourse.web.web.latest:2222',
+          },
+          'ports': []
+        },
+      },
+      'version': '3',
+      'volumes': {},
+    })
+  });
+
   it('interpolation vault', async () => {
     const component_config = {
       name: 'architect/cloud',
