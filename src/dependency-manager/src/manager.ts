@@ -178,7 +178,7 @@ export default abstract class DependencyManager {
       const services_regex = new RegExp(`\\\${\\s*services\\.(${IMAGE_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = services_regex.exec(component_interface.url!);
+      const matches = services_regex.exec(replaceBrackets(component_interface.url!));
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
