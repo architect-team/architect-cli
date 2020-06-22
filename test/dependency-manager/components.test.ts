@@ -71,20 +71,14 @@ describe('components spec v1', function () {
         "services": {
           "architect.cloud.api.latest": {
             "depends_on": [],
-            "environment": {
-              "HOST": "architect.cloud.api.latest",
-              "PORT": "8080"
-            },
+            "environment": {},
             "ports": [
               "50001:8080",
             ],
           },
           "architect.cloud.app.latest": {
             "depends_on": [],
-            "environment": {
-              "HOST": "architect.cloud.app.latest",
-              "PORT": "8080"
-            },
+            "environment": {},
             "ports": [
               "50000:8080"
             ]
@@ -203,9 +197,7 @@ describe('components spec v1', function () {
               "architect.cloud.db.latest"
             ],
             "environment": {
-              "DB_ADDR": "http://architect.cloud.db.latest:5432",
-              "HOST": "architect.cloud.api.latest",
-              "PORT": "8080"
+              "DB_ADDR": "http://architect.cloud.db.latest:5432"
             },
             "ports": [
               "50001:8080",
@@ -216,9 +208,7 @@ describe('components spec v1', function () {
               "architect.cloud.api.latest"
             ],
             "environment": {
-              "API_ADDR": "http://architect.cloud.api.latest:8080",
-              "HOST": "architect.cloud.app.latest",
-              "PORT": "8080"
+              "API_ADDR": "http://architect.cloud.api.latest:8080"
             },
             "ports": [
               "50000:8080"
@@ -226,10 +216,7 @@ describe('components spec v1', function () {
           },
           "architect.cloud.db.latest": {
             "depends_on": [],
-            "environment": {
-              "HOST": "architect.cloud.db.latest",
-              "PORT": "5432"
-            },
+            "environment": {},
             "ports": [
               "50002:5432"
             ],

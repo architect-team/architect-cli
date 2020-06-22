@@ -69,10 +69,21 @@ export class EnvironmentConfigBuilder {
   static buildFromJSON(obj: any): EnvironmentConfig {
     // Support old services block in environment config
     if (obj.services) {
+      if (!obj.interfaces) obj.interfaces = {};
       if (!obj.components) obj.components = {};
-      for (const [service_key, service] of Object.entries(obj.services)) {
+      for (const [service_key, service] of Object.entries(obj.services) as any) {
         if (service instanceof Object) {
-          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...(service as object), name: service_key });
+          // Support old subdomain syntax
+          if (service.interfaces) {
+            for (const [ik, iv] of Object.entries(service.interfaces) as any) {
+              if (iv instanceof Object && iv.subdomain) {
+                obj.interfaces[iv.subdomain] = `\${ components.${service_key}.interfaces.${ik}.url }`;
+                delete iv.subdomain;
+              }
+            }
+          }
+
+          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...service, name: service_key });
           delete obj.components[service_key].services.service.environment;
         } else {
           obj.components[`${service_key}:${service}`] = {};

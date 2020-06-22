@@ -5,6 +5,7 @@ import { ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import ServiceEdge from '../../dependency-manager/src/graph/edge/service';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import DockerComposeTemplate from './template';
 
@@ -54,11 +55,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       compose.services[node.normalized_ref] = {
         ports,
         depends_on: [],
-        environment: {
-          ...node.node_config.getEnvironmentVariables(),
-          HOST: node.normalized_ref,
-          PORT: node.ports[0] && node.ports[0].toString(),
-        },
+        environment: node.node_config.getEnvironmentVariables(),
       };
 
       if (node.node_config.getImage()) compose.services[node.normalized_ref].image = node.node_config.getImage();
@@ -144,13 +141,16 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       continue;
     }
 
+    /*
     const external_interfaces_count = Object.values(node_to.interfaces).filter(i => i.subdomain).length;
     const interface_count = Object.keys(node_to.interfaces).length;
     if (interface_count > 1 && external_interfaces_count > 1) { // max one interface per container if external exists https://github.com/nginx-proxy/nginx-proxy#multiple-ports
       throw new Error(`Error in service definition for ${node_to.ref}. Only one ingress per service is supported locally.`);
     }
+    */
 
     if (edge instanceof IngressEdge) {
+      /*
       const service_to = compose.services[node_to.normalized_ref];
       const to_interface = { subdomain: 'TODO' }; // TODO: Object.values(node_to.interfaces).find((i: ServiceInterfaceSpec) => i.subdomain);
       service_to.environment = service_to.environment || {};
@@ -158,7 +158,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];
       service_to.restart = 'always';
       compose.services[node_to.normalized_ref].depends_on.push(node_from.normalized_ref);
+      */
     } else if (edge instanceof ServiceEdge) {
+      const from_node = graph.getNodeByRef(edge.from);
+      if (from_node instanceof InterfacesNode) continue;
+
       if (!seen_edges.has(`${edge.to}__${edge.from}`)) { // Detect circular refs and pick first one
         compose.services[node_from.normalized_ref].depends_on.push(node_to.normalized_ref);
         seen_edges.add(`${edge.to}__${edge.from}`);

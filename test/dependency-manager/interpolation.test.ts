@@ -121,9 +121,7 @@ describe('interpolation spec v1', () => {
             'AUTH0_SECRET_ID': 'worked',
             'SINGLE_QUOTE': 'single',
             'DOUBLE_QUOTE': 'double',
-            'JSON': '{ \"first\": \"value\",\n\"second\": \"value\" }',
-            'HOST': 'architect.cloud.app.latest',
-            'PORT': '8080'
+            'JSON': '{ \"first\": \"value\",\n\"second\": \"value\" }'
           },
           'ports': [
             '50000:8080'

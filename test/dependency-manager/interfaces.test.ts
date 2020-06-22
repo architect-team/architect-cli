@@ -8,6 +8,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
@@ -212,5 +213,44 @@ describe('interfaces spec v1', () => {
       'LEAF_PORT=80',
       'LEAF_URL=http://public.localhost:80'
     ])
+
+    const template = await DockerCompose.generate(manager);
+    expect(Object.keys(template.services)).has.members([
+      'test.branch.api.latest',
+      'test.leaf.db.latest',
+      'test.leaf.api.latest',
+      'gateway'
+    ])
+
+    expect(template.services['test.branch.api.latest']).to.be.deep.equal({
+      depends_on: [],
+      environment: {
+        LEAF_HOST: 'public.localhost',
+        LEAF_PORT: '80',
+        LEAF_PROTOCOL: 'http',
+        LEAF_URL: 'http://public.localhost:80'
+      },
+      image: 'branch:latest',
+      ports: []
+    });
+
+    expect(template.services['test.leaf.db.latest']).to.be.deep.equal({
+      depends_on: [],
+      environment: {},
+      image: 'postgres:11',
+      ports: ['50000:5432']
+    });
+
+    expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
+      depends_on: ['test.leaf.db.latest'],
+      environment: {
+        DB_HOST: 'test.leaf.db.latest',
+        DB_PORT: '5432',
+        DB_PROTOCOL: 'postgres',
+        DB_URL: 'postgres://test.leaf.db.latest:5432'
+      },
+      image: 'api:latest',
+      ports: ['50001:8080']
+    });
   });
 });

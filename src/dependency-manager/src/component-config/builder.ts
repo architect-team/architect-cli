@@ -90,6 +90,15 @@ export class ComponentConfigBuilder {
 
     if (!config.environment) {
       config.environment = ComponentConfigBuilder.transformParametersToEnvironment(parameters, config.datastores);
+      if (config.interfaces && Object.keys(config.interfaces).length > 0) {
+        const interface_name = Object.keys(config.interfaces)[0];
+        if (!config.environment.HOST) {
+          config.environment.HOST = `\${ services.service.interfaces.${interface_name}.host }`;
+        }
+        if (!config.environment.PORT) {
+          config.environment.PORT = `\${ services.service.interfaces.${interface_name}.port }`;
+        }
+      }
     }
 
     if (config.debug?.parameters) {

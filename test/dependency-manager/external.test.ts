@@ -151,9 +151,7 @@ describe('external interfaces spec v1', () => {
           depends_on: [],
           environment: {
             API_ADDR: 'https://external.locahost:80',
-            EXTERNAL_API_ADDR: 'https://external.locahost:80',
-            HOST: 'architect.cloud.app.latest',
-            PORT: '8080'
+            EXTERNAL_API_ADDR: 'https://external.locahost:80'
           },
           ports: [
             '50000:8080'
