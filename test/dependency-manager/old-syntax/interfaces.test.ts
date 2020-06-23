@@ -325,7 +325,7 @@ describe('old interfaces', function () {
   it('generates correct compose port mappings for service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50004:8080', '50005:8081']);
+    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50003:8080', '50004:8081']);
     expect(compose.services['architect.frontend-main.service.latest'].ports).to.include.members(['50000:8082']);
     expect(compose.services['architect.frontend-secondary.service.latest'].ports).eql([]);
   });

@@ -26,7 +26,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   abstract get interfaces(): { [key: string]: any };
 
   get ports(): number[] {
-    return Object.values(this.interfaces).map((i) => (i.port));
+    const ports = Object.values(this.interfaces).map((i) => (i.port));
+    return [...new Set(ports)];
   }
 
   get is_external() {
