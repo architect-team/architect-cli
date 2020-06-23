@@ -361,6 +361,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.language;
   }
 
+  getDescription() {
+    return this.description || '';
+  }
+
   getKeywords() {
     return this.keywords || [];
   }

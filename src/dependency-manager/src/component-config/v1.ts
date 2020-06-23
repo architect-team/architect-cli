@@ -95,6 +95,14 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  description?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ each: true, always: true })
+  keywords?: string[];
+
   @Transform(value => (transformParameters(value)))
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
@@ -135,6 +143,14 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   setExtends(ext: string) {
     this.extends = ext;
+  }
+
+  getDescription() {
+    return this.description || '';
+  }
+
+  getKeywords() {
+    return this.keywords || [];
   }
 
   getParameters() {

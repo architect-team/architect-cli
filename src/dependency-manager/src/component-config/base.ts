@@ -16,6 +16,8 @@ export abstract class ComponentConfig extends BaseSpec {
   abstract getRef(): string;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;
+  abstract getDescription(): string;
+  abstract getKeywords(): string[];
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract getServices(): Dictionary<ServiceConfig>;
   abstract getDependencies(): Dictionary<string>;
