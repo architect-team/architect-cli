@@ -9,7 +9,8 @@ parameters:
   LOG_LEVEL:
     default: debug
     description: |
-      Applied as an environment variable to each service in the component (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
+      Applied as an environment variable to each service in the component
+      (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
 
 dependencies:
   examples/echo: latest
@@ -28,4 +29,4 @@ services:
 interfaces:
   frontend:
     description: Exposes the app to upstream traffic
-    url: ${ services.fake.interfaces.http.url }
+    url: ${ services.stateless-app.interfaces.http.url }

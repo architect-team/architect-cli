@@ -1,0 +1,13 @@
+name: examples/debugging
+
+services:
+  api:
+    build:
+      context: ./
+    interfaces:
+      main: 8080
+    debug:
+      command: ["npm", "run", "dev"]
+
+interfaces:
+  http: ${ services.api.interfaces.main.url }
