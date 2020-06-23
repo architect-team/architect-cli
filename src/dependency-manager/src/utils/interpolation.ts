@@ -1,5 +1,14 @@
 import Mustache, { Context, Writer } from 'mustache';
 
+export class InterpolationError extends Error {
+  errors: string[];
+  constructor(errors: string[]) {
+    super('Interpolation error');
+    this.name = 'InterpolationError';
+    this.errors = errors;
+  }
+}
+
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${ dependencies['architect/cloud'].services } -> ${ dependencies.architect/cloud.services }
@@ -71,7 +80,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
 
     const result = render.bind(this)(template, view, partials);
     if (errors.size > 0) {
-      throw new Error('Unknown symbols: ' + [...errors].join(', '));
+      throw new InterpolationError([...errors]);
     }
     return result;
   };
@@ -80,6 +89,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
   const MAX_DEPTH = 25;
   let depth = 0;
   while (depth < MAX_DEPTH) {
+    param_value = replaceBrackets(param_value);
     param_value = writer.render(param_value, context);
     // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;

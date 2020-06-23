@@ -394,6 +394,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getBuild() {
+    if (!this.build && !this.image) {
+      this.build = new BuildSpecV1();
+      this.build.context = '.';
+    }
     return this.build || {};
   }
 }

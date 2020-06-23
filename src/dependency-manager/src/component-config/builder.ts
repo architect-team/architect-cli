@@ -68,7 +68,7 @@ export class ComponentConfigBuilder {
       await config.validateOrReject({ groups: ['developer'] });
       return config;
     } catch (err) {
-      console.log('Invalid service config:', input);
+      console.log('Invalid component config:', input);
       throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
     }
   }

@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
+import path from 'path';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
@@ -75,13 +76,19 @@ describe('components spec v1', function () {
             "ports": [
               "50001:8080",
             ],
+            "build": {
+              "context": path.resolve("/stack")
+            }
           },
           "architect.cloud.app.latest": {
             "depends_on": [],
             "environment": {},
             "ports": [
               "50000:8080"
-            ]
+            ],
+            "build": {
+              "context": path.resolve("/stack")
+            }
           },
         },
         "version": "3",
@@ -202,6 +209,9 @@ describe('components spec v1', function () {
             "ports": [
               "50001:8080",
             ],
+            "build": {
+              "context": path.resolve("/stack")
+            }
           },
           "architect.cloud.app.latest": {
             "depends_on": [
@@ -212,7 +222,10 @@ describe('components spec v1', function () {
             },
             "ports": [
               "50000:8080"
-            ]
+            ],
+            "build": {
+              "context": path.resolve("/stack")
+            }
           },
           "architect.cloud.db.latest": {
             "depends_on": [],
@@ -220,6 +233,9 @@ describe('components spec v1', function () {
             "ports": [
               "50002:5432"
             ],
+            "build": {
+              "context": path.resolve("/stack")
+            }
           }
         },
         "version": "3",

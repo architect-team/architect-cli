@@ -103,7 +103,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     let errors = await super.validate(options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'components', errors, undefined, options);
-    if ('operator' in (options.groups || [])) {
+    if ((options.groups || []).includes('operator')) {
       interpolateString(serialize(this), this.getContext(), ['vaults.', 'components.']);
     }
     return errors;

@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
+import path from 'path';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
@@ -155,7 +156,10 @@ describe('external interfaces spec v1', () => {
           },
           ports: [
             '50000:8080'
-          ]
+          ],
+          build: {
+            context: path.resolve('/stack')
+          }
         }
       },
       'version': '3',

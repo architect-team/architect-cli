@@ -1,11 +1,11 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
-import { Allow, IsBoolean, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { ParameterValue, ServiceConfig } from '..';
 import { ServiceInterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, transformParameters, transformServices } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { interpolateString } from '../utils/interpolation';
+import { interpolateString, InterpolationError } from '../utils/interpolation';
 import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary } from '../utils/validation';
 import { ComponentConfig } from './base';
 
@@ -227,8 +227,28 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') });
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
-    if ('developer' in (options.groups || [])) {
-      interpolateString(serialize(this), this.getContext(), ['dependencies.', 'interfaces.']);
+    if ((options.groups || []).includes('developer')) {
+      try {
+        interpolateString(serialize(this), this.getContext(), ['dependencies.']);
+      } catch (err) {
+        if (err instanceof InterpolationError) {
+          const validation_error = new ValidationError();
+          validation_error.property = '_interpolation';
+          validation_error.children = [];
+          for (const e of err.errors) {
+            const interpolation_error = new ValidationError();
+            interpolation_error.property = e;
+            interpolation_error.value = e;
+            interpolation_error.constraints = {
+              'interpolation': `\${ ${e} } is invalid`,
+            };
+            validation_error.children.push(interpolation_error);
+          }
+          errors.push(validation_error);
+        } else {
+          throw err;
+        }
+      }
     }
     return errors;
   }
