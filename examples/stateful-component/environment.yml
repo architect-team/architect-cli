@@ -1,0 +1,5 @@
+interfaces:
+  example: ${ components['examples/stateful-component'].interfaces.frontend.url }
+
+components:
+  examples/stateful-component: file:./

@@ -1,186 +1,83 @@
+/**
+ * @format
+ */
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
+import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
-import LocalDependencyGraph from '../../src/common/dependency-manager/local-graph';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { DependencyParameter, ServiceNode, ValueFromParameter } from '../../src/dependency-manager/src';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('interfaces', function () {
+describe('interfaces spec v1', () => {
+  let leaf_component = {} as any,
+    branch_component = {} as any;
 
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
-
-    const checkout_json = {
-      "name": "architect/checkout",
-      "interfaces": {
-        "main": {
-          "port": 7000
-        }
+    moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
       }
-    };
+    })
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
+    PortUtil.reset();
 
-    const backend_json = {
-      "name": "architect/backend",
-      "dependencies": {
-        "architect/checkout": "latest"
-      },
-      "interfaces": {
-        "main": {
-          "description": "main port",
-          "port": 8080
-        },
-        "secondary": {
-          "description": "secondary port",
-          "port": 8081
-        },
-        "concise": 8082
-      },
-      "parameters": {
-        "CHECKOUT_ADDR": {
-          "valueFrom": {
-            "dependency": "architect/checkout",
-            "value": "$HOST:$PORT"
-          }
-        },
-        "CHECKOUT_ADDR_DEFAULT": {
-          "default": {
-            "valueFrom": {
-              "dependency": "architect/checkout",
-              "interface": "main",
-              "value": "$HOST:$PORT"
-            }
-          }
-        },
-        "HOST": {
-          "default": {
-            "valueFrom": {
-              "interface": "main",
-              "value": "$HOST"
-            }
-          }
-        }
-      }
-    };
-
-    const frontend_main_json = {
-      "name": "architect/frontend-main",
-      "dependencies": {
-        "architect/backend": "latest"
-      },
-      "parameters": {
-        "API_ADDR": {
-          "default": {
-            "valueFrom": {
-              "dependency": "architect/backend",
-              "interface": "main",
-              "value": "$HOST:$PORT"
-            }
-          }
-        }
-      },
-      "interfaces": {
-        "main": {
-          "port": 8082
-        },
-        "secondary": {
-          "port": 8083
-        }
-      }
-    };
-
-    const frontend_secondary_json = {
-      "name": "architect/frontend-secondary",
-      "dependencies": {
-        "architect/backend": "latest"
-      },
-      "parameters": {
-        "API_ADDR": {
-          "default": {
-            "valueFrom": {
-              "dependency": "architect/backend:latest",
-              "interface": "secondary",
-              "value": "$INTERNAL_HOST:$INTERNAL_PORT"
-            }
-          }
-        }
-      }
-    };
-
-    const env_config_internal = {
-      "services": {
-        "architect/frontend-main:latest": {
-          "debug": {
-            "path": "./src/frontend-main",
-          },
-          "interfaces": {
-            "secondary": {
-              "subdomain": "secondary"
-            }
-          }
-        },
-        "architect/frontend-secondary:latest": {
-          "debug": {
-            "path": "./src/frontend-secondary",
-          }
-        },
-        "architect/checkout:latest": {
-          "debug": {
-            "path": "./src/checkout/checkout-architect.json",
-          }
-        },
-        "architect/backend:latest": {
-          "debug": {
-            "path": "./src/backend",
-          }
-        }
-      }
-    };
-
-    const env_config_external = {
-      "services": {
-        "architect/frontend-main:latest": {
-          "debug": {
-            "path": "./src/frontend-main",
-          }
-        },
-        "architect/frontend-secondary:latest": {
-          "debug": {
-            "path": "./src/frontend-secondary",
-          }
-        },
-        "architect/backend:latest": {
-          "debug": {
-            "path": "./src/backend",
-          },
-          "interfaces": {
-            "main": {
-              "description": "main port",
-              "host": "main.host",
-              "port": 8080
+    leaf_component = {
+      name: 'test/leaf',
+      services: {
+        db: {
+          image: 'postgres:11',
+          interfaces: {
+            postgres: {
+              port: 5432,
+              protocol: 'postgres',
             },
-            "secondary": {
-              "description": "secondary port",
-              "host": "secondary.host",
-              "port": 8081
-            }
-          }
-        }
-      }
+          },
+        },
+        api: {
+          image: 'api:latest',
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            DB_PROTOCOL: '${ services.db.interfaces.postgres.protocol }',
+            DB_HOST: '${ services.db.interfaces.postgres.host }',
+            DB_PORT: '${ services.db.interfaces.postgres.port }',
+            DB_URL: '${ services.db.interfaces.postgres.url }',
+          },
+        },
+      },
+      interfaces: {}
     };
 
-    mock_fs({
-      '/stack/src/checkout/checkout-architect.json': JSON.stringify(checkout_json),
-      '/stack/src/frontend-main/architect.json': JSON.stringify(frontend_main_json),
-      '/stack/src/frontend-secondary/architect.json': JSON.stringify(frontend_secondary_json),
-      '/stack/src/backend/architect.json': JSON.stringify(backend_json),
-      '/stack/arc.env.internal.json': JSON.stringify(env_config_internal),
-      '/stack/arc.env.external.json': JSON.stringify(env_config_external),
-    });
+    branch_component = {
+      name: 'test/branch',
+      dependencies: {
+        'test/leaf': 'latest',
+      },
+      services: {
+        api: {
+          image: 'branch:latest',
+          interfaces: {},
+          environment: {
+            LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.api.protocol }',
+            LEAF_HOST: '${ dependencies.test/leaf.interfaces.api.host }',
+            LEAF_PORT: '${ dependencies.test/leaf.interfaces.api.port }',
+            LEAF_URL: '${ dependencies.test/leaf.interfaces.api.url }',
+          },
+        },
+      },
+      interfaces: {}
+    };
   });
 
   afterEach(function () {
@@ -188,95 +85,175 @@ describe('interfaces', function () {
     sinon.restore();
     // Restore fs
     mock_fs.restore();
-    // reset port range between simulated processes
-    PortUtil.reset();
+    moxios.uninstall();
   });
 
-  it('non-interface valueFrom', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
+  it('should connect two services together', async () => {
+    mock_fs({
+      '/stack/leaf/architect.json': JSON.stringify(leaf_component),
+      '/stack/environment.json': JSON.stringify({
+        components: {
+          'test/leaf': 'file:/stack/leaf/',
+        },
+      }),
+    });
 
-    expect(compose.services['architect.backend.latest'].environment!.CHECKOUT_ADDR).eq('architect.checkout.latest:7000');
-    expect(compose.services['architect.backend.latest'].environment!.CHECKOUT_ADDR_DEFAULT).eq('architect.checkout.latest:7000');
+    const manager = await LocalDependencyManager.createFromPath(
+      axios.create(),
+      '/stack/environment.json',
+    );
+    const graph = await manager.getGraph();
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+    ])
+    const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
+    expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'DB_PROTOCOL=postgres',
+      'DB_HOST=test.leaf.db.latest',
+      'DB_PORT=5432',
+      'DB_URL=postgres://test.leaf.db.latest:5432'
+    ])
   });
 
-  it('valueFrom port from service interfaces', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json')
-    const graph: LocalDependencyGraph = manager.graph;
+  it('should connect services to dependency interfaces', async () => {
+    leaf_component.interfaces = {
+      api: {
+        url: '${ services.api.interfaces.main.url }',
+      }
+    };
 
-    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ServiceNode;
-    expect(backend_node.is_local).true;
-    expect(backend_node!.parameters.MAIN_PORT).eq('8080');
-    expect(backend_node!.parameters.SECONDARY_PORT).eq('8081');
-    expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
-    expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8081').length).eq(1);
-    expect(backend_node!.service_config.getInterfaces().main.port).eq(8080);
-    expect(backend_node!.service_config.getInterfaces().secondary.port).eq(8081);
+    mock_fs({
+      '/stack/leaf/architect.json': JSON.stringify(leaf_component),
+      '/stack/branch/architect.json': JSON.stringify(branch_component),
+      '/stack/environment.json': JSON.stringify({
+        components: {
+          'test/branch': 'file:/stack/branch/',
+          'test/leaf': 'file:/stack/leaf/',
+        },
+      }),
+    });
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as ServiceNode;
-    expect(frontend_main_node.is_local).true;
-    const interfaced_main_value_from = frontend_main_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
-    expect(interfaced_main_value_from.valueFrom.interface).eq('main');
-    expect(frontend_main_node!.parameters.API_ADDR).eq(`${backend_node.normalized_ref}:8080`);
+    const manager = await LocalDependencyManager.createFromPath(
+      axios.create(),
+      '/stack/environment.json',
+    );
+    const graph = await manager.getGraph();
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'test/branch/api:latest',
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as ServiceNode;
-    expect(frontend_secondary_node.is_local).true;
-    const interfaced_secondary_value_from = frontend_secondary_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
-    expect(interfaced_secondary_value_from.valueFrom.interface).eq('secondary');
-    expect(frontend_secondary_node!.parameters.API_ADDR).eq(`${backend_node.normalized_ref}:8081`);
+      'test/leaf:latest-interfaces',
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
+
+      'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
+    ])
+    const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+    expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'LEAF_PROTOCOL=http',
+      'LEAF_HOST=test.leaf.api.latest',
+      'LEAF_PORT=8080',
+      'LEAF_URL=http://test.leaf.api.latest:8080'
+    ])
   });
 
-  it('valueFrom port from environment interfaces', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.external.json')
-    const graph: LocalDependencyGraph = manager.graph;
+  it('should expose environment interfaces via a gateway', async () => {
+    leaf_component.interfaces = {
+      api: '${ services.api.interfaces.main.url }',
+    };
 
-    const backend_node = graph.nodes.find(node => node.ref === 'architect/backend:latest') as ServiceNode;
-    expect(backend_node.interfaces!.main.port).eq(8080);
-    expect(backend_node.interfaces!.secondary.port).eq(8081);
+    mock_fs({
+      '/stack/leaf/architect.json': JSON.stringify(leaf_component),
+      '/stack/branch/architect.json': JSON.stringify(branch_component),
+      '/stack/environment.json': JSON.stringify({
+        interfaces: {
+          public: '${ components.test/leaf.interfaces.api.url }',
+        },
+        components: {
+          'test/branch': 'file:/stack/branch/',
+          'test/leaf': 'file:/stack/leaf/',
+        },
+      }),
+    });
 
-    const frontend_main_node = graph.nodes.find(node => node.ref === 'architect/frontend-main:latest') as ServiceNode;
-    expect(frontend_main_node.is_local).true;
-    const interfaced_main_value_from = frontend_main_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
-    expect(interfaced_main_value_from.valueFrom.interface).eq('main');
-    expect(frontend_main_node!.parameters.API_ADDR).eq(`main.host:8080`);
+    const manager = await LocalDependencyManager.createFromPath(
+      axios.create(),
+      '/stack/environment.json',
+    );
+    const graph = await manager.getGraph();
 
-    const frontend_secondary_node = graph.nodes.find(node => node.ref === 'architect/frontend-secondary:latest') as ServiceNode;
-    expect(frontend_secondary_node.is_local).true;
-    const interfaced_secondary_value_from = frontend_secondary_node!.service_config.getParameters().API_ADDR.default as ValueFromParameter<DependencyParameter>;
-    expect(interfaced_secondary_value_from.valueFrom.interface).eq('secondary');
-    expect(frontend_secondary_node!.parameters.API_ADDR).eq(`secondary.host:8081`);
-  });
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
 
-  it('correct compose port mappings', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.latest'].ports).to.include.members(['50002:8080', '50003:8081', '50004:8082']);
-    expect(compose.services['architect.frontend-main.latest'].ports).to.include.members(['50000:8082']);
-    expect(compose.services['architect.frontend-secondary.latest'].ports).eql([]);
-  });
+      'test/branch/api:latest',
 
-  it('correct interface environment variables in compose', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
+      'test/leaf:latest-interfaces',
+      'test/leaf/db:latest',
+      'test/leaf/api:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'gateway [public] -> test/leaf:latest-interfaces [api]',
 
-    expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
-    expect(compose.services['architect.backend.latest'].environment!.MAIN_PORT).eq('8080');
-    expect(compose.services['architect.backend.latest'].environment!.SECONDARY_PORT).eq('8081');
-  });
+      'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+      'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-  it('concise interface port spec', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
+      'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
+    ])
+    const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+    expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      'LEAF_PROTOCOL=http',
+      'LEAF_HOST=public.localhost',
+      'LEAF_PORT=80',
+      'LEAF_URL=http://public.localhost:80'
+    ])
 
-    expect(compose.services['architect.backend.latest'].environment!.HOST).eq('architect.backend.latest');
-    expect(compose.services['architect.backend.latest'].environment!.CONCISE_PORT).eq('8082');
-  });
+    const template = await DockerCompose.generate(manager);
+    expect(Object.keys(template.services)).has.members([
+      'test.branch.api.latest',
+      'test.leaf.db.latest',
+      'test.leaf.api.latest',
+      'gateway'
+    ])
 
-  it('external interface host spec', async () => {
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
-    const compose = await DockerCompose.generate(manager);
+    expect(template.services['test.branch.api.latest']).to.be.deep.equal({
+      depends_on: ['test.leaf.api.latest'],
+      environment: {
+        LEAF_HOST: 'public.localhost',
+        LEAF_PORT: '80',
+        LEAF_PROTOCOL: 'http',
+        LEAF_URL: 'http://public.localhost:80'
+      },
+      image: 'branch:latest',
+      ports: []
+    });
 
-    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_HOST).eq('architect.frontend-main.latest');
-    expect(compose.services['architect.frontend-main.latest'].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
+    expect(template.services['test.leaf.db.latest']).to.be.deep.equal({
+      depends_on: [],
+      environment: {},
+      image: 'postgres:11',
+      ports: ['50000:5432']
+    });
+
+    expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
+      depends_on: ['test.leaf.db.latest', 'gateway'],
+      environment: {
+        DB_HOST: 'test.leaf.db.latest',
+        DB_PORT: '5432',
+        DB_PROTOCOL: 'postgres',
+        DB_URL: 'postgres://test.leaf.db.latest:5432',
+        VIRTUAL_HOST: 'public.localhost',
+        VIRTUAL_PORT: '50001'
+      },
+      image: 'api:latest',
+      ports: ['50001:8080'],
+      restart: 'always'
+    });
   });
 });

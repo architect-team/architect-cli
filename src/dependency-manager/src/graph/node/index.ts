@@ -1,5 +1,4 @@
-import { Exclude, Type } from 'class-transformer';
-import { ParameterValue } from '../../service-config/base';
+import { Type } from 'class-transformer';
 import { DependencyState } from '../state';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -7,9 +6,6 @@ export interface DependencyNodeOptions { }
 
 export abstract class DependencyNode implements DependencyNodeOptions {
   abstract __type: string;
-
-  @Exclude()
-  protected _parameters?: { [key: string]: ParameterValue };
 
   @Type(() => DependencyState)
   state?: DependencyState;
@@ -25,34 +21,17 @@ export abstract class DependencyNode implements DependencyNodeOptions {
     return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
   }
 
-  abstract get ref(): string;
-
-  get parameters(): { [key: string]: ParameterValue } {
-    if (!this._parameters) {
-      this._parameters = {};
-    }
-    return this._parameters;
-  }
+  abstract ref: string;
 
   abstract get interfaces(): { [key: string]: any };
 
   get ports(): number[] {
-    return Object.values(this.interfaces).map((i) => (i.port));
-  }
-
-  get protocol() {
-    return '';
+    const ports = Object.values(this.interfaces).map((i) => (i.port));
+    return [...new Set(ports)];
   }
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => {
-      // Interpolation modifies the node.interfaces
-      if (i.internal && i.external) {
-        return i.internal.host === i.external.host;
-      } else {
-        return i.host;
-      }
-    });
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
   }
 
   get is_local() {

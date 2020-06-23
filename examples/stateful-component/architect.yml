@@ -1,0 +1,48 @@
+name: examples/stateful-component
+# description: |
+#   Component built from Architect's stateful component guide (https://architect.io/docs/guides/stateful-component)
+# keywords:
+#   - architect-examples
+#   - stateful
+
+parameters:
+  DB_USER:
+    description: Root user to assign to the component's DB
+    default: architect
+  DB_PASS:
+    description: Root password to assign to the component's DB
+    default: secret
+  DB_NAME:
+    description: Name of the DB the component will store content in
+    default: stateful
+
+services:
+  api-db:
+    image: postgres:12
+    interfaces:
+      postgres:
+        port: 5432
+        protocol: postgres
+    environment:
+      POSTGRES_USER: ${ parameters.DB_USER }
+      POSTGRES_PASSWORD: ${ parameters.DB_PASS }
+      POSTGRES_DB: ${ parameters.DB_NAME }
+  stateful-api:
+    build:
+      context: ./backend
+    interfaces:
+      http: 8080
+    environment:
+      DB_ADDR: ${ services.api-db.interfaces.postgres.url }/${ parameters.DB_NAME }
+      DB_USER: ${ parameters.DB_USER }
+      DB_PASS: ${ parameters.DB_PASS }
+  frontend:
+    build:
+      context: ./frontend
+    interfaces:
+      web: 8081
+    environment:
+      API_ADDR: ${ services.stateful-api.interfaces.http.url }
+
+interfaces:
+  frontend: ${ services.frontend.interfaces.http.url }

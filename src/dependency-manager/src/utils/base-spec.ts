@@ -1,3 +1,4 @@
+import { ClassType } from 'class-transformer/ClassTransformer';
 import { validate, ValidationError, ValidatorOptions } from 'class-validator';
 
 export abstract class BaseSpec {
@@ -10,5 +11,9 @@ export abstract class BaseSpec {
     const errors = await this.validate(options);
     if (errors.length)
       return Promise.reject(errors);
+  }
+
+  getClass() {
+    return this.constructor as ClassType<any>;
   }
 }

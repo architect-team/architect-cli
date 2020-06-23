@@ -8,10 +8,17 @@ import { Dictionary } from './dictionary';
  */
 export const flattenValidationErrors = (errors: ValidationError[], property_prefix = ''): Dictionary<Dictionary<string | number>> => {
   let res = {} as Dictionary<Dictionary<string | number>>;
+  if (!(errors instanceof Array)) {
+    throw errors;
+  }
   errors.forEach(error => {
-    const property = `${property_prefix}${error.property}`;
+    let property = `${property_prefix}${error.property}`;
     if (error.constraints && Object.keys(error.constraints).length) {
-      res[property] = error.constraints;
+      // Hack to attempt semi-reasonable validation msging for old syntax
+      if (property.includes('services.service.')) {
+        property = property.replace('services.service.', '').replace('components.', 'services.');
+      }
+      res[property] = { ...error.constraints, value: error.value };
     }
 
     if (error.children && error.children.length) {

@@ -1,20 +1,42 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import DependencyEdge from './edge';
+import IngressEdge from './edge/ingress';
+import ServiceEdge from './edge/service';
 import { DependencyNode } from './node';
+import GatewayNode from './node/gateway';
+import InterfacesNode from './node/interfaces';
+import { ServiceNode } from './node/service';
 
-export default abstract class DependencyGraph {
-  version: string;
-  abstract nodes: DependencyNode[] = [];
-  abstract edges: DependencyEdge[] = [];
+export default class DependencyGraph {
+  @Type(() => DependencyNode, {
+    discriminator: {
+      property: '__type',
+      subTypes: [
+        { value: ServiceNode, name: 'service' },
+        { value: InterfacesNode, name: 'interfaces' },
+        { value: GatewayNode, name: 'gateway' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  nodes: DependencyNode[] = [];
+
+  @Type(() => DependencyEdge, {
+    discriminator: {
+      property: '__type',
+      subTypes: [
+        { value: ServiceEdge, name: 'service' },
+        { value: IngressEdge, name: 'ingress' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
+  edges: DependencyEdge[] = [];
 
   @Exclude()
   protected __nodes_map?: Map<string, DependencyNode>;
   @Exclude()
   protected __edges_map?: Map<string, DependencyEdge>;
-
-  constructor(version: string) {
-    this.version = version;
-  }
 
   addNode(node: DependencyNode): DependencyNode {
     if (!this.nodes_map.has(node.ref)) {
@@ -122,5 +144,12 @@ export default abstract class DependencyGraph {
     }
 
     return Array.from(nodes.values());
+  }
+
+  followEdge(edge: DependencyEdge, interface_name: string): DependencyNode {
+    const child_interface = edge.interfaces_map[interface_name];
+    const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
+    const to = child_edge ? child_edge.to : edge.to;
+    return this.getNodeByRef(to);
   }
 }

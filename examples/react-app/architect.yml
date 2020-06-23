@@ -1,0 +1,63 @@
+name: examples/react-demo
+
+interfaces:
+  app: ${ services.app.interfaces.main.url }
+  api: ${ services.api.interfaces.main.url }
+
+parameters:
+  world_text:
+    description: Default greeting text for the landing page
+    default: world
+
+services:
+  app:
+    build:
+      context: ./frontend
+    description: Example react application
+    language: node
+    interfaces:
+      main: 8080
+    environment:
+      INTERNAL_HOST: ${ services.app.interfaces.main.host }
+      INTERNAL_PORT: ${ services.app.interfaces.main.port }
+      API_ADDR: ${ interfaces.api.url }
+      WORLD_TEXT: ${ parameters.world_text }
+    debug:
+      dockerfile: Dockerfile.dev
+      command: npm run dev
+      volumes:
+        src:
+          mount_path: /usr/src/app/src
+          host_path: ./frontend/src
+
+  api-db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
+      POSTGRES_DB: test_database
+
+  api:
+    build:
+      context: ./backend
+    author: Architect.io
+    language: node
+    interfaces:
+      main: 8080
+    environment:
+      INTERNAL_HOST: ${ services.api.interfaces.main.host }
+      INTERNAL_PORT: ${ services.api.interfaces.main.port }
+      POSTGRES_HOST: ${ services.api-db.interfaces.postgres.host }
+      POSTGRES_PORT: ${ services.api-db.interfaces.postgres.port }
+      POSTGRES_USER: ${ services.api-db.environment.POSTGRES_USER }
+      POSTGRES_PASSWORD: ${ services.api-db.environment.POSTGRES_PASSWORD }
+      POSTGRES_DB: ${ services.api-db.environment.POSTGRES_DB }
+    debug:
+      dockerfile: Dockerfile.dev
+      command: npm run start:dev
+      volumes:
+        src:
+          mount_path: /usr/src/app/src
+          host_path: ./backend/src

@@ -4,19 +4,16 @@ import { ServiceConfig } from '../../service-config/base';
 import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
-  image?: string;
-  tag?: string;
-  digest?: string;
+  ref: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
+  local_path?: string;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  image?: string;
-  tag!: string;
-  digest?: string;
+  // TODO: Remove
   @Type(() => ServiceConfig, {
     discriminator: {
       property: '__version',
@@ -39,42 +36,24 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   })
   node_config!: ServiceConfig;
 
+  ref!: string;
+  local_path!: string;
+
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
     if (options) {
-      this.image = options.image;
-      this.tag = options.tag || 'latest';
-      this.digest = options.digest;
+      this.ref = options.ref;
       this.service_config = options.service_config;
       this.node_config = options.node_config;
+      this.local_path = options.local_path || '';
     }
-  }
-
-  get ref() {
-    return this.node_config.getRef();
-  }
-
-  get volumes() {
-    return this.node_config.getVolumes();
   }
 
   get interfaces(): { [key: string]: any } {
     return this.node_config.getInterfaces();
   }
 
-  get parameters() {
-    if (!this._parameters) {
-      this._parameters = {};
-      for (const [key, value] of Object.entries(this.node_config.getParameters())) {
-        if ('default' in value && value.default !== undefined) {
-          this._parameters[key] = value.default;
-        }
-      }
-    }
-    return this._parameters;
-  }
-
   get is_local() {
-    return this.node_config.getPath() !== undefined;
+    return this.local_path !== '';
   }
 }

@@ -1,4 +1,6 @@
-import { ParameterValue, ServiceConfig } from '../service-config/base';
+import { classToClass, plainToClassFromExist } from 'class-transformer';
+import { ServiceInterfaceSpec } from '..';
+import { ComponentConfig, ParameterDefinitionSpec } from '../component-config/base';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
@@ -17,21 +19,28 @@ export interface DnsConfig {
 
 export abstract class EnvironmentConfig extends BaseSpec {
   abstract __version: string;
-  abstract getParameters(): Dictionary<ParameterValue>;
+  abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract getVaults(): Dictionary<EnvironmentVault>;
-  abstract getServices(): Dictionary<ServiceConfig>;
+  abstract getComponents(): Dictionary<ComponentConfig>;
   abstract getDnsConfig(): DnsConfig;
+  abstract getInterfaces(): Dictionary<ServiceInterfaceSpec>;
+  abstract getContext(): any;
 
-  getServiceDetails(key: string): ServiceConfig | undefined {
-    const services = this.getServices();
-
-    // Remove parent ref if it exists
-    const [parent, service] = key.split('.');
-    key = service ? service : parent;
-
-    const env_service = services[key] || services[key.split(':')[0]];
-    if (env_service && (!env_service.getExtends() || env_service.getExtends() === key)) {
-      return env_service;
+  getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {
+    const service_tag = service_ref.split(':')[1] || 'latest';
+    for (const component of Object.values(this.getComponents())) {
+      const component_tag = component.getRef().split(':')[1] || 'latest';
+      if (service_ref.startsWith(`${component.getName()}/`) && service_tag === component_tag) {
+        return component;
+      }
     }
+  }
+
+  copy() {
+    return classToClass(this);
+  }
+
+  merge(other_environment: EnvironmentConfig): EnvironmentConfig {
+    return plainToClassFromExist(this.copy(), other_environment);
   }
 }

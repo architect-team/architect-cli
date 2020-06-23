@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import { ServiceConfigBuilder } from '../dependency-manager/src';
+import { ComponentConfigBuilder } from '../dependency-manager/src/component-config/builder';
 
 declare const process: NodeJS.Process;
 
@@ -30,9 +30,9 @@ export default class Link extends Command {
 
     // Try to load the service from the path to ensure it exists and is valid
     try {
-      const config = await ServiceConfigBuilder.buildFromPath(servicePath);
-      this.app.linkServicePath(config.getName(), servicePath);
-      this.log(`Successfully linked ${chalk.green(config.getName())} to local system at ${chalk.green(servicePath)}.`);
+      const component_config = await ComponentConfigBuilder.buildFromPath(servicePath);
+      this.app.linkServicePath(component_config.getName(), servicePath);
+      this.log(`Successfully linked ${chalk.green(component_config.getName())} to local system at ${chalk.green(servicePath)}.`);
     } catch (err) {
       if (err.name === 'missing_config_file') {
         this.log(chalk.red(err.message));

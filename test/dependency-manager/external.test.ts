@@ -5,43 +5,58 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { DatastoreNode, ServiceNode } from '../../src/dependency-manager/src';
+import * as DockerCompose from '../../src/common/docker-compose';
+import PortUtil from '../../src/common/utils/port';
+import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('external nodes', function () {
-  beforeEach(async () => {
-    // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+describe('external interfaces spec v1', () => {
+  beforeEach(() => {
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
+
+    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
+    PortUtil.reset();
   });
 
-  afterEach(function () {
-    // Restore stubs
+  afterEach(() => {
     sinon.restore();
-    // Restore fs
     mock_fs.restore();
     moxios.uninstall();
   });
 
-  it('simple external service', async () => {
-    const frontend_config = {
-      name: 'architect/frontend',
-      interfaces: {
-        app: 8080
-      }
+  it('simple external', async () => {
+    const component_config = {
+      name: 'architect/cloud',
+      services: {
+        app: {
+          interfaces: {
+            main: 8080
+          }
+        }
+      },
+      interfaces: {}
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
-    });
-
     const env_config = {
-      services: {
-        'architect/frontend:v1': {
-          interfaces: {
+      components: {
+        'architect/cloud': {
+          extends: 'file:.',
+          services: {
             app: {
-              host: 'app.localhost',
-              port: 80
+              interfaces: {
+                main: {
+                  host: 'http://external.locahost',
+                  port: 80
+                }
+              }
             }
           }
         }
@@ -49,86 +64,61 @@ describe('external nodes', function () {
     };
 
     mock_fs({
-      '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
+      '/stack/architect.json': JSON.stringify(component_config),
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
-    expect(graph.nodes).length(1);
-    expect((graph.nodes[0] as ServiceNode).is_external).true;
-    expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq(80);
-    expect(graph.edges).length(0);
+    const graph = await manager.getGraph();
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'architect/cloud/app:latest',
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([])
+    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+    expect(app_node.is_external).to.be.true;
+
+    const template = await DockerCompose.generate(manager);
+    expect(template).to.be.deep.equal({
+      'services': {},
+      'version': '3',
+      'volumes': {},
+    })
   });
 
-  it('external service - no dependencies created', async () => {
-    const frontend_config = {
-      name: 'architect/frontend',
-      interfaces: {
-        app: 8080
-      },
-      dependencies: {
-        'architect/backend': 'v1'
-      }
-    };
-
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
-    });
-
-    const env_config = {
+  it('service connecting to external', async () => {
+    const component_config = {
+      name: 'architect/cloud',
       services: {
-        'architect/frontend:v1': {
+        app: {
           interfaces: {
-            app: {
-              host: 'app.localhost',
-              port: 80
-            }
+            main: 8080
+          },
+          environment: {
+            API_ADDR: '${ services.api.interfaces.main.url }',
+            EXTERNAL_API_ADDR: '${ services.api.interfaces.main.url }'
+          }
+        },
+        api: {
+          interfaces: {
+            main: 8080
           }
         }
-      }
-    };
-
-    mock_fs({
-      '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
-    });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
-    expect(graph.nodes).length(1);
-    expect((graph.nodes[0] as ServiceNode).is_external).true;
-    expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq(80);
-    expect(graph.edges).length(0);
-  });
-
-  it('external dependency in env config', async () => {
-    const frontend_config = {
-      name: 'architect/frontend',
-      interfaces: {
-        app: 8080
       },
-      dependencies: {
-        'architect/backend': 'v1'
-      }
+      interfaces: {}
     };
-
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
-    });
 
     const env_config = {
-      services: {
-        'architect/frontend:v1': {},
-        'architect/backend:v1': {
-          interfaces: {
+      components: {
+        'architect/cloud': {
+          extends: 'file:.',
+          services: {
             api: {
-              host: 'api.localhost',
-              port: 80
+              interfaces: {
+                main: {
+                  host: 'external.locahost',
+                  port: 80
+                }
+              }
             }
           }
         }
@@ -136,140 +126,40 @@ describe('external nodes', function () {
     };
 
     mock_fs({
-      '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
+      '/stack/architect.json': JSON.stringify(component_config),
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq(80);
-    expect(graph.edges).length(1);
-  });
+    const graph = await manager.getGraph();
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'architect/cloud/app:latest',
+      'architect/cloud/api:latest'
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]'
+    ])
+    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+    expect(app_node.is_external).to.be.false;
+    const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+    expect(api_node.is_external).to.be.true;
 
-  it('external dependency override', async () => {
-    const frontend_config = {
-      name: 'architect/frontend',
-      interfaces: {
-        app: 8080
-      },
-      dependencies: {
-        'architect/backend': 'v2'
-      }
-    };
-
-    const backend_config = {
-      name: 'architect/backend',
-      interfaces: {
-        api: 8080
-      }
-    };
-
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
-    });
-
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v2`, {
-      status: 200,
-      response: { tag: 'v2', config: backend_config, service: { url: 'architect/backend:v2' } }
-    });
-
-    const env_config = {
+    const template = await DockerCompose.generate(manager);
+    expect(template).to.be.deep.equal({
       services: {
-        'architect/frontend:v1': {},
-        'architect/backend:v2': {
-          interfaces: {
-            api: {
-              host: 'api.localhost',
-              port: 80
-            }
-          }
+        'architect.cloud.app.latest': {
+          depends_on: [],
+          environment: {
+            API_ADDR: 'https://external.locahost:80',
+            EXTERNAL_API_ADDR: 'https://external.locahost:80'
+          },
+          ports: [
+            '50000:8080'
+          ]
         }
-      }
-    };
-
-    mock_fs({
-      '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
-    });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[0].ref).eq('architect/frontend:v1')
-    expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].ref).eq('architect/backend:v2')
-    expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq(80);
-    expect(graph.edges).length(1);
-  });
-
-  it('external datastore', async () => {
-    const frontend_config = {
-      name: 'architect/frontend',
-      interfaces: {
-        app: 8080
       },
-      dependencies: {
-        'architect/backend': 'v1'
-      }
-    };
-
-    const backend_config = {
-      name: 'architect/backend',
-      interfaces: {
-        api: 8080
-      },
-      datastores: {
-        primary: {
-          image: 'postgres:11',
-          port: 5432
-        }
-      }
-    };
-
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
-    });
-
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
-      status: 200,
-      response: { tag: 'v1', config: backend_config, service: { url: 'architect/backend:v1' } }
-    });
-
-    const env_config = {
-      services: {
-        'architect/frontend:v1': {},
-        'architect/backend:v1': {
-          datastores: {
-            primary: {
-              host: 'db.localhost',
-              port: 80
-            }
-          }
-        }
-      }
-    };
-
-    mock_fs({
-      '/stack/src/frontend/architect.json': JSON.stringify(frontend_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
-    });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = manager.graph;
-    expect(graph.nodes).length(3);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[1]).instanceOf(ServiceNode);
-    expect((graph.nodes[2] as DatastoreNode).is_external).true;
-    expect(graph.nodes[2].interfaces._default.host).eq('db.localhost');
-    expect(graph.nodes[2].interfaces._default.port).eq(80);
-    expect(graph.edges).length(2);
+      'version': '3',
+      'volumes': {},
+    })
   });
 });

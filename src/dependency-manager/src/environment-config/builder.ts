@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import { ComponentConfigBuilder } from '../component-config/builder';
 import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
@@ -49,13 +50,12 @@ export class EnvironmentConfigBuilder {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
 
-      for (const service of Object.values(env_config.getServices())) {
-        const service_path = service.getDebugOptions()?.getPath();
-        if (service_path) {
-          // Load local service config
-          if (config_path) {
-            service.setDebugPath(path.resolve(path.dirname(config_path), service_path));
-          }
+      for (const component of Object.values(env_config.getComponents())) {
+        const component_extends = component.getExtends();
+        if (component_extends?.startsWith('file:')) {
+          // Load local component config
+          const component_path = component_extends.substr('file:'.length);
+          component.setExtends(`file:${path.resolve(path.dirname(config_path), component_path)}`);
         }
       }
 
@@ -66,7 +66,32 @@ export class EnvironmentConfigBuilder {
     }
   }
 
-  static buildFromJSON(obj: object): EnvironmentConfig {
+  static buildFromJSON(obj: any): EnvironmentConfig {
+    // Support old services block in environment config
+    if (obj.services) {
+      if (!obj.interfaces) obj.interfaces = {};
+      if (!obj.components) obj.components = {};
+      for (const [service_key, service] of Object.entries(obj.services) as any) {
+        if (service instanceof Object) {
+          // Support old subdomain syntax
+          if (service.interfaces) {
+            for (const [ik, iv] of Object.entries(service.interfaces) as any) {
+              if (iv instanceof Object && iv.subdomain) {
+                obj.interfaces[iv.subdomain] = `\${ components.${service_key}.interfaces.${ik}.url }`;
+                delete iv.subdomain;
+              }
+            }
+          }
+
+          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...service, name: service_key });
+          delete obj.components[service_key].services.service.environment;
+        } else {
+          obj.components[`${service_key}:${service}`] = {};
+        }
+      }
+      delete obj.services;
+    }
+
     return plainToClass(EnvironmentConfigV1, obj);
   }
 

@@ -65,7 +65,8 @@ export default class ServiceRegister extends Command {
 
     this.accounts = await this.get_accounts();
 
-    for (const node of dependency_manager.graph.nodes) {
+    const graph = await dependency_manager.getGraph();
+    for (const node of graph.nodes) {
       if (node.is_local && node instanceof ServiceNode) {
 
         let image;
@@ -93,7 +94,7 @@ export default class ServiceRegister extends Command {
             image = await buildImage(node, this.app.config.registry_host, flags.tag);
           } catch (err) {
             cli.action.stop(chalk.red(`Build failed`));
-            this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present at ${node.node_config.getPath()}`);
+            this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present`);
             throw new Error(err);
           }
 
@@ -125,10 +126,8 @@ export default class ServiceRegister extends Command {
         const service_dto = {
           tag: flags.tag,
           digest: digest,
-          config: {
-            ...classToPlain(node.service_config),
-            image: image_without_tag,
-          },
+          image: image_without_tag,
+          config: classToPlain(node.service_config),
         };
         cli.action.start(chalk.blue(`Registering service ${node.service_config.getName()}:${flags.tag} with Architect Cloud...`));
         await this.post_service_to_api(service_dto, selected_account.id);

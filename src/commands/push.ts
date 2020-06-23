@@ -53,7 +53,8 @@ export default class Push extends Command {
 
     this.accounts = await this.get_accounts();
 
-    for (const node of dependency_manager.graph.nodes) {
+    const graph = await dependency_manager.getGraph();
+    for (const node of graph.nodes) {
       if (node.is_local && node instanceof ServiceNode) {
         const tag = await buildImage(node, this.app.config.registry_host, flags.tag);
         cli.action.start(chalk.blue(`Pushing Docker image for ${tag}`));

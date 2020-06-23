@@ -17,16 +17,13 @@
   "homepage": "https://github.com/architect-team/architect-cli",
   "license": "GPL-3.0",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "class-transformer": "^0.2.3",
     "class-validator": "^0.12.2",
-    "dotenv-expand": "^5.1.0",
     "fs-extra": "^8.1.0",
     "js-yaml": "^3.13.1",
     "mustache": "^4.0.1",
-    "shell-quote": "^1.7.2",
-    "tslib": "^1.10.0",
-    "untildify": "^4.0.0"
+    "shell-quote": "^1.7.2"
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
