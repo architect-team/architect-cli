@@ -1,0 +1,5 @@
+interfaces:
+  example: ${ components['examples/multiple-interfaces'].interfaces.public.url }
+
+components:
+  examples/multiple-interfaces: file:./
