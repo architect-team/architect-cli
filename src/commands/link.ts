@@ -31,11 +31,8 @@ export default class Link extends Command {
     // Try to load the service from the path to ensure it exists and is valid
     try {
       const component_config = await ComponentConfigBuilder.buildFromPath(servicePath);
-      // TODO
-      /*
-      this.app.linkServicePath(config.getName(), servicePath);
-      this.log(`Successfully linked ${chalk.green(config.getName())} to local system at ${chalk.green(servicePath)}.`);
-      */
+      this.app.linkServicePath(component_config.getName(), servicePath);
+      this.log(`Successfully linked ${chalk.green(component_config.getName())} to local system at ${chalk.green(servicePath)}.`);
     } catch (err) {
       if (err.name === 'missing_config_file') {
         this.log(chalk.red(err.message));
