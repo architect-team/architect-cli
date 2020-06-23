@@ -63,7 +63,7 @@ export class ComponentConfigBuilder {
     }
 
     try {
-      // TODO: Figure out how to enforce services block for components
+      // TODO: Figure out how to enforce services block for components during registration
       const config = ComponentConfigBuilder.buildFromJSONCompat(js_obj);
       await config.validateOrReject({ groups: ['developer'] });
       return config;

@@ -64,11 +64,12 @@ describe('old external nodes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
 
-    expect(graph.nodes).length(1);
-    expect((graph.nodes[0] as ServiceNode).is_external).true;
-    expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq('80');
-    expect(graph.edges).length(0);
+    expect(graph.nodes).length(2);
+    const frontend_node = graph.getNodeByRef('architect/frontend/service:v1');
+    expect(frontend_node.is_external).true;
+    expect(frontend_node.interfaces.app.host).eq('app.localhost');
+    expect(frontend_node.interfaces.app.port).eq('80');
+    expect(graph.edges).length(1);
   });
 
   it('external service with dependency', async () => {
@@ -112,11 +113,12 @@ describe('old external nodes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(2);
-    expect((graph.nodes[0] as ServiceNode).is_external).true;
-    expect(graph.nodes[0].interfaces.app.host).eq('app.localhost');
-    expect(graph.nodes[0].interfaces.app.port).eq('80');
-    expect(graph.edges).length(0);
+    expect(graph.nodes).length(3);
+    const frontend_node = graph.getNodeByRef('architect/frontend/service:v1');
+    expect(frontend_node.is_external).true;
+    expect(frontend_node.interfaces.app.host).eq('app.localhost');
+    expect(frontend_node.interfaces.app.port).eq('80');
+    expect(graph.edges).length(1);
   });
 
   it('external dependency in env config', async () => {
@@ -140,7 +142,7 @@ describe('old external nodes', function () {
 
     moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
       status: 200,
-      response: { tag: 'v1', config: {}, service: { url: 'architect/backend:v1' } }
+      response: { tag: 'v1', config: { interfaces: { api: 8080 } }, service: { url: 'architect/backend:v1' } }
     });
 
     const env_config = {
@@ -164,12 +166,12 @@ describe('old external nodes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq('80');
-    expect(graph.edges).length(1);
+    expect(graph.nodes).length(4);
+    const backend_node = graph.getNodeByRef('architect/backend/service:v1');
+    expect(backend_node.is_external).true;
+    expect(backend_node.interfaces.api.host).eq('api.localhost');
+    expect(backend_node.interfaces.api.port).eq('80');
+    expect(graph.edges).length(3);
   });
 
   it('external dependency override', async () => {
@@ -221,13 +223,13 @@ describe('old external nodes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(2);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect(graph.nodes[0].ref).eq('architect/frontend/service:v1')
-    expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].ref).eq('architect/backend/service:v2')
-    expect(graph.nodes[1].interfaces.api.host).eq('api.localhost');
-    expect(graph.nodes[1].interfaces.api.port).eq('80');
+    expect(graph.nodes).length(4);
+    const frontend_node = graph.getNodeByRef('architect/frontend/service:v1');
+    expect(frontend_node).instanceOf(ServiceNode);
+    const backend_node = graph.getNodeByRef('architect/backend/service:v2');
+    expect(backend_node.is_external).true;
+    expect(backend_node.interfaces.api.host).eq('api.localhost');
+    expect(backend_node.interfaces.api.port).eq('80');
   });
 
   it('external datastore', async () => {
@@ -285,11 +287,14 @@ describe('old external nodes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes).length(3);
-    expect(graph.nodes[0]).instanceOf(ServiceNode);
-    expect((graph.nodes[1] as ServiceNode).is_external).true;
-    expect(graph.nodes[1].interfaces.main.host).eq('db.localhost');
-    expect(graph.nodes[1].interfaces.main.port).eq('80');
-    expect(graph.nodes[2]).instanceOf(ServiceNode);
+    expect(graph.nodes).length(5);
+    const frontend_node = graph.getNodeByRef('architect/frontend/service:v1');
+    expect(frontend_node).instanceOf(ServiceNode);
+    const backend_db_node = graph.getNodeByRef('architect/backend/datastore-primary:v1');
+    expect(backend_db_node.is_external).true;
+    expect(backend_db_node.interfaces.main.host).eq('db.localhost');
+    expect(backend_db_node.interfaces.main.port).eq('80');
+    const backend_node = graph.getNodeByRef('architect/backend/service:v1');
+    expect(backend_node).instanceOf(ServiceNode);
   });
 });

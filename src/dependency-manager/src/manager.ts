@@ -90,7 +90,11 @@ export default abstract class DependencyManager {
 
     const component = await this.loadComponentConfigWrapper(component_config);
     const load_dependencies = !(component.getRef() in this._component_map); // Detect circular dependencies
-    this._component_map[component.getRef()] = component;
+    let component_string = serialize(component);
+    component_string = replaceBrackets(component_string);
+    component_string = prefixExpressions(component_string, component.getNormalizedRef());
+    const prefixed_component = deserialize(component.getClass(), component_string) as ComponentConfig;
+    this._component_map[component.getRef()] = prefixed_component;
 
     // Create interfaces node for component
     if (Object.keys(component.getInterfaces()).length > 0) {
@@ -100,7 +104,7 @@ export default abstract class DependencyManager {
 
     const ref_map: Dictionary<string> = {};
     // Load component services
-    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+    for (const [service_name, service_config] of Object.entries(prefixed_component.getServices())) {
       // TODO: Kill service_config on node?
       const node_config = service_config.copy();
       const node = new ServiceNode({
@@ -218,10 +222,11 @@ export default abstract class DependencyManager {
     // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
     const environment_components: Dictionary<ComponentConfig> = {};
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
+    const normalized_component_refs = [];
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       environment_components[component_name] = component_map[component.getRef()];
-
       component_interfaces_ref_map[environment_components[component_name].getInterfacesRef()] = environment_components[component_name];
+      normalized_component_refs.push(`${component.getNormalizedRef()}.`);
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
@@ -245,7 +250,7 @@ export default abstract class DependencyManager {
     }
 
     // TODO: Include in interpolation for components so that we don't have to ignore services
-    const interpolated_environment_string = interpolateString(serialize(environment), enriched_environment.getContext(), ['services.']);
+    const interpolated_environment_string = interpolateString(serialize(environment), enriched_environment.getContext(), normalized_component_refs);
 
     return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
   }
@@ -284,17 +289,12 @@ export default abstract class DependencyManager {
   async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
-    for (const component of Object.values(component_map)) {
-      let component_string = serialize(component);
-      component_string = replaceBrackets(component_string);
-      component_string = prefixExpressions(component_string, component.getNormalizedRef());
-
-      let prefixed_component = deserialize(component.getClass(), component_string);
+    for (let component of Object.values(component_map)) {
       const environment_component = interpolated_environment.getComponents()[component.getRef()] || interpolated_environment.getComponents()[component.getName()];
       if (environment_component) {
-        prefixed_component = prefixed_component.merge(environment_component);
+        component = component.merge(environment_component);
       }
-      prefixed_component_map[component.getRef()] = prefixed_component;
+      prefixed_component_map[component.getRef()] = component;
     }
 
     const context = this.buildComponentsContext(graph, prefixed_component_map);

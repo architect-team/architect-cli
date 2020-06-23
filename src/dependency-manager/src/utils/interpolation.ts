@@ -51,7 +51,7 @@ Mustache.tags = ['${', '}']; // sets custom delimiters
 
 export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = []): string => {
   const writer = new Writer();
-  let errors: any = [];
+  const errors: Set<string> = new Set();
 
   const render = writer.render;
   writer.render = function (template, view, partials) {
@@ -63,15 +63,15 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => name.startsWith(k));
         if (!ignored) {
-          errors.push(name);
+          errors.add(name);
         }
       }
       return value;
     };
 
     const result = render.bind(this)(template, view, partials);
-    if (errors.length > 0) {
-      throw new Error("Unknown symbols: " + errors.join(", "));
+    if (errors.size > 0) {
+      throw new Error('Unknown symbols: ' + [...errors].join(', '));
     }
     return result;
   };
@@ -84,11 +84,6 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
     // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;
     depth += 1;
-  }
-
-  if (errors.length) {
-    errors = [];
-    throw new Error(errors);
   }
 
   return param_value;

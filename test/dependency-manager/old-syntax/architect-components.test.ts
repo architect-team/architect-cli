@@ -173,7 +173,7 @@ describe('old architect components', () => {
     });
 
     expect(template.services['gateway']).to.be.deep.equal({
-      "image": "jwilder/nginx-proxy:latest",
+      "image": "architectio/nginx-proxy:latest",
       "restart": "always",
       "ports": [
         "80:80"

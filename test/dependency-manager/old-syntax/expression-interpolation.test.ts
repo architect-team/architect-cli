@@ -27,7 +27,7 @@ describe('old expression-interpolation', function () {
     moxios.uninstall();
   });
 
-  it('loadParameters-with-expressions', async () => {
+  it('loadParameters with expressions', async () => {
     const frontend_config = {
       name: 'architect/cloud',
       interfaces: {
@@ -37,14 +37,14 @@ describe('old expression-interpolation', function () {
         'architect/cloud-api': 'v1'
       },
       environment: {
-        APP_PORT: "${ parameters.APP_PORT }",
-        DEP_DB_USER: "${ parameters.DEP_DB_USER }",
-        lower_dep_ADMIN_PORT: "${ parameters.lower_dep_ADMIN_PORT }",
+        APP_PORT: '${ parameters.APP_PORT }',
+        DEP_DB_USER: '${ parameters.DEP_DB_USER }',
+        lower_dep_ADMIN_PORT: '${ parameters.lower_dep_ADMIN_PORT }',
       },
       parameters: {
         APP_PORT: 8080,
-        DEP_DB_USER: "${ dependencies['architect/cloud-api'].parameters.DB_USER }",
-        lower_dep_ADMIN_PORT: "${ dependencies['architect/cloud-api'].interfaces.admin.port }",
+        DEP_DB_USER: '${ dependencies["architect/cloud-api"].parameters.DB_USER }',
+        lower_dep_ADMIN_PORT: '${ dependencies[\'architect/cloud-api\'].interfaces.admin.port }',
       }
     };
 
@@ -74,7 +74,7 @@ describe('old expression-interpolation', function () {
         primary: 8082,
       },
       environment: {
-        DB_USER: "${ parameters.DB_USER }",
+        DB_USER: '${ parameters.DB_USER }',
       },
       parameters: {
         DB_USER: '${ dependencies.primary.parameters.DB_USER }',
@@ -102,13 +102,11 @@ describe('old expression-interpolation', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
-    expect(graph.nodes[0].ref).eq('architect/cloud/service:v1');
-    const frontend_node = graph.nodes[0] as ServiceNode;
-    const backend_node = graph.nodes[1] as ServiceNode;
+    const frontend_node = graph.getNodeByRef('architect/cloud/service:v1') as ServiceNode;
     expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);
     expect(frontend_node.interfaces.app.port).eq('8080');
     expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq('8080');
-    //expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
+    expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
   });
 
@@ -121,8 +119,8 @@ describe('old expression-interpolation', function () {
       dependencies: {
       },
       parameters: {
-        PARAM_A: "${ parameters.PARAM_B }",
-        PARAM_B: "${ parameters.PARAM_A }",
+        PARAM_A: '${ parameters.PARAM_B }',
+        PARAM_B: '${ parameters.PARAM_A }',
       }
     };
 
