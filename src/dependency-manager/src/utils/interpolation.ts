@@ -1,11 +1,12 @@
 import Mustache, { Context, Writer } from 'mustache';
 
-export class InterpolationError extends Error {
+export class InterpolationErrors extends Error {
   errors: string[];
   constructor(errors: string[]) {
-    super('Interpolation error');
-    this.name = 'InterpolationError';
+    super();
+    this.name = 'InterpolationErrors';
     this.errors = errors;
+    this.message = JSON.stringify(errors, null, 2);
   }
 }
 
@@ -80,7 +81,22 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
 
     const result = render.bind(this)(template, view, partials);
     if (errors.size > 0) {
-      throw new InterpolationError([...errors]);
+      const interpolation_errors: string[] = [];
+      for (const error of errors) {
+        // Dedupe host/port/protocol into url
+        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol')) {
+          const keys = error.split('.');
+          const key = keys.slice(0, keys.length - 1).join('.');
+          if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {
+            interpolation_errors.push(`${key}.url`);
+          } else {
+            interpolation_errors.push(error);
+          }
+        } else {
+          interpolation_errors.push(error);
+        }
+      }
+      throw new InterpolationErrors(interpolation_errors);
     }
     return result;
   };

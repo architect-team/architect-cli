@@ -1,12 +1,14 @@
 /**
  * @format
  */
+import { expect } from '@oclif/test';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import PortUtil from '../../src/common/utils/port';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
+import { ValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation spec v1', () => {
   beforeEach(async () => {
@@ -65,7 +67,15 @@ describe('validation spec v1', () => {
       } catch (err) {
         validation_err = err;
       }
-      // TODO: expect(validation_err).eq({})
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "_interpolation.services.fake.interfaces.main.url": {
+          "interpolation": "${ services.fake.interfaces.main.url } is invalid",
+          "value": "services.fake.interfaces.main.url",
+          "line": 8,
+          "column": 18
+        }
+      })
     });
   })
 });

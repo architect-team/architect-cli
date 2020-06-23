@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { Dictionary } from '../utils/dictionary';
-import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { ComponentConfig } from './base';
 import { ComponentConfigV1 } from './v1';
 
@@ -69,7 +69,7 @@ export class ComponentConfigBuilder {
       return config;
     } catch (err) {
       console.log('Invalid component config:', input);
-      throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
+      throw new ValidationErrors(flattenValidationErrorsWithLineNumbers(err, file_contents));
     }
   }
 

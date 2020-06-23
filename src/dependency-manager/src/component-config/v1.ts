@@ -5,7 +5,7 @@ import { ServiceInterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, transformParameters, transformServices } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { interpolateString, InterpolationError } from '../utils/interpolation';
+import { interpolateString, InterpolationErrors } from '../utils/interpolation';
 import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary } from '../utils/validation';
 import { ComponentConfig } from './base';
 
@@ -231,7 +231,7 @@ export class ComponentConfigV1 extends ComponentConfig {
       try {
         interpolateString(serialize(this), this.getContext(), ['dependencies.']);
       } catch (err) {
-        if (err instanceof InterpolationError) {
+        if (err instanceof InterpolationErrors) {
           const validation_error = new ValidationError();
           validation_error.property = '_interpolation';
           validation_error.children = [];
