@@ -249,7 +249,8 @@ describe('interfaces spec v1', () => {
         DB_PROTOCOL: 'postgres',
         DB_URL: 'postgres://test.leaf.db.latest:5432',
         VIRTUAL_HOST: 'public.localhost',
-        VIRTUAL_PORT: '50001'
+        VIRTUAL_PORT: '8080',
+        VIRTUAL_PROTOCOL: 'http'
       },
       image: 'api:latest',
       ports: ['50001:8080'],
