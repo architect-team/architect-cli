@@ -152,11 +152,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
       if (edge instanceof IngressEdge) {
         const service_to = compose.services[node_to.normalized_ref];
-        const node_to_port = node_to.interfaces[node_to_interface_name].port;
+        const node_to_interface = node_to.interfaces[node_to_interface_name];
         service_to.environment = service_to.environment || {};
         service_to.environment.VIRTUAL_HOST = `${interface_name}.localhost`;
-        service_to.environment.VIRTUAL_PORT = node_to_port;
-        service_to.environment.VIRTUAL_PROTOCOL = 'http';
+        service_to.environment.VIRTUAL_PORT = node_to_interface.port;
+        service_to.environment.VIRTUAL_PROTOCOL = node_to_interface.protocol || 'http';
         service_to.restart = 'always';
 
         // Flip for depends_on
