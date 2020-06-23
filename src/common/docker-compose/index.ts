@@ -141,7 +141,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     if (node_from instanceof InterfacesNode) continue;
 
     for (const interface_name of Object.keys(edge.interfaces_map)) {
-      const node_to = graph.followEdge(edge, interface_name);
+      const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
 
       if (node_to.is_external) {
         continue;
@@ -152,9 +152,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
       if (edge instanceof IngressEdge) {
         const service_to = compose.services[node_to.normalized_ref];
+        const node_to_interface = node_to.interfaces[node_to_interface_name];
         service_to.environment = service_to.environment || {};
         service_to.environment.VIRTUAL_HOST = `${interface_name}.localhost`;
-        service_to.environment.VIRTUAL_PORT = service_to.ports[0] && service_to.ports[0].split(':')[0];
+        service_to.environment.VIRTUAL_PORT = node_to_interface.port;
+        service_to.environment.VIRTUAL_PROTOCOL = node_to_interface.protocol || 'http';
         service_to.restart = 'always';
 
         // Flip for depends_on

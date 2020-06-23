@@ -147,7 +147,8 @@ describe('interpolation spec v1', () => {
       'depends_on': ['gateway'],
       'environment': {
         'VIRTUAL_HOST': 'public.localhost',
-        'VIRTUAL_PORT': '50001'
+        'VIRTUAL_PORT': '8080',
+        'VIRTUAL_PROTOCOL': 'http'
       },
       'ports': [
         '50001:8080'
