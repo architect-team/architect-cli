@@ -13,15 +13,17 @@ export default class AppService {
   auth: AuthClient;
   linkedServices: Dictionary<string> = {};
   _api: AxiosInstance;
+  version: string;
 
-  static async create(config_dir: string): Promise<AppService> {
-    const service = new AppService(config_dir);
+  static async create(config_dir: string, version: string): Promise<AppService> {
+    const service = new AppService(config_dir, version);
     await service.auth.init();
     return service;
   }
 
-  constructor(config_dir: string) {
+  constructor(config_dir: string, version: string) {
     this.config = new AppConfig(config_dir);
+    this.version = version;
     if (config_dir) {
       const config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
       if (fs.existsSync(config_file)) {
@@ -91,6 +93,7 @@ export default class AppService {
       const { token_type, access_token } = this.auth.auth_results;
       this._api.defaults.headers = {
         Authorization: `${token_type} ${access_token}`,
+        'Cli-Version': this.version,
       };
 
       const unauthorized_interceptor = this._api.interceptors.response.use(
