@@ -146,10 +146,11 @@ export default class DependencyGraph {
     return Array.from(nodes.values());
   }
 
-  followEdge(edge: DependencyEdge, interface_name: string): DependencyNode {
+  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, string] {
     const child_interface = edge.interfaces_map[interface_name];
     const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
     const to = child_edge ? child_edge.to : edge.to;
-    return this.getNodeByRef(to);
+    const to_interface = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
+    return [this.getNodeByRef(to), to_interface];
   }
 }
