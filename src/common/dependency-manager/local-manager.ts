@@ -3,11 +3,10 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import DependencyGraph from '../../dependency-manager/src/graph';
-import { ServiceConfigV1 } from '../../dependency-manager/src/service-config/v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 
@@ -29,16 +28,12 @@ export default class LocalDependencyManager extends DependencyManager {
 
   static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
-    await dependency_manager.init();
-    return dependency_manager;
-  }
-
-  async init() {
-    const env_config = this.config_path
-      ? await EnvironmentConfigBuilder.buildFromPath(this.config_path)
+    const env_config = dependency_manager.config_path
+      ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
 
-    await super.init(env_config);
+    await dependency_manager.init(env_config);
+    return dependency_manager;
   }
 
   /**
@@ -48,15 +43,17 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort(starting_port);
   }
 
-  async loadLocalService(service_path: string): Promise<ServiceNode> {
-    // TODO: loadLocalService
-    const node = new ServiceNode({
-      ref: 'TODO',
-      service_config: new ServiceConfigV1(),
-      node_config: new ServiceConfigV1(),
+  async loadLocalService(service_path: string): Promise<void> {
+    this.config_path = service_path;
+
+    // TODO: Don't load dependencies?
+    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
+    const env_config = EnvironmentConfigBuilder.buildFromJSON({
+      components: {
+        [component_config.getName()]: `file:${service_path}`,
+      },
     });
-    // this.graph.addNode(node);
-    return node;
+    await this.init(env_config);
   }
 
   async loadComponentConfig(initial_config: ComponentConfig) {
@@ -65,7 +62,8 @@ export default class LocalDependencyManager extends DependencyManager {
 
     if (component_extends && component_extends.startsWith('file:')) {
       return ComponentConfigBuilder.buildFromPath(component_extends.substr('file:'.length));
-    } else if (this.linked_services.hasOwnProperty(service_name)) {
+    } else if (service_name in this.linked_services) {
+      initial_config.setExtends(`file:${this.linked_services[service_name]}`);
       // Load locally linked service config
       console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
       return ComponentConfigBuilder.buildFromPath(this.linked_services[service_name]);

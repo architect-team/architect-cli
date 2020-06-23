@@ -7,7 +7,7 @@ export interface ServiceNodeOptions {
   ref: string;
   service_config: ServiceConfig;
   node_config: ServiceConfig;
-  local?: boolean;
+  local_path?: string;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -37,7 +37,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   node_config!: ServiceConfig;
 
   ref!: string;
-  local = false;
+  local_path!: string;
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
@@ -45,7 +45,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       this.ref = options.ref;
       this.service_config = options.service_config;
       this.node_config = options.node_config;
-      this.local = options.local || false;
+      this.local_path = options.local_path || '';
     }
   }
 
@@ -54,6 +54,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get is_local() {
-    return this.local;
+    return this.local_path !== '';
   }
 }

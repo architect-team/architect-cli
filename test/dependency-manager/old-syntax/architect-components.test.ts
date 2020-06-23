@@ -194,7 +194,7 @@ describe('old architect components', () => {
 
     expect(template.services['architect.cloud.service.latest']).to.be.deep.equal({
       "ports": [
-        "50003:8080"
+        "50004:8080"
       ],
       "depends_on": [
         "gateway"
@@ -207,7 +207,7 @@ describe('old architect components', () => {
         "HOST": "architect.cloud.service.latest",
         "PORT": "8080",
         "VIRTUAL_HOST": "app.localhost",
-        "VIRTUAL_PORT": "50003"
+        "VIRTUAL_PORT": "50004"
       },
       "command": [
         "npm",
@@ -228,7 +228,7 @@ describe('old architect components', () => {
 
     expect(template.services['concourse.web.service.latest']).to.be.deep.equal({
       "ports": [
-        "50004:8080"
+        "50003:8080"
       ],
       "depends_on": [
         "gateway"
@@ -252,7 +252,7 @@ describe('old architect components', () => {
         "HOST": "concourse.web.service.latest",
         "PORT": "8080",
         "VIRTUAL_HOST": "ci.localhost",
-        "VIRTUAL_PORT": "50004"
+        "VIRTUAL_PORT": "50003"
       },
       "image": "concourse/concourse:6.1.0",
       "command": [

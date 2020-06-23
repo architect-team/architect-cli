@@ -223,7 +223,7 @@ describe('interfaces spec v1', () => {
     ])
 
     expect(template.services['test.branch.api.latest']).to.be.deep.equal({
-      depends_on: [],
+      depends_on: ['test.leaf.api.latest'],
       environment: {
         LEAF_HOST: 'public.localhost',
         LEAF_PORT: '80',

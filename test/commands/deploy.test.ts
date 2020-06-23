@@ -79,7 +79,7 @@ describe('deploy', () => {
       expect(expected.ports).to.have.members(input.ports);
       expect(expected.image).to.equal(input.image);
       expect(expected.depends_on).to.have.members(input.depends_on);
-      expect(expected.build).to.eql(input.build);
+      expect(expected.build).to.deep.eq(input.build);
       expect((expected.command || []).length).to.equal((input.command || []).length);
       if (expected.command && input.command) {
         for (const index of expected.command.keys()) {
@@ -89,7 +89,7 @@ describe('deploy', () => {
       expect(input.environment).not.to.be.undefined;
 
       // Test env variables
-      expect(Object.keys(input.environment || {}).length).eq(Object.keys(expected.environment || {}).length);
+      expect(Object.keys(input.environment || {})).has.members(Object.keys(expected.environment || {}));
       for (const [key, value] of Object.entries(input.environment || {})) {
         expect(value).to.equal(expected.environment![key]);
       }

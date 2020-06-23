@@ -112,12 +112,12 @@ export class ComponentConfigBuilder {
     if (config.debug?.path) {
       ext = `file:${config.debug?.path}`;
       delete config.debug.path;
+    }
 
-      if (!config.image && !config.build) {
-        config.build = {
-          context: '.',
-        };
-      }
+    if (!config.image && !config.build) {
+      config.build = {
+        context: '.',
+      };
     }
 
     const services: any = {};

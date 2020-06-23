@@ -82,9 +82,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
     if (node.is_local && node instanceof ServiceNode) {
       const environment_component = environment.getComponentByServiceRef(node.ref);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const node_path = environment_component?.getExtends()?.startsWith('file:') ? environment_component?.getExtends()!.substr('file:'.length) : '';
-      const component_path = fs.lstatSync(node_path).isFile() ? path.dirname(node_path) : node_path;
+      const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
       if (!node.node_config.getImage()) {
         const build = node.node_config.getBuild();
         const args = [];

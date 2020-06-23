@@ -20,11 +20,11 @@ export default abstract class DependencyManager {
   gateway_port!: number;
   environment!: EnvironmentConfig;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
-  protected _component_map: Dictionary<ComponentConfig>;
+  protected __graph_cache: Dictionary<DependencyGraph | undefined>;
 
   protected constructor() {
     this.__component_config_cache = {};
-    this._component_map = {};
+    this.__graph_cache = {};
   }
 
   async init(environment_config?: EnvironmentConfig): Promise<void> {
@@ -33,11 +33,17 @@ export default abstract class DependencyManager {
   }
 
   async getGraph(): Promise<DependencyGraph> {
-    const graph = new DependencyGraph();
-    const component_map = await this.loadComponents(graph);
-    this.addIngressEdges(graph);
-    const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
-    await this.interpolateComponents(graph, interpolated_environment, component_map);
+    const cache_key = serialize(this.environment);
+    let graph = this.__graph_cache[cache_key];
+    if (!graph) {
+      graph = new DependencyGraph();
+      const component_map = await this.loadComponents(graph);
+      this.addIngressEdges(graph);
+      const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
+      await this.interpolateComponents(graph, interpolated_environment, component_map);
+
+      this.__graph_cache[cache_key] = graph;
+    }
     return graph;
   }
 
@@ -70,15 +76,15 @@ export default abstract class DependencyManager {
   }
 
   async loadComponents(graph: DependencyGraph): Promise<Dictionary<ComponentConfig>> {
+    const component_map: Dictionary<ComponentConfig> = {};
     const components = Object.values(this.environment.getComponents());
     for (const component of components) {
-      await this.loadComponent(graph, component);
+      await this.loadComponent(graph, component, component_map);
     }
-    // TODO: Remove component map and use an aggregator
-    return this._component_map;
+    return component_map;
   }
 
-  async loadComponent(graph: DependencyGraph, component_config: ComponentConfig) {
+  async loadComponent(graph: DependencyGraph, component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>) {
     const environment = this.environment;
 
     const ref = component_config.getRef();
@@ -89,12 +95,12 @@ export default abstract class DependencyManager {
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
-    const load_dependencies = !(component.getRef() in this._component_map); // Detect circular dependencies
+    const load_dependencies = !(component.getRef() in component_map); // Detect circular dependencies
     let component_string = serialize(component);
     component_string = replaceBrackets(component_string);
     component_string = prefixExpressions(component_string, component.getNormalizedRef());
     const prefixed_component = deserialize(component.getClass(), component_string) as ComponentConfig;
-    this._component_map[component.getRef()] = prefixed_component;
+    component_map[component.getRef()] = prefixed_component;
 
     // Create interfaces node for component
     if (Object.keys(component.getInterfaces()).length > 0) {
@@ -111,7 +117,7 @@ export default abstract class DependencyManager {
         ref: component.getServiceRef(node_config.getName()),
         service_config,
         node_config,
-        local: component.getExtends()?.startsWith('file:'),
+        local_path: component.getExtends()?.startsWith('file:') ? component.getExtends()?.substr('file:'.length) : undefined,
       });
       graph.addNode(node);
 
@@ -124,7 +130,7 @@ export default abstract class DependencyManager {
         const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
         const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
         const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
-        await this.loadComponent(graph, dep_component);
+        await this.loadComponent(graph, dep_component, component_map);
       }
     }
 
@@ -162,7 +168,7 @@ export default abstract class DependencyManager {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
 
-        const dep_component = this._component_map[`${dep_name}:${dep_tag}`];
+        const dep_component = component_map[`${dep_name}:${dep_tag}`];
         const to = dep_component.getInterfacesRef();
         if (!graph.nodes_map.has(to)) continue;
 
