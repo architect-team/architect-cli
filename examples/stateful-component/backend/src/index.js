@@ -65,7 +65,7 @@ const start = async () => {
     res.status(200).json([]);
   });
 
-  app.listen(8080, () => {
+  return app.listen(8080, () => {
     logger.info(`> Listening on port: 8080`);
   });
 };

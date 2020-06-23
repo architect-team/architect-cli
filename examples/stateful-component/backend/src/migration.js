@@ -11,13 +11,13 @@ exports.runMigration = async (sequelize, logger) => {
     }
   } catch (err) {
     logger.error(`Sequelize init failed\n${err}`);
-    throw error;
+    throw err;
   }
 
   try {
     await sequelize.sync();
   } catch (error) {
-    logger.error(`Sequelize sync failed\n${err}`);
+    logger.error(`Sequelize sync failed\n${error}`);
     throw error;
   }
 };

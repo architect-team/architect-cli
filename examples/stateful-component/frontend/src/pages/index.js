@@ -53,7 +53,6 @@ const Home = () => {
 
   const signIn = (event) => {
     event.preventDefault();
-    console.log('/api/sign-ins');
     fetch('/api/sign-ins', {
       method: 'POST',
       headers: {
