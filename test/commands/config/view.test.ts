@@ -39,7 +39,7 @@ describe('config:view', () => {
     fs.writeJSONSync(tmp_config_file, config);
 
     // Watch for log results
-    const app_config_spy = sinon.fake.resolves(new AppService(tmp_config_dir));
+    const app_config_spy = sinon.fake.resolves(new AppService(tmp_config_dir, '0.0.1'));
     const log_spy = sinon.fake.returns(null);
     sinon.replace(AppService, 'create', app_config_spy);
     sinon.replace(ConfigView.prototype, 'log', log_spy);
