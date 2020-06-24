@@ -87,11 +87,23 @@ describe('volumes spec v1', () => {
     expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
-  it('multiple volumes', async () => {
+  it('multiple volumes and services', async () => {
     const component_config = `
       name: test/component
       services:
         api:
+          interfaces:
+          volumes:
+            data:
+              mount_path: /data
+            data2:
+              mount_path: /data2
+          debug:
+            volumes:
+              data3:
+                mount_path: /data3
+                host_path: ./data3
+        app:
           interfaces:
           volumes:
             data:
@@ -117,6 +129,7 @@ describe('volumes spec v1', () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
     expect(template.services['test.component.api.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services['test.component.app.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
   });
 
   it('override host_path for volume in env', async () => {
