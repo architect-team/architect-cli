@@ -169,7 +169,7 @@ const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Diction
 
 export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
-    return undefined;
+    return {};
   }
 
   const output: Dictionary<InterfaceSpecV1> = {};
@@ -361,6 +361,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.language;
   }
 
+  getDescription() {
+    return this.description || '';
+  }
+
   getKeywords() {
     return this.keywords || [];
   }
@@ -390,6 +394,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getBuild() {
+    if (!this.build && !this.image) {
+      this.build = new BuildSpecV1();
+      this.build.context = '.';
+    }
     return this.build || {};
   }
 }

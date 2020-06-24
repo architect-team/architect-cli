@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { ComponentConfigBuilder } from '../component-config/builder';
-import { flattenValidationErrorsWithLineNumbers } from '../utils/errors';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -61,14 +61,13 @@ export class EnvironmentConfigBuilder {
 
       return env_config;
     } catch (err) {
-      console.log('Invalid environment config:', config_path);
-      throw new Error(JSON.stringify(flattenValidationErrorsWithLineNumbers(err, file_contents), null, 2));
+      throw new ValidationErrors(config_path, flattenValidationErrorsWithLineNumbers(err, file_contents));
     }
   }
 
   static buildFromJSON(obj: any): EnvironmentConfig {
     // Support old services block in environment config
-    if (obj.services) {
+    if (obj.services && !obj.components) {
       if (!obj.interfaces) obj.interfaces = {};
       if (!obj.components) obj.components = {};
       for (const [service_key, service] of Object.entries(obj.services) as any) {

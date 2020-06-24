@@ -5,8 +5,7 @@ import { ServiceInterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, transformParameters, transformServices } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { interpolateString } from '../utils/interpolation';
-import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary } from '../utils/validation';
+import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig } from './base';
 
 export class ParameterDefinitionSpecV1 extends BaseSpec {
@@ -38,7 +37,7 @@ export interface ComponentContextV1 {
 
 export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
-    return undefined;
+    return {};
   }
 
   // TODO: Be more flexible than just url ref
@@ -95,6 +94,14 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  description?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ each: true, always: true })
+  keywords?: string[];
+
   @Transform(value => (transformParameters(value)))
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
@@ -135,6 +142,14 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   setExtends(ext: string) {
     this.extends = ext;
+  }
+
+  getDescription() {
+    return this.description || '';
+  }
+
+  getKeywords() {
+    return this.keywords || [];
   }
 
   getParameters() {
@@ -211,8 +226,8 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') });
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
-    if ('developer' in (options.groups || [])) {
-      interpolateString(serialize(this), this.getContext(), ['dependencies.', 'interfaces.']);
+    if ((options.groups || []).includes('developer')) {
+      errors = errors.concat(validateInterpolation(serialize(this), this.getContext(), ['dependencies.']));
     }
     return errors;
   }

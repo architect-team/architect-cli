@@ -2,6 +2,7 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
+import path from 'path';
 import sinon from 'sinon';
 import Build from '../../src/commands/build';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
@@ -113,7 +114,10 @@ describe('interpolation spec v1', () => {
           'environment': {},
           'ports': [
             '50000:8080'
-          ]
+          ],
+          'build': {
+            'context': path.resolve('/stack')
+          }
         },
         'concourse.worker.worker.latest': {
           'depends_on': [],
@@ -122,7 +126,10 @@ describe('interpolation spec v1', () => {
             'SINGLE_QUOTE': 'concourse.web.web.latest:2222',
             'DOUBLE_QUOTE': 'concourse.web.web.latest:2222',
           },
-          'ports': []
+          'ports': [],
+          'build': {
+            'context': path.resolve('/stack')
+          }
         },
       },
       'version': '3',
@@ -153,7 +160,10 @@ describe('interpolation spec v1', () => {
       'ports': [
         '50001:8080'
       ],
-      'restart': 'always'
+      'restart': 'always',
+      'build': {
+        'context': path.resolve('/stack')
+      }
     })
     expect(public_template.services['concourse.worker.worker.latest']).to.be.deep.equal({
       'depends_on': [],
@@ -162,7 +172,10 @@ describe('interpolation spec v1', () => {
         'SINGLE_QUOTE': 'public.localhost:2222',
         'DOUBLE_QUOTE': 'public.localhost:2222',
       },
-      'ports': []
+      'ports': [],
+      'build': {
+        'context': path.resolve('/stack')
+      }
     })
   });
 
@@ -259,7 +272,10 @@ describe('interpolation spec v1', () => {
           },
           'ports': [
             '50000:8080'
-          ]
+          ],
+          'build': {
+            'context': path.resolve('/stack')
+          }
         },
       },
       'version': '3',

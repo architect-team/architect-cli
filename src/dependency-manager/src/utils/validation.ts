@@ -1,5 +1,6 @@
 import { matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from './base-spec';
+import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const IMAGE_REGEX = '[a-zA-Z0-9-_]+';
 export const IMAGE_NAME_REGEX = `^${IMAGE_REGEX}$`;
@@ -86,5 +87,31 @@ export const validateDictionary = async <T extends BaseSpec>(
     errors.push(error);
   }
 
+  return errors;
+};
+
+export const validateInterpolation = (param_value: string, context: any, ignore_keys: string[] = []): ValidationError[] => {
+  const errors = [];
+  try {
+    interpolateString(param_value, context, ignore_keys, 1);
+  } catch (err) {
+    if (err instanceof InterpolationErrors) {
+      const validation_error = new ValidationError();
+      validation_error.property = 'interpolation';
+      validation_error.children = [];
+      for (const e of err.errors) {
+        const interpolation_error = new ValidationError();
+        interpolation_error.property = e;
+        interpolation_error.value = e;
+        interpolation_error.constraints = {
+          'interpolation': `\${ ${e} } is invalid`,
+        };
+        validation_error.children.push(interpolation_error);
+      }
+      errors.push(validation_error);
+    } else {
+      throw err;
+    }
+  }
   return errors;
 };

@@ -8,6 +8,7 @@ import { ComponentConfig } from '../../dependency-manager/src/component-config/b
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -99,6 +100,26 @@ export default class LocalDependencyManager extends DependencyManager {
     } else {
       return any_or_path;
     }
+  }
+
+  validateComponent(component: ComponentConfig, context: object) {
+    const errors = super.validateComponent(component, context);
+    const component_extends = component.getExtends();
+    if (component_extends?.startsWith('file:') && errors.length) {
+      const component_path = component_extends.substr('file:'.length);
+      const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(component_path);
+      throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
+    }
+    return errors;
+  }
+
+  validateEnvironment(environment: EnvironmentConfig, context: object) {
+    const errors = super.validateEnvironment(environment, context);
+    if (this.config_path && errors.length) {
+      const file_contents = fs.readFileSync(this.config_path);
+      throw new ValidationErrors(this.config_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
+    }
+    return errors;
   }
 
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {

@@ -1,4 +1,3 @@
-import { serialize } from 'class-transformer';
 import { Transform } from 'class-transformer/decorators';
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '..';
@@ -7,7 +6,6 @@ import { ComponentConfigBuilder } from '../component-config/builder';
 import { ComponentContextV1, ParameterDefinitionSpecV1, transformInterfaces } from '../component-config/v1';
 import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
-import { interpolateString } from '../utils/interpolation';
 import { validateDictionary } from '../utils/validation';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
@@ -21,7 +19,9 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
   }
 
   const output: Dictionary<ComponentConfig> = {};
-  for (const [key, value] of Object.entries(input)) {
+  // eslint-disable-next-line prefer-const
+  for (let [key, value] of Object.entries(input)) {
+    if (!value) value = {};
     if (value instanceof Object) {
       output[key] = ComponentConfigBuilder.buildFromJSON({ extends: key, ...value, name: key });
     } else {
@@ -103,9 +103,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     let errors = await super.validate(options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'components', errors, undefined, options);
-    if ('operator' in (options.groups || [])) {
-      interpolateString(serialize(this), this.getContext(), ['vaults.', 'components.']);
-    }
     return errors;
   }
 }

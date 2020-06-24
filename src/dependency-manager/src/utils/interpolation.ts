@@ -1,5 +1,15 @@
 import Mustache, { Context, Writer } from 'mustache';
 
+export class InterpolationErrors extends Error {
+  errors: string[];
+  constructor(errors: string[]) {
+    super();
+    this.name = 'InterpolationErrors';
+    this.errors = errors;
+    this.message = JSON.stringify(errors, null, 2);
+  }
+}
+
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${ dependencies['architect/cloud'].services } -> ${ dependencies.architect/cloud.services }
@@ -27,6 +37,18 @@ export const prefixExpressions = (value: string, prefix: string) => {
   return res;
 };
 
+export const removePrefixForExpressions = (value: string) => {
+  const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\s*}`, 'g');
+  let matches;
+  let res = value;
+  while ((matches = mustache_regex.exec(value)) != null) {
+    const removed_prefix = matches[1].split('.').slice(1).join('.');
+    const unprefixed_value = matches[0].replace(matches[1], removed_prefix);
+    res = res.replace(matches[0], unprefixed_value);
+  }
+  return res;
+};
+
 export const escapeJSON = (value: any) => {
   if (value instanceof Object) {
     value = JSON.stringify(value);
@@ -49,7 +71,7 @@ Mustache.escape = function (text) {
 }; // turns off HTML escaping
 Mustache.tags = ['${', '}']; // sets custom delimiters
 
-export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = []): string => {
+export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const writer = new Writer();
   const errors: Set<string> = new Set();
 
@@ -71,15 +93,30 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
 
     const result = render.bind(this)(template, view, partials);
     if (errors.size > 0) {
-      throw new Error('Unknown symbols: ' + [...errors].join(', '));
+      const interpolation_errors: Set<string> = new Set();
+      for (const error of errors) {
+        // Dedupe host/port/protocol into url
+        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol')) {
+          const keys = error.split('.');
+          const key = keys.slice(0, keys.length - 1).join('.');
+          if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {
+            interpolation_errors.add(`${key}.url`);
+          } else {
+            interpolation_errors.add(error);
+          }
+        } else {
+          interpolation_errors.add(error);
+        }
+      }
+      throw new InterpolationErrors([...interpolation_errors]);
     }
     return result;
   };
 
   const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
-  const MAX_DEPTH = 25;
   let depth = 0;
-  while (depth < MAX_DEPTH) {
+  while (depth < max_depth) {
+    param_value = replaceBrackets(param_value);
     param_value = writer.render(param_value, context);
     // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;

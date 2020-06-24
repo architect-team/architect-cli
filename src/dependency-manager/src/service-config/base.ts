@@ -48,6 +48,7 @@ export interface BuildSpec {
 export abstract class ServiceConfig extends BaseSpec {
   abstract __version: string;
   abstract getName(): string;
+  abstract getDescription(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;
   abstract getLanguage(): string;
