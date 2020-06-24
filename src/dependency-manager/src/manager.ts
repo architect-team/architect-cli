@@ -1,4 +1,5 @@
 import { deserialize, plainToClass, serialize } from 'class-transformer';
+import { ValidationError } from 'class-validator';
 import { ServiceNode } from '.';
 import { ComponentConfig } from './component-config/base';
 import { ComponentConfigBuilder } from './component-config/builder';
@@ -12,8 +13,9 @@ import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
 import { ServiceInterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
-import { escapeJSON, interpolateString, prefixExpressions, replaceBrackets } from './utils/interpolation';
-import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_WITH_TAG_REGEX } from './utils/validation';
+import { flattenValidationErrors, ValidationErrors } from './utils/errors';
+import { escapeJSON, interpolateString, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
+import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_WITH_TAG_REGEX, validateInterpolation } from './utils/validation';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -98,6 +100,7 @@ export default abstract class DependencyManager {
     const load_dependencies = !(component.getRef() in component_map); // Detect circular dependencies
     let component_string = serialize(component);
     component_string = replaceBrackets(component_string);
+    // Prefix interpolation expressions with components.<name>.
     component_string = prefixExpressions(component_string, component.getNormalizedRef());
     const prefixed_component = deserialize(component.getClass(), component_string) as ComponentConfig;
     component_map[component.getRef()] = prefixed_component;
@@ -222,6 +225,15 @@ export default abstract class DependencyManager {
     return deserialize(environment.getClass(), res);
   }
 
+  validateComponent(component: ComponentConfig, context: object): ValidationError[] {
+    // TODO: Removing the prefix is tedious, but the component map is currently stored prefixed
+    return validateInterpolation(removePrefixForExpressions(serialize(component)), context);
+  }
+
+  validateEnvironment(environment: EnvironmentConfig, context: object): ValidationError[] {
+    return validateInterpolation(serialize(environment), context);
+  }
+
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
     environment = await this.interpolateVaults(environment);
 
@@ -236,6 +248,11 @@ export default abstract class DependencyManager {
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
+
+    const errors = this.validateEnvironment(environment, enriched_environment.getContext());
+    if (errors.length) {
+      throw new ValidationErrors('environment', flattenValidationErrors(errors));
+    }
 
     // Inject external host/port/protocol for exposed interfaces
     for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
@@ -304,6 +321,14 @@ export default abstract class DependencyManager {
     }
 
     const context = this.buildComponentsContext(graph, prefixed_component_map);
+
+    // Validate components
+    for (const component of Object.values(prefixed_component_map)) {
+      const errors = this.validateComponent(component, context[component.getNormalizedRef()]);
+      if (errors.length) {
+        throw new ValidationErrors(component.getRef(), flattenValidationErrors(errors));
+      }
+    }
 
     const full_environment_json: any = { components: prefixed_component_map };
     const full_environment = plainToClass(this.environment.getClass(), full_environment_json);

@@ -4,9 +4,9 @@ import { replaceBrackets } from './interpolation';
 
 export class ValidationErrors extends Error {
   errors: Dictionary<Dictionary<string | number>>;
-  constructor(errors: Dictionary<Dictionary<string | number>>) {
+  constructor(ref: string, errors: Dictionary<Dictionary<string | number>>) {
     super();
-    this.name = 'ValidationErrors';
+    this.name = `ValidationErrors [${ref}]`;
     this.errors = errors;
     this.message = JSON.stringify(errors, null, 2);
   }
@@ -47,7 +47,7 @@ export const flattenValidationErrorsWithLineNumbers = (errors: ValidationError[]
 
   const res = flattenValidationErrors(errors);
   for (const [error_key, error_obj] of Object.entries(res)) {
-    if (error_key.startsWith('_interpolation')) {
+    if (error_key.startsWith('interpolation')) {
       const regex = RegExp(`\\\${\\s*${error_obj.value}\\s*}`, 'gs');
       const matches = regex.exec(file_contents);
       if (matches) {

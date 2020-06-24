@@ -169,7 +169,7 @@ const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Diction
 
 export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
-    return undefined;
+    return {};
   }
 
   const output: Dictionary<InterfaceSpecV1> = {};

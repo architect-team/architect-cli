@@ -26,16 +26,18 @@ export class ComponentConfigBuilder {
     ];
   }
 
-  static async buildFromPath(input: string): Promise<ComponentConfig> {
+  static readFromPath(input: string): [string, string] {
     const try_files = ComponentConfigBuilder.getConfigPaths(input);
 
     // Make sure the file exists
+    let file_path;
     let file_contents;
     for (const file of try_files) {
       try {
         const data = fs.lstatSync(file);
         if (data.isFile()) {
           file_contents = fs.readFileSync(file, 'utf-8');
+          file_path = file;
           break;
         }
       } catch {
@@ -43,9 +45,15 @@ export class ComponentConfigBuilder {
       }
     }
 
-    if (!file_contents) {
+    if (!file_contents || !file_path) {
       throw new MissingConfigFileError(input);
     }
+
+    return [file_path, file_contents];
+  }
+
+  static async buildFromPath(input: string): Promise<ComponentConfig> {
+    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(input);
 
     let js_obj;
     // Try to parse as json
@@ -68,8 +76,7 @@ export class ComponentConfigBuilder {
       await config.validateOrReject({ groups: ['developer'] });
       return config;
     } catch (err) {
-      console.log('Invalid component config:', input);
-      throw new ValidationErrors(flattenValidationErrorsWithLineNumbers(err, file_contents));
+      throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(err, file_contents));
     }
   }
 
