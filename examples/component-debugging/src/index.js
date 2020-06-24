@@ -19,7 +19,7 @@ const start = async () => {
   app.use(bodyParser.json());
 
   app.all('*', (req, res) => {
-    logger.info(`${req.method} ${req.url} - test`);
+    logger.info(`${req.method} ${req.url}`);
     res.status(200).json([]);
   });
 

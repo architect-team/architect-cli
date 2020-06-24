@@ -1,0 +1,41 @@
+name: examples/kafka
+
+parameters:
+  TOPIC_NAME:
+    default: architect
+
+services:
+  zookeeper:
+    image: jplock/zookeeper
+    interfaces:
+      main: 2181
+  kafka:
+    image: wurstmeister/kafka
+    interfaces:
+      kafka: 9092
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: ${ services.kafka.interfaces.kafka.host }
+      KAFKA_ZOOKEEPER_CONNECT: ${ services.zookeeper.interfaces.main.host }:${ services.zookeeper.interfaces.main.port }
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENERS: INTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  publisher:
+    build:
+      context: ./publisher/
+    interfaces:
+      http: 8080
+    environment:
+      KAFKA_ADDR: ${ services.kafka.interfaces.kafka.url }
+      TOPIC: ${ parameters.TOPIC_NAME }
+  subscriber:
+    build:
+      context: ./subscriber/
+    interfaces:
+      http: 8080
+    environment:
+      KAFKA_ADDR: ${ services.kafka.interfaces.kafka.url }
+      TOPIC: ${ parameters.TOPIC_NAME }
+
+interfaces: []

@@ -8,7 +8,7 @@
     "dev": "nodemon -L src/index.js"
   },
   "keywords": [],
-  "author": "ryan-cahill",
+  "author": "Architect.io",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
