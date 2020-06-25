@@ -83,7 +83,7 @@ export class ServiceVolumeV1 extends BaseSpec {
   })
   @IsEmpty({
     groups: ['developer'],
-    message: 'Cannot hardcode a host mount path when registering a service',
+    message: 'Cannot hardcode a host mount path in a component outside of the debug block',
   })
   @IsString({ always: true })
   host_path?: string;
