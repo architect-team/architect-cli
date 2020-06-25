@@ -6,6 +6,7 @@ import { ComponentConfigBuilder } from '../component-config/builder';
 import { ComponentContextV1, ParameterDefinitionSpecV1, transformInterfaces } from '../component-config/v1';
 import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
+import { normalizeInterpolation } from '../utils/interpolation';
 import { validateDictionary } from '../utils/validation';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
@@ -87,9 +88,10 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
 
     const components: Dictionary<ComponentContextV1> = {};
     for (const [ck, cv] of Object.entries(this.getComponents())) {
-      components[ck] = cv.getContext();
-      delete components[ck].services;
-      delete components[ck].dependencies;
+      const normalized_ck = normalizeInterpolation(ck);
+      components[normalized_ck] = cv.getContext();
+      delete components[normalized_ck].services;
+      delete components[normalized_ck].dependencies;
     }
 
     return {

@@ -14,7 +14,7 @@ import InterfacesNode from './graph/node/interfaces';
 import { ServiceInterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
-import { escapeJSON, interpolateString, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
+import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
 import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_WITH_TAG_REGEX, validateInterpolation } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -101,7 +101,7 @@ export default abstract class DependencyManager {
     let component_string = serialize(component);
     component_string = replaceBrackets(component_string);
     // Prefix interpolation expressions with components.<name>.
-    component_string = prefixExpressions(component_string, component.getNormalizedRef());
+    component_string = prefixExpressions(component_string, normalizeInterpolation(component.getRef()));
     const prefixed_component = deserialize(component.getClass(), component_string) as ComponentConfig;
     component_map[component.getRef()] = prefixed_component;
 
@@ -234,8 +234,35 @@ export default abstract class DependencyManager {
     return validateInterpolation(serialize(environment), context);
   }
 
+  // Aggresive replacement to support periods in environment component keys. ex. `${ components['concourse:6.1'].interfaces.web.url }
+  normalizeEnvironmentComponents(environment: EnvironmentConfig): EnvironmentConfig {
+    const env_component_keys = Object.keys(environment.getComponents());
+
+    const value = serialize(environment);
+
+    const mustache_regex = new RegExp(`\\\${\\s*components.(.*?)\\s*}`, 'g');
+    let matches;
+    let res = value;
+    while ((matches = mustache_regex.exec(value)) != null) {
+      const [full_component_exp, component_exp] = matches;
+
+      let normalized_component_exp = full_component_exp;
+      // TODO: Improve check without nested loop
+      for (const env_component_key of env_component_keys) {
+        if (component_exp.startsWith(`${env_component_key}.`)) {
+          normalized_component_exp = normalized_component_exp.replace(env_component_key, normalizeInterpolation(env_component_key));
+          break;
+        }
+      }
+
+      res = res.replace(full_component_exp, normalized_component_exp);
+    }
+    return deserialize(environment.getClass(), res);
+  }
+
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
     environment = await this.interpolateVaults(environment);
+    environment = this.normalizeEnvironmentComponents(environment);
 
     // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
     const environment_components: Dictionary<ComponentConfig> = {};
@@ -244,7 +271,7 @@ export default abstract class DependencyManager {
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       environment_components[component_name] = component_map[component.getRef()];
       component_interfaces_ref_map[environment_components[component_name].getInterfacesRef()] = environment_components[component_name];
-      normalized_component_refs.push(`${component.getNormalizedRef()}.`);
+      normalized_component_refs.push(`${normalizeInterpolation(component.getRef())}.`);
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
@@ -285,24 +312,26 @@ export default abstract class DependencyManager {
 
     // Set contexts for all components
     for (const component of components) {
-      context[component.getNormalizedRef()] = component.getContext();
+      const normalized_ref = normalizeInterpolation(component.getRef());
+      context[normalized_ref] = component.getContext();
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
         for (const interface_name of Object.keys(service.getInterfaces())) {
           const interface_context = this.mapToInterfaceContext(graph, node, interface_name);
-          context[component.getNormalizedRef()].services[service_name].interfaces[interface_name] = interface_context;
+          context[normalized_ref].services[service_name].interfaces[interface_name] = interface_context;
         }
       }
     }
     // Set contexts for all component dependencies (Important to show correct interpolation errors)
     // Ex. ${ dependencies.api.interfaces.invalid }
     for (const component of components) {
+      const normalized_ref = normalizeInterpolation(component.getRef());
       for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
         const dep_ref = dep_tag.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_tag}`;
         const dep_component = components_map[dep_ref];
-        context[component.getNormalizedRef()].dependencies[dep_key] = { ...context[dep_component.getNormalizedRef()] };
+        context[normalized_ref].dependencies[dep_key] = { ...context[normalizeInterpolation(dep_component.getRef())] };
         // Remove dependencies of dependencies
-        delete context[component.getNormalizedRef()].dependencies[dep_key].dependencies;
+        delete context[normalized_ref].dependencies[dep_key].dependencies;
       }
     }
 
@@ -324,7 +353,7 @@ export default abstract class DependencyManager {
 
     // Validate components
     for (const component of Object.values(prefixed_component_map)) {
-      const errors = this.validateComponent(component, context[component.getNormalizedRef()]);
+      const errors = this.validateComponent(component, context[normalizeInterpolation(component.getRef())]);
       if (errors.length) {
         throw new ValidationErrors(component.getRef(), flattenValidationErrors(errors));
       }

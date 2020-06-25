@@ -105,7 +105,7 @@ describe('old validation (v1 spec)', () => {
       const flattened_errors = flattenValidationErrors(errors);
       expect(Object.keys(flattened_errors)).to.include('volumes.image_store.host_path');
       expect(flattened_errors['volumes.image_store.host_path']).to.include({
-        isEmpty: 'Cannot hardcode a host mount path when registering a service',
+        isEmpty: 'Cannot hardcode a host mount path in a component outside of the debug block',
       });
     });
 

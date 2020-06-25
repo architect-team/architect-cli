@@ -10,6 +10,14 @@ export class InterpolationErrors extends Error {
   }
 }
 
+export const normalizeInterpolation = (value: string) => {
+  return value.replace(/\./g, '__arc__');
+};
+
+export const denormalizeInterpolation = (value: string) => {
+  return value.replace(/__arc__/g, '.');
+};
+
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${ dependencies['architect/cloud'].services } -> ${ dependencies.architect/cloud.services }
@@ -108,7 +116,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
           interpolation_errors.add(error);
         }
       }
-      throw new InterpolationErrors([...interpolation_errors]);
+      throw new InterpolationErrors([...interpolation_errors].map((e) => denormalizeInterpolation(e)));
     }
     return result;
   };
