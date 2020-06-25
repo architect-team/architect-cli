@@ -45,4 +45,4 @@ services:
       API_ADDR: ${ services.stateful-api.interfaces.http.url }
 
 interfaces:
-  frontend: ${ services.frontend.interfaces.http.url }
+  frontend: ${ services.frontend.interfaces.web.url }
