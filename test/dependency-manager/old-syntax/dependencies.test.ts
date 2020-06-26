@@ -14,6 +14,14 @@ describe('old dependencies', function () {
     // Stub the logger
     sinon.replace(Build.prototype, 'log', sinon.stub());
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
   });
 
   afterEach(function () {
@@ -223,6 +231,58 @@ describe('old dependencies', function () {
         'postgres/postgres/service:12'
       ]);
       expect(graph.edges).length(0);
+    });
+  });
+
+  describe('inline dependencies', function () {
+    it('simple inline dependency', async () => {
+      const backend_config = `
+      name: architect/backend
+      dependencies:
+        db:
+          image: postgres:11
+          interfaces:
+            postgres: 5432
+          parameters:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: architect
+            POSTGRES_DB: test_database
+      environment:
+        POSTGRES_HOST: \${ dependencies.db.interfaces.postgres.internal.host}
+        POSTGRES_PORT: \${ dependencies['db'].interfaces.postgres.internal.port}
+        POSTGRES_USER: \${ dependencies["db"].parameters.POSTGRES_USER }
+      `
+
+      const env_config = {
+        services: {
+          'architect/backend': {
+            debug: {
+              path: './src/backend'
+            }
+          },
+        }
+      };
+
+      mock_fs({
+        '/stack/src/backend/architect.json': backend_config,
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const graph = await manager.getGraph();
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/backend/db:latest',
+        'architect/backend/service:latest'
+      ])
+      expect(graph.edges.map((e) => e.toString())).has.members([
+        'architect/backend/service:latest [service] -> architect/backend/db:latest [postgres]',
+      ])
+      const api_node = graph.getNodeByRef('architect/backend/service:latest') as ServiceNode;
+      expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+        'POSTGRES_HOST=architect.backend.db.latest',
+        'POSTGRES_PORT=5432',
+        'POSTGRES_USER=postgres',
+      ])
     });
   });
 

@@ -28,7 +28,7 @@ export const replaceBrackets = (value: string) => {
   let matches;
   let res = value;
   while ((matches = mustache_regex.exec(value)) != null) {
-    const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '').replace(/\[\\"/g, '.').replace(/\\"\]/g, '');
+    const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '').replace(/\[\\"/g, '.').replace(/\\"\]/g, '').replace(/\["/g, '.').replace(/"\]/g, '');
     res = res.replace(matches[0], sanitized_value);
   }
   return res;

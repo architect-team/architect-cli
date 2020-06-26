@@ -67,14 +67,21 @@ describe('old architect components', () => {
     expect(graph.edges.map((e) => e.toString())).has.members([
       'architect/registry:latest-interfaces [main] -> architect/registry/service:latest [main]',
 
+      'architect/registry-proxy/service:latest [service] -> architect/registry:latest-interfaces [main]',
       'architect/registry-proxy:latest-interfaces [main] -> architect/registry-proxy/service:latest [main]',
 
       'concourse/web/service:latest [service] -> concourse/web/datastore-primary:latest [main]',
       'concourse/web:latest-interfaces [main] -> concourse/web/service:latest [main]',
 
+      'concourse/worker/service:latest [service] -> concourse/web:latest-interfaces [main]',
+
+      'architect/cloud-api/service:latest [service] -> architect/registry-proxy:latest-interfaces [main]',
+      'architect/cloud-api/service:latest [service] -> architect/registry:latest-interfaces [main]',
+      'architect/cloud-api/service:latest [service] -> concourse/web:latest-interfaces [main]',
       'architect/cloud-api/service:latest [service] -> architect/cloud-api/datastore-primary:latest [main]',
       'architect/cloud-api:latest-interfaces [main] -> architect/cloud-api/service:latest [main]',
 
+      'architect/cloud/service:latest [service] -> architect/cloud-api:latest-interfaces [main]',
       'architect/cloud:latest-interfaces [main] -> architect/cloud/service:latest [main]',
 
       'gateway [api] -> architect/cloud-api:latest-interfaces [main]',
@@ -103,7 +110,7 @@ describe('old architect components', () => {
       "ports": [
         "50001:8080"
       ],
-      "depends_on": [],
+      "depends_on": ['architect.registry.service.latest'],
       "environment": {
         "CLOUD_API_BASE_URL": "http://architect.cloud-api.latest:8080",
         "CLOUD_API_SECRET": "test",
@@ -133,6 +140,9 @@ describe('old architect components', () => {
         "50002:8080"
       ],
       "depends_on": [
+        'architect.registry-proxy.service.latest',
+        'architect.registry.service.latest',
+        'concourse.web.service.latest',
         "gateway"
       ],
       "environment": {
@@ -198,6 +208,7 @@ describe('old architect components', () => {
         "50004:8080"
       ],
       "depends_on": [
+        'architect.cloud-api.service.latest',
         "gateway"
       ],
       "environment": {
@@ -271,7 +282,7 @@ describe('old architect components', () => {
       "privileged": true,
       "stop_signal": "SIGUSR2",
       "ports": [],
-      "depends_on": [],
+      "depends_on": ['concourse.web.service.latest'],
       "environment": {
         "CONCOURSE_LOG_LEVEL": "error",
         "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",

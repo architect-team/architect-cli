@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
+import { replaceBrackets } from '../utils/interpolation';
 import { ComponentConfig } from './base';
 import { ComponentConfigV1 } from './v1';
 
@@ -81,15 +82,27 @@ export class ComponentConfigBuilder {
   }
 
   static transformServiceToComponent(config: any) {
+    const services: any = {};
     const parameters = config.parameters || {};
     delete config.parameters;
 
+    const inline_dependencies = [];
     const dependencies = config.dependencies || {};
     delete config.dependencies;
-    for (const [key, value] of Object.entries(dependencies)) {
-      // Flatten any inline dependencies
+    for (const [key, value] of Object.entries(dependencies) as any) {
       if (value instanceof Object) {
-        dependencies[key] = (value as any).extends || 'latest';
+        if (value.extends) {
+          dependencies[key] = value.extends;
+        } else {
+          if (value.parameters) {
+            value.environment = value.parameters;
+            delete value.parameters;
+          }
+          // Handle inline dependencies
+          services[key] = value;
+          inline_dependencies.push(key);
+          delete dependencies[key];
+        }
       } else {
         dependencies[key] = value;
       }
@@ -127,7 +140,6 @@ export class ComponentConfigBuilder {
       };
     }
 
-    const services: any = {};
     // Support datastores as services
     if (config?.datastores) {
       for (const [datastore_key, datastore_unknown] of Object.entries(config.datastores)) {
@@ -170,6 +182,17 @@ export class ComponentConfigBuilder {
     // Finally set service to services block
     services['service'] = config;
 
+    for (const [pk, pv] of Object.entries(parameters)) {
+      parameters[pk] = ComponentConfigBuilder.transformInterpolation(pv, inline_dependencies);
+    }
+    for (const sv of Object.values(services) as any) {
+      if (sv.environment) {
+        for (const [ek, ev] of Object.entries(sv.environment)) {
+          sv.environment[ek] = ComponentConfigBuilder.transformInterpolation(ev, inline_dependencies);
+        }
+      }
+    }
+
     return {
       name: config.name,
       parameters: parameters,
@@ -178,6 +201,36 @@ export class ComponentConfigBuilder {
       interfaces: interfaces,
       extends: ext,
     };
+  }
+
+  static transformInterpolation(value: any, inline_dependencies: string[]) {
+    if (typeof value === 'string') {
+      value = replaceBrackets(value);
+      const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\.(.*?)\\.(.*?)\\.(.*?)\\s*}`, 'g');
+      let matches;
+      let res = value;
+      while ((matches = mustache_regex.exec(value)) != null) {
+        // eslint-disable-next-line prefer-const
+        let [full_match, m0, m1, m2, m3] = matches;
+
+        const orig_value = [m0, m1, m2, m3].join('.');
+
+        // Transform interpolation for inline dep
+        if (m0 === 'dependencies' && inline_dependencies.includes(m1)) {
+          m0 = 'services';
+          if (m2 === 'parameters') m2 = 'environment';
+        }
+
+        if (m2 === 'interfaces' && (m3.split('.')[1] === 'internal' || m3.split('.')[1] === 'external')) {
+          m3 = m3.replace('internal.', '').replace('external.', '');
+        }
+
+        const final_value = [m0, m1, m2, m3].join('.');
+        res = res.replace(full_match, full_match.replace(orig_value, final_value));
+      }
+      return res;
+    }
+    return value;
   }
 
   static transformParametersToEnvironment(parameters: any, datastores?: any) {
@@ -228,13 +281,20 @@ export class ComponentConfigBuilder {
         }
         environment[parameter_key] = interpolated;
       } else {
-        environment[parameter_key] = `\${ parameters.${parameter_key} }`;
+        if (typeof value === 'string' && value.includes('${') && value.includes('interfaces')) {
+          environment[parameter_key] = value;
+        } else {
+          environment[parameter_key] = `\${ parameters.${parameter_key} }`;
+        }
       }
     }
     return environment;
   }
 
   static buildFromJSON(obj: any): ComponentConfig {
+    if (!(obj instanceof Object)) {
+      throw new Error('Object required to build from JSON');
+    }
     return plainToClass(ComponentConfigV1, obj);
   }
 

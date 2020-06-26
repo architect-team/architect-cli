@@ -5,6 +5,9 @@ import { ServiceConfigV1 } from './v1';
 
 export class ServiceConfigBuilder {
   static buildFromJSON(obj: object): ServiceConfig {
+    if (!(obj instanceof Object)) {
+      throw new Error('Object required to build from JSON');
+    }
     return plainToClass(ServiceConfigV1, obj);
   }
 }

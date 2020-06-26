@@ -66,6 +66,10 @@ export class EnvironmentConfigBuilder {
   }
 
   static buildFromJSON(obj: any): EnvironmentConfig {
+    if (!(obj instanceof Object)) {
+      throw new Error('Object required to build from JSON');
+    }
+
     // Support old services block in environment config
     if (obj.services && !obj.components) {
       if (!obj.interfaces) obj.interfaces = {};
