@@ -244,13 +244,18 @@ describe('old dependencies', function () {
           interfaces:
             postgres: 5432
           parameters:
-            POSTGRES_USER: postgres
+            POSTGRES_USER:
+              default: postgres
             POSTGRES_PASSWORD: architect
             POSTGRES_DB: test_database
       environment:
         POSTGRES_HOST: \${ dependencies.db.interfaces.postgres.internal.host}
         POSTGRES_PORT: \${ dependencies['db'].interfaces.postgres.internal.port}
         POSTGRES_USER: \${ dependencies["db"].parameters.POSTGRES_USER }
+        POSTGRES_PASSWORD: \${ dependencies["db"].parameters.POSTGRES_PASSWORD }
+      parameters:
+        POSTGRES_DB:
+          default: \${ dependencies["db"].parameters.POSTGRES_DB }
       `
 
       const env_config = {
@@ -282,6 +287,8 @@ describe('old dependencies', function () {
         'POSTGRES_HOST=architect.backend.db.latest',
         'POSTGRES_PORT=5432',
         'POSTGRES_USER=postgres',
+        'POSTGRES_PASSWORD=architect',
+        'POSTGRES_DB=test_database'
       ])
     });
   });

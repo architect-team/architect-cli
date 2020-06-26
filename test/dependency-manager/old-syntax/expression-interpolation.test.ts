@@ -103,7 +103,7 @@ describe('old expression-interpolation', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
     const frontend_node = graph.getNodeByRef('architect/cloud/service:v1') as ServiceNode;
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT']);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['APP_PORT', 'DEP_DB_USER', 'lower_dep_ADMIN_PORT', 'HOST', 'PORT']);
     expect(frontend_node.interfaces.app.port).eq('8080');
     expect(frontend_node.node_config.getEnvironmentVariables()['APP_PORT']).eq('8080');
     expect(frontend_node.node_config.getEnvironmentVariables()['DEP_DB_USER']).eq('dep-root');

@@ -95,7 +95,11 @@ export class ComponentConfigBuilder {
           dependencies[key] = value.extends;
         } else {
           if (value.parameters) {
-            value.environment = value.parameters;
+            const inline_environment: Dictionary<string> = {};
+            for (const [pk, pv] of Object.entries(value.parameters || {}) as any) {
+              inline_environment[pk] = pv instanceof Object && 'default' in pv ? pv.default : pv;
+            }
+            value.environment = inline_environment;
             delete value.parameters;
           }
           // Handle inline dependencies
@@ -109,15 +113,17 @@ export class ComponentConfigBuilder {
     }
 
     if (!config.environment) {
-      config.environment = ComponentConfigBuilder.transformParametersToEnvironment(parameters, config.datastores);
-      if (config.interfaces && Object.keys(config.interfaces).length > 0) {
-        const interface_name = Object.keys(config.interfaces)[0];
-        if (!config.environment.HOST) {
-          config.environment.HOST = `\${ services.service.interfaces.${interface_name}.host }`;
-        }
-        if (!config.environment.PORT) {
-          config.environment.PORT = `\${ services.service.interfaces.${interface_name}.port }`;
-        }
+      config.environment = {};
+    }
+
+    config.environment = { ...ComponentConfigBuilder.transformParametersToEnvironment(parameters, config.datastores), ...config.environment };
+    if (config.interfaces && Object.keys(config.interfaces).length > 0) {
+      const interface_name = Object.keys(config.interfaces)[0];
+      if (!config.environment.HOST) {
+        config.environment.HOST = `\${ services.service.interfaces.${interface_name}.host }`;
+      }
+      if (!config.environment.PORT) {
+        config.environment.PORT = `\${ services.service.interfaces.${interface_name}.port }`;
       }
     }
 
@@ -182,18 +188,7 @@ export class ComponentConfigBuilder {
     // Finally set service to services block
     services['service'] = config;
 
-    for (const [pk, pv] of Object.entries(parameters)) {
-      parameters[pk] = ComponentConfigBuilder.transformInterpolation(pv, inline_dependencies);
-    }
-    for (const sv of Object.values(services) as any) {
-      if (sv.environment) {
-        for (const [ek, ev] of Object.entries(sv.environment)) {
-          sv.environment[ek] = ComponentConfigBuilder.transformInterpolation(ev, inline_dependencies);
-        }
-      }
-    }
-
-    return {
+    const res = {
       name: config.name,
       parameters: parameters,
       dependencies: dependencies,
@@ -201,36 +196,41 @@ export class ComponentConfigBuilder {
       interfaces: interfaces,
       extends: ext,
     };
+
+    const res_string = ComponentConfigBuilder.transformInterpolation(JSON.stringify(res), inline_dependencies);
+    return JSON.parse(res_string);
   }
 
   static transformInterpolation(value: any, inline_dependencies: string[]) {
-    if (typeof value === 'string') {
-      value = replaceBrackets(value);
-      const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\.(.*?)\\.(.*?)\\.(.*?)\\s*}`, 'g');
-      let matches;
-      let res = value;
-      while ((matches = mustache_regex.exec(value)) != null) {
-        // eslint-disable-next-line prefer-const
-        let [full_match, m0, m1, m2, m3] = matches;
+    value = replaceBrackets(value);
+    const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\s*}`, 'g');
+    let matches;
+    let res = value;
+    while ((matches = mustache_regex.exec(value)) != null) {
+      const [full_match, match] = matches;
 
-        const orig_value = [m0, m1, m2, m3].join('.');
-
-        // Transform interpolation for inline dep
-        if (m0 === 'dependencies' && inline_dependencies.includes(m1)) {
-          m0 = 'services';
-          if (m2 === 'parameters') m2 = 'environment';
-        }
-
-        if (m2 === 'interfaces' && (m3.split('.')[1] === 'internal' || m3.split('.')[1] === 'external')) {
-          m3 = m3.replace('internal.', '').replace('external.', '');
-        }
-
-        const final_value = [m0, m1, m2, m3].join('.');
-        res = res.replace(full_match, full_match.replace(orig_value, final_value));
+      // eslint-disable-next-line prefer-const
+      let [m0, m1, m2, ...m3] = match.split('.');
+      if (m3.length === 0) {
+        continue;
       }
-      return res;
+
+      const orig_value = [m0, m1, m2, m3.join('.')].join('.');
+
+      // Transform interpolation for inline dep
+      if (m0 === 'dependencies' && inline_dependencies.includes(m1)) {
+        m0 = 'services';
+        if (m2 === 'parameters') m2 = 'environment';
+      }
+
+      if (m2 === 'interfaces' && (m3[1] === 'internal' || m3[1] === 'external')) {
+        m3.splice(1, 1);
+      }
+
+      const final_value = [m0, m1, m2, m3.join('.')].join('.');
+      res = res.replace(full_match, full_match.replace(orig_value, final_value));
     }
-    return value;
+    return res;
   }
 
   static transformParametersToEnvironment(parameters: any, datastores?: any) {
