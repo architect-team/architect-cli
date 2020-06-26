@@ -1,18 +1,21 @@
-architect-cli
-=============
+<!-- docs -->
 
-Command-line interface for Architect.io
+<h1>Architect CLI</h1>
 
 [![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/@architect-io/cli)
 [![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
 [![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
 [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
 
-<!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+Command-line interface for [Architect.io](https://architect.io). This CLI can be used to:
+
+1. Choreograph the deployment and networking of multiple [services](//architect.io/docs/getting-started/core-concepts#services) and
+   [components](//architect.io/docs/getting-started/core-concepts#components) on your local machine
+2. Aid in the creation and registration of [Architect components](//architect.io/docs/getting-started/core-concepts#components)
+3. Issue deploy commands to Architect Cloud
+
 # Usage
+
 <!-- usage -->
 ```sh-session
 $ npm install -g @architect-io/cli
@@ -35,6 +38,7 @@ despite this error, but [you may hide it](https://github.com/nodejs/node-gyp/iss
 by running npm install with the `--unsafe` flag._
 
 # Commands
+
 <!-- commands -->
 * [`architect build`](#architect-build)
 * [`architect config:get OPTION`](#architect-configget-option)
