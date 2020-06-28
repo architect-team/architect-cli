@@ -3,10 +3,10 @@ import { BaseSpec } from './base-spec';
 import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const IMAGE_REGEX = '[a-zA-Z0-9-_]+';
-export const IMAGE_NAME_REGEX = `^${IMAGE_REGEX}$`;
 export const REPOSITORY_REGEX = `${IMAGE_REGEX}\\/${IMAGE_REGEX}`;
-export const REPOSITORY_NAME_REGEX = `^${REPOSITORY_REGEX}$`;
-export const REPOSITORY_WITH_TAG_REGEX = `${REPOSITORY_REGEX}(?::${IMAGE_REGEX})?`;
+// https://github.com/docker/distribution/blob/v2.7.1/reference/reference.go#L15
+export const TAG_REGEX = '[\\w][\\w\\.-]{0,127}';
+export const REPOSITORY_TAG_REGEX = `${REPOSITORY_REGEX}(?::${TAG_REGEX})?`;
 
 export const validateNested = async <T extends Record<string, any>>(
   target: T,

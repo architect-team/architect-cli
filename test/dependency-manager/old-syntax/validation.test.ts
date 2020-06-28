@@ -375,7 +375,7 @@ describe('old validation (v1 spec)', () => {
     it('nested typo', async () => {
       const parsedSpec = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          api: {
+          'typo/api': {
             parameter: {
               TEST: 0
             }
@@ -387,7 +387,7 @@ describe('old validation (v1 spec)', () => {
       });
       expect(errors.length).to.equal(1);
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['components.api.parameter']);
+      expect(Object.keys(flattened_errors)).members(['components.typo/api.parameter']);
     });
 
     it('key matches', async () => {

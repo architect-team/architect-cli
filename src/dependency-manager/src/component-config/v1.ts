@@ -5,7 +5,7 @@ import { ServiceInterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, transformParameters, transformServices } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { IMAGE_NAME_REGEX, REPOSITORY_NAME_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
+import { IMAGE_REGEX, REPOSITORY_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig } from './base';
 
 export class ParameterDefinitionSpecV1 extends BaseSpec {
@@ -80,10 +80,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['operator'],
   })
   @IsString({ always: true })
-  @Matches(new RegExp(IMAGE_NAME_REGEX), {
+  @Matches(new RegExp(`^${IMAGE_REGEX}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(new RegExp(REPOSITORY_NAME_REGEX), {
+  @Matches(new RegExp(`^${REPOSITORY_REGEX}$`), {
     message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
@@ -224,7 +224,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     if (!options) options = {};
     let errors = await super.validate(options);
     errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') });
+    errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${IMAGE_REGEX}$`));
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(this), this.getContext(), ['dependencies.']));

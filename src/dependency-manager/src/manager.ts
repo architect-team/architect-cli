@@ -15,7 +15,7 @@ import { ServiceInterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
-import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_WITH_TAG_REGEX, validateInterpolation } from './utils/validation';
+import { IMAGE_REGEX, REPOSITORY_REGEX, REPOSITORY_TAG_REGEX, validateInterpolation } from './utils/validation';
 import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
@@ -53,7 +53,7 @@ export default abstract class DependencyManager {
   addIngressEdges(graph: DependencyGraph): void {
     const component_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
-      const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_WITH_TAG_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
+      const components_regex = new RegExp(`\\\${\\s*components\\.(${REPOSITORY_TAG_REGEX})?\\.interfaces\\.(${IMAGE_REGEX})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = components_regex.exec(replaceBrackets(component_interface.url!));

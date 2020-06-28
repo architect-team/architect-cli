@@ -174,11 +174,13 @@ describe('interfaces spec v1', () => {
       '/stack/branch/architect.json': JSON.stringify(branch_component),
       '/stack/environment.json': JSON.stringify({
         interfaces: {
-          public: '${ components.test/leaf.interfaces.api.url }',
+          public: '${ components["test/leaf"].interfaces.api.url }',
+          publicv1: '${ components["test/leaf:v1.0"].interfaces.api.url }'
         },
         components: {
           'test/branch': 'file:/stack/branch/',
           'test/leaf': 'file:/stack/leaf/',
+          'test/leaf:v1.0': 'file:/stack/leaf/',
         },
       }),
     });
@@ -196,13 +198,21 @@ describe('interfaces spec v1', () => {
 
       'test/leaf:latest-interfaces',
       'test/leaf/db:latest',
-      'test/leaf/api:latest'
+      'test/leaf/api:latest',
+
+      'test/leaf:v1.0-interfaces',
+      'test/leaf/db:v1.0',
+      'test/leaf/api:v1.0',
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
       'gateway [public] -> test/leaf:latest-interfaces [api]',
+      'gateway [publicv1] -> test/leaf:v1.0-interfaces [api]',
 
       'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
       'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
+
+      'test/leaf/api:v1.0 [service] -> test/leaf/db:v1.0 [postgres]',
+      'test/leaf:v1.0-interfaces [api] -> test/leaf/api:v1.0 [main]',
 
       'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
     ])
@@ -219,6 +229,8 @@ describe('interfaces spec v1', () => {
       'test.branch.api.latest',
       'test.leaf.db.latest',
       'test.leaf.api.latest',
+      'test.leaf.db.v1.0',
+      'test.leaf.api.v1.0',
       'gateway'
     ])
 
@@ -254,6 +266,29 @@ describe('interfaces spec v1', () => {
       },
       image: 'api:latest',
       ports: ['50001:8080'],
+      restart: 'always'
+    });
+
+    expect(template.services['test.leaf.db.v1.0']).to.be.deep.equal({
+      depends_on: [],
+      environment: {},
+      image: 'postgres:11',
+      ports: ['50002:5432']
+    });
+
+    expect(template.services['test.leaf.api.v1.0']).to.be.deep.equal({
+      depends_on: ['test.leaf.db.v1.0', 'gateway'],
+      environment: {
+        DB_HOST: 'test.leaf.db.v1.0',
+        DB_PORT: '5432',
+        DB_PROTOCOL: 'postgres',
+        DB_URL: 'postgres://test.leaf.db.v1.0:5432',
+        VIRTUAL_HOST: 'publicv1.localhost',
+        VIRTUAL_PORT: '8080',
+        VIRTUAL_PROTOCOL: 'http'
+      },
+      image: 'api:latest',
+      ports: ['50003:8080'],
       restart: 'always'
     });
   });
