@@ -218,14 +218,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   language?: string;
 
-  @IsOptional({ always: true })
-  @IsString({ each: true, always: true })
-  keywords?: string[];
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  author?: string;
-
   @Transform(value => {
     if (value instanceof Array) {
       return plainToClass(ServiceConfigV1, { command: value });
@@ -363,14 +355,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDescription() {
     return this.description || '';
-  }
-
-  getKeywords() {
-    return this.keywords || [];
-  }
-
-  getAuthor() {
-    return this.author || '';
   }
 
   getPlatforms(): Dictionary<any> {

@@ -102,6 +102,10 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsString({ each: true, always: true })
   keywords?: string[];
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  author?: string;
+
   @Transform(value => (transformParameters(value)))
   @IsOptional({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
@@ -150,6 +154,10 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getKeywords() {
     return this.keywords || [];
+  }
+
+  getAuthor() {
+    return this.author || '';
   }
 
   getParameters() {

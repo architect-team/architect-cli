@@ -185,11 +185,19 @@ export class ComponentConfigBuilder {
       }
     }
 
+    const author = config.author;
+    delete config.author;
+
+    const keywords = config.keywords;
+    delete config.keywords;
+
     // Finally set service to services block
     services['service'] = config;
 
     const res = {
       name: config.name,
+      author: author,
+      keywords: keywords,
       parameters: parameters,
       dependencies: dependencies,
       services: services,

@@ -19,6 +19,15 @@ describe('interpolation spec v1', () => {
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
 
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
+
     moxios.stubRequest(`/v1/auth/approle/login`, {
       status: 200,
       response: { auth: {} }

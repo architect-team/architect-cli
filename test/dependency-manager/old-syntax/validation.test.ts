@@ -488,12 +488,12 @@ describe('old validation (v1 spec)', () => {
       await ComponentConfigBuilder.buildFromPath('/stack/');
     });
 
-    it('multiple author keys (first invalid) line number/single line', async () => {
+    it('multiple description keys (first invalid) line number/single line', async () => {
       const service_config = {
         name: 'test/test',
-        author: 5,
+        description: 5,
         debug: {
-          author: 'debug'
+          description: 'debug'
         },
       };
       mock_fs({
@@ -506,17 +506,17 @@ describe('old validation (v1 spec)', () => {
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
-      expect(Object.keys(config_err)).members(['author']);
-      expect(config_err['author'].line).to.eq(3);
+      expect(Object.keys(config_err)).members(['description']);
+      expect(config_err['description'].line).to.eq(3);
     });
 
-    it('multiple author keys (second invalid) line number/single line', async () => {
+    it('multiple description keys (second invalid) line number/single line', async () => {
       const service_config = {
         name: 'test/test',
         debug: {
-          author: 'debug'
+          description: 'debug'
         },
-        author: 5,
+        description: 5,
       };
       mock_fs({
         '/stack/architect.json': JSON.stringify(service_config, null, 2),
@@ -528,19 +528,19 @@ describe('old validation (v1 spec)', () => {
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
-      expect(Object.keys(config_err)).members(['author']);
-      expect(config_err['author'].line).to.eq(6);
+      expect(Object.keys(config_err)).members(['description']);
+      expect(config_err['description'].line).to.eq(6);
     });
 
-    it('multiple author keys (middle invalid) line number/single line', async () => {
+    it('multiple description keys (middle invalid) line number/single line', async () => {
       const service_config = {
         name: 'test/test',
         debug: {
-          author: 'debug'
+          description: 'debug'
         },
-        author: 5,
+        description: 5,
         parameters: {
-          author: 'debug'
+          description: 'debug'
         }
       };
       mock_fs({
@@ -553,8 +553,8 @@ describe('old validation (v1 spec)', () => {
       } catch (err) {
         config_err = JSON.parse(err.message);
       }
-      expect(Object.keys(config_err)).members(['author']);
-      expect(config_err['author'].line).to.eq(6);
+      expect(Object.keys(config_err)).members(['description']);
+      expect(config_err['description'].line).to.eq(6);
     });
 
     it('should not allow nested debug blocks with line number (yaml)', async () => {
