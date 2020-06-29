@@ -12,10 +12,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { OfflineUtils } from '../common/utils/offline';
-import { ValidationClient, ValidationResult } from '../common/utils/validation';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
-import DependencyGraph from '../dependency-manager/src/graph';
 
 
 class EnvConfigRequiredError extends Error {
@@ -140,9 +137,6 @@ export default class Deploy extends Command {
       this.app.linkedServices,
     );
 
-    const graph = await dependency_manager.getGraph();
-    await this.validate_graph(graph);
-
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
@@ -255,42 +249,6 @@ export default class Deploy extends Command {
       await this.runLocal();
     } else {
       await this.runRemote();
-    }
-  }
-
-  async validate_graph(graph: DependencyGraph): Promise<void> {
-    cli.action.start(chalk.blue('Validating deployment'));
-
-    let validation_results;
-    try {
-      const response = await this.app.api.post<ValidationResult[]>(`/graph/validation`, graph, { timeout: 2000 });
-      validation_results = response.data;
-    } catch (err) {
-      // we don't want to block local deployments from working without an internet connection so we play nice if the call fails
-      if (OfflineUtils.indicates_offline(err)) {
-        cli.action.stop(chalk.yellow(`Warning: Could not connect to the Architect API to validate the service config, carrying on anyway...`));
-        return;
-      } else {
-        cli.action.stop(chalk.red(`Error, did not run validation: ${err.response?.data?.message || err.message}`));
-        return;
-      }
-    }
-
-    const summary = ValidationClient.summarize(validation_results);
-    if (summary.all_passing) {
-      cli.action.stop(chalk.green(`${summary.passing_count} rules passing`));
-    } else {
-      cli.action.stop(summary.message);
-    }
-
-    if (!summary.all_passing) {
-      this.log('\n');
-      this.log(summary.failure_report);
-      this.log(chalk.blue(`...${summary.passing_count} other rules passing\n`));
-    }
-
-    if (summary.blocker_count > 0) {
-      this.error('The deployment failed validation.');
     }
   }
 }

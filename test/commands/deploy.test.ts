@@ -38,9 +38,7 @@ describe('deploy', () => {
 
   it('generates compose locally', async () => {
     const compose_spy = sinon.fake.resolves(null);
-    const validate_spy = sinon.fake.resolves(null);
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
-    sinon.replace(Deploy.prototype, 'validate_graph', validate_spy);
 
     // Link the addition service
     const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
@@ -51,7 +49,6 @@ describe('deploy', () => {
 
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
     expect(compose_spy.calledOnce).to.equal(true);
-    expect(validate_spy.calledOnce).to.equal(true);
 
     expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
     for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
