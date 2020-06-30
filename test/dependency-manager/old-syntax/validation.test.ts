@@ -394,7 +394,7 @@ describe('old validation (v1 spec)', () => {
       const spec = {
         parameters: {
           'GCP*KEY': 'invalid',
-          'gcp-key': 'invalid'
+          'gcp-key': 'valid'
         },
       };
 
@@ -404,7 +404,7 @@ describe('old validation (v1 spec)', () => {
       });
 
       const flattened_errors = flattenValidationErrors(errors);
-      expect(Object.keys(flattened_errors)).members(['parameters.GCP*KEY', 'parameters.gcp-key']);
+      expect(Object.keys(flattened_errors)).members(['parameters.GCP*KEY']);
       expect(errors.length).to.equal(1);
     });
 

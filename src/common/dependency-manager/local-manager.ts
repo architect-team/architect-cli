@@ -113,8 +113,8 @@ export default class LocalDependencyManager extends DependencyManager {
     return errors;
   }
 
-  validateEnvironment(environment: EnvironmentConfig, context: object) {
-    const errors = super.validateEnvironment(environment, context);
+  validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig) {
+    const errors = super.validateEnvironment(environment, enriched_environment);
     if (this.config_path && errors.length) {
       const file_contents = fs.readFileSync(this.config_path);
       throw new ValidationErrors(this.config_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));

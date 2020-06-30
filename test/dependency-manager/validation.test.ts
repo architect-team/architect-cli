@@ -170,6 +170,53 @@ describe('validation spec v1', () => {
 
   // Environment Validation
   describe('environment validation', () => {
+    it('required component parameters', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        required:
+        required-explicit:
+          required: true
+        not-required:
+          required: false
+      services:
+        api:
+          interfaces:
+            main: 8080
+          environment:
+            REQUIRED: \${ parameters.required }
+            REQUIRED_EXPLICIT: \${ parameters.required-explicit }
+            NOT_REQUIRED: \${ parameters.not-required }
+      interfaces:
+      `
+      const env_config = `
+      components:
+        test/component: file:./component.yml
+      `
+      mock_fs({
+        '/component.yml': component_config,
+        '/environment.yml': env_config
+      });
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        'components.test/component.parameters.required': {
+          'Required': 'required is required',
+          'value': null,
+        },
+        'components.test/component.parameters.required-explicit': {
+          'Required': 'required-explicit is required',
+          'value': undefined
+        }
+      })
+    });
+
     it('valid component interfaces ref', async () => {
       const component_config = `
       name: test/component
@@ -228,6 +275,35 @@ describe('validation spec v1', () => {
           "value": "components.test/component.interfaces.fake.url",
           "line": 3,
           "column": 16
+        }
+      })
+    });
+
+    it('invalid vault ref', async () => {
+      const env_config = `
+      parameters:
+        invalid: \${ vaults.invalid.some_key }
+        valid: \${ vaults.valid.some_key }
+      vaults:
+        valid: {}
+      `
+      mock_fs({
+        '/environment.yml': env_config
+      });
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        'interpolation.vaults.invalid.some_key': {
+          'interpolation': '${ vaults.invalid.some_key } is invalid',
+          'value': 'vaults.invalid.some_key',
+          'line': 3,
+          'column': 17,
         }
       })
     });

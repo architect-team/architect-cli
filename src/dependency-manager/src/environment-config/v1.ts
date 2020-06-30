@@ -103,7 +103,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   async validate(options?: ValidatorOptions) {
     if (!options) options = {};
     let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
     errors = await validateDictionary(this, 'components', errors, undefined, options, new RegExp(`^${REPOSITORY_TAG_REGEX}$`));
     return errors;
   }

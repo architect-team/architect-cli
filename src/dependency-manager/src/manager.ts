@@ -208,9 +208,7 @@ export default abstract class DependencyManager {
   async interpolateVaults(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
     const vault_manager = new VaultManager(environment.getVaults());
 
-    let environment_string = serialize(environment);
-    environment_string = replaceBrackets(environment_string);
-
+    const environment_string = serialize(environment);
     // Interpolate vault separately before mustache
     const vaults_regex = new RegExp(`\\\${\\s*vaults\\.(.*?)\\s*}`, 'g');
     let matches;
@@ -229,15 +227,36 @@ export default abstract class DependencyManager {
     return validateInterpolation(removePrefixForExpressions(serialize(component)), context);
   }
 
-  validateEnvironment(environment: EnvironmentConfig, context: object): ValidationError[] {
-    return validateInterpolation(serialize(environment), context);
+  validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig): ValidationError[] {
+    let validation_errors: ValidationError[] = [];
+    // Check required parameters
+    for (const [component_key, component] of Object.entries(enriched_environment.getComponents())) {
+      for (const [pk, pv] of Object.entries(component.getParameters())) {
+        if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
+          const validation_error = new ValidationError();
+          validation_error.property = `components.${component_key}.parameters.${pk}`;
+          validation_error.target = pv;
+          validation_error.value = pv.default;
+          validation_error.constraints = {
+            'Required': `${pk} is required`,
+          };
+          validation_errors.push(validation_error);
+        }
+      }
+    }
+
+    // Ignore vault keys
+    const ignore_keys = Object.keys(environment.getVaults()).map((vault_key) => `vaults.${vault_key}.`);
+
+    validation_errors = validation_errors.concat(validateInterpolation(serialize(environment), enriched_environment.getContext(), ignore_keys));
+    return validation_errors;
   }
 
   // Aggresive replacement to support periods in environment component keys. ex. `${ components['concourse:6.1'].interfaces.web.url }
   normalizeEnvironmentComponents(environment: EnvironmentConfig): EnvironmentConfig {
     const env_component_keys = Object.keys(environment.getComponents());
 
-    const value = serialize(environment);
+    const value = replaceBrackets(serialize(environment));
 
     const mustache_regex = new RegExp(`\\\${\\s*components.(.*?)\\s*}`, 'g');
     let matches;
@@ -260,7 +279,6 @@ export default abstract class DependencyManager {
   }
 
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
-    environment = await this.interpolateVaults(environment);
     environment = this.normalizeEnvironmentComponents(environment);
 
     // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
@@ -275,10 +293,13 @@ export default abstract class DependencyManager {
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
 
-    const errors = this.validateEnvironment(environment, enriched_environment.getContext());
+    const errors = this.validateEnvironment(environment, enriched_environment);
     if (errors.length) {
       throw new ValidationErrors('environment', flattenValidationErrors(errors));
     }
+
+    environment = await this.interpolateVaults(environment);
+    enriched_environment = await this.interpolateVaults(enriched_environment);
 
     // Inject external host/port/protocol for exposed interfaces
     for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {

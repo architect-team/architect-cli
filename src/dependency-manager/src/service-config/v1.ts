@@ -283,6 +283,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {
       volumes_options.groups = ['debug'];
     }
+    errors = await validateDictionary(this, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
     errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     return errors;

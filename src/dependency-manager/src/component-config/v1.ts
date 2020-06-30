@@ -229,7 +229,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   async validate(options?: ValidatorOptions) {
     if (!options) options = {};
     let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
+    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
     errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${IMAGE_REGEX}$`));
     errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
