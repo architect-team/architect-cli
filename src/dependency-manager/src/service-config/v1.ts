@@ -200,6 +200,10 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   image?: string;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  digest?: string;
+
   @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
@@ -316,6 +320,14 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   setImage(image: string) {
     this.image = image;
+  }
+
+  getDigest(): string {
+    return this.digest || '';
+  }
+
+  setDigest(digest: string): void {
+    this.digest = digest;
   }
 
   getCommand() {
