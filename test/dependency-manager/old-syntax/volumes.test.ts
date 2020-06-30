@@ -3,14 +3,14 @@ import axios from 'axios';
 import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import Build from '../../../src/commands/build';
+import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../../src/common/docker-compose';
 
 describe('old volumes', function () {
   beforeEach(async () => {
     // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(Register.prototype, 'log', sinon.stub());
   });
 
   afterEach(function () {

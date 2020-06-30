@@ -53,8 +53,8 @@ export class ComponentConfigBuilder {
     return [file_path, file_contents];
   }
 
-  static async buildFromPath(input: string): Promise<ComponentConfig> {
-    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(input);
+  static async buildFromPath(path: string): Promise<ComponentConfig> {
+    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(path);
 
     let js_obj;
     // Try to parse as json

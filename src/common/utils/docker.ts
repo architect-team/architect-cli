@@ -1,7 +1,4 @@
 import execa, { Options } from 'execa';
-import fs from 'fs-extra';
-import path from 'path';
-import { ServiceNode } from '../../dependency-manager/src';
 import DockerNotInstalledError from '../errors/docker-not-installed';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
@@ -22,16 +19,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
 };
 
-export const buildImage = async (node: ServiceNode, registry_host: string, tag_name = 'latest') => {
-  const build_context = node.node_config.getBuild().context;
-  if (!build_context) {
-    throw new Error(`No build context for ${node.ref}`);
-  }
-  const local_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
-  const build_path = path.resolve(local_path, build_context);
-
-  const image_tag = `${registry_host}/${node.node_config.getName()}:${tag_name}`;
-
+export const buildImage = async (build_path: string, image_tag: string) => {
   await docker([
     'build',
     '--compress',

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { deserialize, serialize } from 'class-transformer';
 import path from 'path';
 import sinon from 'sinon';
-import Build from '../../../src/commands/build';
+import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceNode } from '../../../src/dependency-manager/src';
 import DependencyGraph from '../../../src/dependency-manager/src/graph';
@@ -16,7 +16,7 @@ describe('old manager', function () {
 
   beforeEach(async function () {
     // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(Register.prototype, 'log', sinon.stub());
 
     const calculator_env_config_path = path.join(__dirname, '../../mocks/calculator-environment.json');
     const manager = await LocalDependencyManager.createFromPath(axios.create(), calculator_env_config_path);
