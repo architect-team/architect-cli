@@ -309,8 +309,8 @@ describe('old interfaces', function () {
     const graph = await manager.getGraph();
 
     const backend_node = graph.getNodeByRef('architect/backend/service:latest') as ServiceNode;
-    expect(backend_node.interfaces!.main.port).eq('8080');
-    expect(backend_node.interfaces!.secondary.port).eq('8081');
+    expect(backend_node.interfaces.main.port).eq('8080');
+    expect(backend_node.interfaces.secondary.port).eq('8081');
 
     const frontend_main_node = graph.getNodeByRef('architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;

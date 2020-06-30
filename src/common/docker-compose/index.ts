@@ -22,6 +22,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
   for (const node of graph.nodes) {
     if (node.is_external) continue;
+    if (!(node instanceof ServiceNode)) continue;
     for (const _ of node.ports) {
       port_promises.push(limit(() => dependency_manager.getServicePort()));
     }
@@ -143,9 +144,8 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     for (const interface_name of Object.keys(edge.interfaces_map)) {
       const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
 
-      if (node_to.is_external) {
-        continue;
-      }
+      if (!(node_to instanceof ServiceNode)) continue;
+      if (node_to.is_external) continue;
 
       let depends_from = node_from.normalized_ref;
       let depends_to = node_to.normalized_ref;

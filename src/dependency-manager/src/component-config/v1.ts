@@ -173,9 +173,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getInterfaces() {
-    if (!this.interfaces) {
-      this.interfaces = {};
-    }
+    if (!this.interfaces) this.interfaces = {};
     return this.interfaces;
   }
 

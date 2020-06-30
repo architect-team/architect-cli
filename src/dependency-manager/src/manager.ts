@@ -8,7 +8,6 @@ import { EnvironmentConfigBuilder } from './environment-config/builder';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
-import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
 import { ServiceInterfaceSpec } from './service-config/base';
@@ -288,7 +287,7 @@ export default abstract class DependencyManager {
 
       for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
         if (!component.getInterfaces()[interface_name]) {
-          component.getInterfaces()[interface_name] = {};
+          component.getInterfaces()[interface_name] = { port: this.gateway_port.toString() };
         }
         const inter = component.getInterfaces()[interface_name];
 
@@ -317,7 +316,7 @@ export default abstract class DependencyManager {
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
         for (const interface_name of Object.keys(service.getInterfaces())) {
-          const interface_context = this.mapToInterfaceContext(graph, node, interface_name);
+          const interface_context = this.mapToInterfaceContext(node, interface_name);
           context[normalized_ref].services[service_name].interfaces[interface_name] = interface_context;
         }
       }
@@ -374,12 +373,12 @@ export default abstract class DependencyManager {
 
   protected abstract toExternalProtocol(): string;
   protected abstract toExternalHost(): string;
-  protected abstract toInternalHost(node: DependencyNode): string;
-  protected toInternalPort(node: DependencyNode, interface_name: string): string {
+  protected abstract toInternalHost(node: ServiceNode): string;
+  protected toInternalPort(node: ServiceNode, interface_name: string): string {
     return node.interfaces[interface_name].port;
   }
 
-  private mapToInterfaceContext(graph: DependencyGraph, node: ServiceNode, interface_name: string): ServiceInterfaceSpec {
+  private mapToInterfaceContext(node: ServiceNode, interface_name: string): ServiceInterfaceSpec {
     const interface_details = node.interfaces[interface_name];
 
     let internal_host: string, internal_port: string, internal_protocol: string;

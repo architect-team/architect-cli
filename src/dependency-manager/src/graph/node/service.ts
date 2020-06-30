@@ -53,6 +53,15 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return this.node_config.getInterfaces();
   }
 
+  get ports(): string[] {
+    const ports = Object.values(this.interfaces).map((i) => i.port) as string[];
+    return [...new Set(ports)];
+  }
+
+  get is_external() {
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
+  }
+
   get is_local() {
     return this.local_path !== '';
   }

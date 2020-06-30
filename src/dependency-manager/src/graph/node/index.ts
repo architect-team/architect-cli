@@ -1,4 +1,6 @@
 import { Type } from 'class-transformer';
+import { ServiceInterfaceSpec } from '../../service-config/base';
+import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -23,15 +25,10 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   abstract ref: string;
 
-  abstract get interfaces(): { [key: string]: any };
-
-  get ports(): number[] {
-    const ports = Object.values(this.interfaces).map((i) => (i.port));
-    return [...new Set(ports)];
-  }
+  abstract get interfaces(): Dictionary<ServiceInterfaceSpec>;
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
+    return false;
   }
 
   get is_local() {

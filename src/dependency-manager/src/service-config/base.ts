@@ -18,7 +18,7 @@ export interface ServiceParameter {
 export interface ServiceInterfaceSpec {
   description?: string;
   host?: string;
-  port?: string;
+  port: string;
   url?: string;
   protocol?: string;
 }

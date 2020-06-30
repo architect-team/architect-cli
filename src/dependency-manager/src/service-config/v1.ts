@@ -7,7 +7,7 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
-import { ServiceConfig, ServiceInterfaceSpec, ServiceLivenessProbe, VolumeSpec } from './base';
+import { ServiceConfig, ServiceLivenessProbe, VolumeSpec } from './base';
 
 class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
@@ -62,7 +62,7 @@ export class InterfaceSpecV1 extends BaseSpec {
   @ValidateIf(obj => obj.host, { groups: ['operator'] })
   @IsNotEmpty({ always: true })
   @Type(() => String)
-  port?: string;
+  port!: string;
 
   @IsOptional({ always: true })
   protocol?: string;
@@ -292,7 +292,7 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.name || '';
   }
 
-  getInterfaces(): Dictionary<ServiceInterfaceSpec> {
+  getInterfaces() {
     return this.interfaces || {};
   }
 
