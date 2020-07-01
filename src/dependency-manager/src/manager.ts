@@ -241,6 +241,7 @@ export default abstract class DependencyManager {
           validation_error.constraints = {
             'Required': `${pk} is required`,
           };
+          validation_error.children = [];
           validation_errors.push(validation_error);
         }
       }
