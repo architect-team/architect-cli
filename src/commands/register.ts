@@ -25,7 +25,7 @@ export default class ComponentRegister extends Command {
     ...Command.flags,
     components: flags.string({
       char: 'c',
-      description: 'Path to a compoennt to build',
+      description: 'Path to a component to build',
       exclusive: ['environment'],
       multiple: true,
     }),
