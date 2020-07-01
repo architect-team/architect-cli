@@ -32,7 +32,7 @@ export default class ComponentRegister extends Command {
     environment: flags.string({
       char: 'e',
       description: 'Path to an environment config including local components to build',
-      exclusive: ['component', 'image'],
+      exclusive: ['component'],
     }),
     tag: flags.string({
       char: 't',
@@ -75,7 +75,7 @@ export default class ComponentRegister extends Command {
   private async register_component(config_path: string, tag: string) {
     const component_config = await ComponentConfigBuilder.buildFromPath(config_path);
 
-    const [account_name, _] = component_config.getRef().split('/');
+    const account_name = component_config.getRef().split('/')[0];
     const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
     if (!selected_account) {
       throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
@@ -83,7 +83,7 @@ export default class ComponentRegister extends Command {
 
     for (const [service_ref, service_config] of Object.entries(component_config.getServices())) {
       const image_tag = `${this.app.config.registry_host}/${component_config.getName()}-${service_config.getName()}:${tag}`;
-      const image = await this.build_docker_image_if_necessary(config_path, service_config, image_tag);
+      const image = await this.push_image_if_necessary(config_path, service_config, image_tag);
       component_config.getServiceByRef(service_ref)?.setImage(image);
     }
 
@@ -93,12 +93,12 @@ export default class ComponentRegister extends Command {
     };
 
     cli.action.start(chalk.blue(`Registering component ${component_config.getName()}:${tag} with Architect Cloud...`));
-    await this.post_component_to_api(component_dto, selected_account.id);
+    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop(chalk.green(`Successfully registered component`));
   }
 
 
-  private async build_docker_image_if_necessary(config_path: string, service_config: ServiceConfig, image_tag: string) {
+  private async push_image_if_necessary(config_path: string, service_config: ServiceConfig, image_tag: string) {
     // if the image field is set, we just take their image as is
     if (service_config.getImage()) {
       return service_config.getImage();
@@ -152,11 +152,5 @@ export default class ComponentRegister extends Command {
       throw new Error(`The image is not reachable by docker: ${image}`);
     });
     cli.action.stop(chalk.green(`Image verified`));
-  }
-
-
-  private async post_component_to_api(dto: PutComponentVersionDto, account_id: string): Promise<any> {
-    const { data: component_version } = await this.app.api.post(`/accounts/${account_id}/components`, dto);
-    return component_version;
   }
 }
