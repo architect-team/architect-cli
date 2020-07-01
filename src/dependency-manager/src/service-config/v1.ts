@@ -113,6 +113,10 @@ export class BuildSpecV1 extends BaseSpec {
     }
   })
   args?: Dictionary<string>;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  dockerfile?: string;
 }
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
@@ -213,10 +217,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
   entrypoint?: string[];
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  dockerfile?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -337,10 +337,6 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getEntrypoint() {
     return this.entrypoint || [];
-  }
-
-  getDockerfile() {
-    return this.dockerfile;
   }
 
   getEnvironmentVariables(): Dictionary<string> {

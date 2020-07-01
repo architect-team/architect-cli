@@ -98,9 +98,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           compose.services[node.normalized_ref].build = compose_build;
         }
 
-        if (node.node_config.getDockerfile()) {
+        if (build.dockerfile) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          compose.services[node.normalized_ref].build!.dockerfile = node.node_config.getDockerfile();
+          compose.services[node.normalized_ref].build!.dockerfile = build.dockerfile;
         }
       }
 

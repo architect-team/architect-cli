@@ -43,6 +43,7 @@ export interface VolumeSpec {
 export interface BuildSpec {
   context?: string;
   args?: Dictionary<string>;
+  dockerfile?: string;
 }
 
 export abstract class ServiceConfig extends BaseSpec {
@@ -56,7 +57,6 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract setDigest(digest: string): void;
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
-  abstract getDockerfile(): string | undefined;
   abstract getEnvironmentVariables(): Dictionary<string>;
   abstract setEnvironmentVariable(key: string, value: string): void;
   abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };

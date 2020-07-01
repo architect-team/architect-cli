@@ -146,6 +146,16 @@ export class ComponentConfigBuilder {
       };
     }
 
+    if (config.dockerfile) {
+      config.build.dockerfile = config.dockerfile;
+      delete config.dockerfile;
+    }
+    if (config.debug?.dockerfile) {
+      if (!config.debug.build) config.debug.build = {};
+      config.debug.build.dockerfile = config.debug.dockerfile;
+      delete config.debug.dockerfile;
+    }
+
     // Support datastores as services
     if (config?.datastores) {
       for (const [datastore_key, datastore_unknown] of Object.entries(config.datastores)) {
