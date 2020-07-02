@@ -3,7 +3,7 @@ import axios from 'axios';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
-import Build from '../../../src/commands/build';
+import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../../src/common/docker-compose';
 import PortUtil from '../../../src/common/utils/port';
@@ -13,7 +13,7 @@ describe('old interfaces', function () {
 
   beforeEach(async () => {
     // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(Register.prototype, 'log', sinon.stub());
     moxios.install();
     moxios.wait(function () {
       let request = moxios.requests.mostRecent()

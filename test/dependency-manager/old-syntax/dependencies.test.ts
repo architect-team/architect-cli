@@ -4,7 +4,7 @@ import { classToPlain, plainToClass } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
-import Build from '../../../src/commands/build';
+import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import { ServiceConfigBuilder, ServiceNode } from '../../../src/dependency-manager/src';
 import DependencyGraph from '../../../src/dependency-manager/src/graph';
@@ -12,7 +12,7 @@ import DependencyGraph from '../../../src/dependency-manager/src/graph';
 describe('old dependencies', function () {
   beforeEach(async () => {
     // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(Register.prototype, 'log', sinon.stub());
     moxios.install();
     moxios.wait(function () {
       let request = moxios.requests.mostRecent()

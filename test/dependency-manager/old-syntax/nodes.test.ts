@@ -4,7 +4,7 @@ import { deserialize, serialize } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
-import Build from '../../../src/commands/build';
+import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import DependencyGraph from '../../../src/dependency-manager/src/graph';
 import GatewayNode from '../../../src/dependency-manager/src/graph/node/gateway';
@@ -15,7 +15,7 @@ describe('old nodes', function () {
 
   before(async function () {
     // Stub the logger
-    sinon.replace(Build.prototype, 'log', sinon.stub());
+    sinon.replace(Register.prototype, 'log', sinon.stub());
     moxios.install();
 
     const env_config_external = {
