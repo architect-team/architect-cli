@@ -98,7 +98,7 @@ describe('old architect components', () => {
       "depends_on": [],
       "environment": {
         "NOTIFICATION_URL": "http://architect.cloud-api.latest:8080",
-        "HOST": "architect.registry.service.latest",
+        "HOST": "0.0.0.0",
         "PORT": "8080"
       },
       "build": {
@@ -116,7 +116,7 @@ describe('old architect components', () => {
         "CLOUD_API_SECRET": "test",
         "REGISTRY_TARGET": "http://architect.registry.service.latest:8080",
         "NODE_ENV": "development",
-        "HOST": "architect.registry-proxy.service.latest",
+        "HOST": "0.0.0.0",
         "PORT": "8080"
       },
       "command": [
@@ -159,7 +159,7 @@ describe('old architect components', () => {
         "DEFAULT_CONCOURSE_HOST": "http://ci.localhost:80",
         "ENABLE_SCHEDULE": "false",
         "SEGMENT_WRITE_KEY": "test",
-        "HOST": "architect.cloud-api.service.latest",
+        "HOST": "0.0.0.0",
         "PORT": "8080",
         "VIRTUAL_HOST": "api.localhost",
         "VIRTUAL_PORT": "8080",
@@ -216,7 +216,7 @@ describe('old architect components', () => {
         "NODE_ENV": "production",
         "SEGMENT_WRITE_KEY": "test",
         "CLOUD_API_BASE_URL": "http://api.localhost:80",
-        "HOST": "architect.cloud.service.latest",
+        "HOST": "0.0.0.0",
         "PORT": "8080",
         "VIRTUAL_HOST": "app.localhost",
         "VIRTUAL_PORT": "8080",
@@ -262,7 +262,7 @@ describe('old architect components', () => {
         "CONCOURSE_LIDAR_SCANNER_INTERVAL": "1s",
         "CONCOURSE_LIDAR_CHECKER_INTERVAL": "1s",
         "CONCOURSE_COMPONENT_RUNNER_INTERVAL": "1s",
-        "HOST": "concourse.web.service.latest",
+        "HOST": "0.0.0.0",
         "PORT": "8080",
         "VIRTUAL_HOST": "ci.localhost",
         "VIRTUAL_PORT": "8080",
