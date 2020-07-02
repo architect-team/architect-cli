@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { classToPlain } from 'class-transformer';
 import { cli } from 'cli-ux';
 import fs from 'fs-extra';
 import path from 'path';
@@ -9,12 +8,12 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
-import { ServiceConfig, ServiceNode } from '../dependency-manager/src';
-import { ComponentConfigBuilder } from '../dependency-manager/src/component-config/builder';
+import { ServiceNode } from '../dependency-manager/src';
+import { ComponentConfigBuilder, RawComponentsConfig, RawServiceConfig } from '../dependency-manager/src/component-config/builder';
 
 export interface PutComponentVersionDto {
   tag: string;
-  config: any;
+  config: RawComponentsConfig;
 }
 
 export default class ComponentRegister extends Command {
@@ -73,39 +72,39 @@ export default class ComponentRegister extends Command {
   }
 
   private async register_component(config_path: string, tag: string) {
-    const component_config = await ComponentConfigBuilder.buildFromPath(config_path);
+    const { raw_config } = await ComponentConfigBuilder.rawFromPath(config_path);
 
-    const account_name = component_config.getRef().split('/')[0];
+    const account_name = raw_config.name.split('/')[0];
     const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
     if (!selected_account) {
       throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
     }
 
-    for (const service_config of Object.values(component_config.getServices())) {
-      const image_tag = `${this.app.config.registry_host}/${component_config.getName()}-${service_config.getName()}:${tag}`;
-      const image = await this.push_image_if_necessary(config_path, service_config, image_tag);
-      service_config.setImage(image);
+    for (const [service_name, service_config] of Object.entries(raw_config.services)) {
+      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
+      const image = await this.push_image_if_necessary(config_path, service_name, service_config, image_tag);
+      service_config.image = image;
     }
 
     const component_dto = {
       tag: tag,
-      config: classToPlain(component_config),
+      config: raw_config,
     };
 
-    cli.action.start(chalk.blue(`Registering component ${component_config.getName()}:${tag} with Architect Cloud...`));
+    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop(chalk.green(`Successfully registered component`));
   }
 
 
-  private async push_image_if_necessary(config_path: string, service_config: ServiceConfig, image_tag: string) {
+  private async push_image_if_necessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
     // if the image field is set, we just take their image as is
-    if (service_config.getImage()) {
-      return service_config.getImage();
+    if (service_config.image) {
+      return service_config.image;
     }
 
     // otherwise we build and push the image to our repository
-    const image = await this.build_image(config_path, service_config, image_tag);
+    const image = await this.build_image(config_path, service_name, service_config, image_tag);
     await this.push_image(image);
     const digest = await this.get_digest(image);
 
@@ -115,10 +114,10 @@ export default class ComponentRegister extends Command {
   }
 
 
-  private async build_image(config_path: string, service_config: ServiceConfig, image_tag: string) {
-    const build_context = service_config.getBuild().context;
+  private async build_image(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+    const build_context = service_config?.build?.context;
     if (!build_context) {
-      throw new Error(`Service ${service_config.getName()} does not specify an image or a build.context. It must contain one or the other.`);
+      throw new Error(`Service ${service_name} does not specify an image or a build.context. It must contain one or the other.`);
     }
     try {
       const component_path = fs.lstatSync(config_path).isFile() ? path.dirname(config_path) : config_path;

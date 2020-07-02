@@ -17,6 +17,22 @@ class MissingConfigFileError extends Error {
   }
 }
 
+//TODO:213: These are temporary types while we figure out how to resolve the issue of typed raw configs
+export type RawComponentsConfig = {
+  name: string;
+  services: RawServiceConfig[];
+  [key: string]: any;
+};
+
+export type RawServiceConfig = {
+  name: string;
+  build?: {
+    context?: string;
+  };
+  image?: string;
+  [key: string]: any;
+};
+
 export class ComponentConfigBuilder {
   static getConfigPaths(input: string) {
     return [
@@ -53,27 +69,33 @@ export class ComponentConfigBuilder {
     return [file_path, file_contents];
   }
 
-  static async buildFromPath(path: string): Promise<ComponentConfig> {
+  static async rawFromPath(path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentsConfig }> {
     const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(path);
 
-    let js_obj;
+    let raw_config;
     // Try to parse as json
     try {
-      js_obj = JSON.parse(file_contents);
+      raw_config = JSON.parse(file_contents);
     } catch {
       // Try to parse as yaml
       try {
-        js_obj = yaml.safeLoad(file_contents);
+        raw_config = yaml.safeLoad(file_contents);
       } catch { }
     }
 
-    if (!js_obj) {
+    if (!raw_config) {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
+    return { file_path, file_contents, raw_config };
+  }
+
+  static async buildFromPath(path: string): Promise<ComponentConfig> {
+    const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(path);
+
     try {
       // TODO: Figure out how to enforce services block for components during registration
-      const config = ComponentConfigBuilder.buildFromJSONCompat(js_obj);
+      const config = ComponentConfigBuilder.buildFromJSONCompat(raw_config);
       await config.validateOrReject({ groups: ['developer'] });
       return config;
     } catch (err) {
