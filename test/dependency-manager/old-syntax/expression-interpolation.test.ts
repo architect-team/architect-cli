@@ -48,7 +48,7 @@ describe('old expression-interpolation', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
     });
@@ -61,7 +61,7 @@ describe('old expression-interpolation', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
+    moxios.stubRequest(`/accounts/postgres/components/postgres/versions/11`, {
       status: 200,
       response: { tag: '11', config: postgres_config, service: { url: 'architect/cloud:11' } },
     });
@@ -84,7 +84,7 @@ describe('old expression-interpolation', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/cloud-api/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/cloud-api/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: backend_config, service: { url: 'architect/cloud-api:v1' } },
     });
@@ -124,7 +124,7 @@ describe('old expression-interpolation', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
     });

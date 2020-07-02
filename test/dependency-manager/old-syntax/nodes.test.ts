@@ -42,12 +42,12 @@ describe('old nodes', function () {
       '/stack/arc.env.external.json': JSON.stringify(env_config_external),
     });
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/latest`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/latest`, {
       status: 200,
       response: { config: { interfaces: {} } }
     });
 
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/latest`, {
+    moxios.stubRequest(`/accounts/architect/components/backend/versions/latest`, {
       status: 200,
       response: {
         id: 'b0fda212-c67d-44ec-875c-cbe0dfc34881',

@@ -113,7 +113,7 @@ describe('components spec v1', function () {
         }
       };
 
-      moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
         status: 200,
         response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
       });
