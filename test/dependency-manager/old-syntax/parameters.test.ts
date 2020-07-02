@@ -61,7 +61,7 @@ describe('old parameters', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/cloud/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/cloud:v1' } },
     });
@@ -92,7 +92,7 @@ describe('old parameters', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/cloud-api/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/cloud-api/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: backend_config, service: { url: 'architect/cloud-api:v1' } },
     });

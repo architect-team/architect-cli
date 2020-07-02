@@ -90,7 +90,7 @@ describe('old dependencies', function () {
       };
       const frontend_config = ServiceConfigBuilder.buildFromJSON(frontend_config_json);
 
-      moxios.stubRequest(`/accounts/architect/services/frontend/versions/latest`, {
+      moxios.stubRequest(`/accounts/architect/components/frontend/versions/latest`, {
         status: 200,
         response: { tag: 'latest', config: classToPlain(frontend_config), service: { url: 'architect/frontend/service:latest' } }
       });
@@ -99,7 +99,7 @@ describe('old dependencies', function () {
         name: 'architect/backend'
       };
 
-      moxios.stubRequest(`/accounts/architect/services/backend/versions/latest`, {
+      moxios.stubRequest(`/accounts/architect/components/backend/versions/latest`, {
         status: 200,
         response: { tag: 'latest', config: classToPlain(backend_config), service: { url: 'architect/backend/service:latest' } }
       });
@@ -130,7 +130,7 @@ describe('old dependencies', function () {
     });
 
     it('two services that share a postgres db', async () => {
-      moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
+      moxios.stubRequest(`/accounts/postgres/components/postgres/versions/11`, {
         status: 200,
         response: { tag: '11', config: { name: 'postgres/postgres' }, service: { url: 'postgres:11' } }
       });
@@ -177,11 +177,11 @@ describe('old dependencies', function () {
     });
 
     it('two services that use different postgres dbs', async () => {
-      moxios.stubRequest(`/accounts/postgres/services/postgres/versions/11`, {
+      moxios.stubRequest(`/accounts/postgres/components/postgres/versions/11`, {
         status: 200,
         response: { tag: '11', config: { name: 'postgres/postgres' }, service: { url: 'postgres:11' } }
       });
-      moxios.stubRequest(`/accounts/postgres/services/postgres/versions/12`, {
+      moxios.stubRequest(`/accounts/postgres/components/postgres/versions/12`, {
         status: 200,
         response: { tag: '12', config: { name: 'postgres/postgres' }, service: { url: 'postgres:12' } }
       });
@@ -300,12 +300,12 @@ describe('old dependencies', function () {
         extends: 'architect/payments-service:v1'
       }
 
-      moxios.stubRequest(`/accounts/forked/services/payments-service/versions/v1`, {
+      moxios.stubRequest(`/accounts/forked/components/payments-service/versions/v1`, {
         status: 200,
         response: { tag: 'v1', config: service_config, service: { url: 'forked/payments-service:v1' } }
       });
 
-      moxios.stubRequest(`/accounts/architect/services/payments-service/versions/v1`, {
+      moxios.stubRequest(`/accounts/architect/components/payments-service/versions/v1`, {
         status: 200,
         response: { tag: 'v1', config: { name: 'architect/payments-service', parameters: { WORKED: 1 }, environment: { WORKED: '${ parameters.WORKED }' } }, service: { url: 'architect/payments-service:v1' } }
       });
@@ -331,7 +331,7 @@ describe('old dependencies', function () {
 
     it('check config refs', async () => {
       for (var i = 1; i < 4; i++) {
-        moxios.stubRequest(`/accounts/architect/services/checkouts-service/versions/v` + i, {
+        moxios.stubRequest(`/accounts/architect/components/checkouts-service/versions/v` + i, {
           status: 200,
           response: { tag: 'v' + i, config: { name: 'architect/checkouts-service', parameters: { WORKED: 1 } }, service: { url: 'architect/checkouts-service:v' + i } }
         });

@@ -59,31 +59,31 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadComponentConfig(initial_config: ComponentConfig) {
     const component_extends = initial_config.getExtends();
-    const service_name = initial_config.getName();
+    const component_name = initial_config.getName();
 
     if (component_extends && component_extends.startsWith('file:')) {
       return ComponentConfigBuilder.buildFromPath(component_extends.substr('file:'.length));
-    } else if (service_name in this.linked_services) {
-      initial_config.setExtends(`file:${this.linked_services[service_name]}`);
+    } else if (component_name in this.linked_services) {
+      initial_config.setExtends(`file:${this.linked_services[component_name]}`);
       // Load locally linked service config
-      console.log(`Using locally linked ${chalk.blue(service_name)} found at ${chalk.blue(this.linked_services[service_name])}`);
-      return ComponentConfigBuilder.buildFromPath(this.linked_services[service_name]);
+      console.log(`Using locally linked ${chalk.blue(component_name)} found at ${chalk.blue(this.linked_services[component_name])}`);
+      return ComponentConfigBuilder.buildFromPath(this.linked_services[component_name]);
     }
 
     if (component_extends) {
       // Load remote service config
-      const [service_name, service_tag] = component_extends.split(':');
-      const [account_name, svc_name] = service_name.split('/');
-      const { data: service_digest } = await this.api.get(`/accounts/${account_name}/services/${svc_name}/versions/${service_tag}`).catch((err) => {
+      const [component_name, component_tag] = component_extends.split(':');
+      const [account_prefix, component_suffix] = component_name.split('/');
+      const { data: component_version } = await this.api.get(`/accounts/${account_prefix}/components/${component_suffix}/versions/${component_tag}`).catch((err) => {
         err.message = `Could not download component for ${component_extends}\n${err.message}`;
         throw err;
       });
 
-      const config = ComponentConfigBuilder.buildFromJSONCompat(service_digest.config);
+      const config = ComponentConfigBuilder.buildFromJSONCompat(component_version.config);
       /*
       if (!config.getImage()) {
-        config.setImage(service_digest.service.url.replace(/(^\w+:|^)\/\//, ''));
-        config.setDigest(service_digest.digest);
+        config.setImage(component_version.service.url.replace(/(^\w+:|^)\/\//, ''));
+        config.setDigest(component_version.digest);
       }
       */
       return config;

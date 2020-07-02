@@ -258,7 +258,7 @@ describe('old interfaces', function () {
       }
     }
 
-    moxios.stubRequest(`/accounts/architect/services/checkout/versions/latest`, {
+    moxios.stubRequest(`/accounts/architect/components/checkout/versions/latest`, {
       status: 200,
       response: { tag: 'latest', config: checkout_config, service: { url: 'architect/checkout:latest' } }
     });

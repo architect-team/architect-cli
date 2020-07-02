@@ -38,7 +38,7 @@ describe('old external nodes', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
     });
@@ -83,7 +83,7 @@ describe('old external nodes', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
     });
@@ -106,7 +106,7 @@ describe('old external nodes', function () {
       '/stack/arc.env.json': JSON.stringify(env_config),
     });
 
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/backend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: {}, service: { url: 'architect/backend:v1' } }
     });
@@ -135,12 +135,12 @@ describe('old external nodes', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
     });
 
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/backend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: { interfaces: { api: 8080 } }, service: { url: 'architect/backend:v1' } }
     });
@@ -192,12 +192,12 @@ describe('old external nodes', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
     });
 
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v2`, {
+    moxios.stubRequest(`/accounts/architect/components/backend/versions/v2`, {
       status: 200,
       response: { tag: 'v2', config: backend_config, service: { url: 'architect/backend:v2' } }
     });
@@ -256,12 +256,12 @@ describe('old external nodes', function () {
       }
     };
 
-    moxios.stubRequest(`/accounts/architect/services/frontend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/frontend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: frontend_config, service: { url: 'architect/frontend:v1' } }
     });
 
-    moxios.stubRequest(`/accounts/architect/services/backend/versions/v1`, {
+    moxios.stubRequest(`/accounts/architect/components/backend/versions/v1`, {
       status: 200,
       response: { tag: 'v1', config: backend_config, service: { url: 'architect/backend:v1' } }
     });
