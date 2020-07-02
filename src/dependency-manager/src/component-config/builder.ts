@@ -120,7 +120,7 @@ export class ComponentConfigBuilder {
     if (config.interfaces && Object.keys(config.interfaces).length > 0) {
       const interface_name = Object.keys(config.interfaces)[0];
       if (!config.environment.HOST) {
-        config.environment.HOST = `\${ services.service.interfaces.${interface_name}.host }`;
+        config.environment.HOST = '0.0.0.0';
       }
       if (!config.environment.PORT) {
         config.environment.PORT = `\${ services.service.interfaces.${interface_name}.port }`;
