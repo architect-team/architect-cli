@@ -81,10 +81,10 @@ export default class ComponentRegister extends Command {
       throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
     }
 
-    for (const [service_ref, service_config] of Object.entries(component_config.getServices())) {
+    for (const service_config of Object.values(component_config.getServices())) {
       const image_tag = `${this.app.config.registry_host}/${component_config.getName()}-${service_config.getName()}:${tag}`;
       const image = await this.push_image_if_necessary(config_path, service_config, image_tag);
-      component_config.getServiceByRef(service_ref)?.setImage(image);
+      service_config.setImage(image);
     }
 
     const component_dto = {
@@ -152,5 +152,6 @@ export default class ComponentRegister extends Command {
       throw new Error(`The image is not reachable by docker: ${image}`);
     });
     cli.action.stop(chalk.green(`Image verified`));
+    return digest;
   }
 }
