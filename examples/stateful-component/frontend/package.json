@@ -1,5 +1,5 @@
 {
-  "name": "@architect-examples/stateless-component",
+  "name": "@architect-examples/stateful-component",
   "version": "0.1.0",
   "private": true,
   "scripts": {

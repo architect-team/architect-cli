@@ -25,7 +25,7 @@ const start = async () => {
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     retry: {
-      max: 3, // maximum amount of tries
+      max: 30, // maximum amount of tries
       timeout: 10000, // throw if no response or error within millisecond timeout, default: undefined,
       match: [ // Must match error signature (ala bluebird catch) to continue
         Sequelize.ConnectionError,

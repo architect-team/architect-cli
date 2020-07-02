@@ -72,7 +72,7 @@ const Home = () => {
   return (
     <Container className={classes.container}>
       <Head>
-        <title>Stateless components | Architect examples</title>
+        <title>Stateful components | Architect examples</title>
         <link rel="icon" href="/img/favicon.ico" />
       </Head>
 
