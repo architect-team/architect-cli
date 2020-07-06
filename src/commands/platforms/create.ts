@@ -55,9 +55,6 @@ export default class PlatformCreate extends Command {
     aws_region: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
     cluster_ca_cert: flags.string({ description: 'File path of cluster_ca_cert', env: 'ARCHITECT_CLUSTER_CA_CERT' }),
-    config_file: flags.string({ char: 'c' }),
-    account: flags.string({ char: 'a' }),
-    platform: flags.string({ char: 'p', exclusive: ['type', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
   };
 
   async run() {
