@@ -2,15 +2,12 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import path from 'path';
 import untildify from 'untildify';
-import { CreatePlatformInput } from '../../commands/environments/create';
-import { EnvironmentNameValidator } from './validation';
+import { CreatePlatformInput } from '../../commands/platforms/create';
 
 export class EcsPlatformUtils {
 
   public static async configure_ecs_platform(
-    args: any,
     flags: any,
-    account: { id: string; name: string },
   ): Promise<CreatePlatformInput> {
 
     let awsconfig: any;
@@ -32,18 +29,6 @@ export class EcsPlatformUtils {
     }
 
     const new_platform_answers: any = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'name',
-        when: !args.name,
-        message: 'What would you like to name the new platform?',
-        filter: value => value.toLowerCase(),
-        validate: value => {
-          if (EnvironmentNameValidator.test(value)) return true;
-          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-        },
-        default: () => `${account.name}-ecs`,
-      },
       {
         type: 'input',
         name: 'aws_region',
@@ -73,7 +58,6 @@ export class EcsPlatformUtils {
     // permissions on the user's behalf
 
     return {
-      name: args.name || new_platform_answers.name,
       type: 'ECS',
       description: 'description',
       credentials: {
