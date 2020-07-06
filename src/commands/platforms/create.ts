@@ -39,11 +39,9 @@ export default class PlatformCreate extends Command {
   static aliases = ['platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
 
-  platforms = [];
-
   static args = [{
     name: 'name',
-    description: 'Name to give the platform',
+    description: 'Fully qualified name to give the platform (my-account/platform_name)',
     parse: (value: string) => value.toLowerCase(),
   }];
 
@@ -71,8 +69,6 @@ export default class PlatformCreate extends Command {
   private async create_platform() {
     const { args, flags } = this.parse(PlatformCreate);
 
-    this.platforms = await this.load_platforms();
-
     let selected_account: any;
     this.accounts = await this.get_accounts();
 
@@ -86,10 +82,10 @@ export default class PlatformCreate extends Command {
     // Prompt user for required inputs
     const answers: any = await inquirer.prompt([
       {
-        when: () => !flags.account,
         type: 'list',
         name: 'account',
         message: 'For which Architect account would you like to create this platform?',
+        when: !args.name,
         choices: this.accounts.rows.map((a: any) => { return { name: a.name, value: a }; }),
         default: selected_account,
       },
@@ -106,12 +102,18 @@ export default class PlatformCreate extends Command {
       },
     ]);
 
+    if (args.name) {
+      const [account, name] = args.name.split('/');
+      answers.account = this.accounts.rows.find((a: any) => a.name === account);
+      answers.name = name;
+    }
+
     if (selected_account) {
       answers.account = selected_account;
     }
 
     const platform = await this.create_architect_platform(flags);
-    const platform_dto = { name: args.name || answers.name, ...platform };
+    const platform_dto = { name: answers.name, ...platform };
 
     cli.action.start('Registering platform with Architect');
     const public_platform = Object.keys(platform_dto).length === 1 && !!platform_dto.name;
@@ -148,12 +150,6 @@ export default class PlatformCreate extends Command {
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
     }
-  }
-
-  private async load_platforms(account_id?: string) {
-    const endpoint = account_id ? `/platforms?account_id=${account_id}` : `/platforms`;
-    const { data: { rows: platforms } } = await this.app.api.get(endpoint);
-    return platforms;
   }
 
   private async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
