@@ -41,7 +41,7 @@ export default class PlatformCreate extends Command {
 
   static args = [{
     name: 'name',
-    description: 'Fully qualified name to give the platform (my-account/platform_name)',
+    description: 'Fully qualified name to give the platform (my-account/platform-name)',
     parse: (value: string) => value.toLowerCase(),
   }];
 
@@ -69,10 +69,15 @@ export default class PlatformCreate extends Command {
     let selected_account: any;
     this.accounts = await this.get_accounts();
 
-    if (flags.account) {
-      selected_account = this.accounts.rows.find((a: any) => a.name === flags.account);
+    if (args.name?.split('/').length !== 2) {
+      throw new Error('Platform name must be in the form my-account/platform-name');
+    }
+
+    if (args.name) {
+      const account = args.name.split('/')[0];
+      selected_account = this.accounts.rows.find((a: any) => a.name === account);
       if (!selected_account) {
-        throw new Error(`Account=${flags.account} does not exist or you do not have access to it.`);
+        throw new Error(`Account=${account} does not exist or you do not have access to it.`);
       }
     }
 
