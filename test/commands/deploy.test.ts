@@ -1,95 +1,130 @@
-import { expect } from '@oclif/test';
-import fs from 'fs-extra';
+import moxios from 'moxios';
 import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
-import AppConfig from '../../src/app-config/config';
-import CredentialManager from '../../src/app-config/credentials';
-import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
-import Link from '../../src/commands/link';
-import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import ARCHITECTPATHS from '../../src/paths';
 
-describe('deploy', () => {
+describe('deploy', function () {
+  this.timeout(15000) // TODO: remove?
+
   let tmp_dir = os.tmpdir();
+  const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment-linked-service.json');
 
-  before(() => {
+  beforeEach(() => {
+    // Stub the logger
+    sinon.replace(Deploy.prototype, 'log', sinon.stub());
+    moxios.install();
+
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
 
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
+    // const credential_spy = sinon.fake.returns('token');
+    // sinon.replace(CredentialManager.prototype, 'get', credential_spy);
 
     // Stub the log_level
-    const config = new AppConfig('', {
-      log_level: 'debug',
-    });
-    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
-    sinon.replace(AppService, 'create', app_config_stub);
+    // const config = new AppConfig('', {
+    //   log_level: 'debug',
+    // });
+    // const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+    // fs.writeJSONSync(tmp_config_file, config);
+    // const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
+    // sinon.replace(AppService, 'create', app_config_stub);
   });
 
-  after(() => {
+  afterEach(() => {
+    moxios.uninstall();
     sinon.restore();
   });
 
-  it('generates compose locally', async () => {
-    const compose_spy = sinon.fake.resolves(null);
-    sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
+  // it('generates compose locally', async () => {
+  //   const compose_spy = sinon.fake.resolves(null);
+  //   sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
 
-    // Link the addition service
-    const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
-    await Link.run([additionServicePath]);
+  //   // Link the addition service
+  //   const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
+  //   await Link.run([additionServicePath]);
 
-    const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment-linked-service.json');
-    await Deploy.run(['-l', calculator_env_config_path]);
+  //   await Deploy.run(['-l', calculator_env_config_path]);
 
-    const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
-    expect(compose_spy.calledOnce).to.equal(true);
+  //   const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
+  //   expect(compose_spy.calledOnce).to.equal(true);
 
-    expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
-    for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
-      expect(Object.keys(expected_compose.services)).to.include(svc_key);
+  //   expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
+  //   for (const svc_key of Object.keys(compose_spy.firstCall.args[0].services)) {
+  //     expect(Object.keys(expected_compose.services)).to.include(svc_key);
 
-      const input = compose_spy.firstCall.args[0].services[svc_key] as DockerService;
-      const expected = expected_compose.services[svc_key];
+  //     const input = compose_spy.firstCall.args[0].services[svc_key] as DockerService;
+  //     const expected = expected_compose.services[svc_key];
 
-      // Overwrite expected paths with full directories
-      if (expected.build?.context) {
-        expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
+  //     // Overwrite expected paths with full directories
+  //     if (expected.build?.context) {
+  //       expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
+  //     }
+
+  //     if (input.build?.context) {
+  //       input.build.context = input.build.context.replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
+  //     }
+
+  //     if (expected.volumes) {
+  //       expected.volumes = expected.volumes.map(volume => {
+  //         const [host, target] = volume.split(':');
+  //         return `${path.join(__dirname, '../../', host)}:${target}`;
+  //       });
+  //     }
+
+  //     expect(expected.ports).to.have.members(input.ports);
+  //     expect(expected.image).to.equal(input.image);
+  //     expect(expected.depends_on).to.have.members(input.depends_on);
+  //     expect(expected.build).to.deep.eq(input.build);
+  //     expect((expected.command || []).length).to.equal((input.command || []).length);
+  //     if (expected.command && input.command) {
+  //       for (const index of expected.command.keys()) {
+  //         expect(expected.command[index]).to.equal(input.command[index]);
+  //       }
+  //     }
+  //     expect(input.environment).not.to.be.undefined;
+
+  //     // Test env variables
+  //     expect(Object.keys(input.environment || {})).has.members(Object.keys(expected.environment || {}));
+  //     for (const [key, value] of Object.entries(input.environment || {})) {
+  //       expect(value).to.equal(expected.environment![key]);
+  //     }
+  //   }
+  // });
+
+  it('Creates a remote deployment with user input when env exists', async () => {
+    moxios.stubRequest(`/accounts/test-account`, {
+      status: 200,
+      response: {
+        id: 'test-account-id'
+      },
+    });
+
+    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
+      status: 200,
+      response: {
+        id: 'test-env-id'
+      },
+    });
+
+    moxios.stubRequest(`/environments/test-env-id/deploy`, {
+      status: 200,
+      response: {
+        id: 'test-deployment-id'
       }
+    });
 
-      if (input.build?.context) {
-        input.build.context = input.build.context.replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
+    moxios.stubRequest(/\/deploy\/test-deployment-id.*/, {
+      status: 200,
+      response: {
+        // applied_at: Date.now()
       }
+    });
 
-      if (expected.volumes) {
-        expected.volumes = expected.volumes.map(volume => {
-          const [host, target] = volume.split(':');
-          return `${path.join(__dirname, '../../', host)}:${target}`;
-        });
-      }
+    const poll_spy = sinon.fake.returns({});
+    sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
-      expect(expected.ports).to.have.members(input.ports);
-      expect(expected.image).to.equal(input.image);
-      expect(expected.depends_on).to.have.members(input.depends_on);
-      expect(expected.build).to.deep.eq(input.build);
-      expect((expected.command || []).length).to.equal((input.command || []).length);
-      if (expected.command && input.command) {
-        for (const index of expected.command.keys()) {
-          expect(expected.command[index]).to.equal(input.command[index]);
-        }
-      }
-      expect(input.environment).not.to.be.undefined;
-
-      // Test env variables
-      expect(Object.keys(input.environment || {})).has.members(Object.keys(expected.environment || {}));
-      for (const [key, value] of Object.entries(input.environment || {})) {
-        expect(value).to.equal(expected.environment![key]);
-      }
-    }
+    await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
   });
 });
