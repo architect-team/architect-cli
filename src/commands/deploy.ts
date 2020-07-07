@@ -14,6 +14,12 @@ import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
+interface CreateEnvironmentInput {
+  name: string;
+  namespace?: string;
+  platform_id: string;
+  config?: string;
+}
 
 class EnvConfigRequiredError extends Error {
   constructor() {
@@ -70,14 +76,14 @@ export default class Deploy extends Command {
       allowNo: true,
       exclusive: ['local', 'compose_file'],
     }),
-    account: flags.string({
-      char: 'a',
-      description: 'Account to deploy the services with',
-      exclusive: ['local', 'compose_file'],
-    }),
     environment: flags.string({
       char: 'e',
-      description: 'Environment to deploy the services to',
+      description: 'Fully qualified environment name in the form my-account/environment-name',
+      exclusive: ['local', 'compose_file'],
+    }),
+    platform: flags.string({
+      char: 'p',
+      description: 'Fully qualified platform name in the form my-account/platform-name',
       exclusive: ['local', 'compose_file'],
     }),
     build_prod: flags.boolean({
@@ -178,48 +184,103 @@ export default class Deploy extends Command {
     }
 
     const { rows: user_accounts } = await this.get_accounts();
+    let environment_id;
 
-    // Prompt user for required inputs if not set as flags
-    const answers: any = await inquirer.prompt([{
-      type: 'list',
-      name: 'account',
-      message: 'Which account would you like to deploy to?',
-      choices: user_accounts.map((a: any) => { return { name: a.name, value: a.id }; }),
-      when: !flags.account,
-    }]);
+    if (!flags.platform && !flags.environment) {
+      const environment_answers = await inquirer.prompt([{
+        type: 'input',
+        name: 'environment_name',
+        message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
+      }]);
 
-    if (!answers.account) {
-      const account = user_accounts.filter((account: any) => account.name === flags.account);
-      if (!account.length) {
-        throw new Error(`Account with name ${flags.account} not found`);
+      const [account_name, environment_name] = environment_answers.environment_name.split('/');
+      const account = user_accounts.find((account: any) => account.name.toLowerCase() === account_name.toLowerCase()); // TODO: check if exists
+
+      const { rows: environments } = (await this.app.api.get(`/accounts/${account.id}/environments`)).data;
+
+      const environment = environments.find((environment: any) => environment.name.toLowerCase() === environment_name.toLowerCase());
+
+      if (environment) {
+        environment_id = environment.id;
+      } else {
+        const platform_answers = await inquirer.prompt([{
+          type: 'input',
+          name: 'platform_name',
+          message: 'What is the name of the platform would you like to create the environment on?', // TODO: error checking
+        }]);
+
+        const { rows: platforms } = (await this.app.api.get(`/accounts/${account.id}/platforms`)).data;
+
+        cli.action.start(chalk.blue('Registering environment with Architect'));
+        const created_environment = await this.post_environment_to_api({
+          name: environment_name,
+          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === platform_answers.platform_name.split('/')[1].toLowerCase()).id, // TODO: error checking
+        }, account.id);
+        cli.action.stop();
+        environment_id = created_environment.id;
       }
-      answers.account = account[0].id;
+    } else if (flags.environment && !flags.platform) {
+
+      if (flags.environment.split('/').length !== 2) {
+        throw new Error('Environment name must be in the form my-account/environment-name');
+      }
+
+      const [account_name, env_name] = flags.environment.split('/');
+      const environment_account = user_accounts.find((a: any) => a.name === account_name);
+      if (!environment_account) {
+        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+      }
+
+      const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
+      const environment = environments.find((environment: any) => environment.name.toLowerCase() === env_name.toLowerCase());
+      if (!environment) {
+        throw new Error(`Environment with name ${flags.environment} not found`); // TODO: prompt for platform if env not found, then create env on platform? probably not
+      }
+      environment_id = environment.id;
+    } else if (flags.platform && !flags.environment) {
+
+      if (flags.platform.split('/').length !== 2) {
+        throw new Error('Platform name must be in the form my-account/platform-name');
+      }
+
+      const [account_name, platform_name] = flags.platform.split('/');
+      const platform_account = user_accounts.find((a: any) => a.name === account_name);
+      if (!platform_account) {
+        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+      }
+
+      const { rows: environments } = (await this.app.api.get(`/accounts/${platform_account.id}/environments`)).data;
+
+      const env_answers = await inquirer.prompt([{
+        type: 'input',
+        name: 'environment_name',
+        message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
+      }]);
+
+      const environment = environments.find((environment: any) => env_answers.environment_name.split('/')[1].toLowerCase() === environment.name.toLowerCase());
+
+      if (!environment) {
+        const { rows: platforms } = (await this.app.api.get(`/accounts/${platform_account.id}/platforms`)).data;
+
+        cli.action.start(chalk.blue('Registering environment with Architect'));
+        const created_environment = await this.post_environment_to_api({
+          name: env_answers.environment_name.split('/')[1],
+          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === platform_name.toLowerCase()).id,
+        }, platform_account.id);
+        cli.action.stop();
+        environment_id = created_environment.id;
+      } else {
+        environment_id = environment.id;
+      }
+    } else { // both flags exist, check for env and create if necessary
+
     }
 
-    const { rows: environments } = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
-
-    // Prompt user for required inputs if not set as flags
-    const env_answers = await inquirer.prompt([{
-      type: 'list',
-      name: 'environment_id',
-      message: 'Which environment would you like to deploy to?',
-      choices: environments.map((a: any) => { return { name: a.name, value: a.id }; }),
-      when: !flags.environment,
-    }]);
-
-    if (!env_answers.environment_id) {
-      const environment = environments.filter((env: any) => env.name === flags.environment);
-      if (!environment.length) {
-        throw new Error(`Environment with name ${flags.environment} not found`);
-      }
-      env_answers.environment_id = environment[0].id;
-    }
-
-    const all_answers = { ...args, ...flags, ...answers, ...env_answers };
+    // const all_answers = { ...args, ...flags, ...answers, ...env_answers };
     const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: config_payload });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
@@ -240,6 +301,11 @@ export default class Deploy extends Command {
     await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
     await this.poll(deployment.id);
     cli.action.stop(chalk.green(`Deployed`));
+  }
+
+  private async post_environment_to_api(data: CreateEnvironmentInput, account_id: string): Promise<any> {
+    const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
+    return environment;
   }
 
   async run() {
