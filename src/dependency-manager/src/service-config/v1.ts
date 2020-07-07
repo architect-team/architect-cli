@@ -103,8 +103,12 @@ export class BuildSpecV1 extends BaseSpec {
   context?: string;
 
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   @Transform(value => {
     if (value) {
+      if (!(value instanceof Object)) {
+        return value;
+      }
       const output: Dictionary<string> = {};
       for (const [k, v] of Object.entries(value)) {
         output[k] = `${v}`;
@@ -121,7 +125,10 @@ export class BuildSpecV1 extends BaseSpec {
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
   if (!input) {
-    return undefined;
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
   }
 
   const output: Dictionary<ParameterDefinitionSpecV1> = {};
@@ -138,6 +145,13 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
 };
 
 export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
     let config;
@@ -158,7 +172,10 @@ export function transformServices(input: Dictionary<string | object | ServiceCon
 
 const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
   if (!input) {
-    return undefined;
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
   }
 
   const output: Dictionary<ServiceVolumeV1> = {};
@@ -174,6 +191,9 @@ const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Diction
 export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
     return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
   }
 
   const output: Dictionary<InterfaceSpecV1> = {};
@@ -233,8 +253,12 @@ export class ServiceConfigV1 extends ServiceConfig {
   debug?: ServiceConfigV1;
 
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   @Transform(value => {
     if (value) {
+      if (!(value instanceof Object)) {
+        return value;
+      }
       const output: Dictionary<string> = {};
       for (const [k, v] of Object.entries(value)) {
         output[k] = `${v}`;
@@ -259,6 +283,7 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @Transform(value => (transformVolumes(value)))
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   volumes?: Dictionary<ServiceVolumeV1>;
 
   @IsOptional({ always: true })

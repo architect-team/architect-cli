@@ -16,7 +16,10 @@ interface DnsConfigSpec {
 
 export const transformComponents = (input?: Dictionary<any>, parent?: any): Dictionary<ComponentConfig> | undefined => {
   if (!input) {
-    return undefined;
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
   }
 
   const output: Dictionary<ComponentConfig> = {};
@@ -41,15 +44,18 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @Allow({ always: true })
   __version = '1.0.0';
 
-  @Transform(value => (transformParameters(value)))
+  @Transform(transformParameters)
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   protected parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(transformComponents)
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   protected components?: Dictionary<ComponentConfig>;
 
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   protected vaults?: Dictionary<EnvironmentVault>;
 
   @IsOptional({ always: true })

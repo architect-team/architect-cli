@@ -170,6 +170,33 @@ describe('validation spec v1', () => {
 
   // Environment Validation
   describe('environment validation', () => {
+    it('invalid component syntax', async () => {
+      const env_config = `
+      components:
+        examples/stateful-component:latest
+      `
+      mock_fs({
+        '/environment.yml': env_config
+      });
+
+      let validation_err;
+      try {
+        const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "components": {
+          "IsObject": "components must be an object",
+          "value": "examples/stateful-component:latest",
+          "line": 2,
+          "column": 17
+        }
+      })
+    });
+
     it('required component parameters', async () => {
       const component_config = `
       name: test/component

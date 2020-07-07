@@ -39,6 +39,9 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
   if (!input) {
     return {};
   }
+  if (!(input instanceof Object)) {
+    return input;
+  }
 
   // TODO: Be more flexible than just url ref
   const output: Dictionary<InterfaceSpecV1> = {};
@@ -106,8 +109,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsString({ always: true })
   author?: string;
 
-  @Transform(value => (transformParameters(value)))
+  @Transform(transformParameters)
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   parameters?: Dictionary<ParameterDefinitionSpecV1>;
 
   @Transform(transformServices)
@@ -116,8 +120,12 @@ export class ComponentConfigV1 extends ComponentConfig {
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
+  @IsObject({ always: true })
   @Transform(value => {
     if (value) {
+      if (!(value instanceof Object)) {
+        return value;
+      }
       const output: Dictionary<string> = {};
       for (const [k, v] of Object.entries(value)) {
         output[k] = `${v}`;

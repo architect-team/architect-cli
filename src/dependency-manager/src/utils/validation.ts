@@ -1,4 +1,4 @@
-import { matches, ValidationError, ValidatorOptions } from 'class-validator';
+import { isObject, matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { BaseSpec } from './base-spec';
 import { interpolateString, InterpolationErrors } from './interpolation';
 
@@ -15,7 +15,7 @@ export const validateNested = async <T extends Record<string, any>>(
   options?: ValidatorOptions,
 ): Promise<ValidationError[]> => {
   const value = (target as any)[property];
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return errors;
   }
   const error_index = errors.findIndex(err => err.property === property);
@@ -53,8 +53,11 @@ export const validateDictionary = async <T extends BaseSpec>(
   regex?: RegExp
 ): Promise<ValidationError[]> => {
   const property_value = (target as any)[property];
-  const error_index = errors.findIndex(err => err.property === property);
+  if (property_value === undefined || property_value === null) {
+    return errors;
+  }
 
+  const error_index = errors.findIndex(err => err.property === property);
   let error = new ValidationError();
   error.property = property;
   error.target = target;
@@ -62,6 +65,14 @@ export const validateDictionary = async <T extends BaseSpec>(
   error.children = [];
   if (error_index >= 0) {
     error = errors.splice(error_index, 1)[0];
+  }
+
+  if (!isObject(property_value)) {
+    error.constraints = {
+      'IsObject': `${property} must be an object`,
+    };
+    errors.push(error);
+    return errors;
   }
 
   for (const [key, value] of Object.entries((property_value || {}))) {
