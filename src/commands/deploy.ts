@@ -186,119 +186,113 @@ export default class Deploy extends Command {
     const { rows: user_accounts } = await this.get_accounts();
     let environment_id;
 
-    if (!flags.platform && !flags.environment) {
-      const environment_answers = await inquirer.prompt([{
-        type: 'input',
-        name: 'environment_name',
-        message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
-      }]);
+    // if (!flags.platform && !flags.environment) {
+    const environment_answers = await inquirer.prompt([{
+      type: 'input',
+      name: 'environment_name',
+      message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
+    }]);
 
-      const [account_name, environment_name] = environment_answers.environment_name.split('/');
-      const account = user_accounts.find((account: any) => account.name.toLowerCase() === account_name.toLowerCase()); // TODO: check if exists
+    const [account_name, environment_name] = environment_answers.environment_name.split('/');
+    const account = user_accounts.find((account: any) => account.name.toLowerCase() === account_name.toLowerCase()); // TODO: check if exists
 
-      const { rows: environments } = (await this.app.api.get(`/accounts/${account.id}/environments`)).data;
+    const { rows: environments } = (await this.app.api.get(`/accounts/${account.id}/environments`)).data;
 
-      const environment = environments.find((environment: any) => environment.name.toLowerCase() === environment_name.toLowerCase());
+    const environment = environments.find((environment: any) => environment.name.toLowerCase() === environment_name.toLowerCase());
 
-      if (environment) {
-        environment_id = environment.id;
-      } else {
-        const platform_answers = await inquirer.prompt([{
-          type: 'input',
-          name: 'platform_name',
-          message: 'What is the name of the platform would you like to create the environment on?', // TODO: error checking
-        }]);
-
-        const { rows: platforms } = (await this.app.api.get(`/accounts/${account.id}/platforms`)).data;
-
-        cli.action.start(chalk.blue('Registering environment with Architect'));
-        const created_environment = await this.post_environment_to_api({
-          name: environment_name,
-          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === platform_answers.platform_name.split('/')[1].toLowerCase()).id, // TODO: error checking
-        }, account.id);
-        cli.action.stop();
-        environment_id = created_environment.id;
-      }
-    } else if (flags.environment && !flags.platform) {
-
-      if (flags.environment.split('/').length !== 2) {
-        throw new Error('Environment name must be in the form my-account/environment-name');
-      }
-
-      const [account_name, env_name] = flags.environment.split('/');
-      const environment_account = user_accounts.find((a: any) => a.name === account_name);
-      if (!environment_account) {
-        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
-      }
-
-      const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
-      const environment = environments.find((environment: any) => environment.name.toLowerCase() === env_name.toLowerCase());
-      if (!environment) {
-        throw new Error(`Environment with name ${flags.environment} not found`); // TODO: prompt for platform if env not found, then create env on platform? probably not
-      }
+    if (environment) {
       environment_id = environment.id;
-    } else if (flags.platform && !flags.environment) {
-
-      if (flags.platform.split('/').length !== 2) {
-        throw new Error('Platform name must be in the form my-account/platform-name');
-      }
-
-      const [account_name, platform_name] = flags.platform.split('/');
-      const platform_account = user_accounts.find((a: any) => a.name === account_name);
-      if (!platform_account) {
-        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
-      }
-
-      const { rows: environments } = (await this.app.api.get(`/accounts/${platform_account.id}/environments`)).data;
-
-      const env_answers = await inquirer.prompt([{
+    } else {
+      const platform_answers = await inquirer.prompt([{
         type: 'input',
-        name: 'environment_name',
-        message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
+        name: 'platform_name',
+        message: 'What is the name of the platform would you like to create the environment on?', // TODO: error checking
       }]);
 
-      const environment = environments.find((environment: any) => env_answers.environment_name.split('/')[1].toLowerCase() === environment.name.toLowerCase());
-
-      if (!environment) {
-        const { rows: platforms } = (await this.app.api.get(`/accounts/${platform_account.id}/platforms`)).data;
-
-        cli.action.start(chalk.blue('Registering environment with Architect'));
-        const created_environment = await this.post_environment_to_api({
-          name: env_answers.environment_name.split('/')[1],
-          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === platform_name.toLowerCase()).id,
-        }, platform_account.id);
-        cli.action.stop();
-        environment_id = created_environment.id;
-      } else {
-        environment_id = environment.id;
+      const { rows: platforms } = (await this.app.api.get(`/accounts/${account.id}/platforms`)).data;
+      const platform = platforms.find((platform: any) => platform.name.toLowerCase() === platform_answers.platform_name.split('/')[1].toLowerCase());
+      if (!platform) {
+        // TODO: not found error
       }
-    } else if (flags.environment && flags.platform) { // both flags exist, check for env and create if necessary
-      if (flags.environment.split('/').length !== 2) {
-        throw new Error('Environment name must be in the form my-account/environment-name');
-      }
-
-      const [account_name, environment_name] = flags.environment.split('/');
-      const environment_account = user_accounts.find((a: any) => a.name === account_name);
-      if (!environment_account) {
-        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
-      }
-
-      const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
-      const environment = environments.find((environment: any) => environment_name.toLowerCase() === environment.name.toLowerCase());
-      if (!environment) {
-        const { rows: platforms } = (await this.app.api.get(`/accounts/${environment_account.id}/platforms`)).data;
-
-        cli.action.start(chalk.blue('Registering environment with Architect'));
-        const created_environment = await this.post_environment_to_api({
-          name: flags.environment.split('/')[1], // TODO: error checking
-          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === flags.platform?.split('/')[1].toLowerCase()).id,
-        }, environment_account.id);
-        cli.action.stop();
-        environment_id = created_environment.id;
-      } else {
-        environment_id = environment.id;
-      }
+      const created_environment = await this.register_architect_environment(environment_name, platform.id, account.id);
+      environment_id = created_environment.id;
     }
+    // } else if (flags.environment && !flags.platform) {
+
+    //   if (flags.environment.split('/').length !== 2) {
+    //     throw new Error('Environment name must be in the form my-account/environment-name');
+    //   }
+
+    //   const [account_name, env_name] = flags.environment.split('/');
+    //   const environment_account = user_accounts.find((a: any) => a.name === account_name);
+    //   if (!environment_account) {
+    //     throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+    //   }
+
+    //   const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
+    //   const environment = environments.find((environment: any) => environment.name.toLowerCase() === env_name.toLowerCase());
+    //   if (!environment) {
+    //     throw new Error(`Environment with name ${flags.environment} not found`); // TODO: prompt for platform if env not found, then create env on platform? probably not
+    //   }
+    //   environment_id = environment.id;
+    // } else if (flags.platform && !flags.environment) {
+
+    //   if (flags.platform.split('/').length !== 2) {
+    //     throw new Error('Platform name must be in the form my-account/platform-name');
+    //   }
+
+    //   const [account_name, platform_name] = flags.platform.split('/');
+    //   const platform_account = user_accounts.find((a: any) => a.name === account_name);
+    //   if (!platform_account) {
+    //     throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+    //   }
+
+    //   const { rows: environments } = (await this.app.api.get(`/accounts/${platform_account.id}/environments`)).data;
+
+    //   const env_answers = await inquirer.prompt([{
+    //     type: 'input',
+    //     name: 'environment_name',
+    //     message: 'What is the name of the environment would you like to deploy to?', // TODO: error checking
+    //   }]);
+
+    //   const environment = environments.find((environment: any) => env_answers.environment_name.split('/')[1].toLowerCase() === environment.name.toLowerCase());
+
+    //   if (!environment) {
+    //     const { rows: platforms } = (await this.app.api.get(`/accounts/${platform_account.id}/platforms`)).data;
+    //     const platform = platforms.find((platform: any) => platform.name.toLowerCase() === platform_name.toLowerCase());
+    //     if (!platform) {
+    //       // TODO: not found error
+    //     }
+    //     const created_environment = await this.register_architect_environment(env_answers.environment_name.split('/')[1], platform.id, platform_account.id)
+    //     environment_id = created_environment.id;
+    //   } else {
+    //     environment_id = environment.id;
+    //   }
+    // } else if (flags.environment && flags.platform) { // both flags exist, check for env and create if necessary
+    //   if (flags.environment.split('/').length !== 2) {
+    //     throw new Error('Environment name must be in the form my-account/environment-name');
+    //   }
+
+    //   const [account_name, environment_name] = flags.environment.split('/');
+    //   const environment_account = user_accounts.find((a: any) => a.name === account_name);
+    //   if (!environment_account) {
+    //     throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+    //   }
+
+    //   const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
+    //   const environment = environments.find((environment: any) => environment_name.toLowerCase() === environment.name.toLowerCase());
+    //   if (!environment) {
+    //     const { rows: platforms } = (await this.app.api.get(`/accounts/${environment_account.id}/platforms`)).data; // TODO: get by slug?
+    //     const platform = platforms.find((platform: any) => platform.name.toLowerCase() === flags.platform?.split('/')[1].toLowerCase());
+    //     if (!platform) {
+    //       // TODO: not found error
+    //     }
+    //     const created_environment = await this.register_architect_environment(environment_name, platform.id, environment_account.id)
+    //     environment_id = created_environment.id;
+    //   } else {
+    //     environment_id = environment.id;
+    //   }
+    // }
 
     // const all_answers = { ...args, ...flags, ...answers, ...env_answers };
     const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
@@ -332,8 +326,14 @@ export default class Deploy extends Command {
     return environment;
   }
 
-  private async register_architect_environment() {
-
+  private async register_architect_environment(environment_name: string, platform_id: string, account_id: string) {
+    cli.action.start(chalk.blue('Registering environment with Architect'));
+    const created_environment = await this.post_environment_to_api({
+      name: environment_name,
+      platform_id: platform_id,
+    }, account_id);
+    cli.action.stop();
+    return created_environment;
   }
 
   async run() {
