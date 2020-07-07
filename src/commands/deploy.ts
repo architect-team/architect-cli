@@ -184,69 +184,52 @@ export default class Deploy extends Command {
       throw new Error(`No file found at ${env_config_path}`);
     }
 
-    const { rows: user_accounts } = await this.get_accounts();
     let environment_id;
-
     let environment_answers: any = {};
     if (!flags.environment) {
       environment_answers = await inquirer.prompt([{
         type: 'input',
         name: 'environment_name',
         message: 'What is the name of the environment would you like to deploy to?',
-        validate: value => {
-          const env_split = value.split('/');
-          if (env_split.length !== 2) {
-            return 'Environment name must be in the form my-account/environment-name';
-          }
-          if (!EnvironmentNameValidator.test(env_split[0]) || !EnvironmentNameValidator.test(env_split[1])) {
-            return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-          }
-          return true;
-        }
+        validate: this.validateNamespacedInput,
       }]);
     } else {
+
+      const validation_err = this.validateNamespacedInput(flags.environment);
+      if (typeof validation_err === 'string') { throw new Error(validation_err); }
       environment_answers.environment_name = flags.environment;
     }
 
     const [account_name, environment_name] = environment_answers.environment_name.split('/');
-    const account = user_accounts.find((account: any) => account.name.toLowerCase() === account_name.toLowerCase());
-    if (!account) {
-      throw new Error(`Could not find account with name ${account_name}`);
-    }
+    const account = (await this.app.api.get(`/accounts/${account_name.toLowerCase()}`)).data;
 
-    const { rows: environments } = (await this.app.api.get(`/accounts/${account.id}/environments`)).data;
-    const environment = environments.find((environment: any) => environment.name.toLowerCase() === environment_name.toLowerCase());
-
-    if (environment) {
+    try {
+      const { data: environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment_name.toLowerCase()}`);
       environment_id = environment.id;
-    } else {
+    } catch (err) {
       let platform_answers: any = {};
-      if (!flags.platform) {
-        platform_answers = await inquirer.prompt([{
-          type: 'input',
-          name: 'platform_name',
-          message: 'What is the name of the platform would you like to create the environment on?',
-          validate: value => {
-            const platform_split = value.split('/');
-            if (platform_split.length !== 2) {
-              return 'Platform name must be in the form my-account/environment-name';
-            }
-            if (!EnvironmentNameValidator.test(platform_split[0]) || !EnvironmentNameValidator.test(platform_split[1])) {
-              return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-            }
-            return true;
-          }
-        }]);
-      } else {
-        platform_answers.platform_name = flags.platform;
-      }
+      if (err.response.status === 404) {
+        if (!flags.platform) {
+          platform_answers = await inquirer.prompt([{
+            type: 'input',
+            name: 'platform_name',
+            message: 'What is the name of the platform would you like to create the environment on?',
+            validate: this.validateNamespacedInput,
+          }]);
+        } else {
+          const validation_err = this.validateNamespacedInput(flags.platform);
+          if (typeof validation_err === 'string') { throw new Error(validation_err); }
+          platform_answers.platform_name = flags.platform;
+        }
+      } else { throw err; }
 
-      const { rows: platforms } = (await this.app.api.get(`/accounts/${account.id}/platforms`)).data;
-      const platform = platforms.find((platform: any) => platform.name.toLowerCase() === platform_answers.platform_name.split('/')[1].toLowerCase());
-      if (!platform) {
-        throw new Error(`Platform ${platform_answers.platform_name} not found.`);
-      }
-      const created_environment = await this.register_architect_environment(environment_name, platform.id, account.id);
+      const { data: platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform_answers.platform_name.split('/')[1]}`);
+      cli.action.start(chalk.blue('Registering environment with Architect'));
+      const { data: created_environment } = await this.app.api.post(`/accounts/${account.id}/environments`, {
+        name: environment_name,
+        platform_id: platform.id,
+      });
+      cli.action.stop();
       environment_id = created_environment.id;
     }
 
@@ -276,19 +259,15 @@ export default class Deploy extends Command {
     cli.action.stop(chalk.green(`Deployed`));
   }
 
-  private async post_environment_to_api(data: CreateEnvironmentInput, account_id: string): Promise<any> {
-    const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
-    return environment;
-  }
-
-  private async register_architect_environment(environment_name: string, platform_id: string, account_id: string) {
-    cli.action.start(chalk.blue('Registering environment with Architect'));
-    const created_environment = await this.post_environment_to_api({
-      name: environment_name,
-      platform_id: platform_id,
-    }, account_id);
-    cli.action.stop();
-    return created_environment;
+  private validateNamespacedInput(value: string) {
+    const value_split = value.split('/');
+    if (value_split.length !== 2) {
+      return 'Platform name must be in the form my-account/environment-name';
+    }
+    if (!EnvironmentNameValidator.test(value_split[0]) || !EnvironmentNameValidator.test(value_split[1])) {
+      return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+    }
+    return true;
   }
 
   async run() {
