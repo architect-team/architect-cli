@@ -272,8 +272,32 @@ export default class Deploy extends Command {
       } else {
         environment_id = environment.id;
       }
-    } else { // both flags exist, check for env and create if necessary
+    } else if (flags.environment && flags.platform) { // both flags exist, check for env and create if necessary
+      if (flags.environment.split('/').length !== 2) {
+        throw new Error('Environment name must be in the form my-account/environment-name');
+      }
 
+      const [account_name, environment_name] = flags.environment.split('/');
+      const environment_account = user_accounts.find((a: any) => a.name === account_name);
+      if (!environment_account) {
+        throw new Error(`Account=${account_name} does not exist or you do not have access to it.`);
+      }
+
+      const { rows: environments } = (await this.app.api.get(`/accounts/${environment_account.id}/environments`)).data;
+      const environment = environments.find((environment: any) => environment_name.toLowerCase() === environment.name.toLowerCase());
+      if (!environment) {
+        const { rows: platforms } = (await this.app.api.get(`/accounts/${environment_account.id}/platforms`)).data;
+
+        cli.action.start(chalk.blue('Registering environment with Architect'));
+        const created_environment = await this.post_environment_to_api({
+          name: flags.environment.split('/')[1], // TODO: error checking
+          platform_id: platforms.find((platform: any) => platform.name.toLowerCase() === flags.platform?.split('/')[1].toLowerCase()).id,
+        }, environment_account.id);
+        cli.action.stop();
+        environment_id = created_environment.id;
+      } else {
+        environment_id = environment.id;
+      }
     }
 
     // const all_answers = { ...args, ...flags, ...answers, ...env_answers };
@@ -306,6 +330,10 @@ export default class Deploy extends Command {
   private async post_environment_to_api(data: CreateEnvironmentInput, account_id: string): Promise<any> {
     const { data: environment } = await this.app.api.post(`/accounts/${account_id}/environments`, data);
     return environment;
+  }
+
+  private async register_architect_environment() {
+
   }
 
   async run() {
