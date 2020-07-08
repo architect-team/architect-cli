@@ -96,3 +96,7 @@ jobs:
         with:
           name: dist
           path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
+      - name: npm publish (release candidate)
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
+          npm publish --tag ${PRERELEASE_PREFIX}
