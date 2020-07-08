@@ -63,8 +63,8 @@ jobs:
           git pull
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         working-directory: ./src/dependency-manager
-      - name: npm publish
+      - name: npm publish (release candidate)
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
-          npm publish
+          npm publish --tag ${PRERELEASE_PREFIX}
         working-directory: ./src/dependency-manager
