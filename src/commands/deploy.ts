@@ -258,7 +258,7 @@ export default class Deploy extends Command {
     cli.action.stop(chalk.green(`Deployed`));
   }
 
-  private validateNamespacedInput(value: string) {
+  validateNamespacedInput(value: string) {
     const value_split = value.split('/');
     if (value_split.length !== 2) {
       return 'Platform name must be in the form my-account/environment-name';

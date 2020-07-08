@@ -125,7 +125,7 @@ export default class PlatformCreate extends Command {
     return created_platform;
   }
 
-  private async create_architect_platform(flags: any) {
+  async create_architect_platform(flags: any) {
     const platform_type_answers: any = await inquirer.prompt([
       {
         when: !flags.type,
