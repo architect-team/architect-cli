@@ -69,7 +69,7 @@ export default class PlatformCreate extends Command {
     let selected_account: any;
     this.accounts = await this.get_accounts();
 
-    if (args.name?.split('/').length !== 2) {
+    if (args.name && args.name.split('/').length !== 2) {
       throw new Error('Platform name must be in the form my-account/platform-name');
     }
 

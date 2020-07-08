@@ -314,7 +314,7 @@ describe('deploy', function () {
 
     await Deploy.run([calculator_env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(2);
+    expect(validation_spy.callCount).equals(0);
   });
 
   it('Bad environment account/name input throws an error explaining proper formatting', async () => {

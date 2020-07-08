@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
+import inquirer from 'inquirer';
 import moxios from 'moxios';
 import os from 'os';
 import path from 'path';
@@ -36,15 +37,11 @@ describe('platform:create', function () {
   });
 
   afterEach(() => {
-    // moxios.uninstall();
+    moxios.uninstall();
     sinon.restore();
   });
 
-  it('Tests', async () => {
-    expect(true).true
-  });
-
-  it('Creates a new public platform', async () => {
+  it('Creates a new public platform when account/name arg is included', async () => {
 
     moxios.stubRequest(`/accounts`, {
       status: 200,
@@ -71,6 +68,45 @@ describe('platform:create', function () {
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
 
     await PlatformCreate.run(['test-account-name/platform-name', '-t', 'architect_public']);
+    expect(create_platform_spy.calledOnce).true;
+  });
+
+  it('Creates a new public platform when account/name arg is not included', async () => {
+
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      account: {
+        name: 'test-account-name',
+        id: 'test-account-id',
+      },
+      name: 'platform-name'
+    });
+
+    moxios.stubRequest(`/accounts`, {
+      status: 200,
+      response: {
+        count: 1,
+        rows: [{
+          id: 'test-account-id',
+          name: 'test-account-name'
+        }]
+      },
+    });
+
+    moxios.stubRequest(`/accounts/test-account-id/platforms/public`, {
+      status: 200,
+      response: {
+        id: 'test-platform-id',
+        account: {
+          name: 'test-account-name'
+        }
+      }
+    });
+
+    const create_platform_spy = sinon.fake.returns({});
+    sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
+
+    await PlatformCreate.run(['-t', 'architect_public']);
     expect(create_platform_spy.calledOnce).true;
   });
 });

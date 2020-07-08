@@ -15,13 +15,6 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { EnvironmentNameValidator } from '../common/utils/validation';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
-interface CreateEnvironmentInput {
-  name: string;
-  namespace?: string;
-  platform_id: string;
-  config?: string;
-}
-
 class EnvConfigRequiredError extends Error {
   constructor() {
     super();
