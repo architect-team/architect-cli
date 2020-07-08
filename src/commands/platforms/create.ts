@@ -154,7 +154,7 @@ export default class PlatformCreate extends Command {
     }
   }
 
-  private async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
+  async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
     if (public_platform) {
       const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
       return platform;

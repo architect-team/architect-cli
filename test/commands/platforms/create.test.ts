@@ -42,7 +42,6 @@ describe('platform:create', function () {
   });
 
   it('Creates a new public platform when account/name arg is included', async () => {
-
     moxios.stubRequest(`/accounts`, {
       status: 200,
       response: {
@@ -66,13 +65,14 @@ describe('platform:create', function () {
 
     const create_platform_spy = sinon.fake.returns({});
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
     await PlatformCreate.run(['test-account-name/platform-name', '-t', 'architect_public']);
     expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
   });
 
   it('Creates a new public platform when account/name arg is not included', async () => {
-
     const inquirerStub = sinon.stub(inquirer, 'prompt');
     inquirerStub.resolves({
       account: {
@@ -105,8 +105,77 @@ describe('platform:create', function () {
 
     const create_platform_spy = sinon.fake.returns({});
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
     await PlatformCreate.run(['-t', 'architect_public']);
     expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+  });
+
+  it('Creates an ECS platform with input', async () => {
+    moxios.stubRequest(`/accounts`, {
+      status: 200,
+      response: {
+        count: 1,
+        rows: [{
+          id: 'test-account-id',
+          name: 'test-account-name'
+        }]
+      },
+    });
+
+    moxios.stubRequest(`/accounts/test-account-id/platforms`, {
+      status: 200,
+      response: {
+        id: 'test-platform-id',
+        account: {
+          name: 'test-account-name'
+        }
+      }
+    });
+
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
+
+    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
+  });
+
+  it('Creates an ECS platform without flag input', async () => {
+    const inquirerStub = sinon.stub(inquirer, 'prompt');
+    inquirerStub.resolves({
+      aws_region: 'us-east-2',
+      aws_secret: 'test-secret',
+      aws_key: 'test-key'
+    });
+
+    moxios.stubRequest(`/accounts`, {
+      status: 200,
+      response: {
+        count: 1,
+        rows: [{
+          id: 'test-account-id',
+          name: 'test-account-name'
+        }]
+      },
+    });
+
+    moxios.stubRequest(`/accounts/test-account-id/platforms`, {
+      status: 200,
+      response: {
+        id: 'test-platform-id',
+        account: {
+          name: 'test-account-name'
+        }
+      }
+    });
+
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
+
+    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'ecs']);
+    expect(create_platform_spy.calledOnce).true;
+    expect(post_to_api_spy.calledOnce).true;
   });
 });

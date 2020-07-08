@@ -1,7 +1,4 @@
-import fs from 'fs-extra';
 import inquirer from 'inquirer';
-import path from 'path';
-import untildify from 'untildify';
 import { CreatePlatformInput } from '../../commands/platforms/create';
 
 export class EcsPlatformUtils {
@@ -9,42 +6,23 @@ export class EcsPlatformUtils {
   public static async configure_ecs_platform(
     flags: any,
   ): Promise<CreatePlatformInput> {
-
-    let awsconfig: any;
-    let awscreds: any;
-
-    if (flags.awsconfig) {
-      const awsconfig_path = untildify(`${flags.awsconfig}/config`);
-      const awscreds_path = untildify(`${flags.awsconfig}/credentials`);
-      try {
-        awsconfig = await fs.readFile(path.resolve(awsconfig_path), 'utf-8');
-      } catch {
-        throw new Error(`No awsconfig found at ${awsconfig_path}`);
-      }
-      try {
-        awscreds = await fs.readFile(path.resolve(awscreds_path), 'utf-8');
-      } catch {
-        throw new Error(`No aws credentials found at ${awscreds_path}`);
-      }
-    }
-
     const new_platform_answers: any = await inquirer.prompt([
       {
         type: 'input',
         name: 'aws_region',
-        when: !flags.awsconfig && !flags.aws_region,
+        when: !flags.aws_region,
         message: 'In which AWS region would you like Architect to operate?',
       },
       {
         type: 'input',
         name: 'aws_key',
-        when: !flags.awsconfig && !flags.aws_key,
+        when: !flags.aws_key,
         message: 'What is the AccessKeyId for the AWS user that Architect will drive?',
       },
       {
         type: 'input',
         name: 'aws_secret',
-        when: !flags.awsconfig && !flags.aws_secret,
+        when: !flags.aws_secret,
         message: 'What is the SecretAccessKey for the AWS user that Architect will drive?',
       },
     ]);
