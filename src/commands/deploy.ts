@@ -194,7 +194,6 @@ export default class Deploy extends Command {
         validate: this.validateNamespacedInput,
       }]);
     } else {
-
       const validation_err = this.validateNamespacedInput(flags.environment);
       if (typeof validation_err === 'string') { throw new Error(validation_err); }
       environment_answers.environment_name = flags.environment;
