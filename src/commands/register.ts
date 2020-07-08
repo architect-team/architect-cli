@@ -80,6 +80,10 @@ export default class ComponentRegister extends Command {
       throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
     }
 
+    if (!raw_config.services) {
+      this.error(`You cannot register the old service spec: ${config_path}.\nPlease upgrade to the new component spec.`,);
+    }
+
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
       const image = await this.push_image_if_necessary(config_path, service_name, service_config, image_tag);
