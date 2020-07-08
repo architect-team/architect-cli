@@ -15,8 +15,6 @@ import PortUtil from '../../src/common/utils/port';
 import ARCHITECTPATHS from '../../src/paths';
 
 describe('deploy', function () {
-  this.timeout(15000) // TODO: remove?
-
   let tmp_dir = os.tmpdir();
   const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment-linked-service.json');
 
@@ -292,5 +290,20 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     await Deploy.run([calculator_env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
+  });
+
+  it('Bad environment account/name input throws an error explaining proper formatting', async () => {
+    moxios.stubRequest(`/accounts/test-account`, {
+      status: 200,
+      response: {
+        id: 'test-account-id'
+      },
+    });
+
+    try {
+      await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env::', '--auto_approve'])
+    } catch (err) {
+      expect(err.message).to.equal(`Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`);
+    }
   });
 });
