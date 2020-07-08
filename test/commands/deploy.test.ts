@@ -129,7 +129,12 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
+    const validation_spy = sinon.fake.returns(true);
+    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+
     await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
+    expect(poll_spy.calledOnce).true;
+    expect(validation_spy.callCount).equals(1);
   });
 
   it('Creates a deployment and an environment to deploy to when an env does not exist with env and platform flags', async () => {
@@ -172,7 +177,12 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
+    const validation_spy = sinon.fake.returns(true);
+    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+
     await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
+    expect(poll_spy.calledOnce).true;
+    expect(validation_spy.callCount).equals(2);
   });
 
   it('Creates a deployment when env exists with only env flag', async () => {
@@ -204,7 +214,12 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
+    const validation_spy = sinon.fake.returns(true);
+    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+
     await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
+    expect(poll_spy.calledOnce).true;
+    expect(validation_spy.callCount).equals(1);
   });
 
   it('Creates a deployment and an environment to deploy to when an env does not exist with only env flag', async () => {
@@ -252,7 +267,12 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
+    const validation_spy = sinon.fake.returns(true);
+    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+
     await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
+    expect(poll_spy.calledOnce).true;
+    expect(validation_spy.callCount).equals(1);
   });
 
   it('Creates a deployment and finds the env to use when only the platform flag is used', async () => {
@@ -289,7 +309,12 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
+    const validation_spy = sinon.fake.returns(true);
+    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+
     await Deploy.run([calculator_env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
+    expect(poll_spy.calledOnce).true;
+    expect(validation_spy.callCount).equals(2);
   });
 
   it('Bad environment account/name input throws an error explaining proper formatting', async () => {
