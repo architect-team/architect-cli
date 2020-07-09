@@ -24,7 +24,7 @@ export interface RawEnvironmentConfig {
 
 export class EnvironmentConfigBuilder {
 
-  static readFromPath(config_path: string): RawEnvironmentConfig {
+  static readFromPath(config_path: string): [string, RawEnvironmentConfig] {
     let file_contents;
 
     try {
@@ -53,11 +53,11 @@ export class EnvironmentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    return js_obj;
+    return [file_contents, js_obj];
   }
 
   static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
-    const js_obj = EnvironmentConfigBuilder.readFromPath(config_path);
+    const [file_contents, js_obj] = EnvironmentConfigBuilder.readFromPath(config_path);
 
     try {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);

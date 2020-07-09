@@ -117,9 +117,7 @@ describe('validation spec v1', () => {
         "services": {
           "column": 15,
           "line": 4,
-          "value": {
-            "stateless-app": null
-          },
+          "value": '[object Object]',
           "whitelistValidation": "property services should not exist"
         }
       })

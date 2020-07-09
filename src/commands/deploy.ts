@@ -228,7 +228,7 @@ export default class Deploy extends Command {
     await EnvironmentConfigBuilder.buildFromPath(env_config_path);
 
     // Hack to replace file:
-    const raw_config = EnvironmentConfigBuilder.readFromPath(env_config_path);
+    const [_, raw_config] = EnvironmentConfigBuilder.readFromPath(env_config_path);
     if (raw_config.components) {
       for (const [ck, cv] of Object.entries(raw_config.components) as any) {
         if (cv instanceof Object) {
