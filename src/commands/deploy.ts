@@ -225,25 +225,15 @@ export default class Deploy extends Command {
     }
 
     // Validate env config
-    await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+    const env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+    for (const [ck, cv] of Object.entries(env_config.getComponents())) {
+      if (cv.getExtends()?.startsWith('file:')) {
+        this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
+      }
+    }
 
     // Hack to replace file:
     const [_, raw_config] = EnvironmentConfigBuilder.readFromPath(env_config_path);
-    if (raw_config.components) {
-      for (const [ck, cv] of Object.entries(raw_config.components) as any) {
-        if (cv instanceof Object) {
-          if (cv.extends) {
-            if (cv.extends.startsWith('file:')) {
-              cv.extends = 'latest';
-            }
-          }
-        } else {
-          if (cv.startsWith('file:')) {
-            raw_config.components[ck] = 'latest';
-          }
-        }
-      }
-    }
 
     cli.action.start(chalk.blue('Creating deployment'));
     const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: raw_config });
