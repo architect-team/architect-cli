@@ -12,11 +12,14 @@ import Deploy from '../../src/commands/deploy';
 import Link from '../../src/commands/link';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
+import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import ARCHITECTPATHS from '../../src/paths';
 
 describe('deploy', function () {
   let tmp_dir = os.tmpdir();
-  const calculator_env_config_path = path.join(__dirname, '../mocks/calculator-environment-linked-service.json');
+
+  const local_env_config_path = path.resolve('./test/environment.local.json');
+  const env_config_path = path.resolve('./test/environment.json');
 
   beforeEach(() => {
     // Stub the logger
@@ -37,6 +40,31 @@ describe('deploy', function () {
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
     sinon.replace(AppService, 'create', app_config_stub);
+
+
+    const local_env_config = {
+      "components": {
+        "architect/division-service-grpc:latest": "file:./calculator/division-service/",
+        "architect/subtraction-service-rest:latest": "file:./calculator/subtraction-services/go/rest/"
+      }
+    }
+
+    const env_config = {
+      "components": {
+        "architect/division-service-grpc": "latest",
+        "architect/subtraction-service-rest": "latest"
+      }
+    };
+
+    sinon.replace(EnvironmentConfigBuilder, 'readFromPath', (config_path: string) => {
+      if (config_path === local_env_config_path) {
+        return [JSON.stringify(local_env_config, null, 2), local_env_config]
+      } else if (config_path === env_config_path) {
+        return [JSON.stringify(env_config, null, 2), env_config]
+      } else {
+        throw new Error('No test env config for: ' + config_path)
+      }
+    });
   });
 
   afterEach(() => {
@@ -52,7 +80,7 @@ describe('deploy', function () {
     const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
     await Link.run([additionServicePath]);
 
-    await Deploy.run(['-l', calculator_env_config_path]);
+    await Deploy.run(['-l', local_env_config_path]);
 
     const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
     expect(compose_spy.calledOnce).to.equal(true);
@@ -132,7 +160,7 @@ describe('deploy', function () {
     const validation_spy = sinon.fake.returns(true);
     sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
 
-    await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
     expect(validation_spy.callCount).equals(1);
   });
@@ -180,7 +208,7 @@ describe('deploy', function () {
     const validation_spy = sinon.fake.returns(true);
     sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
 
-    await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
     expect(validation_spy.callCount).equals(2);
   });
@@ -217,7 +245,7 @@ describe('deploy', function () {
     const validation_spy = sinon.fake.returns(true);
     sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
 
-    await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
     expect(validation_spy.callCount).equals(1);
   });
@@ -270,7 +298,7 @@ describe('deploy', function () {
     const validation_spy = sinon.fake.returns(true);
     sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
 
-    await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
     expect(validation_spy.callCount).equals(1);
   });
@@ -312,7 +340,7 @@ describe('deploy', function () {
     const validation_spy = sinon.fake.returns(true);
     sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
 
-    await Deploy.run([calculator_env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
+    await Deploy.run([env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
     expect(validation_spy.callCount).equals(0);
   });
@@ -326,7 +354,7 @@ describe('deploy', function () {
     });
 
     try {
-      await Deploy.run([calculator_env_config_path, '-e', 'test-account/test-env::', '--auto_approve'])
+      await Deploy.run([env_config_path, '-e', 'test-account/test-env::', '--auto_approve'])
     } catch (err) {
       expect(err.message).to.equal(`Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`);
     }

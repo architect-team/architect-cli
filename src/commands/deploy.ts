@@ -172,8 +172,12 @@ export default class Deploy extends Command {
     }
 
     const env_config_path = path.resolve(untildify(args.environment_config));
-    if (!fs.existsSync(env_config_path)) {
-      throw new Error(`No file found at ${env_config_path}`);
+    // Validate env config
+    const env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+    for (const [ck, cv] of Object.entries(env_config.getComponents())) {
+      if (cv.getExtends()?.startsWith('file:')) {
+        this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
+      }
     }
 
     let environment_id;
@@ -222,14 +226,6 @@ export default class Deploy extends Command {
       });
       cli.action.stop();
       environment_id = created_environment.id;
-    }
-
-    // Validate env config
-    const env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
-    for (const [ck, cv] of Object.entries(env_config.getComponents())) {
-      if (cv.getExtends()?.startsWith('file:')) {
-        this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
-      }
     }
 
     // Hack to replace file:
