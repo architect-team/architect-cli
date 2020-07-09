@@ -27,11 +27,13 @@ export default class ComponentRegister extends Command {
       description: 'Path to a component to build',
       exclusive: ['environment'],
       multiple: true,
+      hidden: true,
     }),
     environment: flags.string({
       char: 'e',
       description: 'Path to an environment config including local components to build',
       exclusive: ['component'],
+      hidden: true,
     }),
     tag: flags.string({
       char: 't',
@@ -40,10 +42,19 @@ export default class ComponentRegister extends Command {
     }),
   };
 
+  static args = [{
+    name: 'component',
+    description: 'Path to a component to register',
+  }];
+
   async run() {
-    const { flags } = this.parse(ComponentRegister);
+    const { flags, args } = this.parse(ComponentRegister);
 
     const config_paths: Set<string> = new Set();
+
+    if (args.component) {
+      config_paths.add(path.resolve(untildify(args.component)));
+    }
 
     let dependency_manager = await LocalDependencyManager.create(this.app.api);
     if (flags.environment) {
@@ -60,7 +71,9 @@ export default class ComponentRegister extends Command {
         config_path = path.resolve(untildify(config_path));
         config_paths.add(config_path);
       }
-    } else {
+    }
+
+    if (config_paths.size <= 0) {
       throw new MissingContextError();
     }
 
