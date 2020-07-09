@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { classToPlain } from 'class-transformer';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
@@ -12,8 +11,8 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { EnvironmentNameValidator } from '../common/utils/validation';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
-
 
 class EnvConfigRequiredError extends Error {
   constructor() {
@@ -70,14 +69,14 @@ export default class Deploy extends Command {
       allowNo: true,
       exclusive: ['local', 'compose_file'],
     }),
-    account: flags.string({
-      char: 'a',
-      description: 'Account to deploy the services with',
-      exclusive: ['local', 'compose_file'],
-    }),
     environment: flags.string({
       char: 'e',
-      description: 'Environment to deploy the services to',
+      description: 'Fully qualified environment name in the form my-account/environment-name',
+      exclusive: ['local', 'compose_file'],
+    }),
+    platform: flags.string({
+      char: 'p',
+      description: 'Fully qualified platform name in the form my-account/platform-name',
       exclusive: ['local', 'compose_file'],
     }),
     build_prod: flags.boolean({
@@ -177,49 +176,77 @@ export default class Deploy extends Command {
       throw new Error(`No file found at ${env_config_path}`);
     }
 
-    const { rows: user_accounts } = await this.get_accounts();
-
-    // Prompt user for required inputs if not set as flags
-    const answers: any = await inquirer.prompt([{
-      type: 'list',
-      name: 'account',
-      message: 'Which account would you like to deploy to?',
-      choices: user_accounts.map((a: any) => { return { name: a.name, value: a.id }; }),
-      when: !flags.account,
-    }]);
-
-    if (!answers.account) {
-      const account = user_accounts.filter((account: any) => account.name === flags.account);
-      if (!account.length) {
-        throw new Error(`Account with name ${flags.account} not found`);
-      }
-      answers.account = account[0].id;
+    let environment_id;
+    let environment_answers: any = {};
+    if (!flags.environment) {
+      environment_answers = await inquirer.prompt([{
+        type: 'input',
+        name: 'environment_name',
+        message: 'What is the name of the environment would you like to deploy to?',
+        validate: this.validateNamespacedInput,
+      }]);
+    } else {
+      const validation_err = this.validateNamespacedInput(flags.environment);
+      if (typeof validation_err === 'string') { throw new Error(validation_err); }
+      environment_answers.environment_name = flags.environment;
     }
 
-    const { rows: environments } = (await this.app.api.get(`/accounts/${answers.account}/environments`)).data;
+    const [account_name, environment_name] = environment_answers.environment_name.split('/');
+    const account = (await this.app.api.get(`/accounts/${account_name.toLowerCase()}`)).data;
 
-    // Prompt user for required inputs if not set as flags
-    const env_answers = await inquirer.prompt([{
-      type: 'list',
-      name: 'environment_id',
-      message: 'Which environment would you like to deploy to?',
-      choices: environments.map((a: any) => { return { name: a.name, value: a.id }; }),
-      when: !flags.environment,
-    }]);
+    try {
+      const { data: environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment_name.toLowerCase()}`);
+      environment_id = environment.id;
+    } catch (err) {
+      let platform_answers: any = {};
+      if (err.response.status === 404) {
+        if (!flags.platform) {
+          platform_answers = await inquirer.prompt([{
+            type: 'input',
+            name: 'platform_name',
+            message: 'What is the name of the platform would you like to create the environment on?',
+            validate: this.validateNamespacedInput,
+          }]);
+        } else {
+          const validation_err = this.validateNamespacedInput(flags.platform);
+          if (typeof validation_err === 'string') { throw new Error(validation_err); }
+          platform_answers.platform_name = flags.platform;
+        }
+      } else { throw err; }
 
-    if (!env_answers.environment_id) {
-      const environment = environments.filter((env: any) => env.name === flags.environment);
-      if (!environment.length) {
-        throw new Error(`Environment with name ${flags.environment} not found`);
-      }
-      env_answers.environment_id = environment[0].id;
+      const { data: platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform_answers.platform_name.split('/')[1]}`);
+      cli.action.start(chalk.blue('Registering environment with Architect'));
+      const { data: created_environment } = await this.app.api.post(`/accounts/${account.id}/environments`, {
+        name: environment_name,
+        platform_id: platform.id,
+      });
+      cli.action.stop();
+      environment_id = created_environment.id;
     }
 
-    const all_answers = { ...args, ...flags, ...answers, ...env_answers };
-    const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
+    // Validate env config
+    await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+
+    // Hack to replace file:
+    const [_, raw_config] = EnvironmentConfigBuilder.readFromPath(env_config_path);
+    if (raw_config.components) {
+      for (const [ck, cv] of Object.entries(raw_config.components) as any) {
+        if (cv instanceof Object) {
+          if (cv.extends) {
+            if (cv.extends.startsWith('file:')) {
+              cv.extends = 'latest';
+            }
+          }
+        } else {
+          if (cv.startsWith('file:')) {
+            raw_config.components[ck] = 'latest';
+          }
+        }
+      }
+    }
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${all_answers.environment_id}/deploy`, { config: config_payload });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: raw_config });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
@@ -240,6 +267,17 @@ export default class Deploy extends Command {
     await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
     await this.poll(deployment.id);
     cli.action.stop(chalk.green(`Deployed`));
+  }
+
+  validateNamespacedInput(value: string) {
+    const value_split = value.split('/');
+    if (value_split.length !== 2) {
+      return 'Platform name must be in the form my-account/environment-name';
+    }
+    if (!EnvironmentNameValidator.test(value_split[0]) || !EnvironmentNameValidator.test(value_split[1])) {
+      return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+    }
+    return true;
   }
 
   async run() {

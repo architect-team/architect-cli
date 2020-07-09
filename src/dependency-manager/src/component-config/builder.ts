@@ -18,20 +18,20 @@ class MissingConfigFileError extends Error {
 }
 
 //TODO:213: These are temporary types while we figure out how to resolve the issue of typed raw configs
-export type RawComponentsConfig = {
+export interface RawComponentConfig {
   name: string;
-  services: RawServiceConfig[];
-  [key: string]: any;
-};
+  services: Dictionary<RawServiceConfig>;
+  extends?: string;
+}
 
-export type RawServiceConfig = {
+export interface RawServiceConfig {
   name: string;
   build?: {
     context?: string;
   };
   image?: string;
   [key: string]: any;
-};
+}
 
 export class ComponentConfigBuilder {
   static getConfigPaths(input: string) {
@@ -69,7 +69,7 @@ export class ComponentConfigBuilder {
     return [file_path, file_contents];
   }
 
-  static async rawFromPath(path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentsConfig }> {
+  static async rawFromPath(path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
     const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(path);
 
     let raw_config;

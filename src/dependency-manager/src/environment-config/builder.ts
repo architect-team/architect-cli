@@ -3,7 +3,8 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { ComponentConfigBuilder } from '../component-config/builder';
+import { ComponentConfigBuilder, RawComponentConfig } from '../component-config/builder';
+import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
@@ -16,8 +17,14 @@ class MissingConfigFileError extends Error {
   }
 }
 
+//TODO:213: These are temporary types while we figure out how to resolve the issue of typed raw configs
+export interface RawEnvironmentConfig {
+  components: Dictionary<RawComponentConfig | string>;
+}
+
 export class EnvironmentConfigBuilder {
-  static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
+
+  static readFromPath(config_path: string): [string, RawEnvironmentConfig] {
     let file_contents;
 
     try {
@@ -45,6 +52,12 @@ export class EnvironmentConfigBuilder {
     if (!js_obj) {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
+
+    return [file_contents, js_obj];
+  }
+
+  static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
+    const [file_contents, js_obj] = EnvironmentConfigBuilder.readFromPath(config_path);
 
     try {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);

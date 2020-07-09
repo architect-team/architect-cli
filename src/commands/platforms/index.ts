@@ -21,7 +21,7 @@ export default class Platforms extends Command {
     const { data: { rows: platforms } } = await this.app.api.get(`/platforms?q=${args.query || ''}`);
 
     if (!platforms.length) {
-      this.log('You have not configured any platforms yet. Use `architect env:create` to set up your first one.');
+      this.log('You have not configured any platforms yet. Use `architect platform:create` to set up your first one.');
       return;
     }
 

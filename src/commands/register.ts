@@ -9,11 +9,11 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
 import { ServiceNode } from '../dependency-manager/src';
-import { ComponentConfigBuilder, RawComponentsConfig, RawServiceConfig } from '../dependency-manager/src/component-config/builder';
+import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/component-config/builder';
 
 export interface PutComponentVersionDto {
   tag: string;
-  config: RawComponentsConfig;
+  config: RawComponentConfig;
 }
 
 export default class ComponentRegister extends Command {

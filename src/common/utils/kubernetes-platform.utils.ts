@@ -6,15 +6,12 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { CreatePlatformInput } from '../../commands/environments/create';
-import { EnvironmentNameValidator } from './validation';
+import { CreatePlatformInput } from '../../commands/platforms/create';
 
 export class KubernetesPlatformUtils {
 
   public static async configure_kubernetes_platform(
-    args: any,
     flags: any,
-    account: { id: string; name: string },
   ): Promise<CreatePlatformInput> {
 
     let kubeconfig: any;
@@ -40,18 +37,6 @@ export class KubernetesPlatformUtils {
     ]);
 
     const new_platform_answers: any = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'name',
-        when: !args.name,
-        message: 'What would you like to name the new platform?',
-        filter: value => value.toLowerCase(),
-        validate: value => {
-          if (EnvironmentNameValidator.test(value)) return true;
-          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
-        },
-        default: () => `${account.name}-kubernetes`,
-      },
       {
         type: 'list',
         name: 'context',
@@ -188,7 +173,6 @@ export class KubernetesPlatformUtils {
     cli.action.stop();
 
     return {
-      name: args.name || new_platform_answers.name,
       description: cluster_host,
       type: 'KUBERNETES',
       credentials: {
