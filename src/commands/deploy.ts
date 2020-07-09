@@ -1,6 +1,5 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import { classToPlain } from 'class-transformer';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
@@ -225,10 +224,29 @@ export default class Deploy extends Command {
       environment_id = created_environment.id;
     }
 
-    const config_payload = classToPlain(await EnvironmentConfigBuilder.buildFromPath(env_config_path));
+    // Validate env config
+    await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+
+    // Hack to replace file:
+    const raw_config = EnvironmentConfigBuilder.readFromPath(env_config_path);
+    if (raw_config.components) {
+      for (const [ck, cv] of Object.entries(raw_config.components) as any) {
+        if (cv instanceof Object) {
+          if (cv.extends) {
+            if (cv.extends.startsWith('file:')) {
+              cv.extends = 'latest';
+            }
+          }
+        } else {
+          if (cv.startsWith('file:')) {
+            raw_config.components[ck] = 'latest';
+          }
+        }
+      }
+    }
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: config_payload });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: raw_config });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');

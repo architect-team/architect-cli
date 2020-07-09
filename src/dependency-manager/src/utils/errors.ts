@@ -29,7 +29,7 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
       if (property.includes('services.service.')) {
         property = property.replace('services.service.', '').replace('components.', 'services.');
       }
-      res[property] = { ...error.constraints, value: error.value };
+      res[property] = { ...error.constraints, value: `${error.value}` };
     }
 
     if (error.children && error.children.length) {
