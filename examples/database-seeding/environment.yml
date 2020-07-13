@@ -1,0 +1,8 @@
+interfaces:
+  app: ${ components['examples/database-seeding'].interfaces.main.url }
+
+components:
+  examples/database-seeding:
+    extends: file:./
+    parameters:
+      AUTO_DDL: seed
