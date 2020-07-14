@@ -62,6 +62,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports,
         depends_on: [],
         environment: node.node_config.getEnvironmentVariables(),
+        links: Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`),
       };
 
       if (node.node_config.getImage()) compose.services[node.normalized_ref].image = node.node_config.getImage();

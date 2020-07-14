@@ -16,6 +16,7 @@ export interface DockerService {
   entrypoint?: string[];
   dns_search?: string | string[];
   logging?: { driver?: string };
+  links?: string[];
 }
 
 export default interface DockerComposeTemplate {
