@@ -258,7 +258,7 @@ export default class Deploy extends Command {
   validateNamespacedInput(value: string) {
     const value_split = value.split('/');
     if (value_split.length !== 2) {
-      return 'Platform name must be in the form my-account/environment-name';
+      return 'Environment name must be in the form my-account/environment-name';
     }
     if (!EnvironmentNameValidator.test(value_split[0]) || !EnvironmentNameValidator.test(value_split[1])) {
       return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
