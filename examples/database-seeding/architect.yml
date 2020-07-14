@@ -1,26 +1,36 @@
 name: examples/database-seeding
 description: Example express application using typeorm to seed test data
-author: Architect.io
-language: node
-interfaces:
-  main: 3000
-dependencies:
-  my-demo-db:
-    image: postgres:11
-    interfaces:
-      postgres: 5432
-    parameters:
-      POSTGRES_DB: seeding_demo
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: architect
-environment:
-  DATABASE_HOST: ${ dependencies['my-demo-db'].interfaces.postgres.internal.host }
-  DATABASE_PORT: ${ dependencies['my-demo-db'].interfaces.postgres.internal.port }
-  DATABASE_USER: ${ dependencies['my-demo-db'].parameters.POSTGRES_USER }
-  DATABASE_PASSWORD: ${ dependencies['my-demo-db'].parameters.POSTGRES_PASSWORD }
-  DATABASE_SCHEMA: ${ dependencies['my-demo-db'].parameters.POSTGRES_DB }
-  AUTO_DDL: ${ parameters.AUTO_DDL }
+
 parameters:
   AUTO_DDL:
     description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
     default: none
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    interfaces:
+      main: 3000
+    environment:
+      DATABASE_HOST: ${ services.my-demo-db.interfaces.postgres.host }
+      DATABASE_PORT: ${ services.my-demo-db.interfaces.postgres.port }
+      DATABASE_USER: ${ services.my-demo-db.environment.POSTGRES_USER }
+      DATABASE_PASSWORD: ${ services.my-demo-db.environment.POSTGRES_PASSWORD }
+      DATABASE_SCHEMA: ${ services.my-demo-db.environment.POSTGRES_DB }
+      AUTO_DDL: ${ parameters.AUTO_DDL }
+
+  my-demo-db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    environment:
+      POSTGRES_DB: seeding_demo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
+
+interfaces:
+  main:
+    description: Exposes the app to upstream traffic
+    url: ${ services.app.interfaces.main.url }
