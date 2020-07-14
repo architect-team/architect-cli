@@ -2,7 +2,7 @@ import Table from 'cli-table3';
 import Command from '../../base-command';
 
 export default class Platforms extends Command {
-  static aliases = ['platforms', 'platforms:search'];
+  static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];
   static description = 'Search for platforms on Architect Cloud';
 
   static flags = {
