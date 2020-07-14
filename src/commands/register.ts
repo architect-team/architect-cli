@@ -113,7 +113,6 @@ export default class ComponentRegister extends Command {
     cli.action.stop(chalk.green(`Successfully registered component`));
   }
 
-
   private async push_image_if_necessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
     // if the image field is set, we just take their image as is
     if (service_config.image) {
@@ -130,7 +129,6 @@ export default class ComponentRegister extends Command {
     return `${image_without_tag}@${digest}`;
   }
 
-
   private async build_image(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
     const build_context = service_config?.build?.context;
     if (!build_context) {
@@ -143,11 +141,10 @@ export default class ComponentRegister extends Command {
       return await buildImage(build_path, image_tag);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
-      this.log(`Docker build failed. If an image is not specified in your service config or as a flag, then a Dockerfile must be present`);
+      this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
       throw new Error(err);
     }
   }
-
 
   private async push_image(image: string) {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
@@ -160,12 +157,11 @@ export default class ComponentRegister extends Command {
     cli.action.stop(chalk.green(`Successfully pushed Docker image for ${image}`));
   }
 
-
   private async get_digest(image: string) {
     cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await getDigest(image).catch(e => {
+    const digest = await getDigest(image).catch(err => {
       cli.action.stop(chalk.red(`Inspect failed`));
-      throw new Error(`The image is not reachable by docker: ${image}`);
+      throw new Error(err);
     });
     cli.action.stop(chalk.green(`Image verified`));
     return digest;

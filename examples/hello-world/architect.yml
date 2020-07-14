@@ -1,0 +1,11 @@
+name: examples/hello-world
+
+services:
+  api:
+    image: heroku/nodejs-hello-world
+    interfaces:
+      main: 3000
+
+interfaces:
+  echo:
+    url: ${ services.api.interfaces.main.url }
