@@ -166,6 +166,9 @@ describe('interpolation spec v1', () => {
         'VIRTUAL_PORT': '8080',
         'VIRTUAL_PROTOCOL': 'http'
       },
+      links: [
+        'gateway:public.localhost'
+      ],
       'ports': [
         '50001:8080'
       ],
@@ -184,7 +187,10 @@ describe('interpolation spec v1', () => {
       'ports': [],
       'build': {
         'context': path.resolve('/stack')
-      }
+      },
+      links: [
+        'gateway:public.localhost'
+      ],
     })
   });
 
@@ -210,7 +216,7 @@ describe('interpolation spec v1', () => {
           }
         }
       },
-      interfaces: {}
+      interfaces: {},
     };
 
     const env_config = {

@@ -101,6 +101,11 @@ describe('old architect components', () => {
         "HOST": "0.0.0.0",
         "PORT": "8080"
       },
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
+      ],
       "build": {
         "context": path.resolve('/docker-registry/registry')
       }
@@ -123,6 +128,11 @@ describe('old architect components', () => {
         "npm",
         "run",
         "start:dev"
+      ],
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
       ],
       "build": {
         "context": path.resolve('/docker-registry'),
@@ -169,6 +179,11 @@ describe('old architect components', () => {
         "npm",
         "run",
         "start:dev"
+      ],
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
       ],
       "build": {
         "context": path.resolve('/cloud-api'),
@@ -227,6 +242,11 @@ describe('old architect components', () => {
         "run",
         "dev"
       ],
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
+      ],
       "build": {
         "context": path.resolve('/architect-cloud'),
         "args": [
@@ -272,6 +292,11 @@ describe('old architect components', () => {
       "command": [
         "web"
       ],
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
+      ],
       "volumes": [
         `${path.resolve('/cloud-api/concourse/keys/web')}:/concourse-keys`,
       ],
@@ -295,6 +320,11 @@ describe('old architect components', () => {
       "image": "concourse/concourse:6.1.0",
       "command": [
         "worker"
+      ],
+      links: [
+        'gateway:api.localhost',
+        'gateway:app.localhost',
+        'gateway:ci.localhost'
       ],
       "volumes": [
         `${path.resolve('/cloud-api/concourse/keys/worker')}:/concourse-keys`,

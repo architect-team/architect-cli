@@ -29,6 +29,8 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   }
   const available_ports = (await Promise.all(port_promises)).sort();
 
+  const gateway_links = Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
+
   // Enrich base service details
   for (const node of graph.nodes) {
     if (node.is_external) continue;
@@ -62,8 +64,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         ports,
         depends_on: [],
         environment: node.node_config.getEnvironmentVariables(),
-        links: Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`),
       };
+
+      if (gateway_links.length) {
+        compose.services[node.normalized_ref].links = gateway_links;
+      }
 
       if (node.node_config.getImage()) compose.services[node.normalized_ref].image = node.node_config.getImage();
     }

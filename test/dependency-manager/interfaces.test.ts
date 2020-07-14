@@ -243,6 +243,10 @@ describe('interfaces spec v1', () => {
         LEAF_URL: 'http://public.localhost:80'
       },
       image: 'branch:latest',
+      links: [
+        'gateway:public.localhost',
+        'gateway:publicv1.localhost'
+      ],
       ports: []
     });
 
@@ -250,7 +254,11 @@ describe('interfaces spec v1', () => {
       depends_on: [],
       environment: {},
       image: 'postgres:11',
-      ports: ['50000:5432']
+      ports: ['50000:5432'],
+      links: [
+        'gateway:public.localhost',
+        'gateway:publicv1.localhost'
+      ],
     });
 
     expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
@@ -266,14 +274,22 @@ describe('interfaces spec v1', () => {
       },
       image: 'api:latest',
       ports: ['50001:8080'],
-      restart: 'always'
+      restart: 'always',
+      links: [
+        'gateway:public.localhost',
+        'gateway:publicv1.localhost'
+      ],
     });
 
     expect(template.services['test.leaf.db.v1.0']).to.be.deep.equal({
       depends_on: [],
       environment: {},
       image: 'postgres:11',
-      ports: ['50002:5432']
+      ports: ['50002:5432'],
+      links: [
+        'gateway:public.localhost',
+        'gateway:publicv1.localhost'
+      ],
     });
 
     expect(template.services['test.leaf.api.v1.0']).to.be.deep.equal({
@@ -289,7 +305,11 @@ describe('interfaces spec v1', () => {
       },
       image: 'api:latest',
       ports: ['50003:8080'],
-      restart: 'always'
+      restart: 'always',
+      links: [
+        'gateway:public.localhost',
+        'gateway:publicv1.localhost'
+      ],
     });
   });
 });
