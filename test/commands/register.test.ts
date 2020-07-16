@@ -9,8 +9,9 @@ describe('register', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  // we need to cast this as a string because annoyingly the oclif/test library has restricted this type to a string
+  // we need to cast this as a string because annoyingly the oclif/fancy-test library has restricted this type to a string
   // while the underyling nock library that it wraps allows a regex
+  // submitted an issue here: https://github.com/oclif/fancy-test/issues/73
   const mock_api_host = (/.*/ as any as string);
 
   let dockerBuildStub: sinon.SinonStub;
