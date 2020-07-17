@@ -15,6 +15,14 @@ describe('components spec v1', function () {
     // Stub the logger
     sinon.replace(Register.prototype, 'log', sinon.stub());
     moxios.install();
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
   });
@@ -135,6 +143,52 @@ describe('components spec v1', function () {
         'architect/cloud/api:latest',
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([])
+    });
+
+    it('simple remote component with override', async () => {
+      const component_config = {
+        name: 'architect/cloud',
+        parameters: {
+          log_level: 'info'
+        },
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            },
+            environment: {
+              LOG_LEVEL: '${ parameters.log_level }'
+            }
+          }
+        }
+      };
+
+      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+      });
+
+      const env_config = {
+        components: {
+          'architect/cloud': {
+            extends: 'v1',
+            parameters: {
+              log_level: 'debug'
+            }
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const graph = await manager.getGraph();
+      expect(graph.nodes.map((n) => n.ref)).has.members(['architect/cloud/app:latest'])
+      expect(graph.edges.map((e) => e.toString())).has.members([])
+      const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+      expect(app_node.node_config.getEnvironmentVariables().LOG_LEVEL).eq('debug')
     });
 
     it('local component with edges', async () => {
