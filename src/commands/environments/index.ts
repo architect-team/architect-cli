@@ -20,7 +20,7 @@ export default class Environments extends Command {
     const { data: { rows: environments } } = await this.app.api.get(`/environments?q=${args.query || ''}`);
 
     if (!environments.length) {
-      this.log('You have not configured any environments yet. Use `architect env:create` to set up your first one.');
+      this.log('You have not configured any environments yet.');
       return;
     }
 
