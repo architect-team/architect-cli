@@ -1,0 +1,18 @@
+interfaces:
+  auth: ${ components['architect/fusionauth'].interfaces.http.url }
+
+components:
+  architect/fusionauth:
+    extends: file:./architect.yml
+    parameters:
+      DATABASE_ROOT_USER: fusionuser
+      DATABASE_ROOT_PASSWORD: fusionpassword
+      DATABASE_USER: fusionuser
+      DATABASE_PASSWORD: fusionpassword
+
+    services:
+
+      fusionapi:
+        volumes:
+          config:
+            host_path: ./fa_config
