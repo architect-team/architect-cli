@@ -158,7 +158,8 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
 
     await Deploy.run([env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
@@ -206,7 +207,8 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
 
     await Deploy.run([env_config_path, '-e', 'test-account/test-env', '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
@@ -243,7 +245,8 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
 
     await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
@@ -296,7 +299,8 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
 
     await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
@@ -338,7 +342,8 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
     const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
+    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
 
     await Deploy.run([env_config_path, '-p', 'test-account/test-platform', '--auto_approve']);
     expect(poll_spy.calledOnce).true;
