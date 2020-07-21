@@ -51,7 +51,7 @@ services:
 
   fusionapi:
     description: Fusion API
-    language: go
+    language: java
     image: fusionauth/fusionauth-app:latest
     environment:
       DATABASE_URL: jdbc:${ services.db.interfaces.main.url }/${ services.db.environment.POSTGRES_DB }
