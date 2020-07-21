@@ -411,7 +411,7 @@ export default abstract class DependencyManager {
       }
       internal_host = interface_details.host;
       internal_port = interface_details.port;
-      internal_protocol = 'https';
+      internal_protocol = interface_details.protocol || 'https';
     } else {
       internal_host = this.toInternalHost(node);
       internal_port = this.toInternalPort(node, interface_name);

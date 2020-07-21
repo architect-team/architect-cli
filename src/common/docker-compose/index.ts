@@ -162,7 +162,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         service_to.environment = service_to.environment || {};
         service_to.environment.VIRTUAL_HOST = `${interface_name}.localhost`;
         service_to.environment.VIRTUAL_PORT = node_to_interface.port;
-        service_to.environment.VIRTUAL_PROTOCOL = node_to_interface.protocol || 'http';
+        service_to.environment.VIRTUAL_PROTO = node_to_interface.protocol || 'http';
         service_to.restart = 'always';
 
         // Flip for depends_on

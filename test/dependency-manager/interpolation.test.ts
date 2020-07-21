@@ -164,7 +164,7 @@ describe('interpolation spec v1', () => {
       'environment': {
         'VIRTUAL_HOST': 'public.localhost',
         'VIRTUAL_PORT': '8080',
-        'VIRTUAL_PROTOCOL': 'http'
+        'VIRTUAL_PROTO': 'http'
       },
       links: [
         'gateway:public.localhost'
