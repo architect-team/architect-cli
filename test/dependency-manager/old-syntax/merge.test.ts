@@ -58,7 +58,6 @@ describe('old service config merge', function () {
         }
       },
       'keywords': [],
-      'debug': './test.ts'
     };
 
     const env_config_json = {
@@ -114,8 +113,6 @@ describe('old service config merge', function () {
 
     const node_config = merged_component_config.getServices()['service'];
     expect(node_config.getName()).eq('service');
-
-    expect(node_config.getDebugOptions()!.getCommand()).members(['./test.ts']);
 
     expect(node_config.getVolumes()).keys('simple', 'db_data', 'new_db_data')
     expect(node_config.getVolumes().db_data.mount_path).eq('/db')

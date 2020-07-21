@@ -63,12 +63,21 @@ export class EnvironmentConfigBuilder {
       const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
 
-      for (const component of Object.values(env_config.getComponents())) {
+      for (const [component_key, component] of Object.entries(env_config.getComponents())) {
         const component_extends = component.getExtends();
         if (component_extends?.startsWith('file:')) {
-          // Load local component config
           const component_path = component_extends.substr('file:'.length);
-          component.setExtends(`file:${path.resolve(path.dirname(config_path), component_path)}`);
+          const resolved_component_path = path.resolve(path.dirname(config_path), component_path);
+          component.setExtends(`file:${resolved_component_path}`);
+
+          // Load local component config inline into env config
+          /*
+          const local_component = await ComponentConfigBuilder.buildFromPath(resolved_component_path);
+          const prefixed_string = prefixExpressions(serialize(local_component), `components.${normalizeInterpolation(component_key)}`);
+          const prefixed_local_component = deserialize(local_component.getClass(), prefixed_string);
+          env_config.setComponent(component_key, prefixed_local_component.merge(component));
+          */
+          env_config.setComponent(component_key, component);
         }
       }
 

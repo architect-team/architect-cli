@@ -149,6 +149,12 @@ export class ComponentConfigBuilder {
       }
     }
 
+    if (config.debug && (typeof config.debug === 'string' || config.debug instanceof Array)) {
+      config.debug = {
+        command: config.debug,
+      };
+    }
+
     if (config.debug?.parameters) {
       config.debug.environment = ComponentConfigBuilder.transformParametersToEnvironment(parameters);
       delete config.debug.parameters;

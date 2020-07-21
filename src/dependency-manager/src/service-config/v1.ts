@@ -144,32 +144,6 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   return output;
 };
 
-export function transformServices(input: Dictionary<string | object | ServiceConfigV1>, parent?: any) {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: any = {};
-  for (const [key, value] of Object.entries(input)) {
-    let config;
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    if (value instanceof ServiceConfigV1) {
-      config = value;
-    } else if (value instanceof Object) {
-      config = { ...value, name: key };
-    } else {
-      config = { name: key };
-    }
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    output[key] = plainToClass(ServiceConfigV1, config);
-  }
-
-  return output;
-}
-
 const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
   if (!input) {
     return {};
@@ -207,7 +181,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
 
 export class ServiceConfigV1 extends ServiceConfig {
   @Allow({ always: true })
-  __version = '1.0.0';
+  __version?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -224,29 +198,19 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsString({ always: true })
   image?: string;
 
-  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
-  command?: string[];
+  command?: string | string[];
 
-  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
-  entrypoint?: string[];
+  entrypoint?: string | string[];
 
   @IsOptional({ always: true })
   @IsString({ always: true })
   language?: string;
 
-  @Transform(value => {
-    if (value instanceof Array) {
-      return plainToClass(ServiceConfigV1, { command: value });
-    } if (typeof value === 'string') {
-      return plainToClass(ServiceConfigV1, { command: shell_parse(value) });
-    } else {
-      return plainToClass(ServiceConfigV1, value);
-    }
-  }, { toClassOnly: true })
+  @Type(() => ServiceConfigV1)
   @IsOptional({ always: true })
   @IsInstance(ServiceConfigV1, { always: true })
   @IsEmpty({ groups: ['debug'] })
@@ -254,24 +218,12 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform(value => {
-    if (value) {
-      if (!(value instanceof Object)) {
-        return value;
-      }
-      const output: Dictionary<string> = {};
-      for (const [k, v] of Object.entries(value)) {
-        output[k] = `${v}`;
-      }
-      return output;
-    }
-  })
   environment?: Dictionary<string>;
 
-  @Transform(transformInterfaces)
   @IsOptional({ groups: ['operator', 'debug'] })
   @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
-  interfaces?: Dictionary<InterfaceSpecV1>;
+  @Transform((value) => !value ? {} : value)
+  interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @Type(() => LivenessProbeV1)
   @IsOptional({ always: true })
@@ -281,10 +233,9 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   platforms?: Dictionary<any>;
 
-  @Transform(value => (transformVolumes(value)))
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  volumes?: Dictionary<ServiceVolumeV1>;
+  volumes?: Dictionary<ServiceVolumeV1 | string>;
 
   @IsOptional({ always: true })
   @IsEmpty({
@@ -301,16 +252,18 @@ export class ServiceConfigV1 extends ServiceConfig {
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
-    errors = await validateNested(this, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
-    errors = await validateNested(this, 'liveness_probe', errors, options);
+    if (errors.length) return errors;
+    const expanded = this.expand();
+    errors = await validateNested(expanded, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
+    errors = await validateNested(expanded, 'liveness_probe', errors, options);
     // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
     const volumes_options = { ...options };
     if (volumes_options.groups && volumes_options.groups.includes('debug')) {
       volumes_options.groups = ['debug'];
     }
-    errors = await validateDictionary(this, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(this, 'volumes', errors, undefined, volumes_options);
-    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
+    errors = await validateDictionary(expanded, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
+    errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options);
+    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     return errors;
   }
 
@@ -319,7 +272,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getInterfaces() {
-    return this.interfaces || {};
+    return transformInterfaces(this.interfaces) || {};
+  }
+
+  setInterface(key: string, value: InterfaceSpecV1 | string) {
+    if (!this.interfaces) {
+      this.interfaces = {};
+    }
+    this.interfaces[key] = value;
   }
 
   getLivenessProbe(): ServiceLivenessProbe | undefined {
@@ -345,15 +305,21 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getCommand() {
-    return this.command || [];
+    if (!this.command) return [];
+    return this.command instanceof Array ? this.command : shell_parse(this.command).map((e) => `${e}`);
   }
 
   getEntrypoint() {
-    return this.entrypoint || [];
+    if (!this.entrypoint) return [];
+    return this.entrypoint instanceof Array ? this.entrypoint : shell_parse(this.entrypoint).map((e) => `${e}`);
   }
 
   getEnvironmentVariables(): Dictionary<string> {
-    return this.environment || {};
+    const output: Dictionary<string> = {};
+    for (const [k, v] of Object.entries(this.environment || {})) {
+      output[k] = `${v}`;
+    }
+    return output;
   }
 
   setEnvironmentVariable(key: string, value: string) {
@@ -365,6 +331,10 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getDebugOptions(): ServiceConfig | undefined {
     return this.debug;
+  }
+
+  setDebugOptions(value: ServiceConfigV1) {
+    this.debug = value;
   }
 
   getLanguage(): string {
@@ -384,15 +354,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   }
 
   getVolumes(): { [s: string]: VolumeSpec } {
-    return Object.entries(this.volumes || {}).reduce((volumes, [key, entry]) => {
-      if (entry.readonly !== true && entry.readonly !== false) {
-        // Set readonly to false by default
-        entry.readonly = false;
-      }
+    return transformVolumes(this.volumes) || {};
+  }
 
-      volumes[key] = entry as VolumeSpec;
-      return volumes;
-    }, {} as { [key: string]: VolumeSpec });
+  setVolume(key: string, value: ServiceVolumeV1 | string) {
+    if (!this.volumes) {
+      this.volumes = {};
+    }
+    this.volumes[key] = value;
   }
 
   getReplicas() {

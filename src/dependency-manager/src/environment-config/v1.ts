@@ -1,9 +1,8 @@
-import { Transform } from 'class-transformer/decorators';
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { ParameterValue } from '..';
 import { ComponentConfig } from '../component-config/base';
 import { ComponentConfigBuilder } from '../component-config/builder';
-import { ComponentContextV1, ParameterDefinitionSpecV1, transformInterfaces } from '../component-config/v1';
+import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component-config/v1';
 import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { normalizeInterpolation } from '../utils/interpolation';
@@ -45,17 +44,15 @@ interface EnvironmentContextV1 {
 
 export class EnvironmentConfigV1 extends EnvironmentConfig {
   @Allow({ always: true })
-  __version = '1.0.0';
+  __version?: string;
 
-  @Transform(transformParameters)
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  protected parameters?: Dictionary<ParameterDefinitionSpecV1>;
+  protected parameters?: Dictionary<ParameterValueSpecV1>;
 
-  @Transform(transformComponents)
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  protected components?: Dictionary<ComponentConfig>;
+  protected components?: Dictionary<ComponentConfig | string>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
@@ -64,21 +61,33 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @IsOptional({ always: true })
   protected dns?: DnsConfigSpec;
 
-  @Transform(transformInterfaces)
   @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
-  interfaces?: Dictionary<InterfaceSpecV1>;
+  protected interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   getDnsConfig(): DnsConfigSpec {
     return this.dns || {};
   }
 
   getParameters() {
-    return this.parameters || {};
+    return transformParameters(this.parameters) || {};
   }
 
-  getComponents() {
-    return this.components || {};
+  setParameter(key: string, value: any) {
+    if (!this.parameters) {
+      this.parameters = {};
+    }
+    this.parameters[key] = value;
+  }
+
+  getComponents(): Dictionary<ComponentConfig> {
+    return transformComponents(this.components) || {};
+  }
+
+  setComponent(key: string, value: ComponentConfig | string) {
+    if (!this.components) {
+      this.components = {};
+    }
+    this.components[key] = value;
   }
 
   getVaults() {
@@ -86,7 +95,14 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getInterfaces() {
-    return this.interfaces || {};
+    return transformInterfaces(this.interfaces) || {};
+  }
+
+  setInterface(key: string, value: InterfaceSpecV1 | string) {
+    if (!this.interfaces) {
+      this.interfaces = {};
+    }
+    this.interfaces[key] = value;
   }
 
   getContext(): EnvironmentContextV1 {
@@ -99,8 +115,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     for (const [ck, cv] of Object.entries(this.getComponents())) {
       const normalized_ck = normalizeInterpolation(ck);
       components[normalized_ck] = cv.getContext();
-      delete components[normalized_ck].services;
-      delete components[normalized_ck].dependencies;
     }
 
     return {
@@ -112,8 +126,10 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   async validate(options?: ValidatorOptions) {
     if (!options) options = {};
     let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(this, 'components', errors, undefined, options, new RegExp(`^${REPOSITORY_TAG_REGEX}$`));
+    if (errors.length) return errors;
+    const expanded = this.expand();
+    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
+    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${REPOSITORY_TAG_REGEX}$`));
     return errors;
   }
 }

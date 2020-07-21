@@ -10,7 +10,7 @@ import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
-import { ServiceInterfaceSpec } from './service-config/base';
+import { InterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
@@ -318,6 +318,8 @@ export default abstract class DependencyManager {
         inter.port = this.gateway_port.toString();
         inter.protocol = this.toExternalProtocol();
         inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+
+        component.setInterface(interface_name, inter);
       }
     }
 
@@ -401,7 +403,7 @@ export default abstract class DependencyManager {
     return node.interfaces[interface_name].port;
   }
 
-  private mapToInterfaceContext(node: ServiceNode, interface_name: string): ServiceInterfaceSpec {
+  private mapToInterfaceContext(node: ServiceNode, interface_name: string): InterfaceSpec {
     const interface_details = node.interfaces[interface_name];
 
     let internal_host: string, internal_port: string, internal_protocol: string;

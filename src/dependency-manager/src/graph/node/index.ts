@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ServiceInterfaceSpec } from '../../service-config/base';
+import { InterfaceSpec } from '../../service-config/base';
 import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 
@@ -25,7 +25,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   abstract ref: string;
 
-  abstract get interfaces(): Dictionary<ServiceInterfaceSpec>;
+  abstract get interfaces(): Dictionary<InterfaceSpec>;
 
   get is_external() {
     return false;
