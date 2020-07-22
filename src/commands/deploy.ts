@@ -11,7 +11,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { EnvironmentNameValidator } from '../common/utils/validation';
+import { EnvironmentNameValidator, PlatformNameValidator } from '../common/utils/validation';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
 class EnvConfigRequiredError extends Error {
@@ -187,10 +187,10 @@ export default class Deploy extends Command {
         type: 'input',
         name: 'environment_name',
         message: 'What is the name of the environment would you like to deploy to?',
-        validate: this.validateNamespacedInput,
+        validate: this.validateEnvironmentNamespacedInput,
       }]);
     } else {
-      const validation_err = this.validateNamespacedInput(flags.environment);
+      const validation_err = this.validateEnvironmentNamespacedInput(flags.environment);
       if (typeof validation_err === 'string') { throw new Error(validation_err); }
       environment_answers.environment_name = flags.environment;
     }
@@ -209,10 +209,10 @@ export default class Deploy extends Command {
             type: 'input',
             name: 'platform_name',
             message: 'What is the name of the platform would you like to create the environment on?',
-            validate: this.validateNamespacedInput,
+            validate: this.validatePlatformNamespacedInput,
           }]);
         } else {
-          const validation_err = this.validateNamespacedInput(flags.platform);
+          const validation_err = this.validatePlatformNamespacedInput(flags.platform);
           if (typeof validation_err === 'string') { throw new Error(validation_err); }
           platform_answers.platform_name = flags.platform;
         }
@@ -255,12 +255,23 @@ export default class Deploy extends Command {
     cli.action.stop(chalk.green(`Deployed`));
   }
 
-  validateNamespacedInput(value: string) {
+  validateEnvironmentNamespacedInput(value: string) {
     const value_split = value.split('/');
     if (value_split.length !== 2) {
       return 'Environment name must be in the form my-account/environment-name';
     }
     if (!EnvironmentNameValidator.test(value_split[0]) || !EnvironmentNameValidator.test(value_split[1])) {
+      return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+    }
+    return true;
+  }
+
+  validatePlatformNamespacedInput(value: string) {
+    const value_split = value.split('/');
+    if (value_split.length !== 2) {
+      return 'Platform name must be in the form my-account/platform-name';
+    }
+    if (!PlatformNameValidator.test(value_split[0]) || !PlatformNameValidator.test(value_split[1])) {
       return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
     }
     return true;
