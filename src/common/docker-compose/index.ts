@@ -160,7 +160,15 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         const service_to = compose.services[node_to.normalized_ref];
         const node_to_interface = node_to.interfaces[node_to_interface_name];
         service_to.environment = service_to.environment || {};
-        service_to.environment.VIRTUAL_HOST = `${interface_name}.localhost`;
+
+        const interface_host = `${interface_name}.localhost`;
+        if (service_to.environment.VIRTUAL_HOST) {
+          service_to.environment.VIRTUAL_HOST += `,${interface_host}`;
+        } else {
+          service_to.environment.VIRTUAL_HOST = interface_host;
+        }
+        const normalized_host = interface_host.replace(/-/g, '_').replace(/\./g, '_');
+        service_to.environment[`VIRTUAL_PORT_${normalized_host}`] = node_to_interface.port;
         service_to.environment.VIRTUAL_PORT = node_to_interface.port;
         service_to.environment.VIRTUAL_PROTO = node_to_interface.protocol || 'http';
         service_to.restart = 'always';

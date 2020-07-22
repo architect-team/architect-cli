@@ -173,6 +173,7 @@ describe('old architect components', () => {
         "PORT": "8080",
         "VIRTUAL_HOST": "api.localhost",
         "VIRTUAL_PORT": "8080",
+        VIRTUAL_PORT_api_localhost: '8080',
         VIRTUAL_PROTO: 'http'
       },
       "command": [
@@ -235,6 +236,7 @@ describe('old architect components', () => {
         "PORT": "8080",
         "VIRTUAL_HOST": "app.localhost",
         "VIRTUAL_PORT": "8080",
+        VIRTUAL_PORT_app_localhost: '8080',
         VIRTUAL_PROTO: 'http'
       },
       "command": [
@@ -286,6 +288,7 @@ describe('old architect components', () => {
         "PORT": "8080",
         "VIRTUAL_HOST": "ci.localhost",
         "VIRTUAL_PORT": "8080",
+        VIRTUAL_PORT_ci_localhost: '8080',
         VIRTUAL_PROTO: 'http'
       },
       "image": "concourse/concourse:6.1.0",
