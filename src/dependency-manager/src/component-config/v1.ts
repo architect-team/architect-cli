@@ -1,8 +1,8 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsBoolean, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { ParameterValue, ServiceConfig } from '..';
-import { ServiceInterfaceSpec } from '../service-config/base';
-import { InterfaceSpecV1, transformParameters, transformServices } from '../service-config/v1';
+import { InterfaceSpec } from '../service-config/base';
+import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { IMAGE_REGEX, REPOSITORY_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
@@ -25,14 +25,38 @@ export type ParameterValueSpecV1 = string | number | boolean | ParameterDefiniti
 
 interface ServiceContextV1 {
   environment: Dictionary<string>;
-  interfaces: Dictionary<ServiceInterfaceSpec>;
+  interfaces: Dictionary<InterfaceSpec>;
 }
 
 export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
-  interfaces: Dictionary<ServiceInterfaceSpec>;
+  interfaces: Dictionary<InterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
+}
+
+export function transformServices(input?: Dictionary<object | ServiceConfigV1>): Dictionary<ServiceConfigV1> {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    let config;
+    if (value instanceof ServiceConfigV1) {
+      config = value;
+    } else if (value instanceof Object) {
+      config = { ...value, name: key };
+    } else {
+      config = { name: key };
+    }
+    output[key] = plainToClass(ServiceConfigV1, config);
+  }
+
+  return output;
 }
 
 export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
@@ -77,7 +101,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
 
 export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
-  __version = '1.0.0';
+  __version?: string;
 
   @IsOptional({
     groups: ['operator'],
@@ -109,36 +133,23 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsString({ always: true })
   author?: string;
 
-  @Transform(transformParameters)
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  parameters?: Dictionary<ParameterDefinitionSpecV1>;
+  parameters?: Dictionary<ParameterValueSpecV1>;
 
-  @Transform(transformServices)
   @IsOptional({ groups: ['operator'] })
   @IsNotEmptyObject({ groups: ['developer'] })
+  @Transform((value) => !value ? {} : value)
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform(value => {
-    if (value) {
-      if (!(value instanceof Object)) {
-        return value;
-      }
-      const output: Dictionary<string> = {};
-      for (const [k, v] of Object.entries(value)) {
-        output[k] = `${v}`;
-      }
-      return output;
-    }
-  })
   dependencies?: Dictionary<string>;
 
-  @Transform(transformInterfaces, { toClassOnly: true })
   @IsOptional({ groups: ['operator', 'debug'] })
   @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
-  interfaces?: Dictionary<InterfaceSpecV1>;
+  @Transform((value) => !value ? {} : value)
+  interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   getName() {
     return this.name.split(':')[0];
@@ -169,20 +180,44 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getParameters() {
-    return this.parameters || {};
+    return transformParameters(this.parameters) || {};
+  }
+
+  setParameter(key: string, value: any) {
+    if (!this.parameters) {
+      this.parameters = {};
+    }
+    this.parameters[key] = value;
   }
 
   getServices() {
-    return this.services || {};
+    return transformServices(this.services) || {};
+  }
+
+  setService(key: string, value: ServiceConfig) {
+    if (!this.services) {
+      this.services = {};
+    }
+    this.services[key] = value;
   }
 
   getDependencies() {
-    return this.dependencies || {};
+    const output: Dictionary<string> = {};
+    for (const [k, v] of Object.entries(this.dependencies || {})) {
+      output[k] = `${v}`;
+    }
+    return output;
   }
 
   getInterfaces() {
-    if (!this.interfaces) this.interfaces = {};
-    return this.interfaces;
+    return transformInterfaces(this.interfaces) || {};
+  }
+
+  setInterface(key: string, value: InterfaceSpecV1 | string) {
+    if (!this.interfaces) {
+      this.interfaces = {};
+    }
+    this.interfaces[key] = value;
   }
 
   getContext(): ComponentContextV1 {
@@ -203,7 +238,7 @@ export class ComponentConfigV1 extends ComponentConfig {
       url: '',
     };
 
-    const interfaces: Dictionary<ServiceInterfaceSpec> = {};
+    const interfaces: Dictionary<InterfaceSpec> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = {
         ...interface_filler,
@@ -213,7 +248,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
     const services: Dictionary<ServiceContextV1> = {};
     for (const [sk, sv] of Object.entries(this.getServices())) {
-      const interfaces: Dictionary<ServiceInterfaceSpec> = {};
+      const interfaces: Dictionary<InterfaceSpec> = {};
       for (const [ik, iv] of Object.entries(sv.getInterfaces())) {
         interfaces[ik] = {
           ...interface_filler,
@@ -237,11 +272,13 @@ export class ComponentConfigV1 extends ComponentConfig {
   async validate(options?: ValidatorOptions) {
     if (!options) options = {};
     let errors = await super.validate(options);
-    errors = await validateDictionary(this, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(this, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${IMAGE_REGEX}$`));
-    errors = await validateDictionary(this, 'interfaces', errors, undefined, options);
+    if (errors.length) return errors;
+    const expanded = this.expand();
+    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
+    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${IMAGE_REGEX}$`));
+    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
-      errors = errors.concat(validateInterpolation(serialize(this), this.getContext(), ['dependencies.']));
+      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['dependencies.']));
     }
     return errors;
   }

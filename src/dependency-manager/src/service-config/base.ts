@@ -1,5 +1,4 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { BaseSpec } from '../utils/base-spec';
+import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface VaultParameter {
@@ -15,7 +14,7 @@ export interface ServiceParameter {
   required: boolean;
 }
 
-export interface ServiceInterfaceSpec {
+export interface InterfaceSpec {
   description?: string;
   host?: string;
   port: string;
@@ -46,8 +45,8 @@ export interface BuildSpec {
   dockerfile?: string;
 }
 
-export abstract class ServiceConfig extends BaseSpec {
-  abstract __version: string;
+export abstract class ServiceConfig extends ConfigSpec {
+  abstract __version?: string;
   abstract getName(): string;
   abstract getDescription(): string;
   abstract getLanguage(): string;
@@ -57,19 +56,31 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getEntrypoint(): string[];
   abstract getEnvironmentVariables(): Dictionary<string>;
   abstract setEnvironmentVariable(key: string, value: string): void;
-  abstract getInterfaces(): { [s: string]: ServiceInterfaceSpec };
+  abstract getInterfaces(): { [s: string]: InterfaceSpec };
+  abstract setInterface(key: string, value: InterfaceSpec | string): void;
   abstract getDebugOptions(): ServiceConfig | undefined;
+  abstract setDebugOptions(value: ServiceConfig): void;
   abstract getPlatforms(): { [s: string]: any };
   abstract getVolumes(): { [s: string]: VolumeSpec };
+  abstract setVolume(key: string, value: VolumeSpec | string): void;
   abstract getReplicas(): string;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
   abstract getBuild(): BuildSpec;
 
-  copy() {
-    return classToClass(this);
-  }
+  /** @return New expanded copy of the current config */
+  expand() {
+    const config = this.copy();
 
-  merge(other_config: ServiceConfig): ServiceConfig {
-    return plainToClassFromExist(this.copy(), other_config);
+    const debug = config.getDebugOptions();
+    if (debug) {
+      config.setDebugOptions(debug.expand());
+    }
+    for (const [key, value] of Object.entries(this.getInterfaces())) {
+      config.setInterface(key, value);
+    }
+    for (const [key, value] of Object.entries(this.getVolumes())) {
+      config.setVolume(key, value);
+    }
+    return config;
   }
 }

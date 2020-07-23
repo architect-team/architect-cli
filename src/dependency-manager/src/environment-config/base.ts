@@ -1,7 +1,6 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { ServiceInterfaceSpec } from '..';
+import { InterfaceSpec } from '..';
 import { ComponentConfig, ParameterDefinitionSpec } from '../component-config/base';
-import { BaseSpec } from '../utils/base-spec';
+import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface EnvironmentVault {
@@ -17,13 +16,17 @@ export interface DnsConfig {
   searches?: string | string[];
 }
 
-export abstract class EnvironmentConfig extends BaseSpec {
-  abstract __version: string;
+// TODO investigate extending ComponentConfig
+export abstract class EnvironmentConfig extends ConfigSpec {
+  abstract __version?: string;
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
+  abstract setParameter(key: string, value: any): void;
   abstract getVaults(): Dictionary<EnvironmentVault>;
   abstract getComponents(): Dictionary<ComponentConfig>;
+  abstract setComponent(key: string, value: ComponentConfig | string): void;
   abstract getDnsConfig(): DnsConfig;
-  abstract getInterfaces(): Dictionary<ServiceInterfaceSpec>;
+  abstract getInterfaces(): Dictionary<InterfaceSpec>;
+  abstract setInterface(key: string, value: InterfaceSpec | string): void;
   abstract getContext(): any;
 
   getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {
@@ -36,11 +39,18 @@ export abstract class EnvironmentConfig extends BaseSpec {
     }
   }
 
-  copy() {
-    return classToClass(this);
-  }
-
-  merge(other_environment: EnvironmentConfig): EnvironmentConfig {
-    return plainToClassFromExist(this.copy(), other_environment);
+  /** @return New expanded copy of the current config */
+  expand() {
+    const config = this.copy();
+    for (const [key, value] of Object.entries(this.getParameters())) {
+      config.setParameter(key, value);
+    }
+    for (const [key, value] of Object.entries(this.getComponents())) {
+      config.setComponent(key, value.expand());
+    }
+    for (const [key, value] of Object.entries(this.getInterfaces())) {
+      config.setInterface(key, value);
+    }
+    return config;
   }
 }

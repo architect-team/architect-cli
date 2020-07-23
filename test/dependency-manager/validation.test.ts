@@ -1,6 +1,3 @@
-/**
- * @format
- */
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
@@ -52,6 +49,40 @@ describe('validation spec v1', () => {
       `
       mock_fs({ '/architect.yml': component_config });
       await ComponentConfigBuilder.buildFromPath('/architect.yml')
+    });
+
+    it('invalid nested debug', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          interfaces:
+          environment:
+            LOG_LEVEL: error
+          debug:
+            environment:
+              LOG_LEVEL: info
+            debug:
+              environment:
+                LOG_LEVEL: debug
+      interfaces:
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.stateless-app.debug.debug": {
+          "isEmpty": "debug must be empty",
+          "value": "[object Object]",
+          "line": 11,
+          "column": 18
+        }
+      })
     });
 
     it('invalid service ref', async () => {
@@ -187,7 +218,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "components": {
-          "IsObject": "components must be an object",
+          "isObject": "components must be an object",
           "value": "examples/stateful-component:latest",
           "line": 2,
           "column": 17

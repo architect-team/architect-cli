@@ -1,3 +1,4 @@
+import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { ClassType } from 'class-transformer/ClassTransformer';
 import { validate, ValidationError, ValidatorOptions } from 'class-validator';
 
@@ -16,4 +17,22 @@ export abstract class BaseSpec {
   getClass() {
     return this.constructor as ClassType<any>;
   }
+}
+
+export abstract class ConfigSpec extends BaseSpec {
+  /** @return New copy of the current config */
+  copy(): this {
+    return classToClass(this);
+  }
+
+  /**
+   * @param config Config to be merged with this config
+   * @return New copy of the current config
+   * */
+  merge(config: this): this {
+    return plainToClassFromExist(this.expand(), config.expand());
+  }
+
+  /** @return New expanded copy of the current config */
+  abstract expand(): this;
 }

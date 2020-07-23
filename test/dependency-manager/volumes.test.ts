@@ -1,6 +1,3 @@
-/**
- * @format
- */
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
