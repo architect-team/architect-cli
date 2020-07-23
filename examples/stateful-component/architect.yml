@@ -22,7 +22,7 @@ services:
     interfaces:
       postgres:
         port: 5432
-        protocol: postgres
+        protocol: postgresql
     environment:
       POSTGRES_USER: ${ parameters.DB_USER }
       POSTGRES_PASSWORD: ${ parameters.DB_PASS }
