@@ -1,6 +1,5 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { InterfaceSpec, ServiceConfig } from '../service-config/base';
-import { BaseSpec } from '../utils/base-spec';
+import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface ParameterDefinitionSpec {
@@ -9,7 +8,7 @@ export interface ParameterDefinitionSpec {
   default?: string | number | boolean;
 }
 
-export abstract class ComponentConfig extends BaseSpec {
+export abstract class ComponentConfig extends ConfigSpec {
   abstract __version?: string;
 
   abstract getName(): string;
@@ -49,10 +48,7 @@ export abstract class ComponentConfig extends BaseSpec {
     }
   }
 
-  copy() {
-    return classToClass(this);
-  }
-
+  /** @return New expanded copy of the current config */
   expand() {
     const config = this.copy();
     for (const [key, value] of Object.entries(this.getParameters())) {
@@ -66,9 +62,5 @@ export abstract class ComponentConfig extends BaseSpec {
     }
 
     return config;
-  }
-
-  merge(other_config: ComponentConfig): ComponentConfig {
-    return plainToClassFromExist(this.expand(), other_config.expand());
   }
 }

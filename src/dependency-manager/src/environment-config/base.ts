@@ -1,7 +1,6 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { InterfaceSpec } from '..';
 import { ComponentConfig, ParameterDefinitionSpec } from '../component-config/base';
-import { BaseSpec } from '../utils/base-spec';
+import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface EnvironmentVault {
@@ -18,7 +17,7 @@ export interface DnsConfig {
 }
 
 // TODO investigate extending ComponentConfig
-export abstract class EnvironmentConfig extends BaseSpec {
+export abstract class EnvironmentConfig extends ConfigSpec {
   abstract __version?: string;
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract setParameter(key: string, value: any): void;
@@ -40,10 +39,7 @@ export abstract class EnvironmentConfig extends BaseSpec {
     }
   }
 
-  copy() {
-    return classToClass(this);
-  }
-
+  /** @return New expanded copy of the current config */
   expand() {
     const config = this.copy();
     for (const [key, value] of Object.entries(this.getParameters())) {
@@ -56,9 +52,5 @@ export abstract class EnvironmentConfig extends BaseSpec {
       config.setInterface(key, value);
     }
     return config;
-  }
-
-  merge(other_environment: EnvironmentConfig): EnvironmentConfig {
-    return plainToClassFromExist(this.expand(), other_environment.expand());
   }
 }

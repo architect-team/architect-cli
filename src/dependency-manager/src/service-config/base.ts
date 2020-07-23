@@ -1,5 +1,4 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { BaseSpec } from '../utils/base-spec';
+import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface VaultParameter {
@@ -46,7 +45,7 @@ export interface BuildSpec {
   dockerfile?: string;
 }
 
-export abstract class ServiceConfig extends BaseSpec {
+export abstract class ServiceConfig extends ConfigSpec {
   abstract __version?: string;
   abstract getName(): string;
   abstract getDescription(): string;
@@ -68,10 +67,7 @@ export abstract class ServiceConfig extends BaseSpec {
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
   abstract getBuild(): BuildSpec;
 
-  copy() {
-    return classToClass(this);
-  }
-
+  /** @return New expanded copy of the current config */
   expand() {
     const config = this.copy();
 
@@ -86,9 +82,5 @@ export abstract class ServiceConfig extends BaseSpec {
       config.setVolume(key, value);
     }
     return config;
-  }
-
-  merge(other_config: ServiceConfig): ServiceConfig {
-    return plainToClassFromExist(this.expand(), other_config.expand());
   }
 }
