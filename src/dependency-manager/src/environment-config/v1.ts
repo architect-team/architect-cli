@@ -72,7 +72,11 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return transformParameters(this.parameters) || {};
   }
 
-  setParameter(key: string, value: any) {
+  setParameters(value: Dictionary<ParameterValueSpecV1>) {
+    this.parameters = value;
+  }
+
+  setParameter(key: string, value: ParameterValueSpecV1) {
     if (!this.parameters) {
       this.parameters = {};
     }
@@ -81,6 +85,10 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
 
   getComponents(): Dictionary<ComponentConfig> {
     return transformComponents(this.components) || {};
+  }
+
+  setComponents(value: Dictionary<ComponentConfig | string>) {
+    this.components = value;
   }
 
   setComponent(key: string, value: ComponentConfig | string) {
@@ -96,6 +104,10 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
 
   getInterfaces() {
     return transformInterfaces(this.interfaces) || {};
+  }
+
+  setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
+    this.interfaces = value;
   }
 
   setInterface(key: string, value: InterfaceSpecV1 | string) {

@@ -1,19 +1,6 @@
 import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
-export interface VaultParameter {
-  vault: string;
-  key: string;
-}
-
-export type ParameterValue = string | number | boolean | undefined;
-
-export interface ServiceParameter {
-  description: string;
-  default?: ParameterValue;
-  required: boolean;
-}
-
 export interface InterfaceSpec {
   description?: string;
   host?: string;
@@ -54,15 +41,24 @@ export abstract class ServiceConfig extends ConfigSpec {
   abstract setImage(image: string): void;
   abstract getCommand(): string[];
   abstract getEntrypoint(): string[];
+
   abstract getEnvironmentVariables(): Dictionary<string>;
+  abstract setEnvironmentVariables(value: Dictionary<string>): void;
   abstract setEnvironmentVariable(key: string, value: string): void;
-  abstract getInterfaces(): { [s: string]: InterfaceSpec };
+
+  abstract getInterfaces(): Dictionary<InterfaceSpec>;
+  abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
   abstract setInterface(key: string, value: InterfaceSpec | string): void;
+
   abstract getDebugOptions(): ServiceConfig | undefined;
   abstract setDebugOptions(value: ServiceConfig): void;
-  abstract getPlatforms(): { [s: string]: any };
-  abstract getVolumes(): { [s: string]: VolumeSpec };
+
+  abstract getPlatforms(): Dictionary<any>;
+
+  abstract getVolumes(): Dictionary<VolumeSpec>;
+  abstract setVolumes(value: Dictionary<VolumeSpec | string>): void;
   abstract setVolume(key: string, value: VolumeSpec | string): void;
+
   abstract getReplicas(): string;
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
   abstract getBuild(): BuildSpec;

@@ -2,11 +2,15 @@ import { InterfaceSpec, ServiceConfig } from '../service-config/base';
 import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
+export type ParameterValue = string | number | boolean | undefined;
+
 export interface ParameterDefinitionSpec {
   required?: boolean;
   description?: string;
-  default?: string | number | boolean;
+  default?: ParameterValue;
 }
+
+export type ParameterValueSpec = ParameterValue | ParameterDefinitionSpec;
 
 export abstract class ComponentConfig extends ConfigSpec {
   abstract __version?: string;
@@ -18,13 +22,21 @@ export abstract class ComponentConfig extends ConfigSpec {
   abstract getDescription(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;
+
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
-  abstract setParameter(key: string, value: any): void;
+  abstract setParameters(value: Dictionary<ParameterValueSpec>): void;
+  abstract setParameter(key: string, value: ParameterValueSpec): void;
+
   abstract getServices(): Dictionary<ServiceConfig>;
+  abstract setServices(value: Dictionary<ServiceConfig>): void;
   abstract setService(key: string, value: ServiceConfig): void;
+
   abstract getDependencies(): Dictionary<string>;
+
   abstract getInterfaces(): Dictionary<InterfaceSpec>;
+  abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
   abstract setInterface(key: string, value: InterfaceSpec | string): void;
+
   abstract getContext(): any;
 
   getInterfacesRef() {

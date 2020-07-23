@@ -1,5 +1,5 @@
 import { InterfaceSpec } from '..';
-import { ComponentConfig, ParameterDefinitionSpec } from '../component-config/base';
+import { ComponentConfig, ParameterDefinitionSpec, ParameterValueSpec } from '../component-config/base';
 import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
@@ -20,13 +20,21 @@ export interface DnsConfig {
 export abstract class EnvironmentConfig extends ConfigSpec {
   abstract __version?: string;
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
-  abstract setParameter(key: string, value: any): void;
+  abstract setParameters(value: Dictionary<ParameterValueSpec>): void;
+  abstract setParameter(key: string, value: ParameterValueSpec): void;
+
   abstract getVaults(): Dictionary<EnvironmentVault>;
+
   abstract getComponents(): Dictionary<ComponentConfig>;
+  abstract setComponents(value: Dictionary<ComponentConfig | string>): void;
   abstract setComponent(key: string, value: ComponentConfig | string): void;
+
   abstract getDnsConfig(): DnsConfig;
+
   abstract getInterfaces(): Dictionary<InterfaceSpec>;
+  abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
   abstract setInterface(key: string, value: InterfaceSpec | string): void;
+
   abstract getContext(): any;
 
   getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {

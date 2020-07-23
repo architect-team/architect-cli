@@ -6,9 +6,9 @@ import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../servic
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { IMAGE_REGEX, REPOSITORY_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
-import { ComponentConfig } from './base';
+import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
-export class ParameterDefinitionSpecV1 extends BaseSpec {
+export class ParameterDefinitionSpecV1 extends BaseSpec implements ParameterDefinitionSpec {
   @IsOptional({ always: true })
   @IsBoolean({ always: true })
   required?: boolean;
@@ -183,7 +183,11 @@ export class ComponentConfigV1 extends ComponentConfig {
     return transformParameters(this.parameters) || {};
   }
 
-  setParameter(key: string, value: any) {
+  setParameters(value: Dictionary<ParameterValueSpecV1>) {
+    this.parameters = value;
+  }
+
+  setParameter(key: string, value: ParameterValueSpecV1) {
     if (!this.parameters) {
       this.parameters = {};
     }
@@ -192,6 +196,10 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getServices() {
     return transformServices(this.services) || {};
+  }
+
+  setServices(value: Dictionary<ServiceConfig>) {
+    this.services = value;
   }
 
   setService(key: string, value: ServiceConfig) {
@@ -211,6 +219,10 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getInterfaces() {
     return transformInterfaces(this.interfaces) || {};
+  }
+
+  setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
+    this.interfaces = value;
   }
 
   setInterface(key: string, value: InterfaceSpecV1 | string) {

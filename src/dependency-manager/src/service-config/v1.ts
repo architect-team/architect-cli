@@ -275,6 +275,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return transformInterfaces(this.interfaces) || {};
   }
 
+  setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
+    this.interfaces = value;
+  }
+
   setInterface(key: string, value: InterfaceSpecV1 | string) {
     if (!this.interfaces) {
       this.interfaces = {};
@@ -322,6 +326,10 @@ export class ServiceConfigV1 extends ServiceConfig {
     return output;
   }
 
+  setEnvironmentVariables(value: Dictionary<string>) {
+    this.environment = value;
+  }
+
   setEnvironmentVariable(key: string, value: string) {
     if (!this.environment) {
       this.environment = {};
@@ -353,8 +361,12 @@ export class ServiceConfigV1 extends ServiceConfig {
     return this.platforms || {};
   }
 
-  getVolumes(): { [s: string]: VolumeSpec } {
+  getVolumes(): Dictionary<VolumeSpec> {
     return transformVolumes(this.volumes) || {};
+  }
+
+  setVolumes(value: Dictionary<ServiceVolumeV1 | string>) {
+    this.volumes = value;
   }
 
   setVolume(key: string, value: ServiceVolumeV1 | string) {
