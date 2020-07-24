@@ -7,7 +7,7 @@ import Register from '../../../src/commands/register';
 import LocalDependencyManager from '../../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../../src/common/docker-compose';
 import PortUtil from '../../../src/common/utils/port';
-import { ServiceNode } from '../../../src/dependency-manager/src';
+import { Refs, ServiceNode } from '../../../src/dependency-manager/src';
 
 describe('old interfaces', function () {
 
@@ -277,9 +277,13 @@ describe('old interfaces', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR).eq('architect.checkout.service.latest:7000');
-    expect(compose.services['architect.backend.service.latest'].environment!.CHECKOUT_ADDR_DEFAULT).eq('architect.checkout.service.latest:7000');
-    expect(compose.services['architect.backend.service.latest'].environment!.DB_ADDR).eq('http://architect.backend.datastore-primary.latest:5432');
+    const backend_service_ref = Refs.url_safe_ref('architect/backend/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+    const checkout_service_ref = Refs.url_safe_ref('architect/checkout/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+    const backend_datastore_ref = Refs.url_safe_ref('architect/backend/datastore-primary:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+
+    expect(compose.services[backend_service_ref].environment!.CHECKOUT_ADDR).eq(`${checkout_service_ref}:7000`);
+    expect(compose.services[backend_service_ref].environment!.CHECKOUT_ADDR_DEFAULT).eq(`${checkout_service_ref}:7000`);
+    expect(compose.services[backend_service_ref].environment!.DB_ADDR).eq(`http://${backend_datastore_ref}:5432`);
   });
 
   it('can use valueFrom to reference service\'s own interfaces', async () => {
@@ -297,11 +301,12 @@ describe('old interfaces', function () {
 
     const frontend_main_node = graph.getNodeByRef('architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;
-    expect(frontend_main_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${backend_node.normalized_ref}:8080`);
+    const url_safe_ref = Refs.url_safe_ref(backend_node.ref, Refs.MAX_SUBDOMAIN_LENGTH);
+    expect(frontend_main_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${url_safe_ref}:8080`);
 
     const frontend_secondary_node = graph.getNodeByRef('architect/frontend-secondary/service:latest') as ServiceNode;
     expect(frontend_secondary_node.is_local).true;
-    expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${backend_node.normalized_ref}:8081`);
+    expect(frontend_secondary_node!.node_config.getEnvironmentVariables().API_ADDR).eq(`${url_safe_ref}:8081`);
   });
 
   it('can use valueFrom to reference dependency interfaces', async () => {
@@ -325,16 +330,23 @@ describe('old interfaces', function () {
   it('generates correct compose port mappings for service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].ports).to.include.members(['50003:8080', '50004:8081']);
-    expect(compose.services['architect.frontend-main.service.latest'].ports).to.include.members(['50000:8082']);
-    expect(compose.services['architect.frontend-secondary.service.latest'].ports).eql([]);
+
+    const backend_service_ref = Refs.url_safe_ref('architect/backend/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+    const frontend_main_service_ref = Refs.url_safe_ref('architect/frontend-main/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+    const frontend_secondary_service_ref = Refs.url_safe_ref('architect/frontend-secondary/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+
+    expect(compose.services[backend_service_ref].ports).to.include.members(['50003:8080', '50004:8081']);
+    expect(compose.services[frontend_main_service_ref].ports).to.include.members(['50000:8082']);
+    expect(compose.services[frontend_secondary_service_ref].ports).eql([]);
   });
 
   it('properly sets external host address for exposed service interfaces', async () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.internal.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.frontend-main.service.latest'].environment!.SECONDARY_HOST).eq('architect.frontend-main.service.latest');
-    expect(compose.services['architect.frontend-main.service.latest'].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
+    const frontend_main_service_ref = Refs.url_safe_ref('architect/frontend-main/service:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+
+    expect(compose.services[frontend_main_service_ref].environment!.SECONDARY_HOST).eq(frontend_main_service_ref);
+    expect(compose.services[frontend_main_service_ref].environment!.SECONDARY_EXTERNAL_HOST).eq('secondary.localhost');
   });
 });

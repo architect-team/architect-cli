@@ -118,7 +118,7 @@ describe('interpolation spec v1', () => {
     const template = await DockerCompose.generate(manager);
     expect(template).to.be.deep.equal({
       'services': {
-        'concourse.web.web.latest': {
+        'concourse--web--web--7jgqa9dv': {
           'depends_on': [],
           'environment': {},
           'ports': [
@@ -128,12 +128,12 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack')
           }
         },
-        'concourse.worker.worker.latest': {
+        'concourse--worker--worker--jpmrod9i': {
           'depends_on': [],
           'environment': {
-            'REGULAR': 'concourse.web.web.latest:2222',
-            'SINGLE_QUOTE': 'concourse.web.web.latest:2222',
-            'DOUBLE_QUOTE': 'concourse.web.web.latest:2222',
+            'REGULAR': 'concourse--web--web--7jgqa9dv:2222',
+            'SINGLE_QUOTE': 'concourse--web--web--7jgqa9dv:2222',
+            'DOUBLE_QUOTE': 'concourse--web--web--7jgqa9dv:2222',
           },
           'ports': [],
           'build': {
@@ -159,7 +159,7 @@ describe('interpolation spec v1', () => {
     ])
 
     const public_template = await DockerCompose.generate(public_manager);
-    expect(public_template.services['concourse.web.web.latest']).to.be.deep.equal({
+    expect(public_template.services['concourse--web--web--7jgqa9dv']).to.be.deep.equal({
       'depends_on': ['gateway'],
       'environment': {
         'VIRTUAL_HOST': 'public.localhost',
@@ -178,7 +178,7 @@ describe('interpolation spec v1', () => {
         'context': path.resolve('/stack')
       }
     })
-    expect(public_template.services['concourse.worker.worker.latest']).to.be.deep.equal({
+    expect(public_template.services['concourse--worker--worker--jpmrod9i']).to.be.deep.equal({
       'depends_on': [],
       'environment': {
         'REGULAR': 'public.localhost:2222',
@@ -278,7 +278,7 @@ describe('interpolation spec v1', () => {
     const template = await DockerCompose.generate(manager);
     expect(template).to.be.deep.equal({
       'services': {
-        'architect.cloud.app.latest': {
+        'architect--cloud--app--chfry8ne': {
           'depends_on': [],
           'environment': {
             'AUTH0_SECRET_ID': 'worked',

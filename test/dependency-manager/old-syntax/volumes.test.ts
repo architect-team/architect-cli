@@ -80,7 +80,7 @@ describe('old volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1')}:/usr/src/volume1`]);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1')}:/usr/src/volume1`]);
   });
 
   it('should mount relative paths correctly', async () => {
@@ -113,7 +113,7 @@ describe('old volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/stack/relative-volume')}:/usr/src/volume1`]);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/stack/relative-volume')}:/usr/src/volume1`]);
   });
 
   it('should mount to parameterized container path', async () => {
@@ -156,7 +156,7 @@ describe('old volumes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume2')}:/my/custom/path`]);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/home/testUser/volume2')}:/my/custom/path`]);
   });
 
   it('should create volume w/out explicit host binding', async () => {
@@ -187,7 +187,7 @@ describe('old volumes', function () {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
 
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members(['/usr/src/no-host-binding']);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members(['/usr/src/no-host-binding']);
   });
 
   it('should support readonly mode', async () => {
@@ -221,7 +221,7 @@ describe('old volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/volume1:ro`]);
   });
 
   it('should override volume locally', async () => {
@@ -259,7 +259,7 @@ describe('old volumes', function () {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const compose = await DockerCompose.generate(manager);
-    expect(compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/env_volume`]);
+    expect(compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/home/testUser/volume1/')}:/usr/src/env_volume`]);
   });
 
   it('specify only debug volume', async () => {
@@ -295,7 +295,7 @@ describe('old volumes', function () {
 
     const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const debug_compose = await DockerCompose.generate(debug_manager);
-    expect(debug_compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/stack/src')}:/src`]);
+    expect(debug_compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/stack/src')}:/src`]);
   });
 
   it('volume relative to service config', async () => {
@@ -328,6 +328,6 @@ describe('old volumes', function () {
 
     const debug_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const debug_compose = await DockerCompose.generate(debug_manager);
-    expect(debug_compose.services['architect.backend.service.latest'].volumes).to.include.members([`${path.resolve('/stack/src/backend/src')}:/usr/src`]);
+    expect(debug_compose.services['architect--backend--service--idwxtsqn'].volumes).to.include.members([`${path.resolve('/stack/src/backend/src')}:/usr/src`]);
   });
 });

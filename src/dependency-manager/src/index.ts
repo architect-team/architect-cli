@@ -9,4 +9,6 @@ export * from './graph/node';
 export * from './graph/node/service';
 export * from './service-config/base';
 export * from './service-config/builder';
+export * from './utils/refs';
+export * from './utils/slugs';
 

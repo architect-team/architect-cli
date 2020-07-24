@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
 import untildify from 'untildify';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import DependencyGraph from '../../dependency-manager/src/graph';
@@ -146,7 +146,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   toInternalHost(node: DependencyNode) {
-    return node.normalized_ref;
+    return Refs.url_safe_ref(node.ref, Refs.MAX_SUBDOMAIN_LENGTH);
   }
 
   async loadComponents(graph: DependencyGraph) {

@@ -114,9 +114,9 @@ describe('interfaces spec v1', () => {
       const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'DB_PROTOCOL=postgres',
-        'DB_HOST=test.leaf.db.latest',
+        'DB_HOST=test--leaf--db--zmzgf1fc',
         'DB_PORT=5432',
-        'DB_URL=postgres://test.leaf.db.latest:5432'
+        'DB_URL=postgres://test--leaf--db--zmzgf1fc:5432'
       ])
     });
 
@@ -159,9 +159,9 @@ describe('interfaces spec v1', () => {
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=test.leaf.api.latest',
+        'LEAF_HOST=test--leaf--api--eszvjb4s',
         'LEAF_PORT=8080',
-        'LEAF_URL=http://test.leaf.api.latest:8080'
+        'LEAF_URL=http://test--leaf--api--eszvjb4s:8080'
       ])
     });
 
@@ -227,16 +227,16 @@ describe('interfaces spec v1', () => {
 
       const template = await DockerCompose.generate(manager);
       expect(Object.keys(template.services)).has.members([
-        'test.branch.api.latest',
-        'test.leaf.db.latest',
-        'test.leaf.api.latest',
-        'test.leaf.db.v1.0',
-        'test.leaf.api.v1.0',
+        'test--branch--api--vidaicha',
+        'test--leaf--db--zmzgf1fc',
+        'test--leaf--api--eszvjb4s',
+        'test--leaf--db--7seanm6f',
+        'test--leaf--api--pmcwoycm',
         'gateway'
       ])
 
-      expect(template.services['test.branch.api.latest']).to.be.deep.equal({
-        depends_on: ['test.leaf.api.latest'],
+      expect(template.services['test--branch--api--vidaicha']).to.be.deep.equal({
+        depends_on: ['test--leaf--api--eszvjb4s'],
         environment: {
           LEAF_HOST: 'public.localhost',
           LEAF_PORT: '80',
@@ -251,7 +251,7 @@ describe('interfaces spec v1', () => {
         ports: []
       });
 
-      expect(template.services['test.leaf.db.latest']).to.be.deep.equal({
+      expect(template.services['test--leaf--db--zmzgf1fc']).to.be.deep.equal({
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -262,13 +262,13 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
-        depends_on: ['test.leaf.db.latest', 'gateway'],
+      expect(template.services['test--leaf--api--eszvjb4s']).to.be.deep.equal({
+        depends_on: ['test--leaf--db--zmzgf1fc', 'gateway'],
         environment: {
-          DB_HOST: 'test.leaf.db.latest',
+          DB_HOST: 'test--leaf--db--zmzgf1fc',
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: 'postgres://test.leaf.db.latest:5432',
+          DB_URL: 'postgres://test--leaf--db--zmzgf1fc:5432',
           VIRTUAL_HOST: 'public.localhost',
           VIRTUAL_PORT: '8080',
           VIRTUAL_PORT_public_localhost: '8080',
@@ -283,7 +283,7 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.db.v1.0']).to.be.deep.equal({
+      expect(template.services['test--leaf--db--7seanm6f']).to.be.deep.equal({
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -294,13 +294,13 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.api.v1.0']).to.be.deep.equal({
-        depends_on: ['test.leaf.db.v1.0', 'gateway'],
+      expect(template.services['test--leaf--api--pmcwoycm']).to.be.deep.equal({
+        depends_on: ['test--leaf--db--7seanm6f', 'gateway'],
         environment: {
-          DB_HOST: 'test.leaf.db.v1.0',
+          DB_HOST: 'test--leaf--db--7seanm6f',
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: 'postgres://test.leaf.db.v1.0:5432',
+          DB_URL: 'postgres://test--leaf--db--7seanm6f:5432',
           VIRTUAL_HOST: 'publicv1.localhost',
           VIRTUAL_PORT: '8080',
           VIRTUAL_PORT_publicv1_localhost: '8080',
@@ -364,7 +364,7 @@ describe('interfaces spec v1', () => {
     ])
 
     const template = await DockerCompose.generate(manager);
-    expect(template.services['architect.cloud.api.latest']).to.be.deep.equal({
+    expect(template.services['architect--cloud--api--aoaqhrdv']).to.be.deep.equal({
       "depends_on": ["gateway"],
       "environment": {
         "VIRTUAL_HOST": "app.localhost,admin.localhost",

@@ -12,6 +12,8 @@ export class SemvarValidator implements StringValidator {
   }
 }
 
+// TODO:87: consolidate these with new Slug validators
+
 export const EnvironmentNameValidator = new RegExp('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$');
 export const PlatformNameValidator = new RegExp('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$');
 export const ServiceNameValidator = new RegExp('^[a-z0-9]([-a-z0-9]*[a-z0-9])?(/[a-z0-9]([-a-z0-9]*[a-z0-9])?)?$');

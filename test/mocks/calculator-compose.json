@@ -1,15 +1,15 @@
 {
   "version": "3",
   "services": {
-    "architect.division-service-grpc.service.latest": {
+    "architect--division-service-grpc--service--y4o4eioc": {
       "ports": [
         "50000:8080"
       ],
       "depends_on": [
-        "architect.subtraction-service-rest.service.latest"
+        "architect--subtraction-service-rest--service--juzla7nj"
       ],
       "environment": {
-        "SUBTRACTION_SERVICE_ADDRESS": "architect.subtraction-service-rest.service.latest:8080",
+        "SUBTRACTION_SERVICE_ADDRESS": "architect--subtraction-service-rest--service--juzla7nj:8080",
         "HOST": "0.0.0.0",
         "PORT": "8080"
       },
@@ -28,15 +28,15 @@
         "testdomain.com"
       ]
     },
-    "architect.subtraction-service-rest.service.latest": {
+    "architect--subtraction-service-rest--service--juzla7nj": {
       "ports": [
         "50001:8080"
       ],
       "depends_on": [
-        "architect.addition-service-rest.service.latest"
+        "architect--addition-service-rest--service--z8kbmyiv"
       ],
       "environment": {
-        "ADDITION_SERVICE_ADDRESS": "architect.addition-service-rest.service.latest:8080",
+        "ADDITION_SERVICE_ADDRESS": "architect--addition-service-rest--service--z8kbmyiv:8080",
         "HOST": "0.0.0.0",
         "PORT": "8080"
       },
@@ -52,15 +52,15 @@
         "testdomain.com"
       ]
     },
-    "architect.addition-service-rest.service.latest": {
+    "architect--addition-service-rest--service--z8kbmyiv": {
       "ports": [
         "50003:8080"
       ],
       "depends_on": [
-        "architect.addition-service-rest.datastore-primary.latest"
+        "architect--addition-service-rest--datastore-primary--4ssro9d1"
       ],
       "environment": {
-        "DB_PRIMARY_HOST": "architect.addition-service-rest.datastore-primary.latest",
+        "DB_PRIMARY_HOST": "architect--addition-service-rest--datastore-primary--4ssro9d1",
         "DB_PRIMARY_PORT": "5432",
         "DB_PRIMARY_USER": "postgres",
         "DB_PRIMARY_PASSWORD": "architect",
@@ -83,7 +83,7 @@
         "testdomain.com"
       ]
     },
-    "architect.addition-service-rest.datastore-primary.latest": {
+    "architect--addition-service-rest--datastore-primary--4ssro9d1": {
       "ports": [
         "50002:5432"
       ],

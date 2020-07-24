@@ -55,7 +55,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members(['/data'])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members(['/data'])
   });
 
   it('simple debug volume', async () => {
@@ -81,7 +81,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/component/data')}:/data`])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
   it('multiple volumes and services', async () => {
@@ -125,8 +125,8 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
-    expect(template.services['test.component.app.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services['test--component--app--zoljjsz9'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
   });
 
   it('override host_path for volume in env', async () => {
@@ -157,7 +157,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
   it('override host_path for debug volume in env', async () => {
@@ -190,7 +190,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
   it('define new volume in env', async () => {
@@ -218,6 +218,6 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services['test--component--api--gmefhy1b'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 });

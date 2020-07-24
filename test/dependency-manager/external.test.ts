@@ -148,7 +148,7 @@ describe('external interfaces spec v1', () => {
     const template = await DockerCompose.generate(manager);
     expect(template).to.be.deep.equal({
       services: {
-        'architect.cloud.app.latest': {
+        'architect--cloud--app--chfry8ne': {
           depends_on: [],
           environment: {
             API_ADDR: 'https://external.locahost:80',

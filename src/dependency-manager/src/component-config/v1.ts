@@ -5,6 +5,8 @@ import { InterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
+import { Refs } from '../utils/refs';
+import { ComponentSlug, ComponentVersionSlug, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
 import { IMAGE_REGEX, REPOSITORY_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
@@ -151,12 +153,14 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
-  getName() {
-    return this.name.split(':')[0];
+  getName(): ComponentSlug {
+    const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
+    return Slugs.buildComponentSlug(split.component_account_name, split.component_name);
   }
 
-  getRef() {
-    return this.name.includes(':') ? this.name : `${this.name}:latest`;
+  getRef(): ComponentVersionSlug {
+    const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
+    return Slugs.buildComponentVersionSlug(split.component_account_name, split.component_name, split.tag);
   }
 
   getExtends() {

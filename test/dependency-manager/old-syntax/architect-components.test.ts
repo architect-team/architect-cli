@@ -91,13 +91,13 @@ describe('old architect components', () => {
 
     const template = await DockerCompose.generate(manager);
 
-    expect(template.services['architect.registry.service.latest']).to.be.deep.equal({
+    expect(template.services['architect--registry--service--q3ox6xgf']).to.be.deep.equal({
       "ports": [
         "50000:8080"
       ],
       "depends_on": [],
       "environment": {
-        "NOTIFICATION_URL": "http://architect.cloud-api.latest:8080",
+        "NOTIFICATION_URL": "http://architect--cloud-api--service--t4wvaaz2:8080",
         "HOST": "0.0.0.0",
         "PORT": "8080"
       },
@@ -111,15 +111,15 @@ describe('old architect components', () => {
       }
     });
 
-    expect(template.services['architect.registry-proxy.service.latest']).to.be.deep.equal({
+    expect(template.services['architect--registry-proxy--service--ukcsbvvs']).to.be.deep.equal({
       "ports": [
         "50001:8080"
       ],
-      "depends_on": ['architect.registry.service.latest'],
+      "depends_on": ['architect--registry--service--q3ox6xgf'],
       "environment": {
-        "CLOUD_API_BASE_URL": "http://architect.cloud-api.latest:8080",
+        "CLOUD_API_BASE_URL": "http://architect--cloud-api--service--t4wvaaz2:8080",
         "CLOUD_API_SECRET": "test",
-        "REGISTRY_TARGET": "http://architect.registry.service.latest:8080",
+        "REGISTRY_TARGET": "http://architect--registry--service--q3ox6xgf:8080",
         "NODE_ENV": "development",
         "HOST": "0.0.0.0",
         "PORT": "8080"
@@ -145,14 +145,14 @@ describe('old architect components', () => {
       ]
     });
 
-    expect(template.services['architect.cloud-api.service.latest']).to.be.deep.equal({
+    expect(template.services['architect--cloud-api--service--t4wvaaz2']).to.be.deep.equal({
       "ports": [
         "50002:8080"
       ],
       "depends_on": [
-        'architect.registry-proxy.service.latest',
-        'architect.registry.service.latest',
-        'concourse.web.service.latest',
+        'architect--registry-proxy--service--ukcsbvvs',
+        'architect--registry--service--q3ox6xgf',
+        'concourse--web--service--rddtbtm1',
         "gateway"
       ],
       "environment": {
@@ -164,8 +164,8 @@ describe('old architect components', () => {
         "DB_USER": "postgres",
         "DB_PASS": "architect",
         "DB_NAME": "architect_cloud_api",
-        "DEFAULT_INTERNAL_REGISTRY_HOST": "architect.registry-proxy.service.latest:8080",
-        "DEFAULT_INSECURE_REGISTRY_HOST": "architect.registry.service.latest:8080",
+        "DEFAULT_INTERNAL_REGISTRY_HOST": "architect--registry-proxy--service--ukcsbvvs:8080",
+        "DEFAULT_INSECURE_REGISTRY_HOST": "architect--registry--service--q3ox6xgf:8080",
         "DEFAULT_CONCOURSE_HOST": "http://ci.localhost:80",
         "ENABLE_SCHEDULE": "false",
         "SEGMENT_WRITE_KEY": "test",
@@ -219,12 +219,12 @@ describe('old architect components', () => {
       }
     });
 
-    expect(template.services['architect.cloud.service.latest']).to.be.deep.equal({
+    expect(template.services['architect--cloud--service--kktcm7dg']).to.be.deep.equal({
       "ports": [
         "50004:8080"
       ],
       "depends_on": [
-        'architect.cloud-api.service.latest',
+        'architect--cloud-api--service--t4wvaaz2',
         "gateway"
       ],
       "environment": {
@@ -261,7 +261,7 @@ describe('old architect components', () => {
       "restart": "always"
     });
 
-    expect(template.services['concourse.web.service.latest']).to.be.deep.equal({
+    expect(template.services['concourse--web--service--rddtbtm1']).to.be.deep.equal({
       "ports": [
         "50003:8080"
       ],
@@ -306,11 +306,11 @@ describe('old architect components', () => {
       "restart": "always"
     });
 
-    expect(template.services['concourse.worker.service.latest']).to.be.deep.equal({
+    expect(template.services['concourse--worker--service--eh3gmtc9']).to.be.deep.equal({
       "privileged": true,
       "stop_signal": "SIGUSR2",
       "ports": [],
-      "depends_on": ['concourse.web.service.latest'],
+      "depends_on": ['concourse--web--service--rddtbtm1'],
       "environment": {
         "CONCOURSE_LOG_LEVEL": "error",
         "CONCOURSE_BAGGAGECLAIM_LOG_LEVEL": "error",
@@ -722,7 +722,7 @@ export const ARC_ENV_CONFIG = {
         "path": "../docker-registry/registry"
       },
       "parameters": {
-        "NOTIFICATION_URL": "http://architect.cloud-api.latest:8080"
+        "NOTIFICATION_URL": "http://architect--cloud-api--service--t4wvaaz2:8080"
       }
     },
     "architect/registry-proxy:latest": {
@@ -730,7 +730,7 @@ export const ARC_ENV_CONFIG = {
         "path": "../docker-registry"
       },
       "parameters": {
-        "CLOUD_API_BASE_URL": "http://architect.cloud-api.latest:8080",
+        "CLOUD_API_BASE_URL": "http://architect--cloud-api--service--t4wvaaz2:8080",
         "CLOUD_API_SECRET": "test",
         "NODE_ENV": "development"
       }
