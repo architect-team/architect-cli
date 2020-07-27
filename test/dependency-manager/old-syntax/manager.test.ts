@@ -43,7 +43,6 @@ describe('old manager', function () {
   it('create ServiceNode', async () => {
     const node = new ServiceNode({
       ref: 'test',
-      service_config: new ServiceConfigV1(),
       node_config: new ServiceConfigV1(),
     });
 

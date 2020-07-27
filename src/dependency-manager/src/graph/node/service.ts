@@ -5,25 +5,12 @@ import { ServiceConfigV1 } from '../../service-config/v1';
 
 export interface ServiceNodeOptions {
   ref: string;
-  service_config: ServiceConfig;
   node_config: ServiceConfig;
   local_path?: string;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
-
-  // TODO: Remove
-  @Type(() => ServiceConfig, {
-    discriminator: {
-      property: '__version',
-      subTypes: [
-        { value: ServiceConfigV1, name: '1.0.0' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
-  service_config!: ServiceConfig;
 
   @Type(() => ServiceConfig, {
     discriminator: {
@@ -43,7 +30,6 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     super();
     if (options) {
       this.ref = options.ref;
-      this.service_config = options.service_config;
       this.node_config = options.node_config;
       this.local_path = options.local_path || '';
     }

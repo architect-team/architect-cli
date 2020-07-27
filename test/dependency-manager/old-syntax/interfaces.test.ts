@@ -292,8 +292,8 @@ describe('old interfaces', function () {
     expect(backend_node!.node_config.getEnvironmentVariables().SECONDARY_PORT).eq('8081');
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8080').length).eq(1);
     expect(backend_node!.ports.filter(port_pair => port_pair.toString() === '8081').length).eq(1);
-    expect(backend_node!.service_config.getInterfaces().main.port).eq('8080');
-    expect(backend_node!.service_config.getInterfaces().secondary.port).eq('8081');
+    expect(backend_node!.node_config.getInterfaces().main.port).eq('8080');
+    expect(backend_node!.node_config.getInterfaces().secondary.port).eq('8081');
 
     const frontend_main_node = graph.getNodeByRef('architect/frontend-main/service:latest') as ServiceNode;
     expect(frontend_main_node.is_local).true;

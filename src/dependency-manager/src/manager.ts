@@ -114,11 +114,9 @@ export default abstract class DependencyManager {
     const ref_map: Dictionary<string> = {};
     // Load component services
     for (const [service_name, service_config] of Object.entries(prefixed_component.getServices())) {
-      // TODO: Kill service_config on node?
       const node_config = service_config.copy();
       const node = new ServiceNode({
         ref: component.getServiceRef(node_config.getName()),
-        service_config,
         node_config,
         local_path: component.getExtends()?.startsWith('file:') ? component.getExtends()?.substr('file:'.length) : undefined,
       });
