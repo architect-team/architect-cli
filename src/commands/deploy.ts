@@ -141,7 +141,13 @@ export default class Deploy extends Command {
       this.app.linkedServices,
     );
 
-    dependency_manager.environment.setParameters(this.getExtraEnvironmentVariables(flags.parameter));
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const param_name of Object.keys(extra_params)) {
+      if (dependency_manager.environment.getParameters()[param_name] === undefined) {
+        throw new Error(`Parameter ${param_name} not found in env config`);
+      }
+    }
+    dependency_manager.environment.setParameters(extra_params);
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -187,7 +193,13 @@ export default class Deploy extends Command {
       }
     }
 
-    env_config.setParameters(this.getExtraEnvironmentVariables(flags.parameter));
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const param_name of Object.keys(extra_params)) {
+      if (env_config.getParameters()[param_name] === undefined) {
+        throw new Error(`Parameter ${param_name} not found in env config`);
+      }
+    }
+    env_config.setParameters(extra_params);
 
     let environment_id;
     let environment_answers: any = {};
