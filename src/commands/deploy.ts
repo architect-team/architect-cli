@@ -249,11 +249,8 @@ export default class Deploy extends Command {
       environment_id = created_environment.id;
     }
 
-    // Hack to replace file:
-    const [_, raw_config] = EnvironmentConfigBuilder.readFromPath(env_config_path);
-
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: raw_config });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: env_config });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
