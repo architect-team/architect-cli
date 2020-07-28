@@ -75,7 +75,6 @@ export default class Deploy extends Command {
       exclusive: ['local', 'compose_file'],
     }),
     platform: flags.string({
-      char: 'p',
       description: 'Fully qualified platform name in the form my-account/platform-name',
       exclusive: ['local', 'compose_file'],
     }),
@@ -85,6 +84,7 @@ export default class Deploy extends Command {
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     parameter: flags.string({
+      char: 'p',
       description: 'Component parameters',
       multiple: true,
       default: [],
