@@ -86,7 +86,6 @@ export default class Deploy extends Command {
     }),
     parameter: flags.string({
       description: 'Component parameters',
-      exclusive: ['local', 'compose_file'],
       multiple: true,
       default: [],
     }),
@@ -142,6 +141,8 @@ export default class Deploy extends Command {
       this.app.linkedServices,
     );
 
+    dependency_manager.environment.setParameters(this.getExtraEnvironmentVariables(flags.parameter));
+
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
@@ -186,19 +187,7 @@ export default class Deploy extends Command {
       }
     }
 
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
-      if (param_name.startsWith('ARC_')) {
-        env_config.setParameter(param_name.substring(4), param_value);
-      }
-    }
-
-    for (const param of flags.parameter) {
-      const param_split = param.split('=');
-      if (param_split.length !== 2) {
-        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
-      }
-      env_config.setParameter(param_split[0], param_split[1]);
-    }
+    env_config.setParameters(this.getExtraEnvironmentVariables(flags.parameter));
 
     let environment_id;
     let environment_answers: any = {};
@@ -295,6 +284,24 @@ export default class Deploy extends Command {
       return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
     }
     return true;
+  }
+
+  getExtraEnvironmentVariables(parameters: string[]) {
+    const extra_env_vars: { [s: string]: string | undefined } = {};
+    for (const [param_name, param_value] of Object.entries(process.env || {})) {
+      if (param_name.startsWith('ARC_')) {
+        extra_env_vars[param_name.substring(4)] = param_value;
+      }
+    }
+
+    for (const param of parameters) {
+      const param_split = param.split('=');
+      if (param_split.length !== 2) {
+        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
+      }
+      extra_env_vars[param_split[0]] = param_split[1];
+    }
+    return extra_env_vars;
   }
 
   async run() {
