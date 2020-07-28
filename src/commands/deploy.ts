@@ -84,6 +84,12 @@ export default class Deploy extends Command {
       hidden: true,
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
+    parameter: flags.string({
+      description: 'Component parameters',
+      exclusive: ['local', 'compose_file'],
+      multiple: true,
+      default: [],
+    }),
   };
 
   static args = [{
@@ -178,6 +184,20 @@ export default class Deploy extends Command {
       if (cv.getExtends()?.startsWith('file:')) {
         this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
       }
+    }
+
+    for (const [param_name, param_value] of Object.entries(process.env || {})) {
+      if (param_name.startsWith('ARC_')) {
+        env_config.setParameter(param_name.substring(4), param_value);
+      }
+    }
+
+    for (const param of flags.parameter) {
+      const param_split = param.split('=');
+      if (param_split.length !== 2) {
+        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
+      }
+      env_config.setParameter(param_split[0], param_split[1]);
     }
 
     let environment_id;
