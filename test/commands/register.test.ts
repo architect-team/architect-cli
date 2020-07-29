@@ -254,7 +254,7 @@ describe('register', function () {
       expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
       expect(dockerInspectStub.calledOnce).to.be.true;
 
-      expect(err.message).to.contain('Some internal docker inspect exception')
+      expect(err.toString()).to.contain('Some internal docker inspect exception')
     })
     .it('rejects with informative error message if docker inspect fails');
 
