@@ -14,7 +14,7 @@ export default class PromptUtils {
   public static disable_prompts() {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const inquirer = require('inquirer');
-    process.stdout.isTTY = undefined;
+    process.stdout.isTTY = false;
 
     inquirer.prompt = async function (prompts: any) {
       if (!Array.isArray(prompts)) {
