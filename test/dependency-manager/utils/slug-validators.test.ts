@@ -6,7 +6,7 @@ describe('slugs validators', () => {
   const valid_slug = 'architect';
   const invalid_slug = 'double--dashes';
   const valid_tag = '1.0.0';
-  const invalid_tag = '.1.0.0';
+  const invalid_tag = '}1.0.0';
 
   const valid_slugs = [
     valid_slug,
@@ -28,7 +28,6 @@ describe('slugs validators', () => {
   const globally_invalid_punctuation = [
     'other?punctuation',
     'other/punctuation',
-    'other_punctuation',
     'other|punctuation',
     'other\'punctuation',
     'other"punctuation',
@@ -62,14 +61,12 @@ describe('slugs validators', () => {
     'trailingdashes-',
     'something-33-characters-loooooong',
     'other.punctuation',
+    'other_punctuation',
     ...globally_invalid_punctuation
   ];
 
   const invalid_tags = [
     invalid_tag,
-    '-1',
-    'double..periods',
-    'double--dashes',
     ...globally_invalid_punctuation,
   ]
 
@@ -79,19 +76,19 @@ describe('slugs validators', () => {
     }
   });
 
-  it(`valid slugs are NOT acceptable to ArchitectSlugValidator`, async () => {
+  it(`invalid slugs are NOT acceptable to ArchitectSlugValidator`, async () => {
     for (const slug of invalid_slugs) {
       expect(Slugs.ArchitectSlugValidator.test(slug)).to.be.false
     }
   });
 
-  it(`valid slugs are acceptable to ComponentTagValidator`, async () => {
+  it(`valid tags are acceptable to ComponentTagValidator`, async () => {
     for (const tag of valid_tags) {
       expect(Slugs.ComponentTagValidator.test(tag)).to.be.true
     }
   });
 
-  it(`valid slugs are NOT acceptable to ComponentTagValidator`, async () => {
+  it(`invalid tags are NOT acceptable to ComponentTagValidator`, async () => {
     for (const tag of invalid_tags) {
       expect(Slugs.ComponentTagValidator.test(tag)).to.be.false
     }

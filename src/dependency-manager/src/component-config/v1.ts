@@ -109,10 +109,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['operator'],
   })
   @IsString({ always: true })
-  @Matches(new RegExp(`^${Slugs.IMAGE_REGEX}$`), {
+  @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(new RegExp(`^${Slugs.REPOSITORY_REGEX}$`), {
+  @Matches(new RegExp(`^${Slugs.ComponentSlugRegexMaxLength}$`), {
     message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
@@ -290,8 +290,8 @@ export class ComponentConfigV1 extends ComponentConfig {
     let errors = await super.validate(options);
     if (errors.length) return errors;
     const expanded = this.expand();
-    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.IMAGE_REGEX}$`));
+    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
+    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['dependencies.']));

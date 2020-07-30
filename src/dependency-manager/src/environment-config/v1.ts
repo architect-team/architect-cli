@@ -141,8 +141,8 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     let errors = await super.validate(options);
     if (errors.length) return errors;
     const expanded = this.expand();
-    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${Slugs.REPOSITORY_TAG_REGEX}$`));
+    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
+    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${Slugs.ComponentOptionalVersionSlug}$`));
     return errors;
   }
 }

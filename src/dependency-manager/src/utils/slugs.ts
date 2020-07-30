@@ -92,16 +92,26 @@ export class Slugs {
 
   public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SlugCharacterLimit}`;
   static CharacterCountLookahead = `(?=.{1,${Slugs.SlugCharacterLimit}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|${Slugs.ENV_DELIMITER}|$))`;
-  static ArchitectSlugRegexBase = `${Slugs.CharacterCountLookahead}[a-z0-9]+(-[a-z0-9]+)*`;
-  public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
+  static ArchitectSlugRegexBase = `[a-z0-9]+(?:-[a-z0-9]+)*`;
+
+  static ArchitectSlugRegexBaseMaxLength = `${Slugs.CharacterCountLookahead}${Slugs.ArchitectSlugRegexBase}`;
+  public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`);
+
+  // https://github.com/docker/distribution/blob/v2.7.1/reference/reference.go#L15
 
   public static ComponentTagDescription = 'must contain only lower alphanumeric, with single hyphens or periods in the middle';
-  public static ComponentTagRegexBase = `[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+)*`;
+  public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;
+  public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
   public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
 
   public static ComponentSlugDescription = 'must be of the form <account-name>/<component-name>';
   public static ComponentSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
-  public static ComponentSlugValidator = new RegExp(`^${Slugs.ComponentSlugRegexBase}$`);
+  public static ComponentSlugRegexMaxLength = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
+  public static ComponentSlugValidator = new RegExp(`^${Slugs.ComponentSlugRegexMaxLength}$`);
+
+  public static REPOSITORY_REGEX = Slugs.ComponentSlugRegexBase;
+  public static REPOSITORY_TAG_REGEX = `${Slugs.REPOSITORY_REGEX}(?::${Slugs.ComponentTagRegexBase})?`;
+
   public static buildComponentSlug = (account_name: string, component_name: string): ComponentSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}`;
   };
@@ -118,7 +128,9 @@ export class Slugs {
   };
 
   public static ComponentVersionSlugDescription = 'must be of the form <account-name>/<component-name>:<tag>';
-  public static ComponentVersionSlugRegexBase = `${Slugs.ComponentSlugRegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
+  public static ComponentVersionSlugRegexBase = `${Slugs.ComponentSlugRegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
+  public static ComponentOptionalVersionSlug = `${Slugs.ComponentSlugRegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
+  public static ComponentVersionSlugRegexMaxLength = `${Slugs.ComponentSlugRegexMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
   public static ComponentVersionSlugValidator = new RegExp(`^${Slugs.ComponentVersionSlugRegexBase}$`);
   public static buildComponentVersionSlug = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG): ComponentVersionSlug => {
     return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}`;
@@ -141,7 +153,7 @@ export class Slugs {
   };
 
   public static ServiceSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>';
-  public static ServiceSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
+  public static ServiceSlugRegexBase = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
   public static ServiceSlugValidator = new RegExp(`^${Slugs.ServiceSlugRegexBase}$`);
   public static buildServiceSlug = (account_name: string, component_name: string, service_name: string): ServiceSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}`;
@@ -184,7 +196,7 @@ export class Slugs {
   };
 
   public static EnvironmentSlugDescription = 'must be of the form <account-name>/<environment-name>';
-  public static EnvironmentSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
+  public static EnvironmentSlugRegexBase = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
   public static EnvironmentSlugValidator = new RegExp(`^${Slugs.EnvironmentSlugRegexBase}$`);
   public static buildEnvironmentSlug = (account_name: string, environment_name: string): EnvironmentSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
@@ -264,15 +276,7 @@ export class Slugs {
     };
   };
 
-  // static ArchitectSlugRegexBase = `${Slugs.CharacterCountLookahead}[a-z0-9]+(-[a-z0-9]+)*`;
-
-  public static IMAGE_REGEX = '[a-z0-9-]+';
-  public static REPOSITORY_REGEX = `[a-z0-9-]+\\/[a-z0-9-]+`;
-  // https://github.com/docker/distribution/blob/v2.7.1/reference/reference.go#L15
-  public static TAG_REGEX = '[\\w][\\w\\.-]{0,127}';
-  public static REPOSITORY_TAG_REGEX = `[a-z0-9-]+\\/[a-z0-9-]+(?::${Slugs.TAG_REGEX})?`;
-
   public static UrlSafeSlugDescription = 'must be of the form partial-slug--partial-slug--partial-slug-...';
-  public static UrlSafeSlugRegexBase = `^${Slugs.ArchitectSlugRegexBase}(--${Slugs.ArchitectSlugRegexBase})*`;
+  public static UrlSafeSlugRegexBase = `^${Slugs.ArchitectSlugRegexBaseMaxLength}(--${Slugs.ArchitectSlugRegexBaseMaxLength})*`;
   public static UrlSafeSlugValidator = new RegExp(`/^${Slugs.UrlSafeSlugRegexBase}$/`);
 }
