@@ -88,18 +88,18 @@ export class Slugs {
   public static NAMESPACE_DELIMITER = '/';
   public static TAG_DELIMITER = ':';
   public static ENV_DELIMITER = '@';
-  public static SlugCharacterLimit = 24;
+  public static SlugCharacterLimit = 32;
 
-  public static ArchitectSlugDescription = 'lower alphanumeric and single hyphens in the middle; max length 20';
+  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SlugCharacterLimit}`;
   static CharacterCountLookahead = `(?=.{1,${Slugs.SlugCharacterLimit}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|${Slugs.ENV_DELIMITER}|$))`;
   static ArchitectSlugRegexBase = `${Slugs.CharacterCountLookahead}[a-z0-9]+(-[a-z0-9]+)*`;
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
-  public static ComponentTagDescription = 'lower alphanumeric, with single hyphens or periods in the middle';
+  public static ComponentTagDescription = 'must contain only lower alphanumeric, with single hyphens or periods in the middle';
   public static ComponentTagRegexBase = `[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+)*`;
   public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
 
-  public static ComponentSlugDescription = 'must be of the form account-name/component-name';
+  public static ComponentSlugDescription = 'must be of the form <account-name>/<component-name>';
   public static ComponentSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
   public static ComponentSlugValidator = new RegExp(`^${Slugs.ComponentSlugRegexBase}$`);
   public static buildComponentSlug = (account_name: string, component_name: string): ComponentSlug => {
@@ -117,7 +117,7 @@ export class Slugs {
     };
   };
 
-  public static ComponentVersionSlugDescription = 'must be of the form account-name/component-name:tag';
+  public static ComponentVersionSlugDescription = 'must be of the form <account-name>/<component-name>:<tag>';
   public static ComponentVersionSlugRegexBase = `${Slugs.ComponentSlugRegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
   public static ComponentVersionSlugValidator = new RegExp(`^${Slugs.ComponentVersionSlugRegexBase}$`);
   public static buildComponentVersionSlug = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG): ComponentVersionSlug => {
@@ -140,7 +140,7 @@ export class Slugs {
     };
   };
 
-  public static ServiceSlugDescription = 'must be of the form account-name/component-name/service-name';
+  public static ServiceSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>';
   public static ServiceSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
   public static ServiceSlugValidator = new RegExp(`^${Slugs.ServiceSlugRegexBase}$`);
   public static buildServiceSlug = (account_name: string, component_name: string, service_name: string): ServiceSlug => {
@@ -159,7 +159,7 @@ export class Slugs {
     };
   };
 
-  public static ServiceVersionSlugDescription = 'must be of the form account-name/component-name/service-name:tag';
+  public static ServiceVersionSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>';
   public static ServiceVersionSlugRegexBase = `${Slugs.ServiceSlugRegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
   public static ServiceVersionSlugValidator = new RegExp(`^${Slugs.ServiceVersionSlugRegexBase}$`);
   public static buildServiceVersionSlug = (account_name: string, component_name: string, service_name: string, tag: string): ServiceVersionSlug => {
@@ -183,17 +183,17 @@ export class Slugs {
     };
   };
 
-  public static EnvironmentSlugDescription = 'must be of the form @environment-account-name/environment-name';
+  public static EnvironmentSlugDescription = 'must be of the form <account-name>/<environment-name>';
   public static EnvironmentSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
-  public static EnvironmentSlugValidator = new RegExp(`^${Slugs.ENV_DELIMITER}${Slugs.EnvironmentSlugRegexBase}$`);
+  public static EnvironmentSlugValidator = new RegExp(`^${Slugs.EnvironmentSlugRegexBase}$`);
   public static buildEnvironmentSlug = (account_name: string, environment_name: string): EnvironmentSlug => {
-    return `${Slugs.ENV_DELIMITER}${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
+    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
   };
   public static splitEnvironmentSlug = (slug: EnvironmentSlug): ParsedEvironmentSlug => {
     if (!Slugs.EnvironmentSlugValidator.test(slug)) {
       throw new Error(Slugs.EnvironmentSlugDescription);
     }
-    const [account_slug, environment_slug] = slug.replace(Slugs.ENV_DELIMITER, '').split(Slugs.NAMESPACE_DELIMITER); // remove the '@' before splitting
+    const [account_slug, environment_slug] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
       kind: 'environment',
       environment_account_name: account_slug,
@@ -201,7 +201,7 @@ export class Slugs {
     };
   };
 
-  public static ServiceInstanceSlugDescription = 'must be of the form account-name/component-name/service-name:tag@environment-account-name/environment-name';
+  public static ServiceInstanceSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>@<environment-account-name>/<environment-name>';
   public static ServiceInstanceSlugRegexBase = `^${Slugs.ServiceVersionSlugRegexBase}${Slugs.ENV_DELIMITER}${Slugs.EnvironmentSlugRegexBase}`;
   public static ServiceInstanceSlugValidator = new RegExp(`^${Slugs.ServiceInstanceSlugRegexBase}$`);
   public static buildServiceInstanceSlug = (account_name: string, component_name: string, service_name: string, tag: string, environment_account_name: string, environment_name: string): ServiceInstanceSlug => {
@@ -212,7 +212,7 @@ export class Slugs {
       throw new Error(Slugs.ServiceInstanceSlugDescription);
     }
     const [service_version_slug, environment_slug] = slug.split(Slugs.ENV_DELIMITER);
-    const { environment_account_name, environment_name } = Slugs.splitEnvironmentSlug(Slugs.ENV_DELIMITER + environment_slug); // we want to keep the ENV_DELIMITER bc that's a valid part of the EnvironmentSlug
+    const { environment_account_name, environment_name } = Slugs.splitEnvironmentSlug(environment_slug);
     const { component_account_name, component_name, service_name, tag } = Slugs.splitServiceVersionSlug(service_version_slug);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);

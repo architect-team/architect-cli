@@ -15,7 +15,7 @@ describe('slug validators', () => {
   const service_slug = `${component_account_name}/${component_name}/${service_name}`;
   const service_version_slug = `${component_account_name}/${component_name}/${service_name}:${tag}`;
   const service_instance_slug = `${component_account_name}/${component_name}/${service_name}:${tag}@${environment_account_name}/${environment_name}`;
-  const environment_slug = `@${environment_account_name}/${environment_name}`;
+  const environment_slug = `${environment_account_name}/${environment_name}`;
 
   const invalid_slug = 'double--dashes';
   const invalid_tag = '.1.0.0';
@@ -39,7 +39,7 @@ describe('slug validators', () => {
   });
 
   it(`splitComponentSlug throws exception on ${invalid_component_slug}`, async () => {
-    expect(() => Slugs.splitComponentSlug(invalid_component_slug)).to.throw(`must be of the form account-name/component-name`);
+    expect(() => Slugs.splitComponentSlug(invalid_component_slug)).to.throw(`must be of the form <account-name>/<component-name>`);
   });
 
   it(`splitComponentVersionSlug accurately splits ${component_version_slug}`, async () => {
@@ -54,7 +54,7 @@ describe('slug validators', () => {
   });
 
   it(`splitComponentVersionSlug throws exception on ${invalid_component_version_slug}`, async () => {
-    expect(() => Slugs.splitComponentVersionSlug(invalid_component_version_slug)).to.throw(`must be of the form account-name/component-name:tag`);
+    expect(() => Slugs.splitComponentVersionSlug(invalid_component_version_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>`);
   });
 
   it(`splitServiceSlug accurately splits ${service_slug}`, async () => {
@@ -69,7 +69,7 @@ describe('slug validators', () => {
   });
 
   it(`splitServiceSlug throws exception on ${invalid_service_slug}`, async () => {
-    expect(() => Slugs.splitServiceSlug(invalid_service_slug)).to.throw(`must be of the form account-name/component-name/service-name`);
+    expect(() => Slugs.splitServiceSlug(invalid_service_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>`);
   });
 
   it(`splitServiceVersionSlug accurately splits ${service_version_slug}`, async () => {
@@ -84,7 +84,7 @@ describe('slug validators', () => {
   });
 
   it(`splitServiceVersionSlug throws exception on ${invalid_service_version_slug}`, async () => {
-    expect(() => Slugs.splitServiceVersionSlug(invalid_service_version_slug)).to.throw(`must be of the form account-name/component-name/service-name:tag`);
+    expect(() => Slugs.splitServiceVersionSlug(invalid_service_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>:<tag>`);
   });
 
   it(`splitEnvironmentSlug accurately splits ${environment_slug}`, async () => {
@@ -99,7 +99,7 @@ describe('slug validators', () => {
   });
 
   it(`splitEnvironmentSlug throws exception on ${invalid_environment_slug}`, async () => {
-    expect(() => Slugs.splitEnvironmentSlug(invalid_environment_slug)).to.throw(`must be of the form @environment-account-name/environment-name`);
+    expect(() => Slugs.splitEnvironmentSlug(invalid_environment_slug)).to.throw(`must be of the form <account-name>/<environment-name>`);
   });
 
   it(`splitServiceInstanceSlug accurately splits ${service_instance_slug}`, async () => {
@@ -114,6 +114,6 @@ describe('slug validators', () => {
   });
 
   it(`splitServiceInstanceSlug throws exception on ${invalid_service_instance_slug}`, async () => {
-    expect(() => Slugs.splitServiceInstanceSlug(invalid_service_instance_slug)).to.throw(`must be of the form account-name/component-name/service-name:tag@environment-account-name/environment-name`);
+    expect(() => Slugs.splitServiceInstanceSlug(invalid_service_instance_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>:<tag>@<environment-account-name>/<environment-name>`);
   });
 });

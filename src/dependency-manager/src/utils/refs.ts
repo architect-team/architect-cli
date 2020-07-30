@@ -137,11 +137,6 @@ export class Refs {
       validator: Slugs.ComponentSlugValidator,
       splitter: Slugs.splitComponentSlug,
     },
-    'environment': {
-      description: Slugs.EnvironmentSlugDescription,
-      validator: Slugs.EnvironmentSlugValidator,
-      splitter: Slugs.splitEnvironmentSlug,
-    },
     'interfaces': {
       description: Slugs.InterfacesSlugDescription,
       validator: Slugs.InterfacesSlugValidator,
@@ -151,6 +146,11 @@ export class Refs {
       description: Slugs.GatewaySlugDescription,
       validator: Slugs.GatewaySlugValidator,
       splitter: Slugs.splitGatewaySlug,
+    },
+    'environment': {
+      description: Slugs.EnvironmentSlugDescription,
+      validator: Slugs.EnvironmentSlugValidator,
+      splitter: Slugs.splitEnvironmentSlug,
     },
   };
 }

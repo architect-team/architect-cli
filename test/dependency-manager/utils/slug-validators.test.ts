@@ -13,7 +13,7 @@ describe('slugs validators', () => {
     'arc-examples',
     'arc-examples-2',
     '2-arc-examples',
-    'something-24-chars-loong',
+    'something-32-characters-looooong',
     'a',
     '2',
   ];
@@ -60,7 +60,7 @@ describe('slugs validators', () => {
     invalid_slug,
     '-leading-dashes',
     'trailingdashes-',
-    'something-25-chars-looong',
+    'something-33-characters-loooooong',
     'other.punctuation',
     ...globally_invalid_punctuation
   ];

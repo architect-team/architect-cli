@@ -5,7 +5,7 @@ import inquirer from 'inquirer';
 import Command from '../../base-command';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { EnvironmentNameValidator } from '../../common/utils/validation';
+import { Slugs } from '../../dependency-manager/src';
 
 export interface CreatePlatformInput {
   type: string;
@@ -98,8 +98,8 @@ export default class PlatformCreate extends Command {
         when: !args.name,
         filter: value => value.toLowerCase(),
         validate: value => {
-          if (EnvironmentNameValidator.test(value)) return true;
-          return `Name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+          if (Slugs.ArchitectSlugValidator.test(value)) return true;
+          return Slugs.ArchitectSlugDescription;
         },
       },
     ]);
