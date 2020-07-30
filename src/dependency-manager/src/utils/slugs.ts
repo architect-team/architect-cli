@@ -264,6 +264,14 @@ export class Slugs {
     };
   };
 
+  // static ArchitectSlugRegexBase = `${Slugs.CharacterCountLookahead}[a-z0-9]+(-[a-z0-9]+)*`;
+
+  public static IMAGE_REGEX = '[a-z0-9-]+';
+  public static REPOSITORY_REGEX = `[a-z0-9-]+\\/[a-z0-9-]+`;
+  // https://github.com/docker/distribution/blob/v2.7.1/reference/reference.go#L15
+  public static TAG_REGEX = '[\\w][\\w\\.-]{0,127}';
+  public static REPOSITORY_TAG_REGEX = `[a-z0-9-]+\\/[a-z0-9-]+(?::${Slugs.TAG_REGEX})?`;
+
   public static UrlSafeSlugDescription = 'must be of the form partial-slug--partial-slug--partial-slug-...';
   public static UrlSafeSlugRegexBase = `^${Slugs.ArchitectSlugRegexBase}(--${Slugs.ArchitectSlugRegexBase})*`;
   public static UrlSafeSlugValidator = new RegExp(`/^${Slugs.UrlSafeSlugRegexBase}$/`);

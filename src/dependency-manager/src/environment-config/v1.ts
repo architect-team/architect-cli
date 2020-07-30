@@ -6,7 +6,8 @@ import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '.
 import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { normalizeInterpolation } from '../utils/interpolation';
-import { REPOSITORY_TAG_REGEX, validateDictionary } from '../utils/validation';
+import { Slugs } from '../utils/slugs';
+import { validateDictionary } from '../utils/validation';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
 interface DnsConfigSpec {
@@ -141,7 +142,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${REPOSITORY_TAG_REGEX}$`));
+    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${Slugs.REPOSITORY_TAG_REGEX}$`));
     return errors;
   }
 }

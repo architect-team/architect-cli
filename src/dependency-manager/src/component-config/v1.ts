@@ -7,7 +7,7 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ComponentSlug, ComponentVersionSlug, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
-import { IMAGE_REGEX, REPOSITORY_REGEX, validateDictionary, validateInterpolation } from '../utils/validation';
+import { validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
 export class ParameterDefinitionSpecV1 extends BaseSpec implements ParameterDefinitionSpec {
@@ -109,10 +109,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['operator'],
   })
   @IsString({ always: true })
-  @Matches(new RegExp(`^${IMAGE_REGEX}$`), {
+  @Matches(new RegExp(`^${Slugs.IMAGE_REGEX}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(new RegExp(`^${REPOSITORY_REGEX}$`), {
+  @Matches(new RegExp(`^${Slugs.REPOSITORY_REGEX}$`), {
     message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
@@ -291,7 +291,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, /^[a-zA-Z0-9_-]+$/);
-    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${IMAGE_REGEX}$`));
+    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.IMAGE_REGEX}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['dependencies.']));
