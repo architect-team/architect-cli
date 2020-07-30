@@ -1,21 +1,46 @@
-
-export type ArchitectSlug = string; // simply string that passes: ArchitectSlugValidator (ie "account-name")
-export type ComponentSlug = string; // "account-name/component-name"
+export type ArchitectSlug = string; // a string that passes Slugs.ArchitectSlugValidator (ie "account-name")
 export type ComponentTag = string; // "tag"
-export type ComponentVersionSlug = string; // "account-name/component-name:tag"
-export type ServiceSlug = string; // "account-name/component-name/service-name"
-export type ServiceVersionSlug = string; // "account-name/component-name/service-name:tag"
-export type EnvironmentSlug = string; // "@environment-account-name/environment-name"
-export type ServiceInstanceSlug = string; // "account-name/component-name/service-name:tag@environment-account-name/environment-name"
-export type GatewaySlug = 'gateway'; // the string-literal
-export type InterfacesSlug = string; // <account-name>/<component-name>:<tag>-interfaces
 
-export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'service_instance' | 'gateway' | 'interfaces';
+export class Slugs {
 
-/**
- * Represents the unique elements of a fully parsed slug. This object will have different fields depending on the
- * type of slug (ie was it a tagged component vs an untagged component vs a service slug)
- */
+  public static DEFAULT_TAG = 'latest';
+
+  public static NAMESPACE_DELIMITER = '/';
+  public static TAG_DELIMITER = ':';
+  public static SLUG_CHAR_LIMIT = 32;
+
+  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
+  static CharacterCountLookahead = `(?=.{1,${Slugs.SLUG_CHAR_LIMIT}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|$))`;
+
+  public static ArchitectSlugRegexBase = `[a-z0-9]+(?:-[a-z0-9]+)*`;
+  static ArchitectSlugRegexBaseMaxLength = `${Slugs.CharacterCountLookahead}${Slugs.ArchitectSlugRegexBase}`;
+
+  public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`);
+
+  public static ComponentTagDescription = 'must contain only lower alphanumeric, with single hyphens or periods in the middle';
+  public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;
+  public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
+  public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
+
+  public static UrlSafeSlugDescription = 'must be of the form partial-slug--partial-slug--partial-slug-...';
+  public static UrlSafeSlugRegexBase = `^${Slugs.ArchitectSlugRegexBase}(--${Slugs.ArchitectSlugRegexBase})*`;
+  public static UrlSafeSlugValidator = new RegExp(`/^${Slugs.UrlSafeSlugRegexBase}$/`);
+}
+
+// export interface SlugParser<T extends string, U extends ParsedSlug> {
+//   description: string;
+//   validator: RegExp;
+//   parse: (slug: T) => U;
+//   build: (...any: any) => T;
+// }
+
+export interface SlugParser {
+  description: string;
+  validator: RegExp;
+  parse: (slug: any) => any;
+}
+
+export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'gateway' | 'interfaces';
 export interface ParsedSlug {
   kind: SlugKind;
   component_account_name?: string;
@@ -26,98 +51,28 @@ export interface ParsedSlug {
   environment_name?: string;
 }
 
+export type ComponentSlug = string; // "<account-name>/<component-name>"
 export interface ParsedComponentSlug extends ParsedSlug {
   kind: 'component';
   component_account_name: string;
   component_name: string;
 }
+export class ComponentSlugs {
 
-export interface ParsedComponentVersionSlug extends ParsedSlug {
-  kind: 'component_version';
-  component_account_name: string;
-  component_name: string;
-  tag: string;
-}
+  public static description = 'must be of the form <account-name>/<component-name>';
 
-export interface ParsedServiceSlug extends ParsedSlug {
-  kind: 'service';
-  component_account_name: string;
-  component_name: string;
-  service_name: string;
-}
+  static regex_base = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
+  static regex_max_length = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
 
-export interface ParsedServiceVersionSlug extends ParsedSlug {
-  kind: 'service_version';
-  component_account_name: string;
-  component_name: string;
-  service_name: string;
-  tag: string;
-}
+  public static validator = new RegExp(`^${ComponentSlugs.regex_max_length}$`);
 
-export interface ParsedServiceInstanceSlug extends ParsedSlug {
-  kind: 'service_instance';
-  component_account_name: string;
-  component_name: string;
-  service_name: string;
-  tag: string;
-  environment_account_name: string;
-  environment_name: string;
-}
-
-export interface ParsedEvironmentSlug extends ParsedSlug {
-  kind: 'environment';
-  environment_account_name: string;
-  environment_name: string;
-}
-
-export interface ParsedGatewaySlug extends ParsedSlug {
-  kind: 'gateway';
-}
-
-export interface ParsedInterfacesSlug extends ParsedSlug {
-  kind: 'interfaces';
-  component_account_name: string;
-  component_name: string;
-  tag: string;
-}
-
-export class Slugs {
-
-  public static DEFAULT_TAG = 'latest';
-
-  public static NAMESPACE_DELIMITER = '/';
-  public static TAG_DELIMITER = ':';
-  public static ENV_DELIMITER = '@';
-  public static SlugCharacterLimit = 32;
-
-  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SlugCharacterLimit}`;
-  static CharacterCountLookahead = `(?=.{1,${Slugs.SlugCharacterLimit}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|${Slugs.ENV_DELIMITER}|$))`;
-  static ArchitectSlugRegexBase = `[a-z0-9]+(?:-[a-z0-9]+)*`;
-
-  static ArchitectSlugRegexBaseMaxLength = `${Slugs.CharacterCountLookahead}${Slugs.ArchitectSlugRegexBase}`;
-  public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`);
-
-  // https://github.com/docker/distribution/blob/v2.7.1/reference/reference.go#L15
-
-  public static ComponentTagDescription = 'must contain only lower alphanumeric, with single hyphens or periods in the middle';
-  public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;
-  public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
-  public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
-
-  public static ComponentSlugDescription = 'must be of the form <account-name>/<component-name>';
-  public static ComponentSlugRegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
-  public static ComponentSlugRegexMaxLength = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
-  public static ComponentSlugValidator = new RegExp(`^${Slugs.ComponentSlugRegexMaxLength}$`);
-
-  public static REPOSITORY_REGEX = Slugs.ComponentSlugRegexBase;
-  public static REPOSITORY_TAG_REGEX = `${Slugs.REPOSITORY_REGEX}(?::${Slugs.ComponentTagRegexBase})?`;
-
-  public static buildComponentSlug = (account_name: string, component_name: string): ComponentSlug => {
+  public static build = (account_name: string, component_name: string): ComponentSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}`;
   };
-  public static splitComponentSlug = (slug: ComponentSlug): ParsedComponentSlug => {
-    if (!Slugs.ComponentSlugValidator.test(slug)) {
-      throw new Error(Slugs.ComponentSlugDescription);
+
+  public static parse = (slug: ComponentSlug): ParsedComponentSlug => {
+    if (!ComponentSlugs.validator.test(slug)) {
+      throw new Error(ComponentSlugs.description);
     }
     const [account_name, component_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
@@ -126,24 +81,40 @@ export class Slugs {
       component_name: component_name,
     };
   };
+}
 
-  public static ComponentVersionSlugDescription = 'must be of the form <account-name>/<component-name>:<tag>';
-  public static ComponentVersionSlugRegexBase = `${Slugs.ComponentSlugRegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
-  public static ComponentOptionalVersionSlug = `${Slugs.ComponentSlugRegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
-  public static ComponentVersionSlugRegexMaxLength = `${Slugs.ComponentSlugRegexMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
-  public static ComponentVersionSlugValidator = new RegExp(`^${Slugs.ComponentVersionSlugRegexBase}$`);
-  public static buildComponentVersionSlug = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG): ComponentVersionSlug => {
+export type ComponentVersionSlug = string; // "<account-name>/<component-name>:<tag>"
+
+export interface ParsedComponentVersionSlug extends ParsedSlug {
+  kind: 'component_version';
+  component_account_name: string;
+  component_name: string;
+  tag: string;
+}
+
+export class ComponentVersionSlugs {
+
+  public static description = 'must be of the form <account-name>/<component-name>:<tag>';
+
+  public static regex_base = `${ComponentSlugs.regex_base}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
+  public static regex_optional_version = `${ComponentSlugs.regex_base}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
+  public static regex_max_length = `${ComponentSlugs.regex_max_length}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
+
+  public static validator = new RegExp(`^${ComponentVersionSlugs.regex_max_length}$`);
+
+  public static build = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG): ComponentVersionSlug => {
     return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}`;
   };
-  public static splitComponentVersionSlug = (slug: ComponentVersionSlug): ParsedComponentVersionSlug => {
-    if (!Slugs.ComponentVersionSlugValidator.test(slug)) {
-      throw new Error(Slugs.ComponentVersionSlugDescription);
+
+  public static parse = (slug: ComponentVersionSlug): ParsedComponentVersionSlug => {
+    if (!ComponentVersionSlugs.validator.test(slug)) {
+      throw new Error(ComponentVersionSlugs.description);
     }
     const [component_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
     }
-    const { component_account_name, component_name } = Slugs.splitComponentSlug(component_slug);
+    const { component_account_name, component_name } = ComponentSlugs.parse(component_slug);
     return {
       kind: 'component_version',
       component_account_name,
@@ -151,16 +122,28 @@ export class Slugs {
       tag,
     };
   };
+}
 
-  public static ServiceSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>';
-  public static ServiceSlugRegexBase = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
-  public static ServiceSlugValidator = new RegExp(`^${Slugs.ServiceSlugRegexBase}$`);
-  public static buildServiceSlug = (account_name: string, component_name: string, service_name: string): ServiceSlug => {
+export type ServiceSlug = string; // "account-name/component-name/service-name"
+export interface ParsedServiceSlug extends ParsedSlug {
+  kind: 'service';
+  component_account_name: string;
+  component_name: string;
+  service_name: string;
+}
+export class ServiceSlugs {
+
+  public static description = 'must be of the form <account-name>/<component-name>/<service-name>';
+  public static regex_base = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
+  public static validator = new RegExp(`^${ServiceSlugs.regex_base}$`);
+
+  public static build = (account_name: string, component_name: string, service_name: string): ServiceSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}`;
   };
-  public static splitServiceSlug = (slug: ServiceSlug): ParsedServiceSlug => {
-    if (!Slugs.ServiceSlugValidator.test(slug)) {
-      throw new Error(Slugs.ServiceSlugDescription);
+
+  public static parse = (slug: ServiceSlug): ParsedServiceSlug => {
+    if (!ServiceSlugs.validator.test(slug)) {
+      throw new Error(ServiceSlugs.description);
     }
     const [account_name, component_name, service_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
@@ -170,22 +153,36 @@ export class Slugs {
       service_name: service_name,
     };
   };
+}
 
-  public static ServiceVersionSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>';
-  public static ServiceVersionSlugRegexBase = `${Slugs.ServiceSlugRegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
-  public static ServiceVersionSlugValidator = new RegExp(`^${Slugs.ServiceVersionSlugRegexBase}$`);
-  public static buildServiceVersionSlug = (account_name: string, component_name: string, service_name: string, tag: string): ServiceVersionSlug => {
+export type ServiceVersionSlug = string; // "<account-name>/<component-name>/<service-name>:<tag>"
+export interface ParsedServiceVersionSlug extends ParsedSlug {
+  kind: 'service_version';
+  component_account_name: string;
+  component_name: string;
+  service_name: string;
+  tag: string;
+}
+export class ServiceVersionSlugs {
+
+  public static description = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>';
+  public static regex_base = `${ServiceSlugs.regex_base}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
+  public static validator = new RegExp(`^${ServiceVersionSlugs.regex_base}$`);
+
+  public static build = (account_name: string, component_name: string, service_name: string, tag: string): ServiceVersionSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.TAG_DELIMITER}${tag}`;
   };
-  public static splitServiceVersionSlug = (slug: ServiceVersionSlug): ParsedServiceVersionSlug => {
-    if (!Slugs.ServiceVersionSlugValidator.test(slug)) {
-      throw new Error(Slugs.ServiceVersionSlugDescription);
+
+  public static parse = (slug: ServiceVersionSlug): ParsedServiceVersionSlug => {
+    if (!ServiceVersionSlugs.validator.test(slug)) {
+      throw new Error(ServiceVersionSlugs.description);
     }
     const [service_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
     }
-    const { component_account_name, component_name, service_name } = Slugs.splitServiceSlug(service_slug);
+    const { component_account_name, component_name, service_name } = ServiceSlugs.parse(service_slug);
+
     return {
       kind: 'service_version',
       component_account_name,
@@ -194,16 +191,29 @@ export class Slugs {
       tag,
     };
   };
+}
 
-  public static EnvironmentSlugDescription = 'must be of the form <account-name>/<environment-name>';
-  public static EnvironmentSlugRegexBase = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
-  public static EnvironmentSlugValidator = new RegExp(`^${Slugs.EnvironmentSlugRegexBase}$`);
-  public static buildEnvironmentSlug = (account_name: string, environment_name: string): EnvironmentSlug => {
+export type EnvironmentSlug = string; // "<account-name>/<environment-name>"
+
+export interface ParsedEvironmentSlug extends ParsedSlug {
+  kind: 'environment';
+  environment_account_name: string;
+  environment_name: string;
+}
+
+export class EnvironmentSlugs {
+
+  public static description = 'must be of the form <account-name>/<environment-name>';
+  public static regex_base = `${Slugs.ArchitectSlugRegexBaseMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBaseMaxLength}`;
+  public static validator = new RegExp(`^${EnvironmentSlugs.regex_base}$`);
+
+  public static build = (account_name: string, environment_name: string): EnvironmentSlug => {
     return `${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
   };
-  public static splitEnvironmentSlug = (slug: EnvironmentSlug): ParsedEvironmentSlug => {
-    if (!Slugs.EnvironmentSlugValidator.test(slug)) {
-      throw new Error(Slugs.EnvironmentSlugDescription);
+
+  public static parse = (slug: EnvironmentSlug): ParsedEvironmentSlug => {
+    if (!EnvironmentSlugs.validator.test(slug)) {
+      throw new Error(EnvironmentSlugs.description);
     }
     const [account_slug, environment_slug] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
@@ -212,62 +222,34 @@ export class Slugs {
       environment_name: environment_slug,
     };
   };
+}
 
-  public static ServiceInstanceSlugDescription = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>@<environment-account-name>/<environment-name>';
-  public static ServiceInstanceSlugRegexBase = `^${Slugs.ServiceVersionSlugRegexBase}${Slugs.ENV_DELIMITER}${Slugs.EnvironmentSlugRegexBase}`;
-  public static ServiceInstanceSlugValidator = new RegExp(`^${Slugs.ServiceInstanceSlugRegexBase}$`);
-  public static buildServiceInstanceSlug = (account_name: string, component_name: string, service_name: string, tag: string, environment_account_name: string, environment_name: string): ServiceInstanceSlug => {
-    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.TAG_DELIMITER}${tag}${Slugs.ENV_DELIMITER}${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
-  };
-  public static splitServiceInstanceSlug = (slug: ServiceInstanceSlug): ParsedServiceInstanceSlug => {
-    if (!Slugs.ServiceInstanceSlugValidator.test(slug)) {
-      throw new Error(Slugs.ServiceInstanceSlugDescription);
-    }
-    const [service_version_slug, environment_slug] = slug.split(Slugs.ENV_DELIMITER);
-    const { environment_account_name, environment_name } = Slugs.splitEnvironmentSlug(environment_slug);
-    const { component_account_name, component_name, service_name, tag } = Slugs.splitServiceVersionSlug(service_version_slug);
-    if (!Slugs.ComponentTagValidator.test(tag)) {
-      throw new Error(Slugs.ComponentTagDescription);
-    }
-    return {
-      kind: 'service_instance',
-      component_account_name,
-      component_name,
-      service_name,
-      tag,
-      environment_account_name,
-      environment_name,
-    };
+export type InterfaceSlug = string; // <account-name>/<component-name>:<tag>-interfaces
+
+export interface ParsedInterfacesSlug extends ParsedSlug {
+  kind: 'interfaces';
+  component_account_name: string;
+  component_name: string;
+  tag: string;
+}
+
+export class InterfaceSlugs {
+  public static suffix = `-interfaces`; // this is temporary while we combine interafes into one node on the graph
+
+  public static description = 'must be of the form <account-name>/<component-name>:<tag>-interfaces';
+  public static regex_base = `${ComponentVersionSlugs.regex_base}${InterfaceSlugs.suffix}`;
+  public static validator = new RegExp(`^${InterfaceSlugs.regex_base}$`);
+
+  public static build = (component_account_name: string, component_name: string, tag: string): InterfaceSlug => {
+    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}${InterfaceSlugs.suffix}`;
   };
 
-  public static GatewaySlugDescription = 'must be \'gateway\'';
-  public static GatewaySlugLiteral = `gateway`;
-  public static GatewaySlugValidator = new RegExp(`^${Slugs.GatewaySlugLiteral}$`);
-  public static buildGatewaySlug = (): GatewaySlug => {
-    return `gateway`;
-  };
-  public static splitGatewaySlug = (slug: string): ParsedGatewaySlug => {
-    if (!Slugs.GatewaySlugValidator.test(slug)) {
-      throw new Error(Slugs.GatewaySlugDescription);
+  public static parse = (slug: InterfaceSlug): ParsedInterfacesSlug => {
+    if (!InterfaceSlugs.validator.test(slug)) {
+      throw new Error(InterfaceSlugs.description);
     }
-    return {
-      kind: 'gateway',
-    };
-  };
-
-  public static InterfacesSlugDescription = 'must be of the form <account-name>/<component-name>:<tag>-interfaces';
-  public static InterfacesSlugSuffix = `-interfaces`;
-  public static InterfacesSlugRegexBase = `${Slugs.ComponentVersionSlugRegexBase}${Slugs.InterfacesSlugSuffix}`;
-  public static InterfacesSlugValidator = new RegExp(`^${Slugs.InterfacesSlugRegexBase}$`);
-  public static buildInterfacesSlug = (component_account_name: string, component_name: string, tag: string): InterfacesSlug => {
-    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}${Slugs.InterfacesSlugSuffix}`;
-  };
-  public static splitInterfacesSlug = (slug: string): ParsedInterfacesSlug => {
-    if (!Slugs.InterfacesSlugValidator.test(slug)) {
-      throw new Error(Slugs.InterfacesSlugDescription);
-    }
-    const slug_without_interfaces = slug.replace(Slugs.InterfacesSlugSuffix, '');
-    const { component_account_name, component_name, tag } = Slugs.splitComponentVersionSlug(slug_without_interfaces);
+    const slug_without_suffix = slug.replace(InterfaceSlugs.suffix, '');
+    const { component_account_name, component_name, tag } = ComponentVersionSlugs.parse(slug_without_suffix);
     return {
       kind: 'interfaces',
       component_account_name,
@@ -275,8 +257,31 @@ export class Slugs {
       tag,
     };
   };
+}
 
-  public static UrlSafeSlugDescription = 'must be of the form partial-slug--partial-slug--partial-slug-...';
-  public static UrlSafeSlugRegexBase = `^${Slugs.ArchitectSlugRegexBaseMaxLength}(--${Slugs.ArchitectSlugRegexBaseMaxLength})*`;
-  public static UrlSafeSlugValidator = new RegExp(`/^${Slugs.UrlSafeSlugRegexBase}$/`);
+export type GatewaySlug = 'gateway'; // the string-literal
+
+export interface ParsedGatewaySlug extends ParsedSlug {
+  kind: 'gateway';
+}
+
+export class GatewaySlugs {
+  public static string_literal = `gateway`; // the gateway slug is a special case
+
+  public static description = 'must be \'gateway\'';
+  public static validator = new RegExp(`^${GatewaySlugs.string_literal}$`);
+
+  public static build = (): GatewaySlug => {
+    return `gateway`;
+  };
+
+  public static parse = (slug: string): ParsedGatewaySlug => {
+    if (!GatewaySlugs.validator.test(slug)) {
+      throw new Error(GatewaySlugs.description);
+    }
+    return {
+      kind: 'gateway',
+    };
+  };
+
 }

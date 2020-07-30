@@ -6,7 +6,7 @@ import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../servic
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
-import { ComponentSlug, ComponentVersionSlug, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
+import { ComponentSlug, ComponentSlugs, ComponentVersionSlug, ComponentVersionSlugs, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
 import { validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
@@ -112,7 +112,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(new RegExp(`^${Slugs.ComponentSlugRegexMaxLength}$`), {
+  @Matches(new RegExp(`^${ComponentSlugs.regex_max_length}$`), {
     message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
@@ -155,12 +155,12 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getName(): ComponentSlug {
     const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
-    return Slugs.buildComponentSlug(split.component_account_name, split.component_name);
+    return ComponentSlugs.build(split.component_account_name, split.component_name);
   }
 
   getRef(): ComponentVersionSlug {
     const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
-    return Slugs.buildComponentVersionSlug(split.component_account_name, split.component_name, split.tag);
+    return ComponentVersionSlugs.build(split.component_account_name, split.component_name, split.tag);
   }
 
   getExtends() {

@@ -1,11 +1,5 @@
 import crypto from 'crypto';
-import { ParsedSlug, SlugKind, Slugs } from './slugs';
-
-interface EntityParser<T extends ParsedSlug> {
-  description: string;
-  validator: RegExp;
-  splitter: (slug: string) => T;
-}
+import { ComponentSlugs, ComponentVersionSlugs, EnvironmentSlugs, GatewaySlugs, InterfaceSlugs, ParsedSlug, ServiceSlugs, ServiceVersionSlugs, SlugKind, SlugParser } from './slugs';
 
 export class Refs {
 
@@ -24,7 +18,7 @@ export class Refs {
   public static try_split_slug<T extends ParsedSlug>(slug: string): T {
     for (const parser of Object.values(Refs.OrderedEntityParsers)) {
       if (parser.validator.test(slug)) {
-        return parser.splitter(slug);
+        return parser.parse(slug);
       }
     }
     throw new Error(`Slug did not match a valid architect reference: ${slug}`);
@@ -33,7 +27,7 @@ export class Refs {
   public static split<T extends ParsedSlug>(kind: SlugKind, slug: string): T {
     const parser = Refs.OrderedEntityParsers[kind];
     if (parser.validator.test(slug)) {
-      return parser.splitter(slug);
+      return parser.parse(slug);
     } else {
       throw new Error(parser.description);
     }
@@ -43,7 +37,7 @@ export class Refs {
     const parsed_slug = Refs.try_split_slug(ref);
 
     if (parsed_slug.kind === 'gateway') {
-      return Slugs.GatewaySlugLiteral;
+      return GatewaySlugs.string_literal;
     }
 
     const uri = Refs.to_uri(parsed_slug);
@@ -111,46 +105,41 @@ export class Refs {
   }
 
   // ordered from most specific to least specific
-  private static OrderedEntityParsers: { [key in SlugKind]: EntityParser<any> } = {
-    'service_instance': {
-      description: Slugs.ServiceInstanceSlugDescription,
-      validator: Slugs.ServiceSlugValidator,
-      splitter: Slugs.splitServiceInstanceSlug,
-    },
+  private static OrderedEntityParsers: { [key in SlugKind]: SlugParser } = {
     'service_version': {
-      description: Slugs.ServiceVersionSlugDescription,
-      validator: Slugs.ServiceVersionSlugValidator,
-      splitter: Slugs.splitServiceVersionSlug,
+      description: ServiceVersionSlugs.description,
+      validator: ServiceVersionSlugs.validator,
+      parse: ServiceVersionSlugs.parse,
     },
     'service': {
-      description: Slugs.ServiceSlugDescription,
-      validator: Slugs.ServiceSlugValidator,
-      splitter: Slugs.splitServiceSlug,
+      description: ServiceSlugs.description,
+      validator: ServiceSlugs.validator,
+      parse: ServiceSlugs.parse,
     },
     'component_version': {
-      description: Slugs.ComponentVersionSlugDescription,
-      validator: Slugs.ComponentVersionSlugValidator,
-      splitter: Slugs.splitComponentVersionSlug,
+      description: ComponentVersionSlugs.description,
+      validator: ComponentVersionSlugs.validator,
+      parse: ComponentVersionSlugs.parse,
     },
     'component': {
-      description: Slugs.ComponentSlugDescription,
-      validator: Slugs.ComponentSlugValidator,
-      splitter: Slugs.splitComponentSlug,
+      description: ComponentSlugs.description,
+      validator: ComponentSlugs.validator,
+      parse: ComponentSlugs.parse,
     },
     'interfaces': {
-      description: Slugs.InterfacesSlugDescription,
-      validator: Slugs.InterfacesSlugValidator,
-      splitter: Slugs.splitInterfacesSlug,
+      description: InterfaceSlugs.description,
+      validator: InterfaceSlugs.validator,
+      parse: InterfaceSlugs.parse,
     },
     'gateway': {
-      description: Slugs.GatewaySlugDescription,
-      validator: Slugs.GatewaySlugValidator,
-      splitter: Slugs.splitGatewaySlug,
+      description: GatewaySlugs.description,
+      validator: GatewaySlugs.validator,
+      parse: GatewaySlugs.parse,
     },
     'environment': {
-      description: Slugs.EnvironmentSlugDescription,
-      validator: Slugs.EnvironmentSlugValidator,
-      splitter: Slugs.splitEnvironmentSlug,
+      description: EnvironmentSlugs.description,
+      validator: EnvironmentSlugs.validator,
+      parse: EnvironmentSlugs.parse,
     },
   };
 }

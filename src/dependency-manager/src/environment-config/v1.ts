@@ -6,7 +6,7 @@ import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '.
 import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { normalizeInterpolation } from '../utils/interpolation';
-import { Slugs } from '../utils/slugs';
+import { ComponentVersionSlugs, Slugs } from '../utils/slugs';
 import { validateDictionary } from '../utils/validation';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
@@ -142,7 +142,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
-    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${Slugs.ComponentOptionalVersionSlug}$`));
+    errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${ComponentVersionSlugs.regex_optional_version}$`));
     return errors;
   }
 }

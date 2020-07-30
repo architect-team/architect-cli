@@ -11,7 +11,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { Slugs } from '../dependency-manager/src';
+import { EnvironmentSlugs } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
 class EnvConfigRequiredError extends Error {
@@ -256,15 +256,15 @@ export default class Deploy extends Command {
   }
 
   validateEnvironmentNamespacedInput(value: string) {
-    if (!Slugs.EnvironmentSlugValidator.test(value)) {
-      return 'Environments ' + Slugs.EnvironmentSlugDescription;
+    if (!EnvironmentSlugs.validator.test(value)) {
+      return 'Environments ' + EnvironmentSlugs.description;
     }
     return true;
   }
 
   validatePlatformNamespacedInput(value: string) {
-    if (!Slugs.EnvironmentSlugValidator.test(value)) {
-      return 'Platforms ' + Slugs.EnvironmentSlugDescription;
+    if (!EnvironmentSlugs.validator.test(value)) {
+      return 'Platforms ' + EnvironmentSlugs.description;
     }
     return true;
   }

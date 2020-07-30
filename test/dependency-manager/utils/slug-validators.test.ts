@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Slugs } from '../../../src/dependency-manager/src/utils/slugs';
+import { ComponentSlugs, ComponentVersionSlugs, ServiceSlugs, ServiceVersionSlugs, Slugs } from '../../../src/dependency-manager/src/utils/slugs';
 
 describe('slugs validators', () => {
 
@@ -97,135 +97,96 @@ describe('slugs validators', () => {
   it(`valid slugs are acceptable to ComponentSlugValidator`, async () => {
     for (const component_name of valid_slugs) {
       const slug = `${valid_slug}/${component_name}`;
-      expect(Slugs.ComponentSlugValidator.test(slug)).to.be.true
+      expect(ComponentSlugs.validator.test(slug)).to.be.true
     }
   });
 
   it(`invalid slugs are NOT acceptable to ComponentSlugValidator`, async () => {
     for (const component_name of invalid_slugs) {
       const slug = `${valid_slug}/${component_name}`;
-      expect(Slugs.ComponentSlugValidator.test(slug)).to.be.false
+      expect(ComponentSlugs.validator.test(slug)).to.be.false
     }
 
     for (const component_name of valid_slugs) {
       const slug = `${invalid_slug}/${component_name}`;
-      expect(Slugs.ComponentSlugValidator.test(slug)).to.be.false
+      expect(ComponentSlugs.validator.test(slug)).to.be.false
     }
 
     for (const component_name of invalid_slugs) {
       const slug = `${invalid_slug}/${component_name}`;
-      expect(Slugs.ComponentSlugValidator.test(slug)).to.be.false
+      expect(ComponentSlugs.validator.test(slug)).to.be.false
     }
   });
 
   it(`valid slugs are acceptable to ComponentVersionSlugValidator`, async () => {
     for (const tag of valid_tags) {
       const slug = `${valid_slug}/${valid_slug}:${tag}`;
-      expect(Slugs.ComponentVersionSlugValidator.test(slug)).to.be.true
+      expect(ComponentVersionSlugs.validator.test(slug)).to.be.true
     }
   });
 
   it(`invalid slugs are NOT acceptable to ComponentVersionSlugValidator`, async () => {
     for (const tag of valid_tags) {
       const slug = `${invalid_slug}/${valid_slug}:${tag}`;
-      expect(Slugs.ComponentVersionSlugValidator.test(slug)).to.be.false
+      expect(ComponentVersionSlugs.validator.test(slug)).to.be.false
     }
 
     for (const tag of valid_tags) {
       const slug = `${valid_slug}/${invalid_slug}:${tag}`;
-      expect(Slugs.ComponentVersionSlugValidator.test(slug)).to.be.false
+      expect(ComponentVersionSlugs.validator.test(slug)).to.be.false
     }
 
     for (const tag of invalid_tags) {
       const slug = `${valid_slug}/${valid_slug}:${tag}`;
-      expect(Slugs.ComponentVersionSlugValidator.test(slug)).to.be.false
+      expect(ComponentVersionSlugs.validator.test(slug)).to.be.false
     }
   });
 
-  it(`valid slugs are acceptable to ServiceSlugValidator`, async () => {
+  it(`valid slugs are acceptable to ServiceSlugs`, async () => {
     for (const resource_name of valid_slugs) {
       const slug = `${valid_slug}/${valid_slug}/${resource_name}`;
-      expect(Slugs.ServiceSlugValidator.test(slug)).to.be.true
+      expect(ServiceSlugs.validator.test(slug)).to.be.true
     }
   });
 
-  it(`invalid slugs are NOT acceptable to ServiceSlugValidator`, async () => {
+  it(`invalid slugs are NOT acceptable to ServiceSlugs`, async () => {
     for (const resource_name of invalid_slugs) {
       const slug = `${valid_slug}/${valid_slug}/${resource_name}`;
-      expect(Slugs.ServiceSlugValidator.test(slug)).to.be.false
+      expect(ServiceSlugs.validator.test(slug)).to.be.false
     }
 
     for (const component_name of invalid_slugs) {
       const slug = `${valid_slug}/${component_name}/${valid_slug}`;
-      expect(Slugs.ServiceSlugValidator.test(slug)).to.be.false
+      expect(ServiceSlugs.validator.test(slug)).to.be.false
     }
 
     for (const account_name of invalid_slugs) {
       const slug = `${account_name}/${valid_slug}/${valid_slug}`;
-      expect(Slugs.ServiceSlugValidator.test(slug)).to.be.false
+      expect(ServiceSlugs.validator.test(slug)).to.be.false
     }
   });
 
   it(`valid slugs are acceptable to ServiceVersionSlugValidator`, async () => {
     for (const resource_name of valid_slugs) {
       const slug = `${valid_slug}/${valid_slug}/${resource_name}:${valid_tag}`;
-      expect(Slugs.ServiceVersionSlugValidator.test(slug)).to.be.true
+      expect(ServiceVersionSlugs.validator.test(slug)).to.be.true
     }
   });
 
   it(`invalid slugs are NOT acceptable to ServiceVersionSlugValidator`, async () => {
     for (const resource_name of invalid_slugs) {
       const slug = `${valid_slug}/${valid_slug}/${resource_name}:${valid_tag}`;
-      expect(Slugs.ServiceVersionSlugValidator.test(slug)).to.be.false
+      expect(ServiceVersionSlugs.validator.test(slug)).to.be.false
     }
 
     for (const component_name of invalid_slugs) {
       const slug = `${valid_slug}/${component_name}/${valid_slug}:${valid_tag}`;
-      expect(Slugs.ServiceVersionSlugValidator.test(slug)).to.be.false
+      expect(ServiceVersionSlugs.validator.test(slug)).to.be.false
     }
 
     for (const account_name of invalid_slugs) {
       const slug = `${account_name}/${valid_slug}/${valid_slug}:${valid_tag}`;
-      expect(Slugs.ServiceVersionSlugValidator.test(slug)).to.be.false
-    }
-  });
-
-  it(`valid slugs are acceptable to ServiceInstanceSlugValidator`, async () => {
-    for (const account_environment_name of valid_slugs) {
-      const slug = `${valid_slug}/${valid_slug}/${valid_slug}:${valid_tag}@${account_environment_name}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.true
-    }
-  });
-
-  it(`invalid slugs are NOT acceptable to ServiceInstanceSlugValidator`, async () => {
-    for (const account_environment_name of invalid_slugs) {
-      const slug = `${valid_slug}/${valid_slug}/${valid_slug}:${valid_tag}@${account_environment_name}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
-    }
-
-    for (const tag of invalid_tags) {
-      const slug = `${valid_slug}/${valid_slug}/${valid_slug}:${tag}@${valid_slug}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
-    }
-
-    for (const environment_name of invalid_slugs) {
-      const slug = `${valid_slug}/${valid_slug}/${valid_slug}:${valid_tag}@${valid_slug}/${environment_name}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
-    }
-
-    for (const resource_name of invalid_slugs) {
-      const slug = `${valid_slug}/${valid_slug}/${resource_name}:${valid_tag}@${valid_slug}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
-    }
-
-    for (const component_name of invalid_slugs) {
-      const slug = `${valid_slug}/${component_name}/${valid_slug}:${valid_tag}@${valid_slug}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
-    }
-
-    for (const account_name of invalid_slugs) {
-      const slug = `${account_name}/${valid_slug}/${valid_slug}:${valid_tag}@${valid_slug}/${valid_slug}`;
-      expect(Slugs.ServiceInstanceSlugValidator.test(slug)).to.be.false
+      expect(ServiceVersionSlugs.validator.test(slug)).to.be.false
     }
   });
 });

@@ -1,7 +1,7 @@
 import { InterfaceSpec, ServiceConfig } from '../service-config/base';
 import { ConfigSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ServiceVersionSlug, Slugs } from '../utils/slugs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugs, InterfaceSlugs, ServiceVersionSlug, ServiceVersionSlugs } from '../utils/slugs';
 
 export type ParameterValue = string | number | boolean | undefined;
 
@@ -41,16 +41,16 @@ export abstract class ComponentConfig extends ConfigSpec {
   abstract getContext(): any;
 
   getInterfacesRef() {
-    return `${this.getRef()}${Slugs.InterfacesSlugSuffix}`;
+    return `${this.getRef()}${InterfaceSlugs.suffix}`;
   }
 
   getComponentVersion(): ComponentTag {
-    return Slugs.splitComponentVersionSlug(this.getRef()).tag;
+    return ComponentVersionSlugs.parse(this.getRef()).tag;
   }
 
   getServiceRef(service_name: string): ServiceVersionSlug {
-    const parsed = Slugs.splitComponentVersionSlug(this.getRef());
-    return Slugs.buildServiceVersionSlug(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    const parsed = ComponentVersionSlugs.parse(this.getRef());
+    return ServiceVersionSlugs.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {

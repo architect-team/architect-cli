@@ -14,7 +14,7 @@ import { InterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
-import { Slugs } from './utils/slugs';
+import { ComponentSlugs, ComponentVersionSlugs, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -54,7 +54,7 @@ export default abstract class DependencyManager {
   addIngressEdges(graph: DependencyGraph): void {
     const component_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
-      const components_regex = new RegExp(`\\\${\\s*components\\.(${Slugs.ComponentOptionalVersionSlug})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const components_regex = new RegExp(`\\\${\\s*components\\.(${ComponentVersionSlugs.regex_optional_version})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = components_regex.exec(replaceBrackets(component_interface.url!));
@@ -164,7 +164,7 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and dependencies inside the component
-      const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${Slugs.ComponentSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${ComponentSlugs.regex_base})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       const dep_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
