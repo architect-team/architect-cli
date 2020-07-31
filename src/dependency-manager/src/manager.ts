@@ -14,7 +14,7 @@ import { InterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
-import { ComponentSlugs, ComponentVersionSlugs, Slugs } from './utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
 import VaultManager from './vault-manager';
 
@@ -54,7 +54,7 @@ export default abstract class DependencyManager {
   addIngressEdges(graph: DependencyGraph): void {
     const component_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
-      const components_regex = new RegExp(`\\\${\\s*components\\.(${ComponentVersionSlugs.regex_optional_version})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const components_regex = new RegExp(`\\\${\\s*components\\.(${ComponentVersionSlugUtils.RegexOptionalTag})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = components_regex.exec(replaceBrackets(component_interface.url!));
@@ -148,7 +148,7 @@ export default abstract class DependencyManager {
       service_string = replaceBrackets(service_string);
 
       // Add edges between services inside the component
-      const services_regex = new RegExp(`\\\${\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
       const service_edge_map: Dictionary<Dictionary<string>> = {};
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
@@ -164,7 +164,7 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and dependencies inside the component
-      const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${ComponentSlugs.regex_base})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const dependencies_regex = new RegExp(`\\\${\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
       const dep_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
@@ -187,7 +187,7 @@ export default abstract class DependencyManager {
     // Add edges between services and the component's interfaces node
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
-      const services_regex = new RegExp(`\\\${\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = services_regex.exec(replaceBrackets(component_interface.url!));

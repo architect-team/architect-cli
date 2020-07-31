@@ -6,7 +6,7 @@ import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../servic
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
-import { ComponentSlug, ComponentSlugs, ComponentVersionSlug, ComponentVersionSlugs, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
+import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
 import { validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
@@ -109,10 +109,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['operator'],
   })
   @IsString({ always: true })
-  @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBaseMaxLength}$`), {
+  @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
   })
-  @Matches(new RegExp(`^${ComponentSlugs.regex_max_length}$`), {
+  @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
     message: 'Names must be prefixed with an account name (e.g. architect/component-name)',
     groups: ['developer'],
   })
@@ -155,12 +155,12 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getName(): ComponentSlug {
     const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
-    return ComponentSlugs.build(split.component_account_name, split.component_name);
+    return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
   getRef(): ComponentVersionSlug {
     const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
-    return ComponentVersionSlugs.build(split.component_account_name, split.component_name, split.tag);
+    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
   }
 
   getExtends() {
@@ -291,7 +291,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
-    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`));
+    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['dependencies.']));

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ComponentSlugs, ComponentVersionSlugs, EnvironmentSlugs, GatewaySlugs, InterfaceSlugs, ParsedSlug, ServiceSlugs, ServiceVersionSlugs, SlugKind, SlugParser } from './slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, GatewaySlugUtils, InterfaceSlugUtils, ParsedSlug, ServiceSlugUtils, ServiceVersionSlugUtils, SlugKind, SlugParser } from './slugs';
 
 export class Refs {
 
@@ -37,7 +37,7 @@ export class Refs {
     const parsed_slug = Refs.try_split_slug(ref);
 
     if (parsed_slug.kind === 'gateway') {
-      return GatewaySlugs.string_literal;
+      return GatewaySlugUtils.StringLiteral;
     }
 
     const uri = Refs.to_uri(parsed_slug);
@@ -107,39 +107,39 @@ export class Refs {
   // ordered from most specific to least specific
   private static OrderedEntityParsers: { [key in SlugKind]: SlugParser } = {
     'service_version': {
-      description: ServiceVersionSlugs.description,
-      validator: ServiceVersionSlugs.validator,
-      parse: ServiceVersionSlugs.parse,
+      description: ServiceVersionSlugUtils.Description,
+      validator: ServiceVersionSlugUtils.Validator,
+      parse: ServiceVersionSlugUtils.parse,
     },
     'service': {
-      description: ServiceSlugs.description,
-      validator: ServiceSlugs.validator,
-      parse: ServiceSlugs.parse,
+      description: ServiceSlugUtils.Description,
+      validator: ServiceSlugUtils.Validator,
+      parse: ServiceSlugUtils.parse,
     },
     'component_version': {
-      description: ComponentVersionSlugs.description,
-      validator: ComponentVersionSlugs.validator,
-      parse: ComponentVersionSlugs.parse,
+      description: ComponentVersionSlugUtils.Description,
+      validator: ComponentVersionSlugUtils.Validator,
+      parse: ComponentVersionSlugUtils.parse,
     },
     'component': {
-      description: ComponentSlugs.description,
-      validator: ComponentSlugs.validator,
-      parse: ComponentSlugs.parse,
+      description: ComponentSlugUtils.Description,
+      validator: ComponentSlugUtils.Validator,
+      parse: ComponentSlugUtils.parse,
     },
     'interfaces': {
-      description: InterfaceSlugs.description,
-      validator: InterfaceSlugs.validator,
-      parse: InterfaceSlugs.parse,
+      description: InterfaceSlugUtils.Description,
+      validator: InterfaceSlugUtils.Validator,
+      parse: InterfaceSlugUtils.parse,
     },
     'gateway': {
-      description: GatewaySlugs.description,
-      validator: GatewaySlugs.validator,
-      parse: GatewaySlugs.parse,
+      description: GatewaySlugUtils.Description,
+      validator: GatewaySlugUtils.Validator,
+      parse: GatewaySlugUtils.parse,
     },
     'environment': {
-      description: EnvironmentSlugs.description,
-      validator: EnvironmentSlugs.validator,
-      parse: EnvironmentSlugs.parse,
+      description: EnvironmentSlugUtils.Description,
+      validator: EnvironmentSlugUtils.Validator,
+      parse: EnvironmentSlugUtils.parse,
     },
   };
 }
