@@ -68,4 +68,12 @@ describe('Refs url_safe_ref', () => {
     const url_safe_ref = Refs.url_safe_ref(interface_slug);
     expect(url_safe_ref).to.equal(expected_slug);
   });
+
+  it(`Refs.url_safe_ref cuts long string to 63 chars`, async () => {
+    const interface_slug = `this-is-a-component/that-has-more-than-63-chars:it-should-getlopped-off-interfaces`;
+    const expected_slug = `this-is-a-component--that-has-more-than-63-cha--m9gnv6yi-interfaces`;
+
+    const url_safe_ref = Refs.url_safe_ref(interface_slug);
+    expect(url_safe_ref).to.equal(expected_slug);
+  });
 });

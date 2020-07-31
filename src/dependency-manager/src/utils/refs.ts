@@ -26,7 +26,7 @@ export class Refs {
     url_safe_ref = url_safe_ref.replace(/[^a-zA-Z0-9-]/g, Refs.URL_SAFE_PUNCTUATION_REPLACEMENT);
 
     // slice if the whole thing is too long
-    const max_base_length = Refs.DEFAULT_MAX_LENGTH - Refs.HASH_LENGTH;
+    const max_base_length = Refs.DEFAULT_MAX_LENGTH - Refs.HASH_LENGTH - suffix.length;
     if (url_safe_ref.length > max_base_length) {
       url_safe_ref = url_safe_ref.slice(0, max_base_length + 1);
       // trim any trailing dashes
