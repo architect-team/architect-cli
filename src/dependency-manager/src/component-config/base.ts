@@ -41,7 +41,7 @@ export abstract class ComponentConfig extends ConfigSpec {
   abstract getContext(): any;
 
   getInterfacesRef() {
-    return `${this.getRef()}${InterfaceSlugUtils.suffix}`;
+    return `${this.getRef()}${InterfaceSlugUtils.Suffix}`;
   }
 
   getComponentVersion(): ComponentTag {
