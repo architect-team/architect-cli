@@ -75,7 +75,6 @@ export default class Deploy extends Command {
       exclusive: ['local', 'compose_file'],
     }),
     platform: flags.string({
-      char: 'p',
       description: 'Fully qualified platform name in the form my-account/platform-name',
       exclusive: ['local', 'compose_file'],
     }),
@@ -83,6 +82,12 @@ export default class Deploy extends Command {
       description: 'Build without debug config',
       hidden: true,
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+    }),
+    parameter: flags.string({
+      char: 'p',
+      description: 'Component parameters',
+      multiple: true,
+      default: [],
     }),
   };
 
@@ -136,6 +141,14 @@ export default class Deploy extends Command {
       this.app.linkedServices,
     );
 
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const param_name of Object.keys(extra_params)) {
+      if (dependency_manager.environment.getParameters()[param_name] === undefined) {
+        throw new Error(`Parameter ${param_name} not found in env config`);
+      }
+    }
+    dependency_manager.environment.setParameters(extra_params);
+
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
@@ -179,6 +192,14 @@ export default class Deploy extends Command {
         this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
       }
     }
+
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const param_name of Object.keys(extra_params)) {
+      if (env_config.getParameters()[param_name] === undefined) {
+        throw new Error(`Parameter ${param_name} not found in env config`);
+      }
+    }
+    env_config.setParameters(extra_params);
 
     let environment_id;
     let environment_answers: any = {};
@@ -228,11 +249,8 @@ export default class Deploy extends Command {
       environment_id = created_environment.id;
     }
 
-    // Hack to replace file:
-    const [_, raw_config] = EnvironmentConfigBuilder.readFromPath(env_config_path);
-
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: raw_config });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: env_config });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
@@ -275,6 +293,24 @@ export default class Deploy extends Command {
       return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
     }
     return true;
+  }
+
+  getExtraEnvironmentVariables(parameters: string[]) {
+    const extra_env_vars: { [s: string]: string | undefined } = {};
+    for (const [param_name, param_value] of Object.entries(process.env || {})) {
+      if (param_name.startsWith('ARC_')) {
+        extra_env_vars[param_name.substring(4)] = param_value;
+      }
+    }
+
+    for (const param of parameters) {
+      const param_split = param.split('=');
+      if (param_split.length !== 2) {
+        throw new Error(`Bad format for parameter ${param}. Please specify in the format --parameter PARAM_NAME=PARAM_VALUE`);
+      }
+      extra_env_vars[param_split[0]] = param_split[1];
+    }
+    return extra_env_vars;
   }
 
   async run() {
