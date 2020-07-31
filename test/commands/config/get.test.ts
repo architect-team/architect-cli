@@ -30,7 +30,7 @@ const expectConfigValues = async (config_dir: string, config: AppConfig) => {
 };
 
 describe('config:get', function () {
-  this.timeout(15000); // otherwise this fails occaisionally in github actions at default 5000 timeout
+  this.timeout(20000); // otherwise this fails occaisionally in github actions at default 5000 timeout
   afterEach(function () {
     sinon.restore();
   });

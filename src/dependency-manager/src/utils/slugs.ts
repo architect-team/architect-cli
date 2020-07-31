@@ -218,21 +218,21 @@ export interface ParsedInterfacesSlug extends ParsedSlug {
   tag: string;
 }
 export class InterfaceSlugUtils extends SlugUtils {
-  public static suffix = `-interfaces`; // this is temporary while we combine interafes into one node on the graph
+  public static Suffix = `-interfaces`; // this is temporary while we combine interafes into one node on the graph
 
   public static Description = 'must be of the form <account-name>/<component-name>:<tag>-interfaces';
-  public static RegexBase = `${ComponentVersionSlugUtils.RegexNoMaxLength}${InterfaceSlugUtils.suffix}`;
+  public static RegexBase = `${ComponentVersionSlugUtils.RegexNoMaxLength}${InterfaceSlugUtils.Suffix}`;
   public static Validator = new RegExp(`^${InterfaceSlugUtils.RegexBase}$`);
 
   public static build = (component_account_name: string, component_name: string, tag: string): InterfaceSlug => {
-    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}${InterfaceSlugUtils.suffix}`;
+    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}${InterfaceSlugUtils.Suffix}`;
   };
 
   public static parse = (slug: InterfaceSlug): ParsedInterfacesSlug => {
     if (!InterfaceSlugUtils.Validator.test(slug)) {
       throw new Error(InterfaceSlugUtils.Description);
     }
-    const slug_without_suffix = slug.replace(InterfaceSlugUtils.suffix, '');
+    const slug_without_suffix = slug.replace(InterfaceSlugUtils.Suffix, '');
     const { component_account_name, component_name, tag } = ComponentVersionSlugUtils.parse(slug_without_suffix);
     return {
       kind: 'interfaces',

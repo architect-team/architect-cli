@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { GatewaySlugUtils, Slugs } from './slugs';
+import { GatewaySlugUtils, InterfaceSlugUtils, Slugs } from './slugs';
 
 export class Refs {
 
@@ -12,15 +12,21 @@ export class Refs {
     if (ref === GatewaySlugUtils.StringLiteral) {
       return ref;
     }
+    let suffix = '';
+    let url_safe_ref = ref;
+    if (ref.endsWith(InterfaceSlugUtils.Suffix)) {
+      suffix = InterfaceSlugUtils.Suffix;
+      url_safe_ref = ref.slice(0, -1 * (InterfaceSlugUtils.Suffix.length));
+    }
 
     const hash = Refs.to_digest(ref);
 
-    let url_safe_ref = ref.replace(new RegExp(`${Slugs.NAMESPACE_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
+    url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.NAMESPACE_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
     url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.TAG_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
     url_safe_ref = url_safe_ref.replace(/[^a-zA-Z0-9-]/g, Refs.URL_SAFE_PUNCTUATION_REPLACEMENT);
 
     // slice if the whole thing is too long
-    const max_base_length = Refs.DEFAULT_MAX_LENGTH - Refs.HASH_LENGTH;
+    const max_base_length = Refs.DEFAULT_MAX_LENGTH - Refs.HASH_LENGTH - suffix.length;
     if (url_safe_ref.length > max_base_length) {
       url_safe_ref = url_safe_ref.slice(0, max_base_length + 1);
       // trim any trailing dashes
@@ -32,6 +38,7 @@ export class Refs {
     // add the hash
     url_safe_ref += Refs.URL_SAFE_DELIMITER;
     url_safe_ref += hash.slice(0, Refs.HASH_LENGTH + 1);
+    url_safe_ref += suffix;
 
     return url_safe_ref;
   }
