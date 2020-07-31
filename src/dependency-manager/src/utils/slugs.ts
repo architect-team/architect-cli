@@ -23,12 +23,6 @@ export class Slugs {
   public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
 }
 
-export interface SlugParser {
-  description: string;
-  validator: RegExp;
-  parse: (slug: any) => any;
-}
-
 export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'gateway' | 'interfaces';
 export interface ParsedSlug {
   kind: SlugKind;
@@ -46,7 +40,14 @@ export interface ParsedComponentSlug extends ParsedSlug {
   component_account_name: string;
   component_name: string;
 }
-export class ComponentSlugUtils {
+
+export abstract class SlugUtils {
+  public static Description: string;
+  public static Validator: RegExp;
+  public static parse: Function;
+}
+
+export class ComponentSlugUtils extends SlugUtils {
 
   public static Description = 'must be of the form <account-name>/<component-name>';
 
@@ -79,7 +80,7 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_name: string;
   tag: string;
 }
-export class ComponentVersionSlugUtils {
+export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Description = 'must be of the form <account-name>/<component-name>:<tag>';
 
@@ -118,7 +119,7 @@ export interface ParsedServiceSlug extends ParsedSlug {
   component_name: string;
   service_name: string;
 }
-export class ServiceSlugUtils {
+export class ServiceSlugUtils extends SlugUtils {
 
   public static Description = 'must be of the form <account-name>/<component-name>/<service-name>';
   public static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
@@ -150,7 +151,7 @@ export interface ParsedServiceVersionSlug extends ParsedSlug {
   service_name: string;
   tag: string;
 }
-export class ServiceVersionSlugUtils {
+export class ServiceVersionSlugUtils extends SlugUtils {
 
   public static Description = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>';
   public static RegexBase = `${ServiceSlugUtils.RegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
@@ -186,7 +187,7 @@ export interface ParsedEvironmentSlug extends ParsedSlug {
   environment_account_name: string;
   environment_name: string;
 }
-export class EnvironmentSlugUtils {
+export class EnvironmentSlugUtils extends SlugUtils {
 
   public static Description = 'must be of the form <account-name>/<environment-name>';
   public static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
@@ -216,7 +217,7 @@ export interface ParsedInterfacesSlug extends ParsedSlug {
   component_name: string;
   tag: string;
 }
-export class InterfaceSlugUtils {
+export class InterfaceSlugUtils extends SlugUtils {
   public static suffix = `-interfaces`; // this is temporary while we combine interafes into one node on the graph
 
   public static Description = 'must be of the form <account-name>/<component-name>:<tag>-interfaces';
@@ -246,7 +247,7 @@ export type GatewaySlug = 'gateway'; // the string-literal
 export interface ParsedGatewaySlug extends ParsedSlug {
   kind: 'gateway';
 }
-export class GatewaySlugUtils {
+export class GatewaySlugUtils extends SlugUtils {
   public static StringLiteral = `gateway`; // the gateway slug is a special case
 
   public static Description = 'must be \'gateway\'';

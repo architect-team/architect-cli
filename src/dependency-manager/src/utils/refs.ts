@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, GatewaySlugUtils, InterfaceSlugUtils, ParsedSlug, ServiceSlugUtils, ServiceVersionSlugUtils, SlugKind, SlugParser } from './slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, GatewaySlugUtils, InterfaceSlugUtils, ParsedSlug, ServiceSlugUtils, ServiceVersionSlugUtils, SlugUtils } from './slugs';
 
 export class Refs {
 
@@ -16,21 +16,12 @@ export class Refs {
    * @throws Error if the given slug does not match any valid architect slug formats
    */
   public static try_split_slug<T extends ParsedSlug>(slug: string): T {
-    for (const parser of Object.values(Refs.OrderedEntityParsers)) {
-      if (parser.validator.test(slug)) {
+    for (const parser of Refs.OrderedEntityParsers) {
+      if (parser.Validator.test(slug)) {
         return parser.parse(slug);
       }
     }
     throw new Error(`Slug did not match a valid architect reference: ${slug}`);
-  }
-
-  public static split<T extends ParsedSlug>(kind: SlugKind, slug: string): T {
-    const parser = Refs.OrderedEntityParsers[kind];
-    if (parser.validator.test(slug)) {
-      return parser.parse(slug);
-    } else {
-      throw new Error(parser.description);
-    }
   }
 
   public static url_safe_ref(ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
@@ -105,41 +96,13 @@ export class Refs {
   }
 
   // ordered from most specific to least specific
-  private static OrderedEntityParsers: { [key in SlugKind]: SlugParser } = {
-    'service_version': {
-      description: ServiceVersionSlugUtils.Description,
-      validator: ServiceVersionSlugUtils.Validator,
-      parse: ServiceVersionSlugUtils.parse,
-    },
-    'service': {
-      description: ServiceSlugUtils.Description,
-      validator: ServiceSlugUtils.Validator,
-      parse: ServiceSlugUtils.parse,
-    },
-    'component_version': {
-      description: ComponentVersionSlugUtils.Description,
-      validator: ComponentVersionSlugUtils.Validator,
-      parse: ComponentVersionSlugUtils.parse,
-    },
-    'component': {
-      description: ComponentSlugUtils.Description,
-      validator: ComponentSlugUtils.Validator,
-      parse: ComponentSlugUtils.parse,
-    },
-    'interfaces': {
-      description: InterfaceSlugUtils.Description,
-      validator: InterfaceSlugUtils.Validator,
-      parse: InterfaceSlugUtils.parse,
-    },
-    'gateway': {
-      description: GatewaySlugUtils.Description,
-      validator: GatewaySlugUtils.Validator,
-      parse: GatewaySlugUtils.parse,
-    },
-    'environment': {
-      description: EnvironmentSlugUtils.Description,
-      validator: EnvironmentSlugUtils.Validator,
-      parse: EnvironmentSlugUtils.parse,
-    },
-  };
+  private static OrderedEntityParsers: typeof SlugUtils[] = [
+    ServiceVersionSlugUtils,
+    ServiceSlugUtils,
+    ComponentVersionSlugUtils,
+    ComponentSlugUtils,
+    InterfaceSlugUtils,
+    GatewaySlugUtils,
+    EnvironmentSlugUtils,
+  ];
 }
