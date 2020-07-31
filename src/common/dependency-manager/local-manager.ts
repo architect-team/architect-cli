@@ -146,7 +146,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   toInternalHost(node: DependencyNode) {
-    return Refs.url_safe_ref(node.ref, Refs.MAX_SUBDOMAIN_LENGTH);
+    return Refs.url_safe_ref(node.ref);
   }
 
   async loadComponents(graph: DependencyGraph) {

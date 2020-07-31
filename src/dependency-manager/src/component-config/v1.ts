@@ -5,8 +5,7 @@ import { InterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../service-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
-import { Refs } from '../utils/refs';
-import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ParsedComponentSlug, ParsedComponentVersionSlug, Slugs } from '../utils/slugs';
+import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
 import { validateDictionary, validateInterpolation } from '../utils/validation';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
@@ -154,12 +153,22 @@ export class ComponentConfigV1 extends ComponentConfig {
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   getName(): ComponentSlug {
-    const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
+    let split;
+    try {
+      split = ComponentSlugUtils.parse(this.name);
+    } catch {
+      split = ComponentVersionSlugUtils.parse(this.name);
+    }
     return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
   getRef(): ComponentVersionSlug {
-    const split = Refs.try_split_slug<ParsedComponentSlug | ParsedComponentVersionSlug>(this.name);
+    let split;
+    try {
+      split = ComponentSlugUtils.parse(this.name);
+    } catch {
+      split = ComponentVersionSlugUtils.parse(this.name);
+    }
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
   }
 

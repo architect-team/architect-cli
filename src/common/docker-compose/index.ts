@@ -8,8 +8,6 @@ import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import DockerComposeTemplate from './template';
 
-export const MAX_DOCKER_COMPOSE_SVC_NAME = 512; // tested this empirically and have not bumped up against a limit yet. setting it at 512 just to put some high cap on it
-
 export const generate = async (dependency_manager: LocalDependencyManager): Promise<DockerComposeTemplate> => {
   const compose: DockerComposeTemplate = {
     version: '3',
@@ -36,7 +34,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   // Enrich base service details
   for (const node of graph.nodes) {
     if (node.is_external) continue;
-    const url_safe_ref = Refs.url_safe_ref(node.ref, MAX_DOCKER_COMPOSE_SVC_NAME);
+    const url_safe_ref = Refs.url_safe_ref(node.ref);
 
     if (node instanceof GatewayNode) {
       compose.services[url_safe_ref] = {
@@ -149,11 +147,11 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   for (const edge of graph.edges) {
     const node_from = graph.getNodeByRef(edge.from);
     if (node_from instanceof InterfacesNode) continue;
-    const node_from_url_safe_ref = Refs.url_safe_ref(node_from.ref, MAX_DOCKER_COMPOSE_SVC_NAME);
+    const node_from_url_safe_ref = Refs.url_safe_ref(node_from.ref);
 
     for (const interface_name of Object.keys(edge.interfaces_map)) {
       const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-      const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref, MAX_DOCKER_COMPOSE_SVC_NAME);
+      const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref);
 
       if (!(node_to instanceof ServiceNode)) continue;
       if (node_to.is_external) continue;

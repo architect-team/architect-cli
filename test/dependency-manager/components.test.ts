@@ -78,7 +78,7 @@ describe('components spec v1', function () {
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
-          "architect--cloud--api--aoaqhrdv": {
+          "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -88,7 +88,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--app--chfry8ne": {
+          "architect--cloud--app--latest--kavtrukr": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -247,17 +247,17 @@ describe('components spec v1', function () {
       // Test parameter values
       const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
 
-      const cloud_api_ref = Refs.url_safe_ref('architect/cloud/api:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+      const cloud_api_ref = Refs.url_safe_ref('architect/cloud/api:latest');
       expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq(`http://${cloud_api_ref}:8080`)
 
       const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      const cloud_db_ref = Refs.url_safe_ref('architect/cloud/db:latest', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+      const cloud_db_ref = Refs.url_safe_ref('architect/cloud/db:latest');
       expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${cloud_db_ref}:5432`)
 
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
-          "architect--cloud--api--aoaqhrdv": {
+          "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [
               `${cloud_db_ref}`
             ],
@@ -271,7 +271,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--app--chfry8ne": {
+          "architect--cloud--app--latest--kavtrukr": {
             "depends_on": [
               `${cloud_api_ref}`
             ],
@@ -285,7 +285,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--db--y8pscont": {
+          "architect--cloud--db--latest--6apzjzoe": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -377,7 +377,7 @@ describe('components spec v1', function () {
 
       // Test parameter values
       const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      const concourse_web_ref = Refs.url_safe_ref('concourse/ci/web:6.2', DockerCompose.MAX_DOCKER_COMPOSE_SVC_NAME);
+      const concourse_web_ref = Refs.url_safe_ref('concourse/ci/web:6.2');
       expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${concourse_web_ref}:8080`)
       const worker_node = graph.getNodeByRef('concourse/ci/worker:6.2') as ServiceNode;
       expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(concourse_web_ref);

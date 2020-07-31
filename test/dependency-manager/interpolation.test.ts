@@ -8,7 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -116,9 +116,10 @@ describe('interpolation spec v1', () => {
     ])
 
     const template = await DockerCompose.generate(manager);
+    const url_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
     expect(template).to.be.deep.equal({
       'services': {
-        'concourse--web--web--7jgqa9dv': {
+        'concourse--web--web--latest--62arnmmt': {
           'depends_on': [],
           'environment': {},
           'ports': [
@@ -128,12 +129,12 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack')
           }
         },
-        'concourse--worker--worker--jpmrod9i': {
+        'concourse--worker--worker--latest--umjxggst': {
           'depends_on': [],
           'environment': {
-            'REGULAR': 'concourse--web--web--7jgqa9dv:2222',
-            'SINGLE_QUOTE': 'concourse--web--web--7jgqa9dv:2222',
-            'DOUBLE_QUOTE': 'concourse--web--web--7jgqa9dv:2222',
+            'REGULAR': `${url_safe_ref}:2222`,
+            'SINGLE_QUOTE': `${url_safe_ref}:2222`,
+            'DOUBLE_QUOTE': `${url_safe_ref}:2222`,
           },
           'ports': [],
           'build': {
@@ -159,7 +160,7 @@ describe('interpolation spec v1', () => {
     ])
 
     const public_template = await DockerCompose.generate(public_manager);
-    expect(public_template.services['concourse--web--web--7jgqa9dv']).to.be.deep.equal({
+    expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal({
       'depends_on': ['gateway'],
       'environment': {
         'VIRTUAL_HOST': 'public.localhost',
@@ -178,7 +179,7 @@ describe('interpolation spec v1', () => {
         'context': path.resolve('/stack')
       }
     })
-    expect(public_template.services['concourse--worker--worker--jpmrod9i']).to.be.deep.equal({
+    expect(public_template.services['concourse--worker--worker--latest--umjxggst']).to.be.deep.equal({
       'depends_on': [],
       'environment': {
         'REGULAR': 'public.localhost:2222',
@@ -278,7 +279,7 @@ describe('interpolation spec v1', () => {
     const template = await DockerCompose.generate(manager);
     expect(template).to.be.deep.equal({
       'services': {
-        'architect--cloud--app--chfry8ne': {
+        'architect--cloud--app--latest--kavtrukr': {
           'depends_on': [],
           'environment': {
             'AUTH0_SECRET_ID': 'worked',

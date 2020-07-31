@@ -284,7 +284,7 @@ describe('old dependencies', function () {
       ])
       const api_node = graph.getNodeByRef('architect/backend/service:latest') as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
-        'POSTGRES_HOST=architect--backend--db--yptx6au8',
+        'POSTGRES_HOST=architect--backend--db--latest--mafrzyev',
         'POSTGRES_PORT=5432',
         'POSTGRES_USER=postgres',
         'POSTGRES_PASSWORD=architect',
