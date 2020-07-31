@@ -12,15 +12,7 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  @Type(() => ServiceConfig, {
-    discriminator: {
-      property: '__version',
-      subTypes: [
-        { value: ServiceConfigV1, name: '1.0.0' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+  @Type(() => ServiceConfigV1)
   node_config!: ServiceConfig;
 
   ref!: string;
