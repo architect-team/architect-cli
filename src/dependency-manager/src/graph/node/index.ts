@@ -12,17 +12,6 @@ export abstract class DependencyNode implements DependencyNodeOptions {
   @Type(() => DependencyState)
   state?: DependencyState;
 
-  get normalized_ref() {
-    return this.ref
-      .replace(/:/g, '.')
-      .replace(/\//g, '.');
-  }
-
-  //TODO:87:consolidate with normalized_ref
-  get namespace_ref() {
-    return this.normalized_ref.replace(/\./g, '_').replace(/-/g, '_');
-  }
-
   abstract ref: string;
 
   abstract get interfaces(): Dictionary<InterfaceSpec>;

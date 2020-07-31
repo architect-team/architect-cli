@@ -8,6 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
+import { Refs } from '../../src/dependency-manager/src';
 
 describe('volumes spec v1', () => {
   beforeEach(async () => {
@@ -34,6 +35,9 @@ describe('volumes spec v1', () => {
     moxios.uninstall();
   });
 
+  const test_component_api_url_safe_ref = Refs.url_safe_ref('test/component/api:latest');
+  const test_component_app_url_safe_ref = Refs.url_safe_ref('test/component/app:latest');
+
   it('simple volume', async () => {
     const component_config = `
       name: test/component
@@ -55,7 +59,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members(['/data'])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data'])
   });
 
   it('simple debug volume', async () => {
@@ -81,7 +85,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/component/data')}:/data`])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
   it('multiple volumes and services', async () => {
@@ -125,8 +129,8 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
-    expect(template.services['test.component.app.latest'].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_app_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
   });
 
   it('override host_path for volume in env', async () => {
@@ -157,7 +161,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
   it('override host_path for debug volume in env', async () => {
@@ -190,7 +194,7 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
   it('define new volume in env', async () => {
@@ -218,6 +222,6 @@ describe('volumes spec v1', () => {
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const template = await DockerCompose.generate(manager);
-    expect(template.services['test.component.api.latest'].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
+    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 });

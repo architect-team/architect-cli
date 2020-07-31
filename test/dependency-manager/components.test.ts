@@ -8,7 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('components spec v1', function () {
   beforeEach(async () => {
@@ -78,7 +78,7 @@ describe('components spec v1', function () {
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
-          "architect.cloud.api.latest": {
+          "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -88,7 +88,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect.cloud.app.latest": {
+          "architect--cloud--app--latest--kavtrukr": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -246,19 +246,23 @@ describe('components spec v1', function () {
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
-      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq('http://architect.cloud.api.latest:8080')
+
+      const cloud_api_ref = Refs.url_safe_ref('architect/cloud/api:latest');
+      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq(`http://${cloud_api_ref}:8080`)
+
       const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq('http://architect.cloud.db.latest:5432')
+      const cloud_db_ref = Refs.url_safe_ref('architect/cloud/db:latest');
+      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${cloud_db_ref}:5432`)
 
       const template = await DockerCompose.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
-          "architect.cloud.api.latest": {
+          "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [
-              "architect.cloud.db.latest"
+              `${cloud_db_ref}`
             ],
             "environment": {
-              "DB_ADDR": "http://architect.cloud.db.latest:5432"
+              "DB_ADDR": `http://${cloud_db_ref}:5432`
             },
             "ports": [
               "50001:8080",
@@ -267,12 +271,12 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect.cloud.app.latest": {
+          "architect--cloud--app--latest--kavtrukr": {
             "depends_on": [
-              "architect.cloud.api.latest"
+              `${cloud_api_ref}`
             ],
             "environment": {
-              "API_ADDR": "http://architect.cloud.api.latest:8080"
+              "API_ADDR": `http://${cloud_api_ref}:8080`
             },
             "ports": [
               "50000:8080"
@@ -281,7 +285,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect.cloud.db.latest": {
+          "architect--cloud--db--latest--6apzjzoe": {
             "depends_on": [],
             "environment": {},
             "ports": [
@@ -373,9 +377,10 @@ describe('components spec v1', function () {
 
       // Test parameter values
       const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq('http://concourse.ci.web.6.2:8080')
+      const concourse_web_ref = Refs.url_safe_ref('concourse/ci/web:6.2');
+      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${concourse_web_ref}:8080`)
       const worker_node = graph.getNodeByRef('concourse/ci/worker:6.2') as ServiceNode;
-      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq('concourse.ci.web.6.2')
+      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(concourse_web_ref);
     });
   });
 });

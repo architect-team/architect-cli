@@ -8,7 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interfaces spec v1', () => {
   beforeEach(async () => {
@@ -89,6 +89,12 @@ describe('interfaces spec v1', () => {
       };
     });
 
+    const test_branch_url_safe_ref = Refs.url_safe_ref('test/branch/api:latest');
+    const test_leaf_db_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/db:latest');
+    const test_leaf_api_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/api:latest');
+    const test_leaf_db_v1_url_safe_ref = Refs.url_safe_ref('test/leaf/db:v1.0');
+    const test_leaf_api_v1_url_safe_ref = Refs.url_safe_ref('test/leaf/api:v1.0');
+
     it('should connect two services together', async () => {
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
@@ -114,9 +120,9 @@ describe('interfaces spec v1', () => {
       const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'DB_PROTOCOL=postgres',
-        'DB_HOST=test.leaf.db.latest',
+        `DB_HOST=${test_leaf_db_latest_url_safe_ref}`,
         'DB_PORT=5432',
-        'DB_URL=postgres://test.leaf.db.latest:5432'
+        `DB_URL=postgres://${test_leaf_db_latest_url_safe_ref}:5432`
       ])
     });
 
@@ -157,11 +163,12 @@ describe('interfaces spec v1', () => {
         'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
       ])
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=test.leaf.api.latest',
+        `LEAF_HOST=${test_leaf_api_latest_url_safe_ref}`,
         'LEAF_PORT=8080',
-        'LEAF_URL=http://test.leaf.api.latest:8080'
+        `LEAF_URL=http://${test_leaf_api_latest_url_safe_ref}:8080`
       ])
     });
 
@@ -227,16 +234,16 @@ describe('interfaces spec v1', () => {
 
       const template = await DockerCompose.generate(manager);
       expect(Object.keys(template.services)).has.members([
-        'test.branch.api.latest',
-        'test.leaf.db.latest',
-        'test.leaf.api.latest',
-        'test.leaf.db.v1.0',
-        'test.leaf.api.v1.0',
+        test_branch_url_safe_ref,
+        test_leaf_db_latest_url_safe_ref,
+        test_leaf_api_latest_url_safe_ref,
+        test_leaf_db_v1_url_safe_ref,
+        test_leaf_api_v1_url_safe_ref,
         'gateway'
       ])
 
-      expect(template.services['test.branch.api.latest']).to.be.deep.equal({
-        depends_on: ['test.leaf.api.latest'],
+      expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal({
+        depends_on: [test_leaf_api_latest_url_safe_ref],
         environment: {
           LEAF_HOST: 'public.localhost',
           LEAF_PORT: '80',
@@ -251,7 +258,7 @@ describe('interfaces spec v1', () => {
         ports: []
       });
 
-      expect(template.services['test.leaf.db.latest']).to.be.deep.equal({
+      expect(template.services[test_leaf_db_latest_url_safe_ref]).to.be.deep.equal({
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -262,13 +269,13 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.api.latest']).to.be.deep.equal({
-        depends_on: ['test.leaf.db.latest', 'gateway'],
+      expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal({
+        depends_on: [test_leaf_db_latest_url_safe_ref, 'gateway'],
         environment: {
-          DB_HOST: 'test.leaf.db.latest',
+          DB_HOST: test_leaf_db_latest_url_safe_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: 'postgres://test.leaf.db.latest:5432',
+          DB_URL: `postgres://${test_leaf_db_latest_url_safe_ref}:5432`,
           VIRTUAL_HOST: 'public.localhost',
           VIRTUAL_PORT: '8080',
           VIRTUAL_PORT_public_localhost: '8080',
@@ -283,7 +290,7 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.db.v1.0']).to.be.deep.equal({
+      expect(template.services[test_leaf_db_v1_url_safe_ref]).to.be.deep.equal({
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -294,13 +301,13 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services['test.leaf.api.v1.0']).to.be.deep.equal({
-        depends_on: ['test.leaf.db.v1.0', 'gateway'],
+      expect(template.services[test_leaf_api_v1_url_safe_ref]).to.be.deep.equal({
+        depends_on: [test_leaf_db_v1_url_safe_ref, 'gateway'],
         environment: {
-          DB_HOST: 'test.leaf.db.v1.0',
+          DB_HOST: test_leaf_db_v1_url_safe_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: 'postgres://test.leaf.db.v1.0:5432',
+          DB_URL: `postgres://${test_leaf_db_v1_url_safe_ref}:5432`,
           VIRTUAL_HOST: 'publicv1.localhost',
           VIRTUAL_PORT: '8080',
           VIRTUAL_PORT_publicv1_localhost: '8080',
@@ -363,8 +370,10 @@ describe('interfaces spec v1', () => {
       'gateway [app, admin] -> architect/cloud:latest-interfaces [app, admin]'
     ])
 
+    const architect_cloud_api_url_safe_ref = Refs.url_safe_ref('architect/cloud/api:latest');
+
     const template = await DockerCompose.generate(manager);
-    expect(template.services['architect.cloud.api.latest']).to.be.deep.equal({
+    expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal({
       "depends_on": ["gateway"],
       "environment": {
         "VIRTUAL_HOST": "app.localhost,admin.localhost",

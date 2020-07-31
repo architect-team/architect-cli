@@ -77,10 +77,10 @@ describe('old expression-interpolation', function () {
         DB_USER: '${ parameters.DB_USER }',
       },
       parameters: {
-        DB_USER: '${ dependencies.primary.parameters.DB_USER }',
+        DB_USER: '${ dependencies[\'postgres/postgres\'].parameters.DB_USER }',
       },
       dependencies: {
-        primary: 'postgres/postgres:11'
+        'postgres/postgres': '11'
       }
     };
 

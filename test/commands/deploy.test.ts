@@ -361,7 +361,7 @@ describe('deploy', function () {
     try {
       await Deploy.run([env_config_path, '-e', 'test-account/test-env::', '--auto_approve'])
     } catch (err) {
-      expect(err.message).to.equal(`Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`);
+      expect(err.message).to.equal(`Environments must be of the form <account-name>/<environment-name>`);
     }
   });
 });

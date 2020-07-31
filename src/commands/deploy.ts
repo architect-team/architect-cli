@@ -11,7 +11,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { EnvironmentNameValidator, PlatformNameValidator } from '../common/utils/validation';
+import { EnvironmentSlugUtils } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
 class EnvConfigRequiredError extends Error {
@@ -274,23 +274,15 @@ export default class Deploy extends Command {
   }
 
   validateEnvironmentNamespacedInput(value: string) {
-    const value_split = value.split('/');
-    if (value_split.length !== 2) {
-      return 'Environment name must be in the form my-account/environment-name';
-    }
-    if (!EnvironmentNameValidator.test(value_split[0]) || !EnvironmentNameValidator.test(value_split[1])) {
-      return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+    if (!EnvironmentSlugUtils.Validator.test(value)) {
+      return 'Environments ' + EnvironmentSlugUtils.Description;
     }
     return true;
   }
 
   validatePlatformNamespacedInput(value: string) {
-    const value_split = value.split('/');
-    if (value_split.length !== 2) {
-      return 'Platform name must be in the form my-account/platform-name';
-    }
-    if (!PlatformNameValidator.test(value_split[0]) || !PlatformNameValidator.test(value_split[1])) {
-      return `Each part of name must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character`;
+    if (!EnvironmentSlugUtils.Validator.test(value)) {
+      return 'Platforms ' + EnvironmentSlugUtils.Description;
     }
     return true;
   }

@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import pLimit from 'p-limit';
 import path from 'path';
-import { ServiceNode } from '../../dependency-manager/src';
+import { Refs, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
@@ -34,9 +34,10 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   // Enrich base service details
   for (const node of graph.nodes) {
     if (node.is_external) continue;
+    const url_safe_ref = Refs.url_safe_ref(node.ref);
 
     if (node instanceof GatewayNode) {
-      compose.services[node.normalized_ref] = {
+      compose.services[url_safe_ref] = {
         image: 'architectio/nginx-proxy:latest',
         restart: 'always',
         ports: [`${dependency_manager.gateway_port}:${dependency_manager.gateway_port}`],
@@ -60,29 +61,29 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
       }
-      compose.services[node.normalized_ref] = {
+      compose.services[url_safe_ref] = {
         ports,
         depends_on: [],
         environment: node.node_config.getEnvironmentVariables(),
       };
 
       if (gateway_links.length) {
-        compose.services[node.normalized_ref].links = gateway_links;
+        compose.services[url_safe_ref].links = gateway_links;
       }
 
-      if (node.node_config.getImage()) compose.services[node.normalized_ref].image = node.node_config.getImage();
+      if (node.node_config.getImage()) compose.services[url_safe_ref].image = node.node_config.getImage();
     }
 
     if (node instanceof ServiceNode) {
-      if (node.node_config.getCommand().length) compose.services[node.normalized_ref].command = node.node_config.getCommand();
-      if (node.node_config.getEntrypoint().length) compose.services[node.normalized_ref].entrypoint = node.node_config.getEntrypoint();
+      if (node.node_config.getCommand().length) compose.services[url_safe_ref].command = node.node_config.getCommand();
+      if (node.node_config.getEntrypoint().length) compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint();
 
       const platforms = node.node_config.getPlatforms();
       const docker_compose_config = platforms['docker-compose'];
       if (docker_compose_config) {
-        compose.services[node.normalized_ref] = {
+        compose.services[url_safe_ref] = {
           ...docker_compose_config,
-          ...compose.services[node.normalized_ref],
+          ...compose.services[url_safe_ref],
         };
       }
     }
@@ -101,12 +102,12 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           const compose_build: any = {};
           if (build.context) compose_build.context = path.resolve(component_path, build.context);
           if (args.length) compose_build.args = args;
-          compose.services[node.normalized_ref].build = compose_build;
+          compose.services[url_safe_ref].build = compose_build;
         }
 
         if (build.dockerfile) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          compose.services[node.normalized_ref].build!.dockerfile = build.dockerfile;
+          compose.services[url_safe_ref].build!.dockerfile = build.dockerfile;
         }
       }
 
@@ -131,13 +132,13 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         }
         volumes.push(volume);
       }
-      if (volumes.length) compose.services[node.normalized_ref].volumes = volumes;
+      if (volumes.length) compose.services[url_safe_ref].volumes = volumes;
     }
 
     // Append the dns_search value if it was provided in the environment config
     const dns_config = environment.getDnsConfig();
     if (dns_config.searches) {
-      compose.services[node.normalized_ref].dns_search = dns_config.searches;
+      compose.services[url_safe_ref].dns_search = dns_config.searches;
     }
   }
 
@@ -146,18 +147,20 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
   for (const edge of graph.edges) {
     const node_from = graph.getNodeByRef(edge.from);
     if (node_from instanceof InterfacesNode) continue;
+    const node_from_url_safe_ref = Refs.url_safe_ref(node_from.ref);
 
     for (const interface_name of Object.keys(edge.interfaces_map)) {
       const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
+      const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref);
 
       if (!(node_to instanceof ServiceNode)) continue;
       if (node_to.is_external) continue;
 
-      let depends_from = node_from.normalized_ref;
-      let depends_to = node_to.normalized_ref;
+      let depends_from = node_from_url_safe_ref;
+      let depends_to = node_to_url_safe_ref;
 
       if (edge instanceof IngressEdge) {
-        const service_to = compose.services[node_to.normalized_ref];
+        const service_to = compose.services[node_to_url_safe_ref];
         const node_to_interface = node_to.interfaces[node_to_interface_name];
         service_to.environment = service_to.environment || {};
 
@@ -174,8 +177,8 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         service_to.restart = 'always';
 
         // Flip for depends_on
-        depends_from = node_to.normalized_ref;
-        depends_to = node_from.normalized_ref;
+        depends_from = node_to_url_safe_ref;
+        depends_to = node_from_url_safe_ref;
       }
 
       if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
