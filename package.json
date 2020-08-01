@@ -22,7 +22,7 @@
     "axios": "0.19.2",
     "base64url": "^3.0.1",
     "btoa": "^1.2.1",
-    "class-transformer": "0.2.3",
+    "class-transformer": "0.3.1",
     "class-validator": "0.12.2",
     "cli-table3": "0.6.0",
     "cli-ux": "5.4.9",

@@ -18,7 +18,7 @@
   "license": "GPL-3.0",
   "dependencies": {
     "axios": "^0.19.2",
-    "class-transformer": "^0.2.3",
+    "class-transformer": "^0.3.1",
     "class-validator": "^0.12.2",
     "fs-extra": "^8.1.0",
     "js-yaml": "^3.13.1",
