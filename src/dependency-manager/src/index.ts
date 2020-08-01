@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import DependencyManager from './manager';
 
 export default DependencyManager;
