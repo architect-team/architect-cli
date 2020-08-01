@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import DependencyManager from './manager';
 
 export default DependencyManager;
@@ -12,4 +11,3 @@ export * from './service-config/base';
 export * from './service-config/builder';
 export * from './utils/refs';
 export * from './utils/slugs';
-
