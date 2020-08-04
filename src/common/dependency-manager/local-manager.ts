@@ -129,11 +129,23 @@ export default class LocalDependencyManager extends DependencyManager {
       vault.role_id = this.readIfFile(vault.role_id);
       vault.secret_id = this.readIfFile(vault.secret_id);
     }
+
     for (const component of Object.values(environment.getComponents()) as Array<ComponentConfig>) {
       for (const pv of Object.values(component.getParameters())) {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
     }
+
+    for (const [component_name, component_config] of Object.entries(component_map)) {
+      for (const [key, value] of Object.entries(component_config.getServices())) {
+        for (const [env_key, env_value] of Object.entries(value.getEnvironmentVariables())) {
+          if (env_value.startsWith('file:')) {
+            component_map[component_name].services[key].environment[env_key] = this.readIfFile(env_value);
+          }
+        }
+      }
+    }
+
     return super.interpolateEnvironment(graph, environment, component_map);
   }
 
