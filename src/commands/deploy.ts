@@ -147,7 +147,7 @@ export default class Deploy extends Command {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
     }
-    dependency_manager.environment.setParameters(extra_params);
+    dependency_manager.environment.setParameters(Object.assign({}, dependency_manager.environment.getParameters(), extra_params)); // TODO: add test?
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -199,7 +199,7 @@ export default class Deploy extends Command {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
     }
-    env_config.setParameters(extra_params);
+    env_config.setParameters(Object.assign({}, env_config.getParameters(), extra_params)); // TODO: add test?
 
     let environment_id;
     let environment_answers: any = {};
