@@ -136,13 +136,13 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
 
-    for (const [component_name, component_config] of Object.entries(component_map)) {
-      for (const [key, value] of Object.entries(component_config.getServices())) {
-        for (const [env_key, env_value] of Object.entries(value.getEnvironmentVariables())) {
-          if (env_value.startsWith('file:')) {
-            component_map[component_name].services[key].environment[env_key] = this.readIfFile(env_value);
-          }
+    for (const [component_name, component_config] of Object.entries(component_map)) { // TODO: add test
+      for (const [service_ref, service] of Object.entries(component_config.getServices())) {
+        const component_service = component_map[component_name].getServices()[service_ref];
+        for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
+          component_service?.setEnvironmentVariable(env_key, this.readIfFile(env_value));
         }
+        component_map[component_name].setService(service_ref, component_service);
       }
     }
 
