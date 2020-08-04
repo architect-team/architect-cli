@@ -57,7 +57,7 @@ export class KubernetesPlatformUtils {
       {
         type: 'input',
         name: 'service_account_name',
-        message: 'What would you like to name the service account for your environment?',
+        message: 'What would you like to name the service account for your platform?',
         default: 'architect',
       },
       {
@@ -75,7 +75,7 @@ export class KubernetesPlatformUtils {
         },
         type: 'confirm',
         name: 'use_existing_sa',
-        message: 'A service account with that name already exists. Would you like to use it for this environment?',
+        message: 'A service account with that name already exists. Would you like to use it for this platform?',
       },
     ]);
 

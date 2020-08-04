@@ -69,6 +69,7 @@ export default class Deploy extends Command {
       allowNo: true,
       exclusive: ['local', 'compose_file'],
     }),
+    // TODO: namespace
     environment: flags.string({
       char: 'e',
       description: 'Fully qualified environment name in the form my-account/environment-name',

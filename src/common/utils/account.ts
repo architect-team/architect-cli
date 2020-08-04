@@ -26,7 +26,7 @@ export class AccountUtils {
       const answers: any = await inquirer.prompt([
         {
           type: 'autocomplete',
-          name: 'account_name',
+          name: 'account',
           message: 'Select an account',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
@@ -38,7 +38,7 @@ export class AccountUtils {
       ]);
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      account = accounts.find((account) => account.name === answers.account_name)!;
+      account = accounts.find((account) => account.name === answers.account)!;
     }
     return account;
   }

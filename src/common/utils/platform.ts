@@ -33,7 +33,7 @@ export class PlatformUtils {
       const answers: any = await inquirer.prompt([
         {
           type: 'autocomplete',
-          name: 'platform_name',
+          name: 'platform',
           message: 'Select a platform',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
@@ -45,7 +45,7 @@ export class PlatformUtils {
       ]);
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      platform = platforms.find((platform) => platform.name === answers.platform_name)!;
+      platform = platforms.find((platform) => platform.name === answers.platform)!;
     }
     return platform;
   }

@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import Command from '../../base-command';
+import { AccountUtils } from '../../common/utils/account';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
 import { Slugs } from '../../dependency-manager/src';
@@ -40,13 +41,14 @@ export default class PlatformCreate extends Command {
   static description = 'Register a new platform with Architect Cloud';
 
   static args = [{
-    name: 'name',
-    description: 'Fully qualified name to give the platform (my-account/platform-name)',
+    name: 'platform',
+    description: 'Name to give the platform',
     parse: (value: string) => value.toLowerCase(),
   }];
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
     type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT_PUBLIC', 'architect_public', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
@@ -59,67 +61,40 @@ export default class PlatformCreate extends Command {
 
   async run() {
     const platform = await this.create_platform();
-    this.log(chalk.green('Platform created successfully'));
-    this.log(`${this.app.config.app_host}/${platform.account.name}/platforms/`);
+    const platform_url = `${this.app.config.app_host}/${platform.account.name}/platforms/`;
+    this.log(chalk.green(`Platform created: ${platform_url}`));
   }
 
   private async create_platform() {
     const { args, flags } = this.parse(PlatformCreate);
 
-    let selected_account: any;
-    this.accounts = await this.get_accounts();
-
-    if (args.name && args.name.split('/').length !== 2) {
-      throw new Error('Platform name must be in the form my-account/platform-name');
-    }
-
-    if (args.name) {
-      const account = args.name.split('/')[0];
-      selected_account = this.accounts.rows.find((a: any) => a.name === account);
-      if (!selected_account) {
-        throw new Error(`Account=${account} does not exist or you do not have access to it.`);
-      }
-    }
-
-    // Prompt user for required inputs
     const answers: any = await inquirer.prompt([
       {
-        type: 'list',
-        name: 'account',
-        message: 'For which Architect account would you like to create this platform?',
-        when: !args.name,
-        choices: this.accounts.rows.map((a: any) => { return { name: a.name, value: a }; }),
-        default: selected_account,
-      },
-      {
         type: 'input',
-        name: 'name',
+        name: 'platform',
         message: 'What would you like to name your new platform?',
-        when: !args.name,
+        when: !args.platform,
         filter: value => value.toLowerCase(),
         validate: value => {
           if (Slugs.ArchitectSlugValidator.test(value)) return true;
-          return Slugs.ArchitectSlugDescription;
+          return `platform ${Slugs.ArchitectSlugDescription}`;
         },
       },
     ]);
 
-    if (args.name) {
-      const [account, name] = args.name.split('/');
-      answers.account = this.accounts.rows.find((a: any) => a.name === account);
-      answers.name = name;
+    const platform_name = args.platform || answers.platform;
+    if (!Slugs.ArchitectSlugValidator.test(platform_name)) {
+      throw new Error(`platform ${Slugs.ArchitectSlugDescription}`);
     }
 
-    if (selected_account) {
-      answers.account = selected_account;
-    }
+    const account = await AccountUtils.getAccount(this.app.api, flags.account);
 
     const platform = await this.create_architect_platform(flags);
-    const platform_dto = { name: answers.name, ...platform };
+    const platform_dto = { name: platform_name, ...platform };
 
     cli.action.start('Registering platform with Architect');
     const public_platform = Object.keys(platform_dto).length === 1 && !!platform_dto.name;
-    const created_platform = await this.post_platform_to_api(platform_dto, answers.account.id, public_platform);
+    const created_platform = await this.post_platform_to_api(platform_dto, account.id, public_platform);
     cli.action.stop();
 
     return created_platform;
