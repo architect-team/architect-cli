@@ -136,17 +136,26 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
 
-    for (const [component_name, component_config] of Object.entries(component_map)) { // TODO: add test
+    return super.interpolateEnvironment(graph, environment, component_map);
+  }
+
+  loadParameterFiles(component_map: Dictionary<ComponentConfig>) {
+    for (const [component_name, component_config] of Object.entries(component_map)) {
       for (const [service_ref, service] of Object.entries(component_config.getServices())) {
         const component_service = component_map[component_name].getServices()[service_ref];
         for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
-          component_service?.setEnvironmentVariable(env_key, this.readIfFile(env_value));
+          try {
+            component_service.setEnvironmentVariable(env_key, this.readIfFile(env_value));
+          } catch(err) {
+            if (err.code === 'ENOENT') {
+              throw new Error(`Could not read contents of file ${err.path} into environment parameter ${env_key}.`);
+            }
+            throw err;
+          }
         }
         component_map[component_name].setService(service_ref, component_service);
       }
     }
-
-    return super.interpolateEnvironment(graph, environment, component_map);
   }
 
   toExternalHost() {

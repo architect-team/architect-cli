@@ -60,7 +60,7 @@ export default class ComponentRegister extends Command {
     if (flags.environment) {
       const config_path = path.resolve(untildify(flags.environment));
       dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);
-      const graph = await dependency_manager.getGraph(false);
+      const graph = await dependency_manager.getGraph(true, false);
       for (const node of graph.nodes) {
         if (node.is_local && node instanceof ServiceNode) {
           config_paths.add(node.local_path);
@@ -78,7 +78,7 @@ export default class ComponentRegister extends Command {
     }
 
     this.accounts = await this.get_accounts();
-
+console.log(config_paths);
     for (const config_path of config_paths) {
       await this.register_component(config_path, flags.tag);
     }
@@ -98,6 +98,13 @@ export default class ComponentRegister extends Command {
     }
 
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {
+      for (const [param_key, param_value] of Object.entries(service_config.environment)) {
+        if (typeof param_value === 'string' && param_value.startsWith('file:')) {
+          const file_path = untildify(param_value.slice('file:'.length));
+          const res = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8');
+          service_config.environment[param_key] = res.trim();
+        }
+      }
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
       const image = await this.push_image_if_necessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
