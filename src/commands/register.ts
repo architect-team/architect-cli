@@ -98,7 +98,7 @@ console.log(config_paths);
     }
 
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {
-      for (const [param_key, param_value] of Object.entries(service_config.environment)) {
+      for (const [param_key, param_value] of Object.entries(service_config.environment || {})) {
         if (typeof param_value === 'string' && param_value.startsWith('file:')) {
           const file_path = untildify(param_value.slice('file:'.length));
           const res = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8');
