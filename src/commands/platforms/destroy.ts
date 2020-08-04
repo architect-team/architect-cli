@@ -17,6 +17,7 @@ export default class PlatformDestroy extends Command {
     }),
   };
 
+  // TODO: remove namespace
   static args = [{
     name: 'namespaced_platform',
     description: 'Name of the platform to destroy',

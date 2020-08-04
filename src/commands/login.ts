@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import opener from 'opener';
 import Command from '../base-command';
 import PortUtil from '../common/utils/port';
-import PromptUtils from '../common/utils/prompt_utils';
+import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
 import PromptUI = require('inquirer/lib/ui/prompt');
 

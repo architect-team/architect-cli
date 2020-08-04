@@ -22,6 +22,7 @@ export default class EnvironmentDestroy extends Command {
     }),
   };
 
+  // TODO: remove namespace
   static args = [{
     name: 'namespaced_environment',
     description: 'Name of the environment to destroy',

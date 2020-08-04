@@ -1,6 +1,6 @@
 import { Hook } from '@oclif/config';
 import readline from 'readline';
-import PromptUtils from '../../common/utils/prompt_utils';
+import PromptUtils from '../../common/utils/prompt-utils';
 
 const hook: Hook<'init'> = async function (options) {
   // https://github.com/SBoudrias/Inquirer.js#know-issues

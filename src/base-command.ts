@@ -42,6 +42,7 @@ export default abstract class extends Command {
     }
   }
 
+  // TODO: Move to AccountUtils
   async get_accounts() {
     if (!this.accounts) {
       this.accounts = (await this.app.api.get('/accounts')).data;

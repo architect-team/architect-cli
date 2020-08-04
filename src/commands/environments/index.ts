@@ -2,8 +2,8 @@ import Table from 'cli-table3';
 import Command from '../../base-command';
 
 export default class Environments extends Command {
-  static aliases = ['environments', 'envs', 'env', 'environments:list', 'envs:list', 'env:list'];
-  static description = 'List environments you have access to';
+  static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search'];
+  static description = 'Search environments you have access to';
 
   static flags = {
     ...Command.flags,

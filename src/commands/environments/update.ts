@@ -12,6 +12,7 @@ export default class EnvironmentUpdate extends Command {
     description: flags.string({ char: 'd' }),
   };
 
+  // TODO: remove namespace
   static args = [{
     name: 'namespaced_environment',
     description: 'Name of the environment to update',
