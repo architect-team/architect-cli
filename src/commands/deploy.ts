@@ -13,7 +13,7 @@ import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { EnvironmentSlugUtils } from '../dependency-manager/src';
+import { EnvironmentConfig, EnvironmentSlugUtils } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
 class EnvConfigRequiredError extends Error {
@@ -87,8 +87,8 @@ export default class Deploy extends Command {
   };
 
   static args = [{
-    name: 'environment_config',
-    description: 'Path to an environment config file',
+    name: 'environment_config_or_component',
+    description: 'Path to an environment config file or component `account/component:latest`',
   }];
 
   async runCompose(compose: DockerComposeTemplate) {
@@ -126,13 +126,13 @@ export default class Deploy extends Command {
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
 
-    if (!args.environment_config) {
+    if (!args.environment_config_or_component) {
       throw new EnvConfigRequiredError();
     }
 
     const dependency_manager = await LocalDependencyManager.createFromPath(
       this.app.api,
-      path.resolve(untildify(args.environment_config)),
+      path.resolve(untildify(args.environment_config_or_component)),
       this.app.linkedServices,
     );
 
@@ -175,17 +175,31 @@ export default class Deploy extends Command {
   protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
-    if (!args.environment_config) {
+    if (!args.environment_config_or_component) {
       throw new EnvConfigRequiredError();
     }
 
-    const env_config_path = path.resolve(untildify(args.environment_config));
-    // Validate env config
-    const env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
-    for (const [ck, cv] of Object.entries(env_config.getComponents())) {
-      if (cv.getExtends()?.startsWith('file:')) {
-        this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
+    let env_config: EnvironmentConfig;
+
+    let merge: boolean;
+    if (args.environment_config_or_component.includes(':')) {
+      const [name, tag] = args.environment_config_or_component.split(':');
+      env_config = EnvironmentConfigBuilder.buildFromJSON({
+        components: {
+          [name]: tag,
+        },
+      });
+      merge = true;
+    } else {
+      const env_config_path = path.resolve(untildify(args.environment_config_or_component));
+      // Validate env config
+      env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
+      for (const [ck, cv] of Object.entries(env_config.getComponents())) {
+        if (cv.getExtends()?.startsWith('file:')) {
+          this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
+        }
       }
+      merge = false;
     }
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
@@ -200,7 +214,7 @@ export default class Deploy extends Command {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');
