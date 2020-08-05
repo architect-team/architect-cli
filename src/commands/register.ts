@@ -78,7 +78,7 @@ export default class ComponentRegister extends Command {
     }
 
     this.accounts = await this.get_accounts();
-console.log(config_paths);
+
     for (const config_path of config_paths) {
       await this.register_component(config_path, flags.tag);
     }

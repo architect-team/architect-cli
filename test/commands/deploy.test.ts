@@ -1,6 +1,7 @@
-import { expect } from '@oclif/test';
+import { expect, test } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import os from 'os';
 import path from 'path';
@@ -20,6 +21,9 @@ describe('deploy', function () {
 
   const local_env_config_path = path.resolve('./test/environment.local.json');
   const env_config_path = path.resolve('./test/environment.json');
+
+  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
+  const print = true; // TODO: set back to false
 
   beforeEach(() => {
     // Stub the logger
@@ -56,11 +60,23 @@ describe('deploy', function () {
       }
     };
 
+    const tmp_env_config = {
+      'components': {
+        'test/component': 'file:./component.yml',
+      },
+      'parameters': {
+        'TEST_PARAM': 'env test param value',
+        'ANOTHER_TEST_PARAM': 'env another test param value',
+      }
+    };
+
     sinon.replace(EnvironmentConfigBuilder, 'readFromPath', (config_path: string) => {
       if (config_path === local_env_config_path) {
-        return [JSON.stringify(local_env_config, null, 2), local_env_config]
+        return [JSON.stringify(local_env_config, null, 2), local_env_config];
       } else if (config_path === env_config_path) {
-        return [JSON.stringify(env_config, null, 2), env_config]
+        return [JSON.stringify(env_config, null, 2), env_config];
+      } else if (config_path === path.join(os.tmpdir(), '/environment.yml')) {
+        return [JSON.stringify(tmp_env_config, null, 2), tmp_env_config];
       } else {
         throw new Error('No test env config for: ' + config_path)
       }
@@ -68,6 +84,7 @@ describe('deploy', function () {
   });
 
   afterEach(() => {
+    mock_fs.restore();
     moxios.uninstall();
     sinon.restore();
   });
@@ -364,4 +381,61 @@ describe('deploy', function () {
       expect(err.message).to.equal(`Environments must be of the form <account-name>/<environment-name>`);
     }
   });
+
+  // it('Adds an extra parameter on the command line', async () => {
+    // const compose_spy = sinon.fake.resolves(null);
+    // sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
+
+    // await Deploy.run(['-l', local_env_config_path, '--parameter', '']);
+
+    // const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
+
+
+    // write env config with mock fs which includes two params
+    // write component spec with mock fs which uses those two params
+    // run local deploy command using nock?
+    // read output written to specific location within mock fs by using the -o flag on deploy command
+
+
+      test
+        .do(ctx => {
+          const component_config = `
+          name: test/component
+          parameters:
+            TEST_PARAM: component config test param value
+            ANOTHER_TEST_PARAM: component config another test param value
+          services:
+            api:
+              interfaces:
+                main: 8080
+              environment:
+                TEST_PARAM: \${ parameters.TEST_PARAM }
+                ANOTHER_TEST_PARAM: \${ parameters.ANOTHER_TEST_PARAM }
+          interfaces:
+          `;
+
+          const env_config = `
+          components:
+            test/component: file:/tmp/component.yml
+          parameters:
+            TEST_PARAM: env test param value
+            ANOTHER_TEST_PARAM: env another test param value
+          `;
+
+          fs.writeFileSync(path.join(os.tmpdir(), '/component.yml'), component_config);
+          fs.writeFileSync(path.join(os.tmpdir(), '/environment.yml'), env_config);
+
+          const compose_spy = sinon.fake.resolves(null);
+          sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
+        })
+        .finally(() => sinon.restore())
+        .stdout({ print })
+        .stderr({ print })
+        .command(['deploy', '-l', '-o', path.join(os.tmpdir(), '/compose.json'), path.join(os.tmpdir(), '/environment.yml'), '--parameter', 'ANOTHER_TEST_PARAM=value overwritten'])
+        .it('overwrites a param value via the command line input without affecting other param values', ctx => {
+          // expect(ctx.stdout).to.contain('Register a new Component with Architect Cloud\n')
+          console.log(fs.readFileSync(path.join(os.tmpdir(), '/compose.json')))
+          console.log('HERE*************************************************************************')
+        });
+  // });
 });

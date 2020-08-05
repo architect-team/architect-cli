@@ -42,7 +42,6 @@ export default abstract class DependencyManager {
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
       if (load_files) {
-        console.log('LOADING');
         this.loadParameterFiles(component_map);
       }
       if (interpolate) {
