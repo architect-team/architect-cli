@@ -19,6 +19,7 @@ class MissingConfigFileError extends Error {
 
 //TODO:213: These are temporary types while we figure out how to resolve the issue of typed raw configs
 export interface RawEnvironmentConfig {
+  interfaces?: Dictionary<any>;
   components: Dictionary<RawComponentConfig | string>;
 }
 

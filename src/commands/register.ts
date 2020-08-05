@@ -87,7 +87,7 @@ export default class ComponentRegister extends Command {
     const { raw_config } = await ComponentConfigBuilder.rawFromPath(config_path);
 
     if (!raw_config.name) {
-      throw new Error('Config must have a name');
+      throw new Error('Component Config must have a name');
     }
 
     const account_name = raw_config.name.split('/')[0];

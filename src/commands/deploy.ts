@@ -12,19 +12,85 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
-import { EnvironmentUtils } from '../common/utils/environment';
-import { EnvironmentConfig, EnvironmentSlugUtils } from '../dependency-manager/src';
+import { Environment, EnvironmentUtils } from '../common/utils/environment';
+import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
-class EnvConfigRequiredError extends Error {
-  constructor() {
-    super();
-    this.name = 'environment_config_required';
-    this.message = 'An environment configuration is required';
+export abstract class DeployCommand extends Command {
+  static flags = {
+    ...Command.flags,
+    auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
+    lock: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose_file'],
+    }),
+    force_unlock: flags.integer({
+      description: 'Be very careful with this flag. Usage: --force_unlock=<lock_id>.',
+      hidden: true,
+      exclusive: ['local', 'compose_file'],
+    }),
+    refresh: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose_file'],
+    }),
+  };
+
+  async poll(deployment_id: string, match_stage?: string) {
+    return new Promise((resolve, reject) => {
+      let poll_count = 0;
+      const poll = setInterval(async () => {
+        const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
+        if (deployment.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
+          clearInterval(poll);
+          reject(new Error('Deployment failed'));
+        }
+
+        if (match_stage) {
+          if (deployment.stage === match_stage) {
+            clearInterval(poll);
+            resolve(deployment);
+          }
+        } else if (deployment.applied_at) {
+          clearInterval(poll);
+          resolve(deployment);
+        }
+        poll_count += 1;
+      }, 10000);
+    });
+  }
+
+  async deployRemote(environment: Environment, env_config: EnvironmentConfig, merge: boolean) {
+    const { flags } = this.parse(this.constructor as typeof DeployCommand);
+
+    cli.action.start(chalk.blue('Creating deployment'));
+    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
+    cli.action.stop();
+    if (!flags.auto_approve) {
+      this.log(`Review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'deploy',
+        message: 'Would you like to apply?',
+      });
+      if (!confirmation.deploy) {
+        this.warn('Canceled deploy');
+        return;
+      }
+    }
+
+    cli.action.start(chalk.blue('Deploying'));
+    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
+    await this.poll(deployment.id);
+    cli.action.stop();
+    this.log(chalk.green(`Deployed`));
   }
 }
 
-export default class Deploy extends Command {
+export default class Deploy extends DeployCommand {
   auth_required() {
     const { flags } = this.parse(Deploy);
     return !flags.local;
@@ -33,9 +99,10 @@ export default class Deploy extends Command {
   static description = 'Create a deploy job on Architect Cloud or run stacks locally';
 
   static flags = {
-    ...Command.flags,
+    ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
+
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
@@ -55,24 +122,6 @@ export default class Deploy extends Command {
       char: 'd',
       dependsOn: ['local'],
     }),
-    auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
-    lock: flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
-      exclusive: ['local', 'compose_file'],
-    }),
-    force_unlock: flags.integer({
-      description: 'Be very careful with this flag. Usage: --force_unlock=<lock_id>.',
-      hidden: true,
-      exclusive: ['local', 'compose_file'],
-    }),
-    refresh: flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
-      exclusive: ['local', 'compose_file'],
-    }),
     build_prod: flags.boolean({
       description: 'Build without debug config',
       hidden: true,
@@ -89,6 +138,7 @@ export default class Deploy extends Command {
   static args = [{
     name: 'environment_config_or_component',
     description: 'Path to an environment config file or component `account/component:latest`',
+    required: true,
   }];
 
   async runCompose(compose: DockerComposeTemplate) {
@@ -126,10 +176,6 @@ export default class Deploy extends Command {
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
 
-    if (!args.environment_config_or_component) {
-      throw new EnvConfigRequiredError();
-    }
-
     const dependency_manager = await LocalDependencyManager.createFromPath(
       this.app.api,
       path.resolve(untildify(args.environment_config_or_component)),
@@ -148,48 +194,20 @@ export default class Deploy extends Command {
     await this.runCompose(compose);
   }
 
-  async poll(deployment_id: string, match_stage?: string) {
-    return new Promise((resolve, reject) => {
-      let poll_count = 0;
-      const poll = setInterval(async () => {
-        const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
-        if (deployment.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
-          clearInterval(poll);
-          reject(new Error('Deployment failed'));
-        }
-
-        if (match_stage) {
-          if (deployment.stage === match_stage) {
-            clearInterval(poll);
-            resolve(deployment);
-          }
-        } else if (deployment.applied_at) {
-          clearInterval(poll);
-          resolve(deployment);
-        }
-        poll_count += 1;
-      }, 10000);
-    });
-  }
-
   protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
-    if (!args.environment_config_or_component) {
-      throw new EnvConfigRequiredError();
-    }
-
     let env_config: EnvironmentConfig;
 
-    let merge: boolean;
-    if (args.environment_config_or_component.includes(':')) {
+    let env_config_merge: boolean;
+    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const [name, tag] = args.environment_config_or_component.split(':');
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
           [name]: tag,
         },
       });
-      merge = true;
+      env_config_merge = true;
     } else {
       const env_config_path = path.resolve(untildify(args.environment_config_or_component));
       // Validate env config
@@ -199,7 +217,7 @@ export default class Deploy extends Command {
           this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
         }
       }
-      merge = false;
+      env_config_merge = false;
     }
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
@@ -212,44 +230,7 @@ export default class Deploy extends Command {
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-
-    cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
-
-    if (!flags.auto_approve) {
-      await this.poll(deployment.id, 'verify');
-      cli.action.stop();
-      this.log(`Review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
-      const confirmation = await inquirer.prompt({
-        type: 'confirm',
-        name: 'deploy',
-        message: 'Would you like to apply?',
-      });
-      if (!confirmation.deploy) {
-        this.warn('Canceled deploy');
-        return;
-      }
-    }
-
-    cli.action.start(chalk.blue('Deploying'));
-    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
-    await this.poll(deployment.id);
-    cli.action.stop();
-    this.log(chalk.green(`Deployed`));
-  }
-
-  validateEnvironmentNamespacedInput(value: string) {
-    if (!EnvironmentSlugUtils.Validator.test(value)) {
-      return 'Environments ' + EnvironmentSlugUtils.Description;
-    }
-    return true;
-  }
-
-  validatePlatformNamespacedInput(value: string) {
-    if (!EnvironmentSlugUtils.Validator.test(value)) {
-      return 'Platforms ' + EnvironmentSlugUtils.Description;
-    }
-    return true;
+    await this.deployRemote(environment, env_config, env_config_merge);
   }
 
   getExtraEnvironmentVariables(parameters: string[]) {
