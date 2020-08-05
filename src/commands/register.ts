@@ -60,7 +60,7 @@ export default class ComponentRegister extends Command {
     if (flags.environment) {
       const config_path = path.resolve(untildify(flags.environment));
       dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);
-      const graph = await dependency_manager.getGraph(true, false);
+      const graph = await dependency_manager.getGraph(false);
       for (const node of graph.nodes) {
         if (node.is_local && node instanceof ServiceNode) {
           config_paths.add(node.local_path);

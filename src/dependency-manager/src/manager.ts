@@ -34,16 +34,14 @@ export default abstract class DependencyManager {
     this.gateway_port = await this.getServicePort(80);
   }
 
-  async getGraph(load_files = false, interpolate = true): Promise<DependencyGraph> {
+  async getGraph(interpolate = true): Promise<DependencyGraph> {
     const cache_key = `${serialize(this.environment)}-${interpolate}`;
     let graph = this.__graph_cache[cache_key];
     if (!graph) {
       graph = new DependencyGraph();
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
-      if (load_files) {
-        this.loadParameterFiles(component_map);
-      }
+      this.loadParameterFiles(component_map);
       if (interpolate) {
         const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
         await this.interpolateComponents(graph, interpolated_environment, component_map);

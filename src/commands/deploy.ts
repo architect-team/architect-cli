@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import cli from 'cli-ux';
+import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import os from 'os';

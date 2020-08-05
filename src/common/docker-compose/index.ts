@@ -17,7 +17,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
   const limit = pLimit(5);
   const port_promises = [];
-  const graph = await dependency_manager.getGraph(true);
+  const graph = await dependency_manager.getGraph();
   const environment = dependency_manager.environment;
 
   for (const node of graph.nodes) {

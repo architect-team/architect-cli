@@ -114,7 +114,7 @@ describe('old parameters', function () {
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
-    const graph = await manager.getGraph(true);
+    const graph = await manager.getGraph();
     const frontend_node = graph.getNodeByRef('architect/cloud/service:v1') as ServiceNode
     expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', 'A_FILE_REF_PARAM', 'HOST', 'PORT']);
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
