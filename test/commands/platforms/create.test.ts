@@ -18,10 +18,24 @@ import ARCHITECTPATHS from '../../../src/paths';
 describe('platform:create', function () {
   let tmp_dir = os.tmpdir();
 
+  const account = {
+    id: 'test-account-id',
+    name: 'test-account-name'
+  }
+
   beforeEach(() => {
     // Stub the logger
     sinon.replace(PlatformCreate.prototype, 'log', sinon.stub());
     moxios.install();
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
 
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
@@ -45,25 +59,17 @@ describe('platform:create', function () {
     // mock_fs.restore();
   });
 
-  it('Creates a new public platform when account/name arg is included', async () => {
-    moxios.stubRequest(`/accounts`, {
+  it('Creates a new public platform when name arg is included', async () => {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
-      response: {
-        count: 1,
-        rows: [{
-          id: 'test-account-id',
-          name: 'test-account-name'
-        }]
-      },
+      response: account
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/platforms/public`, {
+    moxios.stubRequest(`/accounts/${account.id}/platforms/public`, {
       status: 200,
       response: {
         id: 'test-platform-id',
-        account: {
-          name: 'test-account-name'
-        }
+        account: account
       }
     });
 
@@ -71,39 +77,27 @@ describe('platform:create', function () {
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'architect_public']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'architect_public']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
 
-  it('Creates a new public platform when account/name arg is not included', async () => {
+  it('Creates a new public platform when name arg is not included', async () => {
     const inquirerStub = sinon.stub(inquirer, 'prompt');
     inquirerStub.resolves({
-      account: {
-        name: 'test-account-name',
-        id: 'test-account-id',
-      },
-      name: 'platform-name'
+      platform: 'platform-name'
     });
 
-    moxios.stubRequest(`/accounts`, {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
-      response: {
-        count: 1,
-        rows: [{
-          id: 'test-account-id',
-          name: 'test-account-name'
-        }]
-      },
+      response: account
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/platforms/public`, {
+    moxios.stubRequest(`/accounts/${account.id}/platforms/public`, {
       status: 200,
       response: {
         id: 'test-platform-id',
-        account: {
-          name: 'test-account-name'
-        }
+        account: account
       }
     });
 
@@ -111,37 +105,29 @@ describe('platform:create', function () {
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['-t', 'architect_public']);
+    await PlatformCreate.run(['-a', 'test-account-name', '-t', 'architect_public']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
 
   it('Creates an ECS platform with input', async () => {
-    moxios.stubRequest(`/accounts`, {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
-      response: {
-        count: 1,
-        rows: [{
-          id: 'test-account-id',
-          name: 'test-account-name'
-        }]
-      },
+      response: account
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/platforms`, {
+    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
         id: 'test-platform-id',
-        account: {
-          name: 'test-account-name'
-        }
+        account: account
       }
     });
 
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
@@ -154,31 +140,23 @@ describe('platform:create', function () {
       aws_key: 'test-key'
     });
 
-    moxios.stubRequest(`/accounts`, {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
-      response: {
-        count: 1,
-        rows: [{
-          id: 'test-account-id',
-          name: 'test-account-name'
-        }]
-      },
+      response: account
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/platforms`, {
+    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
         id: 'test-platform-id',
-        account: {
-          name: 'test-account-name'
-        }
+        account: account
       }
     });
 
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'ecs']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
@@ -191,24 +169,16 @@ describe('platform:create', function () {
       use_existing_sa: true,
     });
 
-    moxios.stubRequest(`/accounts`, {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
-      response: {
-        count: 1,
-        rows: [{
-          id: 'test-account-id',
-          name: 'test-account-name'
-        }]
-      },
+      response: account
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/platforms`, {
+    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
         id: 'test-platform-id',
-        account: {
-          name: 'test-account-name'
-        }
+        account: account
       }
     });
 
@@ -217,7 +187,7 @@ describe('platform:create', function () {
     const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
     sinon.replace(KubernetesPlatformUtils, 'configure_kubernetes_platform', kubernetes_configuration_fake);
 
-    await PlatformCreate.run(['test-account-name/platform-name', '-t', 'kubernetes']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;
