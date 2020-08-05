@@ -7,6 +7,7 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
+import { AccountUtils } from '../common/utils/account';
 import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
 import { ServiceNode } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/component-config/builder';
@@ -77,8 +78,6 @@ export default class ComponentRegister extends Command {
       throw new MissingContextError();
     }
 
-    this.accounts = await this.get_accounts();
-
     for (const config_path of config_paths) {
       await this.register_component(config_path, flags.tag);
     }
@@ -87,8 +86,12 @@ export default class ComponentRegister extends Command {
   private async register_component(config_path: string, tag: string) {
     const { raw_config } = await ComponentConfigBuilder.rawFromPath(config_path);
 
+    if (!raw_config.name) {
+      throw new Error('Config must have a name');
+    }
+
     const account_name = raw_config.name.split('/')[0];
-    const selected_account = this.accounts.rows.find((a: any) => a.name === account_name);
+    const selected_account = await AccountUtils.getAccount(this.app.api, account_name).catch(() => undefined);
     if (!selected_account) {
       throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
     }

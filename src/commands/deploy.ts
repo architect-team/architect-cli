@@ -11,6 +11,8 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { AccountUtils } from '../common/utils/account';
+import { EnvironmentUtils } from '../common/utils/environment';
 import { EnvironmentSlugUtils } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 
@@ -32,6 +34,8 @@ export default class Deploy extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
+    ...EnvironmentUtils.flags,
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
@@ -67,16 +71,6 @@ export default class Deploy extends Command {
       default: true,
       hidden: true,
       allowNo: true,
-      exclusive: ['local', 'compose_file'],
-    }),
-    // TODO: remove namespace
-    environment: flags.string({
-      char: 'e',
-      description: 'Fully qualified environment name in the form my-account/environment-name',
-      exclusive: ['local', 'compose_file'],
-    }),
-    platform: flags.string({
-      description: 'Fully qualified platform name in the form my-account/platform-name',
       exclusive: ['local', 'compose_file'],
     }),
     build_prod: flags.boolean({
@@ -202,56 +196,11 @@ export default class Deploy extends Command {
     }
     env_config.setParameters(extra_params);
 
-    let environment_id;
-    let environment_answers: any = {};
-    if (!flags.environment) {
-      environment_answers = await inquirer.prompt([{
-        type: 'input',
-        name: 'environment_name',
-        message: 'What is the name of the environment would you like to deploy to?',
-        validate: this.validateEnvironmentNamespacedInput,
-      }]);
-    } else {
-      const validation_err = this.validateEnvironmentNamespacedInput(flags.environment);
-      if (typeof validation_err === 'string') { throw new Error(validation_err); }
-      environment_answers.environment_name = flags.environment;
-    }
-
-    const [account_name, environment_name] = environment_answers.environment_name.split('/');
-    const account = (await this.app.api.get(`/accounts/${account_name.toLowerCase()}`)).data;
-
-    try {
-      const { data: environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment_name.toLowerCase()}`);
-      environment_id = environment.id;
-    } catch (err) {
-      let platform_answers: any = {};
-      if (err.response.status === 404) {
-        if (!flags.platform) {
-          platform_answers = await inquirer.prompt([{
-            type: 'input',
-            name: 'platform_name',
-            message: 'What is the name of the platform would you like to create the environment on?',
-            validate: this.validatePlatformNamespacedInput,
-          }]);
-        } else {
-          const validation_err = this.validatePlatformNamespacedInput(flags.platform);
-          if (typeof validation_err === 'string') { throw new Error(validation_err); }
-          platform_answers.platform_name = flags.platform;
-        }
-      } else { throw err; }
-
-      const { data: platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform_answers.platform_name.split('/')[1]}`);
-      cli.action.start(chalk.blue('Registering environment with Architect'));
-      const { data: created_environment } = await this.app.api.post(`/accounts/${account.id}/environments`, {
-        name: environment_name,
-        platform_id: platform.id,
-      });
-      cli.action.stop();
-      environment_id = created_environment.id;
-    }
+    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment_id}/deploy`, { config: env_config });
+    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config });
 
     if (!flags.auto_approve) {
       await this.poll(deployment.id, 'verify');

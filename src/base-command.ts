@@ -41,12 +41,4 @@ export default abstract class extends Command {
       this.error(chalk.red(err.stderr || err.message || err));
     }
   }
-
-  // TODO: Move to AccountUtils
-  async get_accounts() {
-    if (!this.accounts) {
-      this.accounts = (await this.app.api.get('/accounts')).data;
-    }
-    return this.accounts;
-  }
 }

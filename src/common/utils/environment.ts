@@ -12,6 +12,7 @@ export class EnvironmentUtils {
   static flags = {
     environment: flags.string({
       description: 'Architect Environment',
+      char: 'e',
       env: 'ARCHITECT_ENVIRONMENT',
     }),
   };

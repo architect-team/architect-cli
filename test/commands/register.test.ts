@@ -18,24 +18,19 @@ describe('register', function () {
   let dockerPushStub: sinon.SinonStub;
   let dockerInspectStub: sinon.SinonStub;
 
-  const mock_accounts_response = {
-    total: 1,
-    rows: [
-      {
-        created_at: "2020-06-02T15:33:27.870Z",
-        updated_at: "2020-06-02T15:33:27.870Z",
-        deleted_at: null,
-        id: "ba440d39-97d9-43c3-9f1a-a9a69adb2a41",
-        name: "examples",
-        display_name: null,
-        description: "",
-        location: null,
-        website: null,
-        is_public: false,
-        default_user_id: null
-      }
-    ]
-  };
+  const mock_account_response = {
+    created_at: "2020-06-02T15:33:27.870Z",
+    updated_at: "2020-06-02T15:33:27.870Z",
+    deleted_at: null,
+    id: "ba440d39-97d9-43c3-9f1a-a9a69adb2a41",
+    name: "examples",
+    display_name: null,
+    description: "",
+    location: null,
+    website: null,
+    is_public: false,
+    default_user_id: null
+  }
 
   test
     .do(ctx => mockAuth())
@@ -52,8 +47,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .nock(mock_api_host, api => api
       .persist()
@@ -77,8 +72,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .nock(mock_api_host, api => api
       .persist()
@@ -102,8 +97,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .nock(mock_api_host, api => api
       .persist()
@@ -122,11 +117,8 @@ describe('register', function () {
     .do(ctx => mockAuth())
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
-      .get('/accounts')
-      .reply(200, {
-        total: 0,
-        rows: []
-      })
+      .get('/accounts/examples')
+      .reply(403)
     )
     .stdout({ print })
     .stderr({ print })
@@ -146,8 +138,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .nock(mock_api_host, api => api
       .persist()
@@ -184,8 +176,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .stdout({ print })
     .stderr({ print })
@@ -212,8 +204,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .stdout({ print })
     .stderr({ print })
@@ -241,8 +233,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .stdout({ print })
     .stderr({ print })
@@ -279,8 +271,8 @@ describe('register', function () {
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()
-      .get('/accounts')
-      .reply(200, mock_accounts_response)
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
     )
     .nock(mock_api_host, api => api
       .persist()
