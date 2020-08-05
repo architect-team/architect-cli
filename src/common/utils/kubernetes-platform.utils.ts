@@ -8,6 +8,8 @@ import path from 'path';
 import untildify from 'untildify';
 import { CreatePlatformInput } from '../../commands/platforms/create';
 
+const SERVICE_ACCOUNT_NAME = 'architect';
+
 export class KubernetesPlatformUtils {
 
   public static async configure_kubernetes_platform(
@@ -54,37 +56,22 @@ export class KubernetesPlatformUtils {
           return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
         },
       },
-      {
-        type: 'input',
-        name: 'service_account_name',
-        message: 'What would you like to name the service account for your platform?',
-        default: 'architect',
-      },
-      {
-        when: async (answers: any) => {
-          try {
-            await execa('kubectl', [
-              ...set_kubeconfig,
-              'get', 'sa', answers.service_account_name,
-              '-o', 'json',
-            ]);
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        type: 'confirm',
-        name: 'use_existing_sa',
-        message: 'A service account with that name already exists. Would you like to use it for this platform?',
-      },
     ]);
 
-    if (new_platform_answers.use_existing_sa === false) {
-      throw new Error('Please select another service account name');
+    let use_existing_sa;
+    try {
+      await execa('kubectl', [
+        ...set_kubeconfig,
+        'get', 'sa', SERVICE_ACCOUNT_NAME,
+        '-o', 'json',
+      ]);
+      use_existing_sa = true;
+    } catch {
+      use_existing_sa = false;
     }
 
     // Make sure the existing SA uses cluster-admin role binding
-    if (new_platform_answers.use_existing_sa) {
+    if (use_existing_sa) {
       const { stdout } = await execa('kubectl', [
         ...set_kubeconfig,
         'get', 'clusterrolebinding',
@@ -98,7 +85,7 @@ export class KubernetesPlatformUtils {
           rolebinding.subjects.find(
             (subject: any) =>
               subject.kind === 'ServiceAccount' &&
-              subject.name === new_platform_answers.service_account_name
+              subject.name === SERVICE_ACCOUNT_NAME
           )
       );
 
@@ -107,18 +94,18 @@ export class KubernetesPlatformUtils {
           ...set_kubeconfig,
           'create',
           'clusterrolebinding',
-          `${new_platform_answers.service_account_name}-cluster-admin`,
+          `${SERVICE_ACCOUNT_NAME}-cluster-admin`,
           '--clusterrole',
           'cluster-admin',
           '--serviceaccount',
-          `default:${new_platform_answers.service_account_name}`,
+          `default:${SERVICE_ACCOUNT_NAME}`,
         ]);
       }
     }
 
-    if (!new_platform_answers.use_existing_sa) {
+    if (!use_existing_sa) {
       cli.action.start('Creating the service account');
-      await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), new_platform_answers.service_account_name);
+      await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
       cli.action.stop();
     }
 
@@ -138,7 +125,7 @@ export class KubernetesPlatformUtils {
     // Retrieve service account token
     const saRes = await execa('kubectl', [
       ...set_kubeconfig,
-      'get', 'sa', new_platform_answers.service_account_name,
+      'get', 'sa', SERVICE_ACCOUNT_NAME,
       '-o', 'json',
     ]);
     const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;

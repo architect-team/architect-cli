@@ -70,7 +70,7 @@ export abstract class DeployCommand extends Command {
     const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
     cli.action.stop();
     if (!flags.auto_approve) {
-      this.log(`Review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
+      this.log(`Deployment ready for review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
