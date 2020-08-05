@@ -48,7 +48,7 @@ export default class EnvironmentCreate extends Command {
       throw new Error(`environment ${Slugs.ArchitectSlugDescription}`);
     }
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app.api, flags.account, 'Select an account to register the environment with');
     const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
 
     cli.action.start(chalk.blue('Registering environment with Architect'));

@@ -16,7 +16,7 @@ export class AccountUtils {
     }),
   };
 
-  static async getAccount(api: AxiosInstance, account_name?: string): Promise<Account> {
+  static async getAccount(api: AxiosInstance, account_name?: string, account_message?: string): Promise<Account> {
     let account: Account;
     if (account_name) {
       account = (await api.get(`/accounts/${account_name}`)).data;
@@ -27,7 +27,7 @@ export class AccountUtils {
         {
           type: 'autocomplete',
           name: 'account',
-          message: 'Select an account',
+          message: account_message || 'Select an account',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await api.get('/accounts', { params: { q: input, limit: 10 } });

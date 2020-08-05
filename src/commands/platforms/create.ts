@@ -87,7 +87,7 @@ export default class PlatformCreate extends Command {
       throw new Error(`platform ${Slugs.ArchitectSlugDescription}`);
     }
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app.api, flags.account, 'Select an account to register the platform with');
 
     const platform = await this.create_architect_platform(flags);
     const platform_dto = { name: platform_name, ...platform };
@@ -108,21 +108,21 @@ export default class PlatformCreate extends Command {
         name: 'platform_type',
         message: 'What type of platform would you like to register?',
         choices: [
-          'KUBERNETES',
-          'ECS',
-          'ARCHITECT_PUBLIC',
+          'kubernetes',
+          'ecs',
+          'public',
         ],
       },
     ]);
 
-    const selected_type = (flags.type || platform_type_answers.platform_type).toUpperCase();
+    const selected_type = (flags.type || platform_type_answers.platform_type).toLowerCase();
 
     switch (selected_type) {
-      case 'KUBERNETES':
+      case 'kubernetes':
         return await KubernetesPlatformUtils.configure_kubernetes_platform(flags);
-      case 'ECS':
+      case 'ecs':
         return await EcsPlatformUtils.configure_ecs_platform(flags);
-      case 'ARCHITECT_PUBLIC':
+      case 'public':
         return {};
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
