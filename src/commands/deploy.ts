@@ -15,6 +15,7 @@ import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
+import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
   static flags = {
@@ -183,12 +184,7 @@ export default class Deploy extends DeployCommand {
     );
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const param_name of Object.keys(extra_params)) {
-      if (dependency_manager.environment.getParameters()[param_name] === undefined) {
-        throw new Error(`Parameter ${param_name} not found in env config`);
-      }
-    }
-    dependency_manager.environment.setParameters(extra_params);
+    this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -221,12 +217,7 @@ export default class Deploy extends DeployCommand {
     }
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const param_name of Object.keys(extra_params)) {
-      if (env_config.getParameters()[param_name] === undefined) {
-        throw new Error(`Parameter ${param_name} not found in env config`);
-      }
-    }
-    env_config.setParameters(extra_params);
+    this.updateEnvironmentParameters(env_config, extra_params);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -249,6 +240,15 @@ export default class Deploy extends DeployCommand {
       extra_env_vars[param_split[0]] = param_split[1];
     }
     return extra_env_vars;
+  }
+
+  updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>) {
+    for (const [param_name, param_value] of Object.entries(extra_params)) {
+      if (env_config.getParameters()[param_name] === undefined) {
+        throw new Error(`Parameter ${param_name} not found in env config`);
+      }
+      env_config.setParameter(param_name, param_value);
+    }
   }
 
   async run() {
