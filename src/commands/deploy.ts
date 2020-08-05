@@ -69,7 +69,7 @@ export default class Deploy extends Command {
       allowNo: true,
       exclusive: ['local', 'compose_file'],
     }),
-    // TODO: namespace
+    // TODO: remove namespace
     environment: flags.string({
       char: 'e',
       description: 'Fully qualified environment name in the form my-account/environment-name',
@@ -271,7 +271,8 @@ export default class Deploy extends Command {
     cli.action.start(chalk.blue('Deploying'));
     await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
     await this.poll(deployment.id);
-    cli.action.stop(chalk.green(`Deployed`));
+    cli.action.stop();
+    this.log(chalk.green(`Deployed`));
   }
 
   validateEnvironmentNamespacedInput(value: string) {

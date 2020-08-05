@@ -110,7 +110,8 @@ export default class ComponentRegister extends Command {
 
     cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
-    cli.action.stop(chalk.green(`Successfully registered component`));
+    cli.action.stop();
+    this.log(chalk.green(`Successfully registered component`));
   }
 
   private async push_image_if_necessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
@@ -154,7 +155,8 @@ export default class ComponentRegister extends Command {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
     }
-    cli.action.stop(chalk.green(`Successfully pushed Docker image for ${image}`));
+    cli.action.stop();
+    this.log(chalk.green(`Successfully pushed Docker image for ${image}`));
   }
 
   private async get_digest(image: string) {
@@ -163,7 +165,8 @@ export default class ComponentRegister extends Command {
       cli.action.stop(chalk.red(`Inspect failed`));
       throw new Error(err);
     });
-    cli.action.stop(chalk.green(`Image verified`));
+    cli.action.stop();
+    this.log(chalk.green(`Image verified`));
     return digest;
   }
 }

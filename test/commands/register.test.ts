@@ -64,7 +64,7 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
     .it('it reports to the user that the component was registered successfully', ctx => {
-      expect(ctx.stderr).to.contain('Successfully registered component');
+      expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   test
@@ -94,7 +94,7 @@ describe('register', function () {
       expect(dockerInspectStub.notCalled).to.be.true;
 
       expect(ctx.stderr).to.contain('Registering component examples/hello-world:1.0.0 with Architect Cloud');
-      expect(ctx.stderr).to.contain('Successfully registered component');
+      expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   test
@@ -115,7 +115,7 @@ describe('register', function () {
     .command(['register', '-c', 'examples/hello-world/architect.yml'])
     .it('it defaults the tag to latest if not supplied', ctx => {
       expect(ctx.stderr).to.contain('Registering component examples/hello-world:latest with Architect Cloud');
-      expect(ctx.stderr).to.contain('Successfully registered component');
+      expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   test
@@ -165,13 +165,13 @@ describe('register', function () {
       expect(dockerInspectStub.calledOnce).to.be.true;
 
       expect(ctx.stderr).to.contain('Pushing Docker image for repostory/account/some-image:1.0.0');
-      expect(ctx.stderr).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
+      expect(ctx.stdout).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
 
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
-      expect(ctx.stderr).to.contain('Image verified');
+      expect(ctx.stdout).to.contain('Image verified');
 
       expect(ctx.stderr).to.contain('Registering component examples/database-seeding:1.0.0 with Architect Cloud');
-      expect(ctx.stderr).to.contain('Successfully registered component');
+      expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
   test
@@ -297,7 +297,7 @@ describe('register', function () {
       expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
       expect(dockerInspectStub.calledOnce).to.be.true;
 
-      expect(ctx.stderr).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
+      expect(ctx.stdout).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
 
       expect(ctx.stderr).to.contain('Registering component examples/stateless-component:1.0.0 with Architect Cloud');

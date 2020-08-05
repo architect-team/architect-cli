@@ -26,7 +26,7 @@ export class PlatformUtils {
       // inquirer-autocomplete-prompt doesn't catch exceptions in source...
       const { data } = await api.get(`/accounts/${account.id}/platforms`, { params: { limit: 1 } });
       if (!data.total) {
-        throw new Error(`No platform selected. Run 'architect platform:create -a ${account.name}'.`);
+        throw new Error(`No configured platforms. Run 'architect platform:create -a ${account.name}'.`);
       }
 
       let platforms: Platform[] = [];

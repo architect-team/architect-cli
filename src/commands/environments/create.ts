@@ -61,6 +61,7 @@ export default class EnvironmentCreate extends Command {
     await this.app.api.post(`/accounts/${account.id}/environments`, dto);
 
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-    cli.action.stop(chalk.green(`\nEnvironment created: ${environment_url}`));
+    cli.action.stop();
+    this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }
