@@ -1,7 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import cli from 'cli-ux';
-import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import os from 'os';
@@ -147,7 +146,7 @@ export default class Deploy extends Command {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
     }
-    dependency_manager.environment.setParameters(Object.assign({}, dependency_manager.environment.getParameters(), extra_params)); // TODO: add test?
+    dependency_manager.environment.setParameters(Object.assign({}, dependency_manager.environment.getParameters(), extra_params));
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -199,7 +198,7 @@ export default class Deploy extends Command {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
     }
-    env_config.setParameters(Object.assign({}, env_config.getParameters(), extra_params)); // TODO: add test?
+    env_config.setParameters(Object.assign({}, env_config.getParameters(), extra_params));
 
     let environment_id;
     let environment_answers: any = {};
