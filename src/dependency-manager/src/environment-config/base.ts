@@ -24,6 +24,8 @@ export abstract class EnvironmentConfig extends ConfigSpec {
   abstract setParameter(key: string, value: ParameterValueSpec): void;
 
   abstract getVaults(): Dictionary<EnvironmentVault>;
+  abstract setVaults(value: Dictionary<EnvironmentVault>): void;
+  abstract setVault(key: string, value: EnvironmentVault): void;
 
   abstract getComponents(): Dictionary<ComponentConfig>;
   abstract setComponents(value: Dictionary<ComponentConfig | string>): void;

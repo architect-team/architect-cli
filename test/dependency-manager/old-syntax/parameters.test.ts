@@ -48,6 +48,10 @@ describe('old parameters', function () {
         SOME_BOOLEAN_PARAM: {
           description: "A boolean param that should end up as a string",
           default: false,
+        },
+        A_FILE_REF_PARAM: {
+          description: 'A parameter as a file reference where the contents of the file should be read',
+          value: 'file:./file-ref-param-file.txt',
         }
       },
       datastores: {
@@ -106,13 +110,15 @@ describe('old parameters', function () {
     mock_fs({
       '/stack/src/cloud/architect.json': JSON.stringify(frontend_config),
       '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/file-ref-param-file.txt': 'some text read from a file into a param',
     });
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
     const graph = await manager.getGraph();
     const frontend_node = graph.getNodeByRef('architect/cloud/service:v1') as ServiceNode
-    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', 'HOST', 'PORT']);
+    expect(Object.keys(frontend_node.node_config.getEnvironmentVariables())).members(['DB_USER', 'lower_dep_ADMIN_PORT', 'SOME_BOOLEAN_PARAM', 'A_FILE_REF_PARAM', 'HOST', 'PORT']);
     expect(frontend_node.node_config.getEnvironmentVariables()['SOME_BOOLEAN_PARAM']).eq('false');
+    expect(frontend_node.node_config.getEnvironmentVariables()['A_FILE_REF_PARAM']).eq('some text read from a file into a param');
     expect(frontend_node.node_config.getEnvironmentVariables()['DB_USER']).eq('root');
     expect(frontend_node.node_config.getEnvironmentVariables()['lower_dep_ADMIN_PORT']).eq('8081');
   });

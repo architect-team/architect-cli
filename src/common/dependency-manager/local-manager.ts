@@ -80,12 +80,6 @@ export default class LocalDependencyManager extends DependencyManager {
       });
 
       const config = ComponentConfigBuilder.buildFromJSONCompat(component_version.config);
-      /*
-      if (!config.getImage()) {
-        config.setImage(component_version.service.url.replace(/(^\w+:|^)\/\//, ''));
-        config.setDigest(component_version.digest);
-      }
-      */
       return config;
     } else {
       return ComponentConfigBuilder.buildFromJSON(initial_config);
@@ -124,17 +118,41 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     // Only include in cli since it will read files off disk
-    for (const vault of Object.values(environment.getVaults())) {
+    for (const [vault_name, vault] of Object.entries(environment.getVaults())) {
       vault.client_token = this.readIfFile(vault.client_token);
       vault.role_id = this.readIfFile(vault.role_id);
       vault.secret_id = this.readIfFile(vault.secret_id);
+      environment.setVault(vault_name, vault);
     }
-    for (const component of Object.values(environment.getComponents()) as Array<ComponentConfig>) {
+
+    for (const [component_name, component] of Object.entries(environment.getComponents())) {
       for (const pv of Object.values(component.getParameters())) {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
       }
+      environment.setComponent(component_name, component);
     }
+
     return super.interpolateEnvironment(graph, environment, component_map);
+  }
+
+  interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
+    for (const [component_name, component_config] of Object.entries(component_map)) {
+      for (const [service_ref, service] of Object.entries(component_config.getServices())) {
+        const component_service = component_map[component_name].getServices()[service_ref];
+        for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
+          try {
+            component_service.setEnvironmentVariable(env_key, this.readIfFile(env_value));
+          } catch (err) {
+            if (err.code === 'ENOENT') {
+              throw new Error(`Could not read contents of file ${err.path} into environment parameter ${env_key}.`);
+            }
+            throw err;
+          }
+        }
+        component_map[component_name].setService(service_ref, component_service);
+      }
+    }
+    return super.interpolateComponents(graph, interpolated_environment, component_map);
   }
 
   toExternalHost() {

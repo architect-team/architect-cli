@@ -101,6 +101,13 @@ export default class ComponentRegister extends Command {
     }
 
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {
+      for (const [param_key, param_value] of Object.entries(service_config.environment || {})) {
+        if (typeof param_value === 'string' && param_value.startsWith('file:')) {
+          const file_path = untildify(param_value.slice('file:'.length));
+          const res = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8');
+          service_config.environment[param_key] = res.trim();
+        }
+      }
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
       const image = await this.push_image_if_necessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;

@@ -77,9 +77,9 @@ describe('deploy', function () {
 
     sinon.replace(EnvironmentConfigBuilder, 'readFromPath', (config_path: string) => {
       if (config_path === local_env_config_path) {
-        return [JSON.stringify(local_env_config, null, 2), local_env_config]
+        return [JSON.stringify(local_env_config, null, 2), local_env_config];
       } else if (config_path === env_config_path) {
-        return [JSON.stringify(env_config, null, 2), env_config]
+        return [JSON.stringify(env_config, null, 2), env_config];
       } else {
         throw new Error('No test env config for: ' + config_path)
       }
