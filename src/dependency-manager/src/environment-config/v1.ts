@@ -103,6 +103,17 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     return this.vaults || {};
   }
 
+  setVaults(value: Dictionary<EnvironmentVault>) {
+    this.vaults = value;
+  }
+
+  setVault(key: string, value: EnvironmentVault) {
+    if (!this.vaults) {
+      this.vaults = {};
+    }
+    this.vaults[key] = value;
+  }
+
   getInterfaces() {
     return transformInterfaces(this.interfaces) || {};
   }
