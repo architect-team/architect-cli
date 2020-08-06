@@ -135,7 +135,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return super.interpolateEnvironment(graph, environment, component_map);
   }
 
-  loadParameterFiles(component_map: Dictionary<ComponentConfig>) {
+  interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     for (const [component_name, component_config] of Object.entries(component_map)) {
       for (const [service_ref, service] of Object.entries(component_config.getServices())) {
         const component_service = component_map[component_name].getServices()[service_ref];
@@ -152,6 +152,7 @@ export default class LocalDependencyManager extends DependencyManager {
         component_map[component_name].setService(service_ref, component_service);
       }
     }
+    return super.interpolateComponents(graph, interpolated_environment, component_map);
   }
 
   toExternalHost() {

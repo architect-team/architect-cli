@@ -41,7 +41,6 @@ export default abstract class DependencyManager {
       graph = new DependencyGraph();
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
-      this.loadParameterFiles(component_map);
       if (interpolate) {
         const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
         await this.interpolateComponents(graph, interpolated_environment, component_map);
@@ -49,10 +48,6 @@ export default abstract class DependencyManager {
       this.__graph_cache[cache_key] = graph;
     }
     return graph;
-  }
-
-  loadParameterFiles(component_map: Dictionary<ComponentConfig>) {
-    return;
   }
 
   // Add edges between gateway and component interfaces nodes
