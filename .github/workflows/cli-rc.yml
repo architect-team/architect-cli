@@ -39,6 +39,7 @@ jobs:
         with:
           submodules: recursive
       - name: Get npm cache directory
+        if: runner.os != 'Windows'
         id: npm-cache
         run: |
           echo "::set-output name=dir::$(npm config get cache)"
