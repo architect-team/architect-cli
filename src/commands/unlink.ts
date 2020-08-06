@@ -13,7 +13,6 @@ export default class Unlink extends Command {
   static flags = {
     ...Command.flags,
     all: flags.boolean({
-      char: 'a',
       description: 'Unlink all services registered locally',
     }),
   };
@@ -27,7 +26,7 @@ export default class Unlink extends Command {
   }];
 
   async run() {
-    const {args, flags} = this.parse(Unlink);
+    const { args, flags } = this.parse(Unlink);
 
     if (flags.all) {
       this.app.unlinkAllServices();

@@ -1,7 +1,7 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "0.5.2",
+  "version": "0.5.3-rc.1",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
@@ -30,6 +30,7 @@
     "execa": "4.0.3",
     "fs-extra": "9.0.1",
     "inquirer": "7.3.3",
+    "inquirer-autocomplete-prompt": "^1.0.2",
     "is-ci": "^2.0.0",
     "is-windows": "^1.0.2",
     "js-yaml": "3.14.0",

@@ -22,7 +22,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.5.2 linux-x64 node-v12.18.3
+@architect-io/cli/0.5.3-rc.1 linux-x64 node-v12.18.3
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -43,18 +43,18 @@ by running npm install with the `--unsafe` flag._
 * [`architect config:get OPTION`](#architect-configget-option)
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
-* [`architect deploy [ENVIRONMENT_CONFIG]`](#architect-deploy-environment_config)
+* [`architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`](#architect-deploy-environment_config_or_component)
+* [`architect destroy`](#architect-destroy)
 * [`architect environments [QUERY]`](#architect-environments-query)
-* [`architect environments:clear`](#architect-environmentsclear)
-* [`architect environments:destroy NAMESPACED_ENVIRONMENT`](#architect-environmentsdestroy-namespaced_environment)
-* [`architect environments:update NAMESPACED_ENVIRONMENT`](#architect-environmentsupdate-namespaced_environment)
+* [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
+* [`architect environments:destroy [ENVIRONMENT]`](#architect-environmentsdestroy-environment)
 * [`architect help [COMMAND]`](#architect-help-command)
 * [`architect link [SERVICEPATH]`](#architect-link-servicepath)
 * [`architect login`](#architect-login)
 * [`architect logout`](#architect-logout)
 * [`architect platforms [QUERY]`](#architect-platforms-query)
-* [`architect platforms:create [NAME]`](#architect-platformscreate-name)
-* [`architect platforms:destroy NAMESPACED_PLATFORM`](#architect-platformsdestroy-namespaced_platform)
+* [`architect platforms:create [PLATFORM]`](#architect-platformscreate-platform)
+* [`architect platforms:destroy [PLATFORM]`](#architect-platformsdestroy-platform)
 * [`architect register [COMPONENT]`](#architect-register-component)
 * [`architect unlink [SERVICEPATHORNAME]`](#architect-unlink-servicepathorname)
 * [`architect whoami`](#architect-whoami)
@@ -74,7 +74,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -92,7 +92,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -109,40 +109,57 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/config/view.ts)_
 
-## `architect deploy [ENVIRONMENT_CONFIG]`
+## `architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`
 
 Create a deploy job on Architect Cloud or run stacks locally
 
 ```
 USAGE
-  $ architect deploy [ENVIRONMENT_CONFIG]
+  $ architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT
 
 ARGUMENTS
-  ENVIRONMENT_CONFIG  Path to an environment config file
+  ENVIRONMENT_CONFIG_OR_COMPONENT  Path to an environment config file or component `account/component:latest`
 
 OPTIONS
+  -a, --account=account            Architect Account
   -d, --detached                   Run in detached mode
-  -e, --environment=environment    Fully qualified environment name in the form my-account/environment-name
+  -e, --environment=environment    Architect Environment
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1596325761604.json] Path where the compose file
+  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1596663608318.json] Path where the compose file
                                    should be written to
 
   -p, --parameter=parameter        [default: ] Component parameters
 
   --auto_approve
-
-  --platform=platform              Fully qualified platform name in the form my-account/platform-name
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/deploy.ts)_
+
+## `architect destroy`
+
+Destroy components from an environment
+
+```
+USAGE
+  $ architect destroy
+
+OPTIONS
+  -a, --account=account          Architect Account
+  -c, --components=components    Component(s) to destroy
+  -e, --environment=environment  Architect Environment
+  -h, --help                     show CLI help
+  --auto_approve
+```
+
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
-List environments you have access to
+Search environments you have access to
 
 ```
 USAGE
@@ -158,58 +175,54 @@ ALIASES
   $ architect environments
   $ architect envs
   $ architect env
-  $ architect environments:list
-  $ architect envs:list
-  $ architect env:list
+  $ architect environments:search
+  $ architect envs:search
+  $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/environments/index.ts)_
 
-## `architect environments:clear`
+## `architect environments:create [ENVIRONMENT]`
 
-Clear services from an environment
+Register a new environment with Architect Cloud
 
 ```
 USAGE
-  $ architect environments:clear
+  $ architect environments:create [ENVIRONMENT]
+
+ARGUMENTS
+  ENVIRONMENT  Name to give the environment
 
 OPTIONS
-  -d, --detached                   Run in detached mode
-  -e, --environment=environment    Fully qualified environment name in the form my-account/environment-name
-  -h, --help                       show CLI help
-  -l, --local                      Deploy the stack locally instead of via Architect Cloud
-
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1596325761604.json] Path where the compose file
-                                   should be written to
-
-  -p, --parameter=parameter        [default: ] Component parameters
-
-  --auto_approve
-
-  --platform=platform              Fully qualified platform name in the form my-account/platform-name
+  -a, --account=account      Architect Account
+  -h, --help                 show CLI help
+  --description=description  Environment Description
+  --platform=platform        Architect Platform
 
 ALIASES
-  $ architect environment:clear
-  $ architect env:clear
+  $ architect environment:create
+  $ architect envs:create
+  $ architect env:create
 ```
 
-_See code: [src/commands/environments/clear.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/environments/clear.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/environments/create.ts)_
 
-## `architect environments:destroy NAMESPACED_ENVIRONMENT`
+## `architect environments:destroy [ENVIRONMENT]`
 
 Destroy an environment
 
 ```
 USAGE
-  $ architect environments:destroy NAMESPACED_ENVIRONMENT
+  $ architect environments:destroy [ENVIRONMENT]
 
 ARGUMENTS
-  NAMESPACED_ENVIRONMENT  Name of the environment to destroy
+  ENVIRONMENT  Name of the environment to destroy
 
 OPTIONS
-  -a, --auto_approve  Automatically apply the changes without reviewing the diff
-  -f, --force         Force the deletion even if the environment is not empty
-  -h, --help          show CLI help
+  -a, --account=account  Architect Account
+  -f, --force            Force the deletion even if the environment is not empty
+  -h, --help             show CLI help
+  --auto_approve         Automatically apply the changes
 
 ALIASES
   $ architect environment:destroy
@@ -217,30 +230,7 @@ ALIASES
   $ architect env:destroy
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/environments/destroy.ts)_
-
-## `architect environments:update NAMESPACED_ENVIRONMENT`
-
-Update an environments configuration
-
-```
-USAGE
-  $ architect environments:update NAMESPACED_ENVIRONMENT
-
-ARGUMENTS
-  NAMESPACED_ENVIRONMENT  Name of the environment to update
-
-OPTIONS
-  -d, --description=description
-  -h, --help                     show CLI help
-
-ALIASES
-  $ architect environment:update
-  $ architect envs:update
-  $ architect env:update
-```
-
-_See code: [src/commands/environments/update.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/environments/update.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -271,7 +261,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -287,7 +277,7 @@ OPTIONS
   -u, --username=username  Username
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -301,7 +291,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -324,20 +314,21 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/platforms/index.ts)_
 
-## `architect platforms:create [NAME]`
+## `architect platforms:create [PLATFORM]`
 
 Register a new platform with Architect Cloud
 
 ```
 USAGE
-  $ architect platforms:create [NAME]
+  $ architect platforms:create [PLATFORM]
 
 ARGUMENTS
-  NAME  Fully qualified name to give the platform (my-account/platform-name)
+  PLATFORM  Name to give the platform
 
 OPTIONS
+  -a, --account=account                                                       Architect Account
   -h, --help                                                                  show CLI help
   -h, --host=host
   -k, --kubeconfig=kubeconfig                                                 [default: ~/.kube/config]
@@ -353,28 +344,30 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/platforms/create.ts)_
 
-## `architect platforms:destroy NAMESPACED_PLATFORM`
+## `architect platforms:destroy [PLATFORM]`
 
 Destroy a platform
 
 ```
 USAGE
-  $ architect platforms:destroy NAMESPACED_PLATFORM
+  $ architect platforms:destroy [PLATFORM]
 
 ARGUMENTS
-  NAMESPACED_PLATFORM  Name of the platform to destroy
+  PLATFORM  Name of the platform to destroy
 
 OPTIONS
-  -a, --auto_approve  Automatically apply the changes without reviewing the diff
-  -h, --help          show CLI help
+  -a, --account=account  Architect Account
+  -h, --help             show CLI help
+  --auto_approve         Automatically apply the changes
 
 ALIASES
   $ architect platform:destroy
+  $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -398,7 +391,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/register.ts)_
 
 ## `architect unlink [SERVICEPATHORNAME]`
 
@@ -409,11 +402,11 @@ USAGE
   $ architect unlink [SERVICEPATHORNAME]
 
 OPTIONS
-  -a, --all   Unlink all services registered locally
   -h, --help  show CLI help
+  --all       Unlink all services registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/unlink.ts)_
 
 ## `architect whoami`
 
@@ -430,5 +423,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.5.2/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.5.3-rc.1/src/commands/whoami.ts)_
 <!-- commandsstop -->

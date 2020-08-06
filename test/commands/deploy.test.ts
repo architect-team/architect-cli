@@ -1,6 +1,5 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
-import inquirer from 'inquirer';
 import moxios from 'moxios';
 import os from 'os';
 import path from 'path';
@@ -11,9 +10,20 @@ import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
 import Link from '../../src/commands/link';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
+import { AccountUtils } from '../../src/common/utils/account';
 import PortUtil from '../../src/common/utils/port';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import ARCHITECTPATHS from '../../src/paths';
+
+const account = {
+  id: 'test-account-id',
+  name: 'test-account'
+}
+
+const environment = {
+  id: 'test-env-id',
+  name: 'test-env'
+}
 
 describe('deploy', function () {
   let tmp_dir = os.tmpdir();
@@ -25,6 +35,15 @@ describe('deploy', function () {
     // Stub the logger
     sinon.replace(Deploy.prototype, 'log', sinon.stub());
     moxios.install();
+
+    moxios.wait(function () {
+      let request = moxios.requests.mostRecent()
+      if (request) {
+        request.respondWith({
+          status: 404,
+        })
+      }
+    })
 
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
@@ -128,22 +147,22 @@ describe('deploy', function () {
     }
   });
 
-  it('Creates a remote deployment when env exists with env and platform flags', async () => {
-    moxios.stubRequest(`/accounts/test-account`, {
+  it('Creates a remote deployment when env exists with env and account flags', async () => {
+    moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
       response: {
-        id: 'test-account-id'
+        id: account.id
       },
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
+    moxios.stubRequest(`/accounts/${account.id}/environments/${environment.name}`, {
       status: 200,
       response: {
-        id: 'test-env-id'
+        id: environment.id
       },
     });
 
-    moxios.stubRequest(`/environments/test-env-id/deploy`, {
+    moxios.stubRequest(`/environments/${environment.id}/deploy`, {
       status: 200,
       response: {
         id: 'test-deployment-id'
@@ -157,80 +176,19 @@ describe('deploy', function () {
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
-    const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
-    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
-
-    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--platform', 'test-account/test-platform', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', environment.name, '-a', account.name, '--auto_approve']);
     expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(1);
-  });
-
-  it('Creates a deployment and an environment to deploy to when an env does not exist with env and platform flags', async () => {
-    moxios.stubRequest(`/accounts/test-account`, {
-      status: 200,
-      response: {
-        id: 'test-account-id'
-      },
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
-      status: 404,
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/platforms/test-platform`, {
-      status: 200,
-      response: {
-        id: 'test-platform-id'
-      }
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/environments`, {
-      status: 200,
-      response: {
-        id: 'test-env-id'
-      }
-    });
-
-    moxios.stubRequest(`/environments/test-env-id/deploy`, {
-      status: 200,
-      response: {
-        id: 'test-deployment-id'
-      }
-    });
-
-    moxios.stubRequest(/\/deploy\/test-deployment-id.*/, {
-      status: 200,
-    });
-
-    const poll_spy = sinon.fake.returns({});
-    sinon.replace(Deploy.prototype, 'poll', poll_spy);
-
-    const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
-    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
-
-    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--platform', 'test-account/test-platform', '--auto_approve']);
-    expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(2);
   });
 
   it('Creates a deployment when env exists with only env flag', async () => {
-    moxios.stubRequest(`/accounts/test-account`, {
+    moxios.stubRequest(`/accounts/${account.id}/environments/${environment.name}`, {
       status: 200,
       response: {
-        id: 'test-account-id'
+        id: environment.id
       },
     });
 
-    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
-      status: 200,
-      response: {
-        id: 'test-env-id'
-      },
-    });
-
-    moxios.stubRequest(`/environments/test-env-id/deploy`, {
+    moxios.stubRequest(`/environments/${environment.id}/deploy`, {
       status: 200,
       response: {
         id: 'test-deployment-id'
@@ -241,127 +199,12 @@ describe('deploy', function () {
       status: 200,
     });
 
-    const poll_spy = sinon.fake.returns({});
-    sinon.replace(Deploy.prototype, 'poll', poll_spy);
-
-    const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
-    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
-
-    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
-    expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(1);
-  });
-
-  it('Creates a deployment and an environment to deploy to when an env does not exist with only env flag', async () => {
-    moxios.stubRequest(`/accounts/test-account`, {
-      status: 200,
-      response: {
-        id: 'test-account-id'
-      },
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
-      status: 404,
-    });
-
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      platform_name: 'test-account/test-platform'
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/platforms/test-platform`, {
-      status: 200,
-      response: {
-        id: 'test-platform-id'
-      }
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/environments`, {
-      status: 200,
-      response: {
-        id: 'test-env-id'
-      }
-    });
-
-    moxios.stubRequest(`/environments/test-env-id/deploy`, {
-      status: 200,
-      response: {
-        id: 'test-deployment-id'
-      }
-    });
-
-    moxios.stubRequest(/\/deploy\/test-deployment-id.*/, {
-      status: 200,
-    });
+    sinon.replace(AccountUtils, 'getAccount', async () => account)
 
     const poll_spy = sinon.fake.returns({});
     sinon.replace(Deploy.prototype, 'poll', poll_spy);
 
-    const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
-    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
-
-    await Deploy.run([env_config_path, '-e', 'test-account/test-env', '--auto_approve']);
+    await Deploy.run([env_config_path, '-e', environment.name, '--auto_approve']);
     expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(1);
-  });
-
-  it('Creates a deployment and finds the env to use when only the platform flag is used', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      environment_name: 'test-account/test-env'
-    });
-
-    moxios.stubRequest(`/accounts/test-account`, {
-      status: 200,
-      response: {
-        id: 'test-account-id'
-      },
-    });
-
-    moxios.stubRequest(`/accounts/test-account-id/environments/test-env`, {
-      status: 200,
-      response: {
-        id: 'test-env-id'
-      },
-    });
-
-    moxios.stubRequest(`/environments/test-env-id/deploy`, {
-      status: 200,
-      response: {
-        id: 'test-deployment-id'
-      }
-    });
-
-    moxios.stubRequest(/\/deploy\/test-deployment-id.*/, {
-      status: 200,
-    });
-
-    const poll_spy = sinon.fake.returns({});
-    sinon.replace(Deploy.prototype, 'poll', poll_spy);
-
-    const validation_spy = sinon.fake.returns(true);
-    sinon.replace(Deploy.prototype, 'validateEnvironmentNamespacedInput', validation_spy);
-    sinon.replace(Deploy.prototype, 'validatePlatformNamespacedInput', validation_spy);
-
-    await Deploy.run([env_config_path, '--platform', 'test-account/test-platform', '--auto_approve']);
-    expect(poll_spy.calledOnce).true;
-    expect(validation_spy.callCount).equals(0);
-  });
-
-  it('Bad environment account/name input throws an error explaining proper formatting', async () => {
-    moxios.stubRequest(`/accounts/test-account`, {
-      status: 200,
-      response: {
-        id: 'test-account-id'
-      },
-    });
-
-    try {
-      await Deploy.run([env_config_path, '-e', 'test-account/test-env::', '--auto_approve'])
-    } catch (err) {
-      expect(err.message).to.equal(`Environments must be of the form <account-name>/<environment-name>`);
-    }
   });
 });

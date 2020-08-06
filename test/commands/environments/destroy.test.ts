@@ -1,4 +1,3 @@
-import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import moxios from 'moxios';
 import os from 'os';
@@ -37,15 +36,6 @@ describe('environment:destroy', () => {
 
     // Remove the registry_host stub
     fs.removeSync(path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME));
-  });
-
-  it('should require an environment name', async () => {
-    try {
-      await EnvironmentDestroy.run([]);
-      expect(true, 'no error thrown').to.equal(false);
-    } catch (err) {
-      expect(err.message).to.equal('Missing 1 required arg:\nnamespaced_environment  Name of the environment to destroy\nSee more help with --help');
-    }
   });
 
   // TODO: determine why moxios doesn't seem to intercept DELETE requests
