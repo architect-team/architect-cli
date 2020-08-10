@@ -183,18 +183,31 @@ export default class Deploy extends DeployCommand {
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
 
-    const dependency_manager = await LocalDependencyManager.createFromPath(
-      this.app.api,
-      path.resolve(untildify(args.environment_config_or_component)),
-      this.app.linkedServices,
-    );
+    let dependency_manager;
+    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
+      const [component_name, tag] = args.environment_config_or_component.split(':');
+      const env_config = EnvironmentConfigBuilder.buildFromJSON({
+        components: {
+          [component_name]: tag,
+        },
+      });
+
+      dependency_manager = await LocalDependencyManager.create(this.app.api);
+      dependency_manager.environment = env_config;
+
+      const extra_interfaces = this.getExtraInterfaces(flags.interface); // TODO: should we add interfaces for an env config? if so, what component are we targeting?
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
+    } else {
+      dependency_manager = await LocalDependencyManager.createFromPath(
+        this.app.api,
+        path.resolve(untildify(args.environment_config_or_component)),
+        this.app.linkedServices,
+      );
+      // TODO: interfaces for env config?
+    }
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
-
-    // const extra_interfaces = this.getExtraInterfaces(flags.interface);
-    // console.log(extra_interfaces);
-    // console.log(dependency_manager.environment);
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
