@@ -134,6 +134,12 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    interface: flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+    }),
   };
 
   static args = [{
@@ -186,6 +192,10 @@ export default class Deploy extends DeployCommand {
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
 
+    // const extra_interfaces = this.getExtraInterfaces(flags.interface);
+    // console.log(extra_interfaces);
+    // console.log(dependency_manager.environment);
+
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
@@ -197,12 +207,16 @@ export default class Deploy extends DeployCommand {
 
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const [name, tag] = args.environment_config_or_component.split(':');
-      env_config = EnvironmentConfigBuilder.buildFromJSON({
+      const [component_name, tag] = args.environment_config_or_component.split(':');
+      env_config = EnvironmentConfigBuilder.buildFromJSON({ // TODO: local component deployment support
         components: {
-          [name]: tag,
+          [component_name]: tag,
         },
       });
+
+      const extra_interfaces = this.getExtraInterfaces(flags.interface); // TODO: should we do this for an env config? if so, what component are we targeting?
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
+
       env_config_merge = true;
     } else {
       const env_config_path = path.resolve(untildify(args.environment_config_or_component));
@@ -242,12 +256,27 @@ export default class Deploy extends DeployCommand {
     return extra_env_vars;
   }
 
+  getExtraInterfaces(interfaces: string[]) {
+    const extra_interfaces: { [s: string]: string } = {};
+    for (const component_interface of interfaces) {
+      const interface_split = component_interface.split(':');
+      if (interface_split.length !== 2) {
+        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface SUBDOMAIN:COMPONENT_INTERFACE`);
+      }
+      extra_interfaces[interface_split[0]] = interface_split[1];
+    }
+    return extra_interfaces;
+  }
+
   updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>) {
     for (const [param_name, param_value] of Object.entries(extra_params)) {
-      if (env_config.getParameters()[param_name] === undefined) {
-        throw new Error(`Parameter ${param_name} not found in env config`);
-      }
-      env_config.setParameter(param_name, param_value);
+      env_config.setParameter(param_name, param_value); // TODO: how do we validate when deploying a component?
+    }
+  }
+
+  updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
+    for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
+      env_config.setInterface(subdomain, `\${components['${component_name}'].interfaces.${interface_name}.url}`);
     }
   }
 
