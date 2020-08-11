@@ -1,6 +1,7 @@
 import { test } from '@oclif/test';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { DeployCommand } from '../../src/commands/deploy';
 import { mockAuth } from '../utils/mocks';
 
 describe('destroy', function () {
@@ -25,7 +26,10 @@ describe('destroy', function () {
   }
 
   test
-    .do(ctx => mockAuth())
+    .do(ctx => {
+      mockAuth()
+      sinon.replace(DeployCommand, 'POLL_INTERVAL', 0);
+    })
     .finally(() => sinon.restore())
     .nock(mock_api_host, api => api
       .persist()

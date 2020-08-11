@@ -18,6 +18,8 @@ import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
+  static POLL_INTERVAL = 10000;
+
   static flags = {
     ...Command.flags,
     auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
@@ -60,7 +62,7 @@ export abstract class DeployCommand extends Command {
           resolve(deployment);
         }
         poll_count += 1;
-      }, 10000);
+      }, DeployCommand.POLL_INTERVAL);
     });
   }
 
