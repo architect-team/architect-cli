@@ -1,4 +1,5 @@
 import { flags } from '@oclif/command';
+import 'reflect-metadata';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig, EnvironmentConfigBuilder, RawEnvironmentConfig } from '../dependency-manager/src';
@@ -34,6 +35,10 @@ export default class Destroy extends DeployCommand {
     let new_env_config: EnvironmentConfig;
     if (flags.components) {
       const { data } = await this.app.api.get(`/environments/${environment.id}/state`);
+      if (!data.env_config || Object.keys(data.env_config).length === 0) {
+        this.warn('The environment is already empty');
+        return;
+      }
       const env_config = EnvironmentConfigBuilder.buildFromJSON(data.env_config);
       new_env_config = this.removeComponents(data.env_config, env_config, flags.components);
     } else {
