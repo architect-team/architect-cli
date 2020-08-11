@@ -14,21 +14,21 @@ import PortUtil from '../utils/port';
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   config_path: string;
-  linked_services: Dictionary<string>;
+  linked_components: Dictionary<string>;
 
-  protected constructor(api: AxiosInstance, config_path = '', linked_services: Dictionary<string> = {}) {
+  protected constructor(api: AxiosInstance, config_path = '', linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
     this.config_path = config_path || '';
-    this.linked_services = linked_services;
+    this.linked_components = linked_components;
   }
 
   static async create(api: AxiosInstance) {
     return this.createFromPath(api, '');
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_services: Dictionary<string> = {}): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_services);
+  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
+    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_components);
     const env_config = dependency_manager.config_path
       ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
@@ -44,34 +44,21 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort(starting_port);
   }
 
-  async loadLocalService(service_path: string): Promise<void> {
-    this.config_path = service_path;
-
-    // TODO: Don't load dependencies?
-    const component_config = await ComponentConfigBuilder.buildFromPath(service_path);
-    const env_config = EnvironmentConfigBuilder.buildFromJSON({
-      components: {
-        [component_config.getName()]: `file:${service_path}`,
-      },
-    });
-    await this.init(env_config);
-  }
-
   async loadComponentConfig(initial_config: ComponentConfig) {
     const component_extends = initial_config.getExtends();
     const component_name = initial_config.getName();
 
     if (component_extends && component_extends.startsWith('file:')) {
       return ComponentConfigBuilder.buildFromPath(component_extends.substr('file:'.length));
-    } else if (component_name in this.linked_services) {
-      initial_config.setExtends(`file:${this.linked_services[component_name]}`);
-      // Load locally linked service config
-      console.log(`Using locally linked ${chalk.blue(component_name)} found at ${chalk.blue(this.linked_services[component_name])}`);
-      return ComponentConfigBuilder.buildFromPath(this.linked_services[component_name]);
+    } else if (component_name in this.linked_components) {
+      initial_config.setExtends(`file:${this.linked_components[component_name]}`);
+      // Load locally linked component config
+      console.log(`Using locally linked ${chalk.blue(component_name)} found at ${chalk.blue(this.linked_components[component_name])}`);
+      return ComponentConfigBuilder.buildFromPath(this.linked_components[component_name]);
     }
 
     if (component_extends) {
-      // Load remote service config
+      // Load remote component config
       const [component_name, component_tag] = component_extends.split(':');
       const [account_prefix, component_suffix] = component_name.split('/');
       const { data: component_version } = await this.api.get(`/accounts/${account_prefix}/components/${component_suffix}/versions/${component_tag}`).catch((err) => {

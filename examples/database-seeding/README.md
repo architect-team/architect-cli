@@ -3,33 +3,32 @@
 ### Quickstart
 
 ##### For a 'dev' environment:
-In the arc.env.yml, set `AUTO_DDL:migrate`
+In the environment.yml, set `AUTO_DDL:migrate`
 ```
-architect deploy -l arc.env.yml
+architect deploy -l environment.yml
 ```
 At http://api.localhost:3000/users, you should see an empty list of users because the AUTO_DDL parameter is set to 'migrate' which migrated the schema from the Typeorm schema migration scripts in src/migrations.
 
 ##### For a 'qa' environment:
-In thje arc.env.yml, set `AUTO_DDL:seed`
+In thje environment.yml, set `AUTO_DDL:seed`
 ```
-architect deploy -l arc.env.yml
+architect deploy -l environment.yml
 ```
 At http://api.localhost:3000/users, you should see a list of test users generated because the AUTO_DDL parameter is set to 'seed' which migrated the schema and ran the populated the test fixtures from src/fixtures.
 
 
 ### Example Explained
 
-This example shows how we may use a service parameter to configure different database startup strategies.
+This example shows how we may use a component parameter to configure different database startup strategies.
 
 In a developer environment, it may be that we want to auto-run database migrations at application startup, while in production we may consider that to be dangerous. This is one of many examples of how an environment operator may wish to modify application behavior depending on the environment. Architect provides a straightforward approach to such configuration:
 
-(1) The service developer declares a parameter in the `architect.yml` file:
+(1) The developer declares a parameter in the `architect.yml` file:
 
 ```
 name: examples/database-seeding
 // ...
 parameters:
-  // ...
   AUTO_DDL:
     description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
     default: none
@@ -52,31 +51,31 @@ parameters:
   }
 ```
 
-(3) The environment operator then has the chance to set the parameter value in the `arc.env.yml` file.
+(3) The environment operator then has the chance to set the parameter value in the `environment.yml` file.
 
 At runtime, a developer might configure their local environment like this so migrations run at startup...
 ```
-services:
-  examples/database-seeding:latest:
-    // ...
+components:
+  examples/database-seeding:
+    //...
     parameters:
       AUTO_DDL: migrate
 ```
 
 ...whereas a production operator may prefer to configure the environment to run without any migrations...
 ```
-services:
-  examples/database-seeding:latest:
-    // ...
+components:
+  examples/database-seeding:
+    //...
     parameters:
       AUTO_DDL: none
 ```
 
 And the quality assurance organization may prefer to start the application up with seed data...
 ```
-services:
-  examples/database-seeding:latest:
-    // ...
+components:
+  examples/database-seeding:
+    //...
     parameters:
       AUTO_DDL: seed
 ```

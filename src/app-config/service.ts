@@ -11,7 +11,7 @@ import AppConfig from './config';
 export default class AppService {
   config: AppConfig;
   auth: AuthClient;
-  linkedServices: Dictionary<string> = {};
+  linkedComponents: Dictionary<string> = {};
   _api: AxiosInstance;
   version: string;
 
@@ -41,47 +41,47 @@ export default class AppService {
       timeout: 10000,
     });
 
-    const linkedServicesFile = path.join(config_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    if (fs.existsSync(linkedServicesFile)) {
-      this.linkedServices = fs.readJSONSync(linkedServicesFile) as Dictionary<string>;
+    const linkedComponentsFile = path.join(config_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    if (fs.existsSync(linkedComponentsFile)) {
+      this.linkedComponents = fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
     }
   }
 
-  private saveLinkedServices() {
-    const linkedServicesFile = path.join(this.config.getConfigDir(), ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    fs.writeJSONSync(linkedServicesFile, this.linkedServices);
+  private saveLinkedComponents() {
+    const linkedComponentsFile = path.join(this.config.getConfigDir(), ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    fs.writeJSONSync(linkedComponentsFile, this.linkedComponents);
   }
 
-  linkServicePath(serviceName: string, servicePath: string) {
-    this.linkedServices[serviceName] = servicePath;
-    this.saveLinkedServices();
+  linkComponentPath(componentName: string, componentPath: string) {
+    this.linkedComponents[componentName] = componentPath;
+    this.saveLinkedComponents();
   }
 
-  unlinkService(serviceNameOrPath: string): string | undefined {
+  unlinkComponent(componentNameOrPath: string): string | undefined {
     let res;
 
-    if (this.linkedServices.hasOwnProperty(serviceNameOrPath)) {
-      delete this.linkedServices[serviceNameOrPath];
-      res = serviceNameOrPath;
+    if (this.linkedComponents.hasOwnProperty(componentNameOrPath)) {
+      delete this.linkedComponents[componentNameOrPath];
+      res = componentNameOrPath;
     } else {
-      this.linkedServices = Object.entries(this.linkedServices).reduce((linkedServices, [serviceName, servicePath]) => {
-        if (servicePath !== serviceNameOrPath) {
-          linkedServices[serviceName] = servicePath;
+      this.linkedComponents = Object.entries(this.linkedComponents).reduce((linkedComponents, [componentName, componentPath]) => {
+        if (componentPath !== componentNameOrPath) {
+          linkedComponents[componentName] = componentPath;
         } else {
-          res = serviceName;
+          res = componentName;
         }
 
-        return linkedServices;
+        return linkedComponents;
       }, {} as Dictionary<string>);
     }
 
-    this.saveLinkedServices();
+    this.saveLinkedComponents();
     return res;
   }
 
-  unlinkAllServices() {
-    this.linkedServices = {};
-    this.saveLinkedServices();
+  unlinkAllComponents() {
+    this.linkedComponents = {};
+    this.saveLinkedComponents();
   }
 
   saveConfig() {

@@ -208,7 +208,7 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
-        this.app.linkedServices,
+        this.app.linkedComponents,
       );
 
       const extra_params = this.getExtraEnvironmentVariables(flags.parameter);

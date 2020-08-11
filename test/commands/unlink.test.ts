@@ -10,7 +10,7 @@ import AppService from '../../src/app-config/service';
 import Unlink from '../../src/commands/unlink';
 import ARCHITECTPATHS from '../../src/paths';
 
-const addition_service_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
+const component_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
 
 describe('unlink', () => {
   let tmp_dir = os.tmpdir();
@@ -23,9 +23,9 @@ describe('unlink', () => {
     const config = new AppConfig('', {
       log_level: 'info',
     });
-    const tmp_linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    fs.writeJSONSync(tmp_linked_services_file, {
-      'architect/addition-service-rest': addition_service_path,
+    const tmp_linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    fs.writeJSONSync(tmp_linked_components_file, {
+      'architect/addition-service-rest': component_path,
     });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
@@ -37,7 +37,7 @@ describe('unlink', () => {
     sinon.restore();
   });
 
-  it('should fail unlink without service config', async () => {
+  it('should fail unlink without component config', async () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Unlink.prototype, 'log', log_spy);
 
@@ -45,24 +45,24 @@ describe('unlink', () => {
     await Unlink.run([bad_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No linked service found matching, ${bad_path}`));
+    expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No linked component found matching, ${bad_path}`));
 
-    const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    const linked_services = fs.readJSONSync(linked_services_file);
-    expect(linked_services).to.have.property('architect/addition-service-rest', addition_service_path);
+    const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    const linked_components = fs.readJSONSync(linked_components_file);
+    expect(linked_components).to.have.property('architect/addition-service-rest', component_path);
   });
 
-  it('should link service', async () => {
+  it('should link component', async () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Unlink.prototype, 'log', log_spy);
 
-    await Unlink.run([addition_service_path]);
+    await Unlink.run([component_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
     expect(log_spy.firstCall.args[0]).to.equal(chalk.green('Successfully unlinked architect/addition-service-rest'));
 
-    const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    const linked_services = fs.readJSONSync(linked_services_file);
-    expect(linked_services).not.to.have.property('architect/addition-service-rest');
+    const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    const linked_components = fs.readJSONSync(linked_components_file);
+    expect(linked_components).not.to.have.property('architect/addition-service-rest');
   });
 })
