@@ -279,7 +279,7 @@ export default class Deploy extends DeployCommand {
     for (const component_interface of interfaces) {
       const interface_split = component_interface.split(':');
       if (interface_split.length !== 2) {
-        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface SUBDOMAIN:COMPONENT_INTERFACE`);
+        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface subdomain:component_interface`);
       }
       extra_interfaces[interface_split[0]] = interface_split[1];
     }
