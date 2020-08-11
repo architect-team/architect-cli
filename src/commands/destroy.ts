@@ -1,4 +1,5 @@
 import { flags } from '@oclif/command';
+import 'reflect-metadata';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig, EnvironmentConfigBuilder, RawEnvironmentConfig } from '../dependency-manager/src';
