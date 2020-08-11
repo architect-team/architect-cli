@@ -195,15 +195,16 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.create(this.app.api);
       dependency_manager.environment = env_config;
 
-      const extra_interfaces = this.getExtraInterfaces(flags.interface); // TODO: should we add interfaces for an env config? if so, what component are we targeting?
+      const extra_interfaces = this.getExtraInterfaces(flags.interface);
       this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
     } else {
+      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
+
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
         this.app.linkedServices,
       );
-      // TODO: interfaces for env config?
     }
 
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
@@ -221,17 +222,19 @@ export default class Deploy extends DeployCommand {
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const [component_name, tag] = args.environment_config_or_component.split(':');
-      env_config = EnvironmentConfigBuilder.buildFromJSON({ // TODO: local component deployment support
+      env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
           [component_name]: tag,
         },
       });
 
-      const extra_interfaces = this.getExtraInterfaces(flags.interface); // TODO: should we do this for an env config? if so, what component are we targeting?
+      const extra_interfaces = this.getExtraInterfaces(flags.interface);
       this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
 
       env_config_merge = true;
     } else {
+      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
+
       const env_config_path = path.resolve(untildify(args.environment_config_or_component));
       // Validate env config
       env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
