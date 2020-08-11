@@ -1,7 +1,7 @@
 import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
 import inquirer from 'inquirer';
-import { Account } from '../../common/utils/account';
+import { Account } from './account';
 
 interface Platform {
   id: string;

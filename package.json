@@ -109,7 +109,7 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "fix": "eslint --ext .ts,.js . --fix",
-    "build": "rm -rf ./lib && tsc -b && npm run copy-static",
+    "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
