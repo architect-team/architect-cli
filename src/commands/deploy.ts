@@ -186,12 +186,14 @@ export default class Deploy extends DeployCommand {
     const { args, flags } = this.parse(Deploy);
 
     let dependency_manager;
-    let validate_params = true;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [parsed_component_version.namespaced_component_name]: {
+            extends: parsed_component_version.tag,
+            parameters: this.getExtraEnvironmentVariables(flags.parameter),
+          },
         },
       });
 
@@ -200,7 +202,6 @@ export default class Deploy extends DeployCommand {
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
       this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
-      validate_params = false;
     } else {
       if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
 
@@ -209,10 +210,10 @@ export default class Deploy extends DeployCommand {
         path.resolve(untildify(args.environment_config_or_component)),
         this.app.linkedServices,
       );
-    }
 
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    this.updateEnvironmentParameters(dependency_manager.environment, extra_params, validate_params);
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
+    }
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -228,7 +229,10 @@ export default class Deploy extends DeployCommand {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [parsed_component_version.namespaced_component_name]: {
+            extends: parsed_component_version.tag,
+            parameters: this.getExtraEnvironmentVariables(flags.parameter),
+          },
         },
       });
 
@@ -247,11 +251,12 @@ export default class Deploy extends DeployCommand {
           this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
         }
       }
+
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      this.updateEnvironmentParameters(env_config, extra_params);
+
       env_config_merge = false;
     }
-
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    this.updateEnvironmentParameters(env_config, extra_params, env_config_merge === false);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -288,9 +293,9 @@ export default class Deploy extends DeployCommand {
     return extra_interfaces;
   }
 
-  updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>, validate: boolean) {
+  updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>) {
     for (const [param_name, param_value] of Object.entries(extra_params)) {
-      if (validate && env_config.getParameters()[param_name] === undefined) {
+      if (env_config.getParameters()[param_name] === undefined) {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
       env_config.setParameter(param_name, param_value);
