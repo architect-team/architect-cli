@@ -78,6 +78,7 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   kind: 'component_version';
   component_account_name: string;
   component_name: string;
+  namespaced_component_name: string;
   tag: string;
 }
 export class ComponentVersionSlugUtils extends SlugUtils {
@@ -107,6 +108,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       kind: 'component_version',
       component_account_name,
       component_name,
+      namespaced_component_name: `${component_account_name}/${component_name}`,
       tag,
     };
   };

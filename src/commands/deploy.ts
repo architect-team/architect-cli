@@ -188,10 +188,10 @@ export default class Deploy extends DeployCommand {
     let dependency_manager;
     let validate_params = true;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const [component_name, tag] = args.environment_config_or_component.split(':');
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [component_name]: tag,
+          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
@@ -199,7 +199,7 @@ export default class Deploy extends DeployCommand {
       dependency_manager.environment = env_config;
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
       validate_params = false;
     } else {
       if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
@@ -225,15 +225,15 @@ export default class Deploy extends DeployCommand {
 
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const [component_name, tag] = args.environment_config_or_component.split(':');
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [component_name]: tag,
+          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, component_name);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
 
       env_config_merge = true;
     } else {
