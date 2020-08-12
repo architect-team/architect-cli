@@ -21,8 +21,8 @@ describe('link', () => {
     const config = new AppConfig('', {
       log_level: 'info',
     });
-    const tmp_linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    fs.writeJSONSync(tmp_linked_services_file, {});
+    const tmp_linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    fs.writeJSONSync(tmp_linked_components_file, {});
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
@@ -33,7 +33,7 @@ describe('link', () => {
     sinon.restore();
   });
 
-  it('should fail link without service config', async () => {
+  it('should fail link without component config', async () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
 
@@ -43,26 +43,26 @@ describe('link', () => {
     expect(log_spy.calledOnce).to.equal(true);
     expect(log_spy.firstCall.args[0]).to.equal(chalk.red(`No component config file found at ${bad_path}`));
 
-    const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    if (fs.existsSync(linked_services_file)) {
-      const linked_services = fs.readJSONSync(linked_services_file);
-      expect(linked_services).not.to.have.property('architect/addition-service-rest');
+    const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    if (fs.existsSync(linked_components_file)) {
+      const linked_components = fs.readJSONSync(linked_components_file);
+      expect(linked_components).not.to.have.property('architect/addition-service-rest');
     }
   });
 
-  it('should link service', async () => {
+  it('should link component', async () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
 
-    const service_path = path.join(__dirname, '../calculator/addition-service/rest/').replace(/\/$/gi, '').replace(/\\$/gi, '');
-    await Link.run([service_path]);
+    const component_path = path.join(__dirname, '../calculator/addition-service/rest/').replace(/\/$/gi, '').replace(/\\$/gi, '');
+    await Link.run([component_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('architect/addition-service-rest')} to local system at ${chalk.green(service_path)}.`);
+    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('architect/addition-service-rest')} to local system at ${chalk.green(component_path)}.`);
 
-    const linked_services_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_SERVICE_MAP_FILENAME);
-    expect(fs.existsSync(linked_services_file)).to.be.true;
-    const linked_services = fs.readJSONSync(linked_services_file);
-    expect(linked_services).to.have.property('architect/addition-service-rest', service_path);
+    const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    expect(fs.existsSync(linked_components_file)).to.be.true;
+    const linked_components = fs.readJSONSync(linked_components_file);
+    expect(linked_components).to.have.property('architect/addition-service-rest', component_path);
   });
 })

@@ -2,6 +2,6 @@ export default class MissingContextError extends Error {
   constructor() {
     super();
     this.name = 'missing_build_context';
-    this.message = 'No context was provided. Please specify a path to a valid Architect service.';
+    this.message = 'No context was provided. Please specify a path to a valid Architect component.';
   }
 }
