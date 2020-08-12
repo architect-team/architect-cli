@@ -136,6 +136,12 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    interface: flags.string({
+      char: 'i',
+      description: 'Component interfaces',
+      multiple: true,
+      default: [],
+    }),
   };
 
   static args = [{
@@ -179,14 +185,35 @@ export default class Deploy extends DeployCommand {
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
 
-    const dependency_manager = await LocalDependencyManager.createFromPath(
-      this.app.api,
-      path.resolve(untildify(args.environment_config_or_component)),
-      this.app.linkedServices,
-    );
+    let dependency_manager;
+    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      const env_config = EnvironmentConfigBuilder.buildFromJSON({
+        components: {
+          [parsed_component_version.namespaced_component_name]: {
+            extends: parsed_component_version.tag,
+            parameters: this.getExtraEnvironmentVariables(flags.parameter),
+          },
+        },
+      });
 
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
+      dependency_manager = await LocalDependencyManager.create(this.app.api);
+      dependency_manager.environment = env_config;
+
+      const extra_interfaces = this.getExtraInterfaces(flags.interface);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+    } else {
+      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
+
+      dependency_manager = await LocalDependencyManager.createFromPath(
+        this.app.api,
+        path.resolve(untildify(args.environment_config_or_component)),
+        this.app.linkedServices,
+      );
+
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
+    }
 
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -199,14 +226,23 @@ export default class Deploy extends DeployCommand {
 
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const [name, tag] = args.environment_config_or_component.split(':');
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [name]: tag,
+          [parsed_component_version.namespaced_component_name]: {
+            extends: parsed_component_version.tag,
+            parameters: this.getExtraEnvironmentVariables(flags.parameter),
+          },
         },
       });
+
+      const extra_interfaces = this.getExtraInterfaces(flags.interface);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+
       env_config_merge = true;
     } else {
+      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
+
       const env_config_path = path.resolve(untildify(args.environment_config_or_component));
       // Validate env config
       env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
@@ -215,11 +251,12 @@ export default class Deploy extends DeployCommand {
           this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
         }
       }
+
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      this.updateEnvironmentParameters(env_config, extra_params);
+
       env_config_merge = false;
     }
-
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    this.updateEnvironmentParameters(env_config, extra_params);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -244,12 +281,30 @@ export default class Deploy extends DeployCommand {
     return extra_env_vars;
   }
 
+  getExtraInterfaces(interfaces: string[]) {
+    const extra_interfaces: { [s: string]: string } = {};
+    for (const component_interface of interfaces) {
+      const interface_split = component_interface.split(':');
+      if (interface_split.length !== 2) {
+        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface subdomain:component_interface`);
+      }
+      extra_interfaces[interface_split[0]] = interface_split[1];
+    }
+    return extra_interfaces;
+  }
+
   updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>) {
     for (const [param_name, param_value] of Object.entries(extra_params)) {
       if (env_config.getParameters()[param_name] === undefined) {
         throw new Error(`Parameter ${param_name} not found in env config`);
       }
       env_config.setParameter(param_name, param_value);
+    }
+  }
+
+  updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
+    for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
+      env_config.setInterface(subdomain, `\${components['${component_name}'].interfaces.${interface_name}.url}`);
     }
   }
 
