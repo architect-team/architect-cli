@@ -164,10 +164,14 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getRef(): ComponentVersionSlug {
     let split;
-    try {
-      split = ComponentSlugUtils.parse(this.name);
-    } catch {
-      split = ComponentVersionSlugUtils.parse(this.name);
+    if (this.extends?.startsWith(`${this.name}:`)) {
+      split = ComponentVersionSlugUtils.parse(this.extends);
+    } else {
+      try {
+        split = ComponentSlugUtils.parse(this.name);
+      } catch {
+        split = ComponentVersionSlugUtils.parse(this.name);
+      }
     }
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
   }
