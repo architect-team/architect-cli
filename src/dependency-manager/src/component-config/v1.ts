@@ -164,12 +164,12 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getRef(): ComponentVersionSlug {
     let split;
-    try {
-      split = ComponentSlugUtils.parse(this.name);
-    } catch {
-      if (this.extends && !this.extends.startsWith('file:')) {
-        split = ComponentVersionSlugUtils.parse(this.extends); // if extends is a tag other than latest
-      } else {
+    if (this.extends?.startsWith(`${this.name}:`)) {
+      split = ComponentVersionSlugUtils.parse(this.extends);
+    } else {
+      try {
+        split = ComponentSlugUtils.parse(this.name);
+      } catch {
         split = ComponentVersionSlugUtils.parse(this.name);
       }
     }
