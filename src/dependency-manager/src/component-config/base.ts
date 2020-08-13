@@ -49,7 +49,13 @@ export abstract class ComponentConfig extends ConfigSpec {
   }
 
   getServiceRef(service_name: string): ServiceVersionSlug {
-    const parsed = ComponentVersionSlugUtils.parse(this.getRef());
+    let parsed;
+    const component_extends = this.getExtends();
+    if (component_extends && !component_extends.startsWith('file:')) {
+      parsed = ComponentVersionSlugUtils.parse(component_extends); // if extends is a tag other than latest
+    } else {
+      parsed = ComponentVersionSlugUtils.parse(this.getRef());
+    }
     return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
   }
 

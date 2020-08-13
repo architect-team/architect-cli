@@ -167,7 +167,11 @@ export class ComponentConfigV1 extends ComponentConfig {
     try {
       split = ComponentSlugUtils.parse(this.name);
     } catch {
-      split = ComponentVersionSlugUtils.parse(this.name);
+      if (this.extends && !this.extends.startsWith('file:')) {
+        split = ComponentVersionSlugUtils.parse(this.extends); // if extends is a tag other than latest
+      } else {
+        split = ComponentVersionSlugUtils.parse(this.name);
+      }
     }
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
   }

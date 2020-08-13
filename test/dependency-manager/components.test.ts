@@ -139,8 +139,8 @@ describe('components spec v1', function () {
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/app:latest',
-        'architect/cloud/api:latest',
+        'architect/cloud/app:v1',
+        'architect/cloud/api:v1',
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -185,9 +185,9 @@ describe('components spec v1', function () {
 
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
       const graph = await manager.getGraph();
-      expect(graph.nodes.map((n) => n.ref)).has.members(['architect/cloud/app:latest'])
+      expect(graph.nodes.map((n) => n.ref)).has.members(['architect/cloud/app:v1'])
       expect(graph.edges.map((e) => e.toString())).has.members([])
-      const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+      const app_node = graph.getNodeByRef('architect/cloud/app:v1') as ServiceNode;
       expect(app_node.node_config.getEnvironmentVariables().LOG_LEVEL).eq('debug')
     });
 
