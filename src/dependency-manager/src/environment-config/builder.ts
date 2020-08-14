@@ -109,7 +109,7 @@ export class EnvironmentConfigBuilder {
             }
           }
 
-          obj.components[service_key] = ComponentConfigBuilder.buildFromJSONCompat({ extends: service_key, ...service, name: service_key });
+          obj.components[service_key] = ComponentConfigBuilder.buildFromJSON({ extends: service_key, ...service, name: service_key });
           delete obj.components[service_key].services.service.environment;
         } else {
           obj.components[`${service_key}:${service}`] = {};

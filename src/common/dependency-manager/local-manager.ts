@@ -66,7 +66,7 @@ export default class LocalDependencyManager extends DependencyManager {
         throw err;
       });
 
-      const config = ComponentConfigBuilder.buildFromJSONCompat(component_version.config);
+      const config = ComponentConfigBuilder.buildFromJSON(component_version.config);
       return config;
     } else {
       return ComponentConfigBuilder.buildFromJSON(initial_config);

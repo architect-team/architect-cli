@@ -7,6 +7,7 @@ describe('login', () => {
   const print = false;
 
   test
+    .timeout(10000)
     .stderr({ print })
     .command(['login', '-u', 'test-user'])
     .catch(ctx => {
