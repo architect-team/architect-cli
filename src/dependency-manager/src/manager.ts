@@ -294,7 +294,6 @@ export default abstract class DependencyManager {
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
 
-
     const errors = this.validateEnvironment(environment, enriched_environment);
     for (const [param_key, param_value] of Object.entries(environment.getParameters())) {
       if (param_value?.default === null || Object.keys(param_value || {}).length === 1 && param_value.required === true) {

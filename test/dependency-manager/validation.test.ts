@@ -327,7 +327,6 @@ describe('validation spec v1', () => {
           'value': 'null'
         }
       });
-      console.log(validation_err.errors)
     });
 
     it('valid component interfaces ref', async () => {
