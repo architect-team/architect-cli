@@ -280,6 +280,7 @@ describe('validation spec v1', () => {
         required:
         required-explicit:
         not-required:
+          required: false
       services:
         api:
           interfaces:
