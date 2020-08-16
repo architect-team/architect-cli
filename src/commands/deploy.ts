@@ -208,13 +208,13 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
-        this.app.linkedComponents,
       );
 
       const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
       this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
     }
 
+    dependency_manager.setLinkedComponents(this.app.linkedComponents);
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
   }
