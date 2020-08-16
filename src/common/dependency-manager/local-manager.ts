@@ -167,4 +167,8 @@ export default class LocalDependencyManager extends DependencyManager {
     }
     return components_map;
   }
+
+  setLinkedComponents(linked_components: Dictionary<string> = {}) {
+    this.linked_components = linked_components;
+  }
 }
