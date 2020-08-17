@@ -229,7 +229,21 @@ export default abstract class DependencyManager {
 
   validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig): ValidationError[] {
     let validation_errors: ValidationError[] = [];
-    // Check required parameters
+
+    // Check required parameters for environment
+    for (const [pk, pv] of Object.entries(environment.getParameters())) {
+      if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
+        const validation_error = new ValidationError();
+        validation_error.property = `parameters.${pk}`;
+        validation_error.target = pv;
+        validation_error.value = pv.default;
+        validation_error.constraints = { Required: `${pk} is required` };
+        validation_error.children = [];
+        validation_errors.push(validation_error);
+      }
+    }
+
+    // Check required parameters for components
     for (const [component_key, component] of Object.entries(enriched_environment.getComponents())) {
       for (const [pk, pv] of Object.entries(component.getParameters())) {
         if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
@@ -237,9 +251,7 @@ export default abstract class DependencyManager {
           validation_error.property = `components.${component_key}.parameters.${pk}`;
           validation_error.target = pv;
           validation_error.value = pv.default;
-          validation_error.constraints = {
-            'Required': `${pk} is required`,
-          };
+          validation_error.constraints = { Required: `${pk} is required` };
           validation_error.children = [];
           validation_errors.push(validation_error);
         }
@@ -295,15 +307,6 @@ export default abstract class DependencyManager {
     enriched_environment = enriched_environment.merge(environment);
 
     const errors = this.validateEnvironment(environment, enriched_environment);
-    for (const [param_key, param_value] of Object.entries(environment.getParameters())) {
-      if (param_value?.default === null || Object.keys(param_value || {}).length === 1 && param_value.required === true) {
-        const validation_error = new ValidationError();
-        validation_error.property = `environment.parameters.${param_key}`;
-        validation_error.value = 'null';
-        validation_error.constraints = { Required: `${param_key} is required` };
-        errors.push(validation_error);
-      }
-    }
     if (errors.length) {
       throw new ValidationErrors('environment', flattenValidationErrors(errors));
     }

@@ -319,13 +319,17 @@ describe('validation spec v1', () => {
       }
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
-        'environment.parameters.required': {
-          'Required': 'required is required',
-          'value': 'null',
+        'parameters.required': {
+          Required: 'required is required',
+          line: 3,
+          column: 17,
+          value: null,
         },
-        'environment.parameters.required-explicit': {
-          'Required': 'required-explicit is required',
-          'value': 'null'
+        'parameters.required-explicit': {
+          Required: 'required-explicit is required',
+          line: 4,
+          column: 26,
+          value: undefined
         }
       });
     });
