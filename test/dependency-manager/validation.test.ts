@@ -273,6 +273,67 @@ describe('validation spec v1', () => {
       })
     });
 
+    it('required environment parameters', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        required:
+        required-explicit:
+        not-required:
+          required: false
+      services:
+        api:
+          interfaces:
+            main: 8080
+          environment:
+            REQUIRED: \${ parameters.required }
+            REQUIRED_EXPLICIT: \${ parameters.required-explicit }
+            NOT_REQUIRED: \${ parameters.not-required }
+      interfaces:
+      `
+      const env_config = `
+      parameters:
+        required:
+        required-explicit:
+          required: true
+        not-required:
+          required: false
+      components:
+        test/component:
+          extends: file:./component.yml
+          parameters:
+            required: \${ parameters.required }
+            required-explicit: \${ parameters.required-explicit }
+            not-required: \${ parameters.not-required }
+      `
+      mock_fs({
+        '/component.yml': component_config,
+        '/environment.yml': env_config
+      });
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        'parameters.required': {
+          Required: 'required is required',
+          line: 3,
+          column: 17,
+          value: null,
+        },
+        'parameters.required-explicit': {
+          Required: 'required-explicit is required',
+          line: 4,
+          column: 26,
+          value: undefined
+        }
+      });
+    });
+
     it('valid component interfaces ref', async () => {
       const component_config = `
       name: test/component
