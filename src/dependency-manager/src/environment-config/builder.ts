@@ -3,7 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { ComponentConfigBuilder, RawComponentConfig } from '../component-config/builder';
+import { RawComponentConfig } from '../component-config/builder';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { EnvironmentConfig } from './base';
@@ -92,32 +92,6 @@ export class EnvironmentConfigBuilder {
     if (!(obj instanceof Object)) {
       throw new Error('Object required to build from JSON');
     }
-
-    // Support old services block in environment config
-    if (obj.services && !obj.components) {
-      if (!obj.interfaces) obj.interfaces = {};
-      if (!obj.components) obj.components = {};
-      for (const [service_key, service] of Object.entries(obj.services) as any) {
-        if (service instanceof Object) {
-          // Support old subdomain syntax
-          if (service.interfaces) {
-            for (const [ik, iv] of Object.entries(service.interfaces) as any) {
-              if (iv instanceof Object && iv.subdomain) {
-                obj.interfaces[iv.subdomain] = `\${ components.${service_key}.interfaces.${ik}.url }`;
-                delete iv.subdomain;
-              }
-            }
-          }
-
-          obj.components[service_key] = ComponentConfigBuilder.buildFromJSON({ extends: service_key, ...service, name: service_key });
-          delete obj.components[service_key].services.service.environment;
-        } else {
-          obj.components[`${service_key}:${service}`] = {};
-        }
-      }
-      delete obj.services;
-    }
-
     return plainToClass(EnvironmentConfigV1, obj);
   }
 
