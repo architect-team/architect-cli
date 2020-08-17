@@ -63,15 +63,15 @@ describe('deploy', function () {
 
     const local_env_config = {
       "components": {
-        "architect/division-service-grpc:latest": "file:./calculator/division-service/",
-        "architect/subtraction-service-rest:latest": "file:./calculator/subtraction-services/go/rest/"
+        "examples/database-seeding:latest": "file:../examples/database-seeding/",
+        "examples/echo:latest": "file:../examples/echo/"
       }
     }
 
     const env_config = {
       "components": {
-        "architect/division-service-grpc": "latest",
-        "architect/subtraction-service-rest": "latest"
+        "examples/database-seeding": "latest",
+        "examples/echo": "latest"
       }
     };
 
@@ -96,12 +96,12 @@ describe('deploy', function () {
     sinon.replace(Deploy.prototype, 'runCompose', compose_spy);
 
     // Link the addition service
-    const additionServicePath = path.join(__dirname, '../calculator/addition-service/rest');
+    const additionServicePath = path.join(__dirname, '../../examples/hello-world');
     await Link.run([additionServicePath]);
 
     await Deploy.run(['-l', local_env_config_path]);
 
-    const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/calculator-compose.json')) as DockerComposeTemplate;
+    const expected_compose = fs.readJSONSync(path.join(__dirname, '../mocks/local-deploy-compose.json')) as DockerComposeTemplate;
     expect(compose_spy.calledOnce).to.equal(true);
 
     expect(compose_spy.firstCall.args[0].version).to.equal(expected_compose.version);
