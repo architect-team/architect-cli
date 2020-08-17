@@ -37,7 +37,7 @@ describe('link', () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
 
-    const bad_path = path.join(__dirname, '../calculator').toLowerCase();
+    const bad_path = path.join(__dirname, '../examples').toLowerCase();
     await Link.run([bad_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
@@ -46,7 +46,7 @@ describe('link', () => {
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     if (fs.existsSync(linked_components_file)) {
       const linked_components = fs.readJSONSync(linked_components_file);
-      expect(linked_components).not.to.have.property('architect/addition-service-rest');
+      expect(linked_components).not.to.have.property('examples/hello-world');
     }
   });
 
@@ -54,15 +54,15 @@ describe('link', () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
 
-    const component_path = path.join(__dirname, '../calculator/addition-service/rest/').replace(/\/$/gi, '').replace(/\\$/gi, '');
+    const component_path = path.join(__dirname, '../../examples/hello-world/').replace(/\/$/gi, '').replace(/\\$/gi, '');
     await Link.run([component_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('architect/addition-service-rest')} to local system at ${chalk.green(component_path)}.`);
+    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('examples/hello-world')} to local system at ${chalk.green(component_path)}.`);
 
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     expect(fs.existsSync(linked_components_file)).to.be.true;
     const linked_components = fs.readJSONSync(linked_components_file);
-    expect(linked_components).to.have.property('architect/addition-service-rest', component_path);
+    expect(linked_components).to.have.property('examples/hello-world', component_path);
   });
 })

@@ -10,7 +10,7 @@ import AppService from '../../src/app-config/service';
 import Unlink from '../../src/commands/unlink';
 import ARCHITECTPATHS from '../../src/paths';
 
-const component_path = path.join(__dirname, '../calculator/addition-service/rest/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
+const component_path = path.join(__dirname, '../../examples/hello-world/').toLowerCase().replace(/\/$/gi, '').replace(/\\$/gi, '');
 
 describe('unlink', () => {
   let tmp_dir = os.tmpdir();
@@ -25,7 +25,7 @@ describe('unlink', () => {
     });
     const tmp_linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     fs.writeJSONSync(tmp_linked_components_file, {
-      'architect/addition-service-rest': component_path,
+      'examples/hello-world': component_path,
     });
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
@@ -41,7 +41,7 @@ describe('unlink', () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Unlink.prototype, 'log', log_spy);
 
-    const bad_path = path.join(__dirname, '../calculator').toLowerCase();
+    const bad_path = path.join(__dirname, '../examples').toLowerCase();
     await Unlink.run([bad_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
@@ -49,7 +49,7 @@ describe('unlink', () => {
 
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     const linked_components = fs.readJSONSync(linked_components_file);
-    expect(linked_components).to.have.property('architect/addition-service-rest', component_path);
+    expect(linked_components).to.have.property('examples/hello-world', component_path);
   });
 
   it('should link component', async () => {
@@ -59,10 +59,10 @@ describe('unlink', () => {
     await Unlink.run([component_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(chalk.green('Successfully unlinked architect/addition-service-rest'));
+    expect(log_spy.firstCall.args[0]).to.equal(chalk.green('Successfully unlinked examples/hello-world'));
 
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     const linked_components = fs.readJSONSync(linked_components_file);
-    expect(linked_components).not.to.have.property('architect/addition-service-rest');
+    expect(linked_components).not.to.have.property('examples/hello-world');
   });
 })
