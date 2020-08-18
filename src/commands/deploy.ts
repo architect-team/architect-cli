@@ -7,6 +7,7 @@ import inquirer from 'inquirer';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
+import yaml from 'js-yaml';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
@@ -116,7 +117,7 @@ export default class Deploy extends DeployCommand {
       description: 'Path where the compose file should be written to',
       default: path.join(
         os.tmpdir(),
-        `architect-deployment-${Date.now().toString()}.json`,
+        `architect-deployment-${Date.now().toString()}.yml`,
       ),
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
@@ -172,7 +173,7 @@ export default class Deploy extends DeployCommand {
       }
     }
     await fs.ensureFile(flags.compose_file);
-    await fs.writeJSON(flags.compose_file, compose, { spaces: 2 });
+    await fs.writeFile(flags.compose_file, yaml.safeDump(compose));
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
     const compose_args = ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'];
     if (flags.detached) {
