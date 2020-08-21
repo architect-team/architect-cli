@@ -119,7 +119,7 @@ export default abstract class DependencyManager {
       const node = new ServiceNode({
         ref: component.getServiceRef(node_config.getName()),
         node_config,
-        local_path: component.getExtends()?.startsWith('file:') ? component.getExtends()?.substr('file:'.length) : undefined,
+        local_path: component.getLocalPath(),
       });
       graph.addNode(node);
 

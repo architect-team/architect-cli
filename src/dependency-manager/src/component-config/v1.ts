@@ -184,6 +184,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     this.extends = ext;
   }
 
+  getLocalPath() {
+    return this.getExtends()?.startsWith('file:') ? this.getExtends()?.substr('file:'.length) : undefined;
+  }
+
   getDescription() {
     return this.description || '';
   }

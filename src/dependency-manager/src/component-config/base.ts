@@ -20,6 +20,7 @@ export abstract class ComponentConfig extends ConfigSpec {
   abstract getRef(): ComponentVersionSlug;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;
+  abstract getLocalPath(): string | undefined;
   abstract getDescription(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;

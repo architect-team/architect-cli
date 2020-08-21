@@ -196,6 +196,51 @@ describe('interpolation spec v1', () => {
     })
   });
 
+  it('interpolation environment file:', async () => {
+    const component_config = {
+      name: 'test/component',
+      interfaces: {
+        main: '${ services.web.interfaces.main.url }'
+      },
+      parameters: {
+        log_level: 'debug'
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            APPLICATION_PROPERTIES: 'file:./application.properties'
+          }
+        }
+      }
+    }
+
+    const env_config = {
+      components: {
+        'test/component:latest': {
+          extends: 'file:./web/web.json'
+        }
+      }
+    };
+
+    const properties = 'log_level=${ parameters.log_level }'
+
+    mock_fs({
+      '/stack/web/application.properties': properties,
+      '/stack/web/web.json': JSON.stringify(component_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      APPLICATION_PROPERTIES: 'log_level=debug'
+    })
+  });
+
   it('interpolation vault', async () => {
     const component_config = {
       name: 'architect/cloud',
