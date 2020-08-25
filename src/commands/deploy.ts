@@ -193,16 +193,16 @@ export default class Deploy extends DeployCommand {
     if (!isCi && flags.browser) {
       let open_browser_attempts = 0;
       const browser_interval = setInterval(async () => {
+        if (open_browser_attempts === 300) {
+          clearInterval(browser_interval);
+        }
+
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
           promises.push(axios.get(exposed_interface, {
             timeout: 2000,
             validateStatus: (status: number) => { return status < 500; },
           }));
-        }
-
-        if (open_browser_attempts === 300) {
-          clearInterval(browser_interval);
         }
 
         Promise.all(promises).then(() => {
