@@ -1,13 +1,16 @@
 import { flags } from '@oclif/command';
+import axios, { AxiosResponse } from 'axios';
 import chalk from 'chalk';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import isCi from 'is-ci';
+import yaml from 'js-yaml';
+import open from 'open';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
-import yaml from 'js-yaml';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
@@ -40,6 +43,10 @@ export abstract class DeployCommand extends Command {
       hidden: true,
       allowNo: true,
       exclusive: ['local', 'compose_file'],
+    }),
+    browser: flags.boolean({
+      default: true,
+      allowNo: true,
     }),
   };
 
@@ -154,6 +161,7 @@ export default class Deploy extends DeployCommand {
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
 
+    const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
     if (gateway) {
       const gateway_port = gateway.ports[0] && gateway.ports[0].split(':')[0];
@@ -161,6 +169,7 @@ export default class Deploy extends DeployCommand {
         if (service.environment && service.environment.VIRTUAL_HOST) {
           const service_host = `http://${service.environment.VIRTUAL_HOST}:${gateway_port}/`;
           this.log(`${chalk.blue(service_host)} => ${service_name}`);
+          exposed_interfaces.push(service_host);
         }
       }
       this.log('');
@@ -180,6 +189,42 @@ export default class Deploy extends DeployCommand {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
     }
+
+    if (!isCi && flags.browser) {
+      let open_browser_attempts = 0;
+      const poll_interval = 2000;
+      const browser_interval = setInterval(async () => {
+        if (open_browser_attempts === 300) {
+          clearInterval(browser_interval);
+          return;
+        }
+
+        const promises: Promise<AxiosResponse<any>>[] = [];
+        for (const exposed_interface of exposed_interfaces) {
+          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
+          promises.push(axios.get(`http://localhost:${port}`, {
+            headers: {
+              Host: host_name,
+            },
+            timeout: poll_interval,
+            validateStatus: (status: number) => { return status < 500; },
+          }));
+        }
+
+        Promise.all(promises).then(() => {
+          for (const exposed_interface of exposed_interfaces) {
+            this.log('Opening', chalk.blue(exposed_interface));
+            open(exposed_interface);
+          }
+          this.log('(disable with --no-browser)');
+          clearInterval(browser_interval);
+        }).catch(err => {
+          // at least one exposed service is not yet ready
+        });
+        open_browser_attempts++;
+      }, poll_interval);
+    }
+
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
