@@ -44,8 +44,9 @@ export abstract class DeployCommand extends Command {
       allowNo: true,
       exclusive: ['local', 'compose_file'],
     }),
-    disable_open_browser: flags.boolean({
-      default: false,
+    browser: flags.boolean({
+      default: true,
+      allowNo: true,
     }),
   };
 
@@ -188,9 +189,8 @@ export default class Deploy extends DeployCommand {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
     }
-    execa('docker-compose', compose_args, { stdio: 'inherit' });
 
-    if (!isCi && !flags.disable_open_browser) {
+    if (!isCi && flags.browser) {
       let open_browser_attempts = 0;
       const browser_interval = setInterval(async () => {
         if (open_browser_attempts === 300) {
@@ -199,7 +199,10 @@ export default class Deploy extends DeployCommand {
 
         try {
           for (const exposed_interface of exposed_interfaces) {
-            await axios.get(exposed_interface, {validateStatus: (status: number) => { return status < 500; }});
+            await axios.get(exposed_interface, {
+              timeout: 2000,
+              validateStatus: (status: number) => { return status < 500; },
+            });
           }
           for (const exposed_interface of exposed_interfaces) {
             open(exposed_interface);
@@ -211,6 +214,8 @@ export default class Deploy extends DeployCommand {
         open_browser_attempts++;
       }, 2000);
     }
+
+    await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
   private async runLocal() {
