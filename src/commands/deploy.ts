@@ -195,6 +195,7 @@ export default class Deploy extends DeployCommand {
       const browser_interval = setInterval(async () => {
         if (open_browser_attempts === 300) {
           clearInterval(browser_interval);
+          return;
         }
 
         const promises: Promise<AxiosResponse<any>>[] = [];
