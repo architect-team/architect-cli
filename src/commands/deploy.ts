@@ -1,13 +1,16 @@
 import { flags } from '@oclif/command';
+import axios from 'axios';
 import chalk from 'chalk';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import isCi from 'is-ci';
+import yaml from 'js-yaml';
+import open from 'open';
 import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
-import yaml from 'js-yaml';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import * as DockerCompose from '../common/docker-compose';
@@ -40,6 +43,9 @@ export abstract class DeployCommand extends Command {
       hidden: true,
       allowNo: true,
       exclusive: ['local', 'compose_file'],
+    }),
+    disable_open_browser: flags.boolean({
+      default: false,
     }),
   };
 
@@ -154,6 +160,7 @@ export default class Deploy extends DeployCommand {
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
 
+    const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
     if (gateway) {
       const gateway_port = gateway.ports[0] && gateway.ports[0].split(':')[0];
@@ -161,6 +168,7 @@ export default class Deploy extends DeployCommand {
         if (service.environment && service.environment.VIRTUAL_HOST) {
           const service_host = `http://${service.environment.VIRTUAL_HOST}:${gateway_port}/`;
           this.log(`${chalk.blue(service_host)} => ${service_name}`);
+          exposed_interfaces.push(service_host);
         }
       }
       this.log('');
@@ -180,7 +188,29 @@ export default class Deploy extends DeployCommand {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
     }
-    await execa('docker-compose', compose_args, { stdio: 'inherit' });
+    execa('docker-compose', compose_args, { stdio: 'inherit' });
+
+    if (!isCi && !flags.disable_open_browser) {
+      let open_browser_attempts = 0;
+      const browser_interval = setInterval(async () => {
+        if (open_browser_attempts === 30) {
+          clearInterval(browser_interval);
+        }
+
+        try {
+          for (const exposed_interface of exposed_interfaces) {
+            await axios.get(exposed_interface, {validateStatus: (status: number) => { return status < 500; }});
+          }
+          for (const exposed_interface of exposed_interfaces) {
+            open(exposed_interface);
+          }
+          clearInterval(browser_interval);
+        } catch(err) {
+          // at least one exposed service is not yet ready
+        }
+        open_browser_attempts++;
+      }, 2000);
+    }
   }
 
   private async runLocal() {
