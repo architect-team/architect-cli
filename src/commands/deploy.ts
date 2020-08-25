@@ -192,6 +192,7 @@ export default class Deploy extends DeployCommand {
 
     if (!isCi && flags.browser) {
       let open_browser_attempts = 0;
+      const poll_interval = 2000;
       const browser_interval = setInterval(async () => {
         if (open_browser_attempts === 300) {
           clearInterval(browser_interval);
@@ -200,22 +201,28 @@ export default class Deploy extends DeployCommand {
 
         const promises: Promise<AxiosResponse<any>>[] = [];
         for (const exposed_interface of exposed_interfaces) {
-          promises.push(axios.get(exposed_interface, {
-            timeout: 2000,
+          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
+          promises.push(axios.get(`http://localhost:${port}`, {
+            headers: {
+              Host: host_name,
+            },
+            timeout: poll_interval,
             validateStatus: (status: number) => { return status < 500; },
           }));
         }
 
         Promise.all(promises).then(() => {
           for (const exposed_interface of exposed_interfaces) {
+            this.log('Opening', chalk.blue(exposed_interface));
             open(exposed_interface);
           }
+          this.log('(disable with --no-browser)');
           clearInterval(browser_interval);
         }).catch(err => {
           // at least one exposed service is not yet ready
         });
         open_browser_attempts++;
-      }, 2000);
+      }, poll_interval);
     }
 
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
