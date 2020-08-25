@@ -193,7 +193,7 @@ export default class Deploy extends DeployCommand {
     if (!isCi && !flags.disable_open_browser) {
       let open_browser_attempts = 0;
       const browser_interval = setInterval(async () => {
-        if (open_browser_attempts === 30) {
+        if (open_browser_attempts === 300) {
           clearInterval(browser_interval);
         }
 
