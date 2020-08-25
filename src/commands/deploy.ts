@@ -1,5 +1,5 @@
 import { flags } from '@oclif/command';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import chalk from 'chalk';
 import cli from 'cli-ux';
 import execa from 'execa';
@@ -193,24 +193,26 @@ export default class Deploy extends DeployCommand {
     if (!isCi && flags.browser) {
       let open_browser_attempts = 0;
       const browser_interval = setInterval(async () => {
+        const promises: Promise<AxiosResponse<any>>[] = [];
+        for (const exposed_interface of exposed_interfaces) {
+          promises.push(axios.get(exposed_interface, {
+            timeout: 2000,
+            validateStatus: (status: number) => { return status < 500; },
+          }));
+        }
+
         if (open_browser_attempts === 300) {
           clearInterval(browser_interval);
         }
 
-        try {
-          for (const exposed_interface of exposed_interfaces) {
-            await axios.get(exposed_interface, {
-              timeout: 2000,
-              validateStatus: (status: number) => { return status < 500; },
-            });
-          }
+        Promise.all(promises).then(() => {
           for (const exposed_interface of exposed_interfaces) {
             open(exposed_interface);
           }
           clearInterval(browser_interval);
-        } catch(err) {
+        }).catch(err => {
           // at least one exposed service is not yet ready
-        }
+        });
         open_browser_attempts++;
       }, 2000);
     }
