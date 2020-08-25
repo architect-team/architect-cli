@@ -61,19 +61,48 @@ describe('Refs url_safe_ref', () => {
     expect(url_safe_ref).to.equal(expected_slug);
   });
 
-  it(`Refs.url_safe_ref cuts long string to 63 chars`, async () => {
-    const interface_slug = `this-is-a-component/that-has-more-than-63-chars:it-should-getlopped-off`;
-    const expected_slug = `this-is-a-component--that-has-more-than-63-chars--it-shou--6vemnzig`;
+  it(`Refs.url_safe_ref cuts account string to 63 chars`, async () => {
+    const slug = `this-is-an-account-name-that-has-more-than-63-chars-it-should-get-lopped-off`;
+    const abridged_slug = `this-is-an-account-name-that-has-more-than-63-chars-i--9xd8vqs2`;
 
-    const url_safe_ref = Refs.url_safe_ref(interface_slug);
-    expect(url_safe_ref).to.equal(expected_slug);
+    const url_safe_ref = Refs.url_safe_ref(slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
   });
 
-  it(`Refs.url_safe_ref cuts long string to 63 chars`, async () => {
-    const interface_slug = `this-is-a-component/that-has-more-than-63-chars:it-should-getlopped-off-interfaces`;
-    const expected_slug = `this-is-a-component--that-has-more-than-63-cha--m9gnv6yi-interfaces`;
+  it(`Refs.url_safe_ref cuts component string to 63 chars`, async () => {
+    const component_slug = `this-is-a/component-name-that-has-more-than-63-chars-it-should-get-lopped-off`;
+    const abridged_slug = `this-is-a--component-name-that-has-more-than-63-chars--62o43gic`;
 
-    const url_safe_ref = Refs.url_safe_ref(interface_slug);
-    expect(url_safe_ref).to.equal(expected_slug);
+    const url_safe_ref = Refs.url_safe_ref(component_slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
+  });
+
+  it(`Refs.url_safe_ref cuts component-version string to 63 chars`, async () => {
+    const component_version_slug = `this-is-a/component-name-that-has-more-than-63-chars-it:should-get-lopped-off`;
+    const abridged_slug = `this-is-a--component-name-that-has-more-than-63-chars--dmikixq7`;
+
+    const url_safe_ref = Refs.url_safe_ref(component_version_slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
+  });
+
+  it(`Refs.url_safe_ref cuts service string to 63 chars`, async () => {
+    const service_slug = `this-is-a/component-name-that-has-more/than-63-chars-it-should-get-lopped-off`;
+    const abridged_slug = `this-is-a--component-name-that-has-more--than-63-char--epllln75`;
+
+    const url_safe_ref = Refs.url_safe_ref(service_slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
+  });
+
+  it(`Refs.url_safe_ref cuts service-version string to 63 chars`, async () => {
+    const service_version_slug = `this-is-a/component-name-that-has-more/than-63-chars-it:should-get-lopped-off`;
+    const abridged_slug = `this-is-a--component-name-that-has-more--than-63-char--vwfgu54y`;
+
+    const url_safe_ref = Refs.url_safe_ref(service_version_slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
   });
 });
