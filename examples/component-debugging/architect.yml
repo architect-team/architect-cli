@@ -14,4 +14,4 @@ services:
           mount_path: /usr/src/app/src
 
 interfaces:
-  http: ${ services.api.interfaces.main.url }
+  http: ${{ services.api.interfaces.main.url }}

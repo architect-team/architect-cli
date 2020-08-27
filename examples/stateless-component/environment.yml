@@ -1,5 +1,5 @@
 interfaces:
-  example: ${ components['examples/stateless-component'].interfaces.frontend.url }
+  example: ${{ components['examples/stateless-component'].interfaces.frontend.url }}
 
 components:
   examples/stateless-component: file:./

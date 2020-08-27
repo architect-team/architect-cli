@@ -8,4 +8,4 @@ services:
 
 interfaces:
   echo:
-    url: ${ services.api.interfaces.main.url }
+    url: ${{ services.api.interfaces.main.url }}

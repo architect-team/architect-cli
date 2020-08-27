@@ -45,7 +45,7 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        frontend: \${ services['stateless-app'].interfaces.main.url }
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
       await ComponentConfigBuilder.buildFromPath('/architect.yml')
@@ -93,7 +93,7 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        frontend: \${ services.fake.interfaces.main.url }
+        frontend: \${{ services.fake.interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
@@ -105,7 +105,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "interpolation.services.fake.interfaces.main.url": {
-          "interpolation": "${ services.fake.interfaces.main.url } is invalid",
+          "interpolation": "${{ services.fake.interfaces.main.url }} is invalid",
           "value": "services.fake.interfaces.main.url",
           "line": 8,
           "column": 18
@@ -123,7 +123,7 @@ describe('validation spec v1', () => {
       components:
         test/component:
           parameters:
-            test2: \${ parameters.test }
+            test2: \${{ parameters.test }}
       `
       mock_fs({ '/environment.yml': env_config });
       await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
@@ -165,7 +165,7 @@ describe('validation spec v1', () => {
         api:
           interfaces:
           environment:
-            OTHER_ADDR: \${ dependencies.test/other.interfaces.fake.url }
+            OTHER_ADDR: \${{ dependencies.test/other.interfaces.fake.url }}
       dependencies:
         test/other: latest
       `
@@ -188,7 +188,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "interpolation.dependencies.test/other.interfaces.fake.url": {
-          "interpolation": "${ dependencies.test/other.interfaces.fake.url } is invalid",
+          "interpolation": "${{ dependencies.test/other.interfaces.fake.url }} is invalid",
           "value": "dependencies.test/other.interfaces.fake.url",
           "column": 24,
           "line": 8,
@@ -240,9 +240,9 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
           environment:
-            REQUIRED: \${ parameters.required }
-            REQUIRED_EXPLICIT: \${ parameters.required-explicit }
-            NOT_REQUIRED: \${ parameters.not-required }
+            REQUIRED: \${{ parameters.required }}
+            REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
+            NOT_REQUIRED: \${{ parameters.not-required }}
       interfaces:
       `
       const env_config = `
@@ -286,9 +286,9 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
           environment:
-            REQUIRED: \${ parameters.required }
-            REQUIRED_EXPLICIT: \${ parameters.required-explicit }
-            NOT_REQUIRED: \${ parameters.not-required }
+            REQUIRED: \${{ parameters.required }}
+            REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
+            NOT_REQUIRED: \${{ parameters.not-required }}
       interfaces:
       `
       const env_config = `
@@ -302,9 +302,9 @@ describe('validation spec v1', () => {
         test/component:
           extends: file:./component.yml
           parameters:
-            required: \${ parameters.required }
-            required-explicit: \${ parameters.required-explicit }
-            not-required: \${ parameters.not-required }
+            required: \${{ parameters.required }}
+            required-explicit: \${{ parameters.required-explicit }}
+            not-required: \${{ parameters.not-required }}
       `
       mock_fs({
         '/component.yml': component_config,
@@ -342,11 +342,11 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        api: \${ services.api.interfaces.main.url }
+        api: \${{ services.api.interfaces.main.url }}
       `
       const env_config = `
       interfaces:
-        public: \${ components.test/component.interfaces.api.url }
+        public: \${{ components.test/component.interfaces.api.url }}
       components:
         test/component: file:./component.yml
       `
@@ -366,11 +366,11 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        api: \${ services.api.interfaces.main.url }
+        api: \${{ services.api.interfaces.main.url }}
       `
       const env_config = `
       interfaces:
-        public: \${ components.test/component.interfaces.fake.url }
+        public: \${{ components.test/component.interfaces.fake.url }}
       components:
         test/component: file:./component.yml
       `
@@ -388,7 +388,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "interpolation.components.test/component.interfaces.fake.url": {
-          "interpolation": "${ components.test/component.interfaces.fake.url } is invalid",
+          "interpolation": "${{ components.test/component.interfaces.fake.url }} is invalid",
           "value": "components.test/component.interfaces.fake.url",
           "line": 3,
           "column": 16
@@ -399,8 +399,8 @@ describe('validation spec v1', () => {
     it('invalid vault ref', async () => {
       const env_config = `
       parameters:
-        invalid: \${ vaults.invalid.some_key }
-        valid: \${ vaults.valid.some_key }
+        invalid: \${{ vaults.invalid.some_key }}
+        valid: \${{ vaults.valid.some_key }}
       vaults:
         valid: {}
       `
@@ -417,7 +417,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         'interpolation.vaults.invalid.some_key': {
-          'interpolation': '${ vaults.invalid.some_key } is invalid',
+          'interpolation': '${{ vaults.invalid.some_key }} is invalid',
           'value': 'vaults.invalid.some_key',
           'line': 3,
           'column': 17,
@@ -433,11 +433,11 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        api: \${ services.api.interfaces.main.url }
+        api: \${{ services.api.interfaces.main.url }}
       `
       const env_config = `
       interfaces:
-        public: \${ components['test/component:v1.0'].interfaces.api.url }
+        public: \${{ components['test/component:v1.0'].interfaces.api.url }}
       components:
         test/component:v1.0: file:./component.yml
       `
@@ -457,11 +457,11 @@ describe('validation spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        api: \${ services.api.interfaces.main.url }
+        api: \${{ services.api.interfaces.main.url }}
       `
       const env_config = `
       interfaces:
-        public: \${ components['test/component:v2.0'].interfaces.main.url }
+        public: \${{ components['test/component:v2.0'].interfaces.main.url }}
       components:
         test/component:v1.0: file:./component.yml
       `
@@ -479,7 +479,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "interpolation.components.test/component:v2.0.interfaces.main.url": {
-          "interpolation": "${ components.test/component:v2.0.interfaces.main.url } is invalid",
+          "interpolation": "${{ components.test/component:v2.0.interfaces.main.url }} is invalid",
           "value": "components.test/component:v2.0.interfaces.main.url",
           "line": 3,
           "column": 16

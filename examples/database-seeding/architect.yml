@@ -14,12 +14,12 @@ services:
     interfaces:
       main: 3000
     environment:
-      DATABASE_HOST: ${ services.my-demo-db.interfaces.postgres.host }
-      DATABASE_PORT: ${ services.my-demo-db.interfaces.postgres.port }
-      DATABASE_USER: ${ services.my-demo-db.environment.POSTGRES_USER }
-      DATABASE_PASSWORD: ${ services.my-demo-db.environment.POSTGRES_PASSWORD }
-      DATABASE_SCHEMA: ${ services.my-demo-db.environment.POSTGRES_DB }
-      AUTO_DDL: ${ parameters.AUTO_DDL }
+      DATABASE_HOST: ${{ services.my-demo-db.interfaces.postgres.host }}
+      DATABASE_PORT: ${{ services.my-demo-db.interfaces.postgres.port }}
+      DATABASE_USER: ${{ services.my-demo-db.environment.POSTGRES_USER }}
+      DATABASE_PASSWORD: ${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}
+      DATABASE_SCHEMA: ${{ services.my-demo-db.environment.POSTGRES_DB }}
+      AUTO_DDL: ${{ parameters.AUTO_DDL }}
 
   my-demo-db:
     image: postgres:11
@@ -33,4 +33,4 @@ services:
 interfaces:
   main:
     description: Exposes the app to upstream traffic
-    url: ${ services.app.interfaces.main.url }
+    url: ${{ services.app.interfaces.main.url }}

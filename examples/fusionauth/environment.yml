@@ -1,6 +1,6 @@
 interfaces:
-  auth: ${ components['architect/fusionauth'].interfaces.http.url }
-  mgmt: ${ components['architect/fusionauth'].interfaces.mgmt.url }
+  auth: ${{ components['architect/fusionauth'].interfaces.http.url }}
+  mgmt: ${{ components['architect/fusionauth'].interfaces.mgmt.url }}
 
 components:
   architect/fusionauth:

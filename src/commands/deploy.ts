@@ -350,7 +350,7 @@ export default class Deploy extends DeployCommand {
 
   updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
     for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${components['${component_name}'].interfaces.${interface_name}.url}`);
+      env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
     }
   }
 
