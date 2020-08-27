@@ -1,4 +1,4 @@
-name: ryan-cahill-a0/hello-world
+name: examples/hello-world
 
 services:
   api:
