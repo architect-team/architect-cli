@@ -41,11 +41,11 @@ describe('config spec v1', () => {
           interfaces:
             main: 8080
       interfaces:
-        frontend: \${ services['stateless-app'].interfaces.main.url }
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
     const environment_yml = `
       interfaces:
-        frontend: \${ components.test/component.interfaces.frontend.url }
+        frontend: \${{ components.test/component.interfaces.frontend.url }}
       components:
         test/component: file:./architect.yml
       `
@@ -65,7 +65,7 @@ describe('config spec v1', () => {
         }
       },
       "interfaces": {
-        "frontend": "${ services['stateless-app'].interfaces.main.url }"
+        "frontend": "${{ services['stateless-app'].interfaces.main.url }}"
       }
     })
 
@@ -73,7 +73,7 @@ describe('config spec v1', () => {
     console.log(JSON.stringify(env_config, null, 2))
     expect(env_config).to.deep.eq({
       "interfaces": {
-        "frontend": "${ components.test/component.interfaces.frontend.url }"
+        "frontend": "${{ components.test/component.interfaces.frontend.url }}"
       },
       "components": {
         "test/component": {

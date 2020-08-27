@@ -46,7 +46,7 @@ describe('interpolation spec v1', () => {
     const web_component_config = {
       name: 'concourse/web',
       interfaces: {
-        main: '${ services.web.interfaces.main.url }'
+        main: '${{ services.web.interfaces.main.url }}'
       },
       services: {
         web: {
@@ -59,9 +59,9 @@ describe('interpolation spec v1', () => {
     const worker_component_config = {
       name: 'concourse/worker',
       parameters: {
-        regular: "${ dependencies.concourse/web.interfaces.main.host }:2222",
-        single_quote: "${ dependencies['concourse/web'].interfaces.main.host }:2222",
-        double_quote: '${ dependencies["concourse/web"].interfaces.main.host }:2222'
+        regular: '${{ dependencies.concourse/web.interfaces.main.host }}:2222',
+        single_quote: "${{ dependencies['concourse/web'].interfaces.main.host }}:2222",
+        double_quote: '${{ dependencies["concourse/web"].interfaces.main.host }}:2222'
       },
       dependencies: {
         'concourse/web': 'latest'
@@ -69,9 +69,9 @@ describe('interpolation spec v1', () => {
       services: {
         worker: {
           environment: {
-            REGULAR: '${ parameters.regular }',
-            SINGLE_QUOTE: '${ parameters.single_quote }',
-            DOUBLE_QUOTE: '${ parameters.double_quote }',
+            REGULAR: '${{ parameters.regular }}',
+            SINGLE_QUOTE: '${{ parameters.single_quote }}',
+            DOUBLE_QUOTE: '${{ parameters.double_quote }}',
           },
           interfaces: {}
         }
@@ -93,7 +93,7 @@ describe('interpolation spec v1', () => {
     const public_env_config = {
       ...env_config,
       interfaces: {
-        public: '${ components.concourse/web:latest.interfaces.main.url }'
+        public: '${{ components.concourse/web:latest.interfaces.main.url }}'
       }
     }
 
@@ -200,7 +200,7 @@ describe('interpolation spec v1', () => {
     const component_config = {
       name: 'test/component',
       interfaces: {
-        main: '${ services.web.interfaces.main.url }'
+        main: '${{ services.web.interfaces.main.url }}'
       },
       parameters: {
         log_level: 'debug'
@@ -225,7 +225,7 @@ describe('interpolation spec v1', () => {
       }
     };
 
-    const properties = 'log_level=${ parameters.log_level }'
+    const properties = 'log_level=${{ parameters.log_level }}'
 
     mock_fs({
       '/stack/web/application.properties': properties,
@@ -256,10 +256,10 @@ describe('interpolation spec v1', () => {
             main: 8080
           },
           environment: {
-            AUTH0_SECRET_ID: '${ parameters.auth0_secret_id }',
-            JSON: '${ parameters.json }',
-            SINGLE_QUOTE: '${ parameters.single_quote }',
-            DOUBLE_QUOTE: '${ parameters.double_quote }',
+            AUTH0_SECRET_ID: '${{ parameters.auth0_secret_id }}',
+            JSON: '${{ parameters.json }}',
+            SINGLE_QUOTE: '${{ parameters.single_quote }}',
+            DOUBLE_QUOTE: '${{ parameters.double_quote }}',
           }
         }
       },
@@ -268,16 +268,16 @@ describe('interpolation spec v1', () => {
 
     const env_config = {
       parameters: {
-        cloud_auth0_secret_id: '${ vaults.local_vault.secrets/keys#auth0_secret_id }',
+        cloud_auth0_secret_id: '${{ vaults.local_vault.secrets/keys#auth0_secret_id }}',
       },
       components: {
         'architect/cloud': {
           extends: 'file:.',
           parameters: {
-            auth0_secret_id: '${ parameters.cloud_auth0_secret_id }',
-            single_quote: "${ vaults.local_vault['secrets/keys#single_quote'] }",
-            double_quote: '${ vaults.local_vault["secrets/keys#double_quote"] }',
-            json: '${ vaults.local_vault.secrets/keys#json }',
+            auth0_secret_id: '${{ parameters.cloud_auth0_secret_id }}',
+            single_quote: "${{ vaults.local_vault['secrets/keys#single_quote'] }}",
+            double_quote: '${{ vaults.local_vault["secrets/keys#double_quote"] }}',
+            json: '${{ vaults.local_vault.secrets/keys#json }}',
           }
         }
       },

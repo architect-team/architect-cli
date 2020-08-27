@@ -58,10 +58,10 @@ describe('interfaces spec v1', () => {
               main: 8080
             },
             environment: {
-              DB_PROTOCOL: '${ services.db.interfaces.postgres.protocol }',
-              DB_HOST: '${ services.db.interfaces.postgres.host }',
-              DB_PORT: '${ services.db.interfaces.postgres.port }',
-              DB_URL: '${ services.db.interfaces.postgres.url }',
+              DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
+              DB_HOST: '${{ services.db.interfaces.postgres.host }}',
+              DB_PORT: '${{ services.db.interfaces.postgres.port }}',
+              DB_URL: '${{ services.db.interfaces.postgres.url }}',
             },
           },
         },
@@ -78,10 +78,10 @@ describe('interfaces spec v1', () => {
             image: 'branch:latest',
             interfaces: {},
             environment: {
-              LEAF_PROTOCOL: '${ dependencies.test/leaf.interfaces.api.protocol }',
-              LEAF_HOST: '${ dependencies.test/leaf.interfaces.api.host }',
-              LEAF_PORT: '${ dependencies.test/leaf.interfaces.api.port }',
-              LEAF_URL: '${ dependencies.test/leaf.interfaces.api.url }',
+              LEAF_PROTOCOL: '${{ dependencies.test/leaf.interfaces.api.protocol }}',
+              LEAF_HOST: '${{ dependencies.test/leaf.interfaces.api.host }}',
+              LEAF_PORT: '${{ dependencies.test/leaf.interfaces.api.port }}',
+              LEAF_URL: '${{ dependencies.test/leaf.interfaces.api.url }}',
             },
           },
         },
@@ -129,7 +129,7 @@ describe('interfaces spec v1', () => {
     it('should connect services to dependency interfaces', async () => {
       leaf_component.interfaces = {
         api: {
-          url: '${ services.api.interfaces.main.url }',
+          url: '${{ services.api.interfaces.main.url }}',
         }
       };
 
@@ -174,7 +174,7 @@ describe('interfaces spec v1', () => {
 
     it('should expose environment interfaces via a gateway', async () => {
       leaf_component.interfaces = {
-        api: '${ services.api.interfaces.main.url }',
+        api: '${{ services.api.interfaces.main.url }}',
       };
 
       mock_fs({
@@ -182,8 +182,8 @@ describe('interfaces spec v1', () => {
         '/stack/branch/architect.json': JSON.stringify(branch_component),
         '/stack/environment.json': JSON.stringify({
           interfaces: {
-            public: '${ components["test/leaf"].interfaces.api.url }',
-            publicv1: '${ components["test/leaf:v1.0"].interfaces.api.url }'
+            public: '${{ components["test/leaf"].interfaces.api.url }}',
+            publicv1: '${{ components["test/leaf:v1.0"].interfaces.api.url }}'
           },
           components: {
             'test/branch': 'file:/stack/branch/',
@@ -336,15 +336,15 @@ describe('interfaces spec v1', () => {
         },
       },
       interfaces: {
-        app: '${ services.api.interfaces.main.url }',
-        admin: '${ services.api.interfaces.admin.url }'
+        app: '${{ services.api.interfaces.main.url }}',
+        admin: '${{ services.api.interfaces.admin.url }}'
       }
     };
 
     const env_config = {
       interfaces: {
-        app: '${ components.architect/cloud.interfaces.app.url }',
-        admin: '${ components.architect/cloud.interfaces.admin.url }'
+        app: '${{ components.architect/cloud.interfaces.app.url }}',
+        admin: '${{ components.architect/cloud.interfaces.admin.url }}'
       },
       components: {
         'architect/cloud': {
