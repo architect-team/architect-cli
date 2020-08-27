@@ -1,8 +1,8 @@
 name: examples/echo
-# description: A simple echo http service
-# keywords:
-#   - architect-examples
-#   - echo
+description: A simple echo http service
+keywords:
+  - architect-examples
+  - echo
 
 parameters:
   ECHO_TEXT:
@@ -11,11 +11,11 @@ parameters:
 services:
   echo-api:
     image: hashicorp/http-echo:latest
-    command: ['-listen=:8080', '-text=${ parameters.ECHO_TEXT }']
+    command: ['-listen=:8080', '-text=${{ parameters.ECHO_TEXT }}']
     interfaces:
       http: 8080
 
 interfaces:
   echo:
     description: Serves traffic for the echo service
-    url: ${ services.echo-api.interfaces.http.url }
+    url: ${{ services.echo-api.interfaces.http.url }}

@@ -2,8 +2,8 @@ name: architect/fusionauth
 author: Architect.io
 
 interfaces:
-  http: ${ services.fusionapi.interfaces.http.url }
-  mgmt: ${ services.fusionapi.interfaces.mgmt.url }
+  http: ${{ services.fusionapi.interfaces.http.url }}
+  mgmt: ${{ services.fusionapi.interfaces.mgmt.url }}
 
 parameters:
   DATABASE_ROOT_USER:
@@ -41,8 +41,8 @@ services:
     language: postgresql
     image: postgres:9.6
     environment:
-      POSTGRES_USER: ${ parameters.DATABASE_USER }
-      POSTGRES_PASSWORD: ${ parameters.DATABASE_PASSWORD }
+      POSTGRES_USER: ${{ parameters.DATABASE_USER }}
+      POSTGRES_PASSWORD: ${{ parameters.DATABASE_PASSWORD }}
       POSTGRES_DB: fusionauth
     interfaces:
       main:
@@ -54,20 +54,20 @@ services:
     language: java
     image: fusionauth/fusionauth-app:latest
     environment:
-      DATABASE_URL: jdbc:${ services.db.interfaces.main.url }/${ services.db.environment.POSTGRES_DB }
-      DATABASE_ROOT_USER: ${ parameters.DATABASE_ROOT_USER }
-      DATABASE_ROOT_PASSWORD: ${ parameters.DATABASE_ROOT_PASSWORD }
-      DATABASE_USER: ${ services.db.environment.POSTGRES_USER }
-      DATABASE_PASSWORD: ${ services.db.environment.POSTGRES_PASSWORD }
-      FUSIONAUTH_ADDITIONAL_JAVA_ARGS: ${ parameters.FUSIONAUTH_ADDITIONAL_JAVA_ARGS }
-      FUSIONAUTH_AJP_PORT: ${ services.fusionapi.interfaces.ajp.port }
-      FUSIONAUTH_COOKIE_SAME_SITE_POLICY: ${ parameters.FUSIONAUTH_COOKIE_SAME_SITE_POLICY }
-      FUSIONAUTH_HTTP_PORT: ${ services.fusionapi.interfaces.http.port }
-      FUSIONAUTH_HTTPS_PORT: ${ services.fusionapi.interfaces.https.port }
-      FUSIONAUTH_MEMORY: ${ parameters.FUSIONAUTH_MEMORY }
-      FUSIONAUTH_MANAGEMENT_PORT: ${ services.fusionapi.interfaces.mgmt.port }
-      FUSIONAUTH_RUNTIME_MODE: ${ parameters.FUSIONAUTH_RUNTIME_MODE }
-      FUSIONAUTH_SEARCH_ENGINE_TYPE: ${ parameters.FUSIONAUTH_SEARCH_ENGINE_TYPE }
+      DATABASE_URL: jdbc:${{ services.db.interfaces.main.url }}/${{ services.db.environment.POSTGRES_DB }}
+      DATABASE_ROOT_USER: ${{ parameters.DATABASE_ROOT_USER }}
+      DATABASE_ROOT_PASSWORD: ${{ parameters.DATABASE_ROOT_PASSWORD }}
+      DATABASE_USER: ${{ services.db.environment.POSTGRES_USER }}
+      DATABASE_PASSWORD: ${{ services.db.environment.POSTGRES_PASSWORD }}
+      FUSIONAUTH_ADDITIONAL_JAVA_ARGS: ${{ parameters.FUSIONAUTH_ADDITIONAL_JAVA_ARGS }}
+      FUSIONAUTH_AJP_PORT: ${{ services.fusionapi.interfaces.ajp.port }}
+      FUSIONAUTH_COOKIE_SAME_SITE_POLICY: ${{ parameters.FUSIONAUTH_COOKIE_SAME_SITE_POLICY }}
+      FUSIONAUTH_HTTP_PORT: ${{ services.fusionapi.interfaces.http.port }}
+      FUSIONAUTH_HTTPS_PORT: ${{ services.fusionapi.interfaces.https.port }}
+      FUSIONAUTH_MEMORY: ${{ parameters.FUSIONAUTH_MEMORY }}
+      FUSIONAUTH_MANAGEMENT_PORT: ${{ services.fusionapi.interfaces.mgmt.port }}
+      FUSIONAUTH_RUNTIME_MODE: ${{ parameters.FUSIONAUTH_RUNTIME_MODE }}
+      FUSIONAUTH_SEARCH_ENGINE_TYPE: ${{ parameters.FUSIONAUTH_SEARCH_ENGINE_TYPE }}
     interfaces:
       mgmt: 9010
       http: 9011

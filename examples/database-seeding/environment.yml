@@ -1,5 +1,5 @@
 interfaces:
-  app: ${ components['examples/database-seeding'].interfaces.main.url }
+  app: ${{ components['examples/database-seeding'].interfaces.main.url }}
 
 components:
   examples/database-seeding:

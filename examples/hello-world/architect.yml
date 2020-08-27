@@ -1,4 +1,4 @@
-name: examples/hello-world
+name: ryan-cahill-a0/hello-world
 
 services:
   api:
@@ -8,4 +8,4 @@ services:
 
 interfaces:
   echo:
-    url: ${ services.api.interfaces.main.url }
+    url: ${{ services.api.interfaces.main.url }}
