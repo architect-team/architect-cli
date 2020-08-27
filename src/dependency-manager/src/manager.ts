@@ -265,7 +265,7 @@ export default abstract class DependencyManager {
     return validation_errors;
   }
 
-  // Aggresive replacement to support periods in environment component keys. ex. `${ components['concourse:6.1'].interfaces.web.url }
+  // Aggresive replacement to support periods in environment component keys. ex. `${{ components['concourse:6.1'].interfaces.web.url }}
   normalizeEnvironmentComponents(environment: EnvironmentConfig): EnvironmentConfig {
     const env_component_keys = Object.keys(environment.getComponents());
 
@@ -294,7 +294,7 @@ export default abstract class DependencyManager {
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
     environment = this.normalizeEnvironmentComponents(environment);
 
-    // Merge in loaded environment components for interpolation `ex. ${ components.concourse/ci.interfaces.web }
+    // Merge in loaded environment components for interpolation `ex. ${{ components.concourse/ci.interfaces.web }}
     const environment_components: Dictionary<ComponentConfig> = {};
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     const normalized_component_refs = [];
@@ -358,7 +358,7 @@ export default abstract class DependencyManager {
       }
     }
     // Set contexts for all component dependencies (Important to show correct interpolation errors)
-    // Ex. ${ dependencies.api.interfaces.invalid }
+    // Ex. ${{ dependencies.api.interfaces.invalid }}
     for (const component of components) {
       const normalized_ref = normalizeInterpolation(component.getRef());
       for (const [dep_key, dep_tag] of Object.entries(component.getDependencies())) {
