@@ -110,7 +110,7 @@ export const validateInterpolation = (param_value: string, context: any, ignore_
         interpolation_error.value = e;
         interpolation_error.children = [];
         interpolation_error.constraints = {
-          'interpolation': `\${ ${e} } is invalid`,
+          'interpolation': `\${{ ${e} }} is invalid`,
         };
         validation_error.children.push(interpolation_error);
       }

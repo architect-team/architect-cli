@@ -20,11 +20,11 @@ export const denormalizeInterpolation = (value: string) => {
 
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
-${ dependencies['architect/cloud'].services } -> ${ dependencies.architect/cloud.services }
-${ dependencies["architect/cloud"].services } -> ${ dependencies.architect/cloud.services }
+${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}
+${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cloud.services }}
 */
 export const replaceBrackets = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
+  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
   let matches;
   let res = value;
   while ((matches = mustache_regex.exec(value)) != null) {
@@ -35,7 +35,7 @@ export const replaceBrackets = (value: string) => {
 };
 
 export const prefixExpressions = (value: string, prefix: string) => {
-  const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\s*}`, 'g');
+  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
   let matches;
   let res = value;
   while ((matches = mustache_regex.exec(value)) != null) {
@@ -46,7 +46,7 @@ export const prefixExpressions = (value: string, prefix: string) => {
 };
 
 export const removePrefixForExpressions = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${\\s*(.*?)\\s*}`, 'g');
+  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
   let matches;
   let res = value;
   while ((matches = mustache_regex.exec(value)) != null) {
@@ -77,7 +77,7 @@ export const escapeJSON = (value: any) => {
 Mustache.escape = function (text) {
   return escapeJSON(text);
 }; // turns off HTML escaping
-Mustache.tags = ['${', '}']; // sets custom delimiters
+Mustache.tags = ['${{', '}}']; // sets custom delimiters
 
 export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const writer = new Writer();
@@ -121,7 +121,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
     return result;
   };
 
-  const mustache_regex = new RegExp(`\\\${(.*?)}`, 'g');
+  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
   let depth = 0;
   while (depth < max_depth) {
     param_value = replaceBrackets(param_value);

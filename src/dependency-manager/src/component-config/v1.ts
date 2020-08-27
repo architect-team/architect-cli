@@ -77,13 +77,13 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
       let host, port, protocol;
       let url = value instanceof Object ? value.url : value;
 
-      const url_regex = new RegExp(`\\\${\\s*(.*?)\\.url\\s*}`, 'g');
+      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
       const matches = url_regex.exec(url);
       if (matches) {
-        host = `\${ ${matches[1]}.host }`;
-        port = `\${ ${matches[1]}.port }`;
-        protocol = `\${ ${matches[1]}.protocol }`;
-        url = `\${ ${matches[1]}.protocol }://\${ ${matches[1]}.host }:\${ ${matches[1]}.port }`;
+        host = `\${{ ${matches[1]}.host }}`;
+        port = `\${{ ${matches[1]}.port }}`;
+        protocol = `\${{ ${matches[1]}.protocol }}`;
+        url = `\${{ ${matches[1]}.protocol }}://\${{ ${matches[1]}.host }}:\${{ ${matches[1]}.port }}`;
 
         output[key] = plainToClass(InterfaceSpecV1, {
           host,
