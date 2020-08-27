@@ -70,7 +70,6 @@ describe('config spec v1', () => {
     })
 
     const env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml');
-    console.log(JSON.stringify(env_config, null, 2))
     expect(env_config).to.deep.eq({
       "interfaces": {
         "frontend": "${{ components.test/component.interfaces.frontend.url }}"
