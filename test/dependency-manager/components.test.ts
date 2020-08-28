@@ -159,7 +159,7 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              LOG_LEVEL: '${ parameters.log_level }'
+              LOG_LEVEL: '${{ parameters.log_level }}'
             }
           }
         }
@@ -204,7 +204,7 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              API_ADDR: '${ services.api.interfaces.main.url }'
+              API_ADDR: '${{ services.api.interfaces.main.url }}'
             }
           },
           api: {
@@ -212,7 +212,7 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              DB_ADDR: '${ services.db.interfaces.main.url }'
+              DB_ADDR: '${{ services.db.interfaces.main.url }}'
             }
           },
           db: {
@@ -314,7 +314,7 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              CONCOURSE_ADDR: '${ dependencies.concourse/ci.interfaces.web.url }'
+              CONCOURSE_ADDR: '${{ dependencies.concourse/ci.interfaces.web.url }}'
             }
           }
         },
@@ -337,12 +337,12 @@ describe('components spec v1', function () {
             interfaces: {},
             image: 'concourse/concourse:6.2',
             environment: {
-              CONCOURSE_TSA_HOST: '${ services.web.interfaces.main.host }'
+              CONCOURSE_TSA_HOST: '${{ services.web.interfaces.main.host }}'
             }
           }
         },
         interfaces: {
-          web: '${ services.web.interfaces.main.url }'
+          web: '${{ services.web.interfaces.main.url }}'
         }
       }
 

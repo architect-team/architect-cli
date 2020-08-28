@@ -2,8 +2,8 @@ name: examples/react-app
 author: Architect.io
 
 interfaces:
-  app: ${ services.app.interfaces.main.url }
-  api: ${ services.api.interfaces.main.url }
+  app: ${{ services.app.interfaces.main.url }}
+  api: ${{ services.api.interfaces.main.url }}
 
 parameters:
   world_text:
@@ -19,10 +19,10 @@ services:
     interfaces:
       main: 8080
     environment:
-      INTERNAL_HOST: ${ services.app.interfaces.main.host }
-      INTERNAL_PORT: ${ services.app.interfaces.main.port }
-      API_ADDR: ${ interfaces.api.url }
-      WORLD_TEXT: ${ parameters.world_text }
+      INTERNAL_HOST: ${{ services.app.interfaces.main.host }}
+      INTERNAL_PORT: ${{ services.app.interfaces.main.port }}
+      API_ADDR: ${{ interfaces.api.url }}
+      WORLD_TEXT: ${{ parameters.world_text }}
     debug:
       build:
         dockerfile: Dockerfile.dev
@@ -48,13 +48,13 @@ services:
     interfaces:
       main: 8080
     environment:
-      INTERNAL_HOST: ${ services.api.interfaces.main.host }
-      INTERNAL_PORT: ${ services.api.interfaces.main.port }
-      POSTGRES_HOST: ${ services.api-db.interfaces.postgres.host }
-      POSTGRES_PORT: ${ services.api-db.interfaces.postgres.port }
-      POSTGRES_USER: ${ services.api-db.environment.POSTGRES_USER }
-      POSTGRES_PASSWORD: ${ services.api-db.environment.POSTGRES_PASSWORD }
-      POSTGRES_DB: ${ services.api-db.environment.POSTGRES_DB }
+      INTERNAL_HOST: ${{ services.api.interfaces.main.host }}
+      INTERNAL_PORT: ${{ services.api.interfaces.main.port }}
+      POSTGRES_HOST: ${{ services.api-db.interfaces.postgres.host }}
+      POSTGRES_PORT: ${{ services.api-db.interfaces.postgres.port }}
+      POSTGRES_USER: ${{ services.api-db.environment.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ services.api-db.environment.POSTGRES_PASSWORD }}
+      POSTGRES_DB: ${{ services.api-db.environment.POSTGRES_DB }}
     debug:
       build:
         dockerfile: Dockerfile.dev

@@ -1,5 +1,5 @@
 interfaces:
-  auth: ${ components['architect/fusionauth'].interfaces.http.url }
+  auth: ${{ components['architect/fusionauth'].interfaces.http.url }}
 
 components:
   architect/fusionauth:

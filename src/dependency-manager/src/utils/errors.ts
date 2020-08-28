@@ -49,7 +49,7 @@ export const flattenValidationErrorsWithLineNumbers = (errors: ValidationError[]
   const res = flattenValidationErrors(errors);
   for (const [error_key, error_obj] of Object.entries(res)) {
     if (error_key.startsWith('interpolation')) {
-      const regex = RegExp(`\\\${\\s*${error_obj.value}\\s*}`, 'gs');
+      const regex = RegExp(`\\\${{\\s*${error_obj.value}\\s*}}`, 'gs');
       const matches = regex.exec(file_contents);
       if (matches) {
         const index = file_contents.indexOf(matches[0]);

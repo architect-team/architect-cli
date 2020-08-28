@@ -23,10 +23,10 @@ services:
     interfaces:
       http: 8080
     environment:
-      LOG_LEVEL: ${ parameters.LOG_LEVEL }
-      ECHO_ADDR: ${ dependencies['examples/echo'].interfaces.echo.url }
+      LOG_LEVEL: ${{ parameters.LOG_LEVEL }}
+      ECHO_ADDR: ${{ dependencies['examples/echo'].interfaces.echo.url }}
 
 interfaces:
   frontend:
     description: Exposes the app to upstream traffic
-    url: ${ services.stateless-app.interfaces.http.url }
+    url: ${{ services.stateless-app.interfaces.http.url }}

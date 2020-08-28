@@ -95,8 +95,8 @@ describe('external interfaces spec v1', () => {
             main: 8080
           },
           environment: {
-            API_ADDR: '${ services.api.interfaces.main.url }',
-            EXTERNAL_API_ADDR: '${ services.api.interfaces.main.url }'
+            API_ADDR: '${{ services.api.interfaces.main.url }}',
+            EXTERNAL_API_ADDR: '${{ services.api.interfaces.main.url }}'
           }
         },
         api: {

@@ -1,9 +1,9 @@
 name: examples/stateful-component
-# description: |
-#   Component built from Architect's stateful component guide (https://architect.io/docs/guides/stateful-component)
-# keywords:
-#   - architect-examples
-#   - stateful
+description: |
+  Component built from Architect's stateful component guide (https://architect.io/docs/guides/stateful-component)
+keywords:
+  - architect-examples
+  - stateful
 
 parameters:
   DB_USER:
@@ -24,25 +24,25 @@ services:
         port: 5432
         protocol: postgresql
     environment:
-      POSTGRES_USER: ${ parameters.DB_USER }
-      POSTGRES_PASSWORD: ${ parameters.DB_PASS }
-      POSTGRES_DB: ${ parameters.DB_NAME }
+      POSTGRES_USER: ${{ parameters.DB_USER }}
+      POSTGRES_PASSWORD: ${{ parameters.DB_PASS }}
+      POSTGRES_DB: ${{ parameters.DB_NAME }}
   stateful-api:
     build:
       context: ./backend
     interfaces:
       http: 8080
     environment:
-      DB_ADDR: ${ services.api-db.interfaces.postgres.url }/${ parameters.DB_NAME }
-      DB_USER: ${ parameters.DB_USER }
-      DB_PASS: ${ parameters.DB_PASS }
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.DB_NAME }}
+      DB_USER: ${{ parameters.DB_USER }}
+      DB_PASS: ${{ parameters.DB_PASS }}
   frontend:
     build:
       context: ./frontend
     interfaces:
       web: 8081
     environment:
-      API_ADDR: ${ services.stateful-api.interfaces.http.url }
+      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
 interfaces:
-  frontend: ${ services.frontend.interfaces.web.url }
+  frontend: ${{ services.frontend.interfaces.web.url }}
