@@ -1,4 +1,5 @@
 import { AuthenticationClient } from 'auth0';
+import { AxiosInstance } from 'axios';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
 import { Auth0Shim } from './auth0_shim';
@@ -23,16 +24,21 @@ export default class AuthClient {
   auth_results?: AuthResults;
   callback_server: CallbackServer;
   auth0_transaction: any;
+  architect_api: AxiosInstance;
 
   public static AUDIENCE = 'architect-hub-api';
   public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, auth0: AuthenticationClient) {
+  constructor(config: AppConfig, architect_api: AxiosInstance) {
     this.config = config;
     this.credentials = new CredentialManager(config);
-    this.auth0 = auth0;
+    this.auth0 = new AuthenticationClient({
+      domain: this.config.oauth_domain,
+      clientId: AuthClient.CLIENT_ID,
+    });
     this.callback_server = new CallbackServer();
+    this.architect_api = architect_api;
   }
 
   async init() {
@@ -66,17 +72,30 @@ export default class AuthClient {
   async login_from_cli(username: string, password: string) {
     await this.logout();
 
-    const auth0_results = await this.auth0.passwordGrant({
-      realm: 'Username-Password-Authentication',
-      username: username,
-      password: password,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore: the auth0 library is not properly typed -_-
-      audience: AuthClient.AUDIENCE,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      scope: AuthClient.SCOPE,
-    }) as AuthResults;
+    let auth0_results;
+    try {
+      // TODO make sure mfa flow error is good
+      const { data } = await this.architect_api.post('/oauth/token', { email: username, token: password });
+      auth0_results = data;
+    } catch (err) {
+      try {
+        auth0_results = await this.auth0.passwordGrant({
+          realm: 'Username-Password-Authentication',
+          username: username,
+          password: password,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+          // @ts-ignore: the auth0 library is not properly typed -_-
+          audience: AuthClient.AUDIENCE,
+          scope: AuthClient.SCOPE,
+        }) as AuthResults;
+      } catch (err) {
+        if (err.name === 'mfa_required') {
+          throw new Error('Multifactor authentication required. Use personal access tokens when in non-interactive flows.');
+        } else {
+          throw err;
+        }
+      }
+    }
 
     await this.setToken(username, auth0_results);
     const new_token = await this.dockerLogin(username);

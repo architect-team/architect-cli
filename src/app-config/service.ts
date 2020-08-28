@@ -1,4 +1,3 @@
-import { AuthenticationClient } from 'auth0';
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
@@ -32,14 +31,15 @@ export default class AppService {
       }
     }
 
-    this.auth = new AuthClient(this.config, new AuthenticationClient({
-      domain: this.config.oauth_domain,
-      clientId: AuthClient.CLIENT_ID,
-    }));
     this._api = axios.create({
       baseURL: this.config.api_host,
       timeout: 10000,
+      headers: {
+        'Cli-Version': this.version,
+      },
     });
+
+    this.auth = new AuthClient(this.config, this._api);
 
     const linkedComponentsFile = path.join(config_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     if (fs.existsSync(linkedComponentsFile)) {
@@ -92,8 +92,8 @@ export default class AppService {
     if (this.auth.auth_results) {
       const { token_type, access_token } = this.auth.auth_results;
       this._api.defaults.headers = {
+        ...this._api.defaults.headers,
         Authorization: `${token_type} ${access_token}`,
-        'Cli-Version': this.version,
       };
 
       const unauthorized_interceptor = this._api.interceptors.response.use(
