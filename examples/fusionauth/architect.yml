@@ -1,81 +1,77 @@
 name: architect/fusionauth
-author: Architect.io
-
-interfaces:
-  http: ${ services.fusionapi.interfaces.http.url }
-  mgmt: ${ services.fusionapi.interfaces.mgmt.url }
+description: An example fusion auth Architect component
 
 parameters:
-  DATABASE_ROOT_USER:
-    required: false
-    description: The database root user that is used to create the FusionAuth schema and FusionAuth user.
-  DATABASE_ROOT_PASSWORD:
-    required: false
-    description: The database root password that is used to create the FusionAuth schema and FusionAuth user. It is recommended to leave the value of this variable empty.
-  DATABASE_USER:
+  DB_NAME:
+    description: Name of the database containing FusionAuth tables
     default: fusionauth
-    description: The database user that will be created during configuration to own the FusionAuth schema and to connect to the database at FusionAuth runtime.
-  DATABASE_PASSWORD:
-    default: fusionauth
-    description: The database password that will be created during configuration to own the FusionAuth schema and to connect to the database at FusionAuth runtime.
-  FUSIONAUTH_ADDITIONAL_JAVA_ARGS:
-    required: false
-    description: Any additional arguments that you want to pass to the Java VM where this service will run.
-  FUSIONAUTH_COOKIE_SAME_SITE_POLICY:
-    required: false
-    description: The value to use in the Same-Site cookie attribute for cookies set by FusionAuth. None, Lax, Strict
+  ROOT_DB_USER:
+    description: Root database user. Should only be used for running migrations.
+    default: root
+  ROOT_DB_PASS:
+    description: Root database password. Should only be used for running migrations.
+    default: secret
+  FUSIONAUTH_DB_USER:
+    description: Username used by FusionAuth to regularly access the database
+    default: ${ parameters.ROOT_DB_USER }
+  FUSIONAUTH_DB_PASS:
+    description: Username used by FusionAuth to regularly access the database
+    default: ${ parameters.ROOT_DB_PASS }
   FUSIONAUTH_MEMORY:
+    description: Memory to allocate to the FusionAuth JVM
     default: 512M
-    description: The amount of memory to allocate to Java VM where this service will run. Use the M or G suffix to denote megabytes and gigabytes respectively.
-  FUSIONAUTH_RUNTIME_MODE:
-    default: development
-    description: The FusionAuth runtime mode. The runtime mode causes some features to be modified based upon this configuration. development, production
-  FUSIONAUTH_SEARCH_ENGINE_TYPE:
-    default: database
-    description: The search engine type. When configuring the search engine type to elasticsearch, you must configure the fusionauth-app.search-servers property as well. database, elasticsearch
+  DEFAULT_API_KEY:
+    description: API key to seed with the FusionAuth instance. Used to dynamically generate oauth clients at deploy-time.
+    default: 4600268f-5408-4cb5-8298-5407703713f3
+  ADMIN_USER_EMAIL:
+    description: Email address of the default admin user
+    default: test@test.com
+  ADMIN_USER_PASSWORD:
+    description: Password for the default admin user
+    default: password
+
+interfaces:
+  app:
+    description: Exposes the fusionauth app to upstream traffic
+    url: ${ services.fusionauth.interfaces.public.url }
 
 services:
-
-  db:
-    description: Fusion Database
-    language: postgresql
+  fusionauth-db:
     image: postgres:9.6
-    environment:
-      POSTGRES_USER: ${ parameters.DATABASE_USER }
-      POSTGRES_PASSWORD: ${ parameters.DATABASE_PASSWORD }
-      POSTGRES_DB: fusionauth
     interfaces:
-      main:
-        port: 5432
+      postgres:
         protocol: postgresql
-
-  fusionapi:
-    description: Fusion API
-    language: java
-    image: fusionauth/fusionauth-app:latest
+        port: 5432
     environment:
-      DATABASE_URL: jdbc:${ services.db.interfaces.main.url }/${ services.db.environment.POSTGRES_DB }
-      DATABASE_ROOT_USER: ${ parameters.DATABASE_ROOT_USER }
-      DATABASE_ROOT_PASSWORD: ${ parameters.DATABASE_ROOT_PASSWORD }
-      DATABASE_USER: ${ services.db.environment.POSTGRES_USER }
-      DATABASE_PASSWORD: ${ services.db.environment.POSTGRES_PASSWORD }
-      FUSIONAUTH_ADDITIONAL_JAVA_ARGS: ${ parameters.FUSIONAUTH_ADDITIONAL_JAVA_ARGS }
-      FUSIONAUTH_AJP_PORT: ${ services.fusionapi.interfaces.ajp.port }
-      FUSIONAUTH_COOKIE_SAME_SITE_POLICY: ${ parameters.FUSIONAUTH_COOKIE_SAME_SITE_POLICY }
-      FUSIONAUTH_HTTP_PORT: ${ services.fusionapi.interfaces.http.port }
-      FUSIONAUTH_HTTPS_PORT: ${ services.fusionapi.interfaces.https.port }
-      FUSIONAUTH_MEMORY: ${ parameters.FUSIONAUTH_MEMORY }
-      FUSIONAUTH_MANAGEMENT_PORT: ${ services.fusionapi.interfaces.mgmt.port }
-      FUSIONAUTH_RUNTIME_MODE: ${ parameters.FUSIONAUTH_RUNTIME_MODE }
-      FUSIONAUTH_SEARCH_ENGINE_TYPE: ${ parameters.FUSIONAUTH_SEARCH_ENGINE_TYPE }
-    interfaces:
-      mgmt: 9010
-      http: 9011
-      https: 9013
-      ajp: 9019
-      searchtcp: 9020
-      search: 9021
-    volumes:
-      config:
-        mount_path: /usr/local/fusionauth/config
+      POSTGRES_USER: ${ parameters.ROOT_DB_USER }
+      POSTGRES_PASSWORD: ${ parameters.ROOT_DB_PASS }
+      POSTGRES_DB: ${ parameters.DB_NAME }
 
+  fusionauth:
+    image: fusionauth/fusionauth-app:latest
+    interfaces:
+      public: 9011
+    environment:
+      DATABASE_URL: jdbc:${ services.fusionauth-db.interfaces.postgres.url }/${ parameters.DB_NAME }
+      DATABASE_ROOT_USER: ${ parameters.ROOT_DB_USER }
+      DATABASE_ROOT_PASSWORD: ${ parameters.ROOT_DB_PASS }
+      DATABASE_USER: ${ parameters.FUSIONAUTH_DB_USER }
+      DATABASE_PASSWORD: ${ parameters.FUSIONAUTH_DB_PASS }
+      FUSIONAUTH_MEMORY: ${ parameters.FUSIONAUTH_MEMORY }
+      FUSIONAUTH_SEARCH_ENGINE_TYPE: database
+      FUSIONAUTH_URL: ${ interfaces.app.url }
+      FUSIONAUTH_RUNTIME_MODE: development
+      FUSIONAUTH_API_KEY: ${ parameters.DEFAULT_API_KEY }
+      ADMIN_USER_EMAIL: ${ parameters.ADMIN_USER_EMAIL }
+      ADMIN_USER_PASSWORD: ${ parameters.ADMIN_USER_PASSWORD }
+      KICKSTART_CONTENTS: file:./config/kickstart.json
+      FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
+    command:
+      - sh
+      - -c
+      - |
+        echo "$$KICKSTART_CONTENTS" > $$FUSIONAUTH_KICKSTART
+        chmod 755 $$FUSIONAUTH_KICKSTART
+        whoami
+        ls -l /usr/local/fusionauth
+        /usr/local/fusionauth/fusionauth-app/apache-tomcat/bin/catalina.sh run
