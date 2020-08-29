@@ -1,5 +1,5 @@
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
-import { ParameterValue } from '..';
+import { InterfaceSpec, ParameterValue } from '..';
 import { ComponentConfig } from '../component-config/base';
 import { ComponentConfigBuilder } from '../component-config/builder';
 import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component-config/v1';
@@ -39,6 +39,7 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
 };
 
 interface EnvironmentContextV1 {
+  interfaces: Dictionary<InterfaceSpec>;
   parameters: Dictionary<ParameterValue>;
   components: Dictionary<ComponentContextV1>;
 }
@@ -130,6 +131,11 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getContext(): EnvironmentContextV1 {
+    const interfaces: Dictionary<InterfaceSpec> = {};
+    for (const [ik, iv] of Object.entries(this.getInterfaces())) {
+      interfaces[ik] = iv;
+    }
+
     const parameters: Dictionary<ParameterValue> = {};
     for (const [pk, pv] of Object.entries(this.getParameters())) {
       parameters[pk] = pv.default === undefined ? '' : pv.default;
@@ -142,6 +148,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     }
 
     return {
+      interfaces,
       parameters,
       components,
     };

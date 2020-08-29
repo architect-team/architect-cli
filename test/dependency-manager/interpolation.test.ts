@@ -196,6 +196,73 @@ describe('interpolation spec v1', () => {
     })
   });
 
+  it('interpolation interfaces', async () => {
+    const backend_config = `
+    name: examples/backend
+    interfaces:
+      main: \${{ services.api.interfaces.api.url }}
+    services:
+      api:
+        interfaces:
+          api: 8081
+        environment:
+          INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
+          EXTERNAL_HOST: \${{ interfaces.main.url }}
+    `
+    const frontend_config = `
+    name: examples/frontend
+    parameters:
+      external_api_host:
+      external_api_host2:
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app: 8080
+        environment:
+          EXTERNAL_API_HOST: \${{ parameters.external_api_host }}
+          EXTERNAL_API_HOST2: \${{ parameters.external_api_host2 }}
+          EXTERNAL_API_HOST3: \${{ dependencies.examples/backend.interfaces.main.url }}
+    `
+    const env_config = `
+    interfaces:
+      backend: \${{ components.examples/backend.interfaces.main.url }}
+    components:
+      examples/backend: file:./backend/architect.yml
+      examples/frontend:
+        extends: file:./frontend/architect.yml
+        parameters:
+          external_api_host: \${{ interfaces.backend.url }}
+          external_api_host2: \${{ components.examples/backend.interfaces.main.url }}
+    `
+
+    mock_fs({
+      '/backend/architect.yml': backend_config,
+      '/frontend/architect.yml': frontend_config,
+      '/environment.yml': env_config
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+    const graph = await manager.getGraph();
+    const backend_external_url = 'http://backend.localhost:80'
+    const backend_ref = 'examples/backend/api:latest';
+    const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
+    expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      INTERNAL_HOST: `http://${Refs.url_safe_ref(backend_ref)}:8081`,
+      EXTERNAL_HOST: backend_external_url
+    })
+    const frontend_ref = 'examples/frontend/app:latest';
+    const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
+    expect(frontend_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      EXTERNAL_API_HOST: backend_external_url,
+      EXTERNAL_API_HOST2: backend_external_url,
+      EXTERNAL_API_HOST3: backend_external_url
+    })
+  });
+
   it('interpolation environment file:', async () => {
     const component_config = {
       name: 'test/component',

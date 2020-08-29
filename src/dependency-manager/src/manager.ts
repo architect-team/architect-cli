@@ -294,13 +294,37 @@ export default abstract class DependencyManager {
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>): Promise<EnvironmentConfig> {
     environment = this.normalizeEnvironmentComponents(environment);
 
+    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
+    for (const component of Object.values(environment.getComponents())) {
+      component_interfaces_ref_map[component.getInterfacesRef()] = component_map[component.getRef()];
+    }
+
+    // Inject external host/port/protocol for exposed interfaces
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      const component = component_interfaces_ref_map[edge.to];
+      if (!component) continue;
+
+      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
+        if (!component.getInterfaces()[interface_name]) {
+          component.getInterfaces()[interface_name] = { port: this.gateway_port.toString() };
+        }
+        const inter = component.getInterfaces()[interface_name];
+        if (!inter) { continue; }
+
+        inter.host = `${env_interface}.${this.toExternalHost()}`;
+        inter.port = this.gateway_port.toString();
+        inter.protocol = this.toExternalProtocol();
+        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+
+        component.setInterface(interface_name, inter);
+      }
+    }
+
     // Merge in loaded environment components for interpolation `ex. ${{ components.concourse/ci.interfaces.web }}
     const environment_components: Dictionary<ComponentConfig> = {};
-    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     const normalized_component_refs = [];
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       environment_components[component_name] = component_map[component.getRef()];
-      component_interfaces_ref_map[environment_components[component_name].getInterfacesRef()] = environment_components[component_name];
       normalized_component_refs.push(`${normalizeInterpolation(component.getRef())}.`);
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
@@ -314,27 +338,6 @@ export default abstract class DependencyManager {
     environment = await this.interpolateVaults(environment);
     enriched_environment = await this.interpolateVaults(enriched_environment);
 
-    // Inject external host/port/protocol for exposed interfaces
-    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-      const component = component_interfaces_ref_map[edge.to];
-      if (!component) continue;
-
-      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
-        if (!component.getInterfaces()[interface_name]) {
-          component.getInterfaces()[interface_name] = { port: this.gateway_port.toString() };
-        }
-        const inter = component.getInterfaces()[interface_name];
-
-        inter.host = `${env_interface}.${this.toExternalHost()}`;
-        inter.port = this.gateway_port.toString();
-        inter.protocol = this.toExternalProtocol();
-        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
-
-        component.setInterface(interface_name, inter);
-      }
-    }
-
-    // TODO: Include in interpolation for components so that we don't have to ignore services
     const interpolated_environment_string = interpolateString(serialize(environment), enriched_environment.getContext(), normalized_component_refs);
 
     return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
