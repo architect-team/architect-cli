@@ -81,7 +81,7 @@ export default class LocalDependencyManager extends DependencyManager {
       for (const [service_ref, service] of Object.entries(component_config.getServices())) {
         for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
           try {
-            if (env_value && env_value.startsWith('file:')) {
+            if (env_value?.startsWith('file:')) {
               const env_file = env_value.substr('file:'.length);
               const env_path = `file:${path.resolve(component_path, env_file)}`;
               service.setEnvironmentVariable(env_key, this.readIfFile(env_path));
@@ -95,7 +95,23 @@ export default class LocalDependencyManager extends DependencyManager {
         }
         component_config.setService(service_ref, service);
       }
+
+      for (const [param_key, param_value] of Object.entries(component_config.getParameters())) {
+        try {
+          if (param_value?.default && typeof param_value.default === 'string' && param_value.default.startsWith('file:')) {
+            const env_file = param_value.default.substr('file:'.length);
+            const env_path = `file:${path.resolve(component_path, env_file)}`;
+            component_config.setParameter(param_key, this.readIfFile(env_path));
+          }
+        } catch (err) {
+          if (err.code === 'ENOENT') {
+            throw new Error(`Could not read contents of file ${err.path} into component parameter ${param_key}.`);
+          }
+          throw err;
+        }
+      }
     }
+
     return component_config;
   }
 

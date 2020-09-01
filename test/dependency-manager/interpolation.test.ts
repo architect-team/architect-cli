@@ -305,6 +305,50 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       APPLICATION_PROPERTIES: 'log_level=debug'
+    });
+  });
+
+  it('service environment param interpolated from component parameter with file ref', async () => {
+    const component_config = {
+      name: 'test/component',
+      interfaces: {
+        main: '${{ services.web.interfaces.main.url }}'
+      },
+      parameters: {
+        TEST_FILE_DATA: 'file:./test-file.txt'
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            TEST_DATA: '${{ parameters.TEST_FILE_DATA }}'
+          }
+        }
+      }
+    }
+
+    const env_config = {
+      components: {
+        'test/component:latest': {
+          extends: 'file:./web/web.json'
+        }
+      }
+    };
+
+
+    mock_fs({
+      '/stack/web/test-file.txt': 'some test file data from component param',
+      '/stack/web/web.json': JSON.stringify(component_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_DATA: 'some test file data from component param'
     })
   });
 
