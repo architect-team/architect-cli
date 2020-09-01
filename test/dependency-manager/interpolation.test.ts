@@ -400,6 +400,52 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('service environment param interpolated directly with file ref', async () => {
+    const component_config = {
+      name: 'test/component',
+      interfaces: {
+        main: '${{ services.web.interfaces.main.url }}'
+      },
+      parameters: {
+        FILE_PARAM: null
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            TEST_DATA: '${{ parameters.FILE_PARAM }}'
+          }
+        }
+      }
+    }
+
+    const env_config = {
+      components: {
+        'test/component:latest': {
+          extends: 'file:./web.json',
+          parameters: {
+            'FILE_PARAM': 'file:./test/test-file.txt'
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/test/test-file.txt': 'some test file data from component param',
+      '/stack/web.json': JSON.stringify(component_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_DATA: 'some test file data from component param'
+    });
+  });
+
   it('interpolation vault', async () => {
     const component_config = {
       name: 'architect/cloud',
