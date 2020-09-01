@@ -337,7 +337,6 @@ describe('interpolation spec v1', () => {
       }
     };
 
-
     mock_fs({
       '/stack/web/test-file.txt': 'some test file data from component param',
       '/stack/web/web.json': JSON.stringify(component_config),
@@ -349,7 +348,56 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
-    })
+    });
+  });
+
+  it('service environment param interpolated from environment parameter with file ref', async () => {
+    const component_config = {
+      name: 'test/component',
+      interfaces: {
+        main: '${{ services.web.interfaces.main.url }}'
+      },
+      parameters: {
+        FILE_PARAM: null
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            TEST_DATA: '${{ parameters.FILE_PARAM }}'
+          }
+        }
+      }
+    }
+
+    const env_config = {
+      parameters: {
+        'FILE_PARAM': 'file:./test-file.txt'
+      },
+      components: {
+        'test/component:latest': {
+          extends: 'file:./web/web.json',
+          parameters: {
+            'FILE_PARAM': '${{ parameters.FILE_PARAM }}'
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/test-file.txt': 'some test file data from environment param',
+      '/stack/web/web.json': JSON.stringify(component_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_DATA: 'some test file data from environment param'
+    });
   });
 
   it('interpolation vault', async () => {

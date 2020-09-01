@@ -154,6 +154,19 @@ export default class LocalDependencyManager extends DependencyManager {
       environment.setVault(vault_name, vault);
     }
 
+    for (const [param_key, param_value] of Object.entries(environment.getParameters())) {
+      try {
+        if (param_value?.default && typeof param_value.default === 'string' && param_value.default.startsWith('file:')) {
+          environment.setParameter(param_key, this.readIfFile(param_value.default));
+        }
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          throw new Error(`Could not read contents of file ${err.path} into environment parameter ${param_key}.`);
+        }
+        throw err;
+      }
+    }
+
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       for (const pv of Object.values(component.getParameters())) {
         if (pv?.default) pv.default = this.readIfFile(pv.default);
