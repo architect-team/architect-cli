@@ -41,7 +41,7 @@ export default class Login extends Command {
 
   private async run_browser_flow() {
     if (!PromptUtils.prompts_available()) {
-      throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -u <user> -p <password>`');
+      throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
     const port = await PortUtil.getAvailablePort(60000);
 
