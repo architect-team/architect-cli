@@ -5,7 +5,6 @@ import Command from '../base-command';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
-import PromptUI = require('inquirer/lib/ui/prompt');
 
 export default class Login extends Command {
   auth_required() {
@@ -16,10 +15,10 @@ export default class Login extends Command {
 
   static flags = {
     ...Command.flags,
-    username: flags.string({
-      char: 'u',
-      description: 'Username',
-      env: 'ARCHITECT_USERNAME',
+    email: flags.string({
+      char: 'e',
+      description: 'Email',
+      env: 'ARCHITECT_EMAIL',
     }),
     password: flags.string({
       char: 'p',
@@ -31,7 +30,7 @@ export default class Login extends Command {
   async run() {
     const { flags } = this.parse(Login);
 
-    if (flags.username || flags.password) {
+    if (flags.email || flags.password) {
       await this.run_cli_flow(flags);
     } else {
       await this.run_browser_flow();
@@ -64,9 +63,9 @@ export default class Login extends Command {
     let answers = await inquirer.prompt([
       {
         type: 'input',
-        name: 'username',
-        default: flags.username,
-        when: !flags.username,
+        name: 'email',
+        default: flags.email,
+        when: !flags.email,
       },
       {
         type: 'password',
@@ -81,6 +80,6 @@ export default class Login extends Command {
       ...answers,
     };
 
-    await this.app.auth.login_from_cli(answers.username, answers.password);
+    await this.app.auth.login_from_cli(answers.email, answers.password);
   }
 }
