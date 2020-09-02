@@ -69,19 +69,19 @@ export default class AuthClient {
     }
   }
 
-  async login_from_cli(username: string, password: string) {
+  async login_from_cli(email: string, password: string) {
     await this.logout();
 
     let auth0_results;
     try {
       // TODO make sure mfa flow error is good
-      const { data } = await this.architect_api.post('/oauth/token', { email: username, token: password });
+      const { data } = await this.architect_api.post('/oauth/token', { email: email, token: password });
       auth0_results = data;
     } catch (err) {
       try {
         auth0_results = await this.auth0.passwordGrant({
           realm: 'Username-Password-Authentication',
-          username: username,
+          username: email,
           password: password,
           // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
           // @ts-ignore: the auth0 library is not properly typed -_-
@@ -97,8 +97,8 @@ export default class AuthClient {
       }
     }
 
-    await this.setToken(username, auth0_results);
-    const new_token = await this.dockerLogin(username);
+    await this.setToken(email, auth0_results);
+    const new_token = await this.dockerLogin(email);
     if (!new_token) {
       throw new Error('Login failed');
     }
@@ -139,9 +139,9 @@ export default class AuthClient {
       throw new Error('Login Failed with Invalid JWT Token');
     }
 
-    const username = decoded_token.user.email;
-    await this.setToken(username, auth0_results);
-    await this.dockerLogin(username);
+    const email = decoded_token.user.email;
+    await this.setToken(email, auth0_results);
+    await this.dockerLogin(email);
   }
 
   async logout() {
@@ -193,7 +193,7 @@ export default class AuthClient {
     });
   }
 
-  private async setToken(username: any, auth0_results: any) {
+  private async setToken(email: any, auth0_results: any) {
     // Windows credential manager password max length is 256 chars
     this.auth_results = {
       access_token: auth0_results.access_token,
@@ -203,7 +203,7 @@ export default class AuthClient {
       issued_at: new Date().getTime() / 1000,
     };
 
-    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, username, JSON.stringify(this.auth_results));
+    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, email, JSON.stringify(this.auth_results));
     return this.auth_results;
   }
 
