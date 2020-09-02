@@ -87,6 +87,12 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
+    for (const key of Object.keys(raw_config)) {
+      if (key.startsWith('.')) {
+        delete raw_config[key];
+      }
+    }
+
     return { file_path, file_contents, raw_config };
   }
 
