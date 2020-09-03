@@ -49,7 +49,7 @@ export default class PlatformCreate extends Command {
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT_PUBLIC', 'architect_public', 'ECS', 'ecs'] }),
+    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT', 'architect', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     aws_key: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
@@ -110,7 +110,7 @@ export default class PlatformCreate extends Command {
         choices: [
           'kubernetes',
           'ecs',
-          'public',
+          'architect',
         ],
       },
     ]);
@@ -122,7 +122,7 @@ export default class PlatformCreate extends Command {
         return await KubernetesPlatformUtils.configure_kubernetes_platform(flags);
       case 'ecs':
         return await EcsPlatformUtils.configure_ecs_platform(flags);
-      case 'public':
+      case 'architect':
         return {};
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
