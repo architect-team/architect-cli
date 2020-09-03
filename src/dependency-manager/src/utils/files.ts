@@ -5,7 +5,7 @@ import untildify from 'untildify';
 export const insertFileDataFromRefs = (file_contents: string, file_path: string, config_path: string) => {
   let updated_file_contents = file_contents;
   if (file_path.endsWith('.yml') || file_path.endsWith('.yaml')) {
-    const file_regex = new RegExp('^(?!extends)[a-zA-Z_]+:[\\s+](file:.*\\..*)', 'gm');
+    const file_regex = new RegExp('^\\s*(?!extends)[a-zA-Z0-9_]+:\\s+(file:.*\\..*)', 'gm');
     let matches;
     while ((matches = file_regex.exec(updated_file_contents)) != null) {
       const file_path = untildify(matches[1].slice('file:'.length));
