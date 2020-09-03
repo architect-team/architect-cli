@@ -77,7 +77,7 @@ describe('platform:create', function () {
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'architect_public']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'architect']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
@@ -105,7 +105,7 @@ describe('platform:create', function () {
     sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['-a', 'test-account-name', '-t', 'architect_public']);
+    await PlatformCreate.run(['-a', 'test-account-name', '-t', 'architect']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
   });
