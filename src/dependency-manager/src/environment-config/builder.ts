@@ -3,10 +3,10 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import untildify from 'untildify';
 import { RawComponentConfig } from '../component-config/builder';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
+import { insertFileDataFromRefs } from '../utils/files';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -40,25 +40,7 @@ export class EnvironmentConfigBuilder {
       throw new MissingConfigFileError(config_path);
     }
 
-    let updated_file_contents = file_contents;
-    if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
-      const file_regex = new RegExp('^(?!extends)[a-zA-Z_]+:[\\s+](file:.*\\..*)', 'gm');
-      let matches;
-      while ((matches = file_regex.exec(updated_file_contents)) != null) {
-        const file_path = untildify(matches[1].slice('file:'.length));
-        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
-        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
-      }
-    } else if (config_path.endsWith('json')) {
-      updated_file_contents = JSON.stringify(JSON.parse(updated_file_contents), null, 2);
-      const file_regex = new RegExp('^(?!.*"extends).*(file:.*\\..*)"$', 'gm');
-      let matches;
-      while ((matches = file_regex.exec(updated_file_contents)) != null) {
-        const file_path = untildify(matches[1].slice('file:'.length));
-        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
-        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
-      }
-    }
+    const updated_file_contents = insertFileDataFromRefs(file_contents, config_path, config_path);
 
     // Try to parse as json
     let js_obj;

@@ -1,0 +1,26 @@
+import fs from 'fs';
+import path from 'path';
+import untildify from 'untildify';
+
+export const insertFileDataFromRefs = (file_contents: string, file_path: string, config_path: string) => {
+  let updated_file_contents = file_contents;
+  if (file_path.endsWith('.yml') || file_path.endsWith('.yaml')) {
+    const file_regex = new RegExp('^(?!extends)[a-zA-Z_]+:[\\s+](file:.*\\..*)', 'gm');
+    let matches;
+    while ((matches = file_regex.exec(updated_file_contents)) != null) {
+      const file_path = untildify(matches[1].slice('file:'.length));
+      const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+      updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+    }
+  } else if (file_path.endsWith('json')) {
+    updated_file_contents = JSON.stringify(JSON.parse(updated_file_contents), null, 2); // important in the case of a JSON file as a single line
+    const file_regex = new RegExp('^(?!.*"extends).*(file:.*\\..*)"$', 'gm');
+    let matches;
+    while ((matches = file_regex.exec(updated_file_contents)) != null) {
+      const file_path = untildify(matches[1].slice('file:'.length));
+      const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+      updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+    }
+  }
+  return updated_file_contents;
+};
