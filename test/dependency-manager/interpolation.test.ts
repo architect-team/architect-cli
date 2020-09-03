@@ -263,7 +263,7 @@ describe('interpolation spec v1', () => {
     })
   });
 
-  it('interpolation environment file:', async () => {
+  it('interpolation environment file', async () => {
     const component_config = {
       name: 'test/component',
       interfaces: {
@@ -443,6 +443,127 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
+    });
+  });
+
+  it('yaml comment not interpreted as active file ref', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      TEST_FILE: manually set test file env # file:./this-file-does-not-exist.nope
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          TEST_FILE_ENV: \${{ parameters.TEST_FILE }}
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:./architect.yml
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_FILE_ENV: 'manually set test file env'
+    });
+  });
+
+  it('file: at end of yaml key not interpreted as file ref', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          data_from_my_config_file: regular config file data
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:./architect.yml
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      data_from_my_config_file: 'regular config file data'
+    });
+  });
+
+  it('commented file ref not interpreted to be read', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          ENV_PARAM: env_param_data
+    #      CONFIG_DATA: file:./this-file-does-not-exist.nope
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:./architect.yml
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      ENV_PARAM: 'env_param_data'
     });
   });
 

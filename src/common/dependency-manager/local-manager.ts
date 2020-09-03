@@ -78,40 +78,7 @@ export default class LocalDependencyManager extends DependencyManager {
     let component_path = component_config.getLocalPath();
     if (component_path) {
       component_path = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
-      for (const [service_ref, service] of Object.entries(component_config.getServices())) {
-        for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
-          try {
-            if (env_value?.startsWith('file:')) {
-              const env_file = env_value.substr('file:'.length);
-              const env_path = `file:${path.resolve(component_path, env_file)}`;
-              service.setEnvironmentVariable(env_key, this.readIfFile(env_path));
-            }
-          } catch (err) {
-            if (err.code === 'ENOENT') {
-              throw new Error(`Could not read contents of file ${err.path} into environment parameter ${env_key}.`);
-            }
-            throw err;
-          }
-        }
-        component_config.setService(service_ref, service);
-      }
-
-      for (const [param_key, param_value] of Object.entries(component_config.getParameters())) {
-        try {
-          if (param_value?.default && typeof param_value.default === 'string' && param_value.default.startsWith('file:')) {
-            const env_file = param_value.default.substr('file:'.length);
-            const env_path = `file:${path.resolve(component_path, env_file)}`;
-            component_config.setParameter(param_key, this.readIfFile(env_path));
-          }
-        } catch (err) {
-          if (err.code === 'ENOENT') {
-            throw new Error(`Could not read contents of file ${err.path} into component parameter ${param_key}.`);
-          }
-          throw err;
-        }
-      }
     }
-
     return component_config;
   }
 
@@ -152,35 +119,6 @@ export default class LocalDependencyManager extends DependencyManager {
       vault.role_id = this.readIfFile(vault.role_id);
       vault.secret_id = this.readIfFile(vault.secret_id);
       environment.setVault(vault_name, vault);
-    }
-
-    for (const [param_key, param_value] of Object.entries(environment.getParameters())) {
-      try {
-        if (param_value?.default && typeof param_value.default === 'string' && param_value.default.startsWith('file:')) {
-          environment.setParameter(param_key, this.readIfFile(param_value.default));
-        }
-      } catch (err) {
-        if (err.code === 'ENOENT') {
-          throw new Error(`Could not read contents of file ${err.path} into environment parameter ${param_key}.`);
-        }
-        throw err;
-      }
-    }
-
-    for (const [component_key, component] of Object.entries(environment.getComponents())) {
-      for (const [param_key, param_value] of Object.entries(component.getParameters())) {
-        try {
-          if (param_value?.default && typeof param_value.default === 'string' && param_value.default.startsWith('file:')) {
-            component.setParameter(param_key, this.readIfFile(param_value.default));
-          }
-        } catch (err) {
-          if (err.code === 'ENOENT') {
-            throw new Error(`Could not read contents of file ${err.path} into component parameter ${param_key}.`);
-          }
-          throw err;
-        }
-      }
-      environment.setComponent(component_key, component);
     }
 
     for (const [component_name, component] of Object.entries(environment.getComponents())) {

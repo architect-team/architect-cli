@@ -4,6 +4,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import untildify from 'untildify';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { ComponentConfig } from './base';
@@ -69,17 +70,37 @@ export class ComponentConfigBuilder {
     return [file_path, file_contents];
   }
 
-  static async rawFromPath(path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
-    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(path);
+  static async rawFromPath(config_path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
+    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(config_path);
+
+    let updated_file_contents = file_contents;
+    if (file_path.endsWith('.yml') || file_path.endsWith('.yaml')) {
+      const file_regex = new RegExp('^(?!extends)[a-zA-Z_]+:[\\s+](file:.*\\..*)', 'gm');
+      let matches;
+      while ((matches = file_regex.exec(updated_file_contents)) != null) {
+        const file_path = untildify(matches[1].slice('file:'.length));
+        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+      }
+    } else if (file_path.endsWith('json')) {
+      updated_file_contents = JSON.stringify(JSON.parse(updated_file_contents), null, 2);
+      const file_regex = new RegExp('^(?!.*"extends).*(file:.*\\..*)"$', 'gm');
+      let matches;
+      while ((matches = file_regex.exec(updated_file_contents)) != null) {
+        const file_path = untildify(matches[1].slice('file:'.length));
+        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+      }
+    }
 
     let raw_config;
     // Try to parse as json
     try {
-      raw_config = JSON.parse(file_contents);
+      raw_config = JSON.parse(updated_file_contents);
     } catch {
       // Try to parse as yaml
       try {
-        raw_config = yaml.safeLoad(file_contents);
+        raw_config = yaml.safeLoad(updated_file_contents);
       } catch { }
     }
 
@@ -87,7 +108,7 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    return { file_path, file_contents, raw_config };
+    return { file_path, file_contents: updated_file_contents, raw_config };
   }
 
   static async buildFromPath(path: string): Promise<ComponentConfig> {

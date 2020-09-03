@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import untildify from 'untildify';
 import { RawComponentConfig } from '../component-config/builder';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
@@ -39,14 +40,34 @@ export class EnvironmentConfigBuilder {
       throw new MissingConfigFileError(config_path);
     }
 
+    let updated_file_contents = file_contents;
+    if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
+      const file_regex = new RegExp('^(?!extends)[a-zA-Z_]+:[\\s+](file:.*\\..*)', 'gm');
+      let matches;
+      while ((matches = file_regex.exec(updated_file_contents)) != null) {
+        const file_path = untildify(matches[1].slice('file:'.length));
+        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+      }
+    } else if (config_path.endsWith('json')) {
+      updated_file_contents = JSON.stringify(JSON.parse(updated_file_contents), null, 2);
+      const file_regex = new RegExp('^(?!.*"extends).*(file:.*\\..*)"$', 'gm');
+      let matches;
+      while ((matches = file_regex.exec(updated_file_contents)) != null) {
+        const file_path = untildify(matches[1].slice('file:'.length));
+        const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
+        updated_file_contents = updated_file_contents.replace(matches[1], file_data);
+      }
+    }
+
     // Try to parse as json
     let js_obj;
     try {
-      js_obj = JSON.parse(file_contents);
+      js_obj = JSON.parse(updated_file_contents);
     } catch {
       try {
         // Try to parse as yaml
-        js_obj = yaml.safeLoad(file_contents);
+        js_obj = yaml.safeLoad(updated_file_contents);
       } catch { }
     }
 
@@ -54,7 +75,7 @@ export class EnvironmentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    return [file_contents, js_obj];
+    return [updated_file_contents, js_obj];
   }
 
   static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
