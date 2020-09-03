@@ -87,12 +87,6 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    for (const key of Object.keys(raw_config)) {
-      if (key.startsWith('.')) {
-        delete raw_config[key];
-      }
-    }
-
     return { file_path, file_contents, raw_config };
   }
 
@@ -110,6 +104,12 @@ export class ComponentConfigBuilder {
   }
 
   static buildFromJSON(obj: any): ComponentConfig {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('.')) {
+        delete obj[key];
+      }
+    }
+
     if (!(obj instanceof Object)) {
       throw new Error('Object required to build from JSON');
     }

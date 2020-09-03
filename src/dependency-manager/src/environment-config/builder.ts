@@ -54,12 +54,6 @@ export class EnvironmentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    for (const key of Object.keys(js_obj)) {
-      if (key.startsWith('.')) {
-        delete js_obj[key];
-      }
-    }
-
     return [file_contents, js_obj];
   }
 
@@ -95,6 +89,12 @@ export class EnvironmentConfigBuilder {
   }
 
   static buildFromJSON(obj: any): EnvironmentConfig {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('.')) {
+        delete obj[key];
+      }
+    }
+
     if (!(obj instanceof Object)) {
       throw new Error('Object required to build from JSON');
     }
