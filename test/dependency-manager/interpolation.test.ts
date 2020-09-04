@@ -617,6 +617,92 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('multi-line file inserted into yaml produces proper yaml', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          TEST_FILE_DATA: file:.env
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:./architect.yml
+    `
+
+    mock_fs({
+      '/stack/.env': 'some file data\nsome file data on a new line\n  file data indented on a new line',
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line\n',
+    });
+  });
+
+  it('multi-line file inserted into json produces proper json', async () => {
+    const component_config = {
+      name: 'test/component',
+      interfaces: {
+        main: '${{ services.web.interfaces.main.url }}'
+      },
+      parameters: {
+        FILE_PARAM: null
+      },
+      services: {
+        web: {
+          interfaces: {
+            main: 8080
+          },
+          environment: {
+            TEST_DATA: '${{ parameters.FILE_PARAM }}'
+          }
+        }
+      }
+    }
+
+    const env_config = {
+      components: {
+        'test/component:latest': {
+          extends: 'file:./web.json',
+          parameters: {
+            'FILE_PARAM': 'file:./test-file.txt'
+          }
+        }
+      }
+    };
+
+    mock_fs({
+      '/stack/test-file.txt': 'some file data\nsome file data on a new line\n  file data indented on a new line',
+      '/stack/web.json': JSON.stringify(component_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line'
+    });
+  });
+
   it('service environment param interpolated directly with file ref', async () => {
     const component_config = {
       name: 'test/component',
