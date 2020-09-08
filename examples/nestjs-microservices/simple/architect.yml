@@ -1,0 +1,26 @@
+name: examples/nestjs-simple
+description: Simple NestJS microservice that uses TCP for inter-process communication
+keywords:
+  - nestjs
+  - examples
+  - tcp
+  - microservices
+
+interfaces:
+  main:
+    url: ${{ services.api.interfaces.main.url }}
+
+services:
+  api:
+    build:
+      context: ./
+    interfaces:
+      main:
+        port: 8080
+        protocol: tcp
+    debug:
+      command: npm run start:dev
+      volumes:
+        src:
+          host_path: ./src/
+          mount_path: /usr/src/app/src/
