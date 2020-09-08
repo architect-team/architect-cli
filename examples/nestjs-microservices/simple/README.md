@@ -1,75 +1,45 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
+  <a href="//architect.io" target="blank"><img src="https://www.architect.io/logo.svg" width="320" alt="Architect Logo" /></a>
 </p>
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
+<p align="center">
+  A dynamic microservices framework for building, connecting, and deploying service-oriented applications.
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# NestJS TCP microservices
 
-## Installation
+Nest (NestJS) is a framework for building efficient, scalable Node.js server-side applications. It uses progressive JavaScript, is built with and fully supports TypeScript (yet still enables developers to code in pure JavaScript) and combines elements of OOP (Object Oriented Programming), FP (Functional Programming), and FRP (Functional Reactive Programming).
 
-```bash
-$ npm install
-```
+In addition to traditional (sometimes called monolithic) application architectures, Nest natively supports the microservice architectural style of development. Wherever possible, Nest abstracts implementation details so that the same components can run across HTTP-based platforms, WebSockets, and Microservices.
 
-## Running the app
+This repository contains the source code for two NestJS microservices: one that uses Nest's native microservices utilities to create a TCP-based microservice, and another that uses the default Nest framework to expose a REST API that proxies to the TCP service.
 
-```bash
-# development
-$ npm run start
+## Setup
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Test
+This project uses [Architect](https://architect.io) to deploy and manage our two services simultaneously. Install Architect's CLI to deploy both services:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+$ npm install -g @architect-io/cli
 ```
 
-## Support
+Architect uses [Components](https://www.architect.io/docs/getting-started/first-component) to encapsulate servcices allowing them to be deployed and extended. Both our TCP server and HTTP client have component manifest files describing them (`architect.yml` files) so that they can be automatically deployed.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Normally component's would be sourced from Architect's cloud registry, but when developing our components we want them to be run directly from the source. Fortunately, Architect simulates the registry locally by allowing components to be [linked](https://www.architect.io/docs/guides/developing-multiple-components#component-linking) to the local file system. Linking components tells Architect's CLI that the components already exist and don't need to be pulled from the registry.
 
-## Stay in touch
+```bash
+$ architect link .
+Successfully linked examples/nestjs-simple to local system at /architect-cli/examples/nestjs-microservices/simple
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+$ architect link ./client/
+Successfully linked examples/nestjs-simple-client to local system at /architect-cli/examples/nestjs-microservices/simple/client
+```
 
-## License
+## Running the stack
 
-  Nest is [MIT licensed](LICENSE).
+The REST client service cites the TCP server as a dependency. This means that Architect can automatically deploy and connect to it whenever the client is deployed, and all we have to do is deploy the client component:
+
+```bash
+$ architect deploy --local examples/nestjs-simple-client:latest -i main:client
+```
