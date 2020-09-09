@@ -17,11 +17,11 @@
 
 ---
 
-Architect is the world's first DevOps-as-a-Service toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
+Architect is the world's first [DevOps-as-a-Service](https://www.architect.io/how-it-works) toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
 
 Our unique approach to continuous delivery is powered by an embedded dependency resolver. By simply asserting your microservice dependenies, Architect is able to build a graph of your application and deploy the entire stack to your favorite cloud provider.
 
-Architect's CLI, which provides the full developer experience needed to create components and operate local environments, is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
+Architect's CLI, which provides the full developer experience needed to create [components](https://www.architect.io/docs/getting-started/core-concepts#components) and operate local [environments](https://www.architect.io/docs/getting-started/core-concepts#environments), is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
 # Usage
 
