@@ -4,7 +4,7 @@
   <a href="//architect.io" target="blank"><img src="https://www.architect.io/logo.svg" width="480" alt="Architect Logo" /></a>
 </p>
 
-<p align="center">
+<p style="text-align: center">
 
   [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
   [![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
