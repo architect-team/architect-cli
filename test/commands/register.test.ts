@@ -1,5 +1,6 @@
 import { test } from '@oclif/test';
 import { expect } from 'chai';
+import path from 'path';
 import sinon from 'sinon';
 import * as docker from '../../src/common/utils/docker';
 import { mockAuth } from '../utils/mocks';
@@ -294,5 +295,33 @@ describe('register', function () {
 
       expect(ctx.stderr).to.contain('Registering component examples/stateless-component:1.0.0 with Architect Cloud');
       expect(ctx.stderr).to.contain('Registering component examples/echo:1.0.0 with Architect Cloud');
+    });
+
+  test
+    .do(ctx => {
+      mockAuth();
+      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
+      dockerPushStub = sinon.stub(docker, "pushImage");
+      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
+    })
+    .finally(() => sinon.restore())
+    .nock(mock_api_host, api => api
+      .persist()
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(mock_api_host, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .it('docker image built with dockerfile specified in architect.yml', ctx => {
+      const current_path = path.join(__dirname, '../..').replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
+      expect(dockerBuildStub.args[0].length).to.eq(3);
+      expect(dockerBuildStub.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
+      expect(dockerBuildStub.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
     });
 });
