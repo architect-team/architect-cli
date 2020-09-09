@@ -133,12 +133,7 @@ describe('deploy', function () {
       expect(expected.ports).to.have.members(input.ports);
       expect(expected.image).to.equal(input.image);
       expect(expected.depends_on).to.have.members(input.depends_on);
-      if (expected.build?.context) {
-        expect(expected.build?.context).to.eq(input.build?.context);
-      }
-      if (expected.build?.dockerfile) {
-        expect(expected.build.dockerfile.toLowerCase()).to.eq(input.build!.dockerfile!.toLowerCase());
-      }
+      expect(expected.build).to.deep.eq(input.build);
       expect((expected.command || []).length).to.equal((input.command || []).length);
       if (expected.command && input.command) {
         for (const index of expected.command.keys()) {
