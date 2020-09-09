@@ -1,18 +1,27 @@
 <!-- docs -->
 
-<h1>Architect CLI</h1>
+<p align="center">
+  <a href="//architect.io" target="blank"><img src="https://www.architect.io/logo.svg" width="480" alt="Architect Logo" /></a>
+</p>
 
-[![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/@architect-io/cli)
-[![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
-[![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+<p align="center">
+  <a href="https://oclif.io"><img src="https://img.shields.io/badge/cli-oclif-brightgreen.svg" alt="oclif" /></a>
+  <a href="https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22"><img src="https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate" alt="Build" /></a>
+  <a href="https://npmjs.org/package/@architect-io/cli"><img src="https://img.shields.io/npm/v/@architect-io/cli.svg" alt="Version" /></a>
+  <a href="https://github.com/architect-team/architect-cli/blob/master/package.json"><img src="https://img.shields.io/npm/l/@architect-io/cli.svg" alt="License" /></a>
+</p>
 
-Command-line interface for [Architect.io](https://architect.io). This CLI can be used to:
+<p align="center">
+  Self-service cloud environments for everyone. Achieve deployment, networking, and security automation all at once with Architect.
+</p>
 
-1. Choreograph the deployment and networking of multiple [services](//architect.io/docs/getting-started/core-concepts#services) and
-   [components](//architect.io/docs/getting-started/core-concepts#components) on your local machine
-2. Aid in the creation and registration of [Architect components](//architect.io/docs/getting-started/core-concepts#components)
-3. Issue deploy commands to Architect Cloud
+---
+
+Architect is the world's first DevOps-as-a-Service toolset designed to help democratize environment provisioning for engineers. With Architect, anyone can deploy any service, anywhere, for any reason with the push of a button.
+
+Our unique approach to continuous delivery is powered by an embedded dependency resolver. By simply asserting your microservice dependenies, Architect is able to build a graph of your application and deploy the entire stack to your favorite cloud provider.
+
+Architect's CLI, which provides the full developer experience needed to create components and operate local environments, is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
 # Usage
 
