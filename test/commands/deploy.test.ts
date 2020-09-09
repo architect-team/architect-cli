@@ -115,9 +115,6 @@ describe('deploy', function () {
       if (expected.build?.context) {
         expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       }
-      if (expected.build?.dockerfile) {
-        expected.build.dockerfile = path.join(__dirname, '../', expected.build.dockerfile).replace(/\/$/gi, '').replace(/\\$/gi, '');
-      }
 
       if (input.build?.context) {
         input.build.context = input.build.context.replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
