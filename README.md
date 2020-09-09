@@ -5,6 +5,15 @@
 </p>
 
 <p align="center">
+
+  [![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
+  [![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
+  [![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/@architect-io/cli)
+  [![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
+
+</p>
+
+<p align="center">
   Self-service cloud environments for everyone. Achieve deployment, networking, and security automation all at once with Architect.
 </p>
 
@@ -14,18 +23,7 @@ Architect is the world's first DevOps-as-a-Service toolset designed to help demo
 
 Our unique approach to continuous delivery is powered by an embedded dependency resolver. By simply asserting your microservice dependenies, Architect is able to build a graph of your application and deploy the entire stack to your favorite cloud provider.
 
-<h1>Architect CLI</h1>
-
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Build](https://img.shields.io/github/workflow/status/architect-team/architect-cli/CLI%20-%20Cut%20Release%20Candidate)](https://github.com/architect-team/architect-cli/actions?query=workflow%3A%22CLI+-+Cut+Release+Candidate%22)
-[![Version](https://img.shields.io/npm/v/@architect-io/cli.svg)](https://npmjs.org/package/@architect-io/cli)
-[![License](https://img.shields.io/npm/l/@architect-io/cli.svg)](https://github.com/architect-team/architect-cli/blob/master/package.json)
-
-Developers can take advantage of Architect's framework using our open-source CLI. This CLI (contained in this repository) can be used to:
-
-1. Stand up end-to-end microservice environments on your local machine
-2. Register and connect to components hosted in Architect's [Component](//architect.io/docs/getting-started/core-concepts#components) registry
-3. Automatically create and destroy remote environments with the help of [Architect Cloud](//architect.io)
+Architect's CLI, which provides the full developer experience needed to create components and operate local environments, is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
 # Usage
 
