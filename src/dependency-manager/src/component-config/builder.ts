@@ -106,11 +106,17 @@ export class ComponentConfigBuilder {
     }
   }
 
-  static buildFromJSON(obj: any): ComponentConfig {
-    if (!(obj instanceof Object)) {
+  static buildFromJSON(plain_obj: any): ComponentConfig {
+    if (!(plain_obj instanceof Object)) {
       throw new Error('Object required to build from JSON');
     }
-    return plainToClass(ComponentConfigV1, obj);
+
+    for (const key of Object.keys(plain_obj)) {
+      if (key.startsWith('.')) {
+        delete plain_obj[key];
+      }
+    }
+    return plainToClass(ComponentConfigV1, plain_obj);
   }
 
   static saveToPath(config_path: string, config: ComponentConfig) {
