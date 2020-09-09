@@ -107,7 +107,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
         if (build.dockerfile) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          compose.services[url_safe_ref].build!.dockerfile = build.dockerfile;
+          compose.services[url_safe_ref].build!.dockerfile = path.join(path.dirname(dependency_manager.config_path), build.context || '.', build.dockerfile);
         }
       }
 
