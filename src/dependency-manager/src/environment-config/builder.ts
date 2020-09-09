@@ -40,16 +40,14 @@ export class EnvironmentConfigBuilder {
       throw new MissingConfigFileError(config_path);
     }
 
-    const updated_file_contents = insertFileDataFromRefs(file_contents, config_path, config_path);
-
     // Try to parse as json
     let js_obj;
     try {
-      js_obj = JSON.parse(updated_file_contents);
+      js_obj = JSON.parse(file_contents);
     } catch {
       try {
         // Try to parse as yaml
-        js_obj = yaml.safeLoad(updated_file_contents);
+        js_obj = yaml.safeLoad(file_contents);
       } catch { }
     }
 
@@ -57,15 +55,16 @@ export class EnvironmentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    return [updated_file_contents, js_obj];
+    return [file_contents, js_obj];
   }
 
   static async buildFromPath(config_path: string): Promise<EnvironmentConfig> {
     const [file_contents, js_obj] = EnvironmentConfigBuilder.readFromPath(config_path);
 
     try {
-      const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
+      let env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
+      env_config = EnvironmentConfigBuilder.buildFromJSON(JSON.parse(insertFileDataFromRefs(JSON.stringify(js_obj, null, 2), config_path)));
 
       for (const [component_key, component] of Object.entries(env_config.getComponents())) {
         const component_extends = component.getExtends();

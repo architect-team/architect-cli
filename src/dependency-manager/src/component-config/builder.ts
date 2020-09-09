@@ -73,16 +73,14 @@ export class ComponentConfigBuilder {
   static async rawFromPath(config_path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
     const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(config_path);
 
-    const updated_file_contents = insertFileDataFromRefs(file_contents, file_path, config_path);
-
     let raw_config;
     // Try to parse as json
     try {
-      raw_config = JSON.parse(updated_file_contents);
+      raw_config = JSON.parse(file_contents);
     } catch {
       // Try to parse as yaml
       try {
-        raw_config = yaml.safeLoad(updated_file_contents);
+        raw_config = yaml.safeLoad(file_contents);
       } catch { }
     }
 
@@ -90,8 +88,10 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
-    return { file_path, file_contents: updated_file_contents, raw_config };
-  }
+    return { file_path, file_contents, raw_config };
+  }// Can you try updating raw_config via insertFileDataFromRefs (stringify, insert, parse)?
+  //If we keep the file_contents as is then the line numbers should be correct (def add a test).
+  // Keep the logic in the readFromPath since we wouldn't want to allow for file: reads server-side.
 
   static async buildFromPath(path: string): Promise<ComponentConfig> {
     const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(path);
@@ -100,7 +100,7 @@ export class ComponentConfigBuilder {
       // TODO: Figure out how to enforce services block for components during registration
       const config = ComponentConfigBuilder.buildFromJSON(raw_config);
       await config.validateOrReject({ groups: ['developer'] });
-      return config;
+      return ComponentConfigBuilder.buildFromJSON(JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), path)));
     } catch (err) {
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(err, file_contents));
     }

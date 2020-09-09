@@ -653,7 +653,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph();
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
-      TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line\n',
+      TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line',
     });
   });
 
