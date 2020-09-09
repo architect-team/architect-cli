@@ -89,9 +89,7 @@ export class ComponentConfigBuilder {
     }
 
     return { file_path, file_contents, raw_config };
-  }// Can you try updating raw_config via insertFileDataFromRefs (stringify, insert, parse)?
-  //If we keep the file_contents as is then the line numbers should be correct (def add a test).
-  // Keep the logic in the readFromPath since we wouldn't want to allow for file: reads server-side.
+  }
 
   static async buildFromPath(path: string): Promise<ComponentConfig> {
     const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(path);
