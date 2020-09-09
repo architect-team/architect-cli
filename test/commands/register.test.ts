@@ -322,7 +322,6 @@ describe('register', function () {
       const current_path = path.join(__dirname, '../..').replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       expect(dockerBuildStub.args[0].length).to.eq(3);
       expect(dockerBuildStub.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
-      expect(dockerBuildStub.args[0][1]).to.eq('0.0.0.0:50001/examples/database-seeding-app:1.0.0')
       expect(dockerBuildStub.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
     });
 });
