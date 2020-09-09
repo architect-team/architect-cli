@@ -19,11 +19,13 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
   }
 };
 
-export const buildImage = async (build_path: string, image_tag: string) => {
+export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string) => {
+  const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   await docker([
     'build',
     '--compress',
     '-t', image_tag,
+    ...dockerfile_args,
     build_path,
   ]);
   return image_tag;

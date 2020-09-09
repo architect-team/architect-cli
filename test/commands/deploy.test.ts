@@ -115,6 +115,9 @@ describe('deploy', function () {
       if (expected.build?.context) {
         expected.build.context = path.join(__dirname, '../../', expected.build.context).replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       }
+      if (expected.build?.dockerfile) {
+        expected.build.dockerfile = path.join(__dirname, '../', expected.build.dockerfile).replace(/\/$/gi, '').replace(/\\$/gi, '');
+      }
 
       if (input.build?.context) {
         input.build.context = input.build.context.replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
@@ -130,7 +133,12 @@ describe('deploy', function () {
       expect(expected.ports).to.have.members(input.ports);
       expect(expected.image).to.equal(input.image);
       expect(expected.depends_on).to.have.members(input.depends_on);
-      expect(expected.build).to.deep.eq(input.build);
+      if (expected.build?.context) {
+        expect(expected.build?.context).to.eq(input.build?.context);
+      }
+      if (expected.build?.dockerfile) {
+        expect(expected.build.dockerfile.toLowerCase()).to.eq(input.build!.dockerfile!.toLowerCase());
+      }
       expect((expected.command || []).length).to.equal((input.command || []).length);
       if (expected.command && input.command) {
         for (const index of expected.command.keys()) {

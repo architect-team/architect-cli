@@ -148,8 +148,11 @@ export default class ComponentRegister extends Command {
     try {
       const component_path = fs.lstatSync(config_path).isFile() ? path.dirname(config_path) : config_path;
       const build_path = path.resolve(component_path, build_context);
-
-      return await buildImage(build_path, image_tag);
+      let dockerfile;
+      if (service_config.build?.dockerfile) {
+        dockerfile = path.join(build_path, service_config.build.dockerfile);
+      }
+      return await buildImage(build_path, image_tag, dockerfile);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
