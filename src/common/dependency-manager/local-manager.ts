@@ -78,23 +78,6 @@ export default class LocalDependencyManager extends DependencyManager {
     let component_path = component_config.getLocalPath();
     if (component_path) {
       component_path = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
-      for (const [service_ref, service] of Object.entries(component_config.getServices())) {
-        for (const [env_key, env_value] of Object.entries(service.getEnvironmentVariables())) {
-          try {
-            if (env_value && env_value.startsWith('file:')) {
-              const env_file = env_value.substr('file:'.length);
-              const env_path = `file:${path.resolve(component_path, env_file)}`;
-              service.setEnvironmentVariable(env_key, this.readIfFile(env_path));
-            }
-          } catch (err) {
-            if (err.code === 'ENOENT') {
-              throw new Error(`Could not read contents of file ${err.path} into environment parameter ${env_key}.`);
-            }
-            throw err;
-          }
-        }
-        component_config.setService(service_ref, service);
-      }
     }
     return component_config;
   }

@@ -6,6 +6,7 @@ import path from 'path';
 import { RawComponentConfig } from '../component-config/builder';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
+import { insertFileDataFromRefs } from '../utils/files';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 
@@ -53,6 +54,8 @@ export class EnvironmentConfigBuilder {
     if (!js_obj) {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
+
+    js_obj = JSON.parse(insertFileDataFromRefs(JSON.stringify(js_obj, null, 2), config_path));
 
     return [file_contents, js_obj];
   }

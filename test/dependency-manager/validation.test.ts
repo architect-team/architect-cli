@@ -155,6 +155,41 @@ describe('validation spec v1', () => {
     });
   })
 
+  describe('environment builder validation', () => {
+    it('file reference does not misalign validation error line numbers', async () => {
+      const env_config = `
+      components:
+        test/component:
+          extends: latest
+          parameters:
+            TEST_FILE_TEXT: file:./test-file.txt
+      services:
+        stateless-app:
+      `
+
+      mock_fs({
+        '/test-file.txt': `some file text\non another line`,
+        '/environment.yml': env_config
+      });
+
+      let validation_err;
+      try {
+        await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services": {
+          "column": 15,
+          "line": 7,
+          "value": '[object Object]',
+          "whitelistValidation": "property services should not exist"
+        }
+      })
+    });
+  })
+
   // Component Validation
   describe('component validation', () => {
     it('invalid component interfaces ref', async () => {
@@ -192,6 +227,51 @@ describe('validation spec v1', () => {
           "value": "dependencies.test/other.interfaces.fake.url",
           "column": 24,
           "line": 8,
+        }
+      })
+    });
+  });
+
+  describe('component builder validation', () => {
+    it('file reference does not misalign validation error line numbers', async () => {
+      const component_config = `
+      name: test/component
+      interfaces:
+      services:
+        api:
+          interfaces:
+          environment:
+            TEST_FILE_TEXT: file:./test-file.txt
+            OTHER_ADDR: \${{ dependencies.test/other.interfaces.fake.url }}
+      dependencies:
+        test/other: latest
+      `
+
+      const env_config = `
+      components:
+        test/component: file:./component.yml
+        test/other: file:./component.yml
+      `
+      mock_fs({
+        '/test-file.txt': `some file text\non another line`,
+        '/component.yml': component_config,
+        '/environment.yml': env_config
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "interpolation.dependencies.test/other.interfaces.fake.url": {
+          "interpolation": "${{ dependencies.test/other.interfaces.fake.url }} is invalid",
+          "value": "dependencies.test/other.interfaces.fake.url",
+          "column": 24,
+          "line": 9,
         }
       })
     });

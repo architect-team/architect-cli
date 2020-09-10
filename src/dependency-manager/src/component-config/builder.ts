@@ -6,6 +6,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
+import { insertFileDataFromRefs } from '../utils/files';
 import { ComponentConfig } from './base';
 import { ComponentConfigV1 } from './v1';
 
@@ -70,8 +71,8 @@ export class ComponentConfigBuilder {
     return [file_path, file_contents];
   }
 
-  static async rawFromPath(path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
-    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(path);
+  static async rawFromPath(config_path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
+    const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(config_path);
 
     let raw_config;
     // Try to parse as json
@@ -87,6 +88,8 @@ export class ComponentConfigBuilder {
     if (!raw_config) {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
+
+    raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), file_path));
 
     return { file_path, file_contents, raw_config };
   }

@@ -24,7 +24,8 @@
     "js-yaml": "^3.13.1",
     "mustache": "^4.0.1",
     "reflect-metadata": "0.1.13",
-    "shell-quote": "^1.7.2"
+    "shell-quote": "^1.7.2",
+    "untildify": "4.0.0"
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
