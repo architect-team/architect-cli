@@ -182,7 +182,6 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  // Test file: replacement
   test
     .do(ctx => {
       mockAuth();
@@ -214,7 +213,7 @@ describe('register', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
-    .it('gives user feedback while running docker commands', ctx => {
+    .it('test file: replacement', ctx => {
       expect(dockerBuildStub.notCalled).to.be.true;
       expect(dockerPushStub.notCalled).to.be.true;
       expect(dockerInspectStub.notCalled).to.be.true;
