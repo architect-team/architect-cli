@@ -574,6 +574,91 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('yaml file ref as .env file via linked component', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          TEST_FILE_DATA: file:.env
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world: latest
+    `
+
+    mock_fs({
+      '/stack/.env': 'some file data',
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml', { 'examples/hello-world': '/stack/architect.yml' });
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_FILE_DATA: 'some file data'
+    });
+  });
+
+  it('yaml file ref as .env file in environment.yml', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      test_file_data: file:.env.default
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          TEST_FILE_DATA: \${{ parameters.test_file_data }}
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:../data/architect.yml
+        parameters:
+          test_file_data: file:.env
+    `
+
+    mock_fs({
+      '/data/.env.default': 'some default file data',
+      '/data/architect.yml': component_config,
+      '/stack/.env': 'some file data',
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      TEST_FILE_DATA: 'some file data'
+    });
+  });
+
   it('multiple yaml file refs as .env files', async () => {
     const component_config = `
     name: examples/hello-world
