@@ -88,6 +88,8 @@ export class ComponentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
+    raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), file_path));
+
     return { file_path, file_contents, raw_config };
   }
 
@@ -98,7 +100,7 @@ export class ComponentConfigBuilder {
       // TODO: Figure out how to enforce services block for components during registration
       const config = ComponentConfigBuilder.buildFromJSON(raw_config);
       await config.validateOrReject({ groups: ['developer'] });
-      return ComponentConfigBuilder.buildFromJSON(JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), path)));
+      return config;
     } catch (err) {
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(err, file_contents));
     }

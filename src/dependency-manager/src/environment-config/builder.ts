@@ -55,6 +55,8 @@ export class EnvironmentConfigBuilder {
       throw new Error('Invalid file format. Must be json or yaml.');
     }
 
+    js_obj = JSON.parse(insertFileDataFromRefs(JSON.stringify(js_obj, null, 2), config_path));
+
     return [file_contents, js_obj];
   }
 
@@ -62,9 +64,8 @@ export class EnvironmentConfigBuilder {
     const [file_contents, js_obj] = EnvironmentConfigBuilder.readFromPath(config_path);
 
     try {
-      let env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
+      const env_config = EnvironmentConfigBuilder.buildFromJSON(js_obj);
       await env_config.validateOrReject({ groups: ['operator'] });
-      env_config = EnvironmentConfigBuilder.buildFromJSON(JSON.parse(insertFileDataFromRefs(JSON.stringify(js_obj, null, 2), config_path)));
 
       for (const [component_key, component] of Object.entries(env_config.getComponents())) {
         const component_extends = component.getExtends();
