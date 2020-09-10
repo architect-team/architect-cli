@@ -10,7 +10,7 @@ export const insertFileDataFromRefs = (file_contents: string, config_path: strin
   while ((matches = file_regex.exec(updated_file_contents)) != null) {
     const file_path = untildify(matches[1].slice('file:'.length));
     const file_data = fs.readFileSync(path.resolve(path.dirname(config_path), file_path), 'utf-8').trim();
-    updated_file_contents = updated_file_contents.replace(matches[1], file_data.replace(/[\n\r]/g, '\\n'));
+    updated_file_contents = updated_file_contents.replace(matches[1], file_data.replace(/[\n\r]/g, '\\n').replace(/"/g, "\\\""));
   }
   return updated_file_contents;
 };

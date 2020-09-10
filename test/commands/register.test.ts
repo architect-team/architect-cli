@@ -1,5 +1,6 @@
 import { test } from '@oclif/test';
 import { expect } from 'chai';
+import fs from 'fs-extra';
 import sinon from 'sinon';
 import * as docker from '../../src/common/utils/docker';
 import { mockAuth } from '../utils/mocks';
@@ -32,6 +33,11 @@ describe('register', function () {
     default_user_id: null
   }
 
+  const mock_architect_account_response = {
+    ...mock_account_response,
+    name: 'architect'
+  }
+
   test
     .do(ctx => mockAuth())
     .finally(() => sinon.restore())
@@ -52,7 +58,7 @@ describe('register', function () {
     )
     .nock(mock_api_host, api => api
       .persist()
-      .post(/\/accounts\/.*\/components/)
+      .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
     .stdout({ print })
@@ -77,7 +83,12 @@ describe('register', function () {
     )
     .nock(mock_api_host, api => api
       .persist()
-      .post(/\/accounts\/.*\/components/)
+      .post(/\/accounts\/.*\/components/, (body) => {
+        expect(body.tag).to.eq('1.0.0')
+        expect(body.config.name).to.eq('examples/hello-world')
+        expect(body.config.services.api.image).to.eq('heroku/nodejs-hello-world')
+        return body;
+      })
       .reply(200, {})
     )
     .stdout({ print })
@@ -102,7 +113,7 @@ describe('register', function () {
     )
     .nock(mock_api_host, api => api
       .persist()
-      .post(/\/accounts\/.*\/components/)
+      .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
     .stdout({ print })
@@ -143,7 +154,12 @@ describe('register', function () {
     )
     .nock(mock_api_host, api => api
       .persist()
-      .post(/\/accounts\/.*\/components/)
+      .post(/\/accounts\/.*\/components/, (body) => {
+        expect(body.tag).to.eq('1.0.0')
+        expect(body.config.name).to.eq('examples/database-seeding')
+        expect(body.config.services.app.image).to.eq('repostory/account/some-image@some-digest')
+        return body;
+      })
       .reply(200, {})
     )
     .stdout({ print })
@@ -163,6 +179,47 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Image verified');
 
       expect(ctx.stderr).to.contain('Registering component examples/database-seeding:1.0.0 with Architect Cloud');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  // Test file: replacement
+  test
+    .do(ctx => {
+      mockAuth();
+      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
+      dockerPushStub = sinon.stub(docker, "pushImage");
+      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
+    })
+    .finally(() => sinon.restore())
+    .nock(mock_api_host, api => api
+      .persist()
+      .get(`/accounts/architect`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(mock_api_host, api => api
+      .persist()
+      .post(/\/accounts\/.*\/components/, (body) => {
+        expect(body.tag).to.eq('1.0.0')
+        expect(body.config.name).to.eq('architect/fusionauth')
+        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.ADMIN_USER_PASSWORD }}')
+        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
+
+        const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
+        expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
+        return body;
+      })
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
+    .it('gives user feedback while running docker commands', ctx => {
+      expect(dockerBuildStub.notCalled).to.be.true;
+      expect(dockerPushStub.notCalled).to.be.true;
+      expect(dockerInspectStub.notCalled).to.be.true;
+
+      expect(ctx.stderr).to.contain('Registering component architect/fusionauth:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -276,7 +333,7 @@ describe('register', function () {
     )
     .nock(mock_api_host, api => api
       .persist()
-      .post(/\/accounts\/.*\/components/)
+      .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
     .stdout({ print })
