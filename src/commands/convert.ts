@@ -5,7 +5,6 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { ComponentConfigBuilder } from '../dependency-manager/src';
 import { ComponentConfigV1 } from '../dependency-manager/src/component-config/v1';
 import { BuildSpecV1, ServiceConfigV1 } from '../dependency-manager/src/service-config/v1';
 
@@ -31,10 +30,8 @@ export abstract class ConvertCommand extends Command {
     const fromPath = path.resolve(untildify(args.from));
     const docker_compose = ConvertCommand.rawFromPath(fromPath);
 
-    // console.log(docker_compose);
-
-    const converted = new ComponentConfigV1();
-    converted.name = `my-account/my-new-component`;
+    const architect_component = new ComponentConfigV1();
+    architect_component.name = `my-account/my-new-component`;
     for (const [service_name, service] of Object.entries(docker_compose.services)) {
       const architect_service = new ServiceConfigV1();
       architect_service.name = service_name;
@@ -46,32 +43,58 @@ export abstract class ConvertCommand extends Command {
         architect_service.image = service.image;
       } else if (service.build) {
         architect_service.build = new BuildSpecV1();
-        architect_service.build.args = service.build.args;
+        // architect_service.build.args = service.build.args;
         architect_service.build.context = service.build.context;
         if (service.build.dockerfile) {
           architect_service.build.dockerfile = service.build.dockerfile;
         }
       }
       // architect_service.language // TODO: interpret code if dockerfile or code exist?
-      let port_index = 0;
       for (const port of service.ports) {
-        if (typeof port === 'string') {
-          const colon_port_regex = new RegExp('^(\\d+[:]\\d+)'); // 8080:8080
-          const host_port_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*([a-zA-Z]+)*:(\\d+[:]\\d+)'); // 127.0.0.1:8001:8001, elastic:8001:8001
-          const single_number_port = new RegExp('^\\d+$'); // 3000
-          const range_as_port = new RegExp('^\\d+-\\d+$'); // 4000-4005
+        if (typeof port === 'string') { // TODO: object ports from compose spec
+          // TODO: write tests, then condense regexes to use port mapping endings if possible
+          const colon_port_regex = new RegExp('^(\\d+[:]\\d+)$'); // 8080:8080
+          const host_port_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*:(\\d+[:]\\d+)'); // 127.0.0.1:8001:8001
+          const single_number_port_regex = new RegExp('^\\d+$'); // 3000
+          const range_as_port_regex = new RegExp('^\\d+-\\d+$'); // 4000-4005
+          const range_to_port_regex = new RegExp('^\\d+-\\d+:\\d+$'); // 12400-12500:1240
+          const range_to_range_regex = new RegExp('^\\d+-\\d+:\\d+-\\d+$'); // 9090-9091:8080-8081
+          const host_port_ranges_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*([a-zA-Z]+)*:(\\d+-\\d+[:]\\d+-\\d+)'); // 127.0.0.1:5000-5010:5000-5010
+          const protocol_port_regex = new RegExp('^(\\d+:\\d+)\\/[a-zA-Z]+$'); // 5000:5000/tcp
 
-
-          architect_service.setInterface(`port${port_index}`, );
+          if (colon_port_regex.exec(port)?.length || host_port_regex.exec(port)?.length || range_to_port_regex.exec(port)?.length) {
+            const port_number = port.split(':')[1];
+            architect_service.setInterface(`interface${port_number}`, port_number);
+          } else if(single_number_port_regex.exec(port)?.length) {
+            architect_service.setInterface(`interface${port}`, port);
+          } else if(range_as_port_regex.exec(port)?.length) {
+            const [start, end] = port.split('-');
+            for (let i = parseInt(start); i < parseInt(end); i++) {
+              architect_service.setInterface(`interface${i}`, i.toString());
+            }
+          } else if (range_to_range_regex.exec(port)?.length) {
+            const [start, end] = port.split(':')[1].split('-');
+            for (let i = parseInt(start); i < parseInt(end); i++) {
+              architect_service.setInterface(`interface${i}`, i.toString());
+            }
+          } else if (host_port_ranges_regex.exec(port)?.length) {
+            const [start, end] = port.split(':')[2].split('-');
+            for (let i = parseInt(start); i < parseInt(end); i++) {
+              architect_service.setInterface(`interface${i}`, i.toString());
+            }
+          } else if (protocol_port_regex.exec(port)?.length) {
+            const port_number = port.split(':')[1].split('/')[0];
+            architect_service.setInterface(`interface${port_number}`, port_number);
+          }
         }
-        port_index++;
       }
-      architect_service.setInterface;
+
       // architect_service.volumes // TODO
+
+      architect_component.setService(service_name, architect_service);
     }
 
-    const architect_config = ComponentConfigBuilder.buildFromJSON(converted);
-    console.log(architect_config);
+    console.log(JSON.stringify(architect_component, null, 2));
   }
 
   static getConfigPaths(input: string) {
