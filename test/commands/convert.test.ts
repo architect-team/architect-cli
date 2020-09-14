@@ -12,7 +12,7 @@ import { mockAuth } from '../utils/mocks';
 describe('convert', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true; // TODO: restore
+  const print = false;
 
   // we need to cast this as a string because annoyingly the oclif/fancy-test library has restricted this type to a string
   // while the underyling nock library that it wraps allows a regex
