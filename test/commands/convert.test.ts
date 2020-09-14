@@ -230,11 +230,10 @@ describe('convert', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
-    .it('adds ports of various docker-compose types to kibana component config', ctx => {
+    .it('adds ports of various docker-compose types to kibana service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      console.log(JSON.stringify(component_config.getServices()['kibana'].getInterfaces(), null, 2))
       expect(component_config.getServices()['kibana'].getInterfaces()['interface0'].port).eq('5601');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].port).eq('5000');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].protocol).eq('udp');
@@ -262,11 +261,10 @@ describe('convert', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
-    .it('adds ports to elasticsearch component config', ctx => {
+    .it('adds ports to service component config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      console.log(JSON.stringify(component_config.getServices()['elasticsearch'].getInterfaces(), null, 2))
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface0'].port).eq('9200');
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface1'].port).eq('9300');
     });
@@ -280,16 +278,73 @@ describe('convert', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
-    .it('adds ports to logstash component config', ctx => {
+    .it('adds ports to logstash service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      console.log(JSON.stringify(component_config.getServices()['logstash'].getInterfaces(), null, 2))
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].port).eq('5000');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].protocol).eq('tcp');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].port).eq('5000');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].protocol).eq('udp');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface2'].port).eq('9600');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds debug and regular volumes to elasticsearch service config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['elasticsearch'].getVolumes()['volume1'].mount_path).eq('/usr/share/elasticsearch/data');
+      expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
+      expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
+      expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds debug volumes to logstash service config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./logstash/config/logstash.yml');
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].mount_path).eq('/usr/share/logstash/pipeline');
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].host_path).eq('./logstash/pipeline');
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].readonly).to.be.true;
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds debug volumes to kibana service config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./kibana/config/kibana.yml');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
     });
 
 

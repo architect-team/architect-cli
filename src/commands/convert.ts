@@ -94,48 +94,33 @@ export abstract class ConvertCommand extends Command {
       let port_index = 0;
       for (const port of service.ports) {
         if (typeof port === 'string' || typeof port === 'number') {
-          // TODO: write tests, then condense regexes to use port mapping endings if possible
-          const colon_port_regex = new RegExp('^(\\d+[:]\\d+)$'); // 8080:8080
-          const host_port_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*:(\\d+[:]\\d+)'); // 127.0.0.1:8001:8001
-          const single_number_port_regex = new RegExp('^\\d+$'); // 3000
-          const range_as_port_regex = new RegExp('^\\d+-\\d+$'); // 4000-4005
-          const range_to_port_regex = new RegExp('^\\d+-\\d+:\\d+$'); // 12400-12500:1240
-          const range_to_range_regex = new RegExp('^\\d+-\\d+:\\d+-\\d+$'); // 9090-9091:8080-8081
-          const host_port_ranges_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*([a-zA-Z]+)*:(\\d+-\\d+[:]\\d+-\\d+)'); // 127.0.0.1:5000-5010:5000-5010
-          const protocol_port_regex = new RegExp('^(\\d+:\\d+)\\/[a-zA-Z]+$'); // 5000:5000/tcp
+          const single_number_port_regex = new RegExp('^\\d+$');
+          const single_port_regex = new RegExp('(\\d+[:]\\d+)\\/*([a-zA-Z]+)*$');
+          const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
-          if (colon_port_regex.exec(port)?.length || host_port_regex.exec(port)?.length || range_to_port_regex.exec(port)?.length) {
-            const port_number = port.split(':')[1];
-            architect_service.setInterface(`interface${port_index}`, port_number);
-            port_index++;
-          } else if(single_number_port_regex.exec(port)?.length) {
+          if (single_number_port_regex.exec(port)?.length) {
             architect_service.setInterface(`interface${port_index}`, port);
             port_index++;
-          } else if(range_as_port_regex.exec(port)?.length) {
-            const [start, end] = port.split('-');
-            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-              architect_service.setInterface(`interface${port_index}`, i.toString());
-              port_index++;
-            }
-          } else if (range_to_range_regex.exec(port)?.length) {
-            const [start, end] = port.split(':')[1].split('-');
-            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-              architect_service.setInterface(`interface${port_index}`, i.toString());
-              port_index++;
-            }
-          } else if (host_port_ranges_regex.exec(port)?.length) {
-            const [start, end] = port.split(':')[2].split('-');
-            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-              architect_service.setInterface(`interface${port_index}`, i.toString());
-              port_index++;
-            }
-          } else if (protocol_port_regex.exec(port)?.length) {
-            const [port_number, protocol] = port.split(':')[1].split('/');
+          } else if (single_port_regex.test(port)) {
+            const matches = single_port_regex.exec(port);
             const interface_spec = new InterfaceSpecV1();
-            interface_spec.port = port_number;
-            interface_spec.protocol = protocol;
+            if (matches && matches.length >= 3) {
+              interface_spec.protocol = matches[2];
+            }
+            if (matches && matches.length >= 2) {
+              interface_spec.port = matches[1].split(':')[1];
+            }
             architect_service.setInterface(`interface${port_index}`, interface_spec);
             port_index++;
+          } else if (port_range_regex.test(port)) {
+            const matches = port_range_regex.exec(port);
+            if (matches && matches.length >= 2) {
+              const [start, end] = matches[1].split('-');
+              for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
+                architect_service.setInterface(`interface${port_index}`, i.toString());
+                port_index++;
+              }
+            }
           }
         } else {
           const interface_spec = new InterfaceSpecV1();
