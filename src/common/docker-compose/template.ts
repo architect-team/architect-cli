@@ -11,8 +11,15 @@ export interface DockerComposeVolume {
   read_only?: boolean;
 }
 
+export interface DockerComposeInterface {
+  target: string | number;
+  published: string | number;
+  protocol?: string;
+  mode?: string;
+}
+
 export interface DockerService {
-  ports: string[];
+  ports: string[] | DockerComposeInterface[];
   image?: string;
   environment?: { [key: string]: any };
   depends_on: string[];

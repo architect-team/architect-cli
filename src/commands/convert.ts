@@ -1,22 +1,38 @@
 /* eslint-disable no-empty */
+import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import fs from 'fs';
+import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { AccountUtils } from '../common/utils/account';
 import { ComponentConfigV1 } from '../dependency-manager/src/component-config/v1';
-import { BuildSpecV1, ServiceConfigV1, ServiceVolumeV1 } from '../dependency-manager/src/service-config/v1';
+import { BuildSpecV1, InterfaceSpecV1, ServiceConfigV1, ServiceVolumeV1 } from '../dependency-manager/src/service-config/v1';
 
 export abstract class ConvertCommand extends Command {
   auth_required() {
     return false;
   }
 
-  static description = 'Initialize an architect component from an existing docker-compose template';
+  static description = 'Initialize an architect component from an existing docker-compose file';
 
   static flags = {
     ...Command.flags,
+    component_file: flags.string({
+      char: 'o',
+      description: 'Path where the component file should be written to',
+      default: 'architect.yml',
+    }),
+    account: flags.string({
+      char: 'a',
+    }),
+    name: flags.string({
+      char: 'n',
+    }),
   };
 
   static args = [{
@@ -26,17 +42,29 @@ export abstract class ConvertCommand extends Command {
   }];
 
   async run() {
-    const { args } = this.parse(ConvertCommand);
+    const { args, flags } = this.parse(ConvertCommand);
     const fromPath = path.resolve(untildify(args.from));
     const docker_compose = ConvertCommand.rawFromPath(fromPath);
+
+    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const answers: any = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'What should the name of the component be?',
+        when: !flags.name,
+        filter: value => value.toLowerCase(),
+      },
+    ]);
+
     const compose_volumes = Object.keys(docker_compose.volumes);
 
     const architect_component = new ComponentConfigV1();
-    architect_component.name = `my-account/my-new-component`;
+    architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
     for (const [service_name, service] of Object.entries(docker_compose.services)) {
       const architect_service = new ServiceConfigV1();
       architect_service.name = service_name;
-      architect_service.description = `${service_name} converted to architect service with "architect convert"`;
+      architect_service.description = `${service_name} converted to an Architect service with "architect convert"`;
       architect_service.environment = service.environment;
       architect_service.command = service.command;
       architect_service.entrypoint = service.entrypoint;
@@ -65,7 +93,7 @@ export abstract class ConvertCommand extends Command {
 
       let port_index = 0;
       for (const port of service.ports) {
-        if (typeof port === 'string') { // TODO: object ports from compose spec
+        if (typeof port === 'string') {
           // TODO: write tests, then condense regexes to use port mapping endings if possible
           const colon_port_regex = new RegExp('^(\\d+[:]\\d+)$'); // 8080:8080
           const host_port_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*:(\\d+[:]\\d+)'); // 127.0.0.1:8001:8001
@@ -106,6 +134,13 @@ export abstract class ConvertCommand extends Command {
             architect_service.setInterface(`interface${port_index}`, port_number);
             port_index++;
           }
+        } else {
+          const interface_spec = new InterfaceSpecV1();
+          interface_spec.port = port.target.toString();
+          if (port.protocol) {
+            interface_spec.protocol = port.protocol;
+          }
+          architect_service.setInterface(`interface${port_index}`, interface_spec);
         }
       }
 
@@ -148,7 +183,10 @@ export abstract class ConvertCommand extends Command {
       architect_component.setService(service_name, architect_service);
     }
 
-    console.log(JSON.stringify(architect_component, null, 2));
+    const architect_yml = yaml.safeDump(yaml.safeLoad(JSON.stringify(classToPlain(architect_component))));
+    fs.writeFileSync(flags.component_file, architect_yml);
+    this.log(chalk.green(`Wrote Architect component config to ${flags.component_file}`));
+    this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
 
   static getConfigPaths(input: string) {
