@@ -6,6 +6,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import { ComponentConfigV1 } from '../../src/dependency-manager/src/component-config/v1';
+import { BuildSpecV1 } from '../../src/dependency-manager/src/service-config/v1';
 import { mockAuth } from '../utils/mocks';
 
 describe('convert', function () {
@@ -111,7 +112,7 @@ describe('convert', function () {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      expect(Object.keys(component_config.services || {})).to.deep.equal(['elasticsearch', 'logstash','kibana']);
+      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash','kibana']);
     });
 
     test
@@ -131,4 +132,165 @@ describe('convert', function () {
       expect(component_config.getServices()['kibana'].getDescription()).eq('kibana converted to an Architect service with "architect convert"');
       expect(component_config.getServices()['logstash'].getDescription()).eq('logstash converted to an Architect service with "architect convert"');
     });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds environment variables to each service', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ES_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
+      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ELASTIC_PASSWORD']).eq('changeme');
+      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['discovery.type']).eq('single-node');
+      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['TEST_NUMBER']).eq('3000');
+      expect(component_config.getServices()['logstash'].getEnvironmentVariables()['LS_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
+      expect(component_config.getServices()['logstash'].getEnvironmentVariables()['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.interface0.url }}');
+      expect(component_config.getServices()['kibana'].getEnvironmentVariables()['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.interface0.url }}');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds command to logstash service', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['logstash'].getCommand()).deep.eq(['npm', 'run', 'start']);
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds entrypoint to logstash service', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['logstash'].getEntrypoint()).deep.eq(['entrypoint.sh']);
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds image to kibana service', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect(component_config.getServices()['kibana'].getImage()).eq('docker.elastic.co/kibana/kibana:7.8.0');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds build context and args to elasticsearch service', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).args!['ELK_VERSION']).eq('$ELK_VERSION');
+      expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).context).eq('elasticsearch/');
+      expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).dockerfile).eq('Dockerfile.elasticsearch');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds ports of various docker-compose types to kibana component config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      console.log(JSON.stringify(component_config.getServices()['kibana'].getInterfaces(), null, 2))
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface0'].port).eq('5601');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].port).eq('5000');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].protocol).eq('udp');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface2'].port).eq('8001');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface3'].port).eq('3000');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface4'].port).eq('4000');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface9'].port).eq('4005');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface10'].port).eq('1240');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface11'].port).eq('8080');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface12'].port).eq('8081');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface13'].port).eq('5000');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface23'].port).eq('5010');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface24'].port).eq('4444');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface24'].protocol).eq('tcp');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface25'].port).eq('4445');
+      expect(component_config.getServices()['kibana'].getInterfaces()['interface25'].protocol).eq('udp');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds ports to elasticsearch component config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      console.log(JSON.stringify(component_config.getServices()['elasticsearch'].getInterfaces(), null, 2))
+      expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface0'].port).eq('9200');
+      expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface1'].port).eq('9300');
+    });
+
+    test
+    .do(ctx => {
+      mockAuth();
+      writeFileStub = sinon.stub(fs, "writeFileSync");
+    })
+    .finally(() => sinon.restore())
+    .stdout({ print })
+    .stderr({ print })
+    .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .it('adds ports to logstash component config', ctx => {
+      expect(writeFileStub.called).to.be.true;
+
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      console.log(JSON.stringify(component_config.getServices()['logstash'].getInterfaces(), null, 2))
+      expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].port).eq('5000');
+      expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].protocol).eq('tcp');
+      expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].port).eq('5000');
+      expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].protocol).eq('udp');
+      expect(component_config.getServices()['logstash'].getInterfaces()['interface2'].port).eq('9600');
+    });
+
+
 });

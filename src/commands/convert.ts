@@ -93,7 +93,7 @@ export abstract class ConvertCommand extends Command {
 
       let port_index = 0;
       for (const port of service.ports) {
-        if (typeof port === 'string') {
+        if (typeof port === 'string' || typeof port === 'number') {
           // TODO: write tests, then condense regexes to use port mapping endings if possible
           const colon_port_regex = new RegExp('^(\\d+[:]\\d+)$'); // 8080:8080
           const host_port_regex = new RegExp('(\\d+[.]\\d+[.]\\d+[.]\\d+)*:(\\d+[:]\\d+)'); // 127.0.0.1:8001:8001
@@ -113,25 +113,28 @@ export abstract class ConvertCommand extends Command {
             port_index++;
           } else if(range_as_port_regex.exec(port)?.length) {
             const [start, end] = port.split('-');
-            for (let i = parseInt(start); i < parseInt(end); i++) {
+            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
               architect_service.setInterface(`interface${port_index}`, i.toString());
               port_index++;
             }
           } else if (range_to_range_regex.exec(port)?.length) {
             const [start, end] = port.split(':')[1].split('-');
-            for (let i = parseInt(start); i < parseInt(end); i++) {
+            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
               architect_service.setInterface(`interface${port_index}`, i.toString());
               port_index++;
             }
           } else if (host_port_ranges_regex.exec(port)?.length) {
             const [start, end] = port.split(':')[2].split('-');
-            for (let i = parseInt(start); i < parseInt(end); i++) {
+            for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
               architect_service.setInterface(`interface${port_index}`, i.toString());
               port_index++;
             }
           } else if (protocol_port_regex.exec(port)?.length) {
-            const port_number = port.split(':')[1].split('/')[0];
-            architect_service.setInterface(`interface${port_index}`, port_number);
+            const [port_number, protocol] = port.split(':')[1].split('/');
+            const interface_spec = new InterfaceSpecV1();
+            interface_spec.port = port_number;
+            interface_spec.protocol = protocol;
+            architect_service.setInterface(`interface${port_index}`, interface_spec);
             port_index++;
           }
         } else {
@@ -141,6 +144,7 @@ export abstract class ConvertCommand extends Command {
             interface_spec.protocol = port.protocol;
           }
           architect_service.setInterface(`interface${port_index}`, interface_spec);
+          port_index++;
         }
       }
 
