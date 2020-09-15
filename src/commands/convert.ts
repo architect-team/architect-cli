@@ -54,6 +54,12 @@ export abstract class ConvertCommand extends Command {
         message: 'What should the name of the component be?',
         when: !flags.name,
         filter: value => value.toLowerCase(),
+        validate: (value: any) => {
+          if ((new RegExp('^[a-z][a-z-]+[a-z]$').test(value))) {
+            return true;
+          }
+          return `Component name can only contain lowercase letters and dashes, and must start and end with a letter.`;
+        },
       },
     ]);
 
