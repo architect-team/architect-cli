@@ -348,13 +348,13 @@ describe('convert', function () {
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
       expect(component_config.getServices()['kibana'].getVolumes()['volume1'].mount_path).eq('/var/lib/mysql');
       expect(component_config.getServices()['kibana'].getVolumes()['volume1'].host_path).is.undefined;
-      expect(component_config.getServices()['kibana'].getVolumes()['volume2'].mount_path).eq('/var/lib/mysql');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume2'].host_path).eq('/opt/data');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume3'].mount_path).eq('/tmp/cache');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume3'].host_path).eq('./cache');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].mount_path).eq('/etc/configs/');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].host_path).eq('~/configs');
-      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].readonly).to.be.true;
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume2'].mount_path).eq('/var/lib/mysql');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume2'].host_path).eq('/opt/data');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume3'].mount_path).eq('/tmp/cache');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume3'].host_path).eq('./cache');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].mount_path).eq('/etc/configs/');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].host_path).eq('~/configs');
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].readonly).to.be.true;
 
     });
 });

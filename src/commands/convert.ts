@@ -150,7 +150,7 @@ export abstract class ConvertCommand extends Command {
             const service_volume = new ServiceVolumeV1();
             service_volume.mount_path = volume_parts[0];
             architect_service.setVolume(volume_key, service_volume);
-          } else if (volume_parts.length >= 2) {
+          } else if (volume_parts.length === 2 || volume_parts.length === 3) {
             const service_volume = new ServiceVolumeV1();
             if (!compose_volumes.includes(volume_parts[0])) {
               service_volume.host_path = volume_parts[0];
@@ -159,7 +159,9 @@ export abstract class ConvertCommand extends Command {
             if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
               service_volume.readonly = true;
             }
-            architect_service.setVolume(volume_key, service_volume);
+            debug_config.setVolume(volume_key, service_volume);
+          } else {
+            this.warn(chalk.yellow(`Could not convert volume with spec ${volume}`));
           }
         } else {
           if (volume.source) { // debug volume
