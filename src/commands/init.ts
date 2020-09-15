@@ -65,7 +65,7 @@ export abstract class InitCommand extends Command {
     for (const [service_name, service] of Object.entries(docker_compose.services)) {
       const architect_service = new ServiceConfigV1();
       architect_service.name = service_name;
-      architect_service.description = `${service_name} converted to an Architect service with "architect convert"`;
+      architect_service.description = `${service_name} converted to an Architect service with "architect init"`;
       architect_service.environment = service.environment;
       architect_service.command = service.command;
       architect_service.entrypoint = service.entrypoint;

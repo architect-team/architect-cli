@@ -104,9 +104,9 @@ describe('init', function () {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      expect(component_config.getServices()['elasticsearch'].getDescription()).eq('elasticsearch converted to an Architect service with "architect convert"');
-      expect(component_config.getServices()['kibana'].getDescription()).eq('kibana converted to an Architect service with "architect convert"');
-      expect(component_config.getServices()['logstash'].getDescription()).eq('logstash converted to an Architect service with "architect convert"');
+      expect(component_config.getServices()['elasticsearch'].getDescription()).eq('elasticsearch converted to an Architect service with "architect init"');
+      expect(component_config.getServices()['kibana'].getDescription()).eq('kibana converted to an Architect service with "architect init"');
+      expect(component_config.getServices()['logstash'].getDescription()).eq('logstash converted to an Architect service with "architect init"');
     });
 
     test
