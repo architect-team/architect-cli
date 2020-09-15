@@ -14,31 +14,7 @@ describe('convert', function () {
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  // we need to cast this as a string because annoyingly the oclif/fancy-test library has restricted this type to a string
-  // while the underyling nock library that it wraps allows a regex
-  // submitted an issue here: https://github.com/oclif/fancy-test/issues/73
-  const mock_api_host = (/.*/ as any as string);
-
   let writeFileStub: sinon.SinonStub;
-
-  const mock_account_response = {
-    created_at: "2020-06-02T15:33:27.870Z",
-    updated_at: "2020-06-02T15:33:27.870Z",
-    deleted_at: null,
-    id: "ba440d39-97d9-43c3-9f1a-a9a69adb2a41",
-    name: "examples",
-    display_name: null,
-    description: "",
-    location: null,
-    website: null,
-    is_public: false,
-    default_user_id: null
-  }
-
-  const mock_architect_account_response = {
-    ...mock_account_response,
-    name: 'architect'
-  }
 
   test
     .do(ctx => mockAuth())
