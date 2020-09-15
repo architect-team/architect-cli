@@ -78,12 +78,13 @@ export abstract class ConvertCommand extends Command {
       } else if (service.build) {
         architect_service.build = new BuildSpecV1();
         architect_service.build.args = {};
-        if (service.build.args instanceof Array) {
-          const args = {};
-          for (const arg in args) {
+        if (Array.isArray(service.build.args)) {
+          for (const arg of service.build.args) {
             const [key, value] = arg.split('=');
             if (key && value) {
               architect_service.build.args[key] = value;
+            } else {
+              this.warn(chalk.yellow(`Could not convert environment variable ${arg} for service ${service_name}`));
             }
           }
         } else {
@@ -126,7 +127,7 @@ export abstract class ConvertCommand extends Command {
               }
             }
           } else {
-            this.warn(chalk.yellow(`Could not convert port with spec ${port}`));
+            this.warn(chalk.yellow(`Could not convert port with spec ${port} for service ${service_name}`));
           }
         } else {
           const interface_spec = new InterfaceSpecV1();
@@ -161,7 +162,7 @@ export abstract class ConvertCommand extends Command {
             }
             debug_config.setVolume(volume_key, service_volume);
           } else {
-            this.warn(chalk.yellow(`Could not convert volume with spec ${volume}`));
+            this.warn(chalk.yellow(`Could not convert volume with spec ${volume} for service ${service_name}`));
           }
         } else {
           if (volume.source) { // debug volume

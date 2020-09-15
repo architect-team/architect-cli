@@ -5,7 +5,7 @@ services:
     build:
       context: elasticsearch/
       args:
-        ELK_VERSION: $ELK_VERSION
+        - ELK_VERSION=$ELK_VERSION
       dockerfile: Dockerfile.elasticsearch
     volumes:
       - type: bind
