@@ -21,7 +21,7 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
       ELASTIC_PASSWORD: changeme
-      discovery.type: single-node
+      DISCOVERY_TYPE: single-node
       TEST_NUMBER: 3000
     networks:
       - elk
@@ -52,6 +52,8 @@ services:
       - elasticsearch
     command: npm run start
     entrypoint: entrypoint.sh
+    links:
+      - kibana
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.8.0
@@ -60,6 +62,10 @@ services:
         source: ./kibana/config/kibana.yml
         target: /usr/share/kibana/config/kibana.yml
         read_only: true
+      - /var/lib/mysql
+      - /opt/data:/var/lib/mysql
+      - ./cache:/tmp/cache
+      - ~/configs:/etc/configs/:ro
     ports:
       - "5601:5601"
       - "5000:5000/udp"

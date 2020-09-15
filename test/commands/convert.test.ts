@@ -12,7 +12,7 @@ import { mockAuth } from '../utils/mocks';
 describe('convert', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
+  const print = true; // TODO: fix
 
   // we need to cast this as a string because annoyingly the oclif/fancy-test library has restricted this type to a string
   // while the underyling nock library that it wraps allows a regex
@@ -148,10 +148,11 @@ describe('convert', function () {
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ES_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ELASTIC_PASSWORD']).eq('changeme');
-      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['discovery.type']).eq('single-node');
+      expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['DISCOVERY_TYPE']).eq('single-node');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['TEST_NUMBER']).eq('3000');
       expect(component_config.getServices()['logstash'].getEnvironmentVariables()['LS_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.getServices()['logstash'].getEnvironmentVariables()['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.interface0.url }}');
+      expect(component_config.getServices()['logstash'].getEnvironmentVariables()['KIBANA_URL']).eq('${{ services.kibana.interfaces.interface0.url }}');
       expect(component_config.getServices()['kibana'].getEnvironmentVariables()['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.interface0.url }}');
     });
 
@@ -338,14 +339,22 @@ describe('convert', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['convert', path.join(__dirname, '../mocks/convert-compose.yml'), '-a', 'examples', '-n', 'test-component'])
-    .it('adds debug volumes to kibana service config', ctx => {
+    .it('adds debug and regular volumes to kibana service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+      expect(component_config.getServices()['kibana'].getVolumes()['volume1'].mount_path).eq('/var/lib/mysql');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume1'].host_path).is.undefined;
+      expect(component_config.getServices()['kibana'].getVolumes()['volume2'].mount_path).eq('/var/lib/mysql');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume2'].host_path).eq('/opt/data');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume3'].mount_path).eq('/tmp/cache');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume3'].host_path).eq('./cache');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].mount_path).eq('/etc/configs/');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].host_path).eq('~/configs');
+      expect(component_config.getServices()['kibana'].getVolumes()['volume4'].readonly).to.be.true;
+
     });
-
-
 });

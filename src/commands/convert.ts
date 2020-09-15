@@ -57,8 +57,6 @@ export abstract class ConvertCommand extends Command {
       },
     ]);
 
-    const compose_volumes = Object.keys(docker_compose.volumes);
-
     const architect_component = new ComponentConfigV1();
     architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
     for (const [service_name, service] of Object.entries(docker_compose.services)) {
@@ -98,7 +96,7 @@ export abstract class ConvertCommand extends Command {
           const single_port_regex = new RegExp('(\\d+[:]\\d+)\\/*([a-zA-Z]+)*$');
           const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
-          if (single_number_port_regex.exec(port)?.length) {
+          if (single_number_port_regex.test(port)) {
             architect_service.setInterface(`interface${port_index}`, port);
             port_index++;
           } else if (single_port_regex.test(port)) {
@@ -133,12 +131,28 @@ export abstract class ConvertCommand extends Command {
         }
       }
 
+      const compose_volumes = Object.keys(docker_compose.volumes);
       let volume_index = 0;
       const debug_config = new ServiceConfigV1();
       for (const volume of (service.volumes || [])) {
         const volume_key = `volume${volume_index}`;
         if (typeof volume === 'string') {
-          architect_service.setVolume(volume_key, volume);
+          const volume_parts = volume.split(':');
+          if (volume_parts.length === 1) {
+            const service_volume = new ServiceVolumeV1();
+            service_volume.mount_path = volume_parts[0];
+            architect_service.setVolume(volume_key, service_volume);
+          } else if (volume_parts.length >= 2) {
+            const service_volume = new ServiceVolumeV1();
+            if (!compose_volumes.includes(volume_parts[0])) {
+              service_volume.host_path = volume_parts[0];
+            }
+            service_volume.mount_path = volume_parts[1];
+            if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
+              service_volume.readonly = true;
+            }
+            architect_service.setVolume(volume_key, service_volume);
+          }
         } else {
           if (volume.source) { // debug volume
             const service_volume = new ServiceVolumeV1();
@@ -163,12 +177,14 @@ export abstract class ConvertCommand extends Command {
       }
       architect_service.setDebugOptions(debug_config);
 
-      if (service.depends_on?.length) {
-        for (const depends_on_service of service.depends_on) {
-          architect_service.setEnvironmentVariable(`${depends_on_service.toUpperCase()}_URL`, `\${{ services.${depends_on_service}.interfaces.interface0.url }}`);
+      if (service.depends_on?.length || service.links?.length) {
+        const links = new Set(service.depends_on.concat(service.links || []));
+        for (const link of links) {
+          architect_service.setEnvironmentVariable(`${link.toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
         }
       }
 
+      architect_component.setInterfaces({});
       architect_component.setService(service_name, architect_service);
     }
 
