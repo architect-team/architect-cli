@@ -126,7 +126,7 @@ export abstract class ConvertCommand extends Command {
               }
             }
           } else {
-            this.log(chalk.yellow(`Could not convert port with spec ${port}`));
+            this.warn(chalk.yellow(`Could not convert port with spec ${port}`));
           }
         } else {
           const interface_spec = new InterfaceSpecV1();
