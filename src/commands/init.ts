@@ -13,7 +13,7 @@ import { AccountUtils } from '../common/utils/account';
 import { ComponentConfigV1 } from '../dependency-manager/src/component-config/v1';
 import { BuildSpecV1, InterfaceSpecV1, ServiceConfigV1, ServiceVolumeV1 } from '../dependency-manager/src/service-config/v1';
 
-export abstract class ConvertCommand extends Command {
+export abstract class InitCommand extends Command {
   auth_required() {
     return false;
   }
@@ -33,18 +33,15 @@ export abstract class ConvertCommand extends Command {
     name: flags.string({
       char: 'n',
     }),
+    'from-compose': flags.string({
+      default: process.cwd(),
+    }),
   };
 
-  static args = [{
-    name: 'from',
-    default: process.cwd(),
-    required: false,
-  }];
-
   async run() {
-    const { args, flags } = this.parse(ConvertCommand);
-    const fromPath = path.resolve(untildify(args.from));
-    const docker_compose = ConvertCommand.rawFromPath(fromPath);
+    const { flags } = this.parse(InitCommand);
+    const fromPath = path.resolve(untildify(flags['from-compose']));
+    const docker_compose = InitCommand.rawFromPath(fromPath);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const answers: any = await inquirer.prompt([
@@ -215,7 +212,7 @@ export abstract class ConvertCommand extends Command {
   }
 
   static rawFromPath(compose_file: string): DockerComposeTemplate {
-    const [file_path, file_contents] = ConvertCommand.readFromPath(compose_file);
+    const [file_path, file_contents] = InitCommand.readFromPath(compose_file);
 
     let raw_config;
     try {
@@ -234,7 +231,7 @@ export abstract class ConvertCommand extends Command {
   }
 
   static readFromPath(input: string): [string, string] {
-    const try_files = ConvertCommand.getConfigPaths(input);
+    const try_files = InitCommand.getConfigPaths(input);
 
     // Make sure the file exists
     let file_path;
