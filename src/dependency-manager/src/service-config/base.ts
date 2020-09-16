@@ -17,6 +17,7 @@ export interface ServiceLivenessProbe {
   interval?: string;
   command?: string[];
   port?: string;
+  initial_delay?: string;
 }
 
 export interface VolumeSpec {
