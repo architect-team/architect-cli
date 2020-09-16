@@ -22,14 +22,18 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   timeout?: string;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  interval?: string;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  initial_delay?: string;
+
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
   @IsString({ always: true })
   path?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  interval?: string;
 
   @Transform(value => value instanceof Array ? value : shell_parse(value))
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
@@ -294,6 +298,7 @@ export class ServiceConfigV1 extends ServiceConfig {
       failure_threshold: '1',
       timeout: '5s',
       interval: '30s',
+      initial_delay: '0s',
       ...this.liveness_probe,
     };
 
