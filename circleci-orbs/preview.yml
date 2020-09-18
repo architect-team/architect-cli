@@ -1,0 +1,94 @@
+description: Easily register and deploy a component to a new environment on the Architect Cloud, then destroy the component and environment when ready
+
+display:
+  home_url: https://architect.io
+  source_url: https://github.com/architect-team/architect-cli/circleci-orbs
+
+jobs:
+  create:
+    parameters:
+      email:
+        type: string
+      password:
+        type: string
+      account:
+        type: string
+      environment:
+        type: string
+      platform:
+        type: string
+      component_name:
+        type: string
+      component_file:
+        type: string
+        default: ./architect.yml
+      deploy_flags:
+        type: string
+        default: ''
+    executor: preview_executor
+    steps:
+      - run: npm install -g @architect-io/cli@0.7.4
+      - run: architect login -e << parameters.email >> -p << parameters.password >>
+      - run: architect register << parameters.component_file >> -t << parameters.environment >>
+      - run: architect environment:create << parameters.environment >> -a << parameters.account >> --platform << parameters.platform >>
+      - run: architect deploy --auto_approve -a << parameters.account >> -e << parameters.environment >> << parameters.component_name >>:<< parameters.environment >> << parameters.deploy_flags >>
+  destroy:
+    parameters:
+      email:
+        type: string
+      password:
+        type: string
+      account:
+        type: string
+      environment:
+        type: string
+      component_name:
+        type: string
+    executor: preview_executor
+    steps:
+      - run: npm install -g @architect-io/cli@0.7.4
+      - run: architect login -e << parameters.email >> -p << parameters.password >>
+      - run: architect destroy --auto_approve -a << parameters.account >> -e << parameters.environment >> -c << parameters.component_name >>:<< parameters.environment >>
+      - run: architect env:destroy --auto_approve << parameters.environment >> -a << parameters.account >>
+
+executors:
+  preview_executor:
+    machine:
+      image: ubuntu-1604:202007-01
+
+examples:
+  create_preview:
+    description: Create a preview environment on the Architect Cloud by deploying the component to the specified environment
+    usage:
+      version: "2.1"
+      orbs:
+        preview: architect-team/preview@1.0.0
+      workflows:
+        build_test_deploy:
+          jobs:
+            - preview/create:
+                pre-steps:
+                  - checkout
+                email: email@gmail.com
+                password: $PASSWORD
+                account: example-account
+                environment: preview-$CIRCLE_BUILD_NUM
+                platform: example-platform
+                component_name: example-account/hello-world
+  destroy_preview:
+    description: Destroy the deployed component and the specified environment
+    usage:
+      version: 2.1
+      orbs:
+        preview: architect-team/preview@1.0.0
+      workflows:
+        build_test_deploy:
+          jobs:
+            - preview/destroy:
+                email: email@gmail.com
+                password: $PASSWORD
+                account: example-account
+                environment: preview-$CIRCLE_PREVIOUS_BUILD_NUM
+                component_name: example-account/hello-world
+
+version: 2.1
