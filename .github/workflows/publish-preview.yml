@@ -22,10 +22,9 @@ jobs:
         with:
           ref: circleci-orb
       - run: sudo snap install circleci
-      - run: circleci orb create architect/preview --no-prompt --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }} # TODO: remove
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      - run: circleci orb publish ./circleci-orbs/preview.yml architect/preview@dev:${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      # - run: circleci orb publish promote architect-io/preview@dev:${GITHUB_REF/refs\/tags\//} patch
+      - run: circleci orb publish ./circleci-orbs/preview.yml architect/preview@dev:master --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
+      - run: circleci orb publish promote architect-io/preview@dev:master patch
   publish_create_action:
     name: Publish create GitHub Action
     runs-on: ubuntu-latest
@@ -34,7 +33,7 @@ jobs:
       - id: get-version
         run: |
           cd create-preview
-          CURRENT_VERSION=`git describe --abbrev=0 --tags`
+          CURRENT_VERSION=`git tag -l | tail -1`
           VERSION_PARTS=(${CURRENT_VERSION//./ })
           VNUM1=${VERSION_PARTS[0]}
           VNUM2=${VERSION_PARTS[1]}
@@ -68,7 +67,7 @@ jobs:
       - id: get-version
         run: |
           cd destroy-preview
-          CURRENT_VERSION=`git describe --abbrev=0 --tags`
+          CURRENT_VERSION=`git tag -l | tail -1`
           VERSION_PARTS=(${CURRENT_VERSION//./ })
           VNUM1=${VERSION_PARTS[0]}
           VNUM2=${VERSION_PARTS[1]}
