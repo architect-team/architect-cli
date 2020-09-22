@@ -1,17 +1,13 @@
 name: Publish GitHub Actions and CircleCI Orb
 
 on:
-  push:
+  release:
+    types:
+      - published
     branches:
-      - circleci-orb
-
-  # release: TODO: replace
-  #   types:
-  #     - published
-  #   branches:
-  #     - master
-  #   tags:
-  #     - v0.*.*
+      - master
+    tags:
+      - v0.*.*
 
 jobs:
   publish_circleci_orb:
