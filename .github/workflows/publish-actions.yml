@@ -1,0 +1,93 @@
+name: Publish GitHub Actions and CircleCI Orb
+
+on:
+  push:
+    branches:
+      - publish-test
+
+  # release: TODO: replace
+  #   types:
+  #     - published
+  #   branches:
+  #     - master
+  #   tags:
+  #     - v0.*.*
+
+jobs:
+  publish_circleci_orb:
+    name: Publish CircleCI Orb
+    runs-on: ubuntu-latest
+    # container: circleci/circleci-cli
+    steps:
+      - run: sudo snap install circleci
+      - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
+      - run: circleci orb publish ./circleci-orbs/preview.yml architect-io/preview@dev:${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
+      # - run: circleci orb publish promote architect-io/preview@dev:${GITHUB_REF/refs\/tags\//} patch
+  publish_create_action:
+    name: Publish create GitHub Action
+    runs-on: ubuntu-latest
+    steps:
+      - run: git clone https://github.com/architect-team/create-preview.git
+      - id: get-version
+        run: |
+          cd create-preview
+          CURRENT_VERSION=`git describe --abbrev=0 --tags`
+          VERSION_PARTS=(${CURRENT_VERSION//./ })
+          VNUM1=${VERSION_PARTS[0]}
+          VNUM2=${VERSION_PARTS[1]}
+          VNUM3=${VERSION_PARTS[2]}
+          VNUM3=$((VNUM3+1))
+          NEW_VERSION="$VNUM1.$VNUM2.$VNUM3"
+          echo "Updating $CURRENT_VERSION to $NEW_VERSION"
+          echo "::set-output name=version::${NEW_VERSION}"
+      - id: get-commit
+        run: |
+          cd create-preview
+          LATEST_COMMIT=`git rev-parse HEAD`
+          echo "::set-output name=commit::${LATEST_COMMIT}"
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        with:
+          tag_name: ${{ steps.get-version.outputs.version }}
+          release_name: ${{ steps.get-version.outputs.version }}
+          draft: false
+          prerelease: false
+          owner: architect-team
+          repo: create-preview
+          commitish: ${{ steps.get-commit.outputs.commit }}
+  publish_destroy_action:
+    name: Publish destroy GitHub Action
+    runs-on: ubuntu-latest
+    steps:
+      - run: git clone https://github.com/architect-team/destroy-preview.git
+      - id: get-version
+        run: |
+          cd destroy-preview
+          CURRENT_VERSION=`git describe --abbrev=0 --tags`
+          VERSION_PARTS=(${CURRENT_VERSION//./ })
+          VNUM1=${VERSION_PARTS[0]}
+          VNUM2=${VERSION_PARTS[1]}
+          VNUM3=${VERSION_PARTS[2]}
+          VNUM3=$((VNUM3+1))
+          NEW_VERSION="$VNUM1.$VNUM2.$VNUM3"
+          echo "Updating $CURRENT_VERSION to $NEW_VERSION"
+          echo "::set-output name=version::${NEW_VERSION}"
+      - id: get-commit
+        run: |
+          cd destroy-preview
+          LATEST_COMMIT=`git rev-parse HEAD`
+          echo "::set-output name=commit::${LATEST_COMMIT}"
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        with:
+          tag_name: ${{ steps.get-version.outputs.version }}
+          release_name: ${{ steps.get-version.outputs.version }}
+          draft: false
+          prerelease: false
+          owner: architect-team
+          repo: destroy-preview
+          commitish: ${{ steps.get-commit.outputs.commit }}
