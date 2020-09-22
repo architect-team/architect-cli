@@ -2,7 +2,7 @@ description: Easily register and deploy a component to a new environment on the 
 
 display:
   home_url: https://architect.io
-  source_url: https://github.com/architect-team/architect-cli/circleci-orbs
+  source_url: https://github.com/architect-team/architect-cli/tree/master/circleci-orbs
 
 jobs:
   create:
