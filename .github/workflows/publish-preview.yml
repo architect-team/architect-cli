@@ -3,7 +3,7 @@ name: Publish GitHub Actions and CircleCI Orb
 on:
   push:
     branches:
-      - publish-test
+      - circleci-orb
 
   # release: TODO: replace
   #   types:
@@ -17,7 +17,6 @@ jobs:
   publish_circleci_orb:
     name: Publish CircleCI Orb
     runs-on: ubuntu-latest
-    # container: circleci/circleci-cli
     steps:
       - run: sudo snap install circleci
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
