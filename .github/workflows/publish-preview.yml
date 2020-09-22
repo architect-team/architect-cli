@@ -22,6 +22,7 @@ jobs:
         with:
           ref: circleci-orb
       - run: sudo snap install circleci
+      - run: circleci orb create architect/preview
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
       - run: circleci orb publish ./circleci-orbs/preview.yml architect/preview@dev:${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
       # - run: circleci orb publish promote architect-io/preview@dev:${GITHUB_REF/refs\/tags\//} patch
