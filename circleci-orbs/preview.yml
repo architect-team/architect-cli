@@ -27,7 +27,7 @@ jobs:
         default: ''
     executor: preview_executor
     steps:
-      - run: npm install -g @architect-io/cli@0.7.4
+      - run: npm install -g @architect-io/cli@0.7
       - run: architect login -e << parameters.email >> -p << parameters.password >>
       - run: architect register << parameters.component_file >> -t << parameters.environment >>
       - run: architect environment:create << parameters.environment >> -a << parameters.account >> --platform << parameters.platform >>
@@ -46,7 +46,7 @@ jobs:
         type: string
     executor: preview_executor
     steps:
-      - run: npm install -g @architect-io/cli@0.7.4
+      - run: npm install -g @architect-io/cli@0.7
       - run: architect login -e << parameters.email >> -p << parameters.password >>
       - run: architect destroy --auto_approve -a << parameters.account >> -e << parameters.environment >> -c << parameters.component_name >>:<< parameters.environment >>
       - run: architect env:destroy --auto_approve << parameters.environment >> -a << parameters.account >>

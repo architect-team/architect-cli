@@ -7,7 +7,7 @@ on:
     branches:
       - master
     tags:
-      - v0.*.*
+      - v0.*.0
 
 jobs:
   publish_circleci_orb:
@@ -20,7 +20,7 @@ jobs:
       - run: sudo snap install circleci
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
       - run: circleci orb publish ./circleci-orbs/preview.yml architect/preview@dev:master --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      - run: circleci orb publish promote architect-io/preview@dev:master patch
+      - run: circleci orb publish promote architect-io/preview@dev:master patch --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
   publish_create_action:
     name: Publish create GitHub Action
     runs-on: ubuntu-latest
