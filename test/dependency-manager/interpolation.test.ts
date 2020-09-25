@@ -1041,6 +1041,51 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('file ref with bash env vars', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          CONFIG_DATA: file:./application.properties.tpl
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    interfaces:
+      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
+
+    components:
+      examples/hello-world:
+        extends: file:./architect.yml
+    `
+
+    const properties_tpl = `
+    test.security.apiTrustedSecret=\${TEST_AUTH_CODE_SECRET:}
+    test.security.apiTrustedSecret2=\${ TEST_AUTH_CODE_SECRET }
+    `
+
+    mock_fs({
+      '/stack/application.properties.tpl': properties_tpl,
+      '/stack/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph(true);
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      CONFIG_DATA: 'test.security.apiTrustedSecret=$${TEST_AUTH_CODE_SECRET:}\n    test.security.apiTrustedSecret2=$${ TEST_AUTH_CODE_SECRET }'
+    });
+  });
+
   it('interpolation vault', async () => {
     const component_config = {
       name: 'architect/cloud',
