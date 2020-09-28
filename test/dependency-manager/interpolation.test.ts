@@ -168,7 +168,7 @@ describe('interpolation spec v1', () => {
         VIRTUAL_PORT_public_localhost: '8080',
         'VIRTUAL_PROTO': 'http'
       },
-      links: [
+      external_links: [
         'gateway:public.localhost'
       ],
       'ports': [
@@ -190,7 +190,7 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack')
       },
-      links: [
+      external_links: [
         'gateway:public.localhost'
       ],
     })

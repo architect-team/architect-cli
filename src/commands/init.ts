@@ -185,8 +185,8 @@ export abstract class InitCommand extends Command {
       }
       architect_service.setDebugOptions(debug_config);
 
-      if (service.depends_on?.length || service.links?.length) {
-        const links = new Set((service.depends_on || []).concat(service.links || []));
+      if (service.depends_on?.length || service.external_links?.length) {
+        const links = new Set((service.depends_on || []).concat(service.external_links || []));
         for (const link of links) {
           architect_service.setEnvironmentVariable(`${link.toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
         }

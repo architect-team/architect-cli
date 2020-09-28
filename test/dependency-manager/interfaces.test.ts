@@ -251,7 +251,7 @@ describe('interfaces spec v1', () => {
           LEAF_URL: 'http://public.localhost:80'
         },
         image: 'branch:latest',
-        links: [
+        external_links: [
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
@@ -263,7 +263,7 @@ describe('interfaces spec v1', () => {
         environment: {},
         image: 'postgres:11',
         ports: ['50000:5432'],
-        links: [
+        external_links: [
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
@@ -284,7 +284,7 @@ describe('interfaces spec v1', () => {
         image: 'api:latest',
         ports: ['50001:8080'],
         restart: 'always',
-        links: [
+        external_links: [
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
@@ -295,7 +295,7 @@ describe('interfaces spec v1', () => {
         environment: {},
         image: 'postgres:11',
         ports: ['50002:5432'],
-        links: [
+        external_links: [
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
@@ -316,7 +316,7 @@ describe('interfaces spec v1', () => {
         image: 'api:latest',
         ports: ['50003:8080'],
         restart: 'always',
-        links: [
+        external_links: [
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
@@ -382,7 +382,7 @@ describe('interfaces spec v1', () => {
         "VIRTUAL_PORT_app_localhost": "8080",
         "VIRTUAL_PROTO": "http"
       },
-      "links": [
+      "external_links": [
         "gateway:app.localhost",
         "gateway:admin.localhost"
       ],

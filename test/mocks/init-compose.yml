@@ -52,7 +52,7 @@ services:
       - elasticsearch
     command: npm run start
     entrypoint: entrypoint.sh
-    links:
+    external_links:
       - kibana
 
   kibana:

@@ -68,7 +68,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       };
 
       if (gateway_links.length) {
-        compose.services[url_safe_ref].links = gateway_links;
+        compose.services[url_safe_ref].external_links = gateway_links;
       }
 
       if (node.node_config.getImage()) compose.services[url_safe_ref].image = node.node_config.getImage();

@@ -1,6 +1,6 @@
 export interface DockerServiceBuild {
   context?: string;
-  args?: string[] | {[s: string]: string};
+  args?: string[] | { [s: string]: string };
   dockerfile?: string;
 }
 
@@ -30,7 +30,7 @@ export interface DockerService {
   entrypoint?: string[];
   dns_search?: string | string[];
   logging?: { driver?: string };
-  links?: string[];
+  external_links?: string[];
 }
 
 export default interface DockerComposeTemplate {
