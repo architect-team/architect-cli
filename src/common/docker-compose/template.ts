@@ -1,16 +1,30 @@
 export interface DockerServiceBuild {
   context?: string;
-  args?: string[];
+  args?: string[] | {[s: string]: string};
   dockerfile?: string;
 }
 
+export interface DockerComposeVolume {
+  type?: string;
+  source?: string;
+  target: string;
+  read_only?: boolean;
+}
+
+export interface DockerComposeInterface {
+  target: string | number;
+  published: string | number;
+  protocol?: string;
+  mode?: string;
+}
+
 export interface DockerService {
-  ports: string[];
+  ports: string[] | DockerComposeInterface[];
   image?: string;
   environment?: { [key: string]: any };
   depends_on: string[];
   build?: DockerServiceBuild;
-  volumes?: string[];
+  volumes?: string[] | DockerComposeVolume[];
   command?: string[];
   restart?: string;
   entrypoint?: string[];
