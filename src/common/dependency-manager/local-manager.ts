@@ -2,13 +2,13 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import untildify from 'untildify';
 import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
 import { ComponentConfig } from '../../dependency-manager/src/component-config/base';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/component-config/builder';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
+import { readIfFile } from '../../dependency-manager/src/utils/files';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -82,16 +82,6 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_config;
   }
 
-  readIfFile(any_or_path: any): any {
-    if (any_or_path && any_or_path.startsWith && any_or_path.startsWith('file:')) {
-      const file_path = untildify(any_or_path.slice('file:'.length));
-      const res = fs.readFileSync(path.resolve(path.dirname(this.config_path), file_path), 'utf-8');
-      return res.trim();
-    } else {
-      return any_or_path;
-    }
-  }
-
   validateComponent(component: ComponentConfig, context: object) {
     const errors = super.validateComponent(component, context);
     const component_extends = component.getExtends();
@@ -115,15 +105,15 @@ export default class LocalDependencyManager extends DependencyManager {
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     // Only include in cli since it will read files off disk
     for (const [vault_name, vault] of Object.entries(environment.getVaults())) {
-      vault.client_token = this.readIfFile(vault.client_token);
-      vault.role_id = this.readIfFile(vault.role_id);
-      vault.secret_id = this.readIfFile(vault.secret_id);
+      vault.client_token = readIfFile(vault.client_token, this.config_path);
+      vault.role_id = readIfFile(vault.role_id, this.config_path);
+      vault.secret_id = readIfFile(vault.secret_id, this.config_path);
       environment.setVault(vault_name, vault);
     }
 
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       for (const pv of Object.values(component.getParameters())) {
-        if (pv?.default) pv.default = this.readIfFile(pv.default);
+        if (pv?.default) pv.default = readIfFile(pv.default, this.config_path);
       }
       environment.setComponent(component_name, component);
     }

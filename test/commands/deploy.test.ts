@@ -121,7 +121,7 @@ describe('deploy', function () {
       }
 
       if (expected.volumes) {
-        expected.volumes = expected.volumes.map(volume => {
+        expected.volumes = (expected.volumes as string[]).map(volume => {
           const [host, target] = volume.split(':');
           return `${path.join(__dirname, '../../', host)}:${target}`;
         });
