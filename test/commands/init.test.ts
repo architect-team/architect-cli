@@ -34,7 +34,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('converts a docker-compose file to an architect component file', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -50,7 +50,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component', '-o', 'test-directory/architect.yml'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component', '-o', 'test-directory/architect.yml'])
     .it('converts a docker-compose file to an architect component file and writes the file to a specified output', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -67,7 +67,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('names the component based on the input args', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -83,7 +83,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('converts all services from the docker compose file to architect services', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -99,7 +99,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds initial descriptions to each service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -117,7 +117,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds environment variables to each service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -140,7 +140,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds command to logstash service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -156,7 +156,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds entrypoint to logstash service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -172,7 +172,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds image to kibana service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -188,7 +188,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds build context and args to elasticsearch service', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -206,7 +206,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds ports of various docker-compose types to kibana service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -237,7 +237,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds ports to service component config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -254,7 +254,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds ports to logstash service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -274,7 +274,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds debug and regular volumes to elasticsearch service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -293,7 +293,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds debug volumes to logstash service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
@@ -314,7 +314,7 @@ describe('init', function () {
     .finally(() => sinon.restore())
     .stdout({ print })
     .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
     .it('adds debug and regular volumes to kibana service config', ctx => {
       expect(writeFileStub.called).to.be.true;
 
