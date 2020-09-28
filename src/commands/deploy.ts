@@ -315,7 +315,7 @@ export default class Deploy extends DeployCommand {
     if (env_config) {
       for (const param_name of Object.keys(env_config.getParameters())) {
         if (process.env[`ARC_${param_name}`]) {
-          extra_env_vars[param_name] = process.env[param_name];
+          extra_env_vars[param_name] = process.env[`ARC_${param_name}`];
         }
       }
     } else {
@@ -333,6 +333,7 @@ export default class Deploy extends DeployCommand {
       }
       extra_env_vars[param_split[0]] = param_split[1];
     }
+
     return extra_env_vars;
   }
 
