@@ -33,15 +33,15 @@ export abstract class InitCommand extends Command {
     name: flags.string({
       char: 'n',
     }),
-    'from-compose': flags.string({
+    from_compose: flags.string({
       default: process.cwd(),
     }),
   };
 
   async run() {
     const { flags } = this.parse(InitCommand);
-    const fromPath = path.resolve(untildify(flags['from-compose']));
-    const docker_compose = InitCommand.rawFromPath(fromPath);
+    const from_path = path.resolve(untildify(flags.from_compose));
+    const docker_compose = InitCommand.rawFromPath(from_path);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const answers: any = await inquirer.prompt([
@@ -62,7 +62,7 @@ export abstract class InitCommand extends Command {
 
     const architect_component = new ComponentConfigV1();
     architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
-    for (const [service_name, service] of Object.entries(docker_compose.services)) {
+    for (const [service_name, service] of Object.entries(docker_compose.services || {})) {
       const architect_service = new ServiceConfigV1();
       architect_service.name = service_name;
       architect_service.description = `${service_name} converted to an Architect service with "architect init"`;
@@ -94,7 +94,7 @@ export abstract class InitCommand extends Command {
       }
 
       let port_index = 0;
-      for (const port of service.ports) {
+      for (const port of service.ports || []) {
         if (typeof port === 'string' || typeof port === 'number') {
           const single_number_port_regex = new RegExp('^\\d+$');
           const single_port_regex = new RegExp('(\\d+[:]\\d+)\\/*([a-zA-Z]+)*$');
@@ -137,7 +137,7 @@ export abstract class InitCommand extends Command {
         }
       }
 
-      const compose_volumes = Object.keys(docker_compose.volumes);
+      const compose_volumes = Object.keys(docker_compose.volumes || {});
       let volume_index = 0;
       const debug_config = new ServiceConfigV1();
       for (const volume of (service.volumes || [])) {
@@ -186,7 +186,7 @@ export abstract class InitCommand extends Command {
       architect_service.setDebugOptions(debug_config);
 
       if (service.depends_on?.length || service.links?.length) {
-        const links = new Set(service.depends_on.concat(service.links || []));
+        const links = new Set((service.depends_on || []).concat(service.links || []));
         for (const link of links) {
           architect_service.setEnvironmentVariable(`${link.toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
         }
