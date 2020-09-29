@@ -256,7 +256,7 @@ export default class Deploy extends DeployCommand {
         path.resolve(untildify(args.environment_config_or_component)),
       );
 
-      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter, dependency_manager.environment);
       this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
     }
 
@@ -298,7 +298,7 @@ export default class Deploy extends DeployCommand {
         }
       }
 
-      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter, env_config);
       this.updateEnvironmentParameters(env_config, extra_params);
 
       env_config_merge = false;
@@ -309,11 +309,20 @@ export default class Deploy extends DeployCommand {
     await this.deployRemote(environment, env_config, env_config_merge);
   }
 
-  getExtraEnvironmentVariables(parameters: string[]) {
+  getExtraEnvironmentVariables(parameters: string[], env_config?: EnvironmentConfig) {
     const extra_env_vars: { [s: string]: string | undefined } = {};
-    for (const [param_name, param_value] of Object.entries(process.env || {})) {
-      if (param_name.startsWith('ARC_')) {
-        extra_env_vars[param_name.substring(4)] = param_value;
+
+    if (env_config) {
+      for (const param_name of Object.keys(env_config.getParameters())) {
+        if (process.env[`ARC_${param_name}`]) {
+          extra_env_vars[param_name] = process.env[`ARC_${param_name}`];
+        }
+      }
+    } else {
+      for (const [param_name, param_value] of Object.entries(process.env || {})) {
+        if (param_name.startsWith('ARC_')) {
+          extra_env_vars[param_name.substring(4)] = param_value;
+        }
       }
     }
 
@@ -324,6 +333,7 @@ export default class Deploy extends DeployCommand {
       }
       extra_env_vars[param_split[0]] = param_split[1];
     }
+
     return extra_env_vars;
   }
 
