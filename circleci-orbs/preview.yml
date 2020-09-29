@@ -9,8 +9,6 @@ jobs:
     parameters:
       email:
         type: string
-      password:
-        type: string
       account:
         type: string
       environment:
@@ -28,15 +26,13 @@ jobs:
     executor: preview_executor
     steps:
       - run: npm install -g @architect-io/cli@0.7
-      - run: architect login -e << parameters.email >> -p << parameters.password >>
+      - run: architect login -e << parameters.email >>
       - run: architect register << parameters.component_file >> -t << parameters.environment >>
       - run: architect environment:create << parameters.environment >> -a << parameters.account >> --platform << parameters.platform >>
       - run: architect deploy --auto_approve -a << parameters.account >> -e << parameters.environment >> << parameters.component_name >>:<< parameters.environment >> << parameters.deploy_flags >>
   destroy:
     parameters:
       email:
-        type: string
-      password:
         type: string
       account:
         type: string
@@ -47,7 +43,7 @@ jobs:
     executor: preview_executor
     steps:
       - run: npm install -g @architect-io/cli@0.7
-      - run: architect login -e << parameters.email >> -p << parameters.password >>
+      - run: architect login -e << parameters.email >>
       - run: architect destroy --auto_approve -a << parameters.account >> -e << parameters.environment >> -c << parameters.component_name >>:<< parameters.environment >>
       - run: architect env:destroy --auto_approve << parameters.environment >> -a << parameters.account >>
 
