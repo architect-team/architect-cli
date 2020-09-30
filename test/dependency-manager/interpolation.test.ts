@@ -1189,4 +1189,54 @@ describe('interpolation spec v1', () => {
       'volumes': {},
     })
   });
+
+  it('implicit environment parameter', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      aws_secret:
+      other_secret:
+      default_secret: test3
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          AWS_SECRET: \${{ parameters.aws_secret }}
+          OTHER_SECRET: \${{ parameters.other_secret }}
+          DEFAULT_SECRET: \${{ parameters.default_secret }}
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const env_config = `
+    parameters:
+      aws_secret: test
+      other_secret: not-shown
+    components:
+      examples/hello-world:
+        extends: file:../data/architect.yml
+        parameters:
+          other_secret: shown
+    `
+
+    mock_fs({
+      '/data/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph(true);
+    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+      AWS_SECRET: 'test',
+      OTHER_SECRET: 'shown',
+      DEFAULT_SECRET: 'test3'
+    });
+  });
 });

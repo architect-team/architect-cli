@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
@@ -349,6 +350,74 @@ describe('validation spec v1', () => {
         'components.test/component.parameters.required-explicit': {
           'Required': 'required-explicit is required',
           'value': undefined
+        }
+      })
+    });
+
+    it('required dependency parameter', async () => {
+      const component_config = `
+      name: examples/hello-world
+
+      dependencies:
+        examples/hello-world2: latest
+
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+            main: 3000
+
+      interfaces:
+        echo:
+          url: \${{ services.api.interfaces.main.url }}
+      `
+
+      const component_config2 = `
+      name: examples/hello-world2
+
+      parameters:
+        aws_secret:
+
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+            main: 3000
+          environment:
+            AWS_SECRET: \${{ parameters.aws_secret }}
+
+      interfaces:
+        echo:
+          url: \${{ services.api.interfaces.main.url }}
+      `
+
+      const env_config = `
+      components:
+        examples/hello-world: file:./architect.yml
+      `
+
+      mock_fs({
+        '/architect.yml': component_config,
+        '/environment.yml': env_config,
+      });
+
+      moxios.stubRequest(`/accounts/examples/components/hello-world2/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: yaml.safeLoad(component_config2), service: { url: 'examples/hello-world2:latest' } }
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        'components.examples/hello-world2.parameters.aws_secret': {
+          'Required': 'aws_secret is required',
+          'value': null,
         }
       })
     });
