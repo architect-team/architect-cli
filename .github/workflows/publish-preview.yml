@@ -24,7 +24,10 @@ jobs:
           sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
       - run: cat ./circleci-orbs/preview.yml # TODO: remove
-      - run: git add ./circleci-orbs/preview.yml
-      - run: git commit -m "publish circleci orb"
-      - run: git push origin circleci-orb # TODO: master
+      - run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add ./circleci-orbs/preview.yml
+          git commit -m "publish circleci orb"
+          git push origin circleci-orb # TODO: master
       # - run: circleci orb publish architect-io/preview@${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
