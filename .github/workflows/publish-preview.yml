@@ -5,7 +5,7 @@ on:
     paths:
       - 'circleci-orbs/preview.yml'
     branches:
-      - master
+      - circleci-orb
 
 jobs:
   publish_circleci_orb:
@@ -16,6 +16,10 @@ jobs:
         with:
           ref: circleci-orb
       - run: sudo snap install circleci
+      - run: |
+        VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
+        sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
+        sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      - run: circleci orb publish ./circleci-orbs/preview.yml architect/preview@dev:master --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      - run: circleci orb publish promote architect-io/preview@dev:master patch --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
+      - run: cat ./circleci-orbs/preview.yml
+      # - run: circleci orb publish architect-io/preview@${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
