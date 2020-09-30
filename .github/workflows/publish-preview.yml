@@ -17,9 +17,12 @@ jobs:
           ref: circleci-orb
       - run: sudo snap install circleci
       - run: |
-        VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
-        sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
-        sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
+          VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
+          sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
+          sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
-      - run: cat ./circleci-orbs/preview.yml
+      - run: cat ./circleci-orbs/preview.yml # TODO: remove
+      - run: git add ./circleci-orbs/preview.yml
+      - run: git commit -m "publish circleci orb"
+      - run: git push origin circleci-orb # TODO: master
       # - run: circleci orb publish architect-io/preview@${GITHUB_REF/refs\/tags\//} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
