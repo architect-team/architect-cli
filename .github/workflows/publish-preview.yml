@@ -19,6 +19,7 @@ jobs:
       - run: |
           VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
           echo $VERSION
+          npm ls
           echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
           echo $version
 
