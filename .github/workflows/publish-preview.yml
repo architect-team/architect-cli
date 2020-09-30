@@ -29,6 +29,6 @@ jobs:
           git config --global user.email "bot@architect.io"
           git add ./circleci-orbs/preview.yml
           git commit -m "circleci orb version bump"
-          git push origin master
+          git push origin circleci-orb
       - run: echo ${{ steps.set-version.outputs.version }}
       # - run: circleci orb publish architect-io/preview@${{ steps.set-version.outputs.version }} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
