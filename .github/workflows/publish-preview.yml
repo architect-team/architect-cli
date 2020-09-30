@@ -17,7 +17,7 @@ jobs:
           ref: circleci-orb
       - run: sudo snap install circleci
       - run: |
-          VERSION=${GITHUB_REF/refs\/tags\//}
+          VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
           sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
           sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
