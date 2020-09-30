@@ -17,14 +17,11 @@ jobs:
           ref: circleci-orb
       - run: sudo snap install circleci
       - run: |
-          VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
+          VERSION=$(node -e "console.log(require('./package.json').version);")
           echo $VERSION
-          npm ls
-          echo "::set-output name=version::$(npm version ${GITHUB_REF/refs\/tags\//} --git-tag-version=false --allow-same-version)"
-          echo $version
 
-          sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$version"'/' ./circleci-orbs/preview.yml
-          sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$version"'/' ./circleci-orbs/preview.yml
+          sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
+          sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
       - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
       - run: cat ./circleci-orbs/preview.yml # TODO: remove
       - run: git add ./circleci-orbs/preview.yml
