@@ -111,3 +111,26 @@ jobs:
           asset_path: ${{ steps.find-artifact.outputs.path }}
           asset_name: architect-cli-${{ steps.find-artifact.outputs.version }}${{ matrix.artifact_suffix }}
           asset_content_type: application/gzip
+  publish_circleci_orb:
+    name: Publish CircleCI Orb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: circleci-orb
+      - run: sudo snap install circleci
+      - name: Set version
+        id: set-version
+        run: |
+          VERSION=$(node -e "console.log(require('./package.json').version);")
+          echo "::set-output name=version::${VERSION}"
+          sed -i -E 's/@architect-io\/cli@[0-9]+.[0-9]+.[0-9]+/@architect-io\/cli@'"$VERSION"'/' ./circleci-orbs/preview.yml
+          sed -i -E 's/architect-team\/preview@[0-9]+.[0-9]+.[0-9]+/architect-team\/preview@'"$VERSION"'/' ./circleci-orbs/preview.yml
+      - run: circleci orb validate ./circleci-orbs/preview.yml --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
+      - run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add ./circleci-orbs/preview.yml
+          git commit -m "circleci orb version bump"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+      - run: circleci orb publish architect-io/preview@${{ steps.set-version.outputs.version }} --host https://circleci.com --token ${{ secrets.CIRCLE_TOKEN }}
