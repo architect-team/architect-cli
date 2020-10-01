@@ -31,7 +31,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.7.5-rc.4 linux-x64 node-v12.18.4
+@architect-io/cli/0.7.5-rc.5 linux-x64 node-v12.18.4
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -108,7 +108,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -126,7 +126,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -143,7 +143,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/config/view.ts)_
 
 ## `architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`
 
@@ -164,7 +164,7 @@ OPTIONS
   -i, --interface=interface        [default: ] Component interfaces
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
 
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1601487916283.yml] Path where the compose file
+  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1601570331783.yml] Path where the compose file
                                    should be written to
 
   -p, --parameter=parameter        [default: ] Component parameters
@@ -174,7 +174,7 @@ OPTIONS
   --[no-]browser
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -193,7 +193,7 @@ OPTIONS
   --[no-]browser
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -218,7 +218,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -243,7 +243,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -268,7 +268,7 @@ ALIASES
   $ architect env:destroy
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -303,7 +303,7 @@ OPTIONS
   --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -317,7 +317,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -333,7 +333,7 @@ OPTIONS
   -p, --password=password  Password
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -347,7 +347,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -370,7 +370,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -400,7 +400,7 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/platforms/create.ts)_
 
 ## `architect platforms:destroy [PLATFORM]`
 
@@ -423,7 +423,7 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -447,7 +447,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/register.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -462,7 +462,7 @@ OPTIONS
   --all       Unlink all components registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/unlink.ts)_
 
 ## `architect whoami`
 
@@ -479,5 +479,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.4/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.5/src/commands/whoami.ts)_
 <!-- commandsstop -->
