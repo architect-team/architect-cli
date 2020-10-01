@@ -82,6 +82,7 @@ describe('local deploy', function () {
   }
 
   test
+    .timeout(10000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(local_env_config, null, 2), local_env_config];
     })
@@ -89,7 +90,7 @@ describe('local deploy', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-l', './mock-environment.yml'])
-    .it('shows user email when logged in', ctx => {
+    .it('Create a local deploy', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(expected_compose)
