@@ -1,0 +1,8 @@
+{
+  "log_level": "debug",
+  "registry_host": "mock.registry.localhost",
+  "api_host": "http://mock.api.localhost",
+  "app_host": "http://mock.app.localhost",
+  "oauth_domain": "mock.auth0.localhost",
+  "oauth_client_id": "mock_client_id"
+}

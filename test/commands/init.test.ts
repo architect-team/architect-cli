@@ -1,4 +1,3 @@
-import { test } from '@oclif/test';
 import { expect } from 'chai';
 import { plainToClass } from 'class-transformer';
 import fs from 'fs';
@@ -7,121 +6,85 @@ import path from 'path';
 import sinon from 'sinon';
 import { ComponentConfigV1 } from '../../src/dependency-manager/src/component-config/v1';
 import { BuildSpecV1 } from '../../src/dependency-manager/src/service-config/v1';
-import { mockAuth } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('init', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  let writeFileStub: sinon.SinonStub;
+  const account_name = 'examples';
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--help'])
-    .it('succinctly describes the init command', ctx => {
-      expect(ctx.stdout).to.contain('Initialize an architect component from an existing docker-compose file\n')
-    });
+  const mockInit = () => {
+    return mockArchitectAuth
+      .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account_name}`)
+        .reply(200, {})
+      )
+      .stdout({ print })
+      .stderr({ print })
+  }
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('converts a docker-compose file to an architect component file', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
       expect(ctx.stdout).to.contain('Wrote Architect component config to architect.yml');
       expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component', '-o', 'test-directory/architect.yml'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component', '-o', 'test-directory/architect.yml'])
     .it('converts a docker-compose file to an architect component file and writes the file to a specified output', ctx => {
-      expect(writeFileStub.called).to.be.true;
-
-      expect(writeFileStub.args[0][0]).eq('test-directory/architect.yml');
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+      expect(writeFileSync.args[0][0]).eq('test-directory/architect.yml');
       expect(ctx.stdout).to.contain('Wrote Architect component config to test-directory/architect.yml');
       expect(ctx.stdout).to.contain('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('names the component based on the input args', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      expect(component_config.name).eq('examples/test-component');
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      expect(component_config.name).eq(`${account_name}/test-component`);
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('converts all services from the docker compose file to architect services', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
-      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash','kibana']);
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana']);
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds initial descriptions to each service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getDescription()).eq('elasticsearch converted to an Architect service with "architect init"');
       expect(component_config.getServices()['kibana'].getDescription()).eq('kibana converted to an Architect service with "architect init"');
       expect(component_config.getServices()['logstash'].getDescription()).eq('logstash converted to an Architect service with "architect init"');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds environment variables to each service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ES_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ELASTIC_PASSWORD']).eq('changeme');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['DISCOVERY_TYPE']).eq('single-node');
@@ -132,85 +95,55 @@ describe('init', function () {
       expect(component_config.getServices()['kibana'].getEnvironmentVariables()['ELASTICSEARCH_URL']).eq('${{ services.elasticsearch.interfaces.interface0.url }}');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds command to logstash service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getCommand()).deep.eq(['npm', 'run', 'start']);
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds entrypoint to logstash service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getEntrypoint()).deep.eq(['entrypoint.sh']);
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds image to kibana service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getImage()).eq('docker.elastic.co/kibana/kibana:7.8.0');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds build context and args to elasticsearch service', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).args!['ELK_VERSION']).eq('$ELK_VERSION');
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).context).eq('elasticsearch/');
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).dockerfile).eq('Dockerfile.elasticsearch');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds ports of various docker-compose types to kibana service config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getInterfaces()['interface0'].port).eq('5601');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].port).eq('5000');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].protocol).eq('udp');
@@ -229,36 +162,24 @@ describe('init', function () {
       expect(component_config.getServices()['kibana'].getInterfaces()['interface25'].protocol).eq('udp');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds ports to service component config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface0'].port).eq('9200');
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface1'].port).eq('9300');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds ports to logstash service config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].port).eq('5000');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].protocol).eq('tcp');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].port).eq('5000');
@@ -266,38 +187,26 @@ describe('init', function () {
       expect(component_config.getServices()['logstash'].getInterfaces()['interface2'].port).eq('9600');
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds debug and regular volumes to elasticsearch service config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getVolumes()['volume1'].mount_path).eq('/usr/share/elasticsearch/data');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds debug volumes to logstash service config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./logstash/config/logstash.yml');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
@@ -306,19 +215,13 @@ describe('init', function () {
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].readonly).to.be.true;
     });
 
-    test
-    .do(ctx => {
-      mockAuth();
-      writeFileStub = sinon.stub(fs, "writeFileSync");
-    })
-    .finally(() => sinon.restore())
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', 'examples', '-n', 'test-component'])
+  mockInit()
+    .command(['init', '--from_compose', path.join(__dirname, '../mocks/init-compose.yml'), '-a', account_name, '-n', 'test-component'])
     .it('adds debug and regular volumes to kibana service config', ctx => {
-      expect(writeFileStub.called).to.be.true;
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileStub.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;

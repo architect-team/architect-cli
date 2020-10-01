@@ -1,21 +1,19 @@
-import sinon from 'sinon';
+import { test } from '@oclif/test';
 import AuthClient from '../../src/app-config/auth';
 
-// if using this or any other mocks, be sure to restore sinon at the end of each test:
-//   test
-//      .do(ctx => mockAuth())
-//      .finally(() => sinon.restore())
-//
-export const mockAuth = () => {
-  sinon.stub(AuthClient.prototype, "init");
-  sinon.stub(AuthClient.prototype, "login_from_cli");
-  sinon.stub(AuthClient.prototype, "generate_browser_url").returns("http://mockurl.com");
-  sinon.stub(AuthClient.prototype, "login_from_browser");
-  sinon.stub(AuthClient.prototype, "logout");
-  sinon.stub(AuthClient.prototype, "dockerLogin");
-  sinon.stub(AuthClient.prototype, "getToken").returns(Promise.resolve({
-    account: 'test-user',
-    password: 'test-password'
-  }));
-  sinon.stub(AuthClient.prototype, "refreshToken");
-}
+export const MOCK_API_HOST = 'http://mock.api.localhost';
+
+export const mockArchitectAuth = test
+  .stub(AuthClient.prototype, 'init', () => { })
+  .stub(AuthClient.prototype, 'login_from_cli', () => { })
+  .stub(AuthClient.prototype, 'generate_browser_url', () => { return 'http://mockurl.com' })
+  .stub(AuthClient.prototype, 'login_from_browser', () => { })
+  .stub(AuthClient.prototype, 'logout', () => { })
+  .stub(AuthClient.prototype, 'dockerLogin', () => { })
+  .stub(AuthClient.prototype, 'getToken', () => {
+    return {
+      account: 'test-user',
+      password: 'test-password'
+    }
+  })
+  .stub(AuthClient.prototype, 'refreshToken', () => { })

@@ -1,24 +1,14 @@
-import { test } from '@oclif/test';
 import { expect } from 'chai';
 import fs from 'fs-extra';
 import path from 'path';
 import sinon from 'sinon';
 import * as docker from '../../src/common/utils/docker';
-import { mockAuth } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('register', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
-
-  // we need to cast this as a string because annoyingly the oclif/fancy-test library has restricted this type to a string
-  // while the underyling nock library that it wraps allows a regex
-  // submitted an issue here: https://github.com/oclif/fancy-test/issues/73
-  const mock_api_host = (/.*/ as any as string);
-
-  let dockerBuildStub: sinon.SinonStub;
-  let dockerPushStub: sinon.SinonStub;
-  let dockerInspectStub: sinon.SinonStub;
 
   const mock_account_response = {
     created_at: "2020-06-02T15:33:27.870Z",
@@ -39,9 +29,7 @@ describe('register', function () {
     name: 'architect'
   }
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
+  mockArchitectAuth
     .stdout({ print })
     .stderr({ print })
     .command(['register', '--help'])
@@ -49,16 +37,12 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Register a new Component with Architect Cloud\n')
     });
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
@@ -69,21 +53,15 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('examples/hello-world')
@@ -96,24 +74,23 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
     .it('it does not call any docker commands if the image is provided', ctx => {
-      expect(dockerBuildStub.notCalled).to.be.true;
-      expect(dockerPushStub.notCalled).to.be.true;
-      expect(dockerInspectStub.notCalled).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+      expect(buildImage.notCalled).to.be.true;
+      expect(pushImage.notCalled).to.be.true;
+      expect(getDigest.notCalled).to.be.true;
 
       expect(ctx.stderr).to.contain('Registering component examples/hello-world:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
@@ -125,10 +102,8 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
+  mockArchitectAuth
+    .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
       .reply(403)
     )
@@ -140,21 +115,15 @@ describe('register', function () {
     })
     .it('rejects with informative error message if account is unavailable');
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('examples/database-seeding')
@@ -167,11 +136,15 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
     .it('gives user feedback while running docker commands', ctx => {
-      expect(dockerBuildStub.calledOnce).to.be.true;
-      expect(dockerBuildStub.calledBefore(dockerPushStub)).to.be.true;
-      expect(dockerPushStub.calledOnce).to.be.true;
-      expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
-      expect(dockerInspectStub.calledOnce).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+
+      expect(buildImage.calledOnce).to.be.true;
+      expect(buildImage.calledBefore(pushImage)).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledBefore(getDigest)).to.be.true;
+      expect(getDigest.calledOnce).to.be.true;
 
       expect(ctx.stderr).to.contain('Pushing Docker image for repostory/account/some-image:1.0.0');
       expect(ctx.stdout).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
@@ -183,21 +156,15 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/architect`)
       .reply(200, mock_architect_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('architect/fusionauth')
@@ -215,24 +182,22 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
     .it('test file: replacement', ctx => {
-      expect(dockerBuildStub.notCalled).to.be.true;
-      expect(dockerPushStub.notCalled).to.be.true;
-      expect(dockerInspectStub.notCalled).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+      expect(buildImage.notCalled).to.be.true;
+      expect(pushImage.notCalled).to.be.true;
+      expect(getDigest.notCalled).to.be.true;
 
       expect(ctx.stderr).to.contain('Registering component architect/fusionauth:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
-  test
-    .do(ctx => {
-      mockAuth()
-      dockerBuildStub = sinon.stub(docker, "buildImage").throws('Some internal docker build exception');
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().throws('Some internal docker build exception'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -243,24 +208,23 @@ describe('register', function () {
       expect(err.message).to.contain('Some internal docker build exception')
     })
     .it('rejects with informative error message if docker build fails', ctx => {
-      expect(dockerBuildStub.calledOnce).to.be.true;
-      expect(dockerBuildStub.calledBefore(dockerPushStub)).to.be.true;
-      expect(dockerPushStub.notCalled).to.be.true;
-      expect(dockerInspectStub.notCalled).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+
+      expect(buildImage.calledOnce).to.be.true;
+      expect(buildImage.calledBefore(pushImage)).to.be.true;
+      expect(pushImage.notCalled).to.be.true;
+      expect(getDigest.notCalled).to.be.true;
 
       expect(ctx.stdout).to.contain('Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present');
     });
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage").throws('Some internal docker push exception');
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().throws('Some internal docker push exception'))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -268,11 +232,14 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
     .catch(err => {
-      expect(dockerBuildStub.calledOnce).to.be.true;
-      expect(dockerBuildStub.calledBefore(dockerPushStub)).to.be.true;
-      expect(dockerPushStub.calledOnce).to.be.true;
-      expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
-      expect(dockerInspectStub.notCalled).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+      expect(buildImage.calledOnce).to.be.true;
+      expect(buildImage.calledBefore(pushImage)).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledBefore(getDigest)).to.be.true;
+      expect(getDigest.notCalled).to.be.true;
 
       expect(err.message).to.contain('Some internal docker push exception')
     })
@@ -280,16 +247,11 @@ describe('register', function () {
       expect(ctx.stderr).to.contain('Push failed for image repostory/account/some-image:1.0.0');
     });
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").throws('Some internal docker inspect exception')
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().throws('Some internal docker inspect exception'))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -297,19 +259,20 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
     .catch(err => {
-      expect(dockerBuildStub.calledOnce).to.be.true;
-      expect(dockerBuildStub.calledBefore(dockerPushStub)).to.be.true;
-      expect(dockerPushStub.calledOnce).to.be.true;
-      expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
-      expect(dockerInspectStub.calledOnce).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+      expect(buildImage.calledOnce).to.be.true;
+      expect(buildImage.calledBefore(pushImage)).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledBefore(getDigest)).to.be.true;
+      expect(getDigest.calledOnce).to.be.true;
 
       expect(err.toString()).to.contain('Some internal docker inspect exception')
     })
     .it('rejects with informative error message if docker inspect fails');
 
-  test
-    .do(ctx => mockAuth())
-    .finally(() => sinon.restore())
+  mockArchitectAuth
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-e', 'examples/stateless-component/environment.yml', '-t', '1.0.0'])
@@ -318,20 +281,16 @@ describe('register', function () {
     })
     .it('it throws if both a component and an environment flag are provided; they are exclusive');
 
-  test
-    .do(ctx => {
-      mockAuth()
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
+    .nock(MOCK_API_HOST, api => api
       .persist()
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
@@ -340,11 +299,14 @@ describe('register', function () {
     .stderr({ print })
     .command(['register', '-e', 'examples/stateless-component/environment.yml', '-t', '1.0.0'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
-      expect(dockerBuildStub.calledOnce).to.be.true; // there are two components but only one of them needs to build the docker image
-      expect(dockerBuildStub.calledBefore(dockerPushStub)).to.be.true;
-      expect(dockerPushStub.calledOnce).to.be.true;
-      expect(dockerPushStub.calledBefore(dockerInspectStub)).to.be.true;
-      expect(dockerInspectStub.calledOnce).to.be.true;
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      const pushImage = docker.pushImage as sinon.SinonStub;
+      const getDigest = docker.getDigest as sinon.SinonStub;
+      expect(buildImage.calledOnce).to.be.true; // there are two components but only one of them needs to build the docker image
+      expect(buildImage.calledBefore(pushImage)).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledBefore(getDigest)).to.be.true;
+      expect(getDigest.calledOnce).to.be.true;
 
       expect(ctx.stdout).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
@@ -353,21 +315,15 @@ describe('register', function () {
       expect(ctx.stderr).to.contain('Registering component examples/echo:1.0.0 with Architect Cloud');
     });
 
-  test
-    .do(ctx => {
-      mockAuth();
-      dockerBuildStub = sinon.stub(docker, "buildImage").returns(Promise.resolve('repostory/account/some-image:1.0.0'));
-      dockerPushStub = sinon.stub(docker, "pushImage");
-      dockerInspectStub = sinon.stub(docker, "getDigest").returns(Promise.resolve('some-digest'));
-    })
-    .finally(() => sinon.restore())
-    .nock(mock_api_host, api => api
-      .persist()
+  mockArchitectAuth
+    .stub(docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
-    .nock(mock_api_host, api => api
-      .persist()
+    .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
     )
@@ -376,8 +332,9 @@ describe('register', function () {
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
     .it('docker image built with dockerfile specified in architect.yml', ctx => {
       const current_path = path.join(__dirname, '../..').replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
-      expect(dockerBuildStub.args[0].length).to.eq(3);
-      expect(dockerBuildStub.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
-      expect(dockerBuildStub.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
+      const buildImage = docker.buildImage as sinon.SinonStub;
+      expect(buildImage.args[0].length).to.eq(3);
+      expect(buildImage.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
+      expect(buildImage.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
     });
 });

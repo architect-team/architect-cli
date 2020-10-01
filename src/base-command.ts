@@ -1,6 +1,6 @@
-import 'reflect-metadata';
 import Command, { flags } from '@oclif/command';
 import chalk from 'chalk';
+import 'reflect-metadata';
 import AppService from './app-config/service';
 
 export default abstract class extends Command {
@@ -34,6 +34,8 @@ export default abstract class extends Command {
         error_msg += `\n${k}: ${v}`;
       }
       this.error(chalk.red(error_msg));
+    } else if (err.config) {
+      err.message += `${err.config.url} [${err.config.method}]`;
     }
     if (this.app?.config?.log_level === 'debug') {
       throw err;
