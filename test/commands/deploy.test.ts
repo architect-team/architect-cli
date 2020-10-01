@@ -2,6 +2,8 @@ import { expect, test } from '@oclif/test';
 import path from 'path';
 import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
+import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import * as DockerCompose from '../../src/common/docker-compose';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -22,7 +24,7 @@ const mock_deployment = {
   id: 'test-deployment-id'
 }
 
-describe('local deploy', function () {
+describe('local deploy environment', function () {
   const local_env_config = {
     "components": {
       "examples/database-seeding:latest": "file:./examples/database-seeding/",
@@ -95,9 +97,35 @@ describe('local deploy', function () {
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(expected_compose)
     })
+
+  test
+    .timeout(10000)
+    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
+      return [JSON.stringify(local_env_config, null, 2), local_env_config];
+    })
+    .stub(DockerCompose, 'generate', sinon.stub().returns(undefined))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .env({
+      ARC_LOG_LEVEL: 'debug',
+      ARC_aws_secret: 'test'
+    })
+    .command(['deploy', '-l', './mock-environment.yml'])
+    .it('Create a local deploy with environment parameters', ctx => {
+      const generate = DockerCompose.generate as sinon.SinonStub;
+      expect(generate.calledOnce).to.be.true
+      const dependency_manager = generate.firstCall.args[0] as LocalDependencyManager;
+      expect(dependency_manager.environment.getParameters()).to.deep.equal({
+        LOG_LEVEL: { default: 'debug' },
+        aws_secret: { default: 'test' }
+      })
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+    })
 });
 
-describe('remote deploy', function () {
+describe('remote deploy environment', function () {
   const env_config = {
     "components": {
       "examples/database-seeding": "latest",

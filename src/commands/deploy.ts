@@ -236,10 +236,7 @@ export default class Deploy extends DeployCommand {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: {
-            extends: parsed_component_version.tag,
-            parameters: this.getExtraEnvironmentVariables(flags.parameter),
-          },
+          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
@@ -255,9 +252,10 @@ export default class Deploy extends DeployCommand {
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
       );
-
-      const extra_params = this.getExtraEnvironmentVariables(flags.parameter, dependency_manager.environment);
-      this.updateEnvironmentParameters(dependency_manager.environment, extra_params);
+    }
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
+      dependency_manager.environment.setParameter(parameter_key, parameter);
     }
 
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
@@ -275,10 +273,7 @@ export default class Deploy extends DeployCommand {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: {
-            extends: parsed_component_version.tag,
-            parameters: this.getExtraEnvironmentVariables(flags.parameter),
-          },
+          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
@@ -297,11 +292,12 @@ export default class Deploy extends DeployCommand {
           this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
         }
       }
-
-      const extra_params = this.getExtraEnvironmentVariables(flags.parameter, env_config);
-      this.updateEnvironmentParameters(env_config, extra_params);
-
       env_config_merge = false;
+    }
+
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
+      env_config.setParameter(parameter_key, parameter);
     }
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
@@ -309,20 +305,12 @@ export default class Deploy extends DeployCommand {
     await this.deployRemote(environment, env_config, env_config_merge);
   }
 
-  getExtraEnvironmentVariables(parameters: string[], env_config?: EnvironmentConfig) {
+  getExtraEnvironmentVariables(parameters: string[]) {
     const extra_env_vars: { [s: string]: string | undefined } = {};
 
-    if (env_config) {
-      for (const param_name of Object.keys(env_config.getParameters())) {
-        if (process.env[`ARC_${param_name}`]) {
-          extra_env_vars[param_name] = process.env[`ARC_${param_name}`];
-        }
-      }
-    } else {
-      for (const [param_name, param_value] of Object.entries(process.env || {})) {
-        if (param_name.startsWith('ARC_')) {
-          extra_env_vars[param_name.substring(4)] = param_value;
-        }
+    for (const [param_name, param_value] of Object.entries(process.env || {})) {
+      if (param_name.startsWith('ARC_')) {
+        extra_env_vars[param_name.substring(4)] = param_value;
       }
     }
 
@@ -347,15 +335,6 @@ export default class Deploy extends DeployCommand {
       extra_interfaces[interface_split[0]] = interface_split[1];
     }
     return extra_interfaces;
-  }
-
-  updateEnvironmentParameters(env_config: EnvironmentConfig, extra_params: Dictionary<string | undefined>) {
-    for (const [param_name, param_value] of Object.entries(extra_params)) {
-      if (env_config.getParameters()[param_name] === undefined) {
-        throw new Error(`Parameter ${param_name} not found in env config`);
-      }
-      env_config.setParameter(param_name, param_value);
-    }
   }
 
   updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
