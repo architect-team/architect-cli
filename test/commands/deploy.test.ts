@@ -3,7 +3,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
-import { MOCK_API_HOST } from '../utils/mocks';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = false;
@@ -104,7 +104,7 @@ describe('remote deploy', function () {
     }
   };
 
-  const remoteDeploy = test
+  const remoteDeploy = mockArchitectAuth
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(env_config, null, 2), env_config];
     })
