@@ -39,12 +39,10 @@ describe('register', function () {
 
   mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
@@ -60,12 +58,10 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('examples/hello-world')
@@ -91,12 +87,10 @@ describe('register', function () {
 
   mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
@@ -126,12 +120,10 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('examples/database-seeding')
@@ -169,12 +161,10 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/architect`)
       .reply(200, mock_architect_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
         expect(body.config.name).to.eq('architect/fusionauth')
@@ -208,7 +198,6 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -236,7 +225,6 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().throws('Some internal docker push exception'))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -264,7 +252,6 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().throws('Some internal docker inspect exception'))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
@@ -333,12 +320,10 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
     )

@@ -24,27 +24,22 @@ describe('destroy', function () {
   mockArchitectAuth
     .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
       .reply(200, mock_env)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(`/environments/${mock_env.id}/deploy`)
       .reply(200, mock_deployment)
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(`/deploy/${mock_deployment.id}?lock=true&refresh=true`)
       .reply(200, {})
     )
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/deploy/${mock_deployment.id}`)
       .reply(200, { ...mock_deployment, applied_at: new Date() })
     )

@@ -119,11 +119,9 @@ describe('remote deploy', function () {
       .post(`/environments/${environment.id}/deploy`)
       .reply(200, mock_deployment))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .post(`/deploy/${mock_deployment.id}?lock=true&refresh=true`)
       .reply(200, {}))
     .nock(MOCK_API_HOST, api => api
-      .persist()
       .get(`/deploy/${mock_deployment.id}`)
       .reply(200, { ...mock_deployment, applied_at: new Date() }))
     .stdout({ print })
