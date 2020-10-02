@@ -13,6 +13,7 @@ jobs:
         type: string
       environment:
         type: string
+        default: ''
       platform:
         type: string
       component_name:
@@ -25,11 +26,19 @@ jobs:
         default: ''
     executor: preview_executor
     steps:
+      - run: |
+          if [ "<< parameters.environment >>" = "" ]; then
+            GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            EXPORT_ENV_STR='export ENVIRONMENT_NAME='preview-$GIT_BRANCH
+            echo $EXPORT_ENV_STR >> $BASH_ENV
+          else
+            echo 'export ENVIRONMENT_NAME=<< parameters.environment >>' >> $BASH_ENV
+          fi
       - run: npm install -g @architect-io/cli@0.7.5
       - run: architect login -e << parameters.email >>
-      - run: architect register << parameters.component_file >> -t << parameters.environment >>
-      - run: architect environment:create << parameters.environment >> -a << parameters.account >> --platform << parameters.platform >>
-      - run: architect deploy --auto_approve -a << parameters.account >> -e << parameters.environment >> << parameters.component_name >>:<< parameters.environment >> << parameters.deploy_flags >>
+      - run: architect register << parameters.component_file >> -t ${ENVIRONMENT_NAME}
+      - run: architect environment:create ${ENVIRONMENT_NAME} -a << parameters.account >> --platform << parameters.platform >>
+      - run: architect deploy --auto_approve -a << parameters.account >> -e ${ENVIRONMENT_NAME} << parameters.component_name >>:${ENVIRONMENT_NAME} << parameters.deploy_flags >>
   destroy:
     parameters:
       email:
@@ -38,14 +47,23 @@ jobs:
         type: string
       environment:
         type: string
+        default: ''
       component_name:
         type: string
     executor: preview_executor
     steps:
+      - run: |
+          if [ "<< parameters.environment >>" = "" ]; then
+            GIT_BRANCH=$(git log --first-parent --merges -1 --oneline | cut -d'/' -f2)
+            EXPORT_ENV_STR='export ENVIRONMENT_NAME='preview-$GIT_BRANCH
+            echo $EXPORT_ENV_STR >> $BASH_ENV
+          else
+            echo 'export ENVIRONMENT_NAME=<< parameters.environment >>' >> $BASH_ENV
+          fi
       - run: npm install -g @architect-io/cli@0.7.5
       - run: architect login -e << parameters.email >>
-      - run: architect destroy --auto_approve -a << parameters.account >> -e << parameters.environment >> -c << parameters.component_name >>:<< parameters.environment >>
-      - run: architect env:destroy --auto_approve << parameters.environment >> -a << parameters.account >>
+      - run: architect destroy --auto_approve -a << parameters.account >> -e ${ENVIRONMENT_NAME} -c << parameters.component_name >>:${ENVIRONMENT_NAME}
+      - run: architect env:destroy --auto_approve ${ENVIRONMENT_NAME} -a << parameters.account >>
 
 executors:
   preview_executor:
@@ -63,12 +81,15 @@ examples:
         build_test_deploy:
           jobs:
             - preview/create:
+                filters:
+                  branches:
+                    ignore:
+                      - master
                 pre-steps:
                   - checkout
                 email: email@gmail.com
                 password: $PASSWORD
                 account: example-account
-                environment: preview-$CIRCLE_BUILD_NUM
                 platform: example-platform
                 component_name: example-account/hello-world
   destroy_preview:
@@ -81,10 +102,15 @@ examples:
         build_test_deploy:
           jobs:
             - preview/destroy:
+                filters:
+                  branches:
+                    only:
+                      - master
+                pre-steps:
+                  - checkout
                 email: email@gmail.com
                 password: $PASSWORD
                 account: example-account
-                environment: preview-$CIRCLE_PREVIOUS_BUILD_NUM
                 component_name: example-account/hello-world
 
 version: 2.1
