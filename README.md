@@ -300,7 +300,7 @@ OPTIONS
   -h, --help                           show CLI help
   -n, --name=name
   -o, --component_file=component_file  [default: architect.yml] Path where the component file should be written to
-  --from_compose=from_compose          [default: /home/ryan/Code/architect-cli]
+  --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
 _See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.7.5-rc.6/src/commands/init.ts)_
