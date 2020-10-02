@@ -223,8 +223,22 @@ export default abstract class DependencyManager {
   }
 
   validateComponent(component: ComponentConfig, context: object): ValidationError[] {
+    const validation_errors = [];
+    // Check required parameters for components
+    for (const [pk, pv] of Object.entries(component.getParameters())) {
+      if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
+        const validation_error = new ValidationError();
+        validation_error.property = `components.${component.getName()}.parameters.${pk}`;
+        validation_error.target = pv;
+        validation_error.value = pv.default;
+        validation_error.constraints = { Required: `${pk} is required` };
+        validation_error.children = [];
+        validation_errors.push(validation_error);
+      }
+    }
+
     // TODO: Removing the prefix is tedious, but the component map is currently stored prefixed
-    return validateInterpolation(removePrefixForExpressions(serialize(component)), context);
+    return [...validation_errors, ...validateInterpolation(removePrefixForExpressions(serialize(component)), context)];
   }
 
   validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig): ValidationError[] {
@@ -240,21 +254,6 @@ export default abstract class DependencyManager {
         validation_error.constraints = { Required: `${pk} is required` };
         validation_error.children = [];
         validation_errors.push(validation_error);
-      }
-    }
-
-    // Check required parameters for components
-    for (const [component_key, component] of Object.entries(enriched_environment.getComponents())) {
-      for (const [pk, pv] of Object.entries(component.getParameters())) {
-        if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
-          const validation_error = new ValidationError();
-          validation_error.property = `components.${component_key}.parameters.${pk}`;
-          validation_error.target = pv;
-          validation_error.value = pv.default;
-          validation_error.constraints = { Required: `${pk} is required` };
-          validation_error.children = [];
-          validation_errors.push(validation_error);
-        }
       }
     }
 
@@ -381,6 +380,14 @@ export default abstract class DependencyManager {
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
     for (let component of Object.values(component_map)) {
       const environment_component = interpolated_environment.getComponents()[component.getRef()] || interpolated_environment.getComponents()[component.getName()];
+      // Set default component parameter values from environment parameters
+      for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
+        const environment_parameter = interpolated_environment.getParameters()[parameter_key];
+        if (environment_parameter) {
+          parameter.default = environment_parameter.default;
+          component.setParameter(parameter_key, parameter);
+        }
+      }
       if (environment_component) {
         component = component.merge(environment_component);
       }
