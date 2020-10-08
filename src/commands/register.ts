@@ -145,7 +145,11 @@ export default class ComponentRegister extends Command {
       if (service_config.build?.dockerfile) {
         dockerfile = path.join(build_path, service_config.build.dockerfile);
       }
-      return await buildImage(build_path, image_tag, dockerfile);
+      let build_args: string[] = [];
+      if (service_config.build?.args) {
+        build_args = Object.entries(service_config.build?.args).map(([key, value]) => `${key}=${value}`);
+      }
+      return await buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);

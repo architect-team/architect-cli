@@ -30,6 +30,7 @@ export interface RawServiceConfig {
   build?: {
     context?: string;
     dockerfile?: string;
+    args?: string[];
   };
   image?: string;
   [key: string]: any;

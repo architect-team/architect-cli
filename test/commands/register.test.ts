@@ -333,7 +333,6 @@ describe('register', function () {
     .it('docker image built with dockerfile specified in architect.yml', ctx => {
       const current_path = path.join(__dirname, '../..').replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       const buildImage = docker.buildImage as sinon.SinonStub;
-      expect(buildImage.args[0].length).to.eq(3);
       expect(buildImage.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
       expect(buildImage.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
     });
