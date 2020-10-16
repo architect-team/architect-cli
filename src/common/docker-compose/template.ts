@@ -18,6 +18,14 @@ export interface DockerComposeInterface {
   mode?: string;
 }
 
+export interface DockerComposeDeploy {
+  resources: DockerComposeResources;
+}
+
+export interface DockerComposeResources {
+  limits: { cpus?: string; memory?: string };
+}
+
 export interface DockerService {
   ports: string[] | DockerComposeInterface[];
   image?: string;
@@ -31,6 +39,7 @@ export interface DockerService {
   dns_search?: string | string[];
   logging?: { driver?: string };
   external_links?: string[];
+  deploy?: DockerComposeDeploy;
 }
 
 export default interface DockerComposeTemplate {

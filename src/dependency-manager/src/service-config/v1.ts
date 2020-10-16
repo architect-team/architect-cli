@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { ParameterDefinitionSpecV1 } from '../component-config/v1';
 import { BaseSpec } from '../utils/base-spec';
@@ -253,6 +253,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Type(() => BuildSpecV1)
   build?: BuildSpecV1;
 
+  @IsOptional({ always: true })
+  @IsNumber()
+  cpu?: number;
+
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  memory?: string;
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
@@ -391,5 +399,13 @@ export class ServiceConfigV1 extends ServiceConfig {
       this.build.context = '.';
     }
     return this.build || {};
+  }
+
+  getCpu() {
+    return this.cpu;
+  }
+
+  getMemory() {
+    return this.memory;
   }
 }

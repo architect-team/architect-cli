@@ -72,9 +72,6 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
 
       if (node.node_config.getImage()) compose.services[url_safe_ref].image = node.node_config.getImage();
-    }
-
-    if (node instanceof ServiceNode) {
       if (node.node_config.getCommand().length) compose.services[url_safe_ref].command = node.node_config.getCommand();
       if (node.node_config.getEntrypoint().length) compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint();
 
@@ -85,6 +82,21 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
           ...docker_compose_config,
           ...compose.services[url_safe_ref],
         };
+      }
+
+      console.log(node.node_config);
+      const cpu = node.node_config.getCpu();
+      const memory = node.node_config.getMemory();
+      console.log(cpu);
+      console.log(memory);
+      if (cpu || memory) {
+        compose.services[url_safe_ref].deploy = { resources: { limits: {} } };
+        if (cpu) {
+          compose.services[url_safe_ref].deploy.resources.limits.cpus = cpu.toString();
+        }
+        if (memory) {
+          compose.services[url_safe_ref].deploy.resources.limits.memory = memory;
+        }
       }
     }
 

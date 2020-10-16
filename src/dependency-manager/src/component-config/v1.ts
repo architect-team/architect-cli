@@ -152,6 +152,8 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
+
+
   getName(): ComponentSlug {
     let split;
     try {
