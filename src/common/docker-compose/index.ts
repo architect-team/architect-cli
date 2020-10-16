@@ -84,19 +84,13 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
         };
       }
 
-      console.log(node.node_config);
       const cpu = node.node_config.getCpu();
       const memory = node.node_config.getMemory();
-      console.log(cpu);
-      console.log(memory);
       if (cpu || memory) {
-        compose.services[url_safe_ref].deploy = { resources: { limits: {} } };
-        if (cpu) {
-          compose.services[url_safe_ref].deploy.resources.limits.cpus = cpu.toString();
-        }
-        if (memory) {
-          compose.services[url_safe_ref].deploy.resources.limits.memory = memory;
-        }
+        const service = compose.services[url_safe_ref];
+        service.deploy = { resources: { limits: {} } };
+        if (cpu) { service.deploy.resources.limits.cpus = cpu.toString(); }
+        if (memory) { service.deploy.resources.limits.memory = memory; }
       }
     }
 
