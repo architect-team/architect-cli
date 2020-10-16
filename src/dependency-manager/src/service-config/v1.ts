@@ -253,7 +253,6 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Type(() => BuildSpecV1)
   build?: BuildSpecV1;
 
-
   @IsOptional({ always: true })
   @IsNumber()
   cpu?: number;
