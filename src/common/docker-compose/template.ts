@@ -19,11 +19,7 @@ export interface DockerComposeInterface {
 }
 
 export interface DockerComposeDeploy {
-  resources: DockerComposeResources;
-}
-
-export interface DockerComposeResources {
-  limits: { cpus?: string; memory?: string };
+  resources: { limits: { cpus?: string; memory?: string } };
 }
 
 export interface DockerService {
