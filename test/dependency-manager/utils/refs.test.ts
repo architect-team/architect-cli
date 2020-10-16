@@ -105,4 +105,22 @@ describe('Refs url_safe_ref', () => {
     expect(url_safe_ref).to.equal(abridged_slug);
     expect(url_safe_ref.length).to.be.lessThan(64);
   });
+
+  it(`Refs.url_safe_ref with max_length of 32 cuts environment string to 32 chars`, async () => {
+    const environment_slug = `this-is-a-long-environment-name-that-should-get-cut`;
+    const abridged_slug = `this-is-a-long-enviro--bcpqo07j`;
+
+    const url_safe_ref = Refs.url_safe_ref(environment_slug, 31);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(32);
+  });
+
+  it(`Refs.url_safe_ref with max_length of 32 cuts component string to 32 chars`, async () => {
+    const component_slug = `this-is-a/component-name-that-has-more-than-63-chars-it-should-get-lopped-off`;
+    const abridged_slug = `this-is-a--component--62o43gic`;
+
+    const url_safe_ref = Refs.url_safe_ref(component_slug, 31);
+    expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(32);
+  });
 });

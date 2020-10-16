@@ -8,7 +8,7 @@ export class Refs {
   private static HASH_LENGTH = 7;
   private static DEFAULT_MAX_LENGTH = 63;
 
-  public static url_safe_ref(ref: string): string {
+  public static url_safe_ref(ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
     if (ref === GatewaySlugUtils.StringLiteral) {
       return ref;
     }
@@ -26,7 +26,7 @@ export class Refs {
     url_safe_ref = url_safe_ref.replace(/[^a-zA-Z0-9-]/g, Refs.URL_SAFE_PUNCTUATION_REPLACEMENT);
 
     // slice if the whole thing is too long
-    const max_base_length = Refs.DEFAULT_MAX_LENGTH - Refs.HASH_LENGTH - Refs.URL_SAFE_DELIMITER.length - suffix.length;
+    const max_base_length = max_length - Refs.HASH_LENGTH - Refs.URL_SAFE_DELIMITER.length - suffix.length;
     if (url_safe_ref.length > max_base_length) {
       url_safe_ref = url_safe_ref.slice(0, max_base_length - 1);
       // trim any trailing dashes
