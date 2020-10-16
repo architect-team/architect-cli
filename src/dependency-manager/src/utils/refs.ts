@@ -5,7 +5,7 @@ export class Refs {
 
   private static URL_SAFE_DELIMITER = '--';
   private static URL_SAFE_PUNCTUATION_REPLACEMENT = '-';
-  private static HASH_LENGTH = 7;
+  private static HASH_LENGTH = 8;
   private static DEFAULT_MAX_LENGTH = 63;
 
   public static url_safe_ref(ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
@@ -28,7 +28,7 @@ export class Refs {
     // slice if the whole thing is too long
     const max_base_length = max_length - Refs.HASH_LENGTH - Refs.URL_SAFE_DELIMITER.length - suffix.length;
     if (url_safe_ref.length > max_base_length) {
-      url_safe_ref = url_safe_ref.slice(0, max_base_length - 1);
+      url_safe_ref = url_safe_ref.slice(0, max_base_length);
       // trim any trailing dashes
       while (url_safe_ref.charAt(url_safe_ref.length - 1) === Refs.URL_SAFE_DELIMITER[0]) {
         url_safe_ref = url_safe_ref.substring(0, url_safe_ref.length - 1);
@@ -37,7 +37,7 @@ export class Refs {
 
     // add the hash
     url_safe_ref += Refs.URL_SAFE_DELIMITER;
-    url_safe_ref += hash.slice(0, Refs.HASH_LENGTH + 1);
+    url_safe_ref += hash.slice(0, Refs.HASH_LENGTH);
     url_safe_ref += suffix;
 
     return url_safe_ref;

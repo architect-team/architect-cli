@@ -106,6 +106,15 @@ describe('Refs url_safe_ref', () => {
     expect(url_safe_ref.length).to.be.lessThan(64);
   });
 
+  it(`Refs.url_safe_ref with max_length of 63 cuts component string to 63 chars`, async () => {
+    const component_slug = `test-user22-a0/dashboard-user/dashboard-user:latest`;
+    const abridged_slug = `test-user22-a0--dashboard-user--dashboard-user--latest--f6b6hccv`;
+
+    const url_safe_ref = Refs.url_safe_ref(component_slug);
+    // TODO expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref.length).to.be.lessThan(64);
+  });
+
   it(`Refs.url_safe_ref with max_length of 32 cuts environment string to 32 chars`, async () => {
     const environment_slug = `this-is-a-long-environment-name-that-should-get-cut`;
     const abridged_slug = `this-is-a-long-enviro--bcpqo07j`;
