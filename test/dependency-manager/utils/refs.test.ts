@@ -108,10 +108,10 @@ describe('Refs url_safe_ref', () => {
 
   it(`Refs.url_safe_ref with max_length of 63 cuts component string to 63 chars`, async () => {
     const component_slug = `test-user22-a0/dashboard-user/dashboard-user:latest`;
-    const abridged_slug = `test-user22-a0--dashboard-user--dashboard-user--latest--f6b6hccv`;
+    const abridged_slug = `test-user22-a0--dashboard-user--dashboard-user--lates--rocdog0g`;
 
     const url_safe_ref = Refs.url_safe_ref(component_slug);
-    // TODO expect(url_safe_ref).to.equal(abridged_slug);
+    expect(url_safe_ref).to.equal(abridged_slug);
     expect(url_safe_ref.length).to.be.lessThan(64);
   });
 
