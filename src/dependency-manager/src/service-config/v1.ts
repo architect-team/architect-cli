@@ -35,7 +35,25 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   path?: string;
 
-  @Transform(value => value instanceof Array ? value : shell_parse(value))
+  @Transform(value => {
+    if (value instanceof Array) return value;
+
+    const interpolation_regex = new RegExp('\\${{\\s*[a-zA-z0-9.]+\\s*}}', 'g');
+    let matches = interpolation_regex.exec(value);
+    let escaped_value = value;
+    while (matches) {
+      const match_escaped = matches[0].replace('$', '\\$').replace(/\s/g, '_');
+      escaped_value = escaped_value.replace(matches[0], match_escaped);
+      matches = interpolation_regex.exec(escaped_value);
+    }
+
+    const parsed_escaped_command = shell_parse(escaped_value, undefined, {});
+    const command = [];
+    for (const command_part of parsed_escaped_command) {
+      command.push(command_part.toString().replace(/\${{_/g, '${{ ').replace(/_}}/g, ' }}'));
+    }
+    return command;
+  })
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
   @IsString({ always: true, each: true })
