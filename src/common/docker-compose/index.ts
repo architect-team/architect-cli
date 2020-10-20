@@ -75,8 +75,12 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     if (node instanceof ServiceNode) {
-      if (node.node_config.getCommand().length) compose.services[url_safe_ref].command = node.node_config.getCommand();
-      if (node.node_config.getEntrypoint().length) compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint();
+      if (node.node_config.getCommand().length) {
+        compose.services[url_safe_ref].command = node.node_config.getCommand().map(command_part => command_part.replace(/"\$/g, '"$$$'));
+      }
+      if (node.node_config.getEntrypoint().length) {
+        compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/"\$/g, '"$$$'));
+      }
 
       const platforms = node.node_config.getPlatforms();
       const docker_compose_config = platforms['docker-compose'];
