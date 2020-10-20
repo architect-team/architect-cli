@@ -75,7 +75,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
     }
 
     if (node instanceof ServiceNode) {
-      if (node.node_config.getCommand().length) {
+      if (node.node_config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
         compose.services[url_safe_ref].command = node.node_config.getCommand().map(command_part => command_part.replace(/"\$/g, '"$$$'));
       }
       if (node.node_config.getEntrypoint().length) {
