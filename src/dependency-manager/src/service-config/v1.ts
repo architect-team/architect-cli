@@ -35,11 +35,10 @@ class LivenessProbeV1 extends BaseSpec {
   @IsString({ always: true })
   path?: string;
 
-  @Transform(value => value instanceof Array ? value : shell_parse(value))
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
   @IsString({ always: true, each: true })
-  command?: string[];
+  command?: string[] | string;
 
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
@@ -302,6 +301,10 @@ export class ServiceConfigV1 extends ServiceConfig {
       ...this.liveness_probe,
     };
 
+    if (this.liveness_probe.command && typeof this.liveness_probe.command === 'string') {
+      liveness_probe.command = shell_parse(this.liveness_probe.command).map(e => `${e}`);
+    }
+
     return liveness_probe as ServiceLivenessProbe;
   }
 
@@ -315,12 +318,12 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getCommand() {
     if (!this.command) return [];
-    return this.command instanceof Array ? this.command : shell_parse(this.command).map((e) => `${e}`);
+    return this.command instanceof Array ? this.command : shell_parse(this.command).map(e => `${e}`);
   }
 
   getEntrypoint() {
     if (!this.entrypoint) return [];
-    return this.entrypoint instanceof Array ? this.entrypoint : shell_parse(this.entrypoint).map((e) => `${e}`);
+    return this.entrypoint instanceof Array ? this.entrypoint : shell_parse(this.entrypoint).map(e => `${e}`);
   }
 
   getEnvironmentVariables(): Dictionary<string> {
