@@ -1,6 +1,6 @@
 import { registerDecorator, ValidationArguments, ValidationOptions } from "class-validator";
 
-/** Require that these keys do not exist in the object */
+/** Require each value of the object is of one of the types specified */
 export const DictionaryTypes = (types: string[], validationOptions?: ValidationOptions) => {
   return (object: Record<string, any>, propertyName: string) => {
     registerDecorator({
