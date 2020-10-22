@@ -94,7 +94,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       if (cpu || memory) {
         const service = compose.services[url_safe_ref];
         service.deploy = { resources: { limits: {} } };
-        if (cpu) { service.deploy.resources.limits.cpus = cpu.toString(); }
+        if (cpu) { service.deploy.resources.limits.cpus = cpu; }
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
     }

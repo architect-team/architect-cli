@@ -64,7 +64,7 @@ export abstract class ServiceConfig extends ConfigSpec {
   abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
   abstract getBuild(): BuildSpec;
 
-  abstract getCpu(): number | undefined;
+  abstract getCpu(): string | undefined;
   abstract getMemory(): string | undefined;
 
   /** @return New expanded copy of the current config */
