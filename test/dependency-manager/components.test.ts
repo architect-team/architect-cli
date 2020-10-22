@@ -386,5 +386,64 @@ describe('components spec v1', function () {
       const worker_node = graph.getNodeByRef('concourse/ci/worker:6.2') as ServiceNode;
       expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(concourse_web_ref);
     });
+
+    it('circular component dependency is rejected', async () => {
+      const component_config = {
+        name: 'examples/hello-world',
+        services: {
+          api: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        },
+        interfaces: {},
+        dependencies: {
+          'examples/hello-circular-world': 'latest'
+        }
+      };
+
+      const circular_component_config = {
+        name: 'examples/hello-circular-world',
+        services: {
+          api: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        },
+        interfaces: {},
+        dependencies: {
+          'examples/hello-world': 'latest'
+        }
+      };
+
+      const env_config = {
+        components: {
+          'examples/hello-world': {
+            'extends': 'file:./architect.json'
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(component_config),
+        '/stack/environment.json': JSON.stringify(env_config),
+      });
+
+      moxios.stubRequest(`/accounts/examples/components/hello-circular-world/versions/latest`, {
+        status: 200,
+        response: { tag: 'latest', config: circular_component_config, service: { url: 'examples/hello-circular-world:latest' } }
+      });
+
+      let manager_error;
+      try {
+        const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+        await manager.getGraph();
+      } catch(err) {
+        manager_error = err.message;
+      }
+      expect(manager_error).eq('Circular component dependency detected (examples/hello-world:latest)');
+    });
   });
 });
