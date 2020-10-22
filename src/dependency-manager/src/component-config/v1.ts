@@ -7,6 +7,7 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
 import { validateDictionary, validateInterpolation } from '../utils/validation';
+import { DictionaryType } from '../utils/validators/dictionary_type';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
 export class ParameterDefinitionSpecV1 extends BaseSpec implements ParameterDefinitionSpec {
@@ -145,6 +146,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
+  @DictionaryType('string', { always: true, message: 'dependency versions must be strings' })
   dependencies?: Dictionary<string>;
 
   @IsOptional({ groups: ['operator', 'debug'] })
