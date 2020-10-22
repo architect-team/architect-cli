@@ -72,8 +72,13 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
 
       if (node.node_config.getImage()) compose.services[url_safe_ref].image = node.node_config.getImage();
-      if (node.node_config.getCommand().length) compose.services[url_safe_ref].command = node.node_config.getCommand();
-      if (node.node_config.getEntrypoint().length) compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint();
+
+      if (node.node_config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
+        compose.services[url_safe_ref].command = node.node_config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+      }
+      if (node.node_config.getEntrypoint().length) {
+        compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+      }
 
       const platforms = node.node_config.getPlatforms();
       const docker_compose_config = platforms['docker-compose'];
