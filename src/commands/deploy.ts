@@ -184,7 +184,7 @@ export default class Deploy extends DeployCommand {
     await fs.ensureFile(flags.compose_file);
     await fs.writeFile(flags.compose_file, yaml.safeDump(compose));
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
-    const compose_args = ['-f', flags.compose_file, 'up', '--build', '--abort-on-container-exit'];
+    const compose_args = ['-f', flags.compose_file, '--compatibility', 'up', '--build', '--abort-on-container-exit'];
     if (flags.detached) {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode

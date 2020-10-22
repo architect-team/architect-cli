@@ -252,6 +252,14 @@ export class ServiceConfigV1 extends ServiceConfig {
   @Type(() => BuildSpecV1)
   build?: BuildSpecV1;
 
+  @IsOptional({ always: true })
+  @Type(() => String)
+  cpu?: string;
+
+  @IsOptional({ always: true })
+  @Type(() => String)
+  memory?: string;
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
@@ -394,5 +402,13 @@ export class ServiceConfigV1 extends ServiceConfig {
       this.build.context = '.';
     }
     return this.build || {};
+  }
+
+  getCpu() {
+    return this.cpu;
+  }
+
+  getMemory() {
+    return this.memory;
   }
 }
