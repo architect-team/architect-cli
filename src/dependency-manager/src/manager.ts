@@ -98,9 +98,6 @@ export default abstract class DependencyManager {
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
-    if(component.getRef() in component_map) { // Reject circular dependencies
-      throw new Error(`Circular component dependency detected (${ component.getRef() })`);
-    }
     let component_string = serialize(component);
     component_string = replaceBrackets(component_string);
     // Prefix interpolation expressions with components.<name>.
@@ -133,7 +130,14 @@ export default abstract class DependencyManager {
       const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
       const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
-      await this.loadComponent(graph, dep_component, component_map);
+
+        if (dep_component.getRef() in component_map) { // Reject circular dependencies
+          // if (this.environment.getComponents()[dep_component.getRef().split(':')[0]]) {
+          //   continue;
+          // }
+          throw new Error(`Circular component dependency detected (${ component.getRef() })`);
+        }
+        await this.loadComponent(graph, dep_component, component_map);
     }
 
     // Add edges to services inside component
