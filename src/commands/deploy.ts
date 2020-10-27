@@ -280,7 +280,7 @@ export default class Deploy extends DeployCommand {
       });
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      const component_digest = (await this.app.api.get(`/accounts/${'simplecommands'}/components/${'dashboard'}`)).data;
+      const component_digest = (await this.app.api.get(`/accounts/${parsed_component_version.component_account_name}/components/${parsed_component_version.component_name}`)).data;
       const edges = (await this.app.api.get(`/components/${component_digest.component.id}/versions/${component_digest.tag}/graph`)).data.edges;
 
       this.updateEnvironmentInterfaces(env_config, extra_interfaces, edges);
@@ -301,7 +301,6 @@ export default class Deploy extends DeployCommand {
     }
 
     this.getExtraEnvironmentVariables(flags.parameter, env_config);
-
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
     await this.deployRemote(environment, env_config, env_config_merge);
