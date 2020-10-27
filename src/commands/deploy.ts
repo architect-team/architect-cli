@@ -19,6 +19,7 @@ import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
+import DependencyEdge from '../dependency-manager/src/graph/edge';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -243,8 +244,14 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.create(this.app.api);
       dependency_manager.environment = env_config;
 
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      for (const [parameter_key, parameter] of Object.entries(extra_params)) {
+        dependency_manager.environment.setParameter(parameter_key, parameter);
+      }
+
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+      const edges = (await dependency_manager.getGraph()).edges;
+      this.updateLocalEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, edges);
     } else {
       if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
 
@@ -252,12 +259,19 @@ export default class Deploy extends DeployCommand {
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
       );
-    }
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
-      dependency_manager.environment.setParameter(parameter_key, parameter);
+
+      const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+      for (const [parameter_key, parameter] of Object.entries(extra_params)) {
+        dependency_manager.environment.setParameter(parameter_key, parameter);
+      }
     }
 
+
+    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
+      // const extra_interfaces = this.getExtraInterfaces(flags.interface);
+      // const edges = (await dependency_manager.getGraph()).edges;
+      // this.updateLocalEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, edges);
+    }
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
     const compose = await DockerCompose.generate(dependency_manager);
     await this.runCompose(compose);
@@ -337,9 +351,17 @@ export default class Deploy extends DeployCommand {
     return extra_interfaces;
   }
 
-  updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
+  updateLocalEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, edges: DependencyEdge[]) {
     for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
+      const edge = edges.find(e => e.interfaces_map[interface_name])?.to.split('/');
+      if (edge) {
+        const component_name = edge[0] + '/' + edge[1];
+        env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
+
+        if (!env_config.getComponents()[component_name + ':latest']) {
+          env_config.setComponent(component_name, 'latest');
+        }
+      }
     }
   }
 
