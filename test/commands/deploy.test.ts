@@ -84,7 +84,7 @@ describe('local deploy environment', function () {
   }
 
   test
-    .timeout(10000)
+    .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(local_env_config, null, 2), local_env_config];
     })
@@ -99,7 +99,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(10000)
+    .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(local_env_config, null, 2), local_env_config];
     })

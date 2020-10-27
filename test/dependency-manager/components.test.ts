@@ -319,7 +319,7 @@ describe('components spec v1', function () {
           }
         },
         dependencies: {
-          'concourse/ci': 6.2
+          'concourse/ci': '6.2'
         },
         interfaces: {}
       };
