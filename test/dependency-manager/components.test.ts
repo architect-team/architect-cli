@@ -443,7 +443,7 @@ describe('components spec v1', function () {
       } catch(err) {
         manager_error = err.message;
       }
-      expect(manager_error).eq('Circular component dependency detected (examples/hello-world:latest)');
+      expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world:latest)');
     });
   });
 });

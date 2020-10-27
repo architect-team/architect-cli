@@ -205,13 +205,22 @@ describe('validation spec v1', () => {
       dependencies:
         test/other: latest
       `
+      const other_component_config = `
+      name: test/other
+      interfaces:
+      services:
+        api:
+          interfaces:
+          environment:
+      `
       const env_config = `
       components:
         test/component: file:./component.yml
-        test/other: file:./component.yml
+        test/other: file:./other-component.yml
       `
       mock_fs({
         '/component.yml': component_config,
+        '/other-component.yml': other_component_config,
         '/environment.yml': env_config
       });
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
@@ -248,14 +257,24 @@ describe('validation spec v1', () => {
         test/other: latest
       `
 
+      const other_component_config = `
+      name: test/other
+      interfaces:
+      services:
+        api:
+          interfaces:
+          environment:
+      `
+
       const env_config = `
       components:
         test/component: file:./component.yml
-        test/other: file:./component.yml
+        test/other: file:./other-component.yml
       `
       mock_fs({
         '/test-file.txt': `some file text\non another line`,
         '/component.yml': component_config,
+        '/other-component.yml': other_component_config,
         '/environment.yml': env_config
       });
 
