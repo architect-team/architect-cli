@@ -133,11 +133,14 @@ export default abstract class DependencyManager {
       const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
 
-        if (dep_component.getRef() in component_map) { // Reject circular dependencies
-          if (loaded_by_env.includes(dep_component.getRef())) continue;
-          throw new Error(`Circular component dependency detected (${ component.getRef() })`);
+      if (component_map[dep_component.getRef()]) {
+        const first_side_dependency = component.getRef().split(':')[0] in component_map[dep_component.getRef()].getDependencies();
+        const second_side_dependency = dep_component.getRef().split(':')[0] in component.getDependencies();
+        if (first_side_dependency && second_side_dependency) {
+          throw new Error(`Circular component dependency detected (${ component.getRef() } <> ${dep_component.getRef()})`);
         }
-        await this.loadComponent(graph, dep_component, component_map, loaded_by_env);
+      }
+      await this.loadComponent(graph, dep_component, component_map, loaded_by_env);
     }
 
     // Add edges to services inside component
