@@ -193,9 +193,6 @@ describe('local deploy environment', function () {
        "gateway": {
           "image": "architectio/nginx-proxy:latest",
           "restart": "always",
-          "ports": [
-             "1026:1026"
-          ],
           "volumes": [
              "/var/run/docker.sock:/tmp/docker.sock:ro"
           ],
@@ -203,7 +200,6 @@ describe('local deploy environment', function () {
           "environment": {
              "HTTPS_METHOD": "noredirect",
              "DISABLE_ACCESS_LOGS": "true",
-             "HTTP_PORT": 1026
           },
           "logging": {
              "driver": "none"
@@ -298,7 +294,10 @@ describe('local deploy environment', function () {
     .it('Create a local deploy from a component ref', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose);
+      const created_compose = runCompose.firstCall.args[0];
+      delete created_compose.services.gateway.ports;
+      delete created_compose.services.gateway.environment.HTTP_PORT;
+      expect(created_compose).to.deep.equal(component_expected_compose);
     })
 });
 
