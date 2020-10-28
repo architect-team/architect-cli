@@ -8,7 +8,7 @@ import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true; // TODO: restore
 
 const account = {
   id: 'test-account-id',
@@ -122,6 +122,216 @@ describe('local deploy environment', function () {
       })
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
+    })
+
+
+  const component_expected_compose = {
+    "version": "3",
+    "services": {
+       "examples--hello-world--api--latest--pxo5ulqt": {
+          "ports": [
+             "50005:3000"
+          ],
+          "depends_on": [
+             "gateway"
+          ],
+          "environment": {
+             "ACCOUNT_SECRET": "",
+             "ENV_SECRET": "",
+             "VIRTUAL_HOST": "echo.localhost",
+             "VIRTUAL_PORT_echo_localhost": "3000",
+             "VIRTUAL_PORT": "3000",
+             "VIRTUAL_PROTO": "http"
+          },
+          "external_links": [
+             "gateway:echo.localhost",
+             "gateway:echo-dos.localhost",
+             "gateway:echo-other.localhost"
+          ],
+          "image": "heroku/nodejs-hello-world",
+          "restart": "always"
+       },
+       "examples--hello-world--api-dos--latest--7fqjbsr2": {
+          "ports": [
+             "50006:3000"
+          ],
+          "depends_on": [
+             "gateway"
+          ],
+          "environment": {
+             "ACCOUNT_SECRET": "",
+             "VIRTUAL_HOST": "echo-dos.localhost",
+             "VIRTUAL_PORT_echo_dos_localhost": "3000",
+             "VIRTUAL_PORT": "3000",
+             "VIRTUAL_PROTO": "http"
+          },
+          "external_links": [
+             "gateway:echo.localhost",
+             "gateway:echo-dos.localhost",
+             "gateway:echo-other.localhost"
+          ],
+          "image": "heroku/nodejs-hello-world",
+          "restart": "always"
+       },
+       "examples--hello-other-world--api--latest--vgrkvuub": {
+          "ports": [
+             "50007:3000"
+          ],
+          "depends_on": [
+             "gateway"
+          ],
+          "environment": {
+             "ACCOUNT_SECRET": "",
+             "ENV_SECRET": "",
+             "VIRTUAL_HOST": "echo-other.localhost",
+             "VIRTUAL_PORT_echo_other_localhost": "3000",
+             "VIRTUAL_PORT": "3000",
+             "VIRTUAL_PROTO": "http"
+          },
+          "external_links": [
+             "gateway:echo.localhost",
+             "gateway:echo-dos.localhost",
+             "gateway:echo-other.localhost"
+          ],
+          "image": "heroku/nodejs-hello-world",
+          "restart": "always"
+       },
+       "gateway": {
+          "image": "architectio/nginx-proxy:latest",
+          "restart": "always",
+          "ports": [
+             "1025:1025"
+          ],
+          "volumes": [
+             "/var/run/docker.sock:/tmp/docker.sock:ro"
+          ],
+          "depends_on": [],
+          "environment": {
+             "HTTPS_METHOD": "noredirect",
+             "DISABLE_ACCESS_LOGS": "true",
+             "HTTP_PORT": 1025
+          },
+          "logging": {
+             "driver": "none"
+          }
+       }
+    },
+    "volumes": {}
+  };
+
+  const hello_world_component_config = {
+    "name": "examples/hello-world",
+    "parameters": {
+      "ACCOUNT_SECRET": {
+        "required": false
+      },
+      "ENV_SECRET": {
+        "required": false
+      }
+    },
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": {
+            "port": "3000"
+          }
+        },
+        "environment": {
+          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}",
+          "ENV_SECRET": "${{ parameters.ENV_SECRET }}"
+        },
+        "name": "api"
+      },
+      "api-dos": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": {
+            "port": "3000"
+          }
+        },
+        "environment": {
+          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}"
+        },
+        "name": "api-dos"
+      }
+    },
+    "interfaces": {
+      "echo": {
+        "host": "${{ services.api.interfaces.main.host }}",
+        "port": "${{ services.api.interfaces.main.port }}",
+        "protocol": "${{ services.api.interfaces.main.protocol }}",
+        "url": "${{ services.api.interfaces.main.protocol }}://${{ services.api.interfaces.main.host }}:${{ services.api.interfaces.main.port }}"
+      },
+      "echo-dos": {
+        "host": "${{ services.api-dos.interfaces.main.host }}",
+        "port": "${{ services.api-dos.interfaces.main.port }}",
+        "protocol": "${{ services.api-dos.interfaces.main.protocol }}",
+        "url": "${{ services.api-dos.interfaces.main.protocol }}://${{ services.api-dos.interfaces.main.host }}:${{ services.api-dos.interfaces.main.port }}"
+      },
+      "echo-other": {
+        "host": "${{ dependencies['examples/hello-other-world'].interfaces.echo-other.host }}",
+        "port": "${{ dependencies['examples/hello-other-world'].interfaces.echo-other.port }}",
+        "protocol": "${{ dependencies['examples/hello-other-world'].interfaces.echo-other.protocol }}",
+        "url": "${{ dependencies['examples/hello-other-world'].interfaces.echo-other.protocol }}://${{ dependencies['examples/hello-other-world'].interfaces.echo-other.host }}:${{ dependencies['examples/hello-other-world'].interfaces.echo-other.port }}"
+      }
+    },
+    "dependencies": {
+      "examples/hello-other-world": "latest"
+    },
+  };
+
+  const hello_other_world_component_config = {
+    "name": "examples/hello-other-world:latest",
+    "parameters": {
+      "ACCOUNT_SECRET": {
+        "required": false
+      },
+      "ENV_SECRET": {
+        "required": false
+      }
+    },
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": {
+            "port": "3000"
+          }
+        },
+        "environment": {
+          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}",
+          "ENV_SECRET": "${{ parameters.ENV_SECRET }}"
+        },
+        "name": "api"
+      }
+    },
+    "interfaces": {
+      "echo-other": {
+        "host": "${{ services.api.interfaces.main.host }}",
+        "port": "${{ services.api.interfaces.main.port }}",
+        "protocol": "${{ services.api.interfaces.main.protocol }}",
+        "url": "${{ services.api.interfaces.main.protocol }}://${{ services.api.interfaces.main.host }}:${{ services.api.interfaces.main.port }}"
+      }
+    }
+  };
+
+  test
+    .timeout(15000)
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-world/versions/latest`)
+      .reply(200, {config: hello_world_component_config}))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-other-world/versions/latest`)
+      .reply(200, {config: hello_other_world_component_config}))
+    .command(['deploy', '-l', 'examples/hello-world:latest', '-i', 'echo:echo', '-i', 'echo-dos:echo-dos', '-i', 'echo-other:echo-other'])
+    .it('Create a local deploy from a component ref', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose);
     })
 });
 
