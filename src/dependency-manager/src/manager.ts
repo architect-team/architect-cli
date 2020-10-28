@@ -81,15 +81,13 @@ export default abstract class DependencyManager {
   async loadComponents(graph: DependencyGraph): Promise<Dictionary<ComponentConfig>> {
     const component_map: Dictionary<ComponentConfig> = {};
     const components = Object.values(this.environment.getComponents());
-    const loaded_by_env: string[] = [];
     for (const component of components) {
-      await this.loadComponent(graph, component, component_map, loaded_by_env);
-      loaded_by_env.push(component.getRef());
+      await this.loadComponent(graph, component, component_map);
     }
     return component_map;
   }
 
-  async loadComponent(graph: DependencyGraph, component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, loaded_by_env: string[]) {
+  async loadComponent(graph: DependencyGraph, component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>) {
     const environment = this.environment;
 
     const ref = component_config.getRef();
@@ -140,7 +138,7 @@ export default abstract class DependencyManager {
           throw new Error(`Circular component dependency detected (${ component.getRef() } <> ${dep_component.getRef()})`);
         }
       }
-      await this.loadComponent(graph, dep_component, component_map, loaded_by_env);
+      await this.loadComponent(graph, dep_component, component_map);
     }
 
     // Add edges to services inside component
