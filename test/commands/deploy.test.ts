@@ -1,6 +1,6 @@
 import { expect, test } from '@oclif/test';
 import path from 'path';
-import sinon from 'sinon';
+import sinon, { SinonSpy } from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import * as DockerCompose from '../../src/common/docker-compose';
@@ -124,13 +124,12 @@ describe('local deploy environment', function () {
       expect(runCompose.calledOnce).to.be.true
     })
 
-
   const component_expected_compose = {
     "version": "3",
     "services": {
        "examples--hello-world--api--latest--d00ztoyu": {
           "ports": [
-             "50005:3000"
+             "50003:3000"
           ],
           "depends_on": [
              "gateway"
@@ -151,7 +150,7 @@ describe('local deploy environment', function () {
        },
        "examples--hello-world--api-dos--latest--b7mzopza": {
           "ports": [
-             "50006:3000"
+             "50004:3000"
           ],
           "depends_on": [
              "gateway"
@@ -172,7 +171,7 @@ describe('local deploy environment', function () {
        },
        "examples--hello-other-world--api--latest--h6kkprnr": {
           "ports": [
-             "50007:3000"
+             "50005:3000"
           ],
           "depends_on": [
              "gateway"
@@ -195,7 +194,7 @@ describe('local deploy environment', function () {
           "image": "architectio/nginx-proxy:latest",
           "restart": "always",
           "ports": [
-             "1025:1025"
+             "1026:1026"
           ],
           "volumes": [
              "/var/run/docker.sock:/tmp/docker.sock:ro"
@@ -204,7 +203,7 @@ describe('local deploy environment', function () {
           "environment": {
              "HTTPS_METHOD": "noredirect",
              "DISABLE_ACCESS_LOGS": "true",
-             "HTTP_PORT": 1025
+             "HTTP_PORT": 1026
           },
           "logging": {
              "driver": "none"
@@ -419,9 +418,12 @@ describe('remote deploy environment', function () {
     }
   ];
 
-  const deploy_spy = sinon.fake.returns(undefined);
-      sinon.replace(DeployCommand.prototype, 'deployRemote', deploy_spy);
+  let deploy_spy: SinonSpy;
   mockArchitectAuth.stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
+    .do(ctx => {
+      deploy_spy = sinon.fake.returns(undefined);
+      sinon.replace(DeployCommand.prototype, 'deployRemote', deploy_spy);
+    })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -429,10 +431,10 @@ describe('remote deploy environment', function () {
       .get(`/accounts/${account.id}/environments/${environment.name}`)
       .reply(200, environment))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/hello-world`) // TODO: update
+      .get(`/accounts/examples/components/hello-world`)
       .reply(200, hello_world_component_digest))
     .nock(MOCK_API_HOST, api => api
-      .get(`/components/2638e8a4-0cdf-4581-b59a-2120d3616e03/versions/latest/graph`) // TODO: update
+      .get(`/components/2638e8a4-0cdf-4581-b59a-2120d3616e03/versions/latest/graph`)
       .reply(200, { edges: hello_world_edges}))
     .command(['deploy', 'examples/hello-world:latest', '-e', environment.name, '-a', account.name, '-i', 'echo:echo', '-i', 'echo-dos:echo-dos', '-i', 'echo-other:echo-other', '--auto_approve'])
     .it('Environment config contains specified interfaces', ctx => {
@@ -441,5 +443,5 @@ describe('remote deploy environment', function () {
       expect(deploy_spy.args[0][1]).to.deep.equal(env_config_with_interfaces);
       expect(deploy_spy.args[0][2]).to.be.true;
       sinon.restore();
-    })
+    });
 });
