@@ -128,7 +128,7 @@ describe('local deploy environment', function () {
   const component_expected_compose = {
     "version": "3",
     "services": {
-       "examples--hello-world--api--latest--pxo5ulqt": {
+       "examples--hello-world--api--latest--d00ztoyu": {
           "ports": [
              "50005:3000"
           ],
@@ -136,8 +136,6 @@ describe('local deploy environment', function () {
              "gateway"
           ],
           "environment": {
-             "ACCOUNT_SECRET": "",
-             "ENV_SECRET": "",
              "VIRTUAL_HOST": "echo.localhost",
              "VIRTUAL_PORT_echo_localhost": "3000",
              "VIRTUAL_PORT": "3000",
@@ -151,7 +149,7 @@ describe('local deploy environment', function () {
           "image": "heroku/nodejs-hello-world",
           "restart": "always"
        },
-       "examples--hello-world--api-dos--latest--7fqjbsr2": {
+       "examples--hello-world--api-dos--latest--b7mzopza": {
           "ports": [
              "50006:3000"
           ],
@@ -159,7 +157,6 @@ describe('local deploy environment', function () {
              "gateway"
           ],
           "environment": {
-             "ACCOUNT_SECRET": "",
              "VIRTUAL_HOST": "echo-dos.localhost",
              "VIRTUAL_PORT_echo_dos_localhost": "3000",
              "VIRTUAL_PORT": "3000",
@@ -173,7 +170,7 @@ describe('local deploy environment', function () {
           "image": "heroku/nodejs-hello-world",
           "restart": "always"
        },
-       "examples--hello-other-world--api--latest--vgrkvuub": {
+       "examples--hello-other-world--api--latest--h6kkprnr": {
           "ports": [
              "50007:3000"
           ],
@@ -181,8 +178,6 @@ describe('local deploy environment', function () {
              "gateway"
           ],
           "environment": {
-             "ACCOUNT_SECRET": "",
-             "ENV_SECRET": "",
              "VIRTUAL_HOST": "echo-other.localhost",
              "VIRTUAL_PORT_echo_other_localhost": "3000",
              "VIRTUAL_PORT": "3000",
@@ -221,14 +216,6 @@ describe('local deploy environment', function () {
 
   const hello_world_component_config = {
     "name": "examples/hello-world",
-    "parameters": {
-      "ACCOUNT_SECRET": {
-        "required": false
-      },
-      "ENV_SECRET": {
-        "required": false
-      }
-    },
     "services": {
       "api": {
         "image": "heroku/nodejs-hello-world",
@@ -236,10 +223,6 @@ describe('local deploy environment', function () {
           "main": {
             "port": "3000"
           }
-        },
-        "environment": {
-          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}",
-          "ENV_SECRET": "${{ parameters.ENV_SECRET }}"
         },
         "name": "api"
       },
@@ -249,9 +232,6 @@ describe('local deploy environment', function () {
           "main": {
             "port": "3000"
           }
-        },
-        "environment": {
-          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}"
         },
         "name": "api-dos"
       }
@@ -283,14 +263,6 @@ describe('local deploy environment', function () {
 
   const hello_other_world_component_config = {
     "name": "examples/hello-other-world:latest",
-    "parameters": {
-      "ACCOUNT_SECRET": {
-        "required": false
-      },
-      "ENV_SECRET": {
-        "required": false
-      }
-    },
     "services": {
       "api": {
         "image": "heroku/nodejs-hello-world",
@@ -298,10 +270,6 @@ describe('local deploy environment', function () {
           "main": {
             "port": "3000"
           }
-        },
-        "environment": {
-          "ACCOUNT_SECRET": "${{ parameters.ACCOUNT_SECRET }}",
-          "ENV_SECRET": "${{ parameters.ENV_SECRET }}"
         },
         "name": "api"
       }
@@ -377,5 +345,101 @@ describe('remote deploy environment', function () {
     .command(['deploy', '-e', environment.name, '--auto_approve', './mock-environment.yml'])
     .it('Creates a deployment when env exists with only env flag', ctx => {
       expect(ctx.stdout).to.contain('Deployed')
+    })
+
+
+  const env_config_with_interfaces = {
+    components: {
+      'examples/hello-world': 'latest',
+      'examples/hello-other-world': 'latest'
+    },
+    interfaces: {
+      echo: "${{components['examples/hello-world'].interfaces.echo.url}}",
+      'echo-dos': "${{components['examples/hello-world'].interfaces.echo-dos.url}}",
+      'echo-other': "${{components['examples/hello-other-world'].interfaces.echo-other.url}}"
+    },
+  };
+
+  const hello_world_component_digest = {
+    "id": "37a01809-a2e8-4000-b211-fa39d1d21ffc",
+    "tag": "latest",
+    "config": {
+      "name": "examples/hello-world",
+      "services": {
+        "api": {
+          "interfaces": {
+            "main": 3000
+          },
+        },
+        "api-dos": {
+          "interfaces": {
+            "main": 3000
+          },
+        }
+      },
+      "interfaces": {
+        "echo": {
+          "url": "${{ services.api.interfaces.main.url }}"
+        },
+        "echo-dos": {
+          "url": "${{ services.api-dos.interfaces.main.url }}"
+        },
+        "echo-other": {
+          "url": "${{ dependencies['examples/hello-other-world'].interfaces.echo-other.url }}"
+        }
+      },
+      "dependencies": {
+        "examples/hello-other-world": "latest"
+      }
+    },
+    "component": {
+      "id": "2638e8a4-0cdf-4581-b59a-2120d3616e03",
+      "name": "hello-world",
+    }
+  };
+
+  const hello_world_edges = [
+    {
+      "to": "examples/hello-other-world/api:latest",
+      "interfaces_map": {
+        "echo-other": "main"
+      }
+    },
+    {
+      "to": "examples/hello-world/api:latest",
+      "interfaces_map": {
+        "echo": "main"
+      }
+    },
+    {
+      "to": "examples/hello-world/api-dos:latest",
+      "interfaces_map": {
+        "echo-dos": "main"
+      }
+    }
+  ];
+
+  const deploy_spy = sinon.fake.returns(undefined);
+      sinon.replace(DeployCommand.prototype, 'deployRemote', deploy_spy);
+  mockArchitectAuth.stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-world`) // TODO: update
+      .reply(200, hello_world_component_digest))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/components/2638e8a4-0cdf-4581-b59a-2120d3616e03/versions/latest/graph`) // TODO: update
+      .reply(200, { edges: hello_world_edges}))
+    .command(['deploy', 'examples/hello-world:latest', '-e', environment.name, '-a', account.name, '-i', 'echo:echo', '-i', 'echo-dos:echo-dos', '-i', 'echo-other:echo-other', '--auto_approve'])
+    .it('Environment config contains specified interfaces', ctx => {
+      expect(deploy_spy.callCount).eq(1);
+      expect(deploy_spy.args[0][0]).to.deep.equal(environment);
+      expect(deploy_spy.args[0][1]).to.deep.equal(env_config_with_interfaces);
+      expect(deploy_spy.args[0][2]).to.be.true;
+      sinon.restore();
     })
 });
