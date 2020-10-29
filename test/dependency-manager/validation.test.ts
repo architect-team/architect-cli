@@ -635,5 +635,43 @@ describe('validation spec v1', () => {
         }
       })
     });
+
+    it('invalid interface in service spec', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main:
+              port: 8080
+              domains:
+                - invalid-domain
+      interfaces:
+      `
+      const env_config = `
+      components:
+        test/component:v1.0: file:./component.yml
+      `
+      mock_fs({
+        '/component.yml': component_config,
+        '/environment.yml': env_config
+      });
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      let validation_err;
+      try {
+        await manager.getGraph();
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.api.interfaces.main.domains": {
+          "isUrl": "each value in domains must be an URL address",
+          "value": "invalid-domain",
+          "line": 8,
+          "column": 22
+        }
+      })
+    });
   })
 });
