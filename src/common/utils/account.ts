@@ -20,6 +20,9 @@ export class AccountUtils {
     let account: Account;
     if (account_name) {
       account = (await api.get(`/accounts/${account_name}`)).data;
+      if (!account) {
+        throw new Error(`Could not find account=${account_name}`);
+      }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       let accounts: Account[] = [];
@@ -39,6 +42,9 @@ export class AccountUtils {
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       account = accounts.find((account) => account.name === answers.account)!;
+      if (!account) {
+        throw new Error(`Could not find account=${answers.account}`);
+      }
     }
     return account;
   }
