@@ -313,7 +313,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     if ((options.groups || []).includes('developer')) {
-      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['dependencies.']));
+      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.']));
     }
     return errors;
   }

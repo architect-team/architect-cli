@@ -82,8 +82,9 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_config;
   }
 
-  validateComponent(component: ComponentConfig, context: object) {
-    const errors = super.validateComponent(component, context);
+  // Ignore architect context for local
+  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = ['architect.']) {
+    const errors = super.validateComponent(component, context, ignore_keys);
     const component_extends = component.getExtends();
     if (component_extends?.startsWith('file:') && errors.length) {
       const component_path = component_extends.substr('file:'.length);
@@ -149,5 +150,9 @@ export default class LocalDependencyManager extends DependencyManager {
 
   setLinkedComponents(linked_components: Dictionary<string> = {}) {
     this.linked_components = linked_components;
+  }
+
+  async getArchitectContext(): Promise<object | undefined> {
+    return undefined;
   }
 }

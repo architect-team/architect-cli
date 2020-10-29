@@ -7,7 +7,7 @@ import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { validateDictionary, validateNested } from '../utils/validation';
 import { Exclusive } from '../utils/validators/exclusive';
-import { ServiceConfig, ServiceLivenessProbe, VolumeSpec } from './base';
+import { DeploySpec, ServiceConfig, ServiceLivenessProbe, VolumeSpec } from './base';
 
 class LivenessProbeV1 extends BaseSpec {
   @IsOptional({ always: true })
@@ -124,6 +124,22 @@ export class BuildSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsString({ always: true })
   dockerfile?: string;
+}
+
+export class DeployModuleSpecV1 extends BaseSpec {
+  @IsString({ always: true })
+  path!: string;
+
+  @IsObject({ always: true })
+  inputs!: Dictionary<string>;
+}
+
+export class DeploySpecV1 extends BaseSpec {
+  @IsString({ always: true })
+  strategy!: string;
+
+  @IsObject({ always: true })
+  modules!: Dictionary<DeployModuleSpecV1>;
 }
 
 export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
@@ -259,6 +275,9 @@ export class ServiceConfigV1 extends ServiceConfig {
   @IsOptional({ always: true })
   @Type(() => String)
   memory?: string;
+
+  @IsOptional({ always: true })
+  deploy?: DeploySpecV1;
 
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
@@ -410,5 +429,9 @@ export class ServiceConfigV1 extends ServiceConfig {
 
   getMemory() {
     return this.memory;
+  }
+
+  getDeploy(): DeploySpec | undefined {
+    return this.deploy;
   }
 }
