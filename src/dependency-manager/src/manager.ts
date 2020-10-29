@@ -132,8 +132,8 @@ export default abstract class DependencyManager {
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
 
       if (component_map[dep_component.getRef()]) {
-        const first_side_dependency = component.getRef().split(':')[0] in component_map[dep_component.getRef()].getDependencies();
-        const second_side_dependency = dep_component.getRef().split(':')[0] in component.getDependencies();
+        const first_side_dependency = ComponentVersionSlugUtils.parse(component.getRef()).namespaced_component_name in component_map[dep_component.getRef()].getDependencies();
+        const second_side_dependency = ComponentVersionSlugUtils.parse(dep_component.getRef()).namespaced_component_name in component.getDependencies();
         if (first_side_dependency && second_side_dependency) {
           throw new Error(`Circular component dependency detected (${ component.getRef() } <> ${dep_component.getRef()})`);
         }
