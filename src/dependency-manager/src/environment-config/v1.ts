@@ -161,6 +161,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
     errors = await validateDictionary(expanded, 'components', errors, undefined, options, new RegExp(`^${ComponentVersionSlugUtils.RegexOptionalTag}$`));
+    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     return errors;
   }
 }

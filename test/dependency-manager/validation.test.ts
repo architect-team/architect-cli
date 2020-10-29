@@ -636,7 +636,7 @@ describe('validation spec v1', () => {
       })
     });
 
-    it('invalid interface in service spec', async () => {
+    it('invalid interface in environment spec', async () => {
       const component_config = `
       name: test/component
       services:
@@ -644,32 +644,36 @@ describe('validation spec v1', () => {
           interfaces:
             main:
               port: 8080
-              domains:
-                - invalid-domain
       interfaces:
+        main:
+          url: \${{ services.api.interfaces.main.url }}
       `
       const env_config = `
       components:
-        test/component:v1.0: file:./component.yml
+        test/component: file:./component.yml
+      interfaces:
+        api:
+          url: \${{ components['test/component'].interfaces.main.url }}
+          domains:
+            - invalid_domain
       `
       mock_fs({
         '/component.yml': component_config,
         '/environment.yml': env_config
       });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
       let validation_err;
       try {
-        await manager.getGraph();
+        await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
       } catch (err) {
         validation_err = err;
       }
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
-        "services.api.interfaces.main.domains": {
+        "interfaces.api.domains": {
           "isUrl": "each value in domains must be an URL address",
-          "value": "invalid-domain",
-          "line": 8,
-          "column": 22
+          "value": "invalid_domain",
+          "line": 7,
+          "column": 18
         }
       })
     });
