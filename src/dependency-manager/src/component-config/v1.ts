@@ -92,6 +92,9 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
           protocol,
           url,
         });
+        if (value instanceof Object && value.domains) {
+          output[key].domains = value.domains;
+        }
       } else {
         throw new Error(`Invalid interface regex: ${url}`);
       }
