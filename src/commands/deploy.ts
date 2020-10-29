@@ -17,7 +17,7 @@ import * as DockerCompose from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
+import { ComponentVersionSlugUtils, EnvironmentConfig, ServiceVersionSlugUtils } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
 import DependencyEdge from '../dependency-manager/src/graph/edge';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -244,7 +244,7 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.create(this.app.api);
       dependency_manager.environment = env_config;
 
-      this.getExtraEnvironmentVariables(flags.parameter, env_config);
+      this.setExtraEnvironmentVariables(flags.parameter, env_config);
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
       const edges = (await dependency_manager.getGraph()).edges;
@@ -257,7 +257,7 @@ export default class Deploy extends DeployCommand {
         path.resolve(untildify(args.environment_config_or_component)),
       );
 
-      this.getExtraEnvironmentVariables(flags.parameter, dependency_manager.environment);
+      this.setExtraEnvironmentVariables(flags.parameter, dependency_manager.environment);
     }
 
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
@@ -300,13 +300,13 @@ export default class Deploy extends DeployCommand {
       env_config_merge = false;
     }
 
-    this.getExtraEnvironmentVariables(flags.parameter, env_config);
+    this.setExtraEnvironmentVariables(flags.parameter, env_config);
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
     await this.deployRemote(environment, env_config, env_config_merge);
   }
 
-  getExtraEnvironmentVariables(parameters: string[], env_config: EnvironmentConfig) {
+  setExtraEnvironmentVariables(parameters: string[], env_config: EnvironmentConfig) {
     const extra_env_vars: { [s: string]: string | undefined } = {};
 
     for (const [param_name, param_value] of Object.entries(process.env || {})) {
@@ -342,10 +342,11 @@ export default class Deploy extends DeployCommand {
 
   updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, edges: DependencyEdge[]) {
     for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      const edge = edges.find(e => e.interfaces_map[interface_name])?.to.split('/');
+      const edge = edges.find(e => e.interfaces_map[interface_name]);
       if (edge) {
-        const component_name = `${edge[0]}/${edge[1]}`;
-        const component_tag = edge[2].split(':')[1];
+        const service_version_slug = ServiceVersionSlugUtils.parse(edge.to);
+        const component_name = `${service_version_slug.component_account_name}/${service_version_slug.component_name}`;
+        const component_tag = service_version_slug.tag;
         env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
 
         if (!env_config.getComponents()[`${component_name}:${component_tag}`]) {
