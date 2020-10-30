@@ -190,7 +190,7 @@ export default class Deploy extends DeployCommand {
     this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
     const compose_args = ['-f', flags.compose_file, '--compatibility', 'up', '--abort-on-container-exit'];
     if (flags.build_parallel) {
-      await execa('docker-compose', ['-f', flags.compose_file, 'build', '--parallel', '--no-cache'], { stdio: 'inherit' });
+      await execa('docker-compose', ['-f', flags.compose_file, 'build', '--parallel'], { stdio: 'inherit' });
     } else {
       compose_args.push('--build');
     }
