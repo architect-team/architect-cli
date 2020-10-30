@@ -279,6 +279,12 @@ export class ComponentConfigV1 extends ComponentConfig {
         ...interface_filler,
         ...iv,
       };
+
+      if ((interfaces[ik].protocol === 'http' && interfaces[ik].port === '80') || (interfaces[ik].protocol === 'https' && interfaces[ik].port === '443')) {
+        interfaces[ik].url = `${interfaces[ik].protocol}://${interfaces[ik].host}`;
+      } else {
+        interfaces[ik].url = `${interfaces[ik].protocol}://${interfaces[ik].host}:${interfaces[ik].port}`;
+      }
     }
 
     const services: Dictionary<ServiceContextV1> = {};

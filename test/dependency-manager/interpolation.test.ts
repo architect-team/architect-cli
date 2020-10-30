@@ -247,12 +247,12 @@ describe('interpolation spec v1', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const graph = await manager.getGraph();
-    const backend_external_url = 'http://backend.localhost:80'
+    const backend_external_url = 'http://backend.localhost'
     const backend_ref = 'examples/backend/api:latest';
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${Refs.url_safe_ref(backend_ref)}:8081`,
-      EXTERNAL_HOST: backend_external_url
+      EXTERNAL_HOST: backend_external_url // TODO: why are the others not the same?
     })
     const frontend_ref = 'examples/frontend/app:latest';
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;

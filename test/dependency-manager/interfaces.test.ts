@@ -229,7 +229,7 @@ describe('interfaces spec v1', () => {
         'LEAF_PROTOCOL=http',
         'LEAF_HOST=public.localhost',
         'LEAF_PORT=80',
-        'LEAF_URL=http://public.localhost:80'
+        'LEAF_URL=http://public.localhost'
       ])
 
       const template = await DockerCompose.generate(manager);
@@ -248,7 +248,7 @@ describe('interfaces spec v1', () => {
           LEAF_HOST: 'public.localhost',
           LEAF_PORT: '80',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: 'http://public.localhost:80'
+          LEAF_URL: 'http://public.localhost'
         },
         image: 'branch:latest',
         external_links: [
