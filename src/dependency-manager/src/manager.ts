@@ -443,7 +443,12 @@ export default abstract class DependencyManager {
       internal_protocol = interface_details.protocol || 'http';
     }
 
-    const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+    let internal_url;
+    if ((internal_protocol === 'http' && internal_port === '80') || (internal_protocol === 'https' && internal_port === '443')) {
+      internal_url = `${internal_protocol}://${internal_host}`;
+    } else  {
+      internal_url = `${internal_protocol}://${internal_host}:${internal_port}`;
+    }
 
     return {
       host: internal_host,

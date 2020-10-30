@@ -205,8 +205,10 @@ describe('interpolation spec v1', () => {
       api:
         interfaces:
           api: 8081
+          http: 80
         environment:
           INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
+          INTERNAL_HOST_NO_PORT: \${{ services.api.interfaces.http.url }}
           EXTERNAL_HOST: \${{ interfaces.main.url }}
     `
     const frontend_config = `
@@ -252,6 +254,7 @@ describe('interpolation spec v1', () => {
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${Refs.url_safe_ref(backend_ref)}:8081`,
+      INTERNAL_HOST_NO_PORT: `http://${Refs.url_safe_ref(backend_ref)}`,
       EXTERNAL_HOST: backend_external_url
     })
     const frontend_ref = 'examples/frontend/app:latest';
