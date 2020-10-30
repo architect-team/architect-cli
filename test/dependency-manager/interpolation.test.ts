@@ -252,7 +252,7 @@ describe('interpolation spec v1', () => {
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${Refs.url_safe_ref(backend_ref)}:8081`,
-      EXTERNAL_HOST: backend_external_url // TODO: why are the others not the same?
+      EXTERNAL_HOST: backend_external_url
     })
     const frontend_ref = 'examples/frontend/app:latest';
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;

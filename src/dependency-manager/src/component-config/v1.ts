@@ -84,7 +84,7 @@ export const transformInterfaces = function (input?: Dictionary<string | Diction
         host = `\${{ ${matches[1]}.host }}`;
         port = `\${{ ${matches[1]}.port }}`;
         protocol = `\${{ ${matches[1]}.protocol }}`;
-        url = `\${{ ${matches[1]}.protocol }}://\${{ ${matches[1]}.host }}:\${{ ${matches[1]}.port }}`;
+        url = `\${{ ${matches[1]}.url }}`;
 
         output[key] = plainToClass(InterfaceSpecV1, {
           host,

@@ -43,21 +43,6 @@ export default abstract class DependencyManager {
       this.addIngressEdges(graph);
       if (interpolate) {
         const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
-        console.log(JSON.stringify(this.environment, null, 2));
-        for (const [component_name, component] of Object.entries(interpolated_environment.getComponents() || {})) {
-          for (const [param_name, param] of Object.entries(component.getParameters() || {})) {
-            console.log(component_name);
-            console.log(param_name);
-            console.log(param.default);
-            if (this.environment.getComponents()[component_name].getParameters()[param_name].default?.toString().startsWith('${{')) {
-              console.log('interpolated');
-              if (param.default?.toString().startsWith('http') && param.default.toString().endsWith(':80')) {
-                component.setParameter(param_name, param.default.toString().replace(':80', ''));
-                interpolated_environment.setComponent(component_name, component);
-              }
-            }
-          }
-        }
         await this.interpolateComponents(graph, interpolated_environment, component_map);
       }
       this.__graph_cache[cache_key] = graph;
@@ -328,8 +313,11 @@ export default abstract class DependencyManager {
         inter.host = `${env_interface}.${this.toExternalHost()}`;
         inter.port = this.gateway_port.toString();
         inter.protocol = this.toExternalProtocol();
-        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
-
+        if ((inter.protocol === 'http' && inter.port === '80') || (inter.protocol === 'https' && inter.port === '443')) {
+          inter.url = `${inter.protocol}://${inter.host}`;
+        } else {
+          inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+        }
         component.setInterface(interface_name, inter);
       }
     }
@@ -343,7 +331,6 @@ export default abstract class DependencyManager {
     }
     let enriched_environment = plainToClass(environment.getClass(), { components: environment_components }) as EnvironmentConfig;
     enriched_environment = enriched_environment.merge(environment);
-
     const errors = this.validateEnvironment(environment, enriched_environment);
     if (errors.length) {
       throw new ValidationErrors('environment', flattenValidationErrors(errors));
