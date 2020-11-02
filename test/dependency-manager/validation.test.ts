@@ -705,7 +705,6 @@ describe('validation spec v1', () => {
         '/environment.yml': env_config
       });
       const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      console.log(manager.environment.getInterfaces()['api'].domains)
       expect(manager.environment.getInterfaces()['api'].domains instanceof Set).true;
     });
 });
