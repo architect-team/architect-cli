@@ -105,13 +105,15 @@ describe('register', function () {
   mockArchitectAuth
     .nock(MOCK_API_HOST, api => api
       .get('/accounts/examples')
-      .reply(403)
+      .reply(403, {
+        message: 'Friendly error message from server'
+      })
     )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml'])
     .catch(err => {
-      expect(err.message).to.contain('You do not have access to the account specified in your component config: examples')
+      expect(err.message).to.contain('Friendly error message from server')
     })
     .it('rejects with informative error message if account is unavailable');
 

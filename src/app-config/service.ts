@@ -119,6 +119,7 @@ export default class AppService {
             return this._api.request(error_config);
           }
 
+          // Note: it is okay to rethrow these errors as they are here because the catch block in the basecommand.ts should correctly interpret axios errors.
           throw err;
         }
       );

@@ -91,13 +91,10 @@ export default class ComponentRegister extends Command {
     }
 
     const account_name = raw_config.name.split('/')[0];
-    const selected_account = await AccountUtils.getAccount(this.app.api, account_name).catch(() => undefined);
-    if (!selected_account) {
-      throw new Error(`You do not have access to the account specified in your component config: ${account_name}`);
-    }
+    const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
     if (!raw_config.services) {
-      this.error(`You cannot register the old service spec: ${config_path}.\nPlease upgrade to the new component spec.`,);
+      throw new Error(`You cannot register the old service spec: ${config_path}.\nPlease upgrade to the new component spec.`);
     }
 
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {

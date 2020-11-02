@@ -298,7 +298,7 @@ export default class Deploy extends DeployCommand {
       env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
       for (const [ck, cv] of Object.entries(env_config.getComponents())) {
         if (cv.getExtends()?.startsWith('file:')) {
-          this.error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
+          throw new Error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
         }
       }
       env_config_merge = false;
