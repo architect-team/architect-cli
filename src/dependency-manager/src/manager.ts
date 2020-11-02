@@ -223,7 +223,7 @@ export default abstract class DependencyManager {
     return deserialize(environment.getClass(), res);
   }
 
-  validateComponent(component: ComponentConfig, context: object): ValidationError[] {
+  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.getParameters())) {
@@ -239,7 +239,7 @@ export default abstract class DependencyManager {
     }
 
     // TODO: Removing the prefix is tedious, but the component map is currently stored prefixed
-    return [...validation_errors, ...validateInterpolation(removePrefixForExpressions(serialize(component)), context)];
+    return [...validation_errors, ...validateInterpolation(removePrefixForExpressions(serialize(component)), context, ignore_keys)];
   }
 
   validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig): ValidationError[] {
@@ -343,15 +343,22 @@ export default abstract class DependencyManager {
     return deserialize(environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true });
   }
 
-  buildComponentsContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>) {
+  async buildComponentsContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>) {
     const context: Dictionary<any> = {};
 
     const components = Object.values(components_map);
+
+    const architect_context = await this.getArchitectContext();
 
     // Set contexts for all components
     for (const component of components) {
       const normalized_ref = normalizeInterpolation(component.getRef());
       context[normalized_ref] = component.getContext();
+
+      if (architect_context) {
+        context[normalized_ref].architect = architect_context;
+      }
+
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
         for (const interface_name of Object.keys(service.getInterfaces())) {
@@ -395,7 +402,7 @@ export default abstract class DependencyManager {
       prefixed_component_map[component.getRef()] = component;
     }
 
-    const context = this.buildComponentsContext(graph, prefixed_component_map);
+    const context = await this.buildComponentsContext(graph, prefixed_component_map);
 
     // Validate components
     for (const component of Object.values(prefixed_component_map)) {
@@ -408,7 +415,8 @@ export default abstract class DependencyManager {
     const full_environment_json: any = { components: prefixed_component_map };
     const full_environment = plainToClass(this.environment.getClass(), full_environment_json);
 
-    const interpolated_environment_string = interpolateString(serialize(full_environment), context);
+    const ignore_keys = Object.values(prefixed_component_map).map((component) => `${normalizeInterpolation(component.getRef())}.architect.`);
+    const interpolated_environment_string = interpolateString(serialize(full_environment), context, ignore_keys);
     const environment = deserialize(this.environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
     for (const component of Object.values(environment.getComponents())) {
       for (const [service_name, service] of Object.entries(component.getServices())) {
@@ -486,4 +494,6 @@ export default abstract class DependencyManager {
     }
     return res as ComponentConfig;
   }
+
+  async abstract getArchitectContext(): Promise<object | undefined>;
 }

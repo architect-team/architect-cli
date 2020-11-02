@@ -34,6 +34,16 @@ export interface BuildSpec {
   dockerfile?: string;
 }
 
+export interface DeployModuleSpec {
+  path: string;
+  inputs: Dictionary<string>;
+}
+
+export interface DeploySpec {
+  strategy: string;
+  modules: Dictionary<DeployModuleSpec>;
+}
+
 export abstract class ServiceConfig extends ConfigSpec {
   abstract __version?: string;
   abstract getName(): string;
@@ -67,6 +77,8 @@ export abstract class ServiceConfig extends ConfigSpec {
 
   abstract getCpu(): string | undefined;
   abstract getMemory(): string | undefined;
+
+  abstract getDeploy(): DeploySpec | undefined;
 
   /** @return New expanded copy of the current config */
   expand() {

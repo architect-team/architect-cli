@@ -1239,4 +1239,48 @@ describe('interpolation spec v1', () => {
       DEFAULT_SECRET: 'test3'
     });
   });
+
+  describe('deploy modules interpolation', () => {
+    it('architect context validation is ignored for local', async () => {
+      const component_config = `
+      name: examples/hello-world
+
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+          deploy:
+            strategy: aws
+            modules:
+              aws:
+                path: ./example
+                inputs:
+                  environment_name: \${{ architect.environment.name }}
+                  vpc_id: \${{ architect.vpc.id }}
+
+      interfaces:
+      `
+
+      const env_config = `
+      components:
+        examples/hello-world: file:../data/architect.yml
+      `
+
+      mock_fs({
+        '/data/architect.yml': component_config,
+        '/stack/environment.yml': env_config,
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+
+      sinon.replace(LocalDependencyManager.prototype, 'getArchitectContext', async () => ({ vpc: { id: 'test' } }));
+
+      const graph = await manager.getGraph(true)
+      const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
+      expect(node.node_config.getDeploy()!.modules.aws.inputs).to.deep.eq({
+        environment_name: '',
+        vpc_id: 'test',
+      });
+    });
+  });
 });
