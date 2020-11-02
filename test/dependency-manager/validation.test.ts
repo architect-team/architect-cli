@@ -678,4 +678,26 @@ describe('validation spec v1', () => {
       })
     });
   })
+
+  // Service Config Validation
+  describe('service config validation', () => {
+    it('custom domains as sets', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          interfaces:
+            main:
+              port: 8080
+              domains:
+                - my-domain.net
+                - architest.io
+      interfaces:
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      const built_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
+      expect(built_config.getServices()['stateless-app'].getInterfaces()['main'].domains instanceof Set).true;
+    });
+  });
 });

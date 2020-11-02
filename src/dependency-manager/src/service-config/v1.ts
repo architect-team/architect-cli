@@ -76,6 +76,7 @@ export class InterfaceSpecV1 extends BaseSpec {
   @IsOptional({ always: true })
   @IsArray({ always: true })
   @IsUrl({}, { always: true, each: true })
+  @Type(() => Set)
   domains?: Set<string>;
 }
 
