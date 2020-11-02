@@ -678,4 +678,47 @@ describe('validation spec v1', () => {
       })
     });
   })
+
+  it('validate that custom domain values are unique', async () => {
+    const component_config = `
+    name: test/component
+    services:
+      api:
+        interfaces:
+          main:
+            port: 8080
+    interfaces:
+      main:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+    const env_config = `
+    components:
+      test/component: file:./component.yml
+    interfaces:
+      api:
+        url: \${{ components['test/component'].interfaces.main.url }}
+        domains:
+          - valid-domain.net
+          - valid-domain.net
+    `
+    mock_fs({
+      '/component.yml': component_config,
+      '/environment.yml': env_config
+    });
+    let validation_err;
+    try {
+      await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+    } catch (err) {
+      validation_err = err;
+    }
+    expect(validation_err).instanceOf(ValidationErrors)
+    expect(validation_err.errors).to.deep.eq({
+      "interfaces.api.domains": {
+        "arrayUnique": "All domains's elements must be unique",
+        "value": "valid-domain.net,valid-domain.net",
+        "line": 7,
+        "column": 16
+      }
+    });
+  });
 });
