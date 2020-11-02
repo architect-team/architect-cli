@@ -10,6 +10,7 @@ import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
+import { TaskNode } from './graph/node/task';
 import { InterfaceSpec } from './service-config/base';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
@@ -125,6 +126,20 @@ export default abstract class DependencyManager {
       ref_map[service_name] = node.ref;
     }
 
+    // const task_map: Dictionary<string> = {};
+    // Load component tasks
+    for (const [task_name, task_config] of Object.entries(prefixed_component.getTasks())) {
+      const node_config = task_config.copy();
+      const node = new TaskNode({
+        ref: component.getTaskRef(node_config.getName()),
+        node_config,
+        local_path: component.getLocalPath(),
+      });
+      graph.addNode(node);
+
+      // ref_map[task_name] = node.ref; TODO:84:we're not going to worry about adding the tasks to the ref_map yet, we'll need to do this though to get them working with edges
+    }
+
     // Load component dependencies
     for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
       const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
@@ -132,11 +147,12 @@ export default abstract class DependencyManager {
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
 
       if (component_map[dep_component.getRef()] && ComponentVersionSlugUtils.parse(component.getRef()).namespaced_component_name in component_map[dep_component.getRef()].getDependencies()) {
-        throw new Error(`Circular component dependency detected (${ component.getRef() } <> ${dep_component.getRef()})`);
+        throw new Error(`Circular component dependency detected (${component.getRef()} <> ${dep_component.getRef()})`);
       }
       await this.loadComponent(graph, dep_component, component_map);
     }
 
+    // TODO:84:add edges to and from tasks
     // Add edges to services inside component
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const from = ref_map[service_name];
@@ -359,6 +375,7 @@ export default abstract class DependencyManager {
         context[normalized_ref].architect = architect_context;
       }
 
+      // TODO:84:add support for references to tasks
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;
         for (const interface_name of Object.keys(service.getInterfaces())) {
@@ -418,6 +435,8 @@ export default abstract class DependencyManager {
     const ignore_keys = Object.values(prefixed_component_map).map((component) => `${normalizeInterpolation(component.getRef())}.architect.`);
     const interpolated_environment_string = interpolateString(serialize(full_environment), context, ignore_keys);
     const environment = deserialize(this.environment.getClass(), interpolated_environment_string, { enableImplicitConversion: true }) as EnvironmentConfig;
+
+    // TODO:84:add support for references to tasks
     for (const component of Object.values(environment.getComponents())) {
       for (const [service_name, service] of Object.entries(component.getServices())) {
         const node = graph.getNodeByRef(component.getServiceRef(service_name)) as ServiceNode;

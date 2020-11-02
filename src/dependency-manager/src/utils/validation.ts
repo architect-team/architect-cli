@@ -121,3 +121,35 @@ export const validateInterpolation = (param_value: string, context: any, ignore_
   }
   return errors;
 };
+
+// validates that property1 and property2 do not share any common keys
+export const validateCrossDictionaryCollisions = async <T extends BaseSpec>(
+  target: T,
+  property1: string,
+  property2: string,
+  errors: ValidationError[] = [],
+) => {
+  const dictionary1 = (target as any)[property1];
+  if (dictionary1 === undefined || dictionary1 === null || typeof dictionary1 !== 'object') {
+    return errors;
+  }
+  const dictionary2 = (target as any)[property2];
+  if (dictionary2 === undefined || dictionary2 === null || typeof dictionary2 !== 'object') {
+    return errors;
+  }
+
+  const colliding_keys = Object.keys(dictionary1 || {}).find((s: string) => !!dictionary2[s]);
+  if (colliding_keys?.length) {
+    const error = new ValidationError();
+    error.property = property1;
+    error.target = target;
+    error.value = colliding_keys;
+    error.constraints = {
+      'Collision': `${property1} and ${property2} must not share the same keys`,
+    };
+    error.children = [];
+
+    errors.push(error);
+  }
+  return errors;
+};

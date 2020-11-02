@@ -1,0 +1,18 @@
+name: examples/basic-task
+description: Example application that schedules recurring cron tasks
+
+parameters:
+  OUTPUT_TEXT:
+    description: Example text to output in cron
+    default: "Hello world"
+
+tasks:
+  date-logger:
+    interfaces:
+    build:
+      image: alpine
+    command: echo "$(date) - ${OUTPUT_TEXT}"
+    environment:
+      OUTPUT_TEXT: ${{ parameters.OUTPUT_TEXT }}
+
+interfaces:

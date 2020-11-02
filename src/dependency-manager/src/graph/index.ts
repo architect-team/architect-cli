@@ -6,6 +6,7 @@ import { DependencyNode } from './node';
 import GatewayNode from './node/gateway';
 import InterfacesNode from './node/interfaces';
 import { ServiceNode } from './node/service';
+import { TaskNode } from './node/task';
 
 export default class DependencyGraph {
   @Type(() => DependencyNode, {
@@ -13,6 +14,7 @@ export default class DependencyGraph {
       property: '__type',
       subTypes: [
         { value: ServiceNode, name: 'service' },
+        { value: TaskNode, name: 'task' },
         { value: InterfacesNode, name: 'interfaces' },
         { value: GatewayNode, name: 'gateway' },
       ],

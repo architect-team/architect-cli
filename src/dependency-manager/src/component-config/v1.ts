@@ -1,12 +1,14 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
-import { Allow, IsBoolean, IsNotEmptyObject, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Allow, IsBoolean, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { ParameterValue, ServiceConfig } from '..';
 import { InterfaceSpec } from '../service-config/base';
 import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../service-config/v1';
+import { TaskConfig } from '../task-config/base';
+import { TaskConfigV1 } from '../task-config/v1';
 import { BaseSpec } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
-import { validateDictionary, validateInterpolation } from '../utils/validation';
+import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../utils/validation';
 import { DictionaryType } from '../utils/validators/dictionary_type';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
@@ -30,11 +32,17 @@ interface ServiceContextV1 {
   interfaces: Dictionary<InterfaceSpec>;
 }
 
+interface TaskContextV1 {
+  environment: Dictionary<string>;
+  interfaces: Dictionary<InterfaceSpec>;
+}
+
 export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
   interfaces: Dictionary<InterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
+  tasks: Dictionary<TaskContextV1>;
 }
 
 export function transformServices(input?: Dictionary<object | ServiceConfigV1>): Dictionary<ServiceConfigV1> {
@@ -56,6 +64,30 @@ export function transformServices(input?: Dictionary<object | ServiceConfigV1>):
       config = { name: key };
     }
     output[key] = plainToClass(ServiceConfigV1, config);
+  }
+
+  return output;
+}
+
+export function transformTasks(input?: Dictionary<object | TaskConfigV1>): Dictionary<TaskConfigV1> {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  const output: any = {};
+  for (const [key, value] of Object.entries(input)) {
+    let config;
+    if (value instanceof TaskConfigV1) {
+      config = value;
+    } else if (value instanceof Object) {
+      config = { ...value, name: key };
+    } else {
+      config = { name: key };
+    }
+    output[key] = plainToClass(TaskConfigV1, config);
   }
 
   return output;
@@ -141,9 +173,14 @@ export class ComponentConfigV1 extends ComponentConfig {
   parameters?: Dictionary<ParameterValueSpecV1>;
 
   @IsOptional({ groups: ['operator'] })
-  @IsNotEmptyObject({ groups: ['developer'] })
+  @IsOptional({ groups: ['developer'] }) //TODO:84: should this become optional? should (tasks||services) be required?
   @Transform((value) => !value ? {} : value)
   services?: Dictionary<ServiceConfig>;
+
+  @IsOptional({ groups: ['operator'] })
+  @IsOptional({ groups: ['developer'] }) //TODO:84: should this become optional? should (tasks||services) be required?
+  @Transform((value) => !value ? {} : value)
+  tasks?: Dictionary<TaskConfig>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
@@ -151,7 +188,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   dependencies?: Dictionary<string>;
 
   @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
+  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' }) //TODO:84: this assumption becomes less applicable with tasks
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
@@ -233,6 +270,21 @@ export class ComponentConfigV1 extends ComponentConfig {
     this.services[key] = value;
   }
 
+  getTasks() {
+    return transformTasks(this.tasks) || {};
+  }
+
+  setTasks(value: Dictionary<TaskConfig>) {
+    this.tasks = value;
+  }
+
+  setTask(key: string, value: TaskConfig) {
+    if (!this.tasks) {
+      this.tasks = {};
+    }
+    this.tasks[key] = value;
+  }
+
   getDependencies() {
     const output: Dictionary<string> = {};
     for (const [k, v] of Object.entries(this.dependencies || {})) {
@@ -297,11 +349,27 @@ export class ComponentConfigV1 extends ComponentConfig {
       };
     }
 
+    const tasks: Dictionary<TaskContextV1> = {};
+    for (const [tk, tv] of Object.entries(this.getTasks())) {
+      const interfaces: Dictionary<InterfaceSpec> = {};
+      for (const [ik, iv] of Object.entries(tv.getInterfaces())) {
+        interfaces[ik] = {
+          ...interface_filler,
+          ...iv,
+        };
+      }
+      tasks[tk] = {
+        interfaces,
+        environment: tv.getEnvironmentVariables(),
+      };
+    }
+
     return {
       dependencies,
       parameters,
       interfaces,
       services,
+      tasks,
     };
   }
 
@@ -312,7 +380,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     const expanded = this.expand();
     errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
     errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
+    errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
+    errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
+    // TODO:84: we may want to validate here that services OR tasks is set (since we've set both to optional)
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.']));
     }

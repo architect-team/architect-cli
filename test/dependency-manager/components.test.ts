@@ -9,6 +9,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import * as DockerCompose from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
+import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
 describe('components spec v1', function () {
   beforeEach(async () => {
@@ -440,7 +441,7 @@ describe('components spec v1', function () {
       try {
         const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
         await manager.getGraph();
-      } catch(err) {
+      } catch (err) {
         manager_error = err.message;
       }
       expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world:latest <> examples/hello-world:latest)');
@@ -518,10 +519,97 @@ describe('components spec v1', function () {
       try {
         const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
         await manager.getGraph();
-      } catch(err) {
+      } catch (err) {
         manager_error = err.message;
       }
       expect(manager_error).undefined;
+    });
+
+    it('component with one task', async () => {
+      const component_config = {
+        name: 'architect/cloud',
+        tasks: {
+          syncer: {
+            schedule: '*/1 * * * *'
+          },
+        }
+      };
+
+      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+      });
+
+      const env_config = {
+        components: {
+          'architect/cloud': 'v1'
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
+      expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
+      const graph = await manager.getGraph();
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/syncer:v1',
+      ])
+      const task_node = graph.getNodeByRef('architect/cloud/syncer:v1');
+      expect(task_node.__type).equals('task');
+      expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
+
+      expect(graph.edges.map((e) => e.toString())).has.members([])
+    });
+
+    it('component with one task and one service', async () => {
+      const component_config = {
+        name: 'architect/cloud',
+        tasks: {
+          syncer: {
+            schedule: '*/1 * * * *'
+          },
+        },
+        services: {
+          app: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        }
+      };
+
+      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+      });
+
+      const env_config = {
+        components: {
+          'architect/cloud': 'v1'
+        }
+      };
+
+      mock_fs({
+        '/stack/arc.env.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
+      expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
+      expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
+      const graph = await manager.getGraph();
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        'architect/cloud/syncer:v1',
+        'architect/cloud/app:v1',
+      ])
+      const task_node = graph.getNodeByRef('architect/cloud/syncer:v1');
+      expect(task_node.__type).equals('task');
+      expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
+
+      expect(graph.edges.map((e) => e.toString())).has.members([])
     });
   });
 });

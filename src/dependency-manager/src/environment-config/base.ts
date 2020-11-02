@@ -39,11 +39,11 @@ export abstract class EnvironmentConfig extends ConfigSpec {
 
   abstract getContext(): any;
 
-  getComponentByServiceRef(service_ref: string): ComponentConfig | undefined {
-    const service_tag = service_ref.split(':')[1] || 'latest';
+  getComponentByServiceOrTaskRef(ref: string): ComponentConfig | undefined {
+    const tag = ref.split(':')[1] || 'latest';
     for (const component of Object.values(this.getComponents())) {
       const component_tag = component.getRef().split(':')[1] || 'latest';
-      if (service_ref.startsWith(`${component.getName()}/`) && service_tag === component_tag) {
+      if (ref.startsWith(`${component.getName()}/`) && tag === component_tag) {
         return component;
       }
     }
