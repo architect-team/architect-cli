@@ -679,25 +679,33 @@ describe('validation spec v1', () => {
     });
   })
 
-  // Service Config Validation
-  describe('service config validation', () => {
     it('custom domains as sets', async () => {
       const component_config = `
       name: test/component
       services:
-        stateless-app:
+        api:
           interfaces:
             main:
               port: 8080
-              domains:
-                - my-domain.net
-                - architest.io
       interfaces:
-        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+        main:
+          url: \${{ services.api.interfaces.main.url }}
       `
-      mock_fs({ '/architect.yml': component_config });
-      const built_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
-      expect(built_config.getServices()['stateless-app'].getInterfaces()['main'].domains instanceof Set).true;
+      const env_config = `
+      components:
+        test/component: file:./component.yml
+      interfaces:
+        api:
+          url: \${{ components['test/component'].interfaces.main.url }}
+          domains:
+            - valid-domain.net
+      `
+      mock_fs({
+        '/component.yml': component_config,
+        '/environment.yml': env_config
+      });
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      console.log(manager.environment.getInterfaces()['api'].domains)
+      expect(manager.environment.getInterfaces()['api'].domains instanceof Set).true;
     });
-  });
 });
