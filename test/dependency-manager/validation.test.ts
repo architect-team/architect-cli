@@ -678,33 +678,4 @@ describe('validation spec v1', () => {
       })
     });
   })
-
-    it('custom domains as sets', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main:
-              port: 8080
-      interfaces:
-        main:
-          url: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      components:
-        test/component: file:./component.yml
-      interfaces:
-        api:
-          url: \${{ components['test/component'].interfaces.main.url }}
-          domains:
-            - valid-domain.net
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      expect(manager.environment.getInterfaces()['api'].domains instanceof Set).true;
-    });
 });

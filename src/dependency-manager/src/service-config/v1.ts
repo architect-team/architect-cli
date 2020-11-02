@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, IsUrl, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
+import { Allow, IsArray, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, IsUrl, Matches, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { ParameterDefinitionSpecV1 } from '../component-config/v1';
 import { BaseSpec } from '../utils/base-spec';
@@ -74,9 +74,10 @@ export class InterfaceSpecV1 extends BaseSpec {
   url?: string;
 
   @IsOptional({ always: true })
+  @IsArray({ always: true })
   @IsUrl({}, { always: true, each: true })
   @Type(() => Set)
-  domains?: Set<string>;
+  domains?: string[];
 }
 
 export class ServiceVolumeV1 extends BaseSpec {

@@ -7,7 +7,7 @@ export interface InterfaceSpec {
   port: string;
   url?: string;
   protocol?: string;
-  domains?: Set<string>;
+  domains?: string[];
 }
 
 export interface ServiceLivenessProbe {
