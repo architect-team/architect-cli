@@ -98,7 +98,6 @@ export default abstract class DependencyManager {
     }
 
     const component = await this.loadComponentConfigWrapper(component_config);
-    const load_dependencies = !(component.getRef() in component_map); // Detect circular dependencies
     let component_string = serialize(component);
     component_string = replaceBrackets(component_string);
     // Prefix interpolation expressions with components.<name>.
@@ -127,13 +126,15 @@ export default abstract class DependencyManager {
     }
 
     // Load component dependencies
-    if (load_dependencies) {
-      for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
-        const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
-        const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
-        const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
-        await this.loadComponent(graph, dep_component, component_map);
+    for (const [dep_key, dep_value] of Object.entries(component.getDependencies())) {
+      const dep_name = dep_value.includes(':') ? `${dep_key}:latest` : `${dep_key}:${dep_value}`;
+      const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
+      const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
+
+      if (component_map[dep_component.getRef()] && ComponentVersionSlugUtils.parse(component.getRef()).namespaced_component_name in component_map[dep_component.getRef()].getDependencies()) {
+        throw new Error(`Circular component dependency detected (${ component.getRef() } <> ${dep_component.getRef()})`);
       }
+      await this.loadComponent(graph, dep_component, component_map);
     }
 
     // Add edges to services inside component
