@@ -22,6 +22,7 @@ class MissingConfigFileError extends Error {
 export interface RawComponentConfig {
   name: string;
   services: Dictionary<RawServiceConfig>;
+  tasks: Dictionary<RawServiceConfig>;
   extends?: string;
 }
 

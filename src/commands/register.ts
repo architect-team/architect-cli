@@ -103,6 +103,14 @@ export default class ComponentRegister extends Command {
       service_config.image = image;
     }
 
+    if (raw_config.tasks && Object.keys(raw_config.tasks).length) {
+      for (const [task_name, task_config] of Object.entries(raw_config.tasks)) {
+        const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
+        const image = await this.push_image_if_necessary(config_path, task_name, task_config, image_tag);
+        task_config.image = image;
+      }
+    }
+
     const component_dto = {
       tag: tag,
       config: raw_config,

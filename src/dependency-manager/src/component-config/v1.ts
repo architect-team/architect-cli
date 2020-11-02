@@ -34,7 +34,6 @@ interface ServiceContextV1 {
 
 interface TaskContextV1 {
   environment: Dictionary<string>;
-  interfaces: Dictionary<InterfaceSpec>;
 }
 
 export interface ComponentContextV1 {
@@ -72,9 +71,6 @@ export function transformServices(input?: Dictionary<object | ServiceConfigV1>):
 export function transformTasks(input?: Dictionary<object | TaskConfigV1>): Dictionary<TaskConfigV1> {
   if (!input) {
     return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
   }
 
   const output: any = {};
@@ -177,8 +173,8 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Transform((value) => !value ? {} : value)
   services?: Dictionary<ServiceConfig>;
 
-  @IsOptional({ groups: ['operator'] })
-  @IsOptional({ groups: ['developer'] }) //TODO:84: should this become optional? should (tasks||services) be required?
+  @IsOptional()
+  @IsObject()
   @Transform((value) => !value ? {} : value)
   tasks?: Dictionary<TaskConfig>;
 
@@ -351,15 +347,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
     const tasks: Dictionary<TaskContextV1> = {};
     for (const [tk, tv] of Object.entries(this.getTasks())) {
-      const interfaces: Dictionary<InterfaceSpec> = {};
-      for (const [ik, iv] of Object.entries(tv.getInterfaces())) {
-        interfaces[ik] = {
-          ...interface_filler,
-          ...iv,
-        };
-      }
       tasks[tk] = {
-        interfaces,
         environment: tv.getEnvironmentVariables(),
       };
     }
