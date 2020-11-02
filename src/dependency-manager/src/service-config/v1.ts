@@ -246,7 +246,7 @@ export class ServiceConfigV1 extends ServiceConfig {
   environment?: Dictionary<string>;
 
   @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
+  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' }) //TODO:84: this assumption becomes less applicable with tasks
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 

@@ -144,6 +144,13 @@ export default class LocalDependencyManager extends DependencyManager {
           component.setService(sk, sv.merge(debug_options));
         }
       }
+      for (const [tk, tv] of Object.entries(component.getTasks())) {
+        // If debug is enabled merge in debug options ex. debug.command -> command
+        const debug_options = tv.getDebugOptions();
+        if (debug_options) {
+          component.setTask(tk, tv.merge(debug_options));
+        }
+      }
     }
     return components_map;
   }
