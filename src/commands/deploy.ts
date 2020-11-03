@@ -171,9 +171,10 @@ export default class Deploy extends DeployCommand {
       const gateway_port = gateway.ports[0] && (gateway.ports[0] as string).split(':')[0];
       for (const [service_name, service] of Object.entries(compose.services)) {
         if (service.environment && service.environment.VIRTUAL_HOST) {
-          const service_host = `http://${service.environment.VIRTUAL_HOST}:${gateway_port}/`;
-          this.log(`${chalk.blue(service_host)} => ${service_name}`);
-          exposed_interfaces.push(service_host);
+          for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
+            this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
+            exposed_interfaces.push(split_host);
+          }
         }
       }
       this.log('');
