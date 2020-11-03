@@ -168,12 +168,12 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsObject({ always: true })
   parameters?: Dictionary<ParameterValueSpecV1>;
 
-  @IsOptional({ groups: ['operator'] })
-  @IsOptional({ groups: ['developer'] }) //TODO:84: should this become optional? should (tasks||services) be required?
+  @IsOptional({ groups: ['operator', 'developer'] })
+  @IsObject()
   @Transform((value) => !value ? {} : value)
   services?: Dictionary<ServiceConfig>;
 
-  @IsOptional()
+  @IsOptional({ groups: ['operator', 'developer'] })
   @IsObject()
   @Transform((value) => !value ? {} : value)
   tasks?: Dictionary<TaskConfig>;
