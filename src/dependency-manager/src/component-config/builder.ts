@@ -4,6 +4,7 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
+import { DeploySpec } from '../service-config/base';
 import { Dictionary } from '../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { insertFileDataFromRefs } from '../utils/files';
@@ -34,6 +35,7 @@ export interface RawServiceConfig {
     args?: string[];
   };
   image?: string;
+  deploy?: DeploySpec;
   [key: string]: any;
 }
 

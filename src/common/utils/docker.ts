@@ -1,5 +1,4 @@
 import execa, { Options } from 'execa';
-import DockerNotInstalledError from '../errors/docker-not-installed';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   const cmd = execa('docker', args, execa_opts);
@@ -13,7 +12,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
     try {
       await execa('which', ['docker']);
     } catch {
-      throw new DockerNotInstalledError();
+      throw new Error('Architect requires Docker to be installed. Please install it and try again.');
     }
     throw err;
   }
@@ -67,7 +66,7 @@ export const parseImageLabel = async (image_ref: string, label_name: string) => 
  * The key differentiator (and the only way it's logically possible) is that a tag cannot contain a slash. So we look for the last ":" with no trailing "/"
  * @param image
  */
-export const strip_tag_from_image: (i: string) => string = (image: string) => {
+export const stripTagFromImage: (i: string) => string = (image: string) => {
   if (image.includes('://')) { // remove protocol if exists
     image = image.split('://')[1];
   }
