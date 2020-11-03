@@ -93,9 +93,6 @@ export default class ComponentRegister extends Command {
     const account_name = raw_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-    if (!raw_config.services) {
-      throw new Error(`You cannot register the old service spec: ${config_path}.\nPlease upgrade to the new component spec.`);
-    }
 
     for (const [service_name, service_config] of Object.entries(raw_config.services)) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
