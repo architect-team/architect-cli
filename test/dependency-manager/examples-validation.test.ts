@@ -1,3 +1,4 @@
+import fs from 'fs-extra';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
@@ -6,7 +7,6 @@ import PortUtil from '../../src/common/utils/port';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src';
 
 // This test validates the architect.yml file for each of our example components to ensure that none go out of date
-// TODO:84: add validation for all the other example architect.ymls
 describe('example component validation', function () {
   beforeEach(async () => {
     // Stub the logger
@@ -33,14 +33,24 @@ describe('example component validation', function () {
   });
 
   describe('example components', function () {
-    it('passes validOrReject for the developer group', async () => {
-      const component_config = await ComponentConfigBuilder.buildFromPath('examples/basic-task/architect.yml');
+    const EXAMPLES_DIR = 'examples';
+    var example_architect_dirs = fs.readdirSync(EXAMPLES_DIR);
 
-      try {
-        await component_config.validateOrReject({ groups: ['developer'] });
-      } catch (err) {
-        console.log(err);
+    for (const example_dir of example_architect_dirs) {
+      if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/architect.yml`)) {
+
+        it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes validOrReject for the developer group`, async () => {
+          const component_config = await ComponentConfigBuilder.buildFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+
+          try {
+            await component_config.validateOrReject({ groups: ['developer'] });
+          } catch (err) {
+            console.log('An example architect file is failing the #validateOrReject() method', err);
+            throw err;
+          }
+        });
+
       }
-    });
+    }
   });
 });

@@ -7,7 +7,7 @@ describe('login', () => {
   const print = false;
 
   test
-    .timeout(10000)
+    .timeout(20000)
     .stderr({ print })
     .command(['login', '-e', 'test-email'])
     .catch(ctx => {
@@ -16,6 +16,7 @@ describe('login', () => {
     .it('requires both email and password when not in a tty environment');
 
   test
+    .timeout(20000)
     .stderr({ print })
     .command(['login'])
     .catch(ctx => {

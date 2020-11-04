@@ -1,37 +1,45 @@
 import { Type } from 'class-transformer';
-import { Allow, IsEmpty, IsInstance, IsOptional, IsString } from 'class-validator';
-import { ServiceConfigV1 } from '../service-config/v1';
+import { IsEmpty, IsInstance, IsOptional, IsString, ValidatorOptions } from 'class-validator';
+import { ResourceConfigV1 } from '../common/v1';
+import { validateDictionary, validateNested } from '../utils/validation';
 import { TaskConfig } from './base';
 
-//TODO:84:Tasks: let's rethink our abstraction patterns a bit here. There's a chance we don't want TaskConfig extending ServiceConfig
-export class TaskConfigV1 extends ServiceConfigV1 implements TaskConfig {
-  @Allow({ always: true })
-  __version?: string;
-
-  // TODO:84:Tasks: are there any cron parsers that we can use to validate?
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  schedule?: string;
-
+export class TaskConfigV1 extends ResourceConfigV1 implements TaskConfig {
   @Type(() => TaskConfigV1)
   @IsOptional({ always: true })
   @IsInstance(TaskConfigV1, { always: true })
   @IsEmpty({ groups: ['debug'] })
   debug?: TaskConfigV1;
 
-  getSchedule(): string {
-    return this.schedule || '';
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  schedule?: string;
+
+  async validate(options?: ValidatorOptions) {
+    if (!options) { options = {}; }
+    let errors = await super.validate(options);
+    if (errors.length) return errors;
+    const expanded = this.expand();
+    errors = await validateNested(expanded, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
+    // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
+    const volumes_options = { ...options };
+    if (volumes_options.groups && volumes_options.groups.includes('debug')) {
+      volumes_options.groups = ['debug'];
+    }
+    errors = await validateDictionary(expanded, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
+    errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options);
+    return errors;
   }
 
-  setSchedule(schedule: string): void {
-    this.schedule = schedule;
-  }
-
-  getDebugOptions(): TaskConfig | undefined {
+  getDebugOptions(): TaskConfigV1 | undefined {
     return this.debug;
   }
 
   setDebugOptions(value: TaskConfigV1) {
     this.debug = value;
+  }
+
+  getSchedule(): string {
+    return this.schedule || '';
   }
 }

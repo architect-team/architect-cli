@@ -1,5 +1,5 @@
 import { isObject, matches, ValidationError, ValidatorOptions } from 'class-validator';
-import { BaseSpec } from './base-spec';
+import { ValidatableConfig } from './base-spec';
 import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const validateNested = async <T extends Record<string, any>>(
@@ -27,7 +27,7 @@ export const validateNested = async <T extends Record<string, any>>(
     for (const index in value) {
       error.children = await validateNested(value, index, error.children, options);
     }
-  } else if (value instanceof BaseSpec) {
+  } else if (value instanceof ValidatableConfig) {
     error.children = await value.validate(options) || [];
   }
 
@@ -38,7 +38,7 @@ export const validateNested = async <T extends Record<string, any>>(
   return errors;
 };
 
-export const validateDictionary = async <T extends BaseSpec>(
+export const validateDictionary = async <T extends ValidatableConfig>(
   target: T,
   property: string,
   errors: ValidationError[] = [],
@@ -123,7 +123,7 @@ export const validateInterpolation = (param_value: string, context: any, ignore_
 };
 
 // validates that property1 and property2 do not share any common keys
-export const validateCrossDictionaryCollisions = async <T extends BaseSpec>(
+export const validateCrossDictionaryCollisions = async <T extends ValidatableConfig>(
   target: T,
   property1: string,
   property2: string,

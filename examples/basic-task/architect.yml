@@ -2,18 +2,18 @@ name: examples/basic-task
 description: Example application that schedules recurring cron tasks
 
 parameters:
-  # OUTPUT_TEXT:
-  #   description: Example text to output in cron
-  #   default: "Hello world"
+  OUTPUT_TEXT:
+    description: Example text to output in cron
+    default: "Hello world"
 
 tasks:
   date-logger:
     schedule: "*/5 * * * *"
-    image: alpine
-    command: echo "$(date) - Hello again"
-    # environment:
-    #   OUTPUT_TEXT: ${{ parameters.OUTPUT_TEXT }} ## TODO:84:interpolation is not working properly at the moment. You'll see that if you try to add this back in and deploy, the string is not replaced before it is translated into terraform
-    interfaces:
+    image: ellerbrock/alpine-bash-curl-ssl # useful public image with bash and curl pre-installed
+    command: echo $OUTPUT_TEXT && curl $SERVER_URL
+    environment:
+      OUTPUT_TEXT: ${{ parameters.OUTPUT_TEXT }}
+      SERVER_URL: ${{ services.api.interfaces.main.url }}
 
 services:
   api:

@@ -1,4 +1,4 @@
-import { ConfigSpec } from '../utils/base-spec';
+import { ResourceConfig } from '../common/base';
 import { Dictionary } from '../utils/dictionary';
 
 export interface InterfaceSpec {
@@ -21,79 +21,14 @@ export interface ServiceLivenessProbe {
   initial_delay?: string;
 }
 
-export interface VolumeSpec {
-  mount_path?: string;
-  host_path?: string;
-  description?: string;
-  readonly?: boolean;
-}
+export interface ServiceConfig extends ResourceConfig {
+  getInterfaces(): Dictionary<InterfaceSpec>;
+  setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
+  setInterface(key: string, value: InterfaceSpec | string): void;
 
-export interface BuildSpec {
-  context?: string;
-  args?: Dictionary<string>;
-  dockerfile?: string;
-}
+  getDebugOptions(): ServiceConfig | undefined;
+  setDebugOptions(value: ServiceConfig): void;
 
-export interface DeployModuleSpec {
-  path: string;
-  inputs: Dictionary<string>;
-}
-
-export interface DeploySpec {
-  strategy: string;
-  modules: Dictionary<DeployModuleSpec>;
-}
-
-export abstract class ServiceConfig extends ConfigSpec {
-  abstract __version?: string;
-  abstract getName(): string;
-  abstract getDescription(): string;
-  abstract getLanguage(): string;
-  abstract getImage(): string;
-  abstract setImage(image: string): void;
-  abstract getCommand(): string[];
-  abstract getEntrypoint(): string[];
-
-  abstract getEnvironmentVariables(): Dictionary<string>;
-  abstract setEnvironmentVariables(value: Dictionary<string>): void;
-  abstract setEnvironmentVariable(key: string, value: string): void;
-
-  abstract getInterfaces(): Dictionary<InterfaceSpec>;
-  abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
-  abstract setInterface(key: string, value: InterfaceSpec | string): void;
-
-  abstract getDebugOptions(): ServiceConfig | undefined;
-  abstract setDebugOptions(value: ServiceConfig): void;
-
-  abstract getPlatforms(): Dictionary<any>;
-
-  abstract getVolumes(): Dictionary<VolumeSpec>;
-  abstract setVolumes(value: Dictionary<VolumeSpec | string>): void;
-  abstract setVolume(key: string, value: VolumeSpec | string): void;
-
-  abstract getReplicas(): string;
-  abstract getLivenessProbe(): ServiceLivenessProbe | undefined;
-  abstract getBuild(): BuildSpec;
-
-  abstract getCpu(): string | undefined;
-  abstract getMemory(): string | undefined;
-
-  abstract getDeploy(): DeploySpec | undefined;
-
-  /** @return New expanded copy of the current config */
-  expand() {
-    const config = this.copy();
-
-    const debug = config.getDebugOptions();
-    if (debug) {
-      config.setDebugOptions(debug.expand());
-    }
-    for (const [key, value] of Object.entries(this.getInterfaces())) {
-      config.setInterface(key, value);
-    }
-    for (const [key, value] of Object.entries(this.getVolumes())) {
-      config.setVolume(key, value);
-    }
-    return config;
-  }
+  getReplicas(): string;
+  getLivenessProbe(): ServiceLivenessProbe | undefined;
 }

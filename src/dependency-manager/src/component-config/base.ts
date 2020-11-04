@@ -1,6 +1,6 @@
 import { InterfaceSpec, ServiceConfig } from '../service-config/base';
 import { TaskConfig } from '../task-config/base';
-import { ConfigSpec } from '../utils/base-spec';
+import { BaseConfig } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../utils/slugs';
 
@@ -14,7 +14,7 @@ export interface ParameterDefinitionSpec {
 
 export type ParameterValueSpec = ParameterValue | ParameterDefinitionSpec;
 
-export abstract class ComponentConfig extends ConfigSpec {
+export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;
 
   abstract getName(): ComponentSlug;

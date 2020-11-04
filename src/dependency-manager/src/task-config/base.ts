@@ -1,9 +1,10 @@
-import { ServiceConfig } from '../service-config/base';
+import { ResourceConfig } from '../common/base';
 
-export abstract class TaskConfig extends ServiceConfig {
-  abstract __version?: string;
-  abstract getSchedule(): string;
+export interface TaskConfig extends ResourceConfig {
+  __version?: string;
 
-  abstract getDebugOptions(): TaskConfig | undefined;
-  abstract setDebugOptions(value: TaskConfig): void;
+  getDebugOptions(): TaskConfig | undefined;
+  setDebugOptions(value: TaskConfig): void;
+
+  getSchedule(): string;
 }

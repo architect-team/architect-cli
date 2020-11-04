@@ -1,9 +1,10 @@
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { InterfaceSpec, ParameterValue } from '..';
+import { transformParameters } from '../common/v1';
 import { ComponentConfig } from '../component-config/base';
 import { ComponentConfigBuilder } from '../component-config/builder';
 import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component-config/v1';
-import { InterfaceSpecV1, transformParameters } from '../service-config/v1';
+import { InterfaceSpecV1 } from '../service-config/v1';
 import { Dictionary } from '../utils/dictionary';
 import { normalizeInterpolation } from '../utils/interpolation';
 import { ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
