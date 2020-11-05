@@ -3,14 +3,18 @@ import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import fs from 'fs-extra';
 import path from 'path';
+import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
-import { buildImage, getDigest, pushImage, strip_tag_from_image } from '../common/utils/docker';
-import { ServiceNode } from '../dependency-manager/src';
+import { buildImage, getDigest, pushImage, stripTagFromImage } from '../common/utils/docker';
+import { oras } from '../common/utils/oras';
+import { Refs, ServiceNode } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/component-config/builder';
+
+tmp.setGracefulCleanup();
 
 export interface PutComponentVersionDto {
   tag: string;
@@ -79,12 +83,13 @@ export default class ComponentRegister extends Command {
     }
 
     for (const config_path of config_paths) {
-      await this.register_component(config_path, flags.tag);
+      await this.registerComponent(config_path, flags.tag);
     }
   }
 
-  private async register_component(config_path: string, tag: string) {
-    const { raw_config } = await ComponentConfigBuilder.rawFromPath(config_path);
+  private async registerComponent(config_path: string, tag: string) {
+    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
+    const component_path = path.dirname(file_path);
 
     if (!raw_config.name) {
       throw new Error('Component Config must have a name');
@@ -93,19 +98,28 @@ export default class ComponentRegister extends Command {
     const account_name = raw_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-
-    for (const [service_name, service_config] of Object.entries(raw_config.services)) {
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`), unsafeCleanup: true });
+    let set_artifact_image = false;
+    for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
-      const image = await this.push_image_if_necessary(config_path, service_name, service_config, image_tag);
+      const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
+
+      for (const [module_name, module] of Object.entries(service_config.deploy?.modules || {})) {
+        set_artifact_image = true;
+        fs.copySync(path.resolve(component_path, untildify(module.path)), path.join(tmpobj.name, 'modules', service_name, module_name));
+      }
+    }
+    if (set_artifact_image) {
+      raw_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
     }
 
-    if (raw_config.tasks && Object.keys(raw_config.tasks).length) {
-      for (const [task_name, task_config] of Object.entries(raw_config.tasks)) {
-        const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
-        const image = await this.push_image_if_necessary(config_path, task_name, task_config, image_tag);
-        task_config.image = image;
-      }
+    tmpobj.removeCallback();
+
+    for (const [task_name, task_config] of Object.entries(raw_config.tasks || {})) {
+      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
+      const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
+      task_config.image = image;
     }
 
     const component_dto = {
@@ -119,23 +133,23 @@ export default class ComponentRegister extends Command {
     this.log(chalk.green(`Successfully registered component`));
   }
 
-  private async push_image_if_necessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
     // if the image field is set, we just take their image as is
     if (service_config.image) {
       return service_config.image;
     }
 
     // otherwise we build and push the image to our repository
-    const image = await this.build_image(config_path, service_name, service_config, image_tag);
-    await this.push_image(image);
-    const digest = await this.get_digest(image);
+    const image = await this.buildImage(config_path, service_name, service_config, image_tag);
+    await this.pushImage(image);
+    const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key
-    const image_without_tag = strip_tag_from_image(image);
+    const image_without_tag = stripTagFromImage(image);
     return `${image_without_tag}@${digest}`;
   }
 
-  private async build_image(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async buildImage(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
     const build_context = service_config?.build?.context;
     if (!build_context) {
       throw new Error(`Service ${service_name} does not specify an image or a build.context. It must contain one or the other.`);
@@ -159,7 +173,7 @@ export default class ComponentRegister extends Command {
     }
   }
 
-  private async push_image(image: string) {
+  private async pushImage(image: string) {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
       await pushImage(image);
@@ -171,7 +185,7 @@ export default class ComponentRegister extends Command {
     this.log(chalk.green(`Successfully pushed Docker image for ${image}`));
   }
 
-  private async get_digest(image: string) {
+  private async getDigest(image: string) {
     cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
     const digest = await getDigest(image).catch(err => {
       cli.action.stop(chalk.red(`Inspect failed`));
@@ -180,5 +194,18 @@ export default class ComponentRegister extends Command {
     cli.action.stop();
     this.log(chalk.green(`Image verified`));
     return digest;
+  }
+
+  private async pushArtifact(image: string, folder: string) {
+    this.log(chalk.blue(`Pushing artifact for ${image}`));
+    const { stdout } = await oras(['push', image, '.'], { cwd: folder });
+    const digest_match = new RegExp('Digest: (.*)').exec(stdout);
+    if (digest_match) {
+      const digest = digest_match[1];
+      const image_without_tag = stripTagFromImage(image);
+      return `${image_without_tag}@${digest}`;
+    } else {
+      throw new Error('Unable to get digest');
+    }
   }
 }
