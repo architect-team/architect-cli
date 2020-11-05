@@ -188,6 +188,10 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true })
+  artifact_image?: string;
+
   getName(): ComponentSlug {
     let split;
     try {
@@ -302,6 +306,14 @@ export class ComponentConfigV1 extends ComponentConfig {
       this.interfaces = {};
     }
     this.interfaces[key] = value;
+  }
+
+  getArtifactImage(): string | undefined {
+    return this.artifact_image;
+  }
+
+  setArtifactImage(image: string) {
+    this.artifact_image = image;
   }
 
   getContext(): ComponentContextV1 {
