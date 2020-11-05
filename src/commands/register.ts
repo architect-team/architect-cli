@@ -99,24 +99,22 @@ export default class ComponentRegister extends Command {
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`) });
-    console.log('Dir: ', tmpobj.name);
+    let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
-      /* TODO:274
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
-      */
 
       for (const [module_name, module] of Object.entries(service_config.deploy?.modules || {})) {
+        set_artifact_image = true;
         fs.copySync(path.resolve(component_path, untildify(module.path)), path.join(tmpobj.name, 'modules', service_name, module_name));
       }
     }
-    await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
+    if (set_artifact_image) {
+      raw_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
+    }
 
-    throw new Error('TEST'); // TODO:274
     tmpobj.removeCallback();
-
-
 
     for (const [task_name, task_config] of Object.entries(raw_config.tasks || {})) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
@@ -198,9 +196,12 @@ export default class ComponentRegister extends Command {
     return digest;
   }
 
-  private async pushArtifact(name: string, folder: string) {
+  private async pushArtifact(image: string, folder: string) {
     const credentials = await this.app.auth.getToken();
     await oras(['login', this.app.config.registry_host, '-u', credentials.account, '--password-stdin'], { input: credentials.password });
-    await oras(['push', name, '.'], { cwd: folder });
+    await oras(['push', image, '.'], { cwd: folder });
+    const digest = await this.getDigest(image);
+    const image_without_tag = stripTagFromImage(image);
+    return `${image_without_tag}@${digest}`;
   }
 }

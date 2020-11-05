@@ -25,6 +25,7 @@ export interface RawComponentConfig {
   services: Dictionary<RawServiceConfig>;
   tasks: Dictionary<RawServiceConfig>;
   extends?: string;
+  artifact_image?: string;
 }
 
 export interface RawServiceConfig {
