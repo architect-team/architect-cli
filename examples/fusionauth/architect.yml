@@ -70,8 +70,6 @@ services:
       - sh
       - -c
       - |
-        echo "$$KICKSTART_CONTENTS" > $$FUSIONAUTH_KICKSTART
-        chmod 755 $$FUSIONAUTH_KICKSTART
-        whoami
-        ls -l /usr/local/fusionauth
+        echo "$KICKSTART_CONTENTS" > $FUSIONAUTH_KICKSTART
+        chmod 755 $FUSIONAUTH_KICKSTART
         /usr/local/fusionauth/fusionauth-app/apache-tomcat/bin/catalina.sh run
