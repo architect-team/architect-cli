@@ -1,4 +1,4 @@
-name: tjhiggins/react-app
+name: examples/react-app
 author: Architect.io
 
 interfaces:
@@ -23,13 +23,6 @@ services:
       INTERNAL_PORT: ${{ services.app.interfaces.main.port }}
       API_ADDR: ${{ interfaces.api.url }}
       WORLD_TEXT: ${{ parameters.world_text }}
-    deploy:
-      strategy: k8s
-      modules:
-        k8s:
-          path: ~/code/cloud-api/concourse/modules/kubernetes/service
-        ecs:
-          path: ../../../cloud-api/concourse/modules/ecs/service
     debug:
       build:
         dockerfile: Dockerfile.dev
