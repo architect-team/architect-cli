@@ -1,9 +1,11 @@
 import execa, { Options } from 'execa';
 
 export const oras = async (args: string[], options?: Options): Promise<any> => {
-  // TODO:274 figure out stdio
-  options = { ...{ stdio: 'pipe' }, ...options };
   const cmd = execa('oras', args, options);
+
+  cmd.stdout?.pipe(process.stdout);
+  cmd.stderr?.pipe(process.stderr);
+
   try {
     return await cmd;
   } catch (err) {

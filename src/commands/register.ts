@@ -98,7 +98,7 @@ export default class ComponentRegister extends Command {
     const account_name = raw_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`) });
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
@@ -197,11 +197,15 @@ export default class ComponentRegister extends Command {
   }
 
   private async pushArtifact(image: string, folder: string) {
-    const credentials = await this.app.auth.getToken();
-    await oras(['login', this.app.config.registry_host, '-u', credentials.account, '--password-stdin'], { input: credentials.password });
-    await oras(['push', image, '.'], { cwd: folder });
-    const digest = await this.getDigest(image);
-    const image_without_tag = stripTagFromImage(image);
-    return `${image_without_tag}@${digest}`;
+    this.log(chalk.blue(`Pushing artifact for ${image}`));
+    const { stdout } = await oras(['push', image, '.'], { cwd: folder });
+    const digest_match = new RegExp('Digest: (.*)').exec(stdout);
+    if (digest_match) {
+      const digest = digest_match[1];
+      const image_without_tag = stripTagFromImage(image);
+      return `${image_without_tag}@${digest}`;
+    } else {
+      throw new Error('Unable to get digest');
+    }
   }
 }
