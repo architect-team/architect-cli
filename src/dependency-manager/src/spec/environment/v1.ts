@@ -3,11 +3,13 @@ import { Dictionary } from '../../utils/dictionary';
 import { normalizeInterpolation } from '../../utils/interpolation';
 import { ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateDictionary } from '../../utils/validation';
+import { InterfaceSpecV1 } from '../common/interface-v1';
+import { ParameterValueSpecV1 } from '../common/parameter-v1';
 import { ComponentConfig } from '../component/base';
 import { ComponentConfigBuilder } from '../component/builder';
-import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component/v1';
+import { transformComponentInterfaces } from '../component/transformer';
+import { ComponentContextV1 } from '../component/v1';
 import { transformParameters } from '../resource/v1';
-import { InterfaceSpecV1 } from '../service/v1';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
 interface DnsConfigSpec {
@@ -116,7 +118,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getInterfaces() {
-    return transformInterfaces(this.interfaces) || {};
+    return transformComponentInterfaces(this.interfaces) || {};
   }
 
   setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {

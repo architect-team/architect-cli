@@ -5,7 +5,7 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { BaseConfig, ValidatableConfig } from '../base-spec';
-import { ParameterDefinitionSpecV1 } from '../component/v1';
+import { ParameterDefinitionSpecV1 } from '../common/parameter-v1';
 import { ResourceConfig } from './base';
 
 export class ServiceVolumeV1 extends ValidatableConfig {

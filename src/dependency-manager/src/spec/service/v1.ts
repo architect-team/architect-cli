@@ -1,101 +1,14 @@
-import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
-import { ArrayUnique, IsArray, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, IsUrl, ValidateIf, ValidatorOptions } from 'class-validator';
+import { IsEmpty, IsInstance, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
-import { Exclusive } from '../../utils/validators/exclusive';
-import { ValidatableConfig } from '../base-spec';
+import { InterfaceSpecV1 } from '../common/interface-v1';
+import { ServiceLivenessProbe } from '../common/liveness-probe-spec';
+import { LivenessProbeV1 } from '../common/liveness-probe-v1';
 import { ResourceConfigV1 } from '../resource/v1';
-import { ServiceConfig, ServiceLivenessProbe } from './base';
-
-class LivenessProbeV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
-  @Type(() => String)
-  success_threshold?: string;
-
-  @IsOptional({ always: true })
-  @Type(() => String)
-  failure_threshold?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  timeout?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  interval?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  initial_delay?: string;
-
-  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
-  @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
-  @IsString({ always: true })
-  path?: string;
-
-  @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
-  @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
-  @IsString({ always: true, each: true })
-  command?: string[] | string;
-
-  @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
-  @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
-  @IsNotEmpty({ always: true })
-  @Type(() => String)
-  port?: string;
-}
-
-export class InterfaceSpecV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  description?: string;
-
-  @IsOptional({ always: true })
-  /* TODO: Figure out if we should share the interface spec
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode interface hosts when publishing services',
-  })
-  */
-  @IsString({ always: true })
-  host?: string;
-
-  @ValidateIf(obj => obj.host, { groups: ['operator'] })
-  @IsNotEmpty({ always: true })
-  @Type(() => String)
-  port!: string;
-
-  @IsOptional({ always: true })
-  protocol?: string;
-
-  @IsOptional({ always: true })
-  url?: string;
-
-  @IsOptional({ always: true })
-  @IsArray({ always: true })
-  @ArrayUnique({ always: true })
-  @IsUrl({}, { always: true, each: true })
-  domains?: string[];
-}
-
-export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<InterfaceSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object
-      ? plainToClass(InterfaceSpecV1, value)
-      : plainToClass(InterfaceSpecV1, { port: value });
-  }
-  return output;
-};
+import { ServiceConfig } from './base';
+import { transformServiceInterfaces } from './transformer';
 
 export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Type(() => ServiceConfigV1)
@@ -133,7 +46,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   }
 
   getInterfaces() {
-    return transformInterfaces(this.interfaces) || {};
+    return transformServiceInterfaces(this.interfaces) || {};
   }
 
   setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
