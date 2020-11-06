@@ -1,32 +1,20 @@
-import { plainToClass, serialize, Transform } from 'class-transformer';
-import { Allow, IsBoolean, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
-import { ParameterValue, ServiceConfig } from '..';
-import { transformParameters } from '../common/v1';
-import { InterfaceSpec } from '../service-config/base';
-import { InterfaceSpecV1, ServiceConfigV1 } from '../service-config/v1';
-import { TaskConfig } from '../task-config/base';
-import { TaskConfigV1 } from '../task-config/v1';
-import { ValidatableConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
-import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../utils/validation';
-import { DictionaryType } from '../utils/validators/dictionary_type';
-import { ComponentConfig, ParameterDefinitionSpec } from './base';
-
-export class ParameterDefinitionSpecV1 extends ValidatableConfig implements ParameterDefinitionSpec {
-  @IsOptional({ always: true })
-  @IsBoolean({ always: true })
-  required?: boolean;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  description?: string;
-
-  @IsOptional({ always: true })
-  default?: string | number | boolean;
-}
-
-export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;
+import { serialize, Transform } from 'class-transformer';
+import { Allow, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../../utils/validation';
+import { DictionaryType } from '../../utils/validators/dictionary_type';
+import { InterfaceSpec } from '../common/interface-spec';
+import { InterfaceSpecV1 } from '../common/interface-v1';
+import { ParameterValue } from '../common/parameter-spec';
+import { transformParameters } from '../common/parameter-transformer';
+import { ParameterValueSpecV1 } from '../common/parameter-v1';
+import { ServiceConfig } from '../service/service-config';
+import { transformServices } from '../service/service-transformer';
+import { TaskConfig } from '../task/task-config';
+import { transformTasks } from '../task/task-transformer';
+import { ComponentConfig } from './component-config';
+import { transformComponentInterfaces } from './component-transformer';
 
 interface ServiceContextV1 {
   environment: Dictionary<string>;
@@ -44,92 +32,6 @@ export interface ComponentContextV1 {
   services: Dictionary<ServiceContextV1>;
   tasks: Dictionary<TaskContextV1>;
 }
-
-export function transformServices(input?: Dictionary<object | ServiceConfigV1>): Dictionary<ServiceConfigV1> {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: any = {};
-  for (const [key, value] of Object.entries(input)) {
-    let config;
-    if (value instanceof ServiceConfigV1) {
-      config = value;
-    } else if (value instanceof Object) {
-      config = { ...value, name: key };
-    } else {
-      config = { name: key };
-    }
-    output[key] = plainToClass(ServiceConfigV1, config);
-  }
-
-  return output;
-}
-
-export function transformTasks(input?: Dictionary<object | TaskConfigV1>): Dictionary<TaskConfigV1> {
-  if (!input) {
-    return {};
-  }
-
-  const output: any = {};
-  for (const [key, value] of Object.entries(input)) {
-    let config;
-    if (value instanceof TaskConfigV1) {
-      config = value;
-    } else if (value instanceof Object) {
-      config = { ...value, name: key };
-    } else {
-      config = { name: key };
-    }
-    output[key] = plainToClass(TaskConfigV1, config);
-  }
-
-  return output;
-}
-
-export const transformInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  // TODO: Be more flexible than just url ref
-  const output: Dictionary<InterfaceSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value instanceof Object && 'host' in value && 'port' in value) {
-      output[key] = plainToClass(InterfaceSpecV1, value);
-    } else {
-      let host, port, protocol;
-      let url = value instanceof Object ? value.url : value;
-
-      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
-      const matches = url_regex.exec(url);
-      if (matches) {
-        host = `\${{ ${matches[1]}.host }}`;
-        port = `\${{ ${matches[1]}.port }}`;
-        protocol = `\${{ ${matches[1]}.protocol }}`;
-        url = `\${{ ${matches[1]}.protocol }}://\${{ ${matches[1]}.host }}:\${{ ${matches[1]}.port }}`;
-
-        output[key] = plainToClass(InterfaceSpecV1, {
-          host,
-          port,
-          protocol,
-          url,
-          ...(value instanceof Object && value.domains ? { domains: value.domains } : {}),
-        });
-      } else {
-        throw new Error(`Invalid interface regex: ${url}`);
-      }
-    }
-  }
-
-  return output;
-};
 
 export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
@@ -295,7 +197,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getInterfaces() {
-    return transformInterfaces(this.interfaces) || {};
+    return transformComponentInterfaces(this.interfaces) || {};
   }
 
   setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {

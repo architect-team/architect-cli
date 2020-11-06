@@ -1,18 +1,10 @@
-import { InterfaceSpec, ServiceConfig } from '../service-config/base';
-import { TaskConfig } from '../task-config/base';
-import { BaseConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../utils/slugs';
-
-export type ParameterValue = string | number | boolean | undefined;
-
-export interface ParameterDefinitionSpec {
-  required?: boolean;
-  description?: string;
-  default?: ParameterValue;
-}
-
-export type ParameterValueSpec = ParameterValue | ParameterDefinitionSpec;
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { BaseConfig } from '../base-spec';
+import { InterfaceSpec } from '../common/interface-spec';
+import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
+import { ServiceConfig } from '../service/service-config';
+import { TaskConfig } from '../task/task-config';
 
 export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;

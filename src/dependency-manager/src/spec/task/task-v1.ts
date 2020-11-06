@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { IsEmpty, IsInstance, IsOptional, IsString, ValidatorOptions } from 'class-validator';
-import { ResourceConfigV1 } from '../common/v1';
-import { validateDictionary, validateNested } from '../utils/validation';
-import { TaskConfig } from './base';
+import { validateDictionary, validateNested } from '../../utils/validation';
+import { ResourceConfigV1 } from '../resource/resource-v1';
+import { TaskConfig } from './task-config';
 
 export class TaskConfigV1 extends ResourceConfigV1 implements TaskConfig {
   @Type(() => TaskConfigV1)

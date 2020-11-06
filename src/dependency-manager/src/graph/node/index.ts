@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { InterfaceSpec } from '../../service-config/base';
+import { InterfaceSpec } from '../../spec/common/interface-spec';
 import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 

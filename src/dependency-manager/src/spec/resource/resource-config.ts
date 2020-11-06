@@ -1,28 +1,8 @@
-import { ConfigSpec } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-
-export interface VolumeSpec {
-  mount_path?: string;
-  host_path?: string;
-  description?: string;
-  readonly?: boolean;
-}
-
-export interface BuildSpec {
-  context?: string;
-  args?: Dictionary<string>;
-  dockerfile?: string;
-}
-
-export interface DeployModuleSpec {
-  path: string;
-  inputs: Dictionary<string>;
-}
-
-export interface DeploySpec {
-  strategy: string;
-  modules: Dictionary<DeployModuleSpec>;
-}
+import { Dictionary } from '../../utils/dictionary';
+import { ConfigSpec } from '../base-spec';
+import { BuildSpec } from '../common/build-spec';
+import { DeploySpec } from '../common/deploy-spec';
+import { VolumeSpec } from '../common/volume-spec';
 
 export interface ResourceConfig extends ConfigSpec {
   __version?: string;

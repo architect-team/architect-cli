@@ -1,119 +1,14 @@
-import { plainToClass } from 'class-transformer';
-import { Transform, Type } from 'class-transformer/decorators';
-import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Type } from 'class-transformer/decorators';
+import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
-import { ParameterDefinitionSpecV1 } from '../component-config/v1';
-import { BaseConfig, ValidatableConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { validateDictionary, validateNested } from '../utils/validation';
-import { ResourceConfig } from './base';
-
-export class ServiceVolumeV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  mount_path?: string;
-
-  @IsOptional({ groups: ['developer', 'operator'] })
-  @IsNotEmpty({
-    groups: ['debug'],
-    message: 'Debug volumes require a host path to mount the volume to',
-  })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a host mount path in a component outside of the debug block',
-  })
-  @IsString({ always: true })
-  host_path?: string;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  description?: string;
-
-  @IsOptional({ always: true })
-  @IsBoolean({ always: true })
-  readonly?: boolean;
-}
-
-export class BuildSpecV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  context?: string;
-
-  @IsOptional({ always: true })
-  @IsObject({ always: true })
-  @Transform(value => {
-    if (value) {
-      if (!(value instanceof Object)) {
-        return value;
-      }
-      const output: Dictionary<string> = {};
-      for (const [k, v] of Object.entries(value)) {
-        output[k] = `${v}`;
-      }
-      return output;
-    }
-  })
-  args?: Dictionary<string>;
-
-  @IsOptional({ always: true })
-  @IsString({ always: true })
-  dockerfile?: string;
-}
-
-export class DeployModuleSpecV1 extends ValidatableConfig {
-  @IsString({ always: true })
-  path!: string;
-
-  @IsObject({ always: true })
-  inputs!: Dictionary<string>;
-}
-
-export class DeploySpecV1 extends ValidatableConfig {
-  @IsString({ always: true })
-  strategy!: string;
-
-  @IsObject({ always: true })
-  modules!: Dictionary<DeployModuleSpecV1>;
-}
-
-export const transformParameters = (input?: Dictionary<any>): Dictionary<ParameterDefinitionSpecV1> | undefined => {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<ParameterDefinitionSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value && typeof value === 'object') {
-      output[key] = plainToClass(ParameterDefinitionSpecV1, value);
-    } else {
-      output[key] = plainToClass(ParameterDefinitionSpecV1, {
-        default: value,
-      });
-    }
-  }
-  return output;
-};
-
-export const transformVolumes = (input?: Dictionary<string | Dictionary<any>>): Dictionary<ServiceVolumeV1> | undefined => {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<ServiceVolumeV1> = {};
-
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object
-      ? plainToClass(ServiceVolumeV1, value)
-      : plainToClass(ServiceVolumeV1, { host_path: value });
-  }
-  return output;
-};
+import { Dictionary } from '../../utils/dictionary';
+import { validateDictionary, validateNested } from '../../utils/validation';
+import { BaseConfig } from '../base-spec';
+import { BuildSpecV1 } from '../common/build-v1';
+import { DeploySpecV1 } from '../common/deploy-v1';
+import { transformVolumes } from '../common/volume-transformer';
+import { VolumeSpecV1 } from '../common/volume-v1';
+import { ResourceConfig } from './resource-config';
 
 export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   @Allow({ always: true })
@@ -161,7 +56,7 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  volumes?: Dictionary<ServiceVolumeV1 | string>;
+  volumes?: Dictionary<VolumeSpecV1 | string>;
 
   @IsOptional({ always: true })
   @Type(() => BuildSpecV1)
@@ -261,15 +156,15 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
     return this.platforms || {};
   }
 
-  getVolumes(): Dictionary<ServiceVolumeV1> {
+  getVolumes(): Dictionary<VolumeSpecV1> {
     return transformVolumes(this.volumes) || {};
   }
 
-  setVolumes(value: Dictionary<ServiceVolumeV1 | string>) {
+  setVolumes(value: Dictionary<VolumeSpecV1 | string>) {
     this.volumes = value;
   }
 
-  setVolume(key: string, value: ServiceVolumeV1 | string) {
+  setVolume(key: string, value: VolumeSpecV1 | string) {
     if (!this.volumes) {
       this.volumes = {};
     }

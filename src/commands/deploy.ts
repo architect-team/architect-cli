@@ -18,7 +18,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
-import { EnvironmentConfigBuilder } from '../dependency-manager/src/environment-config/builder';
+import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {

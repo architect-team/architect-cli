@@ -1,5 +1,5 @@
 import { isObject, matches, ValidationError, ValidatorOptions } from 'class-validator';
-import { ValidatableConfig } from './base-spec';
+import { ValidatableConfig } from '../spec/base-spec';
 import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const validateNested = async <T extends Record<string, any>>(

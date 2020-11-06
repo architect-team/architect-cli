@@ -1,47 +1,23 @@
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
-import { InterfaceSpec, ParameterValue } from '..';
-import { transformParameters } from '../common/v1';
-import { ComponentConfig } from '../component-config/base';
-import { ComponentConfigBuilder } from '../component-config/builder';
-import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component-config/v1';
-import { InterfaceSpecV1 } from '../service-config/v1';
-import { Dictionary } from '../utils/dictionary';
-import { normalizeInterpolation } from '../utils/interpolation';
-import { ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
-import { validateDictionary } from '../utils/validation';
-import { EnvironmentConfig, EnvironmentVault } from './base';
+import { Dictionary } from '../../utils/dictionary';
+import { normalizeInterpolation } from '../../utils/interpolation';
+import { ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { validateDictionary } from '../../utils/validation';
+import { InterfaceSpecV1 } from '../common/interface-v1';
+import { transformParameters } from '../common/parameter-transformer';
+import { ParameterValueSpecV1 } from '../common/parameter-v1';
+import { ComponentConfig } from '../component/component-config';
+import { transformComponentInterfaces, transformComponents } from '../component/component-transformer';
+import { ComponentContextV1 } from '../component/component-v1';
+import { EnvironmentConfig, EnvironmentVault } from './environment-config';
 
 interface DnsConfigSpec {
   searches?: string | string[];
 }
 
-export const transformComponents = (input?: Dictionary<any>, parent?: any): Dictionary<ComponentConfig> | undefined => {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<ComponentConfig> = {};
-  // eslint-disable-next-line prefer-const
-  for (let [key, value] of Object.entries(input)) {
-    if (!value) value = {};
-    if (value instanceof Object) {
-      if (value.extends && !value.extends.includes(':')) {
-        value.extends = `${key}:${value.extends}`;
-      }
-      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: key, ...value, name: key });
-    } else {
-      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: value.includes(':') || value.startsWith('file:') ? value : `${key}:${value}`, name: key });
-    }
-  }
-  return output;
-};
-
 interface EnvironmentContextV1 {
-  interfaces: Dictionary<InterfaceSpec>;
-  parameters: Dictionary<ParameterValue>;
+  interfaces: Dictionary<InterfaceSpecV1>;
+  parameters: Dictionary<ParameterValueSpecV1>;
   components: Dictionary<ComponentContextV1>;
 }
 
@@ -117,7 +93,7 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getInterfaces() {
-    return transformInterfaces(this.interfaces) || {};
+    return transformComponentInterfaces(this.interfaces) || {};
   }
 
   setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
@@ -132,12 +108,12 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getContext(): EnvironmentContextV1 {
-    const interfaces: Dictionary<InterfaceSpec> = {};
+    const interfaces: Dictionary<InterfaceSpecV1> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = iv;
     }
 
-    const parameters: Dictionary<ParameterValue> = {};
+    const parameters: Dictionary<ParameterValueSpecV1> = {};
     for (const [pk, pv] of Object.entries(this.getParameters())) {
       parameters[pk] = pv.default === undefined ? '' : pv.default;
     }

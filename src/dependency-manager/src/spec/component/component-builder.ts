@@ -4,12 +4,12 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { DeploySpec } from '../common/base';
-import { Dictionary } from '../utils/dictionary';
-import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
-import { insertFileDataFromRefs } from '../utils/files';
-import { ComponentConfig } from './base';
-import { ComponentConfigV1 } from './v1';
+import { Dictionary } from '../../utils/dictionary';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
+import { insertFileDataFromRefs } from '../../utils/files';
+import { DeploySpec } from '../common/deploy-spec';
+import { ComponentConfig } from './component-config';
+import { ComponentConfigV1 } from './component-v1';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {
