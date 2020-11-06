@@ -1,7 +1,7 @@
 import { Dictionary } from '../../utils/dictionary';
 import { InterfaceSpec } from '../common/interface-spec';
-import { ServiceLivenessProbe } from '../common/liveness-probe-spec';
-import { ResourceConfig } from '../resource/base';
+import { LivenessProbeSpec } from '../common/liveness-probe-spec';
+import { ResourceConfig } from '../resource/resource-config';
 
 export interface ServiceConfig extends ResourceConfig {
   getInterfaces(): Dictionary<InterfaceSpec>;
@@ -12,5 +12,5 @@ export interface ServiceConfig extends ResourceConfig {
   setDebugOptions(value: ServiceConfig): void;
 
   getReplicas(): string;
-  getLivenessProbe(): ServiceLivenessProbe | undefined;
+  getLivenessProbe(): LivenessProbeSpec | undefined;
 }

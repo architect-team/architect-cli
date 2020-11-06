@@ -6,9 +6,9 @@ import path from 'path';
 import { Dictionary } from '../../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
 import { insertFileDataFromRefs } from '../../utils/files';
-import { RawComponentConfig } from '../component/builder';
-import { EnvironmentConfig } from './base';
-import { EnvironmentConfigV1 } from './v1';
+import { RawComponentConfig } from '../component/component-builder';
+import { EnvironmentConfig } from './environment-config';
+import { EnvironmentConfigV1 } from './environment-v1';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {

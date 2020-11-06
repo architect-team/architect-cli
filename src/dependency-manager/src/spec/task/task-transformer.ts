@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { Dictionary } from '../../utils/dictionary';
-import { TaskConfigV1 } from '../task/v1';
+import { TaskConfigV1 } from './task-v1';
 
 export function transformTasks(input?: Dictionary<object | TaskConfigV1>): Dictionary<TaskConfigV1> {
   if (!input) {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import https from 'https';
-import { EnvironmentVault } from './spec/environment/base';
+import { EnvironmentVault } from './spec/environment/environment-config';
 
 export default class VaultManager {
   protected vaults: { [key: string]: EnvironmentVault };

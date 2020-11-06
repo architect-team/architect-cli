@@ -3,7 +3,7 @@ import { IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { Exclusive } from '../../utils/validators/exclusive';
 import { ValidatableConfig } from '../base-spec';
 
-export class LivenessProbeV1 extends ValidatableConfig {
+export class LivenessProbeSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @Type(() => String)
   success_threshold?: string;

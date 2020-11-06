@@ -3,8 +3,8 @@ import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlug
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
-import { ServiceConfig } from '../service/base';
-import { TaskConfig } from '../task/base';
+import { ServiceConfig } from '../service/service-config';
+import { TaskConfig } from '../task/task-config';
 
 export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;

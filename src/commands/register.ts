@@ -12,7 +12,7 @@ import { AccountUtils } from '../common/utils/account';
 import { buildImage, getDigest, pushImage, stripTagFromImage } from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { Refs, ServiceNode } from '../dependency-manager/src';
-import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/builder';
+import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 
 tmp.setGracefulCleanup();
 

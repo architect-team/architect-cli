@@ -10,10 +10,11 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
+import { BuildSpecV1 } from '../dependency-manager/src/spec/common/build-v1';
 import { InterfaceSpecV1 } from '../dependency-manager/src/spec/common/interface-v1';
-import { ComponentConfigV1 } from '../dependency-manager/src/spec/component/v1';
-import { BuildSpecV1, ServiceVolumeV1 } from '../dependency-manager/src/spec/resource/v1';
-import { ServiceConfigV1 } from '../dependency-manager/src/spec/service/v1';
+import { VolumeSpecV1 } from '../dependency-manager/src/spec/common/volume-v1';
+import { ComponentConfigV1 } from '../dependency-manager/src/spec/component/component-v1';
+import { ServiceConfigV1 } from '../dependency-manager/src/spec/service/service-v1';
 
 export abstract class InitCommand extends Command {
   auth_required() {
@@ -147,11 +148,11 @@ export abstract class InitCommand extends Command {
         if (typeof volume === 'string') {
           const volume_parts = volume.split(':');
           if (volume_parts.length === 1) {
-            const service_volume = new ServiceVolumeV1();
+            const service_volume = new VolumeSpecV1();
             service_volume.mount_path = volume_parts[0];
             architect_service.setVolume(volume_key, service_volume);
           } else if (volume_parts.length === 2 || volume_parts.length === 3) {
-            const service_volume = new ServiceVolumeV1();
+            const service_volume = new VolumeSpecV1();
             if (!compose_volumes.includes(volume_parts[0])) {
               service_volume.host_path = volume_parts[0];
             }
@@ -165,7 +166,7 @@ export abstract class InitCommand extends Command {
           }
         } else {
           if (volume.source) { // debug volume
-            const service_volume = new ServiceVolumeV1();
+            const service_volume = new VolumeSpecV1();
             service_volume.host_path = volume.source;
             service_volume.mount_path = volume.target;
             service_volume.readonly = volume.read_only;
@@ -177,7 +178,7 @@ export abstract class InitCommand extends Command {
               debug_config.setVolume(volume_key, service_volume);
             }
           } else {
-            const service_volume = new ServiceVolumeV1();
+            const service_volume = new VolumeSpecV1();
             service_volume.mount_path = volume.target;
             service_volume.readonly = volume.read_only;
             architect_service.setVolume(volume_key, service_volume);

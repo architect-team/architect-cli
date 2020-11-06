@@ -4,41 +4,16 @@ import { normalizeInterpolation } from '../../utils/interpolation';
 import { ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateDictionary } from '../../utils/validation';
 import { InterfaceSpecV1 } from '../common/interface-v1';
+import { transformParameters } from '../common/parameter-transformer';
 import { ParameterValueSpecV1 } from '../common/parameter-v1';
-import { ComponentConfig } from '../component/base';
-import { ComponentConfigBuilder } from '../component/builder';
-import { transformComponentInterfaces } from '../component/transformer';
-import { ComponentContextV1 } from '../component/v1';
-import { transformParameters } from '../resource/v1';
-import { EnvironmentConfig, EnvironmentVault } from './base';
+import { ComponentConfig } from '../component/component-config';
+import { transformComponentInterfaces, transformComponents } from '../component/component-transformer';
+import { ComponentContextV1 } from '../component/component-v1';
+import { EnvironmentConfig, EnvironmentVault } from './environment-config';
 
 interface DnsConfigSpec {
   searches?: string | string[];
 }
-
-export const transformComponents = (input?: Dictionary<any>, parent?: any): Dictionary<ComponentConfig> | undefined => {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<ComponentConfig> = {};
-  // eslint-disable-next-line prefer-const
-  for (let [key, value] of Object.entries(input)) {
-    if (!value) value = {};
-    if (value instanceof Object) {
-      if (value.extends && !value.extends.includes(':')) {
-        value.extends = `${key}:${value.extends}`;
-      }
-      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: key, ...value, name: key });
-    } else {
-      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: value.includes(':') || value.startsWith('file:') ? value : `${key}:${value}`, name: key });
-    }
-  }
-  return output;
-};
 
 interface EnvironmentContextV1 {
   interfaces: Dictionary<InterfaceSpecV1>;

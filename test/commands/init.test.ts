@@ -4,8 +4,8 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
-import { ComponentConfigV1 } from '../../src/dependency-manager/src/spec/component/v1';
-import { BuildSpecV1 } from '../../src/dependency-manager/src/spec/resource/v1';
+import { BuildSpecV1 } from '../../src/dependency-manager/src/spec/common/build-v1';
+import { ComponentConfigV1 } from '../../src/dependency-manager/src/spec/component/component-v1';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('init', function () {

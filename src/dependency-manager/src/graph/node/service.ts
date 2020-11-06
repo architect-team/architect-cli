@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceConfig } from '../../spec/service/base';
-import { ServiceConfigV1 } from '../../spec/service/v1';
+import { ServiceConfig } from '../../spec/service/service-config';
+import { ServiceConfigV1 } from '../../spec/service/service-v1';
 
 export interface ServiceNodeOptions {
   ref: string;

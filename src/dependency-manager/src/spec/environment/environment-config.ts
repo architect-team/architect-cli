@@ -2,7 +2,7 @@ import { Dictionary } from '../../utils/dictionary';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
-import { ComponentConfig } from '../component/base';
+import { ComponentConfig } from '../component/component-config';
 
 export interface EnvironmentVault {
   type: string;

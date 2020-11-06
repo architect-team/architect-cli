@@ -7,14 +7,14 @@ import { DictionaryType } from '../../utils/validators/dictionary_type';
 import { InterfaceSpec } from '../common/interface-spec';
 import { InterfaceSpecV1 } from '../common/interface-v1';
 import { ParameterValue } from '../common/parameter-spec';
+import { transformParameters } from '../common/parameter-transformer';
 import { ParameterValueSpecV1 } from '../common/parameter-v1';
-import { transformParameters } from '../resource/v1';
-import { ServiceConfig } from '../service/base';
-import { transformServices } from '../service/transformer';
-import { TaskConfig } from '../task/base';
-import { transformTasks } from '../task/transformer';
-import { ComponentConfig } from './base';
-import { transformComponentInterfaces } from './transformer';
+import { ServiceConfig } from '../service/service-config';
+import { transformServices } from '../service/service-transformer';
+import { TaskConfig } from '../task/task-config';
+import { transformTasks } from '../task/task-transformer';
+import { ComponentConfig } from './component-config';
+import { transformComponentInterfaces } from './component-transformer';
 
 interface ServiceContextV1 {
   environment: Dictionary<string>;

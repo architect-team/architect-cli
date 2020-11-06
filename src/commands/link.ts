@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import { ComponentConfigBuilder } from '../dependency-manager/src/spec/component/builder';
+import { ComponentConfigBuilder } from '../dependency-manager/src/spec/component/component-builder';
 
 declare const process: NodeJS.Process;
 

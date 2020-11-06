@@ -4,11 +4,11 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { InterfaceSpecV1 } from '../common/interface-v1';
-import { ServiceLivenessProbe } from '../common/liveness-probe-spec';
-import { LivenessProbeV1 } from '../common/liveness-probe-v1';
-import { ResourceConfigV1 } from '../resource/v1';
-import { ServiceConfig } from './base';
-import { transformServiceInterfaces } from './transformer';
+import { LivenessProbeSpec } from '../common/liveness-probe-spec';
+import { LivenessProbeSpecV1 } from '../common/liveness-probe-v1';
+import { ResourceConfigV1 } from '../resource/resource-v1';
+import { ServiceConfig } from './service-config';
+import { transformServiceInterfaces } from './service-transformer';
 
 export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Type(() => ServiceConfigV1)
@@ -22,10 +22,10 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
-  @Type(() => LivenessProbeV1)
+  @Type(() => LivenessProbeSpecV1)
   @IsOptional({ always: true })
-  @IsInstance(LivenessProbeV1, { always: true })
-  liveness_probe?: LivenessProbeV1;
+  @IsInstance(LivenessProbeSpecV1, { always: true })
+  liveness_probe?: LivenessProbeSpecV1;
 
   @IsOptional({ always: true })
   @IsEmpty({
@@ -60,7 +60,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
     this.interfaces[key] = value;
   }
 
-  getLivenessProbe(): ServiceLivenessProbe | undefined {
+  getLivenessProbe(): LivenessProbeSpec | undefined {
     if (!this.liveness_probe || !Object.keys(this.liveness_probe).length) { return undefined; }
 
     const liveness_probe = {
@@ -76,7 +76,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
       liveness_probe.command = shell_parse(this.liveness_probe.command).map(e => `${e}`);
     }
 
-    return liveness_probe as ServiceLivenessProbe;
+    return liveness_probe as LivenessProbeSpec;
   }
 
   getDebugOptions(): ServiceConfigV1 | undefined {

@@ -1,6 +1,5 @@
 
-//TODO:84:rename
-export interface ServiceLivenessProbe {
+export interface LivenessProbeSpec {
   success_threshold?: string;
   failure_threshold?: string;
   timeout?: string;

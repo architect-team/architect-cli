@@ -1,4 +1,4 @@
-import { ResourceConfig } from '../resource/base';
+import { ResourceConfig } from '../resource/resource-config';
 
 export interface TaskConfig extends ResourceConfig {
   __version?: string;

@@ -1,7 +1,7 @@
 import { plainToClass } from 'class-transformer';
 import { Dictionary } from '../../utils/dictionary';
 import { InterfaceSpecV1 } from '../common/interface-v1';
-import { ServiceConfigV1 } from '../service/v1';
+import { ServiceConfigV1 } from './service-v1';
 
 export function transformServices(input?: Dictionary<object | ServiceConfigV1>): Dictionary<ServiceConfigV1> {
   if (!input) {

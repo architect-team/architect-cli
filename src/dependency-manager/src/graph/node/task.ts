@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { TaskConfig } from '../../spec/task/base';
-import { TaskConfigV1 } from '../../spec/task/v1';
+import { TaskConfig } from '../../spec/task/task-config';
+import { TaskConfigV1 } from '../../spec/task/task-v1';
 
 export interface TaskNodeOptions {
   ref: string;

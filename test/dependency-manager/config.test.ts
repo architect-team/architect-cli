@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/builder';
+import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
 
 describe('config spec v1', () => {
   beforeEach(async () => {

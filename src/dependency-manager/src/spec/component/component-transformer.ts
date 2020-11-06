@@ -1,6 +1,32 @@
 import { plainToClass } from 'class-transformer';
 import { Dictionary } from '../../utils/dictionary';
 import { InterfaceSpecV1 } from '../common/interface-v1';
+import { ComponentConfigBuilder } from './component-builder';
+import { ComponentConfig } from './component-config';
+
+export const transformComponents = (input?: Dictionary<any>, parent?: any): Dictionary<ComponentConfig> | undefined => {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  const output: Dictionary<ComponentConfig> = {};
+  // eslint-disable-next-line prefer-const
+  for (let [key, value] of Object.entries(input)) {
+    if (!value) value = {};
+    if (value instanceof Object) {
+      if (value.extends && !value.extends.includes(':')) {
+        value.extends = `${key}:${value.extends}`;
+      }
+      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: key, ...value, name: key });
+    } else {
+      output[key] = ComponentConfigBuilder.buildFromJSON({ extends: value.includes(':') || value.startsWith('file:') ? value : `${key}:${value}`, name: key });
+    }
+  }
+  return output;
+};
 
 export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
   if (!input) {
