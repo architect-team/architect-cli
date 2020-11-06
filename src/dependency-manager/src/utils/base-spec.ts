@@ -2,7 +2,7 @@ import { classToClass, plainToClassFromExist } from 'class-transformer';
 import { ClassType } from 'class-transformer/ClassTransformer';
 import { validate, ValidationError, ValidatorOptions } from 'class-validator';
 
-export abstract class BaseSpec {
+export abstract class ValidatableConfig {
   async validate(options?: ValidatorOptions): Promise<ValidationError[]> {
     options = { whitelist: true, forbidNonWhitelisted: true, forbidUnknownValues: true, ...(options || {}) };
     return validate(this, options);
@@ -19,7 +19,7 @@ export abstract class BaseSpec {
   }
 }
 
-export abstract class ConfigSpec extends BaseSpec {
+export abstract class BaseConfig extends ValidatableConfig implements ConfigSpec {
   /** @return New copy of the current config */
   copy(): this {
     return classToClass(this);
@@ -35,4 +35,19 @@ export abstract class ConfigSpec extends BaseSpec {
 
   /** @return New expanded copy of the current config */
   abstract expand(): this;
+}
+
+
+export interface ConfigSpec {
+  validate(options?: ValidatorOptions): Promise<ValidationError[]>;
+
+  validateOrReject(options?: ValidatorOptions): Promise<undefined>;
+
+  getClass(): ClassType<any>;
+
+  copy(): this;
+
+  merge(config: this): this;
+
+  expand(): this;
 }

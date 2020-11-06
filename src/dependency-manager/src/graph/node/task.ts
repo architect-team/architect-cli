@@ -28,7 +28,7 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   }
 
   get interfaces(): { [key: string]: any } {
-    return this.node_config.getInterfaces();
+    return {};
   }
 
   get ports(): string[] {

@@ -1,6 +1,6 @@
 import { InterfaceSpec } from '..';
 import { ComponentConfig, ParameterDefinitionSpec, ParameterValueSpec } from '../component-config/base';
-import { ConfigSpec } from '../utils/base-spec';
+import { BaseConfig } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface EnvironmentVault {
@@ -17,7 +17,7 @@ export interface DnsConfig {
 }
 
 // TODO investigate extending ComponentConfig
-export abstract class EnvironmentConfig extends ConfigSpec {
+export abstract class EnvironmentConfig extends BaseConfig {
   abstract __version?: string;
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract setParameters(value: Dictionary<ParameterValueSpec>): void;

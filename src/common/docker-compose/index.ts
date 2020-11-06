@@ -193,6 +193,9 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
       }
 
       if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
+        if (!compose.services[depends_from]) {
+          continue; // if the depends_from is not in the compose.services, it is an edge from a task which we ignore in docker-compose
+        }
         compose.services[depends_from].depends_on.push(depends_to);
         seen_edges.add(`${depends_to}__${depends_from}`);
         seen_edges.add(`${depends_from}__${depends_to}`);

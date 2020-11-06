@@ -1,18 +1,19 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsBoolean, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { ParameterValue, ServiceConfig } from '..';
+import { transformParameters } from '../common/v1';
 import { InterfaceSpec } from '../service-config/base';
-import { InterfaceSpecV1, ServiceConfigV1, transformParameters } from '../service-config/v1';
+import { InterfaceSpecV1, ServiceConfigV1 } from '../service-config/v1';
 import { TaskConfig } from '../task-config/base';
 import { TaskConfigV1 } from '../task-config/v1';
-import { BaseSpec } from '../utils/base-spec';
+import { ValidatableConfig } from '../utils/base-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
 import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../utils/validation';
 import { DictionaryType } from '../utils/validators/dictionary_type';
 import { ComponentConfig, ParameterDefinitionSpec } from './base';
 
-export class ParameterDefinitionSpecV1 extends BaseSpec implements ParameterDefinitionSpec {
+export class ParameterDefinitionSpecV1 extends ValidatableConfig implements ParameterDefinitionSpec {
   @IsOptional({ always: true })
   @IsBoolean({ always: true })
   required?: boolean;
@@ -168,13 +169,13 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsObject({ always: true })
   parameters?: Dictionary<ParameterValueSpecV1>;
 
-  @IsOptional({ groups: ['operator', 'developer'] })
-  @IsObject()
+  @IsOptional({ always: true })
+  @IsObject({ always: true })
   @Transform((value) => !value ? {} : value)
   services?: Dictionary<ServiceConfig>;
 
-  @IsOptional({ groups: ['operator', 'developer'] })
-  @IsObject()
+  @IsOptional({ always: true })
+  @IsObject({ always: true })
   @Transform((value) => !value ? {} : value)
   tasks?: Dictionary<TaskConfig>;
 
@@ -184,7 +185,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   dependencies?: Dictionary<string>;
 
   @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' }) //TODO:84: this assumption becomes less applicable with tasks
+  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
@@ -383,7 +384,6 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
-    // TODO:84: we may want to validate here that services OR tasks is set (since we've set both to optional)
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.']));
     }
