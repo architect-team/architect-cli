@@ -1,8 +1,8 @@
-import { InterfaceSpec, ServiceConfig } from '../service-config/base';
-import { TaskConfig } from '../task-config/base';
-import { BaseConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../utils/slugs';
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { BaseConfig } from '../base-spec';
+import { InterfaceSpec, ServiceConfig } from '../service/base';
+import { TaskConfig } from '../task/base';
 
 export type ParameterValue = string | number | boolean | undefined;
 

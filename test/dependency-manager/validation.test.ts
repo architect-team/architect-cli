@@ -8,7 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src/component-config/builder';
+import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/builder';
 import { ValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation spec v1', () => {

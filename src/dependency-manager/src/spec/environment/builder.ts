@@ -3,10 +3,10 @@ import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { RawComponentConfig } from '../component-config/builder';
-import { Dictionary } from '../utils/dictionary';
-import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
-import { insertFileDataFromRefs } from '../utils/files';
+import { Dictionary } from '../../utils/dictionary';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
+import { insertFileDataFromRefs } from '../../utils/files';
+import { RawComponentConfig } from '../component/builder';
 import { EnvironmentConfig } from './base';
 import { EnvironmentConfigV1 } from './v1';
 

@@ -2,10 +2,10 @@ import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { Allow, IsBoolean, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
-import { ParameterDefinitionSpecV1 } from '../component-config/v1';
-import { BaseConfig, ValidatableConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { validateDictionary, validateNested } from '../utils/validation';
+import { Dictionary } from '../../utils/dictionary';
+import { validateDictionary, validateNested } from '../../utils/validation';
+import { BaseConfig, ValidatableConfig } from '../base-spec';
+import { ParameterDefinitionSpecV1 } from '../component/v1';
 import { ResourceConfig } from './base';
 
 export class ServiceVolumeV1 extends ValidatableConfig {

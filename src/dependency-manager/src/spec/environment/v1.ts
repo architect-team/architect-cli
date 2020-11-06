@@ -1,14 +1,13 @@
 import { Allow, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
-import { InterfaceSpec, ParameterValue } from '..';
-import { transformParameters } from '../common/v1';
-import { ComponentConfig } from '../component-config/base';
-import { ComponentConfigBuilder } from '../component-config/builder';
-import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component-config/v1';
-import { InterfaceSpecV1 } from '../service-config/v1';
-import { Dictionary } from '../utils/dictionary';
-import { normalizeInterpolation } from '../utils/interpolation';
-import { ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
-import { validateDictionary } from '../utils/validation';
+import { Dictionary } from '../../utils/dictionary';
+import { normalizeInterpolation } from '../../utils/interpolation';
+import { ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { validateDictionary } from '../../utils/validation';
+import { ComponentConfig } from '../component/base';
+import { ComponentConfigBuilder } from '../component/builder';
+import { ComponentContextV1, ParameterValueSpecV1, transformInterfaces } from '../component/v1';
+import { transformParameters } from '../resource/v1';
+import { InterfaceSpecV1 } from '../service/v1';
 import { EnvironmentConfig, EnvironmentVault } from './base';
 
 interface DnsConfigSpec {
@@ -40,8 +39,8 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
 };
 
 interface EnvironmentContextV1 {
-  interfaces: Dictionary<InterfaceSpec>;
-  parameters: Dictionary<ParameterValue>;
+  interfaces: Dictionary<InterfaceSpecV1>;
+  parameters: Dictionary<ParameterValueSpecV1>;
   components: Dictionary<ComponentContextV1>;
 }
 
@@ -132,12 +131,12 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   }
 
   getContext(): EnvironmentContextV1 {
-    const interfaces: Dictionary<InterfaceSpec> = {};
+    const interfaces: Dictionary<InterfaceSpecV1> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = iv;
     }
 
-    const parameters: Dictionary<ParameterValue> = {};
+    const parameters: Dictionary<ParameterValueSpecV1> = {};
     for (const [pk, pv] of Object.entries(this.getParameters())) {
       parameters[pk] = pv.default === undefined ? '' : pv.default;
     }

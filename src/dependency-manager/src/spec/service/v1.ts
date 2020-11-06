@@ -2,11 +2,11 @@ import { plainToClass } from 'class-transformer';
 import { Transform, Type } from 'class-transformer/decorators';
 import { ArrayUnique, IsArray, IsEmpty, IsInstance, IsNotEmpty, IsObject, IsOptional, IsString, IsUrl, ValidateIf, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
-import { ResourceConfigV1 } from '../common/v1';
-import { ValidatableConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { validateDictionary, validateNested } from '../utils/validation';
-import { Exclusive } from '../utils/validators/exclusive';
+import { Dictionary } from '../../utils/dictionary';
+import { validateDictionary, validateNested } from '../../utils/validation';
+import { Exclusive } from '../../utils/validators/exclusive';
+import { ValidatableConfig } from '../base-spec';
+import { ResourceConfigV1 } from '../resource/v1';
 import { ServiceConfig, ServiceLivenessProbe } from './base';
 
 class LivenessProbeV1 extends ValidatableConfig {

@@ -1,17 +1,16 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsBoolean, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
-import { ParameterValue, ServiceConfig } from '..';
-import { transformParameters } from '../common/v1';
-import { InterfaceSpec } from '../service-config/base';
-import { InterfaceSpecV1, ServiceConfigV1 } from '../service-config/v1';
-import { TaskConfig } from '../task-config/base';
-import { TaskConfigV1 } from '../task-config/v1';
-import { ValidatableConfig } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
-import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../utils/slugs';
-import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../utils/validation';
-import { DictionaryType } from '../utils/validators/dictionary_type';
-import { ComponentConfig, ParameterDefinitionSpec } from './base';
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../../utils/validation';
+import { DictionaryType } from '../../utils/validators/dictionary_type';
+import { ValidatableConfig } from '../base-spec';
+import { transformParameters } from '../resource/v1';
+import { InterfaceSpec, ServiceConfig } from '../service/base';
+import { InterfaceSpecV1, ServiceConfigV1 } from '../service/v1';
+import { TaskConfig } from '../task/base';
+import { TaskConfigV1 } from '../task/v1';
+import { ComponentConfig, ParameterDefinitionSpec, ParameterValue } from './base';
 
 export class ParameterDefinitionSpecV1 extends ValidatableConfig implements ParameterDefinitionSpec {
   @IsOptional({ always: true })

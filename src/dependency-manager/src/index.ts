@@ -1,16 +1,18 @@
 import DependencyManager from './manager';
 
 export default DependencyManager;
-export * from './common/base';
-export * from './component-config/base';
-export * from './component-config/builder';
-export * from './environment-config/base';
-export * from './environment-config/builder';
 export * from './graph/node';
 export * from './graph/node/service';
 export * from './graph/node/task';
-export * from './service-config/base';
-export * from './task-config/base';
+export * from './spec/base-spec';
+export * from './spec/component/base';
+export * from './spec/component/builder';
+export * from './spec/environment/base';
+export * from './spec/environment/builder';
+export * from './spec/resource/base';
+export * from './spec/service/base';
+export * from './spec/task/base';
 export * from './utils/refs';
 export * from './utils/slugs';
 
+// TODO:84: exports

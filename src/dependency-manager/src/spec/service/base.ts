@@ -1,5 +1,5 @@
-import { ResourceConfig } from '../common/base';
-import { Dictionary } from '../utils/dictionary';
+import { Dictionary } from '../../utils/dictionary';
+import { ResourceConfig } from '../resource/base';
 
 export interface InterfaceSpec {
   description?: string;

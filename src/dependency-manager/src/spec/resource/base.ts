@@ -1,5 +1,5 @@
-import { ConfigSpec } from '../utils/base-spec';
-import { Dictionary } from '../utils/dictionary';
+import { Dictionary } from '../../utils/dictionary';
+import { ConfigSpec } from '../base-spec';
 
 export interface VolumeSpec {
   mount_path?: string;
