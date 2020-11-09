@@ -6,7 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
@@ -232,7 +232,7 @@ describe('interfaces spec v1', () => {
         'LEAF_URL=http://public.localhost:80'
       ])
 
-      const template = await DockerCompose.generate(manager);
+      const template = await DockerComposeUtils.generate(manager);
       expect(Object.keys(template.services)).has.members([
         test_branch_url_safe_ref,
         test_leaf_db_latest_url_safe_ref,
@@ -372,7 +372,7 @@ describe('interfaces spec v1', () => {
 
     const architect_cloud_api_url_safe_ref = Refs.url_safe_ref('architect/cloud/api:latest');
 
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal({
       "depends_on": ["gateway"],
       "environment": {

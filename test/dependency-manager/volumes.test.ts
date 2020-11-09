@@ -6,7 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs } from '../../src/dependency-manager/src';
 
@@ -58,7 +58,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data'])
   });
 
@@ -84,7 +84,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
@@ -128,7 +128,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
     expect(template.services[test_component_app_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
   });
@@ -160,7 +160,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
@@ -193,7 +193,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 
@@ -221,7 +221,7 @@ describe('volumes spec v1', () => {
       '/environment.yml': env_config
     });
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 });

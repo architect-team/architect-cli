@@ -8,18 +8,18 @@ import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import open from 'open';
-import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
-import * as DockerCompose from '../common/docker-compose';
+import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import ARCHITECTPATHS from '../paths';
 
 export abstract class DeployCommand extends Command {
   static POLL_INTERVAL = 10000;
@@ -126,10 +126,7 @@ export default class Deploy extends DeployCommand {
     compose_file: flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
-      default: path.join(
-        os.tmpdir(),
-        `architect-deployment-${Date.now().toString()}.yml`,
-      ),
+      default: '',
       exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     detached: flags.boolean({
@@ -185,6 +182,9 @@ export default class Deploy extends DeployCommand {
         const exposed_port = port_pair && (port_pair as string).split(':')[0];
         this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
       }
+    }
+    if (!flags.compose_file) {
+      flags.compose_file = path.join(this.app.config.getConfigDir(), ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME);
     }
     await fs.ensureFile(flags.compose_file);
     await fs.writeFile(flags.compose_file, yaml.safeDump(compose));
@@ -269,7 +269,7 @@ export default class Deploy extends DeployCommand {
     }
 
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
-    const compose = await DockerCompose.generate(dependency_manager);
+    const compose = await DockerComposeUtils.generate(dependency_manager);
     await this.runCompose(compose);
   }
 

@@ -6,7 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
@@ -76,7 +76,7 @@ describe('components spec v1', function () {
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([])
 
-      const template = await DockerCompose.generate(manager);
+      const template = await DockerComposeUtils.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
           "architect--cloud--api--latest--zg9qionk": {
@@ -259,7 +259,7 @@ describe('components spec v1', function () {
       const cloud_db_ref = Refs.url_safe_ref('architect/cloud/db:latest');
       expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${cloud_db_ref}:5432`)
 
-      const template = await DockerCompose.generate(manager);
+      const template = await DockerComposeUtils.generate(manager);
       expect(template).to.be.deep.equal({
         "services": {
           "architect--cloud--api--latest--zg9qionk": {
