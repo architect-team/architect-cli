@@ -17,7 +17,7 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
   for (let [key, value] of Object.entries(input)) {
     if (!value) value = {};
 
-    if (value?.extends && typeof value.extends === 'number') {
+    if (typeof value?.extends === 'number') {
       value.extends = value.extends.toString();
     }
 
