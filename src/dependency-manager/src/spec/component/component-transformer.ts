@@ -16,6 +16,11 @@ export const transformComponents = (input?: Dictionary<any>, parent?: any): Dict
   // eslint-disable-next-line prefer-const
   for (let [key, value] of Object.entries(input)) {
     if (!value) value = {};
+
+    if (value?.extends && typeof value.extends === 'number') {
+      value.extends = value.extends.toString();
+    }
+
     if (value instanceof Object) {
       if (value.extends && !value.extends.includes(':')) {
         value.extends = `${key}:${value.extends}`;
