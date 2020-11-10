@@ -156,7 +156,7 @@ export default class ComponentRegister extends Command {
     }
     try {
       const component_path = fs.lstatSync(config_path).isFile() ? path.dirname(config_path) : config_path;
-      const build_path = path.resolve(component_path, build_context);
+      const build_path = path.resolve(component_path, untildify(build_context));
       let dockerfile;
       if (service_config.build?.dockerfile) {
         dockerfile = path.join(build_path, service_config.build.dockerfile);

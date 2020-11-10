@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import pLimit from 'p-limit';
 import path from 'path';
+import untildify from 'untildify';
 import { Refs, ServiceNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -111,7 +112,7 @@ export const generate = async (dependency_manager: LocalDependencyManager): Prom
 
         if (build.context || args.length) {
           const compose_build: any = {};
-          if (build.context) compose_build.context = path.resolve(component_path, build.context);
+          if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
           if (args.length) compose_build.args = args;
           compose.services[url_safe_ref].build = compose_build;
         }
