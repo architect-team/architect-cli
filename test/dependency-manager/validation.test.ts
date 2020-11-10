@@ -696,6 +696,21 @@ describe('validation spec v1', () => {
         }
       })
     });
+
+    it('trailing zeros are not removed from extends tag on env config parsing', async () => {
+      const env_config = `
+      components:
+        examples/hello-world:
+          extends: 1.00
+      `
+
+      mock_fs({
+        '/environment.yml': env_config
+      });
+
+      const built_env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
+      expect(built_env_config.getComponents()['examples/hello-world'].getExtends()).eq('examples/hello-world:1.00');
+    });
   })
 
   it('validate that custom domain values are unique', async () => {
