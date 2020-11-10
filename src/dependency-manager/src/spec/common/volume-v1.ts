@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmpty, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBooleanString, IsEmpty, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ValidatableConfig } from '../base-spec';
 
 export class VolumeSpecV1 extends ValidatableConfig {
@@ -23,6 +23,6 @@ export class VolumeSpecV1 extends ValidatableConfig {
   description?: string;
 
   @IsOptional({ always: true })
-  @IsBoolean({ always: true })
-  readonly?: boolean;
+  @IsBooleanString({ always: true })
+  readonly?: string;
 }

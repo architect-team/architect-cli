@@ -60,7 +60,7 @@ describe('config spec v1', () => {
       "services": {
         "stateless-app": {
           "interfaces": {
-            "main": 8080
+            "main": "8080"
           }
         }
       },
@@ -112,7 +112,7 @@ describe('config spec v1', () => {
       "services": {
         "stateless-app": {
           "interfaces": {
-            "main": 8080
+            "main": "8080"
           }
         }
       },

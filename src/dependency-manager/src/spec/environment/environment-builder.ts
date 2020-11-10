@@ -1,7 +1,7 @@
 /* eslint-disable no-empty */
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
+import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
 import path from 'path';
 import { Dictionary } from '../../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
@@ -47,7 +47,7 @@ export class EnvironmentConfigBuilder {
     } catch {
       try {
         // Try to parse as yaml
-        js_obj = yaml.safeLoad(file_contents);
+        js_obj = yaml.safeLoad(file_contents, { schema: FAILSAFE_SCHEMA });
       } catch { }
     }
 

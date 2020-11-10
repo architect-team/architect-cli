@@ -2,7 +2,7 @@
 export type ParameterValue = string | number | boolean | undefined;
 
 export interface ParameterDefinitionSpec {
-  required?: boolean;
+  required?: string;
   description?: string;
   default?: ParameterValue;
 }
