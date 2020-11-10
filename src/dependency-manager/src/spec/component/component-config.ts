@@ -36,6 +36,9 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
   abstract setInterface(key: string, value: InterfaceSpec | string): void;
 
+  abstract setArtifactImage(image: string): void;
+  abstract getArtifactImage(): string | undefined;
+
   abstract getContext(): any;
 
   getInterfacesRef() {

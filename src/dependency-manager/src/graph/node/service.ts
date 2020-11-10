@@ -7,6 +7,7 @@ export interface ServiceNodeOptions {
   ref: string;
   node_config: ServiceConfig;
   local_path?: string;
+  artifact_image?: string;
 }
 
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
@@ -17,6 +18,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
 
   ref!: string;
   local_path!: string;
+  artifact_image?: string;
 
   constructor(options: ServiceNodeOptions & DependencyNodeOptions) {
     super();
@@ -24,6 +26,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
       this.ref = options.ref;
       this.node_config = options.node_config;
       this.local_path = options.local_path || '';
+      this.artifact_image = options.artifact_image;
     }
   }
 

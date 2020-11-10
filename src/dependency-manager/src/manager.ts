@@ -120,6 +120,7 @@ export default abstract class DependencyManager {
         ref: component.getServiceRef(node_config.getName()),
         node_config,
         local_path: component.getLocalPath(),
+        artifact_image: prefixed_component.getArtifactImage(),
       });
       graph.addNode(node);
 
