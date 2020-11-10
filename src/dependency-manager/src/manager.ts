@@ -290,7 +290,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.getParameters())) {
-      if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
+      if (pv.required !== 'false' && (pv.default === undefined || pv.default === null)) {
         const validation_error = new ValidationError();
         validation_error.property = `components.${component.getName()}.parameters.${pk}`;
         validation_error.target = pv;
@@ -310,7 +310,7 @@ export default abstract class DependencyManager {
 
     // Check required parameters for environment
     for (const [pk, pv] of Object.entries(environment.getParameters())) {
-      if (pv.required !== false && (pv.default === undefined || pv.default === null)) {
+      if (pv.required !== 'false' && (pv.default === undefined || pv.default === null)) {
         const validation_error = new ValidationError();
         validation_error.property = `parameters.${pk}`;
         validation_error.target = pv;

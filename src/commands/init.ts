@@ -158,7 +158,7 @@ export abstract class InitCommand extends Command {
             }
             service_volume.mount_path = volume_parts[1];
             if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
-              service_volume.readonly = true;
+              service_volume.readonly = 'true';
             }
             debug_config.setVolume(volume_key, service_volume);
           } else {
@@ -169,7 +169,9 @@ export abstract class InitCommand extends Command {
             const service_volume = new VolumeSpecV1();
             service_volume.host_path = volume.source;
             service_volume.mount_path = volume.target;
-            service_volume.readonly = volume.read_only;
+            if (volume.read_only) {
+              service_volume.readonly = volume.read_only.toString();
+            }
 
             if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
               service_volume.host_path = undefined;
@@ -180,7 +182,9 @@ export abstract class InitCommand extends Command {
           } else {
             const service_volume = new VolumeSpecV1();
             service_volume.mount_path = volume.target;
-            service_volume.readonly = volume.read_only;
+            if (volume.read_only) {
+              service_volume.readonly = volume.read_only.toString();
+            }
             architect_service.setVolume(volume_key, service_volume);
           }
         }

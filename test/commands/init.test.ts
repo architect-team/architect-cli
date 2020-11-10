@@ -197,7 +197,7 @@ describe('init', function () {
       expect(component_config.getServices()['elasticsearch'].getVolumes()['volume1'].mount_path).eq('/usr/share/elasticsearch/data');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
-      expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+      expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].readonly).eq('true');
     });
 
   mockInit()
@@ -209,10 +209,10 @@ describe('init', function () {
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./logstash/config/logstash.yml');
-      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].readonly).eq('true');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].mount_path).eq('/usr/share/logstash/pipeline');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].host_path).eq('./logstash/pipeline');
-      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].readonly).to.be.true;
+      expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume1'].readonly).eq('true');
     });
 
   mockInit()
@@ -224,7 +224,7 @@ describe('init', function () {
       const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./kibana/config/kibana.yml');
-      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).to.be.true;
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).eq('true');
       expect(component_config.getServices()['kibana'].getVolumes()['volume1'].mount_path).eq('/var/lib/mysql');
       expect(component_config.getServices()['kibana'].getVolumes()['volume1'].host_path).is.undefined;
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume2'].mount_path).eq('/var/lib/mysql');
@@ -233,7 +233,7 @@ describe('init', function () {
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume3'].host_path).eq('./cache');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].mount_path).eq('/etc/configs/');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].host_path).eq('~/configs');
-      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].readonly).to.be.true;
+      expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume4'].readonly).eq('true');
 
     });
 });
