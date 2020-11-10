@@ -23,6 +23,12 @@ const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_US
   host: process.env.POSTGRES_HOST,
   port: process.env.POSTGRES_PORT,
   dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: process.env.POSTGRES_SSL == 'true',
+      rejectUnauthorized: false
+    }
+  },
   retry: {
     max: 3, // maximum amount of tries
     timeout: 10000, // throw if no response or error within millisecond timeout, default: undefined,
