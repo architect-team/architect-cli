@@ -31,21 +31,21 @@ export default class Login extends Command {
     const { flags } = this.parse(Login);
 
     if (flags.email || flags.password) {
-      await this.run_cli_flow(flags);
+      await this.runCliFlow(flags);
     } else {
-      await this.run_browser_flow();
+      await this.runBrowserFlow();
     }
 
     this.log(chalk.green('Login successful'));
   }
 
-  private async run_browser_flow() {
+  private async runBrowserFlow() {
     if (!PromptUtils.prompts_available()) {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
     const port = await PortUtil.getAvailablePort(60000);
 
-    const url = this.app.auth.generate_browser_url(port);
+    const url = this.app.auth.generateBrowserUrl(port);
 
     try {
       this.log('To login, please navigate to the following URL in your browser:');
@@ -56,10 +56,10 @@ export default class Login extends Command {
       // do nothing if opener fails
     }
 
-    await this.app.auth.login_from_browser(port);
+    await this.app.auth.loginFromBrowser(port);
   }
 
-  private async run_cli_flow(flags: any) {
+  private async runCliFlow(flags: any) {
     let answers = await inquirer.prompt([
       {
         type: 'input',
@@ -80,6 +80,6 @@ export default class Login extends Command {
       ...answers,
     };
 
-    await this.app.auth.login_from_cli(answers.email, answers.password);
+    await this.app.auth.loginFromCli(answers.email, answers.password);
   }
 }

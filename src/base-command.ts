@@ -2,6 +2,7 @@ import Command, { flags } from '@oclif/command';
 import chalk from 'chalk';
 import 'reflect-metadata';
 import AppService from './app-config/service';
+import LoginRequiredError from './common/errors/login-required';
 
 export default abstract class extends Command {
   app!: AppService;
@@ -20,7 +21,7 @@ export default abstract class extends Command {
       this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
       const token = await this.app.auth.getToken();
       if (this.auth_required() && (!token || (token.account === 'unknown' && token.password === 'unknown'))) {
-        this.error(chalk.red(`Please log in using 'architect login'`));
+        throw new LoginRequiredError();
       }
     }
   }

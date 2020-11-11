@@ -35,7 +35,7 @@ export interface RedirectLoginOptions {
  */
 export class Auth0Shim {
 
-  public static build_auth0_transaction(
+  public static buildAuth0Transaction(
     auth0_client_id: string,
     domain: string,
     options: RedirectLoginOptions,

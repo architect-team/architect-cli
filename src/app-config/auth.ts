@@ -49,7 +49,8 @@ export default class AuthClient {
       const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
       // Refresh the token if its expired to force a docker login
       if (expires_at < (new Date().getTime() / 1000)) {
-        await this.refreshToken();
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        await this.refreshToken().catch(() => { });
       }
     } else if (!token) {
       try {
@@ -69,7 +70,7 @@ export default class AuthClient {
     }
   }
 
-  async login_from_cli(email: string, password: string) {
+  async loginFromCli(email: string, password: string) {
     await this.logout();
 
     let auth0_results;
@@ -104,8 +105,8 @@ export default class AuthClient {
     }
   }
 
-  public generate_browser_url(port: number): string {
-    const auth0_transaction = Auth0Shim.build_auth0_transaction(
+  public generateBrowserUrl(port: number): string {
+    const auth0_transaction = Auth0Shim.buildAuth0Transaction(
       AuthClient.CLIENT_ID,
       this.config.oauth_domain,
       {
@@ -118,11 +119,11 @@ export default class AuthClient {
     return 'https://' + auth0_transaction.url;
   }
 
-  async login_from_browser(port: number) {
+  async loginFromBrowser(port: number) {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
-    const auth0_results = await this.perform_oauth_handshake(oauth_code);
+    const auth0_results = await this.performOauthHandshake(oauth_code);
 
     const decoded_token = Auth0Shim.verifyIdToken(
       this.config.oauth_domain,
@@ -176,7 +177,7 @@ export default class AuthClient {
       throw new LoginRequiredError();
     }
 
-    this.auth_results = await this.perform_oauth_refresh(token.refresh_token) as AuthResults;
+    this.auth_results = await this.performOauthRefresh(token.refresh_token) as AuthResults;
 
     await this.setToken(credential.account, this.auth_results);
     await this.dockerLogin(credential.account);
@@ -207,7 +208,7 @@ export default class AuthClient {
     return this.auth_results;
   }
 
-  private async perform_oauth_handshake(
+  private async performOauthHandshake(
     oauth_code: string
   ): Promise<any> {
 
@@ -228,7 +229,7 @@ export default class AuthClient {
     return auth_result;
   }
 
-  private async perform_oauth_refresh(
+  private async performOauthRefresh(
     refresh_token: string
   ): Promise<any> {
     const tokenOptions = {
