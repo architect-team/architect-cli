@@ -1,5 +1,8 @@
 ---
 title: Introduction
+symlinks:
+  - /
+  - /getting-started/
 ---
 
 # Introduction
