@@ -34,6 +34,8 @@ Alternatively, you can download the binary for your system architecture from [Gi
 
 ## Run a sample component
 
+![react-demo-screenshot](/images/docs/getting-started/introduction/react-demo.png)
+
 ```sh
 $ git clone https://github.com/architect-team/architect-cli.git
 $ architect link ./examples/react-demo
