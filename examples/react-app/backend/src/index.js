@@ -1,4 +1,8 @@
 const winston = require('winston');
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
@@ -8,31 +12,17 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: `${__dirname}/../logs/backend.log` })
   ]
 });
-
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
 const app = express();
-
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
 const Sequelize = require('sequelize');
-const sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
-  host: process.env.POSTGRES_HOST,
-  port: process.env.POSTGRES_PORT,
+
+const sequelize = new Sequelize(process.env.DB_ADDR, {
+  username: process.env.DB_USER,
+  password: process.env.DB_PASS,
   dialect: 'postgres',
-  dialectOptions: {
-    ssl: {
-      require: process.env.POSTGRES_SSL == 'true',
-      rejectUnauthorized: false
-    }
-  },
   retry: {
-    max: 3, // maximum amount of tries
-    timeout: 10000, // throw if no response or error within millisecond timeout, default: undefined,
-    match: [ // Must match error signature (ala bluebird catch) to continue
+    max: 3,
+    timeout: 10000,
+    match: [
       Sequelize.ConnectionError,
     ],
   }
@@ -42,6 +32,10 @@ const Name = sequelize.define('name', {
   name: Sequelize.STRING
 });
 
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
 app.get('/names', async (req, res) => {
   logger.info(`GET /names`)
   const names = await Name.findAll({
@@ -49,15 +43,14 @@ app.get('/names', async (req, res) => {
       ['id', 'DESC'],
     ]
   });
-  if (names) {
-    return res.status(200).json(names);
-  }
-  return res.status(404).json({ 'error': 'Not found' });
+  return names
+    ? res.status(200).json(names)
+    : res.status(404).json({ error: 'Not found' });
 });
 
-app.post('/name', async (req, res) => {
+app.post('/names', async (req, res) => {
   try {
-    logger.info(`POST /name`);
+    logger.info(`POST /names`);
     const name = await Name.create({ name: req.body.name });
     return res.status(201).json(name);
   } catch (err) {
@@ -65,22 +58,10 @@ app.post('/name', async (req, res) => {
   }
 });
 
-sequelize.query(`select exists(SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('${process.env.POSTGRES_DB}'));`)
-  .then(async result => {
-    if (!result[0][0].exists) {
-      logger.info('Creating database');
-      await sequelize.query(`CREATE DATABASE "${process.env.POSTGRES_DB}"`);
-    }
-
-    logger.info('Database exists');
-    sequelize.sync().then(function () {
-      const { INTERNAL_HOST, INTERNAL_PORT } = process.env;
-      app.listen(INTERNAL_PORT, () => {
-        logger.info(`Listening at ${INTERNAL_HOST}:${INTERNAL_PORT}`);
-      });
-    }).catch(err => {
-      logger.error(`Sequelize sync failed\n${err}`);
-    });
-  }).catch(err => {
-    logger.error(`Sequelize init failed\n${err}`);
+sequelize.sync().then(() => {
+  app.listen(process.env.PORT, () => {
+    logger.info('Listening on port:', process.env.PORT);
   });
+}).catch(err => {
+  logger.error('Database schema sync failed:', err);
+});

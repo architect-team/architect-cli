@@ -1,5 +1,6 @@
 const express = require('express');
 const next = require('next');
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -9,14 +10,22 @@ app.prepare()
   .then(() => {
     const server = express();
 
+    server.use('/api', createProxyMiddleware({
+      target: process.env.API_ADDR,
+      pathRewrite: {
+          '^/api': ''
+      },
+      changeOrigin: false
+    }));
+
     server.all('*', (req, res) => {
       return handle(req, res);
     });
 
-    const port = process.env.INTERNAL_PORT || 8080;
+    const port = process.env.PORT || 8080;
     server.listen(port, (err) => {
       if (err) throw err;
-      console.log(`> Ready on http://${process.env.INTERNAL_HOST}:${port}`);
+      console.log('> Ready on port:', port);
     })
   })
   .catch((ex) => {
