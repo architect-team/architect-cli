@@ -78,12 +78,6 @@ Name of the component that can be resolved by others. Component names must be un
 
 (optional) Additional search terms to be used when the component is indexed so that others can find it more easily.
 
-## parameters
-
-(optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
-
-[Learn more about configuring parameters](/docs/configuration/parameters)
-
 ## services
 
 A dictionary of named runtimes for the component. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balanced seamlessly between instances.
@@ -95,3 +89,9 @@ A dictionary of named runtimes for the component. Each service described in an `
 A dictionary of named gateways that broker access to the services inside the component. Services inside the same component can always connect to one another via [service discovery](/docs/how-it-works/service-discovery), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications. Interfaces allow components to advertise the features that they want others to be able to connect to.
 
 [Learn more about configuring interfaces](/docs/configuration/interfaces)
+
+## parameters
+
+(optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
+
+[Learn more about configuring parameters](/docs/configuration/parameters)
