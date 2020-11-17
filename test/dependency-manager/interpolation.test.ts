@@ -6,7 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
@@ -115,7 +115,7 @@ describe('interpolation spec v1', () => {
       'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]'
     ])
 
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     const url_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
     expect(template).to.be.deep.equal({
       'services': {
@@ -159,7 +159,7 @@ describe('interpolation spec v1', () => {
       'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]',
     ])
 
-    const public_template = await DockerCompose.generate(public_manager);
+    const public_template = await DockerComposeUtils.generate(public_manager);
     expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal({
       'depends_on': ['gateway'],
       'environment': {
@@ -1166,7 +1166,7 @@ describe('interpolation spec v1', () => {
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.node_config.getEnvironmentVariables()['AUTH0_SECRET_ID']).eq('worked')
 
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template).to.be.deep.equal({
       'services': {
         'architect--cloud--app--latest--kavtrukr': {

@@ -6,6 +6,9 @@ import { Account } from './account';
 export interface Environment {
   id: string;
   name: string;
+  platform: {
+    type: string;
+  };
 }
 
 export class EnvironmentUtils {
