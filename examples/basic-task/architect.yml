@@ -1,18 +1,18 @@
 name: examples/basic-task
-description: Example application that schedules recurring cron tasks
+description: Example application that calls the API once per 5 minutes and prints the results; showcasing Tasks (cron jobs)
 
 parameters:
-  OUTPUT_TEXT:
-    description: Example text to output in cron
-    default: "Hello world"
 
 tasks:
-  date-logger:
-    schedule: "*/5 * * * *"
+  curler:
+    schedule: "*/5 * * * ?"
     image: ellerbrock/alpine-bash-curl-ssl # useful public image with bash and curl pre-installed
-    command: echo $OUTPUT_TEXT && curl $SERVER_URL
+    command:
+      - sh
+      - -c
+      - curl $SERVER_URL
+
     environment:
-      OUTPUT_TEXT: ${{ parameters.OUTPUT_TEXT }}
       SERVER_URL: ${{ services.api.interfaces.main.url }}
 
 services:
@@ -22,3 +22,4 @@ services:
       main: 3000
 
 interfaces:
+  api: ${{ services.api.interfaces.main.url }}

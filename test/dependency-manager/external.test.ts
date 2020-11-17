@@ -6,7 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import * as DockerCompose from '../../src/common/docker-compose';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
@@ -78,7 +78,7 @@ describe('external interfaces spec v1', () => {
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.true;
 
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template).to.be.deep.equal({
       'services': {},
       'version': '3',
@@ -145,7 +145,7 @@ describe('external interfaces spec v1', () => {
     const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
     expect(api_node.is_external).to.be.true;
 
-    const template = await DockerCompose.generate(manager);
+    const template = await DockerComposeUtils.generate(manager);
     expect(template).to.be.deep.equal({
       services: {
         'architect--cloud--app--latest--kavtrukr': {

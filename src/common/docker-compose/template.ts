@@ -36,6 +36,7 @@ export interface DockerService {
   logging?: { driver?: string };
   external_links?: string[];
   deploy?: DockerComposeDeploy;
+  scale?: number;
 }
 
 export default interface DockerComposeTemplate {

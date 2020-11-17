@@ -31,7 +31,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.7.8-rc.12 linux-x64 node-v12.19.0
+@architect-io/cli/0.7.8 linux-x64 node-v12.19.0
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -67,6 +67,7 @@ by running npm install with the `--unsafe` flag._
 * [`architect platforms:create [PLATFORM]`](#architect-platformscreate-platform)
 * [`architect platforms:destroy [PLATFORM]`](#architect-platformsdestroy-platform)
 * [`architect register [COMPONENT]`](#architect-register-component)
+* [`architect task COMPONENT TASK`](#architect-task-component-task)
 * [`architect unlink [COMPONENTPATHORNAME]`](#architect-unlink-componentpathorname)
 * [`architect whoami`](#architect-whoami)
 
@@ -108,7 +109,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -126,7 +127,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -143,7 +144,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/config/view.ts)_
 
 ## `architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`
 
@@ -163,20 +164,14 @@ OPTIONS
   -h, --help                       show CLI help
   -i, --interface=interface        [default: ] Component interfaces
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
-
-  -o, --compose_file=compose_file  [default: /tmp/architect-deployment-1605113679358.yml] Path where the compose file
-                                   should be written to
-
+  -o, --compose_file=compose_file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
-
   --auto_approve
-
   --[no-]browser
-
   --[no-]build_parallel
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -196,7 +191,7 @@ OPTIONS
   --[no-]build_parallel
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -221,7 +216,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -246,7 +241,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -271,7 +266,7 @@ ALIASES
   $ architect env:destroy
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -306,7 +301,7 @@ OPTIONS
   --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -320,7 +315,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -336,7 +331,7 @@ OPTIONS
   -p, --password=password  Password
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -350,7 +345,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -373,7 +368,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -403,7 +398,7 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/platforms/create.ts)_
 
 ## `architect platforms:destroy [PLATFORM]`
 
@@ -426,7 +421,7 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -450,7 +445,32 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/register.ts)_
+
+## `architect task COMPONENT TASK`
+
+Execute a task in the given environment
+
+```
+USAGE
+  $ architect task COMPONENT TASK
+
+ARGUMENTS
+  COMPONENT  The name of the component that contains the task to execute
+  TASK       The name of the task to execute
+
+OPTIONS
+  -a, --account=account            Architect Account
+  -e, --environment=environment    Architect Environment
+  -h, --help                       show CLI help
+  -l, --local                      Deploy the stack locally instead of via Architect Cloud
+  -o, --compose_file=compose_file  Path where the compose file should be written to
+
+ALIASES
+  $ architect task:exec
+```
+
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/task.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -465,7 +485,7 @@ OPTIONS
   --all       Unlink all components registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/unlink.ts)_
 
 ## `architect whoami`
 
@@ -482,5 +502,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8-rc.12/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.7.8/src/commands/whoami.ts)_
 <!-- commandsstop -->
