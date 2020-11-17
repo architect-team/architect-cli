@@ -80,24 +80,18 @@ Name of the component that can be resolved by others. Component names must be un
 
 ## parameters
 
-(optional) A key-value store of configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
+(optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
 
-```yaml
-parameters:
-  param_key:
-    # A human-readable description
-    description: My description
-
-    # An indication of whether or not the field is required (default: false)
-    required: true
-
-    # A default value for the field if none is provided
-    default: value
-
-  # Parameters support a short-hand syntax that allows a default value to be set easily
-  param2: default-value
-```
+[Learn more about configuring parameters](/docs/configuration/parameters)
 
 ## services
 
-A dictionary of named runtimes for the component. Services are some of the most versatile entities in your `architect.yml`, so we've created a separate document outlining [how to configure services](/docs/configuration/services).
+A dictionary of named runtimes for the component. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balanced seamlessly between instances.
+
+[Learn more about configuring services](/docs/configuration/services)
+
+## interfaces
+
+A dictionary of named gateways that broker access to the services inside the component. Services inside the same component can always connect to one another via [service discovery](/docs/how-it-works/service-discovery), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications. Interfaces allow components to advertise the features that they want others to be able to connect to.
+
+[Learn more about configuring interfaces](/docs/configuration/interfaces)

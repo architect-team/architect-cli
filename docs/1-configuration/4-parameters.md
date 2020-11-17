@@ -1,5 +1,0 @@
----
-title: Parameters
----
-
-# Parameters

@@ -1,5 +1,0 @@
----
-title: Interfaces
----
-
-# Interfaces
