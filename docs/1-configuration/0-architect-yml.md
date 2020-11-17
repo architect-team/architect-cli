@@ -6,6 +6,8 @@ symlinks:
 
 # architect.yml
 
+The `architect.yml` file is the manifest file that is used to describe Architect Components. Components described using this syntax can leverage the CLI and cloud platform to provision and update production-grade environments on-demand or via automation.
+
 ```yaml
 name: account/component
 description: Human-readable description of my component
