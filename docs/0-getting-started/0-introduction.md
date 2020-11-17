@@ -11,7 +11,7 @@ The [cloud-native landscape](https://landscape.cncf.io/) is full of powerful too
 
 Architect is a self-service developer platform for cloud-native applications – enabling [continuous delivery](/docs/how-it-works/continuous-delivery), [service discovery](/docs/how-it-works/service-discovery), and [continuous security](/docs/how-it-works/continuous-security) all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
 
-# First steps
+## First steps
 
 The best way to learn how Architect works is through practice, and we've curated a simple set of steps you can follow to get you started:
 

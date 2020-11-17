@@ -8,6 +8,8 @@ Service discovery is the process by which services in an environment can be auto
 
 Service discovery is a powerful feature, and Architect makes it easier than ever for developers to take advantage of it. Instead of having to learn about the wide array of service discovery tools available on the market, developers can simply connect services together using Architects expression syntax. When Architect resolves these references, it will automatically instrument service discovery to ensure that these services can communicate in a performant way.
 
+## Utilizing service discovery
+
 ```yaml
 services:
   database:
@@ -31,7 +33,7 @@ As you can see from the above example, we've set the value of the `DATABASE_ADDR
 
 By referencing a peer service in this way, Architect is able to resolve this reference to the appropriate value based on the service discovery technology available in the target environment. Locally this might mean it resolves to a peer docker-compose service, in Kubernetes it might use the k8s embedded service discovery, or in more complex use-cases it may use a custom tool set entirely. In any case, developers no longer need to worry about the tools or processes since Architect will enrich the value for them.
 
-## Referencing service interfaces
+## Service referencing syntax
 
 It is extremely common for developers to connect to peer services and interfaces, and the `${{ services.*.interfaces.* }}` expresion context is available for exactly this purpose. Developers can reference service interfaces by name using this format, and then will have access to the following fields attached to the interface:
 

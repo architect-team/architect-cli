@@ -21,14 +21,16 @@ parameters:
   param_key: default-value
 ```
 
-## description
+## Configuration options
+
+### description
 
 A human-readable description of the parameter. Use this to inform users of what the desired value should be.
 
-## default
+### default
 
 A default value to assign to the parameter when one wasn't provided
 
-## required
+### required
 
 A boolean value indicating whether or not users are required to provide a value.

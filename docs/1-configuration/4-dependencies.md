@@ -8,6 +8,8 @@ Architect was designed with the future in mind, and the future of any team build
 
 Fortunately, the graphing and collaboration problems this creates have been solved before. We've seen it with object-oriented programming and inheritance, and even more recently with package and dependency management. All of our favorite languages have a way for developers to utilize dependencies through a resolver to handle the artifact storage, complex graphing, and de-duplication needed to manage them at-scale. Architect takes this same approach to make it easier than ever for developers to extend cloud services.
 
+## Utilizing dependencies
+
 ```yaml
 dependencies:
   architect/authentication: 1.2.1
@@ -22,7 +24,7 @@ services:
 
 Just like with your favorite package manager, developers can cite the names and versions of the components that they need to make calls to. Not only will this allow Architect to provision the dependency automatically, it will also allow developers to pin to specific versions and ensure that the APIs don't change out from under them.
 
-## Referencing dependency interfaces
+## Dependency referencing syntax
 
 We've already shown how Architect enables developers to take advantage of [service discovery](/docs/configuration/service-discovery) for connecting to peer services, and the same approach can be used to connect to the interfaces of component dependencies. Once you've specified a dependency in your component, you can reference the interfaces of said dependency using the `${{ dependencies.*.interfaces.* }}` expresion context.
 

@@ -1,37 +1,42 @@
 ---
-title: Services
+title: Tasks
 ---
 
-# Services
+# Tasks
 
-Services describe the runtimes that power your application. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balanced seamlessly between instances.
+There are some scripts and processes that support applications that don't serve traffic and aren't intended to be run as persistent services. Sometimes developers might need to execute these tasks manually at their discression, and sometimes they might want them to be run on a schedule.
+
+By defining task definitions inside Architect components, developers can make use of all the same service discovery and security benefits afforded to persistent services – making it much easier and safer to execute tasks.
 
 ```yaml
+name: account/component
+
 services:
-  my-api:
-    build:
-      context: ./path/to/docker/build/context
-      dockerfile: ./relative/to/context/Dockerfile
-    command: npm start
-    entrypoint: entrypoint override for dockerfile ENTRYPOINT
+  database:
+    image: postgres:11
     interfaces:
-      public:
-        port: 8080
-        protocol: http
-      admin: 8081
+      pg:
+        protocol: postgres
+        port: 5432
+
+tasks:
+  run-reports:
+    # run every sunday at 3am
+    schedule: 0 3 * * 0
+    build:
+      context: .
+    command: node run-reports.js
     environment:
-      DB_ADDR: rds.amazonwebservices.com/db-name
-      DB_USER: postgres
-      DB_PASS: password
-    debug:
-      command: npm run dev
-      volumes:
-        src:
-          host_path: ./src/
-          mount_path: /usr/app/src/
+      DB_ADDR: ${{ services.database.interfaces.pg.url }}
 ```
 
 ## Configuration options
+
+### schedule
+
+A cron string indicating the schedule at which the task will run. Architect will ensure the cron jobs are instrumented correctly regardless of where the task is deployed.
+
+_Note: the schedule is ignored when running locally since the environments are temporary and primarily used for debugging. To test your tasks, [try executing them manually](#manual-execution)_
 
 ### build
 
@@ -61,30 +66,6 @@ _This field cannot be used in conjunction with the `build` field_
 ### entrypoint
 
 (optional) A string or string[] specifying the entrypoint to be used to start up the service inside the container. If no value is specified, the default `ENTRYPOINT` from the associated image will be used.
-
-### interfaces
-
-A dictionary containing a set of named interfaces that the service listens for requests on. Each interface must at minimum specify the port it is listening for requests on.
-
-```yaml
-interfaces:
-  public:
-    # (required) Port that the service is listening for traffic on
-    port: 8080
-
-    # Protocol that the interface responds to (default: http)
-    protocol: http
-
-    # The host address of an existing service to use instead of provisioning a new one
-    host: rds.amazonwebservices.com
-```
-
-Since many services use http for traffic, interfaces also support a simple short-hand for specifying the service port:
-
-```yaml
-interfaces:
-  public: 8080
-```
 
 ### environment
 
@@ -137,3 +118,13 @@ debug:
       host_path: ./src/
       mount_path: /usr/app/src/
 ```
+
+## Manual execution
+
+Anyone with access to an environment that includes a task will be able to execute it manually with Architect's CLI using the following command:
+
+```yaml
+$ architect task:exec account/component run-reports --account="my-account" --environment="my-environment"
+```
+
+`account/component` is the name of the component that contains the task, `run-reports` is the name of the task to execute, and the `--account` and `--environment` fields are used to target an environment that contains an instance of the component.

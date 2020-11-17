@@ -20,10 +20,12 @@ interfaces:
   public: ${{ services['my-service'].interfaces.api.url }}
 ```
 
-## url
+## Configuration options
+
+### url
 
 The address that the interface brokers traffic to. This will usually be a reference to a service interface inside the component.
 
-## description
+### description
 
 (optional) A human-readable description of the interface that informs users of what it should be used for.
