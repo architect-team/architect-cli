@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer/decorators';
-import { ArrayUnique, IsArray, IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
+import { ArrayUnique, IsArray, IsEmpty, IsNotEmpty, IsOptional, IsString, IsUrl, ValidateIf } from 'class-validator';
 import { ValidatableConfig } from '../base-spec';
 
 export class InterfaceSpecV1 extends ValidatableConfig {
@@ -28,6 +28,9 @@ export class InterfaceSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   url?: string;
 
+  @IsEmpty({
+    groups: ['developer'],
+  })
   @IsOptional({ always: true })
   @IsArray({ always: true })
   @ArrayUnique({ always: true })

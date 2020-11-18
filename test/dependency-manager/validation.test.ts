@@ -711,7 +711,7 @@ describe('validation spec v1', () => {
       const built_env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
       expect(built_env_config.getComponents()['examples/hello-world'].getExtends()).eq('examples/hello-world:1.00');
     });
-  })
+  });
 
   it('validate that custom domain values are unique', async () => {
     const component_config = `
@@ -751,6 +751,40 @@ describe('validation spec v1', () => {
         "arrayUnique": "All domains's elements must be unique",
         "value": "valid-domain.net,valid-domain.net",
         "line": 7,
+        "column": 16
+      }
+    });
+  });
+
+  it('a custom domain cannot be specified in the component config', async () => {
+    const component_config = `
+    name: test/component
+    services:
+      api:
+        interfaces:
+          main:
+            port: 8080
+    interfaces:
+      main:
+        url: \${{ services.api.interfaces.main.url }}
+        domains:
+          - api.staging.architest.dev
+    `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    let validation_err;
+    try {
+      await ComponentConfigBuilder.buildFromPath('/component.yml');
+    } catch (err) {
+      validation_err = err;
+    }
+    expect(validation_err).instanceOf(ValidationErrors)
+    expect(validation_err.errors).to.deep.eq({
+      "interfaces.main.domains": {
+        "isEmpty": "domains must be empty",
+        "value": "api.staging.architest.dev",
+        "line": 11,
         "column": 16
       }
     });
