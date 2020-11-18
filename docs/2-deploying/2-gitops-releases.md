@@ -53,6 +53,40 @@ The last step of your GitOps workflow is to finally get your code into productio
 
 The workflows below will first register the component with a tag matching the name of the new release. Then they will deploy the new component tag to an environment named `production`. Obviously production is intended to be persistent, so you'll have to create the environment in advance.
 
-### Github actions
+### Github Actions
 
-TODO
+```yaml
+name: Deploy release
+
+env:
+  ARCHITECT_EMAIL: # Pass into job - don't hardcode
+  ARCHITECT_PASSWORD: # Pass into job - don't hardcode
+  ARCHITECT_ACCOUNT: test
+
+on:
+  release:
+    types:
+      - published
+    branches:
+      - master
+    tags:
+      - v*.*.*
+
+jobs:
+  architect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: tests
+        run: echo "Run your tests here"
+      - name: login
+        run: architect login # credentials provided by envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
+      - name: Tag architect component
+        run: architect register --tag ${{ github.event.release.tag_name }} ./architect.yml
+      - name: deploy to production
+        run: |
+          architect deploy \
+            --environment production \
+            --auto_approve \
+            examples/my-component:${{ github.event.release.tag_name }}
+```

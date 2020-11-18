@@ -28,7 +28,7 @@ services:
 Deploying will fail prompting us to provide a parameter:
 
 ```sh
-$ architect register -c architect.yml -a <account-name>
+$ architect register -c architect.yml
 $ architect deploy examples/component:latest -a <account-name> -e <environment-name>
  »   Error: {
  »     "components.examples/component.parameters.secret_key": {
