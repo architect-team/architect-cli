@@ -36,7 +36,7 @@ Alternatively, you can download the binary for your system architecture from [Gi
 
 In order to help you get familiar with Architect, we've created several [example applications](//github.com/architect-team/architect-cli/tree/master/examples) for you to experiement with. In this walk through, we'll use the react demo application which comes with a frontend Next.js app, a backend Node.js API, and a postgres database – all of which will be deployed automatically via Architect:
 
-![react-demo-screenshot](/images/docs/getting-started/introduction/react-demo.png)
+![react-demo-screenshot](./images/introduction-react-demo.png)
 
 ### Clone the repository
 

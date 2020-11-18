@@ -8,9 +8,9 @@ One of the largest benefits of Architects framework is that provisioning new env
 
 What this means is that not only can developers run the stack privately, but the stack can also be provisioned automatically whenever there is a new branch or pull request. This automation is perfect for creating _previews_ of impending code changes so that product managers can review and integration tests can be run end to end.
 
-## Github Actions
+## Create preview environment
 
-### Create preview environment
+### Github Actions
 
 The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `EMAIL`, `PASSWORD`, `ACCOUNT`, `PLATFORM`, and `COMPONENT_NAME`.
 
@@ -39,7 +39,15 @@ jobs:
           component_name: ${{ secrets.COMPONENT_NAME }}
 ```
 
-### Cleanup preview environment
+### CircleCI
+
+CircleCI doesn't support triggers based on pull request, so we'd recommend a branch based strategy to trigger preview environments. Any branches prefixed with `preview-` will trigger the creation of an associated preview environment.
+
+TODO
+
+## Cleanup preview environment
+
+### Github Actions
 
 You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close:
 
@@ -68,7 +76,7 @@ jobs:
           component_name: ${{ secrets.COMPONENT_NAME }}
 ```
 
-## CircleCI
+### CircleCI
 
 CircleCI doesn't support triggers based on pull request, so we'd recommend a branch based strategy to trigger preview environments. Any branches prefixed with `preview-` will trigger the creation of an associated preview environment.
 
