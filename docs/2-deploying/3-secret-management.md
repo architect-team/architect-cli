@@ -13,7 +13,7 @@ Secrets can be set at the account or environment scope and will only be read at 
 We want to deploy a component with a sensitive parameter `secret_key`:
 ```yaml
 # architect.yml
-name: example/component
+name: examples/component
 parameters:
   secret_key:
     required: true
@@ -25,7 +25,7 @@ services:
 Deploying will fail prompting us to provide a parameter:
 ```sh
 $ architect register -c architect.yml -a <account-name>
-$ architect deploy example/component:latest -a <account-name> -e <environment-name>
+$ architect deploy examples/component:latest -a <account-name> -e <environment-name>
  »   Error: {
  »     "components.examples/component.parameters.secret_key": {
  »       "Required": "secret_key is required",
@@ -38,6 +38,6 @@ To utilize the Architect secret manager navigate to your account or environment 
 
 Now that we added our secret the deploy should work without issue:
 ```sh
-$ architect deploy example/component:latest -a <account-name> -e <environment-name>
+$ architect deploy examples/component:latest -a <account-name> -e <environment-name>
  » Deploying...
 ```
