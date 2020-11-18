@@ -12,6 +12,8 @@ What this means is that not only can developers run the stack privately, but the
 
 ### Create preview environment
 
+The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `EMAIL`, `PASSWORD`, `ACCOUNT`, `PLATFORM`, and `COMPONENT_NAME`.
+
 ```yaml
 name: Architect Create Preview
 
@@ -38,6 +40,8 @@ jobs:
 ```
 
 ### Cleanup preview environment
+
+You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close:
 
 ```yaml
 name: Architect Destroy Preview
