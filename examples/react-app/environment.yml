@@ -1,6 +1,0 @@
-interfaces:
-  app: ${{ components['examples/react-app'].interfaces.app.url }}
-  api: ${{ components['examples/react-app'].interfaces.api.url }}
-
-components:
-  examples/react-app: file:./architect.yml

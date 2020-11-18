@@ -1,65 +1,72 @@
 name: examples/react-app
-author: Architect.io
+description: |
+  Example component that includes a Next.js frontend, Node.js backend, and a postgres database.
+keywords:
+  - react
+  - next.js
+  - express
+  - postgres
 
 interfaces:
   app: ${{ services.app.interfaces.main.url }}
-  api: ${{ services.api.interfaces.main.url }}
 
 parameters:
   world_text:
     description: Default greeting text for the landing page
     default: world
+  root_db_user:
+    description: Root user to assign to the generated database
+    default: postgres
+  root_db_pass:
+    description: Root password to assign to the generated database
+    default: architect
+  api_db_name:
+    description: Name of the database used by the API
+    default: test_database
 
 services:
-  app:
-    build:
-      context: ./frontend
-    description: Example react application
-    language: node
-    interfaces:
-      main: 8080
-    environment:
-      INTERNAL_HOST: ${{ services.app.interfaces.main.host }}
-      INTERNAL_PORT: ${{ services.app.interfaces.main.port }}
-      API_ADDR: ${{ interfaces.api.url }}
-      WORLD_TEXT: ${{ parameters.world_text }}
-    debug:
-      build:
-        dockerfile: Dockerfile.dev
-      command: npm run dev
-      volumes:
-        src:
-          mount_path: /usr/src/app/src
-          host_path: ./frontend/src
-
   api-db:
     image: postgres:11
     interfaces:
-      postgres: 5432
+      postgres:
+        port: 5432
+        protocol: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: architect
-      POSTGRES_DB: test_database
+      POSTGRES_USER: ${{ parameters.root_db_user }}
+      POSTGRES_PASSWORD: ${{ parameters.root_db_pass }}
+      POSTGRES_DB: ${{ parameters.api_db_name }}
 
   api:
     build:
       context: ./backend
-    language: node
     interfaces:
       main: 8080
     environment:
-      INTERNAL_HOST: ${{ services.api.interfaces.main.host }}
-      INTERNAL_PORT: ${{ services.api.interfaces.main.port }}
-      POSTGRES_HOST: ${{ services.api-db.interfaces.postgres.host }}
-      POSTGRES_PORT: ${{ services.api-db.interfaces.postgres.port }}
-      POSTGRES_USER: ${{ services.api-db.environment.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ services.api-db.environment.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ services.api-db.environment.POSTGRES_DB }}
+      PORT: 8080
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
+      DB_USER: ${{ parameters.root_db_user }}
+      DB_PASS: ${{ parameters.root_db_pass }}
+      DB_NAME: ${{ parameters.api_db_name }}
     debug:
-      build:
-        dockerfile: Dockerfile.dev
       command: npm run start:dev
       volumes:
         src:
           mount_path: /usr/src/app/src
           host_path: ./backend/src
+
+  app:
+    build:
+      context: ./frontend
+    interfaces:
+      main: 8080
+    environment:
+      PORT: ${{ services.app.interfaces.main.port }}
+      API_ADDR: ${{ services.api.interfaces.main.url }}
+      WORLD_TEXT: ${{ parameters.world_text }}
+    debug:
+      build:
+        dockerfile: Dockerfile.dev
+      volumes:
+        src:
+          mount_path: /usr/src/app/src
+          host_path: ./frontend/src
