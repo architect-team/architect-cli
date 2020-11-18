@@ -39,12 +39,6 @@ jobs:
           component_name: ${{ secrets.COMPONENT_NAME }}
 ```
 
-### CircleCI
-
-CircleCI doesn't support triggers based on pull request, so we'd recommend a branch based strategy to trigger preview environments. Any branches prefixed with `preview-` will trigger the creation of an associated preview environment.
-
-TODO
-
 ## Cleanup preview environment
 
 ### Github Actions
@@ -75,9 +69,3 @@ jobs:
           environment: preview-${{ github.event.number }}
           component_name: ${{ secrets.COMPONENT_NAME }}
 ```
-
-### CircleCI
-
-CircleCI doesn't support triggers based on pull request, so we'd recommend a branch based strategy to trigger preview environments. Any branches prefixed with `preview-` will trigger the creation of an associated preview environment.
-
-TODO
