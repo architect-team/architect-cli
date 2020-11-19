@@ -88,6 +88,12 @@ A dictionary of named runtimes for the component. Each service described in an `
 
 [Learn more about configuring services](/docs/configuration/services)
 
+### tasks
+
+A dictionary of named tasks included with the component. Each task described in an `architect.yml` file will run on its specified schedule and/or be made available as an executable via Architects CLI upon deployment.
+
+[Learn more about configuring tasks](/docs/configuration/tasks)
+
 ### interfaces
 
 A dictionary of named gateways that broker access to the services inside the component. Services inside the same component can always connect to one another via [service discovery](/docs/how-it-works/service-discovery), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications. Interfaces allow components to advertise the features that they want others to be able to connect to.
