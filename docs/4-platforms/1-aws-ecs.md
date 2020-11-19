@@ -64,13 +64,13 @@ Select the blue "Create policy" button at the top of the page to create the requ
 
 On the "Create policy" page, select the JSON editor. This is where the previously-generated policy will be used. Be sure that you have replaced the defaults `my_region` and `my_account_id` with real values. Clear any existing JSON, then paste the policy into the JSON editor. Select the blue "Review policy" button at the bottom of the page to review the policy that will be created.
 
-![create-policy-json-editor-filled](./images/create-policy-json-editor-filled)
+![create-policy-json-editor-filled](./images/create-policy-json-editor-filled.png)
 
 #### Finish policy creation
 
 On the "Review policy" page, add a policy name then select "Create policy" at the bottom right. You should have been taken back to the policy list page and there should be a message indicating successful policy creation at the top. You can now take this policy and add it to your IAM user.
 
-![review-policy](./images/review-policy)
+![review-policy](./images/review-policy.png)
 
 ## Using a custom domain with an Architect ECS platform
 
