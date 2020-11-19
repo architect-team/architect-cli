@@ -50,7 +50,7 @@ your account. An example policy can be found [here](https://api.architect.io/acc
 
 #### Navigate to the IAM Dashboard
 
-To add the IAM policy to your account, log in to the AWS console and navigate to the IAM dashboard at https://console.aws.amazon.com/iam/home?region=&lt;your_target_region&gt;#/home. `your_target_region` should be the same region that you plan to use to register your ECS platform with Architect (ex. us-east-2).
+To add the IAM policy to your account, log in to the AWS console and navigate to the IAM dashboard at https://console.aws.amazon.com/iam/home?region=your_target_region#/home. `your_target_region` should be the same region that you plan to use to register your ECS platform with Architect (ex. us-east-2).
 
 ![iam-dashboard](./images/iam-dashboard.png)
 
