@@ -6,7 +6,7 @@ title: AWS
 
 ## What services does Architect use?
 
-TODO: A list of services we use on AWS. Ideally we'd use a sample app and show what would be provisioned in graph format.
+TODO: A list of services we use on AWS. Ideally we'd use a sample app and show what would be provisioned in graph format. Create the sample app and represent it with the graph. Also make sure that the public docs link resolves, currently getting a 401
 
 Architect deployments to the AWS ECS platform type will create a variety of services on your behalf in the availability zone provided when the platform was first created. Some resources may or may not be created depending on the components being deployed. Resources created include:
 
