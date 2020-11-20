@@ -152,8 +152,8 @@ cpu: 1
 memory: 2GB
 ```
 
-##### Note for ECS platforms only:
-###### When deploying to platforms of type ECS, there are constraints in the underlying provider that require `cpu` and `memory` to be correlated. In the table below you can find the required memory values for a given vCPU value. See [underlying ECS constraints here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html).
+**Note for ECS platforms only:**
+When deploying to platforms of type ECS, there are constraints in the underlying provider that require `cpu` and `memory` to be correlated. In the table below you can find the required memory values for a given vCPU value. See [underlying ECS constraints here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html).
 
 | cpu | memory |
 | ----- | ----------- |
