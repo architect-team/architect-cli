@@ -5,7 +5,7 @@ describe('Refs url_safe_ref', () => {
 
   const component_account_name = 'architect';
   const component_name = 'fusionauth';
-  const service_name = 'api-db';
+  const resource_name = 'api-db';
 
   const environment_account_name = 'community';
   const environment_name = 'staging';
@@ -30,16 +30,16 @@ describe('Refs url_safe_ref', () => {
   });
 
   it(`Refs.url_safe_ref works for service_slug`, async () => {
-    const service_slug = `${component_account_name}/${component_name}/${service_name}`;
-    const expected_slug = `${component_account_name}--${component_name}--${service_name}--k3l7sgnt`;
+    const service_slug = `${component_account_name}/${component_name}/${resource_name}`;
+    const expected_slug = `${component_account_name}--${component_name}--${resource_name}--k3l7sgnt`;
 
     const url_safe_ref = Refs.url_safe_ref(service_slug);
     expect(url_safe_ref).to.equal(expected_slug);
   });
 
   it(`Refs.url_safe_ref works for service_version_slug`, async () => {
-    const service_version_slug = `${component_account_name}/${component_name}/${service_name}:${tag}`;
-    const expected_slug = `${component_account_name}--${component_name}--${service_name}--${transformed_tag}--uwr37fwm`;
+    const service_version_slug = `${component_account_name}/${component_name}/${resource_name}:${tag}`;
+    const expected_slug = `${component_account_name}--${component_name}--${resource_name}--${transformed_tag}--uwr37fwm`;
 
     const url_safe_ref = Refs.url_safe_ref(service_version_slug);
     expect(url_safe_ref).to.equal(expected_slug);

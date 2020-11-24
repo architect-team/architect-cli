@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 export type ArchitectSlug = string; // a string that passes Slugs.ArchitectSlugValidator (ie "account-name")
 export type ComponentTag = string; // "tag"
 
@@ -23,15 +24,22 @@ export class Slugs {
   public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
 }
 
-export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'gateway' | 'interfaces';
+export type SlugKind = 'component' | 'component_version' | 'resource' | 'resource_version' | 'environment' | 'gateway' | 'interfaces';
 export interface ParsedSlug {
-  kind: SlugKind;
+  kind?: SlugKind;
   component_account_name?: string;
   component_name?: string;
-  service_name?: string;
+  resource_name?: string;
   tag?: string;
   environment_account_name?: string;
   environment_name?: string;
+}
+
+export abstract class SlugUtils {
+  public static Description: string;
+  public static Validator: RegExp;
+  public static parse: (slug: string) => ParsedSlug;
+  public static build: (obj: ParsedSlug) => string;
 }
 
 export type ComponentSlug = string; // "<account-name>/<component-name>"
@@ -39,12 +47,6 @@ export interface ParsedComponentSlug extends ParsedSlug {
   kind: 'component';
   component_account_name: string;
   component_name: string;
-}
-
-export abstract class SlugUtils {
-  public static Description: string;
-  public static Validator: RegExp;
-  public static parse: Function;
 }
 
 export class ComponentSlugUtils extends SlugUtils {
@@ -56,8 +58,11 @@ export class ComponentSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, component_name: string): ComponentSlug => {
-    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}`;
+  public static build = (obj: ParsedSlug): ComponentSlug => {
+    if (!obj.component_account_name || !obj.component_name) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have fields required to build a ComponentSlug`);
+    }
+    return `${obj.component_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.component_name}`;
   };
 
   public static parse = (slug: ComponentSlug): ParsedComponentSlug => {
@@ -91,8 +96,11 @@ export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentVersionSlugUtils.RegexBase}$`);
 
-  public static build = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG): ComponentVersionSlug => {
-    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}`;
+  public static build = (obj: ParsedSlug): ComponentVersionSlug => {
+    if (!obj.component_account_name || !obj.component_name || !obj.tag) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have the fields required to build a ComponentVersionSlugUtils`);
+    }
+    return `${obj.component_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.component_name}${Slugs.TAG_DELIMITER}${obj.tag}`;
   };
 
   public static parse = (slug: ComponentVersionSlug): ParsedComponentVersionSlug => {
@@ -114,70 +122,76 @@ export class ComponentVersionSlugUtils extends SlugUtils {
   };
 }
 
-export type ServiceSlug = string; // "account-name/component-name/service-name"
-export interface ParsedServiceSlug extends ParsedSlug {
-  kind: 'service';
+export type ResourceSlug = string; // "account-name/component-name/resource-name"
+export interface ParsedResourceSlug extends ParsedSlug {
+  kind: 'resource';
   component_account_name: string;
   component_name: string;
-  service_name: string;
+  resource_name: string;
 }
-export class ServiceSlugUtils extends SlugUtils {
+export class ResourceSlugUtils extends SlugUtils {
 
-  public static Description = 'must be of the form <account-name>/<component-name>/<service-name>';
+  public static Description = 'must be of the form <account-name>/<component-name>/<resource-name>';
   public static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
-  public static Validator = new RegExp(`^${ServiceSlugUtils.RegexBase}$`);
+  public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, component_name: string, service_name: string): ServiceSlug => {
-    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}`;
+  public static build = (obj: ParsedSlug): ResourceSlug => {
+    if (!obj.component_account_name || !obj.component_name || !obj.resource_name) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have the fields required to build a ResourceSlug`);
+    }
+    return `${obj.component_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.component_name}${Slugs.NAMESPACE_DELIMITER}${obj.resource_name}`;
   };
 
-  public static parse = (slug: ServiceSlug): ParsedServiceSlug => {
-    if (!ServiceSlugUtils.Validator.test(slug)) {
-      throw new Error(ServiceSlugUtils.Description);
+  public static parse = (slug: ResourceSlug): ParsedResourceSlug => {
+    if (!ResourceSlugUtils.Validator.test(slug)) {
+      throw new Error(ResourceSlugUtils.Description);
     }
-    const [account_name, component_name, service_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
+    const [account_name, component_name, resource_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
-      kind: 'service',
+      kind: 'resource',
       component_account_name: account_name,
       component_name: component_name,
-      service_name: service_name,
+      resource_name: resource_name,
     };
   };
 }
 
-export type ServiceVersionSlug = string; // "<account-name>/<component-name>/<service-name>:<tag>"
-export interface ParsedServiceVersionSlug extends ParsedSlug {
-  kind: 'service_version';
+export type ResourceVersionSlug = string; // "<account-name>/<component-name>/<resource-name>:<tag>"
+export interface ParsedResourceVersionSlug extends ParsedSlug {
+  kind: 'resource_version';
   component_account_name: string;
   component_name: string;
-  service_name: string;
+  resource_name: string;
   tag: string;
 }
-export class ServiceVersionSlugUtils extends SlugUtils {
+export class ResourceVersionSlugUtils extends SlugUtils {
 
-  public static Description = 'must be of the form <account-name>/<component-name>/<service-name>:<tag>';
-  public static RegexBase = `${ServiceSlugUtils.RegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
-  public static Validator = new RegExp(`^${ServiceVersionSlugUtils.RegexBase}$`);
+  public static Description = 'must be of the form <account-name>/<component-name>/<resource-name>:<tag>';
+  public static RegexBase = `${ResourceSlugUtils.RegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}`;
+  public static Validator = new RegExp(`^${ResourceVersionSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, component_name: string, service_name: string, tag: string): ServiceVersionSlug => {
-    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.TAG_DELIMITER}${tag}`;
+  public static build = (obj: ParsedSlug): ResourceVersionSlug => {
+    if (!obj.component_account_name || !obj.component_name || !obj.resource_name || !obj.tag) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have the fields required to build a ResourceVersionSlug`);
+    }
+    return `${obj.component_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.component_name}${Slugs.NAMESPACE_DELIMITER}${obj.resource_name}${Slugs.TAG_DELIMITER}${obj.tag}`;
   };
 
-  public static parse = (slug: ServiceVersionSlug): ParsedServiceVersionSlug => {
-    if (!ServiceVersionSlugUtils.Validator.test(slug)) {
-      throw new Error(ServiceVersionSlugUtils.Description);
+  public static parse = (slug: ResourceVersionSlug): ParsedResourceVersionSlug => {
+    if (!ResourceVersionSlugUtils.Validator.test(slug)) {
+      throw new Error(ResourceVersionSlugUtils.Description);
     }
-    const [service_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
+    const [resource_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
     }
-    const { component_account_name, component_name, service_name } = ServiceSlugUtils.parse(service_slug);
+    const { component_account_name, component_name, resource_name } = ResourceSlugUtils.parse(resource_slug);
 
     return {
-      kind: 'service_version',
+      kind: 'resource_version',
       component_account_name,
       component_name,
-      service_name,
+      resource_name,
       tag,
     };
   };
@@ -195,8 +209,11 @@ export class EnvironmentSlugUtils extends SlugUtils {
   public static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
   public static Validator = new RegExp(`^${EnvironmentSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, environment_name: string): EnvironmentSlug => {
-    return `${account_name}${Slugs.NAMESPACE_DELIMITER}${environment_name}`;
+  public static build = (obj: ParsedSlug): EnvironmentSlug => {
+    if (!obj.environment_account_name || !obj.environment_name) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have the fields required to build a EnvironmentSlug`);
+    }
+    return `${obj.environment_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.environment_name}`;
   };
 
   public static parse = (slug: EnvironmentSlug): ParsedEvironmentSlug => {
@@ -226,8 +243,11 @@ export class InterfaceSlugUtils extends SlugUtils {
   public static RegexBase = `${ComponentVersionSlugUtils.RegexNoMaxLength}${InterfaceSlugUtils.Suffix}`;
   public static Validator = new RegExp(`^${InterfaceSlugUtils.RegexBase}$`);
 
-  public static build = (component_account_name: string, component_name: string, tag: string): InterfaceSlug => {
-    return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}${InterfaceSlugUtils.Suffix}`;
+  public static build = (obj: ParsedSlug): InterfaceSlug => {
+    if (!obj.component_account_name || !obj.component_name || !obj.tag) {
+      throw new Error(`Object ${JSON.stringify(obj)} does not have the fields required to build a InterfaceSlug`);
+    }
+    return `${obj.component_account_name}${Slugs.NAMESPACE_DELIMITER}${obj.component_name}${Slugs.TAG_DELIMITER}${obj.tag}${InterfaceSlugUtils.Suffix}`;
   };
 
   public static parse = (slug: InterfaceSlug): ParsedInterfacesSlug => {
@@ -255,7 +275,7 @@ export class GatewaySlugUtils extends SlugUtils {
   public static Description = 'must be \'gateway\'';
   public static Validator = new RegExp(`^${GatewaySlugUtils.StringLiteral}$`);
 
-  public static build = (): GatewaySlug => {
+  public static build = (_: ParsedSlug): GatewaySlug => {
     return `gateway`;
   };
 
@@ -266,5 +286,32 @@ export class GatewaySlugUtils extends SlugUtils {
     return {
       kind: 'gateway',
     };
+  };
+}
+
+export class SlugParser {
+
+  // order matters here, this should be in order from most specific to least specific; opposite of below
+  public static parse = (slug: string): ParsedSlug => {
+    try { return InterfaceSlugUtils.parse(slug); } catch { }
+    try { return GatewaySlugUtils.parse(slug); } catch { }
+    try { return EnvironmentSlugUtils.parse(slug); } catch { }
+    try { return ResourceVersionSlugUtils.parse(slug); } catch { }
+    try { return ResourceSlugUtils.parse(slug); } catch { }
+    try { return ComponentVersionSlugUtils.parse(slug); } catch { }
+    try { return ComponentSlugUtils.parse(slug); } catch { }
+    throw new Error(`Slug ${slug} could not be parsed into any meaningful Architect entity`);
+  };
+
+  // order matters here, this should be in order from least specific to most specific; opposite of above
+  public static build = (obj: ParsedSlug): string => {
+    try { return ComponentSlugUtils.build(obj); } catch { }
+    try { return ComponentVersionSlugUtils.build(obj); } catch { }
+    try { return ResourceSlugUtils.build(obj); } catch { }
+    try { return ResourceVersionSlugUtils.build(obj); } catch { }
+    try { return EnvironmentSlugUtils.build(obj); } catch { }
+    try { return GatewaySlugUtils.build(obj); } catch { }
+    try { return InterfaceSlugUtils.build(obj); } catch { }
+    throw new Error(`Object ${obj} could not be built into any meaningful Architect slug`);
   };
 }

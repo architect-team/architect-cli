@@ -6,6 +6,7 @@ import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
+import { SlugParser } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
 
 export default class TaskExec extends Command {
@@ -38,7 +39,7 @@ export default class TaskExec extends Command {
   static args = [
     {
       name: 'component',
-      description: 'The name of the component that contains the task to execute',
+      description: 'The name of the component that contains the task to execute: account/component:tag',
       required: true,
     },
     {
@@ -74,6 +75,10 @@ export default class TaskExec extends Command {
 
     let service_name;
     try {
+      console.log('trying to find:');
+      console.log(args.component);
+      console.log('in:');
+      console.log(compose.services);
       service_name = Object.keys(compose.services).find(k => k.includes(args.component) && k.includes(args.task));
     } catch (err) {
       throw new Error(`Could not find ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
@@ -96,7 +101,8 @@ export default class TaskExec extends Command {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
 
     cli.action.start(chalk.blue(`Kicking off task ${args.component}/${args.task} in ${flags.environment}...`));
-    const res = await this.app.api.post(`/environments/${environment.id}/components/${args.component}/tasks/${args.task}/exec`);
+    const parsed_slug = SlugParser.parse(args.component);
+    const res = await this.app.api.post(`/environments/${environment.id}/exec`, parsed_slug);
     cli.action.stop();
 
     this.log(chalk.green(`Successfully kicked off task. ${environment.platform.type.toLowerCase()} reference= ${res.data}`));

@@ -1,5 +1,5 @@
 import { Dictionary } from '../../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ResourceVersionSlug, ResourceVersionSlugUtils } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
@@ -49,12 +49,14 @@ export abstract class ComponentConfig extends BaseConfig {
     return ComponentVersionSlugUtils.parse(this.getRef()).tag;
   }
 
-  getServiceRef(service_name: string): ServiceVersionSlug {
+  getServiceRef(service_name: string): ResourceVersionSlug {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    return ResourceVersionSlugUtils.build({ ...parsed, resource_name: service_name });
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {
+    console.log('#getServiceByRef() service_ref: ');
+    console.log(service_ref);
     if (service_ref.startsWith(this.getName())) {
       const [service_name, component_tag] = service_ref.substr(this.getName().length + 1).split(':');
       if (component_tag === this.getComponentVersion()) {
@@ -63,12 +65,14 @@ export abstract class ComponentConfig extends BaseConfig {
     }
   }
 
-  getTaskRef(task_name: string): ServiceVersionSlug {
+  getTaskRef(task_name: string): ResourceVersionSlug {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, task_name, parsed.tag);
+    return ResourceVersionSlugUtils.build({ ...parsed, resource_name: task_name });
   }
 
   getTaskByRef(task_ref: string): TaskConfig | undefined {
+    console.log('#getTaskByRef() task_ref: ');
+    console.log(task_ref);
     if (task_ref.startsWith(this.getName())) {
       const [task_name, component_tag] = task_ref.substr(this.getName().length + 1).split(':');
       if (component_tag === this.getComponentVersion()) {

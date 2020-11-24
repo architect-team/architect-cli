@@ -1,19 +1,19 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, InterfaceSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, InterfaceSlugUtils, ResourceSlugUtils, ResourceVersionSlugUtils } from '../../../src/dependency-manager/src/utils/slugs';
 
 describe('slug validators', () => {
 
   const component_account_name = 'architect';
   const component_name = 'fusionauth';
-  const service_name = 'api-db';
+  const resource_name = 'api-db';
   const tag = '1.0.0';
   const environment_account_name = 'community';
   const environment_name = 'staging';
 
   const component_slug = `${component_account_name}/${component_name}`;
   const component_version_slug = `${component_account_name}/${component_name}:${tag}`;
-  const service_slug = `${component_account_name}/${component_name}/${service_name}`;
-  const service_version_slug = `${component_account_name}/${component_name}/${service_name}:${tag}`;
+  const resource_slug = `${component_account_name}/${component_name}/${resource_name}`;
+  const resource_version_slug = `${component_account_name}/${component_name}/${resource_name}:${tag}`;
   const interface_slug = `${component_account_name}/${component_name}:${tag}-interfaces`;
   const environment_slug = `${environment_account_name}/${environment_name}`;
 
@@ -22,8 +22,8 @@ describe('slug validators', () => {
 
   const invalid_component_slug = `${invalid_slug}/${component_name}`;
   const invalid_component_version_slug = `${component_account_name}/${component_name}:${invalid_tag}`;
-  const invalid_service_slug = `${component_account_name}/${component_name}/${invalid_slug}`;
-  const invalid_service_version_slug = `${component_account_name}/${component_name}/${service_name}:${invalid_tag}`;
+  const invalid_resource_slug = `${component_account_name}/${component_name}/${invalid_slug}`;
+  const invalid_resource_version_slug = `${component_account_name}/${component_name}/${resource_name}:${invalid_tag}`;
   const invalid_interface_slug = `${component_account_name}/${component_name}:${tag}-notinterfaces`;
   const invalid_environment_slug = `@${invalid_slug}/${environment_name}`;
 
@@ -32,7 +32,7 @@ describe('slug validators', () => {
     expect(result.kind).to.equal('component');
     expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.be.undefined;
+    expect(result.resource_name).to.be.undefined;
     expect(result.environment_name).to.be.undefined;
     expect(result.environment_account_name).to.be.undefined;
     expect(result.tag).to.be.undefined;
@@ -47,7 +47,7 @@ describe('slug validators', () => {
     expect(result.kind).to.equal('component_version');
     expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.be.undefined;
+    expect(result.resource_name).to.be.undefined;
     expect(result.environment_name).to.be.undefined;
     expect(result.environment_account_name).to.be.undefined;
     expect(result.tag).to.equal(tag);
@@ -57,34 +57,34 @@ describe('slug validators', () => {
     expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>`);
   });
 
-  it(`ServiceSlugUtils.parse accurately splits ${service_slug}`, async () => {
-    const result = ServiceSlugUtils.parse(service_slug);
-    expect(result.kind).to.equal('service');
+  it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
+    const result = ResourceSlugUtils.parse(resource_slug);
+    expect(result.kind).to.equal('resource');
     expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.equal(service_name);
+    expect(result.resource_name).to.equal(resource_name);
     expect(result.environment_name).to.be.undefined;
     expect(result.environment_account_name).to.be.undefined;
     expect(result.tag).to.be.undefined;
   });
 
-  it(`ServiceSlugUtils.parse throws exception on ${invalid_service_slug}`, async () => {
-    expect(() => ServiceSlugUtils.parse(invalid_service_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>`);
+  it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
+    expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>`);
   });
 
-  it(`ServiceVersionSlugUtils.parse accurately splits ${service_version_slug}`, async () => {
-    const result = ServiceVersionSlugUtils.parse(service_version_slug);
-    expect(result.kind).to.equal('service_version');
+  it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {
+    const result = ResourceVersionSlugUtils.parse(resource_version_slug);
+    expect(result.kind).to.equal('resource_version');
     expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.equal(service_name);
+    expect(result.resource_name).to.equal(resource_name);
     expect(result.environment_name).to.be.undefined;
     expect(result.environment_account_name).to.be.undefined;
     expect(result.tag).to.equal(tag);
   });
 
-  it(`ServiceVersionSlugUtils.parse throws exception on ${invalid_service_version_slug}`, async () => {
-    expect(() => ServiceVersionSlugUtils.parse(invalid_service_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>:<tag>`);
+  it(`ResourceVersionSlugUtils.parse throws exception on ${invalid_resource_version_slug}`, async () => {
+    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>:<tag>`);
   });
 
   it(`EnvironmentSlugUtils.parse accurately splits ${environment_slug}`, async () => {
@@ -92,7 +92,7 @@ describe('slug validators', () => {
     expect(result.kind).to.equal('environment');
     expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.be.undefined;
-    expect(result.service_name).to.be.undefined;
+    expect(result.resource_name).to.be.undefined;
     expect(result.environment_name).to.equal(environment_name);
     expect(result.environment_account_name).to.equal(environment_account_name);
     expect(result.tag).to.be.undefined;
@@ -107,13 +107,13 @@ describe('slug validators', () => {
     expect(result.kind).to.equal('interfaces');
     expect(result.component_account_name).to.equal(component_account_name);
     expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.be.undefined;
+    expect(result.resource_name).to.be.undefined;
     expect(result.environment_name).to.be.undefined;
     expect(result.environment_account_name).to.be.undefined;
     expect(result.tag).to.equal(tag);
   });
 
-  it(`splitServiceInstanceSlug throws exception on ${invalid_interface_slug}`, async () => {
+  it(`InterfaceSlugUtils throws exception on ${invalid_interface_slug}`, async () => {
     expect(() => InterfaceSlugUtils.parse(invalid_interface_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>-interfaces`);
   });
 });

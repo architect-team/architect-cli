@@ -102,7 +102,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     } catch {
       split = ComponentVersionSlugUtils.parse(this.name);
     }
-    return ComponentSlugUtils.build(split.component_account_name, split.component_name);
+    return ComponentSlugUtils.build({ ...split });
   }
 
   getRef(): ComponentVersionSlug {
@@ -116,7 +116,7 @@ export class ComponentConfigV1 extends ComponentConfig {
         split = ComponentVersionSlugUtils.parse(this.name);
       }
     }
-    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
+    return ComponentVersionSlugUtils.build({ ...split, tag: split.tag || Slugs.DEFAULT_TAG });
   }
 
   getExtends() {
