@@ -1,5 +1,10 @@
-import { expect } from '@oclif/test';
-import { DeployCommand } from '../../src/commands/deploy';
+import { expect, test } from '@oclif/test';
+import path from 'path';
+import sinon from 'sinon';
+import Deploy, { DeployCommand } from '../../src/commands/deploy';
+import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
+import PortUtil from '../../src/common/utils/port';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -20,108 +25,116 @@ const mock_deployment = {
   id: 'test-deployment-id'
 }
 
-// commenting this test out because it is not deterministic. It fails occaisionally on one of many Github Actions OS's (sometimes Windows 11, sometimes Windows 12, usually passes though)
-// TODO:156: https://gitlab.com/architect-io/architect-cli/-/issues/156
-// describe('local deploy environment', function () {
-//   const local_env_config = {
-//     "components": {
-//       "examples/database-seeding:latest": "file:./examples/database-seeding/",
-//       "examples/echo:latest": "file:./examples/echo/"
-//     }
-//   }
+describe('local deploy environment', function () {
 
-//   const expected_compose = {
-//     "version": "3",
-//     "services": {
-//       "examples--database-seeding--app--latest--7fdljhug": {
-//         "ports": [
-//           "50000:3000"
-//         ],
-//         "depends_on": [
-//           "examples--database-seeding--my-demo-db--latest--uimfmkw0"
-//         ],
-//         "environment": {
-//           "DATABASE_HOST": "examples--database-seeding--my-demo-db--latest--uimfmkw0",
-//           "DATABASE_PORT": "5432",
-//           "DATABASE_USER": "postgres",
-//           "DATABASE_PASSWORD": "architect",
-//           "DATABASE_SCHEMA": "seeding_demo",
-//           "AUTO_DDL": "none"
-//         },
-//         "build": {
-//           "context": path.resolve('./examples/database-seeding'),
-//           "dockerfile": "Dockerfile"
-//         }
-//       },
-//       "examples--database-seeding--my-demo-db--latest--uimfmkw0": {
-//         "ports": [
-//           "50001:5432"
-//         ],
-//         "depends_on": [],
-//         "environment": {
-//           "POSTGRES_DB": "seeding_demo",
-//           "POSTGRES_USER": "postgres",
-//           "POSTGRES_PASSWORD": "architect"
-//         },
-//         "image": "postgres:11"
-//       },
-//       "examples--echo--echo-api--latest--2nxfcm8h": {
-//         "ports": [
-//           "50002:8080"
-//         ],
-//         "depends_on": [],
-//         "environment": {},
-//         "image": "hashicorp/http-echo:latest",
-//         "command": [
-//           "-listen=:8080",
-//           "-text=hello world"
-//         ]
-//       }
-//     },
-//     "volumes": {}
-//   }
+  beforeEach(() => {
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
+    PortUtil.reset();
+  });
 
-//   test
-//     .timeout(15000)
-//     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-//       return [JSON.stringify(local_env_config, null, 2), local_env_config];
-//     })
-//     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-//     .stdout({ print })
-//     .stderr({ print })
-//     .command(['deploy', '-l', './mock-environment.yml'])
-//     .it('Create a local deploy', ctx => {
-//       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-//       expect(runCompose.calledOnce).to.be.true
-//       expect(runCompose.firstCall.args[0]).to.deep.equal(expected_compose)
-//     })
+  afterEach(function () {
+    sinon.restore();
+  });
 
-//   test
-//     .timeout(15000)
-//     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-//       return [JSON.stringify(local_env_config, null, 2), local_env_config];
-//     })
-//     .stub(DockerCompose, 'generate', sinon.stub().returns(undefined))
-//     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-//     .stdout({ print })
-//     .stderr({ print })
-//     .env({
-//       ARC_LOG_LEVEL: 'debug',
-//       ARC_aws_secret: 'test'
-//     })
-//     .command(['deploy', '-l', './mock-environment.yml'])
-//     .it('Create a local deploy with environment parameters', ctx => {
-//       const generate = DockerCompose.generate as sinon.SinonStub;
-//       expect(generate.calledOnce).to.be.true
-//       const dependency_manager = generate.firstCall.args[0] as LocalDependencyManager;
-//       expect(dependency_manager.environment.getParameters()).to.deep.equal({
-//         LOG_LEVEL: { default: 'debug' },
-//         aws_secret: { default: 'test' }
-//       })
-//       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-//       expect(runCompose.calledOnce).to.be.true
-//     })
-// });
+  const local_env_config = {
+    "components": {
+      "examples/database-seeding:latest": "file:./examples/database-seeding/",
+      "examples/echo:latest": "file:./examples/echo/"
+    }
+  }
+
+  const expected_compose = {
+    "version": "3",
+    "services": {
+      "examples--database-seeding--app--latest--7fdljhug": {
+        "ports": [
+          "50000:3000"
+        ],
+        "depends_on": [
+          "examples--database-seeding--my-demo-db--latest--uimfmkw0"
+        ],
+        "environment": {
+          "DATABASE_HOST": "examples--database-seeding--my-demo-db--latest--uimfmkw0",
+          "DATABASE_PORT": "5432",
+          "DATABASE_USER": "postgres",
+          "DATABASE_PASSWORD": "architect",
+          "DATABASE_SCHEMA": "seeding_demo",
+          "AUTO_DDL": "none"
+        },
+        "build": {
+          "context": path.resolve('./examples/database-seeding'),
+          "dockerfile": "Dockerfile"
+        }
+      },
+      "examples--database-seeding--my-demo-db--latest--uimfmkw0": {
+        "ports": [
+          "50001:5432"
+        ],
+        "depends_on": [],
+        "environment": {
+          "POSTGRES_DB": "seeding_demo",
+          "POSTGRES_USER": "postgres",
+          "POSTGRES_PASSWORD": "architect"
+        },
+        "image": "postgres:11"
+      },
+      "examples--echo--echo-api--latest--2nxfcm8h": {
+        "ports": [
+          "50002:8080"
+        ],
+        "depends_on": [],
+        "environment": {},
+        "image": "hashicorp/http-echo:latest",
+        "command": [
+          "-listen=:8080",
+          "-text=hello world"
+        ]
+      }
+    },
+    "volumes": {}
+  }
+
+  test
+    .timeout(15000)
+    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
+      return [JSON.stringify(local_env_config, null, 2), local_env_config];
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './mock-environment.yml'])
+    .it('Create a local deploy', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(expected_compose)
+    })
+
+  test
+    .timeout(15000)
+    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
+      return [JSON.stringify(local_env_config, null, 2), local_env_config];
+    })
+    .stub(DockerComposeUtils, 'generate', sinon.stub().returns(undefined))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .env({
+      ARC_LOG_LEVEL: 'debug',
+      ARC_aws_secret: 'test'
+    })
+    .command(['deploy', '-l', './mock-environment.yml'])
+    .it('Create a local deploy with environment parameters', ctx => {
+      const generate = DockerComposeUtils.generate as sinon.SinonStub;
+      expect(generate.calledOnce).to.be.true
+      const dependency_manager = generate.firstCall.args[0] as LocalDependencyManager;
+      expect(dependency_manager.environment.getParameters()).to.deep.equal({
+        LOG_LEVEL: { default: 'debug' },
+        aws_secret: { default: 'test' }
+      })
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+    })
+});
 
 describe('remote deploy environment', function () {
   const env_config = {
