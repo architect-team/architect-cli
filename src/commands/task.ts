@@ -1,13 +1,11 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
-import path from 'path';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils } from '../dependency-manager/src';
-import ARCHITECTPATHS from '../paths';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];
@@ -26,7 +24,7 @@ export default class TaskExec extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -62,15 +60,14 @@ export default class TaskExec extends Command {
   async runLocal() {
     const { flags, args } = this.parse(TaskExec);
 
-    if (!flags.compose_file) {
-      flags.compose_file = path.join(this.app.config.getConfigDir(), ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME);
-    }
+    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     let compose;
     try {
-      compose = DockerComposeUtils.loadDockerCompose(flags.compose_file);
+      compose = DockerComposeUtils.loadDockerCompose(compose_file);
     } catch (err) {
-      throw new Error('Could not find docker compose file. Please run `architect deploy --local` before executing any tasks in your local environment.');
+      throw new Error(`Could not find docker compose file at ${compose_file}. Please run \`architect deploy -l -e ${project_name} ${args.component}\` before executing any tasks in your local ${project_name} environment.`);
     }
 
     let parsed_slug;
@@ -85,16 +82,18 @@ export default class TaskExec extends Command {
     const ref = Refs.url_safe_ref(slug);
     const matching_names = Object.keys(compose.services).filter(name => name.includes(ref));
     if (!matching_names?.length) {
-      throw new Error(`Could not find ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
+      throw new Error(`Could not find ${args.component}/${args.task} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
     } else if (matching_names.length > 1) {
-      throw new Error(`There was more than one task in your local environment that matched ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
+      throw new Error(`There was more than one task in your local environment that matched ${args.component}/${args.task} running in your local environment. See ${compose_file} for available tasks and services.`);
     } else {
       service_name = matching_names[0];
     }
 
-    this.log(chalk.blue(`Running task ${args.component}/${args.task} in the local docker-compose environment...`));
+    this.log(chalk.blue(`Running task ${args.component}/${args.task} in the local ${project_name} environment...`));
+    this.log('\n');
     // all tasks will already exist in the docker-compose file with scale=0; all we need to do is a `run --rm` to start them and clean them up upon exit
-    await DockerComposeUtils.run(service_name, flags.compose_file);
+    await DockerComposeUtils.run(service_name, project_name, compose_file);
+    this.log('\n');
     this.log(chalk.green(`Successfully ran task.`));
   }
 
