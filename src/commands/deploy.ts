@@ -16,7 +16,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import ARCHITECTPATHS from '../paths';
@@ -244,9 +244,11 @@ export default class Deploy extends DeployCommand {
     let dependency_manager;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
@@ -254,7 +256,7 @@ export default class Deploy extends DeployCommand {
       dependency_manager.environment = env_config;
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
     } else {
       if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
 
@@ -281,14 +283,16 @@ export default class Deploy extends DeployCommand {
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
 
       env_config_merge = true;
     } else {
