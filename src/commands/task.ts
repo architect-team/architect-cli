@@ -6,6 +6,7 @@ import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import { EnvironmentUtils } from '../common/utils/environment';
+import { ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils } from '../dependency-manager/src';
 import ARCHITECTPATHS from '../paths';
 
 export default class TaskExec extends Command {
@@ -72,15 +73,23 @@ export default class TaskExec extends Command {
       throw new Error('Could not find docker compose file. Please run `architect deploy --local` before executing any tasks in your local environment.');
     }
 
-    let service_name;
+    let parsed_slug;
     try {
-      service_name = Object.keys(compose.services).find(k => k.includes(args.component) && k.includes(args.task));
+      parsed_slug = ComponentVersionSlugUtils.parse(args.component);
     } catch (err) {
-      throw new Error(`Could not find ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
+      throw new Error(`Error parsing component: ${err}`);
     }
 
-    if (!service_name) {
+    let service_name;
+    const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag);
+    const ref = Refs.url_safe_ref(slug);
+    const matching_names = Object.keys(compose.services).filter(name => name.includes(ref));
+    if (!matching_names?.length) {
       throw new Error(`Could not find ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
+    } else if (matching_names.length > 1) {
+      throw new Error(`There was more than one task in your local environment that matched ${args.component}/${args.task} running in your local environment. See ${ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME} for available tasks and services.`);
+    } else {
+      service_name = matching_names[0];
     }
 
     this.log(chalk.blue(`Running task ${args.component}/${args.task} in the local docker-compose environment...`));
@@ -95,8 +104,20 @@ export default class TaskExec extends Command {
     const selected_account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
 
+    let parsed_slug;
+    try {
+      parsed_slug = ComponentVersionSlugUtils.parse(args.component);
+    } catch (err) {
+      throw new Error(`Error parsing component: ${err}`);
+    }
+
     cli.action.start(chalk.blue(`Kicking off task ${args.component}/${args.task} in ${flags.environment}...`));
-    const res = await this.app.api.post(`/environments/${environment.id}/components/${args.component}/tasks/${args.task}/exec`);
+    const res = await this.app.api.post(`/environments/${environment.id}/exec`, {
+      component_account_name: parsed_slug.component_account_name,
+      component_name: parsed_slug.component_name,
+      task_name: args.task,
+      tag: parsed_slug.tag,
+    });
     cli.action.stop();
 
     this.log(chalk.green(`Successfully kicked off task. ${environment.platform.type.toLowerCase()} reference= ${res.data}`));

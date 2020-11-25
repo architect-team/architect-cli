@@ -78,12 +78,11 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   kind: 'component_version';
   component_account_name: string;
   component_name: string;
-  namespaced_component_name: string;
   tag: string;
 }
 export class ComponentVersionSlugUtils extends SlugUtils {
 
-  public static Description = 'must be of the form <account-name>/<component-name>:<tag>';
+  public static Description = `must be of the form <account-name>/<component-name>:<tag> OR <account-name>/<component-name>. The latter will assume \`${Slugs.DEFAULT_TAG}\` tag`;
 
   public static RegexNoMaxLength = `${ComponentSlugUtils.RegexNoMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
   public static RegexOptionalTag = `${ComponentSlugUtils.RegexNoMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})?`; // for when the tag is optional
@@ -95,8 +94,22 @@ export class ComponentVersionSlugUtils extends SlugUtils {
     return `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}`;
   };
 
+  public static toComponentSlug(slug: ComponentVersionSlug): ComponentSlug {
+    const parsed = ComponentVersionSlugUtils.parse(slug);
+    return ComponentSlugUtils.build(parsed.component_account_name, parsed.component_name);
+  }
+
   public static parse = (slug: ComponentVersionSlug): ParsedComponentVersionSlug => {
     if (!ComponentVersionSlugUtils.Validator.test(slug)) {
+      // if it doesn't pass the ComponentVersionSlug validator, try parsing it with the ComponentSlugUtils, and set the tag to DEFAULT ("latest")
+      try {
+        return {
+          ...ComponentSlugUtils.parse(slug),
+          tag: Slugs.DEFAULT_TAG,
+          kind: 'component_version',
+        };
+        // eslint-disable-next-line no-empty
+      } catch { }
       throw new Error(ComponentVersionSlugUtils.Description);
     }
     const [component_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
@@ -108,7 +121,6 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       kind: 'component_version',
       component_account_name,
       component_name,
-      namespaced_component_name: `${component_account_name}/${component_name}`,
       tag,
     };
   };
