@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import ARCHITECTPATHS from '../paths';
+import LocalPaths from '../paths';
 
 export default class AppConfig {
   private config_dir: string;
@@ -42,7 +42,7 @@ export default class AppConfig {
   }
 
   save() {
-    const config_file = path.join(this.config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+    const config_file = path.join(this.config_dir, LocalPaths.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(config_file, this);
   }
 

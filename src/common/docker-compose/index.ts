@@ -8,10 +8,14 @@ import { Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
+import LocalPaths from '../../paths';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import DockerComposeTemplate from './template';
 
 export class DockerComposeUtils {
+
+  // used to namespace docker-compose projects so multiple deployments can happen to local
+  public static DEFAULT_PROJECT = 'architect';
 
   public static async generate(dependency_manager: LocalDependencyManager): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
@@ -285,14 +289,20 @@ export class DockerComposeUtils {
     }
   }
 
-  public static async run(service_name: string, compose_file?: string) {
+  public static async run(service_name: string, project_name: string, compose_file?: string) {
     const compose_file_args = compose_file ? ['-f', compose_file] : [];
 
     await DockerComposeUtils.dockerCompose([
       ...compose_file_args,
+      '-p',
+      project_name,
       'run',
       '--rm',
       service_name,
     ]);
+  }
+
+  public static buildComposeFilepath(config_dir: string, project_name: string) {
+    return path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH, `${project_name}.yml`);
   }
 }

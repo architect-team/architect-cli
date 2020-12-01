@@ -19,7 +19,6 @@ import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
-import ARCHITECTPATHS from '../paths';
 
 export abstract class DeployCommand extends Command {
   static POLL_INTERVAL = 10000;
@@ -121,7 +120,7 @@ export default class Deploy extends DeployCommand {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -183,15 +182,15 @@ export default class Deploy extends DeployCommand {
         this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
       }
     }
-    if (!flags.compose_file) {
-      flags.compose_file = path.join(this.app.config.getConfigDir(), ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME);
-    }
-    await fs.ensureFile(flags.compose_file);
-    await fs.writeFile(flags.compose_file, yaml.safeDump(compose));
-    this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
-    const compose_args = ['-f', flags.compose_file, '--compatibility', 'up', '--abort-on-container-exit'];
+    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, yaml.safeDump(compose));
+    this.log(`Wrote docker-compose file to: ${compose_file}`);
+    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit'];
     if (flags.build_parallel) {
-      await execa('docker-compose', ['-f', flags.compose_file, 'build', '--parallel'], { stdio: 'inherit' });
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
     } else {
       compose_args.push('--build');
     }

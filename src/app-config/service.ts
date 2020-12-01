@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import LoginRequiredError from '../common/errors/login-required';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
-import ARCHITECTPATHS from '../paths';
+import LocalPaths from '../paths';
 import AuthClient from './auth';
 import AppConfig from './config';
 
@@ -24,7 +24,7 @@ export default class AppService {
     this.config = new AppConfig(config_dir);
     this.version = version;
     if (config_dir) {
-      const config_file = path.join(config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
+      const config_file = path.join(config_dir, LocalPaths.CLI_CONFIG_FILENAME);
       if (fs.existsSync(config_file)) {
         const payload = fs.readJSONSync(config_file);
         this.config = new AppConfig(config_dir, payload);
@@ -41,14 +41,14 @@ export default class AppService {
 
     this.auth = new AuthClient(this.config, this._api);
 
-    const linkedComponentsFile = path.join(config_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    const linkedComponentsFile = path.join(config_dir, LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
     if (fs.existsSync(linkedComponentsFile)) {
       this.linkedComponents = fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
     }
   }
 
   private saveLinkedComponents() {
-    const linkedComponentsFile = path.join(this.config.getConfigDir(), ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
+    const linkedComponentsFile = path.join(this.config.getConfigDir(), LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
     fs.writeJSONSync(linkedComponentsFile, this.linkedComponents);
   }
 
