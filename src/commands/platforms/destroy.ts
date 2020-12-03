@@ -34,7 +34,7 @@ export default class PlatformDestroy extends Command {
     let answers = await inquirer.prompt([{
       type: 'input',
       name: 'destroy',
-      message: 'Are you absolutely sure? This will destroy the platform.\nPlease type in the name of the platform to confirm.\n',
+      message: 'Are you absolutely sure? This will deregister the platform from the Architect system.\nPlease type in the name of the platform to confirm.\n',
       validate: (value: any, answers: any) => {
         if (value === platform.name) {
           return true;
