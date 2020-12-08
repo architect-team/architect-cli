@@ -169,7 +169,7 @@ export default class Deploy extends DeployCommand {
         if (service.environment && service.environment.VIRTUAL_HOST) {
           for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
             this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(split_host);
+            exposed_interfaces.push(`http://${split_host}:${gateway_port}/`);
           }
         }
       }
