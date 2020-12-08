@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A dynamic microservices framework for building, connecting, and deploying service-oriented applications.
+  A dynamic microservices framework for building, connecting, and deploying cloud-native applications.
 </p>
 
 ---
