@@ -1,5 +1,0 @@
-interfaces:
-  app: ${{ components['examples/debugging'].interfaces.http.url }}
-
-components:
-  examples/debugging: file:./
