@@ -1,6 +1,11 @@
 name: Register Example Components
 
-on: push
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'examples/**/*'
 
 jobs:
   detect-changes:
