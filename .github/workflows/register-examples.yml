@@ -8,14 +8,17 @@ jobs:
     outputs:
       matrix: ${{ steps.detect.outputs.matrix }}
     steps:
-      - uses: actions/checkout@master
-      - name: Install jq library
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install jq
         run: sudo apt-get update && sudo apt-get install jq
       - id: detect
-        name: Detect which examples have changes
+        name: Detect changes
         run: |
-          git diff-tree --name-only --no-commit-id -r HEAD
-          find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1)' sh {} \;
+          git diff-tree --name-only --no-commit-id -r ${{ github.sha }}
+          find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'git diff-tree --name-only --no-commit-id -r ${{ github.sha }} -- $(dirname $1)' sh {} \;
           find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;
           export CHANGED_DIRS=$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;)
           echo $CHANGED_DIRS
