@@ -21,4 +21,6 @@ services:
           host_path: ./src/
 
 interfaces:
-  http: ${{ services.api.interfaces.main.url }}
+  http:
+    description: Exposes the API service to upstreams
+    url: ${{ services.api.interfaces.main.url }}
