@@ -14,11 +14,9 @@ jobs:
       - id: detect
         name: Detect which examples have changes
         run: |
-          export ARCHITECT_DIRS=$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec dirname {} \; | uniq)
-          echo $ARCHITECT_DIRS | while read dir; do echo $dir; done
-          export CHANGED_DIRS=$(echo $ARCHITECT_DIRS | while read dir; do test $(git diff-tree --name-only --no-commit-id -r HEAD -- $dir | wc -c) -ne 0 && echo $dir; done)
+          find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;
+          export CHANGED_DIRS=$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;)
           echo $CHANGED_DIRS
-          echo $(jq -n -c --arg v "$CHANGED_DIRS" '{"component_path": $v | split("\n") }')
           echo "::set-output name=matrix::$(jq -n -c --arg v "$CHANGED_DIRS" '{"component_path": $v | split("\n") }')"
   register-components:
     needs: detect-changes
