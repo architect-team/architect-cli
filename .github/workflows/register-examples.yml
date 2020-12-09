@@ -13,7 +13,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install jq
       - id: detect
         name: Detect which examples have changes
-        run: >
+        run: |
           export CHANGES=$(for path in $(find ./examples/*/architect.yml -type f -maxdepth 0 -exec dirname {} \; | uniq); do test $(git diff-tree --name-only --no-commit-id -r HEAD "$path" | wc -c) -ne 0 && echo $path; done)
           echo $CHANGES || echo "No changes found"
           echo $(jq -n --arg v "$CHANGES" '{"component_path": $v | split("\n") }')
