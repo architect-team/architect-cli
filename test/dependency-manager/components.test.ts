@@ -246,8 +246,8 @@ describe('components spec v1', function () {
         'architect/cloud/db:latest'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]',
-        'architect/cloud/api:latest [service] -> architect/cloud/db:latest [main]'
+        'architect/cloud/app:latest [service->main] -> architect/cloud/api:latest [main]',
+        'architect/cloud/api:latest [service->main] -> architect/cloud/db:latest [main]'
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
@@ -375,9 +375,9 @@ describe('components spec v1', function () {
         'concourse/ci/worker:6.2'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'concourse/ci/worker:6.2 [service] -> concourse/ci/web:6.2 [main]',
+        'concourse/ci/worker:6.2 [service->main] -> concourse/ci/web:6.2 [main]',
         'concourse/ci:6.2-interfaces [web] -> concourse/ci/web:6.2 [main]',
-        'architect/cloud/api:latest [service] -> concourse/ci:6.2-interfaces [web]'
+        'architect/cloud/api:latest [service->web] -> concourse/ci:6.2-interfaces [web]'
       ])
 
       // Test parameter values
