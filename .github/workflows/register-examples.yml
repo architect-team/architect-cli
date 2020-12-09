@@ -14,7 +14,7 @@ jobs:
       - id: detect
         name: Detect which examples have changes
         run: |
-          find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'dirname $1' sh {} \;
+          find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1)' sh {} \;
           find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;
           export CHANGED_DIRS=$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD -- $(dirname $1) | wc -c) -ne 0 && dirname $1' sh {}  \;)
           echo $CHANGED_DIRS
