@@ -16,7 +16,7 @@ jobs:
         run: |
           export ARCHITECT_DIRS=$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec dirname {} \; | uniq)
           echo $ARCHITECT_DIRS
-          export CHANGED_DIRS=$(echo $ARCHITECT_DIRS | while read dir; do test $(git diff-tree --name-only --no-commit-id -r HEAD "$dir" | wc -c) -ne 0 && echo $dir; done)
+          export CHANGED_DIRS=$(echo $ARCHITECT_DIRS | while read dir; do test $(git diff-tree --name-only --no-commit-id -r HEAD -- $dir | wc -c) -ne 0 && echo $dir; done)
           echo $CHANGED_DIRS
           echo $(jq -n -c --arg v "$CHANGED_DIRS" '{"component_path": $v | split("\n") }')
           echo "::set-output name=matrix::$(jq -n -c --arg v "$CHANGED_DIRS" '{"component_path": $v | split("\n") }')"
