@@ -174,41 +174,43 @@ export class DockerComposeUtils {
       const node_from_url_safe_ref = Refs.url_safe_ref(node_from.ref);
 
       for (const interface_name of Object.keys(edge.interfaces_map)) {
-        const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-        const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref);
+        const [node_to, node_to_interface_names] = graph.followEdge(edge, interface_name);
+        for (const node_to_interface_name of node_to_interface_names) {
+          const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref);
 
-        if (!(node_to instanceof ServiceNode)) continue;
-        if (node_to.is_external) continue;
+          if (!(node_to instanceof ServiceNode)) continue;
+          if (node_to.is_external) continue;
 
-        let depends_from = node_from_url_safe_ref;
-        let depends_to = node_to_url_safe_ref;
+          let depends_from = node_from_url_safe_ref;
+          let depends_to = node_to_url_safe_ref;
 
-        if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to_url_safe_ref];
-          const node_to_interface = node_to.interfaces[node_to_interface_name];
-          service_to.environment = service_to.environment || {};
+          if (edge instanceof IngressEdge) {
+            const service_to = compose.services[node_to_url_safe_ref];
+            const node_to_interface = node_to.interfaces[node_to_interface_name];
+            service_to.environment = service_to.environment || {};
 
-          const interface_host = `${interface_name}.localhost`;
-          if (service_to.environment.VIRTUAL_HOST) {
-            service_to.environment.VIRTUAL_HOST += `,${interface_host}`;
-          } else {
-            service_to.environment.VIRTUAL_HOST = interface_host;
+            const interface_host = `${interface_name}.localhost`;
+            if (service_to.environment.VIRTUAL_HOST) {
+              service_to.environment.VIRTUAL_HOST += `,${interface_host}`;
+            } else {
+              service_to.environment.VIRTUAL_HOST = interface_host;
+            }
+            const normalized_host = interface_host.replace(/-/g, '_').replace(/\./g, '_');
+            service_to.environment[`VIRTUAL_PORT_${normalized_host}`] = node_to_interface.port;
+            service_to.environment.VIRTUAL_PORT = node_to_interface.port;
+            service_to.environment.VIRTUAL_PROTO = node_to_interface.protocol || 'http';
+            service_to.restart = 'always';
+
+            // Flip for depends_on
+            depends_from = node_to_url_safe_ref;
+            depends_to = node_from_url_safe_ref;
           }
-          const normalized_host = interface_host.replace(/-/g, '_').replace(/\./g, '_');
-          service_to.environment[`VIRTUAL_PORT_${normalized_host}`] = node_to_interface.port;
-          service_to.environment.VIRTUAL_PORT = node_to_interface.port;
-          service_to.environment.VIRTUAL_PROTO = node_to_interface.protocol || 'http';
-          service_to.restart = 'always';
 
-          // Flip for depends_on
-          depends_from = node_to_url_safe_ref;
-          depends_to = node_from_url_safe_ref;
-        }
-
-        if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
-          compose.services[depends_from].depends_on.push(depends_to);
-          seen_edges.add(`${depends_to}__${depends_from}`);
-          seen_edges.add(`${depends_from}__${depends_to}`);
+          if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
+            compose.services[depends_from].depends_on.push(depends_to);
+            seen_edges.add(`${depends_to}__${depends_from}`);
+            seen_edges.add(`${depends_from}__${depends_to}`);
+          }
         }
       }
     }

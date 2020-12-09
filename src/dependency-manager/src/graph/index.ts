@@ -148,11 +148,25 @@ export default class DependencyGraph {
     return Array.from(nodes.values());
   }
 
-  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, string] {
-    const child_interface = edge.interfaces_map[interface_name];
-    const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
-    const to = child_edge ? child_edge.to : edge.to;
-    const to_interface = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
-    return [this.getNodeByRef(to), to_interface];
+  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, string[]] {
+    const child_interfaces = edge.interfaces_map[interface_name];
+    let node_to: DependencyNode;
+    const to_interfaces: string[] = [];
+    for (const child_interface of child_interfaces) {
+      const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
+      const to = child_edge ? child_edge.to : edge.to;
+
+      node_to = this.getNodeByRef(to);
+
+      const to_interface = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
+      if (typeof to_interface === 'string') {
+        to_interfaces.push(to_interface);
+      } else {
+        for (const to_interface_mapping of to_interface) {
+          to_interfaces.push(to_interface_mapping);
+        }
+      }
+    }
+    return [node_to!, to_interfaces]; // TODO: remove exclamation
   }
 }

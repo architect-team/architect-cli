@@ -48,12 +48,13 @@ export default abstract class DependencyManager {
       }
       this.__graph_cache[cache_key] = graph;
     }
+    console.log(graph.edges); // .filter(e => e.from === 'ryan-cahill-a0/admin-ui/dashboard:latest' && e.to === 'ryan-cahill-a0/product-catalog:latest-interfaces'));
     return graph;
   }
 
   // Add edges between gateway and component interfaces nodes
   addIngressEdges(graph: DependencyGraph): void {
-    const component_edge_map: Dictionary<Dictionary<string>> = {};
+    const component_edge_map: Dictionary<Dictionary<Set<string>>> = {};
     for (const [env_interface, component_interface] of Object.entries(this.environment.getInterfaces())) {
       const components_regex = new RegExp(`\\\${{\\s*components\\.(${ComponentVersionSlugUtils.RegexOptionalTag})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
@@ -68,8 +69,13 @@ export default abstract class DependencyManager {
       const to = component.getInterfacesRef();
       if (!graph.nodes_map.has(to)) continue;
 
-      if (!component_edge_map[to]) component_edge_map[to] = {};
-      component_edge_map[to][env_interface] = interface_name;
+      if (!component_edge_map[to]) {
+        component_edge_map[to] = {};
+      }
+      if (!component_edge_map[to][env_interface]) {
+        component_edge_map[to][env_interface] = new Set();
+      }
+      component_edge_map[to][env_interface].add(interface_name);
     }
 
     for (const [to, interfaces_map] of Object.entries(component_edge_map)) {
@@ -166,15 +172,16 @@ export default abstract class DependencyManager {
 
       // Add edges between services inside the component
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const service_edge_map: Dictionary<Dictionary<string>> = {};
+      const service_edge_map: Dictionary<Dictionary<Set<string>>> = {};
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
         const to = service_ref_map[service_name];
         if (to === from) continue;
-        if (!service_edge_map[to]) service_edge_map[to] = {};
-        service_edge_map[to]['service'] = interface_name;
+        if (!service_edge_map[to]) service_edge_map[to] = { service: new Set() };
+        service_edge_map[to]['service'].add(interface_name);
       }
+
       for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
         graph.addEdge(edge);
@@ -182,7 +189,7 @@ export default abstract class DependencyManager {
 
       // Add edges between services and dependencies inside the component
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Dictionary<string>> = {};
+      const dep_edge_map: Dictionary<Dictionary<Set<string>>> = {};
       while ((matches = dependencies_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
@@ -191,13 +198,13 @@ export default abstract class DependencyManager {
         const to = dep_component.getInterfacesRef();
         if (!graph.nodes_map.has(to)) continue;
 
-        if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to]['service'] = interface_name;
+        if (!dep_edge_map[to]) dep_edge_map[to] = { service: new Set() };
+        dep_edge_map[to]['service'].add(interface_name);
       }
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
-        graph.addEdge(edge);
+          const edge = new ServiceEdge(from, to, interfaces_map);
+          graph.addEdge(edge);
       }
     }
 
@@ -214,15 +221,17 @@ export default abstract class DependencyManager {
 
       // Add edges between services inside the component
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const task_edge_map: Dictionary<Dictionary<string>> = {};
+      const task_edge_map: Dictionary<Dictionary<Set<string>>> = {};
       let matches;
       while ((matches = services_regex.exec(task_string)) != null) {
         const [_, service_name, interface_name] = matches;
         const to = service_ref_map[service_name];
         if (to === from) continue;
-        if (!task_edge_map[to]) task_edge_map[to] = {};
-        task_edge_map[to]['service'] = interface_name;
+
+        if (!task_edge_map[to]) task_edge_map[to] = { service: new Set() };
+        task_edge_map[to]['service'].add(interface_name);
       }
+
       for (const [to, interfaces_map] of Object.entries(task_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
         graph.addEdge(edge);
@@ -230,7 +239,7 @@ export default abstract class DependencyManager {
 
       // Add edges between services and dependencies inside the component
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Dictionary<string>> = {};
+      const dep_edge_map: Dictionary<Dictionary<Set<string>>> = {};
       while ((matches = dependencies_regex.exec(task_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
@@ -239,8 +248,8 @@ export default abstract class DependencyManager {
         const to = dep_component.getInterfacesRef();
         if (!graph.nodes_map.has(to)) continue;
 
-        if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to]['service'] = interface_name;
+        if (!dep_edge_map[to]) dep_edge_map[to] = { service: new Set() };
+        dep_edge_map[to]['service'].add(interface_name);
       }
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
@@ -250,7 +259,7 @@ export default abstract class DependencyManager {
     }
 
     // Add edges between services and the component's interfaces node
-    const service_edge_map: Dictionary<Dictionary<string>> = {};
+    const service_edge_map: Dictionary<Dictionary<Set<string>>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
@@ -260,8 +269,13 @@ export default abstract class DependencyManager {
 
       const [_, service_name, interface_name] = matches;
       const to = service_ref_map[service_name];
-      if (!service_edge_map[to]) service_edge_map[to] = {};
-      service_edge_map[to][component_interface_name] = interface_name;
+      if (!service_edge_map[to]) {
+        service_edge_map[to] = {};
+      }
+      if (!service_edge_map[to][component_interface_name]) {
+        service_edge_map[to][component_interface_name] = new Set();
+      }
+      service_edge_map[to][component_interface_name].add(interface_name);
     }
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
@@ -368,19 +382,21 @@ export default abstract class DependencyManager {
       const component = component_interfaces_ref_map[edge.to];
       if (!component) continue;
 
-      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
-        if (!component.getInterfaces()[interface_name]) {
-          component.getInterfaces()[interface_name] = { port: this.gateway_port.toString() };
+      for (const [env_interface, interface_names] of Object.entries(edge.interfaces_map)) {
+        for (const interface_name of interface_names) {
+          if (!component.getInterfaces()[interface_name]) {
+            component.getInterfaces()[interface_name] = { port: this.gateway_port.toString() };
+          }
+          const inter = component.getInterfaces()[interface_name];
+          if (!inter) { continue; }
+
+          inter.host = `${env_interface}.${this.toExternalHost()}`;
+          inter.port = this.gateway_port.toString();
+          inter.protocol = this.toExternalProtocol();
+          inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+
+          component.setInterface(interface_name, inter);
         }
-        const inter = component.getInterfaces()[interface_name];
-        if (!inter) { continue; }
-
-        inter.host = `${env_interface}.${this.toExternalHost()}`;
-        inter.port = this.gateway_port.toString();
-        inter.protocol = this.toExternalProtocol();
-        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
-
-        component.setInterface(interface_name, inter);
       }
     }
 
