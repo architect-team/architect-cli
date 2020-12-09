@@ -177,6 +177,7 @@ export default abstract class DependencyManager {
         const [_, service_name, interface_name] = matches;
         const to = service_ref_map[service_name];
         if (to === from) continue;
+
         if (!service_edge_map[to]) service_edge_map[to] = { service: new Set() };
         service_edge_map[to]['service'].add(interface_name);
       }
@@ -198,18 +199,11 @@ export default abstract class DependencyManager {
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = { service: new Set() };
-        console.log('\nSTART');
-        // console.log(dep_edge_map[to]['service']);
         dep_edge_map[to]['service'].add(interface_name);
-        // console.log(dep_edge_map[to]['service']);
       }
-// console.log(dep_edge_map);
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
-        // console.log('WRITING');
-        console.log(interfaces_map);
-          const edge = new ServiceEdge(from, to, interfaces_map);
-          console.log(edge.toString());
-          graph.addEdge(edge);
+        const edge = new ServiceEdge(from, to, interfaces_map);
+        graph.addEdge(edge);
       }
     }
 

@@ -5,7 +5,7 @@ import { DependencyState } from '../state';
 export default class DependencyEdge {
   from: string;
   to: string;
-  interfaces_map: Dictionary<Set<string>>;
+  interfaces_map: Dictionary<Set<string>>; // NOTE: be careful if debugging this. using JSON.stringify(<any_set>, null, 2) will print as {} which is expected. this does not mean that it has no values
 
   @Type(() => DependencyState)
   state?: DependencyState;
