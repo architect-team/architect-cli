@@ -1,0 +1,28 @@
+name: Register Example Components
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "examples/**/*"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+    steps:
+      - name: Install jq library
+        run: apt-get update && apt-get install jq
+      - id: detect
+        name: Detect which examples have changes
+        run: >
+          echo "::set-output name=matrix::$(jq -n --arg v "$(find ./examples/*/architect.yml -type f -maxdepth 0 -exec sh -c 'test $(git diff-tree --name-only --no-commit-id -r HEAD "$1" | wc -c) -ne 0 && echo $1' sh {} \;)" '{"component_path": $v | split("\n") }')"
+  register-components:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.detect-changes.outputs.matrix)}}
+    steps:
+      - name: Register component
+        run: architect register ${{ matrix.component_path }} -t latest
