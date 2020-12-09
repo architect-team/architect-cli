@@ -396,4 +396,64 @@ describe('interfaces spec v1', () => {
       "restart": "always"
     });
   });
+
+  it('using multiple ports from a dependency', async () => {
+      const admin_ui_config = `
+        name: voic/admin-ui
+
+        dependencies:
+          voic/product-catalog: latest
+
+        interfaces:
+
+        services:
+          dashboard:
+            interfaces:
+              main: 3000
+            environment:
+              API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
+              ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
+        `;
+
+      const product_catalog_config = `
+        name: voic/product-catalog
+
+        services:
+          db:
+            interfaces:
+              pg:
+                port: 5432
+                protocol: postgres
+
+          api:
+            interfaces:
+              public: 8080
+              admin: 8081
+
+        interfaces:
+          public: \${{ services.api.interfaces.public.url }}
+          admin: \${{ services.api.interfaces.admin.url }}
+      `;
+
+      const env_config = `
+        components:
+          voic/admin-ui:
+            extends: file:./admin-ui
+          voic/product-catalog:
+            extends: file:./product-catalog
+      `;
+
+      mock_fs({
+        '/stack/product-catalog/architect.yml': product_catalog_config,
+        '/stack/admin-ui/architect.yml': admin_ui_config,
+        '/stack/environment.yml': env_config,
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+      const graph = await manager.getGraph();
+      expect(graph.edges.map(e => e.toString())).members([
+        'voic/product-catalog:latest-interfaces [public, admin] -> voic/product-catalog/api:latest [public, admin]',
+        'voic/admin-ui/dashboard:latest [service] -> voic/product-catalog:latest-interfaces [public, admin]'
+      ])
+    });
 });
