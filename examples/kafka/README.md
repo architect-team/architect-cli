@@ -8,4 +8,4 @@
 
 ---
 
-# Kafka MQ
+# Kafka message brokering
