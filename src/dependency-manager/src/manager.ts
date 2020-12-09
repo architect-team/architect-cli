@@ -48,7 +48,6 @@ export default abstract class DependencyManager {
       }
       this.__graph_cache[cache_key] = graph;
     }
-    console.log(graph.edges); // .filter(e => e.from === 'ryan-cahill-a0/admin-ui/dashboard:latest' && e.to === 'ryan-cahill-a0/product-catalog:latest-interfaces'));
     return graph;
   }
 
@@ -199,11 +198,17 @@ export default abstract class DependencyManager {
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = { service: new Set() };
+        console.log('\nSTART');
+        // console.log(dep_edge_map[to]['service']);
         dep_edge_map[to]['service'].add(interface_name);
+        // console.log(dep_edge_map[to]['service']);
       }
-
+// console.log(dep_edge_map);
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
+        // console.log('WRITING');
+        console.log(interfaces_map);
           const edge = new ServiceEdge(from, to, interfaces_map);
+          console.log(edge.toString());
           graph.addEdge(edge);
       }
     }
