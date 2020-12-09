@@ -148,25 +148,22 @@ export default class DependencyGraph {
     return Array.from(nodes.values());
   }
 
-  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, string[]] {
+  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, Set<string>] {
     const child_interfaces = edge.interfaces_map[interface_name];
-    let node_to: DependencyNode;
-    const to_interfaces: string[] = [];
+    let child_edge;
     for (const child_interface of child_interfaces) {
-      const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
-      const to = child_edge ? child_edge.to : edge.to;
-
-      node_to = this.getNodeByRef(to);
-
-      const to_interface = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
-      if (typeof to_interface === 'string') {
-        to_interfaces.push(to_interface);
+      child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
+    }
+    const to = child_edge ? child_edge.to : edge.to;
+    let to_interfaces = new Set<string>();
+    for (const child_interface of child_interfaces) {
+      const edge_interfaces = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
+      if (typeof edge_interfaces === 'string') {
+        to_interfaces.add(edge_interfaces);
       } else {
-        for (const to_interface_mapping of to_interface) {
-          to_interfaces.push(to_interface_mapping);
-        }
+        to_interfaces = new Set<string>([...to_interfaces, ...edge_interfaces]);
       }
     }
-    return [node_to!, to_interfaces]; // TODO: remove exclamation
+    return [this.getNodeByRef(to), to_interfaces];
   }
 }
