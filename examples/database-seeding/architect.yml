@@ -22,15 +22,6 @@ parameters:
     default: seeding_demo
 
 services:
-  my-demo-db:
-    image: postgres:11
-    interfaces:
-      postgres: 5432
-    environment:
-      POSTGRES_DB: ${{ parameters.DB_NAME }}
-      POSTGRES_USER: ${{ parameters.DB_USER }}
-      POSTGRES_PASSWORD: ${{ parameters.DB_PASS }}
-
   app:
     build:
       context: ./
@@ -44,6 +35,15 @@ services:
       DATABASE_PASSWORD: ${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}
       DATABASE_SCHEMA: ${{ services.my-demo-db.environment.POSTGRES_DB }}
       AUTO_DDL: ${{ parameters.AUTO_DDL }}
+
+  my-demo-db:
+    image: postgres:11
+    interfaces:
+      postgres: 5432
+    environment:
+      POSTGRES_DB: ${{ parameters.DB_NAME }}
+      POSTGRES_USER: ${{ parameters.DB_USER }}
+      POSTGRES_PASSWORD: ${{ parameters.DB_PASS }}
 
 interfaces:
   main:
