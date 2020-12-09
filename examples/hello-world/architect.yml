@@ -1,4 +1,10 @@
 name: examples/hello-world
+description: A simple hello-world component that returns "Hello World!" on every request.
+keywords:
+  - hello-world
+  - nodejs
+  - architect
+  - examples
 
 services:
   api:
@@ -7,5 +13,6 @@ services:
       main: 3000
 
 interfaces:
-  echo:
+  hello:
+    description: Connects to the hello-world service to return "Hello World!" on-demand
     url: ${{ services.api.interfaces.main.url }}
