@@ -81,7 +81,6 @@ describe('local deploy environment', function () {
       "examples--echo--api--latest--cpe6ciyk": {
         "ports": [
           "50002:3000",
-          "50003:4444"
         ],
         "depends_on": [],
         "environment": {},
