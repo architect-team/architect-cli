@@ -39,7 +39,7 @@ describe('local deploy environment', function () {
   const local_env_config = {
     "components": {
       "examples/database-seeding:latest": "file:./examples/database-seeding/",
-      "examples/echo:latest": "file:./examples/echo/"
+      "examples/echo:latest": "file:./examples/hello-world/"
     }
   }
 
@@ -78,17 +78,13 @@ describe('local deploy environment', function () {
         },
         "image": "postgres:11"
       },
-      "examples--echo--echo-api--latest--2nxfcm8h": {
+      "examples--echo--api--latest--cpe6ciyk": {
         "ports": [
-          "50002:8080"
+          "50002:3000",
         ],
         "depends_on": [],
         "environment": {},
-        "image": "hashicorp/http-echo:latest",
-        "command": [
-          "-listen=:8080",
-          "-text=hello world"
-        ]
+        "image": "heroku/nodejs-hello-world",
       }
     },
     "volumes": {}
