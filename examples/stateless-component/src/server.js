@@ -10,8 +10,8 @@ app.prepare()
   .then(() => {
     const server = express();
 
-    server.get('/echo', async (req, res) => {
-      const { data } = await axios.get(process.env.ECHO_ADDR);
+    server.get('/hello', async (req, res) => {
+      const { data } = await axios.get(process.env.HELLO_WORLD_ADDR);
       return res.send(data);
     });
 

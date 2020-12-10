@@ -1,7 +1,7 @@
+import { Button, Container, Grid, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import Head from 'next/head';
 import React from 'react';
-import { Container, Button, Typography, Grid } from '@material-ui/core';
 
 const useStyles = makeStyles(theme => ({
   container: {
@@ -44,7 +44,7 @@ const Home = () => {
   const [echoRes, setEchoRes] = React.useState('');
 
   const onClick = () => {
-    fetch('/echo')
+    fetch('/hello')
       .then(res => res.text())
       .then(data => {
         setEchoRes(data);
