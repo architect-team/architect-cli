@@ -299,7 +299,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-e', 'examples/stateless-component/environment.yml', '-t', '1.0.0'])
+    .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
       const buildImage = docker.buildImage as sinon.SinonStub;
       const pushImage = docker.pushImage as sinon.SinonStub;
@@ -314,7 +314,6 @@ describe('register', function () {
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
 
       expect(ctx.stderr).to.contain('Registering component examples/stateless-component:1.0.0 with Architect Cloud');
-      expect(ctx.stderr).to.contain('Registering component examples/echo:1.0.0 with Architect Cloud');
     });
 
   mockArchitectAuth
