@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
+import { RootController } from 'src/root.controller';
 
 @Module({
   imports: [ConfigModule.forRoot()],
-  controllers: [AppController],
+  controllers: [RootController, AppController],
   providers: [
     {
       provide: 'HELLO_SERVICE',
