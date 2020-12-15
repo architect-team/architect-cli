@@ -1,21 +1,5 @@
 name: examples/kafka
 
-parameters:
-  TOPIC_NAME:
-    default: architect
-  KAFKA_LISTENERS:
-    default: INTERNAL://:9092,EXTERNAL://:9093
-  KAFKA_ADVERTISED_LISTENERS:
-    default: INTERNAL://:9092,EXTERNAL://${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
-  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:
-    default: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-  KAFKA_ADVERTISED_HOST_NAME:
-    required: false
-  SUBSCRIBE_DELAY:
-    default: 120000
-  ENVIRONMENT:
-    default: prod
-
 services:
   zookeeper:
     image: jplock/zookeeper
@@ -28,38 +12,49 @@ services:
       external: 9093
     environment:
       KAFKA_ZOOKEEPER_CONNECT: ${{ services.zookeeper.interfaces.main.host }}:${{ services.zookeeper.interfaces.main.port }}
-      KAFKA_LISTENERS: ${{ parameters.KAFKA_LISTENERS }}
-      KAFKA_ADVERTISED_LISTENERS: ${{ parameters.KAFKA_ADVERTISED_LISTENERS }}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${{ parameters.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP }}
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092,EXTERNAL://${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: ${{ parameters.TOPIC_NAME }}:1:1
-      KAFKA_ADVERTISED_HOST_NAME: ${{ parameters.KAFKA_ADVERTISED_HOST_NAME }}
+      KAFKA_CREATE_TOPICS: architect:1:1
     debug:
       volumes:
         docker:
           mount_path: /var/run/docker.sock
           host_path: /var/run/docker.sock
+      environment:
+        KAFKA_ADVERTISED_HOST_NAME: host.docker.internal # change to 172.17.0.1 if running on Ubuntu
+        KAFKA_LISTENERS: INTERNAL://:9092
+        KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
   publisher:
     build:
       context: ./publisher/
     interfaces:
       http: 8080
     environment:
-      INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
-      TOPIC: ${{ parameters.TOPIC_NAME }}
-      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
+      TOPIC: architect
+      ENVIRONMENT: prod
+    debug:
+      environment:
+        INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
+        ENVIRONMENT: local
   subscriber:
     build:
       context: ./subscriber/
     interfaces:
       http: 8080
     environment:
-      INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
-      TOPIC: ${{ parameters.TOPIC_NAME }}
-      SUBSCRIBE_DELAY: ${{ parameters.SUBSCRIBE_DELAY }}
-      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
+      TOPIC: architect
+      ENVIRONMENT: prod
+      SUBSCRIBE_DELAY: 120000
+    debug:
+      environment:
+        INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
+        SUBSCRIBE_DELAY: 15000
+        ENVIRONMENT: local
 
 interfaces:
