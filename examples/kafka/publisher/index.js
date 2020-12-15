@@ -1,6 +1,6 @@
 setTimeout(() => {
   const kafka = require('kafka-node');
-  const client = new kafka.KafkaClient({ kafkaHost: process.env.KAFKA_ADDR });
+  const client = new kafka.KafkaClient({ kafkaHost: process.env.ENVIRONMENT === 'local' ? process.env.INTERNAL_KAFKA_ADDR : process.env.EXTERNAL_KAFKA_ADDR });
   const Producer = kafka.Producer;
   const producer = new Producer(client);
 

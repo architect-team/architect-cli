@@ -13,6 +13,12 @@ parameters:
     required: false
   SUBSCRIBE_DELAY:
     default: 120000
+  INTERNAL_KAFKA_ADDR:
+    default: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
+  EXTERNAL_KAFKA_ADDR:
+    default: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
+  ENVIRONMENT:
+    default: prod
 
 services:
   zookeeper:
@@ -44,18 +50,20 @@ services:
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
-      # KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
+      INTERNAL_KAFKA_ADDR: ${{ parameters.INTERNAL_KAFKA_ADDR }}
+      EXTERNAL_KAFKA_ADDR: ${{ parameters.EXTERNAL_KAFKA_ADDR }}
       TOPIC: ${{ parameters.TOPIC_NAME }}
+      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
   subscriber:
     build:
       context: ./subscriber/
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
-      # KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
+      INTERNAL_KAFKA_ADDR: ${{ parameters.INTERNAL_KAFKA_ADDR }}
+      EXTERNAL_KAFKA_ADDR: ${{ parameters.EXTERNAL_KAFKA_ADDR }}
       TOPIC: ${{ parameters.TOPIC_NAME }}
       SUBSCRIBE_DELAY: ${{ parameters.SUBSCRIBE_DELAY }}
+      ENVIRONMENT: ${{ parameters.ENVIRONMENT }}
 
 interfaces:
