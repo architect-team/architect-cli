@@ -2,7 +2,7 @@ components:
   examples/kafka:
     extends: file:./
     parameters:
-      KAFKA_ADVERTISED_HOST_NAME: 172.17.0.1
+      KAFKA_ADVERTISED_HOST_NAME: host.docker.internal # change to 172.17.0.1 if running on Ubuntu
       KAFKA_LISTENERS: INTERNAL://:9092
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
