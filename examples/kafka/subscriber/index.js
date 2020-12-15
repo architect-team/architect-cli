@@ -1,22 +1,26 @@
 const kafka = require('kafka-node');
+const client = new kafka.KafkaClient({ kafkaHost: process.env.KAFKA_ADDR });
+const Consumer = kafka.Consumer;
 
-const client = new kafka.KafkaClient({
-  kafkaHost: process.env.KAFKA_ADDR,
-});
-
-client.on('ready', () => {
-  const consumer = new kafka.Consumer(client, [
+setTimeout(() => {
+  const consumer = new Consumer(
+    client,
+    [
+      {
+        topic: process.env.TOPIC,
+        partition: 0
+      }
+    ],
     {
-      topic: process.env.TOPIC,
-      partition: 0,
+      autoCommit: false
     }
-  ], { autoCommit: false });
+  );
 
-  consumer.on('message', message => {
+  consumer.on('message', (message) => {
     console.log(message);
   });
 
-  consumer.on('error', err => {
-    console.error(err);
+  consumer.on('error', (err) => {
+    console.log(err);
   });
-});
+}, process.env.SUBSCRIBE_DELAY);

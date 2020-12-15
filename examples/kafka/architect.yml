@@ -1,8 +1,21 @@
-name: examples/kafka
+name: ryan-cahill-a0/kafka
 
 parameters:
   TOPIC_NAME:
     default: architect
+  KAFKA_LISTENERS:
+    default: INTERNAL://:9092,EXTERNAL://:9093
+  KAFKA_ADVERTISED_LISTENERS:
+    default: INTERNAL://:9092,EXTERNAL://${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:
+    default: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+  KAFKA_ADVERTISED_HOST_NAME:
+    required: false
+  KAFKA_ADDR:
+    # default: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
+    default: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
+  SUBSCRIBE_DELAY:
+    default: 120000
 
 services:
   zookeeper:
@@ -10,24 +23,31 @@ services:
     interfaces:
       main: 2181
   kafka:
-    image: wurstmeister/kafka
+    image: wurstmeister/kafka:2.12-2.4.0
     interfaces:
-      kafka: 9092
+      internal: 9092
+      external: 9093
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${{ services.kafka.interfaces.kafka.host }}
       KAFKA_ZOOKEEPER_CONNECT: ${{ services.zookeeper.interfaces.main.host }}:${{ services.zookeeper.interfaces.main.port }}
+      KAFKA_LISTENERS: ${{ parameters.KAFKA_LISTENERS }}
+      KAFKA_ADVERTISED_LISTENERS: ${{ parameters.KAFKA_ADVERTISED_LISTENERS }}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${{ parameters.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP }}
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_LISTENERS: INTERNAL://:9092
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CREATE_TOPICS: ${{ parameters.TOPIC_NAME }}:1:1
+      KAFKA_ADVERTISED_HOST_NAME: ${{ parameters.KAFKA_ADVERTISED_HOST_NAME }}
+    debug:
+      volumes:
+        docker:
+          mount_path: /var/run/docker.sock
+          host_path: /var/run/docker.sock
   publisher:
     build:
       context: ./publisher/
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ services.kafka.interfaces.kafka.url }}
+      KAFKA_ADDR: ${{ parameters.KAFKA_ADDR }}
       TOPIC: ${{ parameters.TOPIC_NAME }}
   subscriber:
     build:
@@ -35,7 +55,8 @@ services:
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ services.kafka.interfaces.kafka.url }}
+      KAFKA_ADDR: ${{ parameters.KAFKA_ADDR }}
       TOPIC: ${{ parameters.TOPIC_NAME }}
+      SUBSCRIBE_DELAY: ${{ parameters.SUBSCRIBE_DELAY }}
 
 interfaces:
