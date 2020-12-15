@@ -1,5 +1,5 @@
 components:
-  ryan-cahill-a0/kafka:
+  examples/kafka:
     extends: file:./
     parameters:
       KAFKA_ADVERTISED_HOST_NAME: 172.17.0.1

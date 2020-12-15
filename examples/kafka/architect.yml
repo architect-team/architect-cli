@@ -1,4 +1,4 @@
-name: ryan-cahill-a0/kafka
+name: examples/kafka
 
 parameters:
   TOPIC_NAME:
@@ -11,9 +11,6 @@ parameters:
     default: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
   KAFKA_ADVERTISED_HOST_NAME:
     required: false
-  KAFKA_ADDR:
-    # default: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
-    default: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
   SUBSCRIBE_DELAY:
     default: 120000
 
@@ -47,7 +44,8 @@ services:
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ parameters.KAFKA_ADDR }}
+      KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
+      # KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
       TOPIC: ${{ parameters.TOPIC_NAME }}
   subscriber:
     build:
@@ -55,7 +53,8 @@ services:
     interfaces:
       http: 8080
     environment:
-      KAFKA_ADDR: ${{ parameters.KAFKA_ADDR }}
+      KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }} # uncomment to run locally
+      # KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }} # uncomment to run remotely
       TOPIC: ${{ parameters.TOPIC_NAME }}
       SUBSCRIBE_DELAY: ${{ parameters.SUBSCRIBE_DELAY }}
 
