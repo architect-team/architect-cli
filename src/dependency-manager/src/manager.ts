@@ -448,10 +448,22 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
+    const environment_components = interpolated_environment.getComponents();
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
     for (let component of Object.values(component_map)) {
-      const environment_component = interpolated_environment.getComponents()[component.getRef()] || interpolated_environment.getComponents()[component.getName()];
+      let environment_component = environment_components[component.getRef()];
+
+      if (!environment_component) {
+        const generic_environment_component = environment_components[component.getName()];
+        if (generic_environment_component) {
+          const environment_component_extends = generic_environment_component.getExtends();
+          if (!environment_component_extends || environment_component_extends === component.getExtends()) {
+            environment_component = generic_environment_component;
+          }
+        }
+      }
+
       // Set default component parameter values from environment parameters
       for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
         const environment_parameter = interpolated_environment.getParameters()[parameter_key];

@@ -10,6 +10,7 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
+import yaml from 'js-yaml';
 
 describe('components spec v1', function () {
   beforeEach(async () => {
@@ -610,6 +611,80 @@ describe('components spec v1', function () {
       expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
+    });
+
+    it('component B:v2 and component A with dependency B:v1', async () => {
+      // TODO: Validate lack of services/tasks
+      // TODO: Validate lack of image/build context
+      const component_a = `
+        name: examples/component-a
+        dependencies:
+          examples/component-b: v1
+        services:
+          app:
+            image: test:v1
+        `;
+
+      const component_b_v1 = `
+        name: examples/component-b
+        parameters:
+          test_required:
+        services:
+          api:
+            image: test:v1
+            environment:
+              TEST_REQUIRED: \${{ parameters.test_required }}
+        `;
+
+      const component_b_v2 = `
+        name: examples/component-b
+        parameters:
+          test_required:
+        services:
+          api:
+            image: test:v2
+            environment:
+              TEST_REQUIRED: \${{ parameters.test_required }}
+        `;
+
+      const env_config = `
+        parameters:
+          test_required: foo
+        components:
+          examples/component-a: v1
+          examples/component-b:
+            extends: v2
+            parameters:
+              test_required: foo2
+          examples/component-b:v1:
+            parameters:
+              test_required: foo3
+      `;
+
+      mock_fs({
+        '/stack/environment.yml': env_config,
+      });
+
+      moxios.stubRequest(`/accounts/examples/components/component-a/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: yaml.safeLoad(component_a), service: { url: 'examples/component-a:v1' } }
+      });
+      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: yaml.safeLoad(component_b_v1), service: { url: 'examples/component-b:v1' } }
+      });
+      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v2`, {
+        status: 200,
+        response: { tag: 'v2', config: yaml.safeLoad(component_b_v2), service: { url: 'examples/component-b:v2' } }
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+      const graph = await manager.getGraph();
+
+      const node_b_v1 = graph.getNodeByRef('examples/component-b/api:v1') as ServiceNode;
+      expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
+      const node_b_v2 = graph.getNodeByRef('examples/component-b/api:v2') as ServiceNode;
+      expect(node_b_v2.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
     });
   });
 });
