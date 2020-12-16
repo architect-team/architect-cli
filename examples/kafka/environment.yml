@@ -1,2 +1,2 @@
 components:
-  examples/kafka: file:./
+  examples/kafka: latest
