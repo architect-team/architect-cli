@@ -29,7 +29,8 @@
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
-    "build": "rm -rf lib && tsc -b"
+    "build": "rm -rf lib && tsc -b",
+    "generate:schema:v1": "typescript-json-schema ./src/spec/v1-component-spec.ts ComponentSpecV1 > ./v1-component-schema.json"
   },
   "main": "lib/index.js",
   "files": [
@@ -43,6 +44,7 @@
     "@types/js-yaml": "^3.12.3",
     "@types/mustache": "^4.0.1",
     "@types/shell-quote": "^1.6.2",
-    "typescript": "^3.7.2"
+    "typescript": "^3.7.2",
+    "typescript-json-schema": "^0.45.1"
   }
 }
