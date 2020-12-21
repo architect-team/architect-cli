@@ -1,22 +1,24 @@
 const kafka = require('kafka-node');
+const client = new kafka.KafkaClient({ kafkaHost: process.env.ENVIRONMENT === 'local' ? process.env.INTERNAL_KAFKA_ADDR : process.env.EXTERNAL_KAFKA_ADDR });
+const Consumer = kafka.Consumer;
 
-const client = new kafka.KafkaClient({
-  kafkaHost: process.env.KAFKA_ADDR,
-});
-
-client.on('ready', () => {
-  const consumer = new kafka.Consumer(client, [
+const consumer = new Consumer(
+  client,
+  [
     {
       topic: process.env.TOPIC,
-      partition: 0,
+      partition: 0
     }
-  ], { autoCommit: false });
+  ],
+  {
+    autoCommit: false
+  }
+);
 
-  consumer.on('message', message => {
-    console.log(message);
-  });
+consumer.on('message', (message) => {
+  console.log(message);
+});
 
-  consumer.on('error', err => {
-    console.error(err);
-  });
+consumer.on('error', (err) => {
+  console.log(err);
 });
