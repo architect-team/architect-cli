@@ -67,7 +67,7 @@ deploy_preview:
     architect deploy --auto_approve -a $ARCHITECT_ACCOUNT -e $CI_MERGE_REQUEST_ID $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID $ARCHITECT_DEPLOY_FLAGS
   environment:
     name: architect/preview/$CI_MERGE_REQUEST_ID
-    url: https://app.architect.io/ryan-cahill-a0/environments/$CI_MERGE_REQUEST_ID/
+    url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/$CI_MERGE_REQUEST_ID/
     on_stop: destroy_preview
   rules:
     - if: $CI_MERGE_REQUEST_ID
@@ -83,7 +83,6 @@ destroy_preview:
   rules:
     - if: $CI_MERGE_REQUEST_ID
       when: manual
-
 ```
 
 ## Cleanup preview environment
