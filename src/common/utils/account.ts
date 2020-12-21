@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 
 export interface Account {
@@ -17,6 +18,10 @@ export class AccountUtils {
   };
 
   static async getAccount(api: AxiosInstance, account_name?: string, account_message?: string): Promise<Account> {
+    if (process.env.ARCHITECT_ACCOUNT) {
+      console.log(chalk.blue(`Using account context: `) + `${process.env.ARCHITECT_ACCOUNT}`);
+    }
+
     let account: Account;
     if (account_name) {
       account = (await api.get(`/accounts/${account_name}`)).data;

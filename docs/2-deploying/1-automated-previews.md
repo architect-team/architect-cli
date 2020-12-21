@@ -46,6 +46,10 @@ This job can be pasted into your `.gitlab-ci.yml` at the root of your repository
 This configuration takes advantage of GitLab environments in order to give you better control and visibility into what environments exist and what's deployed to them. On PR creation, both a GitLab and Architect environment will be created. The component specified in the repository will be registered with the Architect Cloud and deployed to the environment. When the PR is either merged or closed, the GitLab environment will be automatically deleted and the component deployed to the environment in the Architect Cloud will be destroyed.
 
 ```yaml
+# this example assumes that the repo has ARCHITECT_ACCOUNT and ARCHITECT_PLATFORM set as CI/CD variables
+variables:
+  ARCHITECT_ENVIRONMENT: $CI_MERGE_REQUEST_ID
+
 stages:
   - preview
 
@@ -63,8 +67,8 @@ deploy_preview:
   stage: preview
   script: |
     architect register architect.yml -t $CI_MERGE_REQUEST_ID
-    architect environment:create $CI_MERGE_REQUEST_ID -a $ARCHITECT_ACCOUNT --platform $ARCHITECT_PLATFORM || true
-    architect deploy --auto_approve -a $ARCHITECT_ACCOUNT -e $CI_MERGE_REQUEST_ID $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID $ARCHITECT_DEPLOY_FLAGS
+    architect environment:create $CI_MERGE_REQUEST_ID || true
+    architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID $ARCHITECT_DEPLOY_FLAGS
   environment:
     name: architect/preview/$CI_MERGE_REQUEST_ID
     url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/$CI_MERGE_REQUEST_ID/
@@ -75,8 +79,8 @@ deploy_preview:
 destroy_preview:
   stage: preview
   script: |
-    architect destroy --auto_approve -a $ARCHITECT_ACCOUNT -e $CI_MERGE_REQUEST_ID -c $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID
-    architect env:destroy --auto_approve $CI_MERGE_REQUEST_ID -a $ARCHITECT_ACCOUNT
+    architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID
+    architect env:destroy --auto_approve $CI_MERGE_REQUEST_ID
   environment:
     name: architect/preview/$CI_MERGE_REQUEST_ID
     action: stop
