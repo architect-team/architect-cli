@@ -41,7 +41,7 @@ jobs:
 
 ### Gitlab CI
 
-This job can be pasted into your `.gitlab-ci.yml` at the root of your repository. You are welcome to change the `stage` to whatever fits your needs to allow you to run tests before the preview is generated, and please be sure to assign correct values for the variables in the job. Additionally, you'll need to assign values for variables in the below config not prefixed with `$CI_` in your repositories CI variables configuration so that the architect commands will run successfully.
+This job can be pasted into your `.gitlab-ci.yml` at the root of your repository. You are welcome to change the `stage` to whatever fits your needs to allow you to run tests before the preview is generated, and please be sure to assign correct values for the variables in the job. Additionally, you'll need to assign values for variables in the below config not prefixed with `$CI_` in your repository's CI variables configuration so that the architect commands will run successfully.
 
 This configuration takes advantage of GitLab environments in order to give you better control and visibility into what environments exist and what's deployed to them. On PR creation, both a GitLab and Architect environment will be created. The component specified in the repository will be registered with the Architect Cloud and deployed to the environment. When the PR is either merged or closed, the GitLab environment will be automatically deleted and the component deployed to the environment in the Architect Cloud will be destroyed.
 
