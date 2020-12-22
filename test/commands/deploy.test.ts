@@ -236,6 +236,21 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
+  const basic_component_expected_compose = {
+    "version": "3",
+    "services": {
+      "examples--hello-world--api--latest--d00ztoyu": {
+        "ports": [
+          "50000:3000",
+        ],
+        "environment": {},
+        "image": "heroku/nodejs-hello-world",
+        "depends_on": []
+      }
+    },
+    "volumes": {}
+  }
+
   const component_expected_compose = {
     "version": "3",
     "services": {
@@ -308,7 +323,7 @@ describe('local deploy environment', function () {
       .it('Create a basic local deploy with a component config', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+        expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
       })
 
     test
