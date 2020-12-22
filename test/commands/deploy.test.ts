@@ -5,7 +5,7 @@ import Deploy, { DeployCommand } from '../../src/commands/deploy';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -43,7 +43,27 @@ describe('local deploy environment', function () {
     }
   }
 
-  const expected_compose = {
+  const local_component_config = {
+    "name": "examples/hello-world",
+
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": "3000"
+        }
+      }
+    },
+
+    "interfaces": {
+      "hello": {
+        "description": 'Connects to the hello-world service to return "Hello World!" on-demand',
+        "url": "${{ services.api.interfaces.main.url }}"
+      }
+    }
+  }
+
+  const environment_expected_compose = {
     "version": "3",
     "services": {
       "examples--database-seeding--app--latest--7fdljhug": {
@@ -90,6 +110,21 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
+  const component_expected_compose = {
+    "version": "3",
+    "services": {
+    "examples--hello-world--api--latest--d00ztoyu": {
+      "ports": [
+        "50000:3000",
+      ],
+      "depends_on": [],
+      "environment": {},
+      "image": "heroku/nodejs-hello-world",
+    }
+  },
+  "volumes": {}
+  }
+
   test
     .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
@@ -99,10 +134,25 @@ describe('local deploy environment', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-l', './mock-environment.yml'])
-    .it('Create a local deploy', ctx => {
+    .it('Create a local deploy with an environment config', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(expected_compose)
+      expect(runCompose.firstCall.args[0]).to.deep.equal(environment_expected_compose)
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml'])
+    .it('Create a local deploy with a component config', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
     })
 
   test
