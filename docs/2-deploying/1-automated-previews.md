@@ -49,6 +49,7 @@ This configuration takes advantage of GitLab environments in order to give you b
 # this example assumes that the repo has ARCHITECT_ACCOUNT and ARCHITECT_PLATFORM set as CI/CD variables
 variables:
   ARCHITECT_ENVIRONMENT: $CI_MERGE_REQUEST_ID
+  PREVIEW_KEY: preview-$CI_MERGE_REQUEST_ID
 
 stages:
   - preview
@@ -66,12 +67,12 @@ default:
 deploy_preview:
   stage: preview
   script: |
-    architect register architect.yml -t $CI_MERGE_REQUEST_ID
-    architect environment:create $CI_MERGE_REQUEST_ID || true
-    architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID $ARCHITECT_DEPLOY_FLAGS
+    architect register architect.yml -t $PREVIEW_KEY
+    architect environment:create $PREVIEW_KEY || true
+    architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$PREVIEW_KEY $ARCHITECT_DEPLOY_FLAGS
   environment:
-    name: architect/preview/$CI_MERGE_REQUEST_ID
-    url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/$CI_MERGE_REQUEST_ID/
+    name: architect/preview/$PREVIEW_KEY
+    url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/$PREVIEW_KEY/
     on_stop: destroy_preview
   rules:
     - if: $CI_MERGE_REQUEST_ID
@@ -79,10 +80,10 @@ deploy_preview:
 destroy_preview:
   stage: preview
   script: |
-    architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$CI_MERGE_REQUEST_ID
-    architect env:destroy --auto_approve $CI_MERGE_REQUEST_ID
+    architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$PREVIEW_KEY
+    architect env:destroy --auto_approve $PREVIEW_KEY
   environment:
-    name: architect/preview/$CI_MERGE_REQUEST_ID
+    name: architect/preview/$PREVIEW_KEY
     action: stop
   rules:
     - if: $CI_MERGE_REQUEST_ID
