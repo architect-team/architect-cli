@@ -1,11 +1,13 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
+import { ComponentConfigV1 } from '../../dependency-manager/src/spec/component/component-v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import { readIfFile } from '../../dependency-manager/src/utils/files';
@@ -37,7 +39,7 @@ export default class LocalDependencyManager extends DependencyManager {
     } else {
       const component_config = await ComponentConfigBuilder.buildFromPath(component_config_path);
       const env_json: any = { components: {} };
-      env_json.components[`${component_config.getName()}:latest`] = { extends: `file:${component_config_path}` };
+      env_json.components[component_config.getName()] = plainToClass(ComponentConfigV1, { extends: `file:${component_config_path}`, name: component_config.getName() });
       env_config = EnvironmentConfigBuilder.buildFromJSON(env_json);
     }
     await dependency_manager.init(env_config);
