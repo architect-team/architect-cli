@@ -47,10 +47,6 @@ This configuration takes advantage of GitLab environments in order to give you b
 
 ```yaml
 # this example assumes that the repo has ARCHITECT_ACCOUNT and ARCHITECT_PLATFORM set as CI/CD variables
-variables:
-  ARCHITECT_ENVIRONMENT: $CI_MERGE_REQUEST_ID
-  PREVIEW_KEY: preview-$CI_MERGE_REQUEST_ID
-
 stages:
   - preview
 
@@ -61,29 +57,33 @@ default:
   before_script:
     - apk add --update npm git
     - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
-    - npm install -g @architect-io/cli@0.8 --unsafe-perm
+    - npm install -g @architect-io/cli --unsafe-perm
     - architect login -e $ARCHITECT_EMAIL -p $ARCHITECT_PASSWORD
 
 deploy_preview:
   stage: preview
+  variables:
+    ARCHITECT_ENVIRONMENT: preview-$CI_MERGE_REQUEST_ID
   script: |
-    architect register architect.yml -t $PREVIEW_KEY
-    architect environment:create $PREVIEW_KEY || true
-    architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$PREVIEW_KEY $ARCHITECT_DEPLOY_FLAGS
+    architect register architect.yml -t $ARCHITECT_ENVIRONMENT
+    architect environment:create $ARCHITECT_ENVIRONMENT || true
+    architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$ARCHITECT_ENVIRONMENT $ARCHITECT_DEPLOY_FLAGS
   environment:
-    name: architect/preview/$PREVIEW_KEY
-    url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/$PREVIEW_KEY/
+    name: architect/preview/preview-$CI_MERGE_REQUEST_ID
+    url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/preview-$CI_MERGE_REQUEST_ID/
     on_stop: destroy_preview
   rules:
     - if: $CI_MERGE_REQUEST_ID
 
 destroy_preview:
   stage: preview
+  variables:
+    ARCHITECT_ENVIRONMENT: preview-$CI_MERGE_REQUEST_ID
   script: |
-    architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$PREVIEW_KEY
-    architect env:destroy --auto_approve $PREVIEW_KEY
+    architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$ARCHITECT_ENVIRONMENT
+    architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT
   environment:
-    name: architect/preview/$PREVIEW_KEY
+    name: architect/preview/preview-$CI_MERGE_REQUEST_ID
     action: stop
   rules:
     - if: $CI_MERGE_REQUEST_ID
