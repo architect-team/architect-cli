@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Account } from './account';
 
@@ -17,6 +18,10 @@ export class PlatformUtils {
   };
 
   static async getPlatform(api: AxiosInstance, account: Account, platform_name?: string): Promise<Platform> {
+    if (process.env.ARCHITECT_PLATFORM === platform_name) {
+      console.log(chalk.blue(`Using platform from environment variables: `) + platform_name);
+    }
+
     let platform: Platform;
     if (platform_name) {
       platform = (await api.get(`/accounts/${account.id}/platforms/${platform_name}`)).data;
