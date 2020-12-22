@@ -22,8 +22,8 @@ export class EnvironmentUtils {
   };
 
   static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
-    if (process.env.ARCHITECT_ENVIRONMENT) {
-      console.log(chalk.blue(`Using environment context: `) + `${process.env.ARCHITECT_ENVIRONMENT}`);
+    if (process.env.ARCHITECT_ENVIRONMENT === environment_name) {
+      console.log(chalk.blue(`Using environment context: `) + environment_name);
     }
 
     let environment: Environment;
