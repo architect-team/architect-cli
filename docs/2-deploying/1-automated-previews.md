@@ -69,7 +69,7 @@ deploy_preview:
     architect environment:create $ARCHITECT_ENVIRONMENT || true
     architect deploy --auto_approve $ARCHITECT_COMPONENT_NAME:$ARCHITECT_ENVIRONMENT $ARCHITECT_DEPLOY_FLAGS
   environment:
-    name: architect/preview/preview-$CI_MERGE_REQUEST_ID
+    name: architect/preview-$CI_MERGE_REQUEST_ID
     url: https://app.architect.io/$ARCHITECT_ACCOUNT/environments/preview-$CI_MERGE_REQUEST_ID/
     on_stop: destroy_preview
   rules:
@@ -83,7 +83,7 @@ destroy_preview:
     architect destroy --auto_approve -c $ARCHITECT_COMPONENT_NAME:$ARCHITECT_ENVIRONMENT
     architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT
   environment:
-    name: architect/preview/preview-$CI_MERGE_REQUEST_ID
+    name: architect/preview-$CI_MERGE_REQUEST_ID
     action: stop
   rules:
     - if: $CI_MERGE_REQUEST_ID
