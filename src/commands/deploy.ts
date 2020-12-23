@@ -263,9 +263,10 @@ export default class Deploy extends DeployCommand {
     }
 
     let dependency_manager;
+    let namespaced_component_name;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
-      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+      namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
 
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
@@ -275,22 +276,20 @@ export default class Deploy extends DeployCommand {
 
       dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
       dependency_manager.environment = env_config;
-
-      const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
     } else {
-      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
-
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
         component_values
       );
+      namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     }
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     for (const [parameter_key, parameter] of Object.entries(extra_params)) {
       dependency_manager.environment.setParameter(parameter_key, parameter);
     }
+    const extra_interfaces = this.getExtraInterfaces(flags.interface);
+    this.updateEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, namespaced_component_name);
 
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
     const compose = await DockerComposeUtils.generate(dependency_manager);
@@ -375,7 +374,7 @@ export default class Deploy extends DeployCommand {
 
   updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
     for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
+      env_config.setInterface(subdomain, `\${{ components['${component_name}'].interfaces.${interface_name}.url }}`);
     }
   }
 

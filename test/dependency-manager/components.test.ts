@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -10,7 +11,6 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
-import yaml from 'js-yaml';
 
 describe('components spec v1', function () {
   beforeEach(async () => {
@@ -66,10 +66,10 @@ describe('components spec v1', function () {
 
       mock_fs({
         '/stack/architect.json': JSON.stringify(component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:latest',
@@ -135,10 +135,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
       const graph = await manager.getGraph();
@@ -184,10 +184,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
@@ -236,10 +236,10 @@ describe('components spec v1', function () {
 
       mock_fs({
         '/stack/architect.json': JSON.stringify(component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:latest',
@@ -362,10 +362,10 @@ describe('components spec v1', function () {
       mock_fs({
         '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
         '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -548,10 +548,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
       const graph = await manager.getGraph();
@@ -594,10 +594,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')

@@ -1,5 +1,6 @@
 import { deserialize, plainToClass, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
+import { isMatch } from 'matcher';
 import { ServiceNode } from '.';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
@@ -31,10 +32,10 @@ export default abstract class DependencyManager {
     this.__graph_cache = {};
   }
 
-  async init(environment_config?: EnvironmentConfig, values_dictionary?: { [s: string]: { [s: string]: string } } = {}): Promise<void> {
+  async init(environment_config?: EnvironmentConfig, values_dictionary: { [s: string]: { [s: string]: string } } = {}): Promise<void> {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
-    values_dictionary = values_dictionary;
+    this.values_dictionary = values_dictionary;
   }
 
   async getGraph(interpolate = true): Promise<DependencyGraph> {
@@ -45,12 +46,34 @@ export default abstract class DependencyManager {
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
       if (interpolate) {
-        const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
+
+        // add values file parameters to environment config from here?
+        const environment_with_values = this.assignValuesToEnvironmentComponents(this.environment, this.values_dictionary);
+        console.log(JSON.stringify(environment_with_values, null, 2))
+        const interpolated_environment = await this.interpolateEnvironment(graph, environment_with_values, component_map);
         await this.interpolateComponents(graph, interpolated_environment, component_map);
       }
       this.__graph_cache[cache_key] = graph;
     }
     return graph;
+  }
+
+  assignValuesToEnvironmentComponents(environment_config: EnvironmentConfig, values_dictionary: { [s: string]: { [s: string]: string } } = {}): EnvironmentConfig {
+    const updated_environment_config = environment_config.copy();
+    const environment_components = updated_environment_config.getComponents();
+    for (const [component_key, env_component] of Object.entries(environment_components)) {
+      if (env_component) {
+        for (const [pattern, params] of Object.entries(values_dictionary)) { // TODO: sort patterns
+          if (isMatch(`${component_key}:latest`, [pattern])) { // TODO: optional tag || latest
+            for (const [param_key, param_value] of Object.entries(params)) {
+              env_component.setParameter(param_key, param_value);
+            }
+          }
+        }
+        updated_environment_config.setComponent(component_key, env_component);
+      }
+    }
+    return updated_environment_config;
   }
 
   // Add edges between gateway and component interfaces nodes
