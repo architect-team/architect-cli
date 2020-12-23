@@ -356,10 +356,10 @@ describe('interfaces spec v1', () => {
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',

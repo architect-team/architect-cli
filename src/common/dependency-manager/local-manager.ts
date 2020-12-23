@@ -1,11 +1,13 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
+import { ComponentConfigV1 } from '../../dependency-manager/src/spec/component/component-v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import { readIfFile } from '../../dependency-manager/src/utils/files';
@@ -27,12 +29,19 @@ export default class LocalDependencyManager extends DependencyManager {
     return this.createFromPath(api, '');
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
-    const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_components);
-    const env_config = dependency_manager.config_path
-      ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
-      : EnvironmentConfigBuilder.buildFromJSON({});
-
+  static async createFromPath(api: AxiosInstance, component_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
+    let env_config;
+    const dependency_manager = new LocalDependencyManager(api, component_config_path, linked_components);
+    if (component_config_path.endsWith('environment.yml') || component_config_path.endsWith('environment.json') || component_config_path.endsWith('env-mock-dev.yml') || !component_config_path) { // TODO: remove when environment configs are offically gone
+      env_config = dependency_manager.config_path
+        ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
+        : EnvironmentConfigBuilder.buildFromJSON({});
+    } else {
+      const component_config = await ComponentConfigBuilder.buildFromPath(component_config_path);
+      const env_json: any = { components: {} };
+      env_json.components[component_config.getName()] = plainToClass(ComponentConfigV1, { extends: `file:${component_config_path}`, name: component_config.getName() });
+      env_config = EnvironmentConfigBuilder.buildFromJSON(env_json);
+    }
     await dependency_manager.init(env_config);
     return dependency_manager;
   }

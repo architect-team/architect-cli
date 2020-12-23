@@ -100,11 +100,11 @@ describe('interpolation spec v1', () => {
     mock_fs({
       '/stack/web.json': JSON.stringify(web_component_config),
       '/stack/worker.json': JSON.stringify(worker_component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
-      '/stack/public.arc.env.json': JSON.stringify(public_env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
+      '/stack/public.environment.json': JSON.stringify(public_env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'concourse/web:latest-interfaces',
@@ -146,7 +146,7 @@ describe('interpolation spec v1', () => {
       'volumes': {},
     })
 
-    const public_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/public.arc.env.json');
+    const public_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/public.environment.json');
     const public_graph = await public_manager.getGraph();
     expect(public_graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -1153,11 +1153,11 @@ describe('interpolation spec v1', () => {
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
       '/stack/secrets/vault-secret': '<secret_id>'
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
