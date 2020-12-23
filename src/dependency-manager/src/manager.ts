@@ -46,10 +46,7 @@ export default abstract class DependencyManager {
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
       if (interpolate) {
-
-        // add values file parameters to environment config from here?
         const environment_with_values = this.assignValuesToEnvironmentComponents(this.environment, this.values_dictionary);
-        console.log(JSON.stringify(environment_with_values, null, 2))
         const interpolated_environment = await this.interpolateEnvironment(graph, environment_with_values, component_map);
         await this.interpolateComponents(graph, interpolated_environment, component_map);
       }
@@ -61,17 +58,23 @@ export default abstract class DependencyManager {
   assignValuesToEnvironmentComponents(environment_config: EnvironmentConfig, values_dictionary: { [s: string]: { [s: string]: string } } = {}): EnvironmentConfig {
     const updated_environment_config = environment_config.copy();
     const environment_components = updated_environment_config.getComponents();
+
+    const sorted_values_keys = Object.keys(values_dictionary).sort();
+    const sorted_values_dict: { [s: string]: { [s: string]: string } } = {};
+    for (const key of sorted_values_keys) {
+      sorted_values_dict[key] = values_dictionary[key];
+    }
+
     for (const [component_key, env_component] of Object.entries(environment_components)) {
-      if (env_component) {
-        for (const [pattern, params] of Object.entries(values_dictionary)) { // TODO: sort patterns
-          if (isMatch(`${component_key}:latest`, [pattern])) { // TODO: optional tag || latest
-            for (const [param_key, param_value] of Object.entries(params)) {
-              env_component.setParameter(param_key, param_value);
-            }
+      for (const [pattern, params] of Object.entries(sorted_values_dict)) {
+        const component_has_tag = component_key.includes(':');
+        if (isMatch(component_has_tag ? component_key : `${component_key}:latest`, [pattern])) {
+          for (const [param_key, param_value] of Object.entries(params)) {
+            env_component.setParameter(param_key, param_value);
           }
         }
-        updated_environment_config.setComponent(component_key, env_component);
       }
+      updated_environment_config.setComponent(component_key, env_component);
     }
     return updated_environment_config;
   }

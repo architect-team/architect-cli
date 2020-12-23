@@ -311,50 +311,50 @@ describe('local deploy environment', function () {
       expect(runCompose.firstCall.args[0]).to.deep.equal(environment_expected_compose)
     })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/hello-world/architect.yml'])
-      .it('Create a basic local deploy with a component config', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml'])
+    .it('Create a basic local deploy with a component config', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
+    })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello'])
-      .it('Create a local deploy with a component and an interface', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello'])
+    .it('Create a local deploy with a component and an interface', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
-      .it('Create a local deploy with a component, parameters, and an interface', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
+    .it('Create a local deploy with a component, parameters, and an interface', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
+    })
 
   test
     .timeout(15000)
@@ -381,6 +381,8 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
     })
+
+
 });
 
 describe('remote deploy environment', function () {

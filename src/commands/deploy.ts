@@ -241,12 +241,10 @@ export default class Deploy extends DeployCommand {
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
-  private async runLocal() {
-    const { args, flags } = this.parse(Deploy);
-
+  private readValuesFile(values_file_path: string | undefined) {
     let component_values = {};
-    if (flags.values && fs.statSync(flags.values)) {
-      const values_file_data = fs.readFileSync(flags.values);
+    if (values_file_path && fs.statSync(values_file_path)) {
+      const values_file_data = fs.readFileSync(values_file_path);
       try {
         component_values = JSON.parse(values_file_data.toString('utf-8'));
       } catch {
@@ -261,6 +259,13 @@ export default class Deploy extends DeployCommand {
         }
       }
     }
+    return component_values;
+  }
+
+  private async runLocal() {
+    const { args, flags } = this.parse(Deploy);
+
+    const component_values = this.readValuesFile(flags.values);
 
     let dependency_manager;
     let namespaced_component_name;
