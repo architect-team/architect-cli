@@ -6,7 +6,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
-import yaml from 'js-yaml';
+import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
 import open from 'open';
 import path from 'path';
 import untildify from 'untildify';
@@ -150,6 +150,10 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    values: flags.string({
+      char: 'v',
+      description: 'Path of values file',
+    }),
   };
 
   static args = [{
@@ -240,6 +244,24 @@ export default class Deploy extends DeployCommand {
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
 
+    let component_values = {};
+    if (flags.values && fs.statSync(flags.values)) {
+      const values_file_data = fs.readFileSync(flags.values);
+      try {
+        component_values = JSON.parse(values_file_data.toString('utf-8'));
+      } catch {
+        try {
+          const parsed_yml = yaml.safeLoad(values_file_data.toString('utf-8'), { schema: FAILSAFE_SCHEMA });
+          if (parsed_yml) {
+            component_values = parsed_yml;
+          }
+        } catch(err) {
+          this.log(chalk.red('Unable to read values file'));
+          throw err;
+        }
+      }
+    }
+
     let dependency_manager;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
@@ -251,7 +273,7 @@ export default class Deploy extends DeployCommand {
         },
       });
 
-      dependency_manager = await LocalDependencyManager.create(this.app.api);
+      dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
       dependency_manager.environment = env_config;
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
@@ -262,6 +284,7 @@ export default class Deploy extends DeployCommand {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
+        component_values
       );
     }
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);

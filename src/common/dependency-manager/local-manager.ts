@@ -23,17 +23,17 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  static async create(api: AxiosInstance) {
-    return this.createFromPath(api, '');
+  static async create(api: AxiosInstance, values_dictionary: { [s: string]: { [s: string]: string } } = {}) {
+    return this.createFromPath(api, '', values_dictionary);
   }
 
-  static async createFromPath(api: AxiosInstance, env_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
+  static async createFromPath(api: AxiosInstance, env_config_path: string, values_dictionary: { [s: string]: { [s: string]: string } } = {}, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
     const dependency_manager = new LocalDependencyManager(api, env_config_path, linked_components);
     const env_config = dependency_manager.config_path
       ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
       : EnvironmentConfigBuilder.buildFromJSON({});
 
-    await dependency_manager.init(env_config);
+    await dependency_manager.init(env_config, values_dictionary);
     return dependency_manager;
   }
 

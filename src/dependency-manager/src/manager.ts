@@ -22,6 +22,7 @@ import VaultManager from './vault-manager';
 export default abstract class DependencyManager {
   gateway_port!: number;
   environment!: EnvironmentConfig;
+  values_dictionary!: { [s: string]: { [s: string]: string } };
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
   protected __graph_cache: Dictionary<DependencyGraph | undefined>;
 
@@ -30,9 +31,10 @@ export default abstract class DependencyManager {
     this.__graph_cache = {};
   }
 
-  async init(environment_config?: EnvironmentConfig): Promise<void> {
+  async init(environment_config?: EnvironmentConfig, values_dictionary?: { [s: string]: { [s: string]: string } } = {}): Promise<void> {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
+    values_dictionary = values_dictionary;
   }
 
   async getGraph(interpolate = true): Promise<DependencyGraph> {
