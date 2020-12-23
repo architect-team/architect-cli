@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
+import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Account } from './account';
 
@@ -21,6 +22,10 @@ export class EnvironmentUtils {
   };
 
   static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
+    if (process.env.ARCHITECT_ENVIRONMENT === environment_name) {
+      console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
+    }
+
     let environment: Environment;
     if (environment_name) {
       environment = (await api.get(`/accounts/${account.id}/environments/${environment_name}`)).data;
