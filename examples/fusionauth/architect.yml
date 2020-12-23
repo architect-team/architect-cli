@@ -29,6 +29,8 @@ parameters:
   ADMIN_USER_PASSWORD:
     description: Password for the default admin user
     default: password
+  FUSIONAUTH_DB_HOST:
+    required: true
 
 interfaces:
   app:
@@ -42,6 +44,7 @@ services:
       postgres:
         protocol: postgresql
         port: 5432
+        host: ${{ parameters.FUSIONAUTH_DB_HOST }}
     environment:
       POSTGRES_USER: ${{ parameters.ROOT_DB_USER }}
       POSTGRES_PASSWORD: ${{ parameters.ROOT_DB_PASS }}
@@ -66,6 +69,7 @@ services:
       ADMIN_USER_PASSWORD: ${{ parameters.ADMIN_USER_PASSWORD }}
       KICKSTART_CONTENTS: file:./config/kickstart.json
       FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
+      FUSIONAUTH_APP_SILENT_MODE: false
     command:
       - sh
       - -c

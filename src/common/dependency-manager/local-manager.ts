@@ -32,7 +32,7 @@ export default class LocalDependencyManager extends DependencyManager {
   static async createFromPath(api: AxiosInstance, component_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
     let env_config;
     const dependency_manager = new LocalDependencyManager(api, component_config_path, linked_components);
-    if (component_config_path.endsWith('environment.yml') || component_config_path.endsWith('environment.json') || !component_config_path) { // TODO: remove when environment configs are offically gone
+    if (component_config_path.endsWith('environment.yml') || component_config_path.endsWith('environment.json') || component_config_path.endsWith('env-mock-dev.yml') || !component_config_path) { // TODO: remove when environment configs are offically gone
       env_config = dependency_manager.config_path
         ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
         : EnvironmentConfigBuilder.buildFromJSON({});
