@@ -9,7 +9,7 @@ import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/depe
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = true;
+const print = true; // TODO: reset
 
 const account = {
   id: 'test-account-id',
@@ -73,7 +73,8 @@ describe('local deploy environment', function () {
         },
         "environment": {
           "a_required_key": "${{ parameters.a_required_key }}",
-          "another_required_key": "${{ parameters.another_required_key }}"
+          "another_required_key": "${{ parameters.another_required_key }}",
+          "one_more_required_param": "${{ parameters.one_more_required_param }}"
         }
       }
     },
@@ -90,18 +91,25 @@ describe('local deploy environment', function () {
       },
       'another_required_key': {
         'required': 'true'
+      },
+      'one_more_required_param': {
+        'required': 'true'
       }
     }
   }
   const basic_parameter_values = {
     'examples/hello-world:latest': {
       'a_required_key': 'some_value',
-      'another_required_key': 'required_value'
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
     },
   }
   const wildcard_parameter_values = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
+    },
+    'examples/hello-world:la*': {
+      'one_more_required_param': 'one_more_value'
     },
     '*': {
       'another_required_key': 'required_value'
@@ -110,7 +118,8 @@ describe('local deploy environment', function () {
   const stacked_parameter_values = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
-      'another_required_key': 'required_value'
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
     },
     '*': {
       'a_required_key': 'a_value_which_will_be_overwritten',
@@ -369,7 +378,8 @@ describe('local deploy environment', function () {
           "VIRTUAL_PORT_test_localhost": "3000",
           "VIRTUAL_PROTO": "http",
           "a_required_key": "some_value",
-          "another_required_key": "required_value"
+          "another_required_key": "required_value",
+          'one_more_required_param': 'one_more_value'
         },
         "external_links": [
           "gateway:test.localhost"
