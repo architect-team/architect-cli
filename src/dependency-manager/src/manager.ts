@@ -46,37 +46,12 @@ export default abstract class DependencyManager {
       const component_map = await this.loadComponents(graph);
       this.addIngressEdges(graph);
       if (interpolate) {
-        const environment_with_values = this.assignValuesToEnvironmentComponents(this.environment, this.values_dictionary);
-        const interpolated_environment = await this.interpolateEnvironment(graph, environment_with_values, component_map);
-        await this.interpolateComponents(graph, interpolated_environment, component_map);
+        const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
+        await this.interpolateComponents(graph, interpolated_environment, component_map, this.values_dictionary);
       }
       this.__graph_cache[cache_key] = graph;
     }
     return graph;
-  }
-
-  assignValuesToEnvironmentComponents(environment_config: EnvironmentConfig, values_dictionary: { [s: string]: { [s: string]: string } } = {}): EnvironmentConfig {
-    const updated_environment_config = environment_config.copy();
-    const environment_components = updated_environment_config.getComponents();
-
-    const sorted_values_keys = Object.keys(values_dictionary).sort();
-    const sorted_values_dict: { [s: string]: { [s: string]: string } } = {};
-    for (const key of sorted_values_keys) {
-      sorted_values_dict[key] = values_dictionary[key];
-    }
-
-    for (const [component_key, env_component] of Object.entries(environment_components)) {
-      for (const [pattern, params] of Object.entries(sorted_values_dict)) {
-        const component_has_tag = component_key.includes(':');
-        if (isMatch(component_has_tag ? component_key : `${component_key}:latest`, [pattern])) {
-          for (const [param_key, param_value] of Object.entries(params)) {
-            env_component.setParameter(param_key, param_value);
-          }
-        }
-      }
-      updated_environment_config.setComponent(component_key, env_component);
-    }
-    return updated_environment_config;
   }
 
   // Add edges between gateway and component interfaces nodes
@@ -475,10 +450,18 @@ export default abstract class DependencyManager {
     return context;
   }
 
-  async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
+  async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>, values_dictionary: { [s: string]: { [s: string]: string } }) {
     const environment_components = interpolated_environment.getComponents();
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
+
+    // pre-sort values dictionary to properly stack/override any colliding keys
+    const sorted_values_keys = Object.keys(this.values_dictionary).sort();
+    const sorted_values_dict: { [s: string]: { [s: string]: string } } = {};
+    for (const key of sorted_values_keys) {
+      sorted_values_dict[key] = this.values_dictionary[key];
+    }
+
     for (let component of Object.values(component_map)) {
       let environment_component = environment_components[component.getRef()];
 
@@ -500,6 +483,18 @@ export default abstract class DependencyManager {
           component.setParameter(parameter_key, parameter);
         }
       }
+
+      // add values from values file to all existing, matching components
+      for (const [pattern, params] of Object.entries(sorted_values_dict)) {
+        console.log(component.getRef())
+        const component_has_tag = component.getRef().includes(':');
+        if (isMatch(component_has_tag ? component.getRef() : `${component.getRef()}:latest`, [pattern])) {
+          for (const [param_key, param_value] of Object.entries(params)) {
+            component.setParameter(param_key, param_value);
+          }
+        }
+      }
+
       if (environment_component) {
         component = component.merge(environment_component);
       }
