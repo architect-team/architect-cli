@@ -605,7 +605,7 @@ describe('interpolation spec v1', () => {
       '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml', { 'examples/hello-world': '/stack/architect.yml' });
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml', {}, { 'examples/hello-world': '/stack/architect.yml' });
     const graph = await manager.getGraph();
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({

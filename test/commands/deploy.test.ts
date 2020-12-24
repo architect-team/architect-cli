@@ -9,7 +9,7 @@ import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/depe
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true;
 
 const account = {
   id: 'test-account-id',
@@ -59,6 +59,62 @@ describe('local deploy environment', function () {
       "hello": {
         "url": "${{ services.api.interfaces.main.url }}"
       }
+    }
+  }
+
+  const local_component_config_with_parameters = {
+    "name": "examples/hello-world",
+
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": "3000"
+        },
+        "environment": {
+          "a_required_key": "${{ parameters.a_required_key }}",
+          "another_required_key": "${{ parameters.another_required_key }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "hello": {
+        "url": "${{ services.api.interfaces.main.url }}"
+      }
+    },
+
+    "parameters": {
+      'a_required_key': {
+        'required': 'true'
+      },
+      'another_required_key': {
+        'required': 'true'
+      }
+    }
+  }
+  const basic_parameter_values = {
+    'examples/hello-world:latest': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value'
+    },
+  }
+  const wildcard_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+    },
+    '*': {
+      'another_required_key': 'required_value'
+    }
+  }
+  const stacked_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value'
+    },
+    '*': {
+      'a_required_key': 'a_value_which_will_be_overwritten',
+      'another_required_key': 'another_value_which_will_be_overwritten'
     }
   }
 
@@ -296,6 +352,53 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
+  const component_with_basic_values_expected_compose = {
+    "version": "3",
+    "services": {
+      "examples--hello-world--api--latest--d00ztoyu": {
+        "ports": [
+          "50000:3000",
+        ],
+        "restart": "always",
+        "depends_on": [
+          "gateway"
+        ],
+        "environment": {
+          "VIRTUAL_HOST": "test.localhost",
+          "VIRTUAL_PORT": "3000",
+          "VIRTUAL_PORT_test_localhost": "3000",
+          "VIRTUAL_PROTO": "http",
+          "a_required_key": "some_value",
+          "another_required_key": "required_value"
+        },
+        "external_links": [
+          "gateway:test.localhost"
+        ],
+        "image": "heroku/nodejs-hello-world",
+      },
+      "gateway": {
+        "depends_on": [],
+        "environment": {
+          "DISABLE_ACCESS_LOGS": "true",
+          "HTTPS_METHOD": "noredirect",
+          "HTTP_PORT": 80
+        },
+        "image": "architectio/nginx-proxy:latest",
+        "logging": {
+          "driver": "none"
+        },
+        "ports": [
+          "80:80"
+        ],
+        "restart": "always",
+        "volumes": [
+          "/var/run/docker.sock:/tmp/docker.sock:ro"
+        ]
+      }
+    },
+    "volumes": {}
+  }
+
   test
     .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
@@ -382,7 +485,59 @@ describe('local deploy environment', function () {
       expect(runCompose.calledOnce).to.be.true
     })
 
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return basic_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a basic values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+    })
 
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return wildcard_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return stacked_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a stacked values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+    })
 });
 
 describe('remote deploy environment', function () {
