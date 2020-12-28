@@ -1,4 +1,4 @@
-name: examples/basic-task
+name: examples/scheduled-tasks
 description: Example application that calls the API once per 5 minutes and prints the results; showcasing Tasks (cron jobs)
 
 parameters:

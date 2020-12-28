@@ -1,93 +1,45 @@
-## Example Application: Database Seeding Through Parameter Configuration
+<p align="center">
+  <a href="//architect.io" target="blank"><img src="https://www.architect.io/logo.svg" width="320" alt="Architect Logo" /></a>
+</p>
 
-### Quickstart
+<p align="center">
+  A dynamic microservices framework for building, connecting, and deploying cloud-native applications.
+</p>
 
-##### For a 'dev' environment:
-In the environment.yml, set `AUTO_DDL:migrate`
-```
-architect deploy -l environment.yml
-```
-At http://api.localhost:3000/users, you should see an empty list of users because the AUTO_DDL parameter is set to 'migrate' which migrated the schema from the Typeorm schema migration scripts in src/migrations.
+---
 
-##### For a 'qa' environment:
-In thje environment.yml, set `AUTO_DDL:seed`
-```
-architect deploy -l environment.yml
-```
-At http://api.localhost:3000/users, you should see a list of test users generated because the AUTO_DDL parameter is set to 'seed' which migrated the schema and ran the populated the test fixtures from src/fixtures.
+# Database seeding example
 
+This example shows how component creators can parameterize their components to allow for different database startup strategies, like automating migrations or database seeding. In a developer environment, it may be that we want to auto-run database migrations at application startup, while in production we may consider that to be dangerous. This is one of many examples of how an environment operator may wish to modify application behavior depending on the environment.
 
-### Example Explained
+This example has been configured with a parameter, `AUTO_DDL`, that dictates what strategy should be used to initialize the database, `none`, `migrate`, or `seed`. Whenever the component is run, we can optionally assign one of these values as the value for the parameter.
 
-This example shows how we may use a component parameter to configure different database startup strategies.
+## Running locally
 
-In a developer environment, it may be that we want to auto-run database migrations at application startup, while in production we may consider that to be dangerous. This is one of many examples of how an environment operator may wish to modify application behavior depending on the environment. Architect provides a straightforward approach to such configuration:
+Architect component specs are declarative, so it can be run locally or remotely with a single deploy command:
 
-(1) The developer declares a parameter in the `architect.yml` file:
+```sh
+# Clone the repository and navigate to this directory
+$ git clone https://github.com/architect-team/architect-cli.git
+$ cd ./architect-cli/examples/database-seeding
 
-```
-name: examples/database-seeding
-// ...
-parameters:
-  AUTO_DDL:
-    description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
-    default: none
-// ...
+# Register the component to the local registry
+$ architect link .
+
+# Deploy using the --local flag
+$ architect deploy --local examples/database-seeding:latest -i main:main -p AUTO_DDL=migrate
 ```
 
-(2) Under the hood, the developer can make use of the value of that parameter by grabbing it from its environment variable:
+Once the deploy has completed, you can reach your new service by going to http://main.localhost/.
+
+## Deploying to the cloud
+
+Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
+
+[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://app.architect.io/examples/components/database-seeding/deploy?tag=latest&interface=main%3Amain&parameter=AUTO_DDL%3Dmigrate)
+
+Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+
+```sh
+$ architect deploy examples/database-seeding:latest -a <account-name> -e <environment-name> -i main:main -p AUTO_DDL=migrate
 ```
-    const auto_ddl = process.env.AUTO_DDL;
-
-    if (auto_ddl === 'migrate') {
-      await this.runMigrations();
-    } else if (auto_ddl === 'seed') {
-      await this.runMigrations();
-      await this.seeDatabase();
-    } else if (auto_ddl === 'none') {
-      // do nothing...
-    } else {
-    // ...
-  }
-```
-
-(3) The environment operator then has the chance to set the parameter value in the `environment.yml` file.
-
-At runtime, a developer might configure their local environment like this so migrations run at startup...
-```
-components:
-  examples/database-seeding:
-    //...
-    parameters:
-      AUTO_DDL: migrate
-```
-
-...whereas a production operator may prefer to configure the environment to run without any migrations...
-```
-components:
-  examples/database-seeding:
-    //...
-    parameters:
-      AUTO_DDL: none
-```
-
-And the quality assurance organization may prefer to start the application up with seed data...
-```
-components:
-  examples/database-seeding:
-    //...
-    parameters:
-      AUTO_DDL: seed
-```
-
-### Notes
-
-* This example uses [Typeorm](https://typeorm.io/#/) to manage the database migrations. See docs here: https://github.com/typeorm/typeorm/blob/master/docs/migrations.md
-* You can see the fixture data that `AUTO_DDL:seed` adds here: `./src/fixtures/`.
-* You can see the migration scripts that `AUTO_DDL:migrate` runs here: `./src/fixtures/`.
-
-## Recap
-
-Environment-specific database manipulation presents a common problem for developing applications in a truly portable way. Architect's parameter construct provides a clean channel to communicate this information between service developers and service operators.
-
-Questions? Don't hesitate to reach out to the architect team!

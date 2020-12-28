@@ -66,10 +66,10 @@ describe('external interfaces spec v1', () => {
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
@@ -128,17 +128,17 @@ describe('external interfaces spec v1', () => {
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
       'architect/cloud/api:latest'
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]'
+      'architect/cloud/app:latest [service->main] -> architect/cloud/api:latest [main]'
     ])
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.false;

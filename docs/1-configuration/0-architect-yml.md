@@ -94,6 +94,18 @@ A dictionary of named gateways that broker access to the services inside the com
 
 [Learn more about configuring interfaces](/docs/configuration/interfaces)
 
+### dependencies
+
+A key-value store of components and their respective tags that this component depends on. Dependency referencing and resolution is a key feature of Architect that enables distribute teams to collaborate without having to get into the specifics of how to operate dependencies.
+
+[Learn more about configuring dependencies](/docs/configuration/dependencies)
+
+### tasks
+
+A dictionary of named tasks included with the component. Each task described in an `architect.yml` file will run on its specified schedule and/or be made available as an executable via Architects CLI upon deployment.
+
+[Learn more about configuring tasks](/docs/configuration/tasks)
+
 ### parameters
 
 (optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.

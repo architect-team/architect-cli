@@ -8,6 +8,8 @@ import { Dictionary } from '../../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
 import { insertFileDataFromRefs } from '../../utils/files';
 import { DeploySpec } from '../common/deploy-spec';
+import { InterfaceSpec } from '../common/interface-spec';
+import { ParameterValueSpec } from '../common/parameter-spec';
 import { ComponentConfig } from './component-config';
 import { ComponentConfigV1 } from './component-v1';
 
@@ -26,6 +28,8 @@ export interface RawComponentConfig {
   tasks: Dictionary<RawServiceConfig>;
   extends?: string;
   artifact_image?: string;
+  parameters?: Dictionary<ParameterValueSpec>;
+  interfaces?: Dictionary<InterfaceSpec>;
 }
 
 export interface RawServiceConfig {

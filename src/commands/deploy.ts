@@ -16,10 +16,9 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
-import ARCHITECTPATHS from '../paths';
 
 export abstract class DeployCommand extends Command {
   static POLL_INTERVAL = 10000;
@@ -121,7 +120,7 @@ export default class Deploy extends DeployCommand {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     compose_file: flags.string({
       char: 'o',
@@ -170,7 +169,7 @@ export default class Deploy extends DeployCommand {
         if (service.environment && service.environment.VIRTUAL_HOST) {
           for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
             this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(split_host);
+            exposed_interfaces.push(`http://${split_host}:${gateway_port}/`);
           }
         }
       }
@@ -183,15 +182,15 @@ export default class Deploy extends DeployCommand {
         this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
       }
     }
-    if (!flags.compose_file) {
-      flags.compose_file = path.join(this.app.config.getConfigDir(), ARCHITECTPATHS.LOCAL_DEPLOY_FILENAME);
-    }
-    await fs.ensureFile(flags.compose_file);
-    await fs.writeFile(flags.compose_file, yaml.safeDump(compose));
-    this.log(`Wrote docker-compose file to: ${flags.compose_file}`);
-    const compose_args = ['-f', flags.compose_file, '--compatibility', 'up', '--abort-on-container-exit'];
+    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, yaml.safeDump(compose));
+    this.log(`Wrote docker-compose file to: ${compose_file}`);
+    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit'];
     if (flags.build_parallel) {
-      await execa('docker-compose', ['-f', flags.compose_file, 'build', '--parallel'], { stdio: 'inherit' });
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
     } else {
       compose_args.push('--build');
     }
@@ -242,31 +241,32 @@ export default class Deploy extends DeployCommand {
     const { args, flags } = this.parse(Deploy);
 
     let dependency_manager;
+    let namespaced_component_name;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+
       const env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
       dependency_manager = await LocalDependencyManager.create(this.app.api);
       dependency_manager.environment = env_config;
-
-      const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
     } else {
-      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
-
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
       );
+      namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     }
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     for (const [parameter_key, parameter] of Object.entries(extra_params)) {
       dependency_manager.environment.setParameter(parameter_key, parameter);
     }
+    const extra_interfaces = this.getExtraInterfaces(flags.interface);
+    this.updateEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, namespaced_component_name);
 
     dependency_manager.setLinkedComponents(this.app.linkedComponents);
     const compose = await DockerComposeUtils.generate(dependency_manager);
@@ -281,14 +281,16 @@ export default class Deploy extends DeployCommand {
     let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+
       env_config = EnvironmentConfigBuilder.buildFromJSON({
         components: {
-          [parsed_component_version.namespaced_component_name]: parsed_component_version.tag,
+          [namespaced_component_name]: parsed_component_version.tag,
         },
       });
 
       const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, parsed_component_version.namespaced_component_name);
+      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
 
       env_config_merge = true;
     } else {
@@ -349,7 +351,7 @@ export default class Deploy extends DeployCommand {
 
   updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
     for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${{components['${component_name}'].interfaces.${interface_name}.url}}`);
+      env_config.setInterface(subdomain, `\${{ components['${component_name}'].interfaces.${interface_name}.url }}`);
     }
   }
 

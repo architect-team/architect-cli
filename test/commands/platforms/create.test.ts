@@ -59,57 +59,6 @@ describe('platform:create', function () {
     // mock_fs.restore();
   });
 
-  it('Creates a new public platform when name arg is included', async () => {
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
-
-    moxios.stubRequest(`/accounts/${account.id}/platforms/public`, {
-      status: 200,
-      response: {
-        id: 'test-platform-id',
-        account: account
-      }
-    });
-
-    const create_platform_spy = sinon.fake.returns({});
-    sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
-
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'architect']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-  });
-
-  it('Creates a new public platform when name arg is not included', async () => {
-    const inquirerStub = sinon.stub(inquirer, 'prompt');
-    inquirerStub.resolves({
-      platform: 'platform-name'
-    });
-
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
-
-    moxios.stubRequest(`/accounts/${account.id}/platforms/public`, {
-      status: 200,
-      response: {
-        id: 'test-platform-id',
-        account: account
-      }
-    });
-
-    const create_platform_spy = sinon.fake.returns({});
-    sinon.replace(PlatformCreate.prototype, 'create_architect_platform', create_platform_spy);
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
-
-    await PlatformCreate.run(['-a', 'test-account-name', '-t', 'architect']);
-    expect(create_platform_spy.calledOnce).true;
-    expect(post_to_api_spy.calledOnce).true;
-  });
-
   it('Creates an ECS platform with input', async () => {
     moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,

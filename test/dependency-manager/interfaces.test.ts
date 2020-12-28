@@ -9,6 +9,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
+import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
 describe('interfaces spec v1', () => {
   beforeEach(async () => {
@@ -115,7 +116,7 @@ describe('interfaces spec v1', () => {
         'test/leaf/api:latest'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
       ])
       const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -157,10 +158,10 @@ describe('interfaces spec v1', () => {
         'test/leaf/api:latest'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
         'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-        'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
+        'test/branch/api:latest [service->api] -> test/leaf:latest-interfaces [api]',
       ])
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
 
@@ -216,13 +217,13 @@ describe('interfaces spec v1', () => {
         'gateway [public] -> test/leaf:latest-interfaces [api]',
         'gateway [publicv1] -> test/leaf:v1.0-interfaces [api]',
 
-        'test/leaf/api:latest [service] -> test/leaf/db:latest [postgres]',
+        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
         'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-        'test/leaf/api:v1.0 [service] -> test/leaf/db:v1.0 [postgres]',
+        'test/leaf/api:v1.0 [service->postgres] -> test/leaf/db:v1.0 [postgres]',
         'test/leaf:v1.0-interfaces [api] -> test/leaf/api:v1.0 [main]',
 
-        'test/branch/api:latest [service] -> test/leaf:latest-interfaces [api]',
+        'test/branch/api:latest [service->api] -> test/leaf:latest-interfaces [api]',
       ])
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -355,10 +356,10 @@ describe('interfaces spec v1', () => {
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/arc.env.json': JSON.stringify(env_config),
+      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
     const graph = await manager.getGraph();
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -395,5 +396,73 @@ describe('interfaces spec v1', () => {
       },
       "restart": "always"
     });
+  });
+
+  it('using multiple ports from a dependency', async () => {
+    const admin_ui_config = `
+      name: voic/admin-ui
+      dependencies:
+        voic/product-catalog: latest
+      interfaces:
+      services:
+        dashboard:
+          interfaces:
+            main: 3000
+          environment:
+            API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
+            ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
+      `;
+
+    const product_catalog_config = `
+      name: voic/product-catalog
+      services:
+        db:
+          interfaces:
+            pg:
+              port: 5432
+              protocol: postgres
+        api:
+          interfaces:
+            public: 8080
+            admin: 8081
+      interfaces:
+        public: \${{ services.api.interfaces.public.url }}
+        admin: \${{ services.api.interfaces.admin.url }}
+    `;
+
+    const env_config = `
+      components:
+        voic/admin-ui:
+          extends: file:./admin-ui
+        voic/product-catalog:
+          extends: file:./product-catalog
+      interfaces:
+        public2: \${{ components.voic/product-catalog.interfaces.public.url }}
+        admin2: \${{ components.voic/product-catalog.interfaces.admin.url }}
+    `;
+
+    mock_fs({
+      '/stack/product-catalog/architect.yml': product_catalog_config,
+      '/stack/admin-ui/architect.yml': admin_ui_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+    expect(graph.edges.map(e => e.toString())).members([
+      'voic/product-catalog:latest-interfaces [public, admin] -> voic/product-catalog/api:latest [public, admin]',
+      'voic/admin-ui/dashboard:latest [service->public, service->admin] -> voic/product-catalog:latest-interfaces [public, admin]',
+      'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]'
+    ])
+
+    const ingress_edge = graph.edges.find((edge) => edge instanceof IngressEdge)!;
+
+    const [node_to, node_to_interface_name] = graph.followEdge(ingress_edge, 'public2');
+    expect(node_to).instanceOf(ServiceNode);
+    expect(node_to_interface_name).to.eq('public');
+
+    const [node_to2, node_to_interface_name2] = graph.followEdge(ingress_edge, 'admin2');
+    expect(node_to2).instanceOf(ServiceNode);
+    expect(node_to_interface_name2).to.eq('admin');
   });
 });

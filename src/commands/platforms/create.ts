@@ -14,10 +14,6 @@ export interface CreatePlatformInput {
   credentials: PlatformCredentials;
 }
 
-export interface CreatePublicPlatformInput {
-  name: string;
-}
-
 export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
 
 export interface KubernetesPlatformCredentials {
@@ -49,7 +45,7 @@ export default class PlatformCreate extends Command {
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ARCHITECT', 'architect', 'ECS', 'ecs'] }),
+    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
     aws_key: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
@@ -93,8 +89,7 @@ export default class PlatformCreate extends Command {
     const platform_dto = { name: platform_name, ...platform };
 
     cli.action.start('Registering platform with Architect');
-    const public_platform = Object.keys(platform_dto).length === 1 && !!platform_dto.name;
-    const created_platform = await this.post_platform_to_api(platform_dto, account.id, public_platform);
+    const created_platform = await this.post_platform_to_api(platform_dto, account.id);
     cli.action.stop();
 
     return created_platform;
@@ -110,7 +105,6 @@ export default class PlatformCreate extends Command {
         choices: [
           'kubernetes',
           'ecs',
-          'architect',
         ],
       },
     ]);
@@ -123,19 +117,14 @@ export default class PlatformCreate extends Command {
       case 'ecs':
         return await EcsPlatformUtils.configure_ecs_platform(flags);
       case 'architect':
-        return {};
+        throw new Error(`You cannot create an Architect platform from the CLI. One Architect platform is registered by default per account.`);
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
     }
   }
 
-  async post_platform_to_api(dto: CreatePlatformInput | CreatePublicPlatformInput, account_id: string, public_platform = false): Promise<any> {
-    if (public_platform) {
-      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms/public`, dto);
-      return platform;
-    } else {
-      const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
-      return platform;
-    }
+  async post_platform_to_api(dto: CreatePlatformInput, account_id: string): Promise<any> {
+    const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
+    return platform;
   }
 }

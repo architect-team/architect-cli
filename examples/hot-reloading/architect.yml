@@ -1,0 +1,26 @@
+name: examples/hot-reloading
+description: An example component that shows how to use the debug volume to mount source code and enable live reloading of code changes.
+keywords:
+  - examples
+  - architect
+  - hot-reloading
+  - volumes
+
+services:
+  api:
+    build:
+      context: ./
+    interfaces:
+      main: 8080
+    debug:
+      command: npm run dev
+      volumes:
+        src:
+          description: Mount the src dir when running locally so code changes can be detected
+          mount_path: /usr/src/app/src
+          host_path: ./src/
+
+interfaces:
+  http:
+    description: Exposes the API service to upstreams
+    url: ${{ services.api.interfaces.main.url }}

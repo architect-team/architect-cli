@@ -137,3 +137,28 @@ debug:
       host_path: ./src/
       mount_path: /usr/app/src/
 ```
+
+### cpu & memory
+
+`cpu`: a whole number or decimal that represents the vCPUs allocated to the service when it runs.
+
+```yaml
+cpu: 1
+```
+
+`memory`: a string that represents the memory allocated to the service when it runs.
+
+```yaml
+memory: 2GB
+```
+
+**Note for ECS platforms only:**
+When deploying to platforms of type ECS, there are constraints in the underlying provider that require `cpu` and `memory` to be correlated. In the table below you can find the required memory values for a given vCPU value. See [underlying ECS constraints here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html).
+
+| cpu | memory |
+| ----- | ----------- |
+| .25   | 0.5GB, 1GB, 2GB |
+| .5  | 1GB, 2GB, 3GB, 4GB |
+| 1  | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
+| 2 | 4GB - 16GB (in increments of 1GB) |
+| 4 | 8GB - 30GB (in increments of 1GB) |

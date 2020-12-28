@@ -1,9 +1,12 @@
 name: examples/stateful-component
-description: |
-  Component built from Architect's stateful component guide (https://architect.io/docs/guides/stateful-component)
+description: A simple sign in sheet webapp built with a Next.js frontend, Express JS backend, and postgres database.
 keywords:
-  - architect-examples
+  - architect
+  - examples
   - stateful
+  - postgres
+  - nodejs
+  - reactjs
 
 parameters:
   DB_USER:
@@ -45,4 +48,6 @@ services:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
 
 interfaces:
-  frontend: ${{ services.frontend.interfaces.web.url }}
+  frontend:
+    description: Exposes the sign in webapp to upstreams
+    url: ${{ services.frontend.interfaces.web.url }}

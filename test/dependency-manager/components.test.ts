@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -65,10 +66,10 @@ describe('components spec v1', function () {
 
       mock_fs({
         '/stack/architect.json': JSON.stringify(component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:latest',
@@ -134,10 +135,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
       const graph = await manager.getGraph();
@@ -183,10 +184,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
@@ -235,10 +236,10 @@ describe('components spec v1', function () {
 
       mock_fs({
         '/stack/architect.json': JSON.stringify(component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:latest',
@@ -246,8 +247,8 @@ describe('components spec v1', function () {
         'architect/cloud/db:latest'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'architect/cloud/app:latest [service] -> architect/cloud/api:latest [main]',
-        'architect/cloud/api:latest [service] -> architect/cloud/db:latest [main]'
+        'architect/cloud/app:latest [service->main] -> architect/cloud/api:latest [main]',
+        'architect/cloud/api:latest [service->main] -> architect/cloud/db:latest [main]'
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
@@ -361,10 +362,10 @@ describe('components spec v1', function () {
       mock_fs({
         '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
         '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       const graph = await manager.getGraph();
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -375,9 +376,9 @@ describe('components spec v1', function () {
         'concourse/ci/worker:6.2'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'concourse/ci/worker:6.2 [service] -> concourse/ci/web:6.2 [main]',
+        'concourse/ci/worker:6.2 [service->main] -> concourse/ci/web:6.2 [main]',
         'concourse/ci:6.2-interfaces [web] -> concourse/ci/web:6.2 [main]',
-        'architect/cloud/api:latest [service] -> concourse/ci:6.2-interfaces [web]'
+        'architect/cloud/api:latest [service->web] -> concourse/ci:6.2-interfaces [web]'
       ])
 
       // Test parameter values
@@ -547,10 +548,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
       const graph = await manager.getGraph();
@@ -593,10 +594,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/arc.env.json': JSON.stringify(env_config),
+        '/stack/environment.json': JSON.stringify(env_config),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/arc.env.json');
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
       expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getTaskRef('syncer')).eq('architect/cloud/syncer:v1')
       expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
@@ -610,6 +611,80 @@ describe('components spec v1', function () {
       expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
+    });
+
+    it('component B:v2 and component A with dependency B:v1', async () => {
+      // TODO: Validate lack of services/tasks
+      // TODO: Validate lack of image/build context
+      const component_a = `
+        name: examples/component-a
+        dependencies:
+          examples/component-b: v1
+        services:
+          app:
+            image: test:v1
+        `;
+
+      const component_b_v1 = `
+        name: examples/component-b
+        parameters:
+          test_required:
+        services:
+          api:
+            image: test:v1
+            environment:
+              TEST_REQUIRED: \${{ parameters.test_required }}
+        `;
+
+      const component_b_v2 = `
+        name: examples/component-b
+        parameters:
+          test_required:
+        services:
+          api:
+            image: test:v2
+            environment:
+              TEST_REQUIRED: \${{ parameters.test_required }}
+        `;
+
+      const env_config = `
+        parameters:
+          test_required: foo
+        components:
+          examples/component-a: v1
+          examples/component-b:
+            extends: v2
+            parameters:
+              test_required: foo2
+          examples/component-b:v1:
+            parameters:
+              test_required: foo3
+      `;
+
+      mock_fs({
+        '/stack/environment.yml': env_config,
+      });
+
+      moxios.stubRequest(`/accounts/examples/components/component-a/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: yaml.safeLoad(component_a), service: { url: 'examples/component-a:v1' } }
+      });
+      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v1`, {
+        status: 200,
+        response: { tag: 'v1', config: yaml.safeLoad(component_b_v1), service: { url: 'examples/component-b:v1' } }
+      });
+      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v2`, {
+        status: 200,
+        response: { tag: 'v2', config: yaml.safeLoad(component_b_v2), service: { url: 'examples/component-b:v2' } }
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+      const graph = await manager.getGraph();
+
+      const node_b_v1 = graph.getNodeByRef('examples/component-b/api:v1') as ServiceNode;
+      expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
+      const node_b_v2 = graph.getNodeByRef('examples/component-b/api:v2') as ServiceNode;
+      expect(node_b_v2.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
     });
   });
 });

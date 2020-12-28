@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A dynamic microservices framework for building, connecting, and deploying service-oriented applications.
+  A dynamic microservices framework for building, connecting, and deploying cloud-native applications.
 </p>
 
 ---
@@ -29,6 +29,7 @@ Architect uses [Components](https://www.architect.io/docs/getting-started/first-
 Normally component's would be sourced from Architect's cloud registry, but when developing our components we want them to be run directly from the source. Fortunately, Architect simulates the registry locally by allowing components to be [linked](https://www.architect.io/docs/guides/developing-multiple-components#component-linking) to the local file system. Linking components tells Architect's CLI that the components already exist and don't need to be pulled from the registry.
 
 ```bash
+$ cd ./simple
 $ architect link .
 Successfully linked examples/nestjs-simple to local system at /architect-cli/examples/nestjs-microservices/simple
 
@@ -36,7 +37,7 @@ $ architect link ./client/
 Successfully linked examples/nestjs-simple-client to local system at /architect-cli/examples/nestjs-microservices/simple/client
 ```
 
-## Running the stack
+## Running locally
 
 The REST client service cites the TCP server as a dependency. This means that Architect can automatically deploy and connect to it whenever the client is deployed, and all we have to do is deploy the client component:
 
@@ -45,3 +46,15 @@ $ architect deploy --local examples/nestjs-simple-client:latest -i main:client
 ```
 
 Once the application is done booting, the REST client will be available on http://app.localhost/hello/Name
+
+## Deploying to the cloud
+
+Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
+
+[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://app.architect.io/examples/components/nestjs-simple-client/deploy?tag=latest&interface=main%3Aclient)
+
+Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+
+```sh
+$ architect deploy examples/nestjs-simple-client:latest -a <account-name> -e <environment-name> -i main:client
+```

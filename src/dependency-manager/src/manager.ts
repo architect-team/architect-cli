@@ -147,7 +147,7 @@ export default abstract class DependencyManager {
       const dep_extends = dep_value.includes(':') ? dep_value : `${dep_key}:${dep_value}`;
       const dep_component = ComponentConfigBuilder.buildFromJSON({ extends: dep_extends, name: dep_name });
 
-      if (component_map[dep_component.getRef()] && ComponentVersionSlugUtils.parse(component.getRef()).namespaced_component_name in component_map[dep_component.getRef()].getDependencies()) {
+      if (component_map[dep_component.getRef()] && ComponentVersionSlugUtils.toComponentSlug(component.getRef()) in component_map[dep_component.getRef()].getDependencies()) {
         throw new Error(`Circular component dependency detected (${component.getRef()} <> ${dep_component.getRef()})`);
       }
       await this.loadComponent(graph, dep_component, component_map);
@@ -173,7 +173,7 @@ export default abstract class DependencyManager {
         const to = service_ref_map[service_name];
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
-        service_edge_map[to]['service'] = interface_name;
+        service_edge_map[to][`service->${interface_name}`] = interface_name;
       }
       for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
@@ -192,7 +192,7 @@ export default abstract class DependencyManager {
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to]['service'] = interface_name;
+        dep_edge_map[to][`service->${interface_name}`] = interface_name;
       }
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
@@ -221,7 +221,7 @@ export default abstract class DependencyManager {
         const to = service_ref_map[service_name];
         if (to === from) continue;
         if (!task_edge_map[to]) task_edge_map[to] = {};
-        task_edge_map[to]['service'] = interface_name;
+        task_edge_map[to][`service->${interface_name}`] = interface_name;
       }
       for (const [to, interfaces_map] of Object.entries(task_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
@@ -240,7 +240,7 @@ export default abstract class DependencyManager {
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to]['service'] = interface_name;
+        dep_edge_map[to][`service->${interface_name}`] = interface_name;
       }
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
@@ -448,10 +448,22 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
+    const environment_components = interpolated_environment.getComponents();
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
     for (let component of Object.values(component_map)) {
-      const environment_component = interpolated_environment.getComponents()[component.getRef()] || interpolated_environment.getComponents()[component.getName()];
+      let environment_component = environment_components[component.getRef()];
+
+      if (!environment_component) {
+        const generic_environment_component = environment_components[component.getName()];
+        if (generic_environment_component) {
+          const environment_component_extends = generic_environment_component.getExtends();
+          if (!environment_component_extends || environment_component_extends === component.getExtends()) {
+            environment_component = generic_environment_component;
+          }
+        }
+      }
+
       // Set default component parameter values from environment parameters
       for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
         const environment_parameter = interpolated_environment.getParameters()[parameter_key];
