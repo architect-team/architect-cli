@@ -206,7 +206,8 @@ describe('local deploy environment', function () {
     '*': {
       'a_required_key': 'a_value_which_will_be_overwritten',
       'another_required_key': 'another_value_which_will_be_overwritten',
-      'world_text': 'some other name'
+      'world_text': 'some other name',
+      'unused_parameter': 'value_not_used_by_any_component'
     }
   }
 
