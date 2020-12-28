@@ -32,7 +32,7 @@ export default abstract class DependencyManager {
     this.__graph_cache = {};
   }
 
-  async init(environment_config?: EnvironmentConfig, values_dictionary: { [s: string]: { [s: string]: string } } = {}): Promise<void> {
+  async init(environment_config?: EnvironmentConfig, values_dictionary: Dictionary<Dictionary<string>> = {}): Promise<void> {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
     this.values_dictionary = values_dictionary;
@@ -47,7 +47,7 @@ export default abstract class DependencyManager {
       this.addIngressEdges(graph);
       if (interpolate) {
         const interpolated_environment = await this.interpolateEnvironment(graph, this.environment, component_map);
-        await this.interpolateComponents(graph, interpolated_environment, component_map, this.values_dictionary);
+        await this.interpolateComponents(graph, interpolated_environment, component_map);
       }
       this.__graph_cache[cache_key] = graph;
     }
@@ -450,7 +450,7 @@ export default abstract class DependencyManager {
     return context;
   }
 
-  async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>, values_dictionary: { [s: string]: { [s: string]: string } }) {
+  async interpolateComponents(graph: DependencyGraph, interpolated_environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
     const environment_components = interpolated_environment.getComponents();
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
@@ -464,6 +464,7 @@ export default abstract class DependencyManager {
 
     for (let component of Object.values(component_map)) {
       let environment_component = environment_components[component.getRef()];
+      const component_parameters = component.getParameters();
 
       if (!environment_component) {
         const generic_environment_component = environment_components[component.getName()];
@@ -476,7 +477,7 @@ export default abstract class DependencyManager {
       }
 
       // Set default component parameter values from environment parameters
-      for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
+      for (const [parameter_key, parameter] of Object.entries(component_parameters)) {
         const environment_parameter = interpolated_environment.getParameters()[parameter_key];
         if (environment_parameter) {
           parameter.default = environment_parameter.default;
@@ -489,7 +490,9 @@ export default abstract class DependencyManager {
         const component_has_tag = component.getRef().includes(':');
         if (isMatch(component_has_tag ? component.getRef() : `${component.getRef()}:latest`, [pattern])) {
           for (const [param_key, param_value] of Object.entries(params)) {
-            component.setParameter(param_key, param_value);
+            if (component_parameters[param_key]) {
+              component.setParameter(param_key, param_value);
+            }
           }
         }
       }

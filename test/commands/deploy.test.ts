@@ -445,115 +445,6 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
-  const component_with_basic_values_expected_compose = {
-    "version": "3",
-    "services": {
-      "examples--hello-world--api--latest--d00ztoyu": {
-        "ports": [
-          "50000:3000",
-        ],
-        "restart": "always",
-        "depends_on": [
-          "gateway"
-        ],
-        "environment": {
-          "VIRTUAL_HOST": "test.localhost",
-          "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_test_localhost": "3000",
-          "VIRTUAL_PROTO": "http",
-          "a_required_key": "some_value",
-          "another_required_key": "required_value",
-          'one_more_required_param': 'one_more_value'
-        },
-        "external_links": [
-          "gateway:test.localhost"
-        ],
-        "image": "heroku/nodejs-hello-world",
-      },
-      "gateway": {
-        "depends_on": [],
-        "environment": {
-          "DISABLE_ACCESS_LOGS": "true",
-          "HTTPS_METHOD": "noredirect",
-          "HTTP_PORT": 80
-        },
-        "image": "architectio/nginx-proxy:latest",
-        "logging": {
-          "driver": "none"
-        },
-        "ports": [
-          "80:80"
-        ],
-        "restart": "always",
-        "volumes": [
-          "/var/run/docker.sock:/tmp/docker.sock:ro"
-        ]
-      }
-    },
-    "volumes": {}
-  }
-
-  const component_with_dependency_expected_compose = {
-    "version": "3",
-    "services": {
-      "examples--hello-world--api--latest--d00ztoyu": {
-        "ports": [
-          "50000:3000",
-        ],
-        "restart": "always",
-        "depends_on": [
-          "gateway"
-        ],
-        "environment": {
-          "VIRTUAL_HOST": "test.localhost",
-          "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_test_localhost": "3000",
-          "VIRTUAL_PROTO": "http",
-          "a_required_key": "some_value",
-          "another_required_key": "required_value",
-          'one_more_required_param': 'one_more_value'
-        },
-        "external_links": [
-          "gateway:test.localhost"
-        ],
-        "image": "heroku/nodejs-hello-world",
-      },
-      "examples--react-app--app--latest--aklmrtvo": {
-        "depends_on": [],
-        "environment": {
-          "PORT": "8080",
-          "WORLD_TEXT": "some other name"
-        },
-        "external_links": [
-          "gateway:test.localhost"
-        ],
-        "ports": [
-          "50001:8080"
-        ]
-      },
-      "gateway": {
-        "depends_on": [],
-        "environment": {
-          "DISABLE_ACCESS_LOGS": "true",
-          "HTTPS_METHOD": "noredirect",
-          "HTTP_PORT": 80
-        },
-        "image": "architectio/nginx-proxy:latest",
-        "logging": {
-          "driver": "none"
-        },
-        "ports": [
-          "80:80"
-        ],
-        "restart": "always",
-        "volumes": [
-          "/var/run/docker.sock:/tmp/docker.sock:ro"
-        ]
-      }
-    },
-    "volumes": {}
-  }
-
   test
     .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
@@ -654,8 +545,12 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a basic values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].external_links).to.contain('gateway:test.localhost');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.VIRTUAL_HOST).to.equal('test.localhost');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -672,8 +567,9 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -690,8 +586,9 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a stacked values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -711,8 +608,10 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_dependency_expected_compose)
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
+      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
+      expect(runCompose.firstCall.args[0].services['examples--react-app--app--latest--aklmrtvo'].environment.WORLD_TEXT).to.equal('some other name');
     })
 });
 
