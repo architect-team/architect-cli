@@ -23,7 +23,7 @@ import VaultManager from './vault-manager';
 export default abstract class DependencyManager {
   gateway_port!: number;
   environment!: EnvironmentConfig;
-  values_dictionary!: { [s: string]: { [s: string]: string } };
+  values_dictionary!: Dictionary<Dictionary<string>>;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
   protected __graph_cache: Dictionary<DependencyGraph | undefined>;
 
@@ -457,7 +457,7 @@ export default abstract class DependencyManager {
 
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(this.values_dictionary).sort();
-    const sorted_values_dict: { [s: string]: { [s: string]: string } } = {};
+    const sorted_values_dict: Dictionary<Dictionary<string>> = {};
     for (const key of sorted_values_keys) {
       sorted_values_dict[key] = this.values_dictionary[key];
     }
