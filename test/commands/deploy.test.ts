@@ -127,6 +127,89 @@ describe('local deploy environment', function () {
     }
   }
 
+  const local_component_config_with_dependency = {
+    "name": "examples/hello-world",
+
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": "3000"
+        },
+        "environment": {
+          "a_required_key": "${{ parameters.a_required_key }}",
+          "another_required_key": "${{ parameters.another_required_key }}",
+          "one_more_required_param": "${{ parameters.one_more_required_param }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "hello": {
+        "url": "${{ services.api.interfaces.main.url }}"
+      }
+    },
+
+    "parameters": {
+      'a_required_key': {
+        'required': 'true'
+      },
+      'another_required_key': {
+        'required': 'true'
+      },
+      'one_more_required_param': {
+        'required': 'true'
+      }
+    },
+
+    "dependencies": {
+      "examples/react-app": "latest"
+    }
+  }
+  const local_component_config_dependency = {
+    'config': {
+      'name': 'examples/react-app',
+      'interfaces': {
+        'app': '\${{ services.app.interfaces.main.url }}'
+      },
+      'parameters': {
+        'world_text': {
+          'default': 'world'
+        }
+      },
+      'services': {
+        'app': {
+          'build': {
+            'context': './frontend'
+          },
+          'interfaces': {
+            'main': '8080'
+          },
+          'environment': {
+            'PORT': '\${{ services.app.interfaces.main.port }}',
+            'WORLD_TEXT': '\${{ parameters.world_text }}'
+          }
+        }
+      }
+    },
+    'component': {
+      'name': 'examples/react-app',
+    },
+    'tag': 'latest'
+  }
+  const component_and_dependency_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
+    },
+    '*': {
+      'a_required_key': 'a_value_which_will_be_overwritten',
+      'another_required_key': 'another_value_which_will_be_overwritten',
+      'world_text': 'some other name'
+    }
+  }
+
   const local_database_seeding_component_config = {
     "name": "examples/database-seeding",
 
@@ -409,6 +492,67 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
+  const component_with_dependency_expected_compose = {
+    "version": "3",
+    "services": {
+      "examples--hello-world--api--latest--d00ztoyu": {
+        "ports": [
+          "50000:3000",
+        ],
+        "restart": "always",
+        "depends_on": [
+          "gateway"
+        ],
+        "environment": {
+          "VIRTUAL_HOST": "test.localhost",
+          "VIRTUAL_PORT": "3000",
+          "VIRTUAL_PORT_test_localhost": "3000",
+          "VIRTUAL_PROTO": "http",
+          "a_required_key": "some_value",
+          "another_required_key": "required_value",
+          'one_more_required_param': 'one_more_value'
+        },
+        "external_links": [
+          "gateway:test.localhost"
+        ],
+        "image": "heroku/nodejs-hello-world",
+      },
+      "examples--react-app--app--latest--aklmrtvo": {
+        "depends_on": [],
+        "environment": {
+          "PORT": "8080",
+          "WORLD_TEXT": "some other name"
+        },
+        "external_links": [
+          "gateway:test.localhost"
+        ],
+        "ports": [
+          "50001:8080"
+        ]
+      },
+      "gateway": {
+        "depends_on": [],
+        "environment": {
+          "DISABLE_ACCESS_LOGS": "true",
+          "HTTPS_METHOD": "noredirect",
+          "HTTP_PORT": 80
+        },
+        "image": "architectio/nginx-proxy:latest",
+        "logging": {
+          "driver": "none"
+        },
+        "ports": [
+          "80:80"
+        ],
+        "restart": "always",
+        "volumes": [
+          "/var/run/docker.sock:/tmp/docker.sock:ro"
+        ]
+      }
+    },
+    "volumes": {}
+  }
+
   test
     .timeout(15000)
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
@@ -547,6 +691,27 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_basic_values_expected_compose)
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return component_and_dependency_parameter_values;
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .reply(200, local_component_config_dependency))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_with_dependency_expected_compose)
     })
 });
 

@@ -486,7 +486,6 @@ export default abstract class DependencyManager {
 
       // add values from values file to all existing, matching components
       for (const [pattern, params] of Object.entries(sorted_values_dict)) {
-        console.log(component.getRef())
         const component_has_tag = component.getRef().includes(':');
         if (isMatch(component_has_tag ? component.getRef() : `${component.getRef()}:latest`, [pattern])) {
           for (const [param_key, param_value] of Object.entries(params)) {
