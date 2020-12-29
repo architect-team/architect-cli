@@ -546,11 +546,12 @@ describe('local deploy environment', function () {
     .it('Create a local deploy with a basic component and a basic values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].external_links).to.contain('gateway:test.localhost');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.VIRTUAL_HOST).to.equal('test.localhost');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
+      const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
+      expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
+      expect(hello_world_service.environment.VIRTUAL_HOST).to.equal('test.localhost');
+      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
+      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
+      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -567,9 +568,10 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -586,9 +588,10 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a stacked values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
     })
 
   test
@@ -608,10 +611,12 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.a_required_key).to.equal('some_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.another_required_key).to.equal('required_value');
-      expect(runCompose.firstCall.args[0].services['examples--hello-world--api--latest--d00ztoyu'].environment.one_more_required_param).to.equal('one_more_value');
-      expect(runCompose.firstCall.args[0].services['examples--react-app--app--latest--aklmrtvo'].environment.WORLD_TEXT).to.equal('some other name');
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      const react_app_environment = (Object.values(runCompose.firstCall.args[0].services)[1] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(react_app_environment.WORLD_TEXT).to.equal('some other name');
     })
 });
 
