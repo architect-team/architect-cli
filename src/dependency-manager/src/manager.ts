@@ -13,6 +13,7 @@ import { ComponentConfigBuilder } from './spec/component/component-builder';
 import { ComponentConfig } from './spec/component/component-config';
 import { EnvironmentConfigBuilder } from './spec/environment/environment-builder';
 import { EnvironmentConfig } from './spec/environment/environment-config';
+import { ValuesConfig } from './spec/values/values';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
@@ -35,6 +36,8 @@ export default abstract class DependencyManager {
   async init(environment_config?: EnvironmentConfig, values_dictionary: Dictionary<Dictionary<string>> = {}): Promise<void> {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
+
+    ValuesConfig.validate(values_dictionary);
     this.values_dictionary = values_dictionary;
   }
 
