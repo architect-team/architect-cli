@@ -51,7 +51,7 @@ export class ValuesConfig {
           }
 
           // check that param value is a string
-          if (!(typeof param_value !== 'string')) {
+          if (typeof param_value !== 'string') {
             const validation_error = new ValidationError();
             validation_error.property = `${component_key}.${param_key}`;
             validation_error.target = param_value;
