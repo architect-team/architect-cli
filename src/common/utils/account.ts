@@ -18,7 +18,7 @@ export class AccountUtils {
   };
 
   static async getAccount(api: AxiosInstance, account_name?: string, account_message?: string): Promise<Account> {
-    if (process.env.ARCHITECT_ACCOUNT === account_name) {
+    if (process.env.ARCHITECT_ACCOUNT === account_name && process.env.ARCHITECT_ACCOUNT) {
       console.log(chalk.blue(`Using account from environment variables: `) + account_name);
     }
 
