@@ -22,7 +22,7 @@ export class EnvironmentUtils {
   };
 
   static async getEnvironment(api: AxiosInstance, account: Account, environment_name?: string): Promise<Environment> {
-    if (process.env.ARCHITECT_ENVIRONMENT === environment_name) {
+    if (process.env.ARCHITECT_ENVIRONMENT === environment_name && process.env.ARCHITECT_ENVIRONMENT) {
       console.log(chalk.blue(`Using environment from environment variables: `) + environment_name);
     }
 

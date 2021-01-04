@@ -18,7 +18,7 @@ export class PlatformUtils {
   };
 
   static async getPlatform(api: AxiosInstance, account: Account, platform_name?: string): Promise<Platform> {
-    if (process.env.ARCHITECT_PLATFORM === platform_name) {
+    if (process.env.ARCHITECT_PLATFORM === platform_name && process.env.ARCHITECT_PLATFORM) {
       console.log(chalk.blue(`Using platform from environment variables: `) + platform_name);
     }
 
