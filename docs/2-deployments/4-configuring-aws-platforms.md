@@ -1,8 +1,8 @@
 ---
-title: AWS platforms
+title: Configuring AWS platforms
 ---
 
-# AWS platforms
+# Configuring AWS platforms
 
 ## Architect IAM policy
 
