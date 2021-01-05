@@ -87,6 +87,15 @@ export default class ComponentRegister extends Command {
     }
   }
 
+  private async getSelectedRegistry(selected_account_id: string): Promise<string> {
+    try {
+      const { data: account_default_registry } = await this.app.api.get(`/accounts/${selected_account_id}/registries`, { params: { q: { is_default: true } } });
+      return account_default_registry[0].url;
+    } catch (err) {
+      return this.app.config.registry_host;
+    }
+  }
+
   private async registerComponent(config_path: string, tag: string) {
     const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
     const component_path = path.dirname(file_path);
@@ -97,11 +106,12 @@ export default class ComponentRegister extends Command {
 
     const account_name = raw_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
+    const selected_registry = await this.getSelectedRegistry(selected_account.id);
 
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
+      const image_tag = `${selected_registry}/${raw_config.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
 
@@ -111,13 +121,13 @@ export default class ComponentRegister extends Command {
       }
     }
     if (set_artifact_image) {
-      raw_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
+      raw_config.artifact_image = await this.pushArtifact(`${selected_registry}/${raw_config.name}:${tag}`, tmpobj.name);
     }
 
     tmpobj.removeCallback();
 
     for (const [task_name, task_config] of Object.entries(raw_config.tasks || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
+      const image_tag = `${selected_registry}/${raw_config.name}-${task_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
     }
