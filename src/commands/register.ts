@@ -89,8 +89,8 @@ export default class ComponentRegister extends Command {
 
   private async getSelectedRegistry(selected_account_id: string): Promise<string> {
     try {
-      const { data: account_default_registry } = await this.app.api.get(`/accounts/${selected_account_id}/registries`, { params: { q: { is_default: true } } });
-      return account_default_registry[0].url;
+      const { data: account_default_registry } = await this.app.api.get(`/accounts/${selected_account_id}/registries`, { params: { is_default: true } });
+      return account_default_registry[0].url; // TODO: should an architect login log the user in to their default registry or should that happen out of band?
     } catch (err) {
       return this.app.config.registry_host;
     }
