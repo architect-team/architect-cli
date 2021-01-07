@@ -15,12 +15,18 @@ Architect is a self-service developer platform for cloud-native applications –
 
 The best way to learn how Architect works is through practice, and we've curated a simple set of steps you can follow to get you started:
 
-1. [Install the CLI](#install-the-cli)
-2. [Run a sample component](#run-a-sample-component)
-3. [Make your own changes](#make-your-own-changes)
-4. [Create a free Architect account](#create-a-free-architect-account)
-5. [Register a component](#register-a-component)
-6. [Deploy to the cloud](#deploy-to-the-cloud)
+- [Introduction](#introduction)
+  - [First steps](#first-steps)
+  - [Install the CLI](#install-the-cli)
+  - [Run a sample component](#run-a-sample-component)
+    - [Clone the repository](#clone-the-repository)
+    - [Register the app locally](#register-the-app-locally)
+    - [Check out the architect.yml file](#check-out-the-architectyml-file)
+    - [Run the component](#run-the-component)
+  - [Make your own changes](#make-your-own-changes)
+  - [Create a free Architect account](#create-a-free-architect-account)
+  - [Register a component](#register-a-component)
+  - [Deploy to the cloud](#deploy-to-the-cloud)
 
 ## Install the CLI
 
@@ -174,7 +180,7 @@ Once you save the file, you'll see the frontend service recompiling in the logs 
 
 ## Create a free Architect account
 
-Now that you've successfully run and edited a component locally, it's time to learn how to register the component and deploy it to cloud environments. Before you can do that however, you need to [sign up](//app.architect.io/signup) for Architect and create an account that will house your components and environments.
+Now that you've successfully run and edited a component locally, it's time to learn how to register the component and deploy it to cloud environments. Before you can do that however, you need to [sign up](//cloud.architect.io/signup) for Architect and create an account that will house your components and environments.
 
 After you've signed up, you simply need to login via the CLI to allow for access to your account:
 
