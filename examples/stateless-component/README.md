@@ -38,7 +38,7 @@ Once the deploy has completed, you can reach your new service by going to http:/
 
 Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
 
-[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://app.architect.io/examples/components/stateless-component/deploy?tag=latest&interface=frontend%3Afrontend)
+[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/stateless-component/deploy?tag=latest&interface=frontend%3Afrontend)
 
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 

@@ -51,7 +51,7 @@ Once the application is done booting, the REST client will be available on http:
 
 Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
 
-[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://app.architect.io/examples/components/nestjs-simple-client/deploy?tag=latest&interface=main%3Aclient)
+[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/nestjs-simple-client/deploy?tag=latest&interface=main%3Aclient)
 
 Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
 
