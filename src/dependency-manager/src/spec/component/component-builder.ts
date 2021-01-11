@@ -114,10 +114,7 @@ export class ComponentConfigBuilder {
   }
 
   static saveToPath(config_path: string, config: ComponentConfig) {
-    if (config_path.endsWith('.json')) {
-      fs.writeJsonSync(config_path, config, { spaces: 2 });
-      return;
-    } else if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
+    if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
       fs.writeFileSync(config_path, yaml.safeDump(config));
       return;
     }
