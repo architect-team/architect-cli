@@ -163,13 +163,13 @@ describe('register', function () {
     .stub(docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/architect`)
+      .get(`/accounts/examples`)
       .reply(200, mock_architect_account_response)
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('architect/fusionauth')
+        expect(body.config.name).to.eq('examples/fusionauth')
         expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
         expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.ADMIN_USER_PASSWORD }}')
         expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
@@ -191,7 +191,7 @@ describe('register', function () {
       expect(pushImage.notCalled).to.be.true;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stderr).to.contain('Registering component architect/fusionauth:1.0.0 with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component examples/fusionauth:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
