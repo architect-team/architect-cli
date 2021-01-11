@@ -1,5 +1,5 @@
 import { serialize, Transform } from 'class-transformer';
-import { Allow, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../../utils/validation';
@@ -68,7 +68,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   author?: string;
 
   @IsOptional({ always: true })
-  @IsString({ always: true })
+  @IsUrl({}, { always: true })
   homepage?: string;
 
   @IsOptional({ always: true })
