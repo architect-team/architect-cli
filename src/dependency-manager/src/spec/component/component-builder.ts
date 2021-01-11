@@ -82,24 +82,8 @@ export class ComponentConfigBuilder {
 
   static async rawFromPath(config_path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
     const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(config_path);
-
-    let raw_config;
-    // Try to parse as json
-    try {
-      raw_config = JSON.parse(file_contents);
-    } catch {
-      // Try to parse as yaml
-      try {
-        raw_config = yaml.safeLoad(file_contents, { schema: FAILSAFE_SCHEMA });
-      } catch { }
-    }
-
-    if (!raw_config) {
-      throw new Error('Invalid file format. Must be json or yaml.');
-    }
-
-    raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), file_path));
-
+    const parsed_yml = yaml.safeLoad(file_contents, { schema: FAILSAFE_SCHEMA });
+    const raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(parsed_yml, null, 2), file_path));
     return { file_path, file_contents, raw_config };
   }
 
@@ -130,10 +114,7 @@ export class ComponentConfigBuilder {
   }
 
   static saveToPath(config_path: string, config: ComponentConfig) {
-    if (config_path.endsWith('.json')) {
-      fs.writeJsonSync(config_path, config, { spaces: 2 });
-      return;
-    } else if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
+    if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
       fs.writeFileSync(config_path, yaml.safeDump(config));
       return;
     }
