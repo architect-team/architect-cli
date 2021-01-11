@@ -1,4 +1,5 @@
 name: examples/kafka
+homepage: https://github.com/architect-team/architect-cli/tree/master/examples/kafka
 
 services:
   zookeeper:
