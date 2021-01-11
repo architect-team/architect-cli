@@ -1,6 +1,7 @@
-name: examples/react-app
+name: ryan-cahill-a0/react-app
 description: |
   Example component that includes a Next.js frontend, Node.js backend, and a postgres database.
+homepage: https://github.com/architect-team/architect-cli/tree/master/examples/react-app
 keywords:
   - react
   - next.js
@@ -8,7 +9,7 @@ keywords:
   - postgres
 
 interfaces:
-  app: ${{ services.app.interfaces.main.url }}
+#   app: ${{ services.app.interfaces.main.url }}
 
 parameters:
   world_text:
@@ -54,19 +55,19 @@ services:
           mount_path: /usr/src/app/src
           host_path: ./backend/src
 
-  app:
-    build:
-      context: ./frontend
-    interfaces:
-      main: 8080
-    environment:
-      PORT: ${{ services.app.interfaces.main.port }}
-      API_ADDR: ${{ services.api.interfaces.main.url }}
-      WORLD_TEXT: ${{ parameters.world_text }}
-    debug:
-      build:
-        dockerfile: Dockerfile.dev
-      volumes:
-        src:
-          mount_path: /usr/src/app/src
-          host_path: ./frontend/src
+  # app:
+  #   build:
+  #     context: ./frontend
+  #   interfaces:
+  #     main: 8080
+  #   environment:
+  #     PORT: ${{ services.app.interfaces.main.port }}
+  #     API_ADDR: ${{ services.api.interfaces.main.url }}
+  #     WORLD_TEXT: ${{ parameters.world_text }}
+  #   debug:
+  #     build:
+  #       dockerfile: Dockerfile.dev
+  #     volumes:
+  #       src:
+  #         mount_path: /usr/src/app/src
+  #         host_path: ./frontend/src

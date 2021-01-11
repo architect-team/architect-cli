@@ -68,6 +68,10 @@ export class ComponentConfigV1 extends ComponentConfig {
   author?: string;
 
   @IsOptional({ always: true })
+  @IsString({ always: true })
+  homepage?: string;
+
+  @IsOptional({ always: true })
   @IsObject({ always: true })
   parameters?: Dictionary<ParameterValueSpecV1>;
 
@@ -141,6 +145,10 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getAuthor() {
     return this.author || '';
+  }
+
+  getHomepage() {
+    return this.homepage || '';
   }
 
   getParameters() {
