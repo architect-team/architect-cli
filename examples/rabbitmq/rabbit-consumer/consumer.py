@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import pika, sys, os
 
-host = 'localhost'
-queue = 'my-queue'
+host = os.environ.get('AMQP_HOST')
+queue = os.environ.get('QUEUE_NAME')
 
 def on_message(ch, method, properties, body):
     message = body.decode('UTF-8')

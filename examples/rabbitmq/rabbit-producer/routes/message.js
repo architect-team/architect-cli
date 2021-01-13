@@ -3,8 +3,8 @@ var router = express.Router();
 
 var amqp = require('amqplib/callback_api');
 
-const url = 'amqp://localhost';
-const queue = 'my-queue';
+const url = `amqp://${process.env.AMQP_HOST}`;
+const queue = process.env.QUEUE_NAME;
 
 let channel = null;
 amqp.connect(url, function (err, conn) {
