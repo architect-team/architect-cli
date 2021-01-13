@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  h1= 'Example RabbitMQ Producer'
+
+  div
+    form(action='/message',method='post')
+      div.input
+          span.label Message:&emsp;
+          input(type="text", name="message")
+          span.actions &emsp;
+            input(type="submit", value="Send")
+
+  div
+    p= response
