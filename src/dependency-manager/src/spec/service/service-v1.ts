@@ -17,8 +17,8 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @IsEmpty({ groups: ['debug'] })
   debug?: ServiceConfigV1;
 
-  @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
+  @IsOptional({ always: true })
+  @IsObject({ groups: ['developer'] })
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
