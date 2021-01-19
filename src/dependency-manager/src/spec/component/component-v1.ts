@@ -90,8 +90,8 @@ export class ComponentConfigV1 extends ComponentConfig {
   @DictionaryType('string', { always: true, message: 'dependency versions must be strings' })
   dependencies?: Dictionary<string>;
 
-  @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
+  @IsOptional({ always: true })
+  @IsObject({ groups: ['developer'] })
   @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
