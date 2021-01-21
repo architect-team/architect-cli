@@ -242,22 +242,10 @@ export default class Deploy extends DeployCommand {
   }
 
   private readValuesFile(values_file_path: string | undefined) {
-    let component_values = {};
+    let component_values: any = {};
     if (values_file_path && fs.statSync(values_file_path)) {
       const values_file_data = fs.readFileSync(values_file_path);
-      try {
-        component_values = JSON.parse(values_file_data.toString('utf-8'));
-      } catch {
-        try {
-          const parsed_yml = yaml.safeLoad(values_file_data.toString('utf-8'), { schema: FAILSAFE_SCHEMA });
-          if (parsed_yml) {
-            component_values = parsed_yml;
-          }
-        } catch(err) {
-          this.log(chalk.red('Unable to read values file'));
-          throw err;
-        }
-      }
+      component_values = yaml.safeLoad(values_file_data.toString('utf-8'), { schema: FAILSAFE_SCHEMA });
     }
     return component_values;
   }
