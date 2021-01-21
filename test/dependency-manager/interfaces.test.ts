@@ -404,6 +404,7 @@ describe('interfaces spec v1', () => {
       dependencies:
         voic/product-catalog: latest
       interfaces:
+        dep: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
       services:
         dashboard:
           interfaces:
@@ -411,6 +412,7 @@ describe('interfaces spec v1', () => {
           environment:
             API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
             ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
+            PRIVATE_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.private.url }}
       `;
 
     const product_catalog_config = `
@@ -425,9 +427,11 @@ describe('interfaces spec v1', () => {
           interfaces:
             public: 8080
             admin: 8081
+            private: 8082
       interfaces:
         public: \${{ services.api.interfaces.public.url }}
         admin: \${{ services.api.interfaces.admin.url }}
+        private: \${{ services.api.interfaces.private.url }}
     `;
 
     const env_config = `
@@ -439,6 +443,7 @@ describe('interfaces spec v1', () => {
       interfaces:
         public2: \${{ components.voic/product-catalog.interfaces.public.url }}
         admin2: \${{ components.voic/product-catalog.interfaces.admin.url }}
+        dep2: \${{ components.voic/admin-ui.interfaces.dep.url }}
     `;
 
     mock_fs({
@@ -450,13 +455,16 @@ describe('interfaces spec v1', () => {
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
     const graph = await manager.getGraph();
     expect(graph.edges.map(e => e.toString())).members([
-      'voic/product-catalog:latest-interfaces [public, admin] -> voic/product-catalog/api:latest [public, admin]',
-      'voic/admin-ui/dashboard:latest [service->public, service->admin] -> voic/product-catalog:latest-interfaces [public, admin]',
-      'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]'
+      'voic/product-catalog:latest-interfaces [public, admin, private] -> voic/product-catalog/api:latest [public, admin, private]',
+      'voic/admin-ui/dashboard:latest [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]',
+      'voic/admin-ui:latest-interfaces [dep] -> voic/product-catalog:latest-interfaces [public]',
+      'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]',
+      'gateway [dep2] -> voic/admin-ui:latest-interfaces [dep]'
     ])
 
-    const ingress_edge = graph.edges.find((edge) => edge instanceof IngressEdge)!;
+    const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);
 
+    const ingress_edge = ingress_edges[0];
     const [node_to, node_to_interface_name] = graph.followEdge(ingress_edge, 'public2');
     expect(node_to).instanceOf(ServiceNode);
     expect(node_to_interface_name).to.eq('public');
@@ -464,5 +472,26 @@ describe('interfaces spec v1', () => {
     const [node_to2, node_to_interface_name2] = graph.followEdge(ingress_edge, 'admin2');
     expect(node_to2).instanceOf(ServiceNode);
     expect(node_to_interface_name2).to.eq('admin');
+
+    const dashboard_node = graph.getNodeByRef('voic/admin-ui/dashboard:latest') as ServiceNode;
+    expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      ADMIN_ADDR: 'http://admin2.localhost:80',
+      API_ADDR: 'http://public2.localhost:80',
+      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082'
+    });
+
+    const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');
+    expect(node_to3).instanceOf(ServiceNode);
+    expect(node_to_interface_name3).to.eq('public');
+
+    const template = await DockerComposeUtils.generate(manager);
+    expect(template.services[Refs.url_safe_ref('voic/product-catalog/api:latest')].environment).to.deep.eq({
+      VIRTUAL_HOST: 'public2.localhost,admin2.localhost,dep2.localhost',
+      VIRTUAL_PORT_public2_localhost: '8080',
+      VIRTUAL_PORT: '8080',
+      VIRTUAL_PROTO: 'http',
+      VIRTUAL_PORT_admin2_localhost: '8081',
+      VIRTUAL_PORT_dep2_localhost: '8080'
+    })
   });
 });

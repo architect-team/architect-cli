@@ -30,7 +30,7 @@ export default class AppConfig {
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
-    this.app_host = 'https://app.architect.io';
+    this.app_host = 'https://cloud.architect.io';
     this.oauth_domain = 'auth.architect.io';
 
     // Override defaults with input values

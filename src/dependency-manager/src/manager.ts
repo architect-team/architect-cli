@@ -133,7 +133,6 @@ export default abstract class DependencyManager {
       service_ref_map[service_name] = node.ref;
     }
 
-    const task_ref_map: Dictionary<string> = {};
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(prefixed_component.getTasks())) {
       const node_config = task_config.copy();
@@ -144,7 +143,7 @@ export default abstract class DependencyManager {
       });
       graph.addNode(node);
 
-      task_ref_map[task_name] = node.ref;
+      service_ref_map[task_name] = node.ref;
     }
 
     // Load component dependencies
@@ -160,7 +159,7 @@ export default abstract class DependencyManager {
     }
 
     // Add edges FROM services to other services and dependencies
-    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+    for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
       const from = service_ref_map[service_name];
       const from_node = graph.getNodeByRef(from);
       if (from_node.is_external) {
@@ -207,54 +206,6 @@ export default abstract class DependencyManager {
       }
     }
 
-    // Add edges FROM tasks to other services and dependencies
-    for (const [task_name, task_config] of Object.entries(component.getTasks())) {
-      const from = task_ref_map[task_name];
-      const from_node = graph.getNodeByRef(from);
-      if (from_node.is_external) {
-        continue;
-      }
-
-      let task_string = serialize(task_config);
-      task_string = replaceBrackets(task_string);
-
-      // Add edges between services inside the component
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const task_edge_map: Dictionary<Dictionary<string>> = {};
-      let matches;
-      while ((matches = services_regex.exec(task_string)) != null) {
-        const [_, service_name, interface_name] = matches;
-        const to = service_ref_map[service_name];
-        if (to === from) continue;
-        if (!task_edge_map[to]) task_edge_map[to] = {};
-        task_edge_map[to][`service->${interface_name}`] = interface_name;
-      }
-      for (const [to, interfaces_map] of Object.entries(task_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
-        graph.addEdge(edge);
-      }
-
-      // Add edges between services and dependencies inside the component
-      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = dependencies_regex.exec(task_string)) != null) {
-        const [_, dep_name, interface_name] = matches;
-        const dep_tag = component.getDependencies()[dep_name];
-
-        const dep_component = component_map[`${dep_name}:${dep_tag}`];
-        const to = dep_component.getInterfacesRef();
-        if (!graph.nodes_map.has(to)) continue;
-
-        if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to][`service->${interface_name}`] = interface_name;
-      }
-
-      for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
-        graph.addEdge(edge);
-      }
-    }
-
     // Add edges between services and the component's interfaces node
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
@@ -266,6 +217,29 @@ export default abstract class DependencyManager {
 
       const [_, service_name, interface_name] = matches;
       const to = service_ref_map[service_name];
+      if (!service_edge_map[to]) service_edge_map[to] = {};
+      service_edge_map[to][component_interface_name] = interface_name;
+    }
+
+    for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+      const edge = new ServiceEdge(component.getInterfacesRef(), to, interfaces_map);
+      graph.addEdge(edge);
+    }
+
+    for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
+      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const matches = dependencies_regex.exec(replaceBrackets(component_interface.url!));
+      if (!matches) continue;
+
+      const [_, dep_name, interface_name] = matches;
+      const dep_tag = component.getDependencies()[dep_name];
+
+      const dep_component = component_map[`${dep_name}:${dep_tag}`];
+      const to = dep_component.getInterfacesRef();
+      if (!graph.nodes_map.has(to)) continue;
+
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -577,7 +551,7 @@ export default abstract class DependencyManager {
     return Promise.resolve(starting_port || 80);
   }
 
-  abstract async loadComponentConfig(initial_config: ComponentConfig): Promise<ComponentConfig>;
+  abstract loadComponentConfig(initial_config: ComponentConfig): Promise<ComponentConfig>;
 
   protected async loadComponentConfigWrapper(initial_config: ComponentConfig): Promise<ComponentConfig> {
     let service_extends = initial_config.getExtends();
@@ -604,5 +578,5 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  async abstract getArchitectContext(): Promise<object | undefined>;
+  abstract getArchitectContext(): Promise<object | undefined>;
 }

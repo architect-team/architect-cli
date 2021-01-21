@@ -17,6 +17,7 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract getDescription(): string;
   abstract getKeywords(): string[];
   abstract getAuthor(): string;
+  abstract getHomepage(): string;
 
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract setParameters(value: Dictionary<ParameterValueSpec>): void;

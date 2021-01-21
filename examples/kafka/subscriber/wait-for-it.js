@@ -6,7 +6,7 @@ const child_process = require('child_process');
 const admin = new Admin(client)
 const interval_id = setInterval(() => {
   admin.listTopics((err, res) => {
-    if (res[1].metadata.architect) {
+    if (res[1].metadata[process.env.TOPIC]) {
       console.log('Kafka topic created');
       clearInterval(interval_id);
       child_process.execSync('npm start', { stdio: 'inherit' });
