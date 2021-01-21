@@ -11,7 +11,7 @@ export class ValuesConfig {
     for (const [component_key, component_values] of Object.entries(values_dict)) {
 
       // check that keys only contain alphanumerics, underscores, and maybe an asterisk
-      const component_key_regex = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9/:\.-]*[*a-zA-Z0-9]$', 'mg');
+      const component_key_regex = new RegExp('^[a-zA-Z0-9][a-zA-Z0-9/:.-]*[*a-zA-Z0-9]$', 'mg');
       const component_key_matches = component_key_regex.exec(component_key);
       if (!component_key_matches && component_key !== '*') {
         const validation_error = new ValidationError();
