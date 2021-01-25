@@ -77,12 +77,12 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform((value) => !value ? {} : value)
+  @Transform((params) => !params?.value ? {} : params.value)
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform((value) => !value ? {} : value)
+  @Transform((params) => !params?.value ? {} : params.value)
   tasks?: Dictionary<TaskConfig>;
 
   @IsOptional({ always: true })
@@ -92,7 +92,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   @IsOptional({ always: true })
   @IsObject({ groups: ['developer'] })
-  @Transform((value) => !value ? {} : value)
+  @Transform((params) => !params?.value ? {} : params.value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @IsOptional({ always: true })

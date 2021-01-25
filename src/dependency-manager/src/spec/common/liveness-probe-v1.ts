@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer/decorators';
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { Exclusive } from '../../utils/validators/exclusive';
 import { ValidatableConfig } from '../base-spec';
