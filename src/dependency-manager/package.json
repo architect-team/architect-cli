@@ -25,6 +25,7 @@
     "mustache": "^4.0.1",
     "reflect-metadata": "0.1.13",
     "shell-quote": "^1.7.2",
+    "tslib": "2.0.0",
     "untildify": "4.0.0"
   },
   "scripts": {
