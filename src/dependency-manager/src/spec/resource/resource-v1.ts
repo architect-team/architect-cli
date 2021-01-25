@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer/decorators';
+import { Type } from 'class-transformer';
 import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
