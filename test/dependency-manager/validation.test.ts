@@ -9,6 +9,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import PortUtil from '../../src/common/utils/port';
 import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
+import { ValuesConfig } from '../../src/dependency-manager/src/spec/values/values';
 import { ValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
 describe('validation spec v1', () => {
@@ -788,5 +789,102 @@ describe('validation spec v1', () => {
         "column": 16
       }
     });
+  });
+
+  it('valid component keys in values files pass validation', () => {
+    const values_dict = {
+      "*": {
+        "POSTGRES_HOST": "172.17.0.1"
+      },
+      "architect/cloud:latest": {
+        "TEST": "string"
+      }
+
+    };
+
+    let passed_validation = false;
+    try {
+      ValuesConfig.validate(values_dict)
+      passed_validation = true;
+    } catch (err) { }
+    expect(passed_validation).true;
+  });
+
+  it('invalid component keys in values files fail validation', () => {
+    const values_dict = {
+      "architect_cloud:latest": {
+        "TEST": "string"
+      }
+    };
+
+    try {
+      ValuesConfig.validate(values_dict)
+    } catch (err) {
+      const validation_error = Object.values(err.errors)[0] as any;
+      expect(validation_error.Invalid).eq(`architect_cloud:latest must be a full or partial component reference, optionally ending with an asterisk.`);
+      expect(validation_error.line).eq(2);
+      expect(validation_error.column).eq(27);
+    }
+  });
+
+  it('invalid value keys in values files fail validation', () => {
+    const values_dict = {
+      "architect/cloud:latest": {
+        "TE-ST": "string"
+      }
+    };
+
+    try {
+      ValuesConfig.validate(values_dict)
+    } catch (err) {
+      const validation_error = Object.values(err.errors)[0] as any;
+      expect(validation_error.Invalid).eq(`TE-ST should only contain alphanumerics and underscores, and cannot start or end with an underscore.`);
+      expect(validation_error.line).eq(3);
+      expect(validation_error.column).eq(12);
+    }
+  });
+
+  it('component values are defined in an object', () => {
+    const values_dict = {
+      "architect/cloud:latest": [],
+      "architect/cloud:*": 'string'
+    };
+
+    try {
+      ValuesConfig.validate(values_dict)
+    } catch (err) {
+      const array_validation_error = Object.values(err.errors)[0] as any;
+      const string_validation_error = Object.values(err.errors)[1] as any;
+      expect(array_validation_error.Invalid).eq(`The value for architect/cloud:latest must be an object.`);
+      expect(array_validation_error.line).eq(2);
+      expect(array_validation_error.column).eq(27);
+      expect(string_validation_error.Invalid).eq(`The value for architect/cloud:* must be an object.`);
+      expect(string_validation_error.line).eq(2);
+      expect(string_validation_error.column).eq(19);
+    }
+  });
+
+  it('component values are strings only', () => {
+    const values_dict = {
+      "architect/cloud:latest": {
+        'test': 'test value'
+      },
+      "architect/cloud:*": {
+        'ANOTHER_test': 'another value'
+      }
+    };
+
+    try {
+      ValuesConfig.validate(values_dict)
+    } catch (err) {
+      const array_validation_error = Object.values(err.errors)[0] as any;
+      const string_validation_error = Object.values(err.errors)[1] as any;
+      expect(array_validation_error.Invalid).eq(`test must be a string.`);
+      expect(array_validation_error.line).eq(3);
+      expect(array_validation_error.column).eq(11);
+      expect(string_validation_error.Invalid).eq(`ANOTHER_test must be a string.`);
+      expect(string_validation_error.line).eq(6);
+      expect(string_validation_error.column).eq(19);
+    }
   });
 });

@@ -6,7 +6,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
-import yaml from 'js-yaml';
+import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
 import open from 'open';
 import path from 'path';
 import untildify from 'untildify';
@@ -150,6 +150,10 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    values: flags.string({
+      char: 'v',
+      description: 'Path of values file',
+    }),
   };
 
   static args = [{
@@ -237,8 +241,19 @@ export default class Deploy extends DeployCommand {
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
+  private readValuesFile(values_file_path: string | undefined) {
+    let component_values: any = {};
+    if (values_file_path && fs.statSync(values_file_path)) {
+      const values_file_data = fs.readFileSync(values_file_path);
+      component_values = yaml.safeLoad(values_file_data.toString('utf-8'), { schema: FAILSAFE_SCHEMA });
+    }
+    return component_values;
+  }
+
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
+
+    const component_values = this.readValuesFile(flags.values);
 
     let dependency_manager;
     let namespaced_component_name;
@@ -252,12 +267,13 @@ export default class Deploy extends DeployCommand {
         },
       });
 
-      dependency_manager = await LocalDependencyManager.create(this.app.api);
+      dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
       dependency_manager.environment = env_config;
     } else {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
+        component_values
       );
       namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     }

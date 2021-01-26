@@ -62,6 +62,155 @@ describe('local deploy environment', function () {
     }
   }
 
+  const local_component_config_with_parameters = {
+    "name": "examples/hello-world",
+
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": "3000"
+        },
+        "environment": {
+          "a_required_key": "${{ parameters.a_required_key }}",
+          "another_required_key": "${{ parameters.another_required_key }}",
+          "one_more_required_param": "${{ parameters.one_more_required_param }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "hello": {
+        "url": "${{ services.api.interfaces.main.url }}"
+      }
+    },
+
+    "parameters": {
+      'a_required_key': {
+        'required': 'true'
+      },
+      'another_required_key': {
+        'required': 'true'
+      },
+      'one_more_required_param': {
+        'required': 'true'
+      }
+    }
+  }
+  const basic_parameter_values = {
+    'examples/hello-world:latest': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
+    },
+  }
+  const wildcard_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+    },
+    'examples/hello-world:la*': {
+      'one_more_required_param': 'one_more_value'
+    },
+    '*': {
+      'another_required_key': 'required_value'
+    }
+  }
+  const stacked_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
+    },
+    '*': {
+      'a_required_key': 'a_value_which_will_be_overwritten',
+      'another_required_key': 'another_value_which_will_be_overwritten'
+    }
+  }
+
+  const local_component_config_with_dependency = {
+    "name": "examples/hello-world",
+
+    "services": {
+      "api": {
+        "image": "heroku/nodejs-hello-world",
+        "interfaces": {
+          "main": "3000"
+        },
+        "environment": {
+          "a_required_key": "${{ parameters.a_required_key }}",
+          "another_required_key": "${{ parameters.another_required_key }}",
+          "one_more_required_param": "${{ parameters.one_more_required_param }}"
+        }
+      }
+    },
+
+    "interfaces": {
+      "hello": {
+        "url": "${{ services.api.interfaces.main.url }}"
+      }
+    },
+
+    "parameters": {
+      'a_required_key': {
+        'required': 'true'
+      },
+      'another_required_key': {
+        'required': 'true'
+      },
+      'one_more_required_param': {
+        'required': 'true'
+      }
+    },
+
+    "dependencies": {
+      "examples/react-app": "latest"
+    }
+  }
+  const local_component_config_dependency = {
+    'config': {
+      'name': 'examples/react-app',
+      'interfaces': {
+        'app': '\${{ services.app.interfaces.main.url }}'
+      },
+      'parameters': {
+        'world_text': {
+          'default': 'world'
+        }
+      },
+      'services': {
+        'app': {
+          'build': {
+            'context': './frontend'
+          },
+          'interfaces': {
+            'main': '8080'
+          },
+          'environment': {
+            'PORT': '\${{ services.app.interfaces.main.port }}',
+            'WORLD_TEXT': '\${{ parameters.world_text }}'
+          }
+        }
+      }
+    },
+    'component': {
+      'name': 'examples/react-app',
+    },
+    'tag': 'latest'
+  }
+  const component_and_dependency_parameter_values = {
+    'examples/hello-world:*': {
+      'a_required_key': 'some_value',
+      'another_required_key': 'required_value',
+      'one_more_required_param': 'one_more_value'
+    },
+    '*': {
+      'a_required_key': 'a_value_which_will_be_overwritten',
+      'another_required_key': 'another_value_which_will_be_overwritten',
+      'world_text': 'some other name',
+      'unused_parameter': 'value_not_used_by_any_component'
+    }
+  }
+
   const local_database_seeding_component_config = {
     "name": "examples/database-seeding",
 
@@ -311,50 +460,50 @@ describe('local deploy environment', function () {
       expect(runCompose.firstCall.args[0]).to.deep.equal(environment_expected_compose)
     })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/hello-world/architect.yml'])
-      .it('Create a basic local deploy with a component config', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml'])
+    .it('Create a basic local deploy with a component config', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
+    })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello'])
-      .it('Create a local deploy with a component and an interface', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello'])
+    .it('Create a local deploy with a component and an interface', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    })
 
-    test
-      .timeout(15000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
-      })
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stdout({ print })
-      .stderr({ print })
-      .command(['deploy', '-l', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
-      .it('Create a local deploy with a component, parameters, and an interface', ctx => {
-        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
-        expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
-      })
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
+    .it('Create a local deploy with a component, parameters, and an interface', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true
+      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
+    })
 
   test
     .timeout(15000)
@@ -380,6 +529,94 @@ describe('local deploy environment', function () {
       })
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return basic_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a basic values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
+      expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
+      expect(hello_world_service.environment.VIRTUAL_HOST).to.equal('test.localhost');
+      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
+      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
+      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return wildcard_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return stacked_parameter_values;
+    })
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a stacked values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
+    })
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return component_and_dependency_parameter_values;
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .reply(200, local_component_config_dependency))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      const react_app_environment = (Object.values(runCompose.firstCall.args[0].services)[1] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+      expect(react_app_environment.WORLD_TEXT).to.equal('some other name');
     })
 });
 

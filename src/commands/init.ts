@@ -208,6 +208,4 @@ export abstract class InitCommand extends Command {
     this.log(chalk.green(`Wrote Architect component config to ${flags.component_file}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
-
-
 }

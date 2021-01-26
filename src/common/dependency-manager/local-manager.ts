@@ -25,11 +25,11 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  static async create(api: AxiosInstance) {
-    return this.createFromPath(api, '');
+  static async create(api: AxiosInstance, values_dictionary: Dictionary<Dictionary<string>> = {}) {
+    return this.createFromPath(api, '', values_dictionary);
   }
 
-  static async createFromPath(api: AxiosInstance, component_config_path: string, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
+  static async createFromPath(api: AxiosInstance, component_config_path: string, values_dictionary: Dictionary<Dictionary<string>> = {}, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
     let env_config;
     const dependency_manager = new LocalDependencyManager(api, component_config_path, linked_components);
     if (component_config_path.endsWith('environment.yml') || component_config_path.endsWith('environment.json') || component_config_path.endsWith('env-mock-dev.yml') || !component_config_path) { // TODO: remove when environment configs are offically gone
@@ -42,7 +42,7 @@ export default class LocalDependencyManager extends DependencyManager {
       env_json.components[component_config.getName()] = plainToClass(ComponentConfigV1, { extends: `file:${component_config_path}`, name: component_config.getName() });
       env_config = EnvironmentConfigBuilder.buildFromJSON(env_json);
     }
-    await dependency_manager.init(env_config);
+    await dependency_manager.init(env_config, values_dictionary);
     return dependency_manager;
   }
 

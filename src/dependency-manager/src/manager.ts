@@ -1,5 +1,6 @@
 import { deserialize, plainToClass, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
+import { isMatch } from 'matcher';
 import { ServiceNode } from '.';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
@@ -12,6 +13,7 @@ import { ComponentConfigBuilder } from './spec/component/component-builder';
 import { ComponentConfig } from './spec/component/component-config';
 import { EnvironmentConfigBuilder } from './spec/environment/environment-builder';
 import { EnvironmentConfig } from './spec/environment/environment-config';
+import { ValuesConfig } from './spec/values/values';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
@@ -22,6 +24,7 @@ import VaultManager from './vault-manager';
 export default abstract class DependencyManager {
   gateway_port!: number;
   environment!: EnvironmentConfig;
+  values_dictionary!: Dictionary<Dictionary<string>>;
   protected __component_config_cache: Dictionary<ComponentConfig | undefined>;
   protected __graph_cache: Dictionary<DependencyGraph | undefined>;
 
@@ -30,9 +33,12 @@ export default abstract class DependencyManager {
     this.__graph_cache = {};
   }
 
-  async init(environment_config?: EnvironmentConfig): Promise<void> {
+  async init(environment_config?: EnvironmentConfig, values_dictionary: Dictionary<Dictionary<string>> = {}): Promise<void> {
     this.environment = environment_config || EnvironmentConfigBuilder.buildFromJSON({});
     this.gateway_port = await this.getServicePort(80);
+
+    ValuesConfig.validate(values_dictionary);
+    this.values_dictionary = values_dictionary;
   }
 
   async getGraph(interpolate = true): Promise<DependencyGraph> {
@@ -425,8 +431,17 @@ export default abstract class DependencyManager {
     const environment_components = interpolated_environment.getComponents();
     // Prefix interpolation expressions with components.<name>.
     const prefixed_component_map: Dictionary<ComponentConfig> = {};
+
+    // pre-sort values dictionary to properly stack/override any colliding keys
+    const sorted_values_keys = Object.keys(this.values_dictionary).sort();
+    const sorted_values_dict: Dictionary<Dictionary<string>> = {};
+    for (const key of sorted_values_keys) {
+      sorted_values_dict[key] = this.values_dictionary[key];
+    }
+
     for (let component of Object.values(component_map)) {
       let environment_component = environment_components[component.getRef()];
+      const component_parameters = component.getParameters();
 
       if (!environment_component) {
         const generic_environment_component = environment_components[component.getName()];
@@ -439,13 +454,26 @@ export default abstract class DependencyManager {
       }
 
       // Set default component parameter values from environment parameters
-      for (const [parameter_key, parameter] of Object.entries(component.getParameters())) {
+      for (const [parameter_key, parameter] of Object.entries(component_parameters)) {
         const environment_parameter = interpolated_environment.getParameters()[parameter_key];
         if (environment_parameter) {
           parameter.default = environment_parameter.default;
           component.setParameter(parameter_key, parameter);
         }
       }
+
+      // add values from values file to all existing, matching components
+      for (const [pattern, params] of Object.entries(sorted_values_dict)) {
+        const component_has_tag = component.getRef().includes(':');
+        if (isMatch(component_has_tag ? component.getRef() : `${component.getRef()}:latest`, [pattern])) {
+          for (const [param_key, param_value] of Object.entries(params)) {
+            if (component_parameters[param_key]) {
+              component.setParameter(param_key, param_value);
+            }
+          }
+        }
+      }
+
       if (environment_component) {
         component = component.merge(environment_component);
       }
