@@ -80,9 +80,7 @@
     "ts-node": "8.10.2",
     "typescript": "3.9.7"
   },
-  "optionalDependencies": {
-    "keytar": "6.0.1"
-  },
+  "optionalDependencies": {},
   "engines": {
     "node": ">=8.0.0"
   },

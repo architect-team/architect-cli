@@ -42,7 +42,6 @@ export default class AuthClient {
   }
 
   async init() {
-    await this.credentials.init();
     const token = await this.getToken();
     if (token && token.password !== 'unknown') {
       this.auth_results = JSON.parse(token.password) as AuthResults;
