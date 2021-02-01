@@ -23,6 +23,7 @@ export interface DockerComposeDeploy {
 }
 
 export interface DockerService {
+  labels: string[];
   ports: string[] | DockerComposeInterface[];
   image?: string;
   environment?: { [key: string]: any };

@@ -47,21 +47,20 @@ export class DockerComposeUtils {
 
       if (node instanceof GatewayNode) {
         compose.services[url_safe_ref] = {
-          image: 'architectio/nginx-proxy:latest',
+          image: 'traefik:v2.4',
           restart: 'always',
-          ports: [`${dependency_manager.gateway_port}:${dependency_manager.gateway_port}`],
+          command: ['--api.insecure=true', '--providers.docker'],
+          ports: [
+            // The HTTP port
+            `${dependency_manager.gateway_port}:80`,
+            // The Web UI(enabled by--api.insecure = true)
+            '8080:8080',
+          ],
           volumes: [
-            '/var/run/docker.sock:/tmp/docker.sock:ro',
+            '/var/run/docker.sock:/var/run/docker.sock',
           ],
           depends_on: [],
-          environment: {
-            HTTPS_METHOD: 'noredirect',
-            DISABLE_ACCESS_LOGS: 'true',
-            HTTP_PORT: dependency_manager.gateway_port,
-          },
-          logging: {
-            driver: 'none',
-          },
+          labels: [],
         };
       }
 
@@ -74,6 +73,7 @@ export class DockerComposeUtils {
           ports,
           depends_on: [],
           environment: node.node_config.getEnvironmentVariables(),
+          labels: [],
         };
 
         if (gateway_links.length) {
@@ -180,29 +180,26 @@ export class DockerComposeUtils {
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
 
-        let depends_from = node_from_url_safe_ref;
-        let depends_to = node_to_url_safe_ref;
+        const depends_from = node_from_url_safe_ref;
+        const depends_to = node_to_url_safe_ref;
 
         if (edge instanceof IngressEdge) {
           const service_to = compose.services[node_to_url_safe_ref];
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 
-          const interface_host = `${interface_name}.localhost`;
-          if (service_to.environment.VIRTUAL_HOST) {
-            service_to.environment.VIRTUAL_HOST += `,${interface_host}`;
-          } else {
-            service_to.environment.VIRTUAL_HOST = interface_host;
+          let protocol = node_to_interface.protocol || 'http';
+          // https://doc.traefik.io/traefik/user-guides/grpc/#with-http-h2c
+          if (protocol === 'grpc') {
+            protocol = 'h2c';
           }
-          const normalized_host = interface_host.replace(/-/g, '_').replace(/\./g, '_');
-          service_to.environment[`VIRTUAL_PORT_${normalized_host}`] = node_to_interface.port;
-          service_to.environment.VIRTUAL_PORT = node_to_interface.port;
-          service_to.environment.VIRTUAL_PROTO = node_to_interface.protocol || 'http';
-          service_to.restart = 'always';
 
-          // Flip for depends_on
-          depends_from = node_to_url_safe_ref;
-          depends_to = node_from_url_safe_ref;
+          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.localhost\`)`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
+          service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
+          service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
+
+          service_to.restart = 'always';
         }
 
         if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
