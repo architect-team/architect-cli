@@ -12,7 +12,7 @@ What this means is that not only can developers run the stack privately, but the
 
 ### Github Actions
 
-The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `EMAIL`, `PASSWORD`, `ACCOUNT`, `PLATFORM`, and `COMPONENT_NAME`.
+The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `ARCHITECT_EMAIL` and `ARCHITECT_PASSWORD`. Replace `<account-name>`, `<platform-name>`, and `<component-name>` with the appropriate values.
 
 ```yaml
 name: Architect Create Preview
@@ -31,12 +31,12 @@ jobs:
       - name: Architect Create Preview
         uses: architect-team/create-preview@v1.0.1
         with:
-          email: ${{ secrets.EMAIL }}
-          password: ${{ secrets.PASSWORD }}
-          account: ${{ secrets.ACCOUNT }}
+          email: ${{ secrets.ARCHITECT_EMAIL }}
+          password: ${{ secrets.ARCHITECT_PASSWORD }}
+          account: <account-name>
+          platform: <platform-name>
           environment: preview-${{ github.event.number }}
-          platform: ${{ secrets.PLATFORM }}
-          component_name: ${{ secrets.COMPONENT_NAME }}
+          component_name: <component-name>
 ```
 
 ### Gitlab CI
@@ -114,9 +114,9 @@ jobs:
       - name: Architect Destroy Preview
         uses: architect-team/destroy-preview@v1.0.1
         with:
-          email: ${{ secrets.EMAIL }}
-          password: ${{ secrets.PASSWORD }}
-          account: ${{ secrets.ACCOUNT }}
+          email: ${{ secrets.ARCHITECT_EMAIL }}
+          password: ${{ secrets.ARCHITECT_PASSWORD }}
+          account: <account-name>
           environment: preview-${{ github.event.number }}
-          component_name: ${{ secrets.COMPONENT_NAME }}
+          component_name: <component-name>
 ```
