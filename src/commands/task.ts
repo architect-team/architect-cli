@@ -59,6 +59,7 @@ export default class TaskExec extends Command {
 
   async runLocal() {
     const { flags, args } = this.parse(TaskExec);
+    await DockerComposeUtils.validateDocker();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);

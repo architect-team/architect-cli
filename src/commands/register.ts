@@ -7,6 +7,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import { DockerComposeUtils } from '../common/docker-compose';
 import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import { buildImage, getDigest, pushImage, stripTagFromImage } from '../common/utils/docker';
@@ -54,6 +55,7 @@ export default class ComponentRegister extends Command {
 
   async run() {
     const { flags, args } = this.parse(ComponentRegister);
+    await DockerComposeUtils.validateDocker();
 
     const config_paths: Set<string> = new Set();
 
