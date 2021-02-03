@@ -9,7 +9,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
-import { buildImage, getDigest, pushImage, stripTagFromImage } from '../common/utils/docker';
+import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { Refs, ServiceNode } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
@@ -54,6 +54,7 @@ export default class ComponentRegister extends Command {
 
   async run() {
     const { flags, args } = this.parse(ComponentRegister);
+    await Docker.verify();
 
     const config_paths: Set<string> = new Set();
 
@@ -145,7 +146,7 @@ export default class ComponentRegister extends Command {
     const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key
-    const image_without_tag = stripTagFromImage(image);
+    const image_without_tag = Docker.stripTagFromImage(image);
     return `${image_without_tag}@${digest}`;
   }
 
@@ -165,7 +166,7 @@ export default class ComponentRegister extends Command {
       if (service_config.build?.args) {
         build_args = Object.entries(service_config.build?.args).map(([key, value]) => `${key}=${value}`);
       }
-      return await buildImage(build_path, image_tag, dockerfile, build_args);
+      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
@@ -176,7 +177,7 @@ export default class ComponentRegister extends Command {
   private async pushImage(image: string) {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
-      await pushImage(image);
+      await Docker.pushImage(image);
     } catch (err) {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
@@ -187,7 +188,7 @@ export default class ComponentRegister extends Command {
 
   private async getDigest(image: string) {
     cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await getDigest(image).catch(err => {
+    const digest = await Docker.getDigest(image).catch(err => {
       cli.action.stop(chalk.red(`Inspect failed`));
       throw new Error(err);
     });
@@ -202,7 +203,7 @@ export default class ComponentRegister extends Command {
     const digest_match = new RegExp('Digest: (.*)').exec(stdout);
     if (digest_match) {
       const digest = digest_match[1];
-      const image_without_tag = stripTagFromImage(image);
+      const image_without_tag = Docker.stripTagFromImage(image);
       return `${image_without_tag}@${digest}`;
     } else {
       throw new Error('Unable to get digest');

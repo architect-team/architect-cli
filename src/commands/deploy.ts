@@ -15,6 +15,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
+import * as Docker from '../common/utils/docker';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
@@ -252,6 +253,7 @@ export default class Deploy extends DeployCommand {
 
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
+    await Docker.verify();
 
     const component_values = this.readValuesFile(flags.values);
 

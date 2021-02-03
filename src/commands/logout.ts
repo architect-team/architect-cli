@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import Command from '../base-command';
+import * as Docker from '../common/utils/docker';
 
 export default class Logout extends Command {
   auth_required() {
@@ -11,6 +12,7 @@ export default class Logout extends Command {
   static flags = { ...Command.flags };
 
   async run() {
+    await Docker.verify(); // docker is required for logout because we run `docker logout`
     await this.app.auth.logout();
     this.log(chalk.green('Logout successful'));
   }
