@@ -252,6 +252,7 @@ export default class Deploy extends DeployCommand {
 
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
+    await DockerComposeUtils.validateDocker();
 
     const component_values = this.readValuesFile(flags.values);
 
