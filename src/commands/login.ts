@@ -2,7 +2,7 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import opener from 'opener';
 import Command from '../base-command';
-import { DockerComposeUtils } from '../common/docker-compose';
+import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
 import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
@@ -30,7 +30,7 @@ export default class Login extends Command {
 
   async run() {
     const { flags } = this.parse(Login);
-    await DockerComposeUtils.validateDocker(); // docker is required for login because we run `docker login`
+    await Docker.verify(); // docker is required for login because we run `docker login`
 
     if (flags.email || flags.password) {
       await this.runCliFlow(flags);

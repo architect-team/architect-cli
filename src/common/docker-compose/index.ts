@@ -271,22 +271,6 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  /**
-   * Checks to make sure docker is installed and that the docker daemon is running. Throws with the corresponding error message if not.
-   */
-  public static async validateDocker(): Promise<any> {
-    try {
-      await execa('which', ['docker']);
-    } catch {
-      throw new Error('Architect requires Docker to be installed. Please install it and try again.');
-    }
-    try {
-      await execa('docker', ['stats', '--no-stream']);
-    } catch (err) {
-      throw new Error('Docker daemon is not running. Please start it and try again.');
-    }
-  }
-
   public static async dockerCompose(args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> {
     const cmd = execa('docker-compose', args, execa_opts);
     if (opts.stdout) {

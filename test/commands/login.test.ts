@@ -1,5 +1,6 @@
 import { expect, test } from '@oclif/test';
-
+import sinon from 'sinon';
+import * as Docker from '../../src/common/utils/docker';
 
 describe('login', () => {
 
@@ -8,6 +9,7 @@ describe('login', () => {
 
   test
     .timeout(20000)
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stderr({ print })
     .command(['login', '-e', 'test-email'])
     .catch(ctx => {
@@ -17,6 +19,7 @@ describe('login', () => {
 
   test
     .timeout(20000)
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stderr({ print })
     .command(['login'])
     .catch(ctx => {

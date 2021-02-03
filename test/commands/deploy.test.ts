@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
 import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
@@ -450,6 +451,7 @@ describe('local deploy environment', function () {
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(local_env_config, null, 2), local_env_config];
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -465,6 +467,7 @@ describe('local deploy environment', function () {
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config);
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -480,6 +483,7 @@ describe('local deploy environment', function () {
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config);
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -495,6 +499,7 @@ describe('local deploy environment', function () {
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -510,6 +515,7 @@ describe('local deploy environment', function () {
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(local_env_config, null, 2), local_env_config];
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'generate', sinon.stub().returns(undefined))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -539,6 +545,7 @@ describe('local deploy environment', function () {
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return basic_parameter_values;
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -562,6 +569,7 @@ describe('local deploy environment', function () {
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return wildcard_parameter_values;
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
@@ -579,6 +587,7 @@ describe('local deploy environment', function () {
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return stacked_parameter_values;
     })
@@ -599,6 +608,7 @@ describe('local deploy environment', function () {
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return component_and_dependency_parameter_values;
     })
@@ -632,6 +642,7 @@ describe('remote deploy environment', function () {
     .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
       return [JSON.stringify(env_config, null, 2), env_config];
     })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
