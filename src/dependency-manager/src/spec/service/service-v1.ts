@@ -19,7 +19,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
 
   @IsOptional({ always: true })
   @IsObject({ groups: ['developer'] })
-  @Transform((params) => !params?.value ? {} : params.value)
+  @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @Type(() => LivenessProbeSpecV1)
