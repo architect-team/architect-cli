@@ -1,18 +1,19 @@
-import { ClassConstructor, plainToClass, Transform } from 'class-transformer';
+import { plainToClass, Transform } from 'class-transformer';
+import { ClassType } from 'class-transformer/ClassTransformer';
 import { Dictionary } from './dictionary';
 
 /**
  * Used in conjunction with the @Transform annotation from the 'class-transformer'
  * library to create class structures for nested dictionaries.
  */
-export const Dict = <T>(typeFunction: () => ClassConstructor<T>, options?: { key?: string }) =>
+export const Dict = <T>(typeFunction: () => ClassType<T>, options?: { key?: string }) =>
   (dict?: Dictionary<any>): Dictionary<T> | undefined => {
     if (!dict) {
       return undefined;
     }
 
     const res = {} as Dictionary<T>;
-    const classConstructor = typeFunction();
+    const classType = typeFunction();
     for (const key of Object.keys(dict)) {
       let value = dict[key];
       if (options && options.key && typeof value === 'string') {
@@ -20,7 +21,7 @@ export const Dict = <T>(typeFunction: () => ClassConstructor<T>, options?: { key
         new_value[options.key] = value;
         value = new_value;
       }
-      res[key] = plainToClass(classConstructor, value);
+      res[key] = plainToClass(classType, value);
     }
     return res;
   };

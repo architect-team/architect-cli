@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer/decorators';
 import { IsEmpty, IsInstance, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
@@ -19,7 +19,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
 
   @IsOptional({ always: true })
   @IsObject({ groups: ['developer'] })
-  @Transform((params) => !params?.value ? {} : params.value)
+  @Transform((value) => !value ? {} : value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @Type(() => LivenessProbeSpecV1)

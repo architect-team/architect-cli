@@ -31,7 +31,7 @@ export const validateNested = async <T extends Record<string, any>>(
     error.children = await value.validate(options) || [];
   }
 
-  if ((error.constraints && Object.keys(error.constraints).length) || error.children?.length) {
+  if ((error.constraints && Object.keys(error.constraints).length) || error.children.length) {
     errors.push(error);
   }
 
@@ -61,7 +61,6 @@ export const validateDictionary = async <T extends ValidatableConfig>(
     error = errors.splice(error_index, 1)[0];
   }
 
-
   if (!isObject(property_value)) {
     error.constraints = {
       'IsObject': `${property} must be an object`,
@@ -81,17 +80,15 @@ export const validateDictionary = async <T extends ValidatableConfig>(
         'Matches': `${key} must match ${regex} regular expression`,
       };
 
-      error.children = error.children || [];
       error.children.push(key_error);
     }
 
     if (!condition || condition(value)) {
-      error.children = error.children || [];
       error.children = error.children.concat(await validateNested(property_value, key, error.children, options));
     }
   }
 
-  if ((error.constraints && Object.keys(error.constraints).length) || error.children?.length) {
+  if ((error.constraints && Object.keys(error.constraints).length) || error.children.length) {
     errors.push(error);
   }
 
