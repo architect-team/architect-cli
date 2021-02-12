@@ -10,6 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
+import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
 describe('components spec v1', function () {
@@ -685,6 +686,132 @@ describe('components spec v1', function () {
       expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
       const node_b_v2 = graph.getNodeByRef('examples/component-b/api:v2') as ServiceNode;
       expect(node_b_v2.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
+    });
+
+    it('environment ingress context produces the correct values for external interfaces', async () => {
+      const cloud_component_config = {
+        name: 'architect/cloud',
+        services: {
+          api: {
+            interfaces: {
+              main: 8080
+            },
+            environment: {
+              EXTERNAL_APP_URL: "${{ environment.ingresses['architect/cloud']['api-interface'].url }}",
+              EXTERNAL_CI_URL: "${{ environment.ingresses['concourse/ci']['ci-interface'].url }}"
+            }
+          }
+        },
+        dependencies: {
+          'concourse/ci': '6.2'
+        },
+        interfaces: {
+          'api-interface': '${{ services.api.interfaces.main.url }}',
+          'ci-interface': "${{ dependencies['concourse/ci'].interfaces.ci-interface.url }}"
+        }
+      };
+
+      const concourse_component_config = {
+        name: 'concourse/ci',
+        services: {
+          web: {
+            interfaces: {
+              main: 8080,
+            },
+            image: 'concourse/concourse:6.2',
+            environment: {
+              EXTERNAL_CI_URL: "${{ environment.ingresses['concourse/ci']['ci-interface'].url }}"
+            }
+          },
+        },
+        interfaces: {
+          'ci-interface': '${{ services.web.interfaces.main.url }}'
+        }
+      }
+
+      const env_config = {
+        components: {
+          'architect/cloud': {
+            extends: 'file:./cloud'
+          },
+          'concourse/ci:6.2': {
+            extends: 'file:./concourse/architect.json'
+          }
+        },
+        interfaces: {
+          api: {
+            url: "${{ components['architect/cloud'].interfaces.api-interface.url }}"
+          },
+          ci: {
+            url: "${{ components['architect/cloud'].interfaces.ci-interface.url }}"
+          }
+        }
+      };
+
+      mock_fs({
+        '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
+        '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
+        '/stack/environment.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+      const graph = await manager.getGraph();
+
+      expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
+      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
+      expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface', ci: 'ci-interface' });
+      const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost:80');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
+      const ci_web_node = graph.getNodeByRef('concourse/ci/web:6.2') as ServiceNode;
+      expect(ci_web_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
+    });
+
+
+    it('environment ingress context produces the correct values for a simple external interface', async () => {
+      const cloud_component_config = {
+        name: 'architect/cloud',
+        services: {
+          api: {
+            interfaces: {
+              main: 8080
+            },
+            environment: {
+              EXTERNAL_APP_URL: "${{ environment.ingresses['architect/cloud']['api-interface'].url }}",
+            }
+          }
+        },
+        interfaces: {
+          'api-interface': '${{ services.api.interfaces.main.url }}',
+        }
+      };
+
+      const env_config = {
+        components: {
+          'architect/cloud': {
+            extends: 'file:./cloud'
+          },
+        },
+        interfaces: {
+          api: {
+            url: "${{ components['architect/cloud'].interfaces.api-interface.url }}"
+          },
+        }
+      };
+
+      mock_fs({
+        '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
+        '/stack/environment.json': JSON.stringify(env_config),
+      });
+
+      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
+      const graph = await manager.getGraph();
+
+      expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
+      const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
+      expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
+      const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost:80');
     });
   });
 });
