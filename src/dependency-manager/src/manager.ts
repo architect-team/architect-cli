@@ -8,7 +8,6 @@ import ServiceEdge from './graph/edge/service';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
 import { TaskNode } from './graph/node/task';
-import { ArchitectContext } from './spec/common/architect-context';
 import { InterfaceSpec } from './spec/common/interface-spec';
 import { ComponentConfigBuilder } from './spec/component/component-builder';
 import { ComponentConfig } from './spec/component/component-config';
@@ -581,5 +580,5 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<ArchitectContext | undefined>;
+  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined>;
 }

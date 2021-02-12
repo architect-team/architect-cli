@@ -6,7 +6,6 @@ import path from 'path';
 import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, InterfaceSpec, Refs, ServiceNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import { ArchitectContext } from '../../dependency-manager/src/spec/common/architect-context';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
 import { ComponentConfigV1 } from '../../dependency-manager/src/spec/component/component-v1';
@@ -170,7 +169,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<ArchitectContext | undefined> {
+  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined> {
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     for (const component of Object.values(components_map)) {
       component_interfaces_ref_map[component.getInterfacesRef()] = components_map[component.getRef()];
