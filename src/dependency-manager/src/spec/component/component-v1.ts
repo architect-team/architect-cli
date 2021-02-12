@@ -31,7 +31,6 @@ export interface ComponentContextV1 {
   interfaces: Dictionary<InterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
   tasks: Dictionary<TaskContextV1>;
-  // environment: any; // TODO
 }
 
 export class ComponentConfigV1 extends ComponentConfig {
