@@ -1,4 +1,4 @@
-import { deserialize, plainToClass, serialize } from 'class-transformer';
+import { classToClass, deserialize, plainToClass, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
 import { ServiceNode } from '.';
@@ -8,6 +8,7 @@ import ServiceEdge from './graph/edge/service';
 import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
 import { TaskNode } from './graph/node/task';
+import { ArchitectContext } from './spec/common/architect-context';
 import { InterfaceSpec } from './spec/common/interface-spec';
 import { ComponentConfigBuilder } from './spec/component/component-builder';
 import { ComponentConfig } from './spec/component/component-config';
@@ -392,7 +393,7 @@ export default abstract class DependencyManager {
 
     const components = Object.values(components_map);
 
-    const architect_context = await this.getArchitectContext();
+    const architect_context = await this.getArchitectContext(graph, components_map);
 
     // Set contexts for all components
     for (const component of components) {
@@ -400,7 +401,9 @@ export default abstract class DependencyManager {
       context[normalized_ref] = component.getContext();
 
       if (architect_context) {
-        context[normalized_ref].architect = architect_context;
+        context[normalized_ref].environment = classToClass(architect_context.environment);
+        context[normalized_ref].architect = classToClass(architect_context);
+        context[normalized_ref].architect.environment = {}; // remove environment from architect context as it shouldn't really be accessible that way in interpolation
       }
 
       for (const [service_name, service] of Object.entries(component.getServices())) {
@@ -578,5 +581,5 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  abstract getArchitectContext(): Promise<object | undefined>;
+  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<ArchitectContext | undefined>;
 }
