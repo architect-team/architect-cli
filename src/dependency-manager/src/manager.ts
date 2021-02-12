@@ -392,7 +392,7 @@ export default abstract class DependencyManager {
 
     const components = Object.values(components_map);
 
-    const architect_context = await this.getArchitectContext(graph, components_map);
+    const architect_context = await this.getArchitectContext(graph);
 
     // Set contexts for all components
     for (const component of components) {
@@ -580,5 +580,5 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined>;
+  abstract getArchitectContext(graph: DependencyGraph): Promise<any | undefined>;
 }

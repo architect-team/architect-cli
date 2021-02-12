@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, InterfaceSpec, Refs, ServiceNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, InterfaceSpec, Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
@@ -169,18 +169,13 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined> {
-    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
-    for (const component of Object.values(components_map)) {
-      component_interfaces_ref_map[component.getInterfacesRef()] = components_map[component.getRef()];
-    }
-
+  async getArchitectContext(graph: DependencyGraph): Promise<any | undefined> {
     const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
     for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
       for (const [env_interface, interface_name] of Object.entries(ingress_edge.interfaces_map)) {
         const [dependency_node, _] = graph.followEdge(ingress_edge, env_interface);
 
-        if (dependency_node instanceof ServiceNode) {
+        if (dependency_node instanceof ServiceNode || dependency_node instanceof TaskNode) {
           const [account_name, component_name] = dependency_node.ref.split('/');
           const full_component_name = `${account_name}/${component_name}`;
 
