@@ -392,7 +392,7 @@ export default abstract class DependencyManager {
 
     const components = Object.values(components_map);
 
-    const architect_context = await this.getArchitectContext(graph);
+    const architect_context = await this.getArchitectContext(graph, components_map);
 
     // Set contexts for all components
     for (const component of components) {
@@ -580,31 +580,41 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  protected generateEnvironmentIngresses(graph: DependencyGraph): Dictionary<Dictionary<InterfaceSpec>> {
+  protected generateEnvironmentIngresses(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Dictionary<Dictionary<InterfaceSpec>> {
+    const all_external_interfaces: Dictionary<InterfaceSpec> = {};
+    for (const component_config of Object.values(components_map)) {
+      const component_interfaces = component_config.getInterfaces();
+      for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
+        if (!interface_data.host?.startsWith('${{')) {
+          all_external_interfaces[component_interface_name] = interface_data;
+        }
+      }
+    }
+
     const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
-    for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
-      for (const [env_interface, interface_name] of Object.entries(ingress_edge.interfaces_map)) {
-        const [dependency_node, _] = graph.followEdge(ingress_edge, env_interface);
-
-        if (dependency_node instanceof ServiceNode || dependency_node instanceof TaskNode) {
-          const [account_name, component_name] = dependency_node.ref.split('/');
-          const full_component_name = `${account_name}/${component_name}`;
-
-          const external_interface: InterfaceSpec = {
-            host: `${env_interface}.${this.toExternalHost()}`,
-            port: this.gateway_port.toString(),
-            protocol: this.toExternalProtocol(),
-          };
-          external_interface.url = `${external_interface.protocol}://${external_interface.host}:${external_interface.port}`;
-          if (!ingresses[full_component_name]) {
-            ingresses[full_component_name] = {};
+    for (const [component_name, component_config] of Object.entries(components_map)) {
+      const component_interfaces = component_config.getInterfaces();
+      for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
+        const tagless_component_name = component_config.getName();
+        if (!ingresses[tagless_component_name]) {
+          ingresses[tagless_component_name] = {};
+        }
+        if (interface_data.host?.startsWith('${{')) { // if the interface is not top-level in the service stack and hasn't been assigned data yet
+          const component_interfaces_node_edges = graph.edges.filter(edge => Object.values(edge.interfaces_map).includes(component_interface_name) && edge.to.replace('-interfaces', '') === component_name) as ServiceEdge[];
+          for (const interface_node_edge of component_interfaces_node_edges) {
+            for (const [interface_map_key, interface_map_value] of Object.entries(interface_node_edge.interfaces_map)) {
+              if (all_external_interfaces[interface_map_key] && component_interface_name === interface_map_value) {
+                ingresses[tagless_component_name][component_interface_name] = all_external_interfaces[interface_map_key];
+              }
+            }
           }
-          ingresses[full_component_name][interface_name] = external_interface;
+        } else {
+          ingresses[tagless_component_name][component_interface_name] = interface_data;
         }
       }
     }
     return ingresses;
   }
 
-  abstract getArchitectContext(graph: DependencyGraph): Promise<any | undefined>;
+  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined>;
 }
