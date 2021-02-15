@@ -580,5 +580,31 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
+  protected generateEnvironmentIngresses(graph: DependencyGraph): Dictionary<Dictionary<InterfaceSpec>> {
+    const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
+    for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
+      for (const [env_interface, interface_name] of Object.entries(ingress_edge.interfaces_map)) {
+        const [dependency_node, _] = graph.followEdge(ingress_edge, env_interface);
+
+        if (dependency_node instanceof ServiceNode || dependency_node instanceof TaskNode) {
+          const [account_name, component_name] = dependency_node.ref.split('/');
+          const full_component_name = `${account_name}/${component_name}`;
+
+          const external_interface: InterfaceSpec = {
+            host: `${env_interface}.${this.toExternalHost()}`,
+            port: this.gateway_port.toString(),
+            protocol: this.toExternalProtocol(),
+          };
+          external_interface.url = `${external_interface.protocol}://${external_interface.host}:${external_interface.port}`;
+          if (!ingresses[full_component_name]) {
+            ingresses[full_component_name] = {};
+          }
+          ingresses[full_component_name][interface_name] = external_interface;
+        }
+      }
+    }
+    return ingresses;
+  }
+
   abstract getArchitectContext(graph: DependencyGraph): Promise<any | undefined>;
 }

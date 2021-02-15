@@ -3,9 +3,8 @@ import chalk from 'chalk';
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
 import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, InterfaceSpec, Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
+import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
-import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
 import { ComponentConfigV1 } from '../../dependency-manager/src/spec/component/component-v1';
@@ -170,32 +169,9 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async getArchitectContext(graph: DependencyGraph): Promise<any | undefined> {
-    const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
-    for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
-      for (const [env_interface, interface_name] of Object.entries(ingress_edge.interfaces_map)) {
-        const [dependency_node, _] = graph.followEdge(ingress_edge, env_interface);
-
-        if (dependency_node instanceof ServiceNode || dependency_node instanceof TaskNode) {
-          const [account_name, component_name] = dependency_node.ref.split('/');
-          const full_component_name = `${account_name}/${component_name}`;
-
-          const external_interface: InterfaceSpec = {
-            host: `${env_interface}.${this.toExternalHost()}`,
-            port: this.gateway_port.toString(),
-            protocol: this.toExternalProtocol(),
-          };
-          external_interface.url = `${external_interface.protocol}://${external_interface.host}:${external_interface.port}`;
-          if (!ingresses[full_component_name]) {
-            ingresses[full_component_name] = {};
-          }
-          ingresses[full_component_name][interface_name] = external_interface;
-        }
-      }
-    }
-
     return {
       environment: {
-        ingresses,
+        ingresses: super.generateEnvironmentIngresses(graph),
       },
     };
   }
