@@ -707,7 +707,7 @@ describe('components spec v1', function () {
         },
         interfaces: {
           'api-interface': '${{ services.api.interfaces.main.url }}',
-          'ci-interface': "${{ dependencies['concourse/ci'].interfaces.ci-interface.url }}"
+          'ci-proxy-interface': "${{ dependencies['concourse/ci'].interfaces.ci-interface.url }}"
         }
       };
 
@@ -743,7 +743,7 @@ describe('components spec v1', function () {
             url: "${{ components['architect/cloud'].interfaces.api-interface.url }}"
           },
           ci: {
-            url: "${{ components['architect/cloud'].interfaces.ci-interface.url }}"
+            url: "${{ components['architect/cloud'].interfaces.ci-proxy-interface.url }}"
           }
         }
       };
