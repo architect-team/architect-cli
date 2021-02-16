@@ -594,15 +594,15 @@ export default abstract class DependencyManager {
     const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
     for (const [component_name, component_config] of Object.entries(components_map)) {
       const component_interfaces = component_config.getInterfaces();
-      for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
+      for (const component_interface_name of Object.keys(component_interfaces)) {
         const tagless_component_name = component_config.getName();
 
-        let interface_node = graph.getNodeByRef(`${component_name}-interfaces`);
+        let to_node = graph.getNodeByRef(`${component_name}-interfaces`);
         let current_interface_name = component_interface_name;
-        let dependent_nodes = graph.getDependentNodes(interface_node);
+        let dependent_nodes = graph.getDependentNodes(to_node);
         while (dependent_nodes.length) {
           const dependent_node = dependent_nodes.pop();
-          const edge = graph.edges.find(edge => edge.from === dependent_node.ref && edge.to === interface_node.ref);
+          const edge = graph.edges.find(edge => edge.from === dependent_node.ref && edge.to === to_node.ref);
           if (edge instanceof IngressEdge && all_external_interfaces[current_interface_name]) {
             if (!ingresses[tagless_component_name]) {
               ingresses[tagless_component_name] = {};
@@ -611,11 +611,11 @@ export default abstract class DependencyManager {
             break;
           } else if (!dependent_nodes.length) {
             dependent_nodes = graph.getDependentNodes(dependent_node);
-            interface_node = dependent_node;
+            to_node = dependent_node;
             if (edge) {
-              const mapping = Object.entries(edge.interfaces_map).find(([k, v]) => v === current_interface_name);
-              if (mapping) {
-                current_interface_name = mapping[0];
+              const interface_mapping = Object.entries(edge.interfaces_map).find(([k, v]) => v === current_interface_name);
+              if (interface_mapping) {
+                current_interface_name = interface_mapping[0];
               }
             }
           }
