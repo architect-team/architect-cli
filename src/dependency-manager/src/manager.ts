@@ -598,8 +598,7 @@ export default abstract class DependencyManager {
         const current_edge = edges.pop();
         if (current_edge) {
           const node_to = graph.getNodeByRef(current_edge.to);
-
-          if (current_edge.ref.endsWith('-interfaces')) {
+          if (node_to instanceof InterfacesNode) {
             const parent_component_name = current_edge.from.split(':')[0];
             const component_name = current_edge.to.split(':')[0];
             if (current_edge instanceof IngressEdge) {
