@@ -581,12 +581,12 @@ export default abstract class DependencyManager {
   }
 
   protected generateEnvironmentIngresses(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Dictionary<Dictionary<InterfaceSpec>> {
-    const all_external_interfaces: Dictionary<InterfaceSpec> = {};
+    const preset_interfaces: Dictionary<InterfaceSpec> = {};
     for (const component_config of Object.values(components_map)) {
       const component_interfaces = component_config.getInterfaces();
       for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
         if (!interface_data.host?.startsWith('${{')) {
-          all_external_interfaces[component_interface_name] = interface_data;
+          preset_interfaces[component_interface_name] = interface_data;
         }
       }
     }
@@ -603,11 +603,11 @@ export default abstract class DependencyManager {
         while (dependent_nodes.length) {
           const dependent_node = dependent_nodes.pop();
           const edge = graph.edges.find(edge => edge.from === dependent_node.ref && edge.to === to_node.ref);
-          if (edge instanceof IngressEdge && all_external_interfaces[current_interface_name]) {
+          if (edge instanceof IngressEdge && preset_interfaces[current_interface_name]) {
             if (!ingresses[tagless_component_name]) {
               ingresses[tagless_component_name] = {};
             }
-            ingresses[tagless_component_name][component_interface_name] = all_external_interfaces[current_interface_name];
+            ingresses[tagless_component_name][component_interface_name] = preset_interfaces[current_interface_name];
             break;
           } else if (!dependent_nodes.length) {
             dependent_nodes = graph.getDependentNodes(dependent_node);
@@ -626,5 +626,11 @@ export default abstract class DependencyManager {
     return ingresses;
   }
 
-  abstract getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined>;
+  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined> {
+    return {
+      environment: {
+        ingresses: this.generateEnvironmentIngresses(graph, components_map),
+      },
+    };
+  }
 }

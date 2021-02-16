@@ -167,12 +167,4 @@ export default class LocalDependencyManager extends DependencyManager {
   setLinkedComponents(linked_components: Dictionary<string> = {}) {
     this.linked_components = linked_components;
   }
-
-  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined> {
-    return {
-      environment: {
-        ingresses: super.generateEnvironmentIngresses(graph, components_map),
-      },
-    };
-  }
 }
