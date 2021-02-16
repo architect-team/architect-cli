@@ -592,32 +592,35 @@ export default abstract class DependencyManager {
     }
 
     const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
-    for (const [component_name, component_config] of Object.entries(components_map)) {
-      const component_interfaces = component_config.getInterfaces();
-      for (const component_interface_name of Object.keys(component_interfaces)) {
-        const tagless_component_name = component_config.getName();
+    for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
+      let edges = [ingress_edge];
+      while(edges.length) {
+        const current_edge = edges.pop();
+        if (current_edge) {
+          const node_to = graph.getNodeByRef(current_edge.to);
 
-        let to_node = graph.getNodeByRef(`${component_name}-interfaces`);
-        let current_interface_name = component_interface_name;
-        let dependent_nodes = graph.getDependentNodes(to_node);
-        while (dependent_nodes.length) {
-          const dependent_node = dependent_nodes.pop();
-          const edge = graph.edges.find(edge => edge.from === dependent_node.ref && edge.to === to_node.ref);
-          if (edge instanceof IngressEdge && preset_interfaces[current_interface_name]) {
-            if (!ingresses[tagless_component_name]) {
-              ingresses[tagless_component_name] = {};
-            }
-            ingresses[tagless_component_name][component_interface_name] = preset_interfaces[current_interface_name];
-            break;
-          } else if (!dependent_nodes.length) {
-            dependent_nodes = graph.getDependentNodes(dependent_node);
-            to_node = dependent_node;
-            if (edge) {
-              const interface_mapping = Object.entries(edge.interfaces_map).find(([k, v]) => v === current_interface_name);
-              if (interface_mapping) {
-                current_interface_name = interface_mapping[0];
+          if (current_edge.ref.endsWith('-interfaces')) {
+            const parent_component_name = current_edge.from.split(':')[0];
+            const component_name = current_edge.to.split(':')[0];
+            if (current_edge instanceof IngressEdge) {
+              for (const interface_name of Object.values(current_edge.interfaces_map)) {
+                if (!ingresses[component_name]) {
+                  ingresses[component_name] = {};
+                }
+                ingresses[component_name][interface_name] = preset_interfaces[interface_name];
+              }
+            } else if (current_edge instanceof ServiceEdge) {
+              for (const [parent_interface, interface_name] of Object.entries(current_edge.interfaces_map)) {
+                if (!ingresses[component_name]) {
+                  ingresses[component_name] = {};
+                }
+                ingresses[component_name][interface_name] = ingresses[parent_component_name][parent_interface];
               }
             }
+          }
+
+          if (!(node_to instanceof ServiceNode)) {
+            edges = edges.concat(graph.edges.filter(edge => edge.from === node_to.ref));
           }
         }
       }
