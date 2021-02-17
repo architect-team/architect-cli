@@ -344,7 +344,7 @@ export default abstract class DependencyManager {
     }
 
     // Inject external host/port/protocol for exposed interfaces
-    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) { // TODO: remove to update internal interfaces changing with external?
       const component = component_interfaces_ref_map[edge.to];
       if (!component) continue;
 
@@ -581,12 +581,38 @@ export default abstract class DependencyManager {
   }
 
   protected generateEnvironmentIngresses(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Dictionary<Dictionary<InterfaceSpec>> {
-    const preset_interfaces: Dictionary<InterfaceSpec> = {};
-    for (const component_config of Object.values(components_map)) {
+    const map_copy = classToClass(components_map);
+    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
+    for (const component of Object.values(map_copy)) {
+      component_interfaces_ref_map[component.getInterfacesRef()] = map_copy[component.getRef()];
+    }
+
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      const component = component_interfaces_ref_map[edge.to];
+      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
+        const inter = {
+          ...component.getInterfaces()[interface_name],
+          ...{
+            host: `${env_interface}.${this.toExternalHost()}`,
+            port: this.gateway_port.toString(),
+            protocol: this.toExternalProtocol(),
+          },
+        };
+        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+        component.setInterface(interface_name, inter);
+      }
+    }
+
+    const preset_interfaces: Dictionary<Dictionary<InterfaceSpec>> = {};
+    for (const component_config of Object.values(map_copy)) {
       const component_interfaces = component_config.getInterfaces();
       for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
         if (!interface_data.host?.startsWith('${{')) {
-          preset_interfaces[component_interface_name] = interface_data;
+          const component_ref = `${component_config.getName()}:${component_config.getComponentVersion()}`;
+          if (!preset_interfaces[component_ref]) {
+            preset_interfaces[component_ref] = {};
+          }
+          preset_interfaces[component_ref][component_interface_name] = interface_data;
         }
       }
     }
@@ -606,7 +632,8 @@ export default abstract class DependencyManager {
                 if (!ingresses[component_name]) {
                   ingresses[component_name] = {};
                 }
-                ingresses[component_name][interface_name] = preset_interfaces[interface_name];
+                const component_ref = current_edge.to.replace('-interfaces', '');
+                ingresses[component_name][interface_name] = preset_interfaces[component_ref][interface_name];
               }
             } else if (current_edge instanceof ServiceEdge) {
               for (const [parent_interface, interface_name] of Object.entries(current_edge.interfaces_map)) {
