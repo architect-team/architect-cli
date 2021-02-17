@@ -581,10 +581,10 @@ export default abstract class DependencyManager {
   }
 
   protected generateEnvironmentIngresses(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Dictionary<Dictionary<InterfaceSpec>> {
-    const map_copy = classToClass(components_map);
+    const components_map_copy = classToClass(components_map);
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
-    for (const component of Object.values(map_copy)) {
-      component_interfaces_ref_map[component.getInterfacesRef()] = map_copy[component.getRef()];
+    for (const component of Object.values(components_map_copy)) {
+      component_interfaces_ref_map[component.getInterfacesRef()] = components_map_copy[component.getRef()];
     }
 
     for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
@@ -604,7 +604,7 @@ export default abstract class DependencyManager {
     }
 
     const preset_interfaces: Dictionary<Dictionary<InterfaceSpec>> = {};
-    for (const component_config of Object.values(map_copy)) {
+    for (const component_config of Object.values(components_map_copy)) {
       const component_interfaces = component_config.getInterfaces();
       for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
         if (!interface_data.host?.startsWith('${{')) {
