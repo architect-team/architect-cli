@@ -211,9 +211,6 @@ describe('interpolation spec v1', () => {
     `
     const frontend_config = `
     name: examples/frontend
-    parameters:
-      external_api_host:
-      external_api_host2:
     interfaces:
       main: \${{ services.app.interfaces.app.url }}
     dependencies:
@@ -223,9 +220,8 @@ describe('interpolation spec v1', () => {
         interfaces:
           app: 8080
         environment:
-          EXTERNAL_API_HOST: \${{ parameters.external_api_host }}
-          EXTERNAL_API_HOST2: \${{ parameters.external_api_host2 }}
-          EXTERNAL_API_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
+          EXTERNAL_API_HOST: \${{ environment.ingresses['examples/backend']['main'].url }}
+          INTERNAL_APP_URL: \${{ interfaces.main.url }}
     `
     const env_config = `
     interfaces:
@@ -234,9 +230,6 @@ describe('interpolation spec v1', () => {
       examples/backend: file:./backend/architect.yml
       examples/frontend:
         extends: file:./frontend/architect.yml
-        parameters:
-          external_api_host: \${{ interfaces.backend.url }}
-          external_api_host2: \${{ components.examples/backend.interfaces.main.url }}
     `
 
     mock_fs({
@@ -258,8 +251,7 @@ describe('interpolation spec v1', () => {
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.node_config.getEnvironmentVariables()).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
-      EXTERNAL_API_HOST2: backend_external_url,
-      EXTERNAL_API_HOST3: backend_external_url
+      INTERNAL_APP_URL: `http://${Refs.url_safe_ref('examples/frontend/app:latest')}:8080`,
     })
   });
 
