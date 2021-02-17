@@ -340,11 +340,11 @@ export default abstract class DependencyManager {
 
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     for (const component of Object.values(environment.getComponents())) {
-      component_interfaces_ref_map[component.getInterfacesRef()] = component_map[component.getRef()];
+      component_interfaces_ref_map[component.getInterfacesRef()] = classToClass(component_map[component.getRef()]); // make copy to avoid actually altering component passed in
     }
 
     // Inject external host/port/protocol for exposed interfaces
-    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) { // TODO: remove to update internal interfaces changing with external?
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
       const component = component_interfaces_ref_map[edge.to];
       if (!component) continue;
 

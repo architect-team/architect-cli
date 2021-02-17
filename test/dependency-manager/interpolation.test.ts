@@ -182,9 +182,9 @@ describe('interpolation spec v1', () => {
     expect(public_template.services['concourse--worker--worker--latest--umjxggst']).to.be.deep.equal({
       'depends_on': [],
       'environment': {
-        'REGULAR': 'public.localhost:2222',
-        'SINGLE_QUOTE': 'public.localhost:2222',
-        'DOUBLE_QUOTE': 'public.localhost:2222',
+        'REGULAR': 'concourse--web--web--latest--62arnmmt:2222',
+        'SINGLE_QUOTE': 'concourse--web--web--latest--62arnmmt:2222',
+        'DOUBLE_QUOTE': 'concourse--web--web--latest--62arnmmt:2222',
       },
       'ports': [],
       'build': {
@@ -207,7 +207,7 @@ describe('interpolation spec v1', () => {
           api: 8081
         environment:
           INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
-          EXTERNAL_HOST: \${{ interfaces.main.url }}
+          EXTERNAL_HOST: \${{ environment.ingresses['examples/backend']['main'].url }}
     `
     const frontend_config = `
     name: examples/frontend
@@ -225,7 +225,7 @@ describe('interpolation spec v1', () => {
         environment:
           EXTERNAL_API_HOST: \${{ parameters.external_api_host }}
           EXTERNAL_API_HOST2: \${{ parameters.external_api_host2 }}
-          EXTERNAL_API_HOST3: \${{ dependencies.examples/backend.interfaces.main.url }}
+          EXTERNAL_API_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
     `
     const env_config = `
     interfaces:

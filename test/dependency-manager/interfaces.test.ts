@@ -177,6 +177,7 @@ describe('interfaces spec v1', () => {
       leaf_component.interfaces = {
         api: '${{ services.api.interfaces.main.url }}',
       };
+      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ environment.ingresses['test/leaf']['api'].url }}";
 
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
@@ -228,9 +229,10 @@ describe('interfaces spec v1', () => {
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=public.localhost',
-        'LEAF_PORT=80',
-        'LEAF_URL=http://public.localhost:80'
+        'LEAF_HOST=test--leaf--api--latest--lw4iacyc',
+        'LEAF_PORT=8080',
+        'LEAF_URL=http://test--leaf--api--latest--lw4iacyc:8080',
+        'EXTERNAL_INTERFACE=http://publicv1.localhost:80', // TODO: need to scope external ingress interpolation with component versions if this is going to be accurate
       ])
 
       const template = await DockerComposeUtils.generate(manager);
@@ -246,10 +248,11 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal({
         depends_on: [test_leaf_api_latest_url_safe_ref],
         environment: {
-          LEAF_HOST: 'public.localhost',
-          LEAF_PORT: '80',
+          LEAF_HOST: 'test--leaf--api--latest--lw4iacyc',
+          LEAF_PORT: '8080',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: 'http://public.localhost:80'
+          LEAF_URL: 'http://test--leaf--api--latest--lw4iacyc:8080',
+          EXTERNAL_INTERFACE: 'http://publicv1.localhost:80'
         },
         image: 'branch:latest',
         external_links: [
@@ -413,6 +416,7 @@ describe('interfaces spec v1', () => {
             API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
             ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
             PRIVATE_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.private.url }}
+            EXTERNAL_API_ADDR: \${{ environment.ingresses['voic/product-catalog']['public'].url }}
       `;
 
     const product_catalog_config = `
@@ -475,9 +479,10 @@ describe('interfaces spec v1', () => {
 
     const dashboard_node = graph.getNodeByRef('voic/admin-ui/dashboard:latest') as ServiceNode;
     expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      ADMIN_ADDR: 'http://admin2.localhost:80',
-      API_ADDR: 'http://public2.localhost:80',
-      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082'
+      ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
+      API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
+      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
+      EXTERNAL_API_ADDR: 'http://dep2.localhost:80',
     });
 
     const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');
