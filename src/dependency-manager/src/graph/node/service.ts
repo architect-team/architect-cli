@@ -40,7 +40,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   }
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
+    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host && !i.host.startsWith('${{')); // a node cannot be determined to actually be external until its value is either set directly or interpolated
   }
 
   get is_local() {
