@@ -8,6 +8,7 @@ import { Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
+import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import LocalDependencyManager from '../dependency-manager/local-manager';
 import DockerComposeTemplate from './template';
@@ -70,10 +71,14 @@ export class DockerComposeUtils {
         for (const port of node.ports) {
           ports.push(`${available_ports.shift()}:${port}`);
         }
+        const formatted_environment_variables: Dictionary<string> = {};
+        for (const [var_key, var_value] of Object.entries(node.node_config.getEnvironmentVariables())) {
+          formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+        }
         compose.services[url_safe_ref] = {
           ports,
           depends_on: [],
-          environment: node.node_config.getEnvironmentVariables(),
+          environment: formatted_environment_variables,
         };
 
         if (gateway_links.length) {
