@@ -41,7 +41,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   protected dns?: DnsConfigSpec;
 
   @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ always: true })
   protected interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   getDnsConfig(): DnsConfigSpec {
