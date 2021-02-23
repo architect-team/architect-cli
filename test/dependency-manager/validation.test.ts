@@ -565,35 +565,6 @@ describe('validation spec v1', () => {
       })
     });
 
-    it('invalid vault ref', async () => {
-      const env_config = `
-      parameters:
-        invalid: \${{ vaults.invalid.some_key }}
-        valid: \${{ vaults.valid.some_key }}
-      vaults:
-        valid: {}
-      `
-      mock_fs({
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      let validation_err;
-      try {
-        await manager.getGraph();
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        'interpolation.vaults.invalid.some_key': {
-          'interpolation': '${{ vaults.invalid.some_key }} is invalid',
-          'value': 'vaults.invalid.some_key',
-          'line': 3,
-          'column': 17,
-        }
-      })
-    });
-
     it('valid component:tag ref', async () => {
       const component_config = `
       name: test/component
