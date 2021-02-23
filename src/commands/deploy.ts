@@ -158,9 +158,8 @@ export default class Deploy extends DeployCommand {
   };
 
   static args = [{
-    name: 'environment_config_or_component',
-    description: 'Path to an environment config file or component `account/component:latest`',
-    required: true,
+    name: 'config_or_component',
+    description: 'Path to an architect.yml file or component `account/component:latest`',
   }];
 
   async runCompose(compose: DockerComposeTemplate) {
@@ -255,22 +254,32 @@ export default class Deploy extends DeployCommand {
     const { args, flags } = this.parse(Deploy);
     await Docker.verify();
 
+    if (!flags.values && fs.existsSync('./values.yml')) {
+      flags.values = './values.yml';
+    }
+
     const component_values = this.readValuesFile(flags.values);
 
     let dependency_manager;
     let namespaced_component_name;
 
-    // try loading the `environment_config_or_component` as a relative path. if that fails, assume it is a component slug (which assumes 'latest' tag if none provided)
+    if (!args.config_or_component) {
+      args.config_or_component = './architect.yml';
+    }
+
+    // try loading the `config_or_component` as a relative path. if that fails, assume it is a component slug (which assumes 'latest' tag if none provided)
     try {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
-        path.resolve(untildify(args.environment_config_or_component)),
-        component_values
+        path.resolve(untildify(args.config_or_component)),
+        component_values,
+        {},
+        flags.interface.length === 0
       );
       namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     } catch (err) {
-      if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component) || ComponentSlugUtils.Validator.test(args.environment_config_or_component)) {
-        const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+      if (ComponentVersionSlugUtils.Validator.test(args.config_or_component) || ComponentSlugUtils.Validator.test(args.config_or_component)) {
+        const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
         namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
 
         const env_config = EnvironmentConfigBuilder.buildFromJSON({
@@ -304,8 +313,8 @@ export default class Deploy extends DeployCommand {
     let env_config: EnvironmentConfig;
 
     let env_config_merge: boolean;
-    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+    if (ComponentVersionSlugUtils.Validator.test(args.config_or_component)) {
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
       const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
 
       env_config = EnvironmentConfigBuilder.buildFromJSON({
@@ -321,7 +330,7 @@ export default class Deploy extends DeployCommand {
     } else {
       if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
 
-      const env_config_path = path.resolve(untildify(args.environment_config_or_component));
+      const env_config_path = path.resolve(untildify(args.config_or_component));
       // Validate env config
       env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
       for (const [ck, cv] of Object.entries(env_config.getComponents())) {
@@ -366,10 +375,7 @@ export default class Deploy extends DeployCommand {
     const extra_interfaces: { [s: string]: string } = {};
     for (const component_interface of interfaces) {
       const interface_split = component_interface.split(':');
-      if (interface_split.length !== 2) {
-        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface subdomain:component_interface`);
-      }
-      extra_interfaces[interface_split[0]] = interface_split[1];
+      extra_interfaces[interface_split[0]] = interface_split[1] || interface_split[0];
     }
     return extra_interfaces;
   }
