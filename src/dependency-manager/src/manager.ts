@@ -340,7 +340,7 @@ export default abstract class DependencyManager {
 
     const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
     for (const component of Object.values(environment.getComponents())) {
-      component_interfaces_ref_map[component.getInterfacesRef()] = component_map[component.getRef()];
+      component_interfaces_ref_map[component.getInterfacesRef()] = classToClass(component_map[component.getRef()]); // make copy to avoid actually altering component passed in
     }
 
     // Inject external host/port/protocol for exposed interfaces
@@ -392,7 +392,7 @@ export default abstract class DependencyManager {
 
     const components = Object.values(components_map);
 
-    const architect_context = await this.getArchitectContext(graph);
+    const architect_context = await this.getArchitectContext(graph, components_map);
 
     // Set contexts for all components
     for (const component of components) {
@@ -580,5 +580,86 @@ export default abstract class DependencyManager {
     return res as ComponentConfig;
   }
 
-  abstract getArchitectContext(graph: DependencyGraph): Promise<any | undefined>;
+  protected generateEnvironmentIngresses(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Dictionary<Dictionary<InterfaceSpec>> {
+    const components_map_copy = classToClass(components_map);
+    const component_interfaces_ref_map: Dictionary<ComponentConfig> = {};
+    for (const component of Object.values(components_map_copy)) {
+      component_interfaces_ref_map[component.getInterfacesRef()] = components_map_copy[component.getRef()];
+    }
+
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      const component = component_interfaces_ref_map[edge.to];
+      for (const [env_interface, interface_name] of Object.entries(edge.interfaces_map)) {
+        const inter = {
+          ...component.getInterfaces()[interface_name],
+          ...{
+            host: `${env_interface}.${this.toExternalHost()}`,
+            port: this.gateway_port.toString(),
+            protocol: this.toExternalProtocol(),
+          },
+        };
+        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+        component.setInterface(interface_name, inter);
+      }
+    }
+
+    const preset_interfaces: Dictionary<Dictionary<InterfaceSpec>> = {};
+    for (const component_config of Object.values(components_map_copy)) {
+      const component_interfaces = component_config.getInterfaces();
+      for (const [component_interface_name, interface_data] of Object.entries(component_interfaces)) {
+        if (!interface_data.host?.startsWith('${{')) {
+          const component_ref = `${component_config.getName()}:${component_config.getComponentVersion()}`;
+          if (!preset_interfaces[component_ref]) {
+            preset_interfaces[component_ref] = {};
+          }
+          preset_interfaces[component_ref][component_interface_name] = interface_data;
+        }
+      }
+    }
+
+    const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
+    for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
+      let edges = [ingress_edge];
+      while(edges.length) {
+        const current_edge = edges.pop();
+        if (current_edge) {
+          const node_to = graph.getNodeByRef(current_edge.to);
+          if (node_to instanceof InterfacesNode) {
+            const parent_component_name = current_edge.from.split(':')[0];
+            const component_name = current_edge.to.split(':')[0];
+            if (current_edge instanceof IngressEdge) {
+              for (const interface_name of Object.values(current_edge.interfaces_map)) {
+                if (!ingresses[component_name]) {
+                  ingresses[component_name] = {};
+                }
+                const component_ref = current_edge.to.replace('-interfaces', '');
+                ingresses[component_name][interface_name] = preset_interfaces[component_ref][interface_name];
+              }
+            } else if (current_edge instanceof ServiceEdge) {
+              for (const [parent_interface, interface_name] of Object.entries(current_edge.interfaces_map)) {
+                if (!ingresses[component_name]) {
+                  ingresses[component_name] = {};
+                }
+                ingresses[component_name][interface_name] = ingresses[parent_component_name][parent_interface];
+              }
+            }
+          }
+
+          if (!(node_to instanceof ServiceNode)) {
+            edges = edges.concat(graph.edges.filter(edge => edge.from === node_to.ref));
+          }
+        }
+      }
+    }
+
+    return ingresses;
+  }
+
+  async getArchitectContext(graph: DependencyGraph, components_map: Dictionary<ComponentConfig>): Promise<any | undefined> {
+    return {
+      environment: {
+        ingresses: this.generateEnvironmentIngresses(graph, components_map),
+      },
+    };
+  }
 }
