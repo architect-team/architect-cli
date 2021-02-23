@@ -15,6 +15,7 @@ import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
+import * as Docker from '../common/utils/docker';
 import { Environment, EnvironmentUtils } from '../common/utils/environment';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
@@ -252,31 +253,39 @@ export default class Deploy extends DeployCommand {
 
   private async runLocal() {
     const { args, flags } = this.parse(Deploy);
+    await Docker.verify();
 
     const component_values = this.readValuesFile(flags.values);
 
     let dependency_manager;
     let namespaced_component_name;
-    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
-      namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
 
-      const env_config = EnvironmentConfigBuilder.buildFromJSON({
-        components: {
-          [namespaced_component_name]: parsed_component_version.tag,
-        },
-      });
-
-      dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
-      dependency_manager.environment = env_config;
-    } else {
+    // try loading the `environment_config_or_component` as a relative path. if that fails, assume it is a component slug (which assumes 'latest' tag if none provided)
+    try {
       dependency_manager = await LocalDependencyManager.createFromPath(
         this.app.api,
         path.resolve(untildify(args.environment_config_or_component)),
         component_values
       );
       namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
+    } catch (err) {
+      if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component) || ComponentSlugUtils.Validator.test(args.environment_config_or_component)) {
+        const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
+        namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+
+        const env_config = EnvironmentConfigBuilder.buildFromJSON({
+          components: {
+            [namespaced_component_name]: parsed_component_version.tag,
+          },
+        });
+
+        dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
+        dependency_manager.environment = env_config;
+      } else {
+        throw err;
+      }
     }
+
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     for (const [parameter_key, parameter] of Object.entries(extra_params)) {
       dependency_manager.environment.setParameter(parameter_key, parameter);

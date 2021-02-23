@@ -18,8 +18,8 @@ The workflows below will first create a new `latest` tag of your component in Ar
 name: Deploy master
 
 env:
-  ARCHITECT_EMAIL: # Pass into job - don't hardcode
-  ARCHITECT_PASSWORD: # Pass into job - don't hardcode
+  ARCHITECT_EMAIL: ${{ secrets.ARCHITECT_EMAIL }} # pass secrets into a job from Github > Settings > Secrets
+  ARCHITECT_PASSWORD: ${{ secrets.ARCHITECT_PASSWORD }}
   ARCHITECT_ACCOUNT: test
   MAINLINE_TAG_NAME: latest
 
@@ -33,18 +33,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: tests
+      - name: Tests
         run: echo "Run your tests here"
-      - name: login
-        run: architect login # credentials provided by envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
-      - name: Tag architect component
-        run: architect register --tag ${{ env.MAINLINE_TAG_NAME }} ./architect.yml
-      - name: deploy to staging
+      - name: Install Architect CLI
+        run: npm install -g @architect-io/cli
+      - name: Login to Architect Cloud
+        run: architect login # credentials loaded automatically from envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
+      - name: Tag and Register Component
+        run: architect register ./architect.yml --tag ${{ env.MAINLINE_TAG_NAME }}
+      - name: Deploy to Staging
         run: |
           architect deploy \
+            --account ${{ env.ARCHITECT_ACCOUNT }} \
             --environment staging \
             --auto_approve \
-            examples/my-component:${{ env.MAINLINE_TAG_NAME }}
+            examples/my-component:${{ env.MAINLINE_TAG_NAME }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
 ```
 
 ## Cut releases for production
@@ -59,8 +62,8 @@ The workflows below will first register the component with a tag matching the na
 name: Deploy release
 
 env:
-  ARCHITECT_EMAIL: # Pass into job - don't hardcode
-  ARCHITECT_PASSWORD: # Pass into job - don't hardcode
+  ARCHITECT_EMAIL: ${{ secrets.ARCHITECT_EMAIL }} # pass secrets into a job from Github > Settings > Secrets
+  ARCHITECT_PASSWORD: ${{ secrets.ARCHITECT_PASSWORD }}
   ARCHITECT_ACCOUNT: test
 
 on:
@@ -77,16 +80,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: tests
+      - name: Tests
         run: echo "Run your tests here"
-      - name: login
-        run: architect login # credentials provided by envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
-      - name: Tag architect component
-        run: architect register --tag ${{ github.event.release.tag_name }} ./architect.yml
-      - name: deploy to production
+      - name: Install Architect CLI
+        run: npm install -g @architect-io/cli
+      - name: Login to Architect Cloud
+        run: architect login # credentials loaded automatically from envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
+      - name: Tag and Register Component
+        run: architect register ./architect.yml --tag ${{ github.event.release.tag_name }}
+      - name: Deploy to Production
         run: |
           architect deploy \
+            --account ${{ env.ARCHITECT_ACCOUNT }} \
             --environment production \
             --auto_approve \
-            examples/my-component:${{ github.event.release.tag_name }}
+            examples/my-component:${{ github.event.release.tag_name }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
 ```

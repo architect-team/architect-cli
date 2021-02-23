@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '12.x'
       - name: Install Architect CLI
-        run: npm i -g @architect-io/cli --unsafe-perm
+        run: npm i -g @architect-io/cli
       - name: Architect login
         run: architect login -e ${{ secrets.ARCHITECT_EXAMPLES_ACCT_EMAIL }} -p ${{ secrets.ARCHITECT_EXAMPLES_ACCT_PASSWORD }}
       - name: Register component

@@ -295,7 +295,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
     if ((options.groups || []).includes('developer')) {
-      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.']));
+      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.', 'environment.ingresses']));
     }
     return errors;
   }

@@ -4,6 +4,7 @@ import { cli } from 'cli-ux';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
+import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
@@ -59,6 +60,7 @@ export default class TaskExec extends Command {
 
   async runLocal() {
     const { flags, args } = this.parse(TaskExec);
+    await Docker.verify();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);

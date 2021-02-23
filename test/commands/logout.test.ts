@@ -7,6 +7,7 @@ import AppConfig from '../../src/app-config/config';
 import CredentialManager from '../../src/app-config/credentials';
 import AppService from '../../src/app-config/service';
 import Logout from '../../src/commands/logout';
+import * as Docker from '../../src/common/utils/docker';
 import ARCHITECTPATHS from '../../src/paths';
 
 describe('logout', function () {
@@ -15,6 +16,8 @@ describe('logout', function () {
 
   beforeEach(function () {
     sinon.replace(Logout.prototype, 'log', sinon.stub());
+    sinon.replace(Docker, 'verify', sinon.stub().returns(Promise.resolve()));
+
 
     const config = new AppConfig('', {});
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
