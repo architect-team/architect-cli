@@ -16,10 +16,9 @@ import { EnvironmentConfig } from './spec/environment/environment-config';
 import { ValuesConfig } from './spec/values/values';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
-import { escapeJSON, interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
+import { interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
-import VaultManager from './vault-manager';
 
 export default abstract class DependencyManager {
   gateway_port!: number;
@@ -250,23 +249,6 @@ export default abstract class DependencyManager {
     }
   }
 
-  async interpolateVaults(environment: EnvironmentConfig): Promise<EnvironmentConfig> {
-    const vault_manager = new VaultManager(environment.getVaults());
-
-    const environment_string = serialize(environment);
-    // Interpolate vault separately before mustache
-    const vaults_regex = new RegExp(`\\\${{\\s*vaults\\.(.*?)\\s*}}`, 'g');
-    let matches;
-    let res = environment_string;
-    while ((matches = vaults_regex.exec(environment_string)) != null) {
-      const [vault_name, key] = matches[1].split('.');
-      const secret = await vault_manager.getSecret(vault_name, key);
-      res = res.replace(matches[0], escapeJSON(secret));
-    }
-
-    return deserialize(environment.getClass(), res);
-  }
-
   validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
     const validation_errors = [];
     // Check required parameters for components
@@ -301,11 +283,7 @@ export default abstract class DependencyManager {
         validation_errors.push(validation_error);
       }
     }
-
-    // Ignore vault keys
-    const ignore_keys = Object.keys(environment.getVaults()).map((vault_key) => `vaults.${vault_key}.`);
-
-    validation_errors = validation_errors.concat(validateInterpolation(serialize(environment), enriched_environment.getContext(), ignore_keys));
+    validation_errors = validation_errors.concat(validateInterpolation(serialize(environment), enriched_environment.getContext(), []));
     return validation_errors;
   }
 
@@ -378,9 +356,6 @@ export default abstract class DependencyManager {
     if (errors.length) {
       throw new ValidationErrors('environment', flattenValidationErrors(errors));
     }
-
-    environment = await this.interpolateVaults(environment);
-    enriched_environment = await this.interpolateVaults(enriched_environment);
 
     const interpolated_environment_string = interpolateString(serialize(environment), enriched_environment.getContext(), normalized_component_refs);
 
@@ -620,7 +595,7 @@ export default abstract class DependencyManager {
     const ingresses: Dictionary<Dictionary<InterfaceSpec>> = {};
     for (const ingress_edge of graph.edges.filter(edge => edge instanceof IngressEdge)) {
       let edges = [ingress_edge];
-      while(edges.length) {
+      while (edges.length) {
         const current_edge = edges.pop();
         if (current_edge) {
           const node_to = graph.getNodeByRef(current_edge.to);

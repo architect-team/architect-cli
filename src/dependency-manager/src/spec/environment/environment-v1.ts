@@ -9,7 +9,7 @@ import { ParameterValueSpecV1 } from '../common/parameter-v1';
 import { ComponentConfig } from '../component/component-config';
 import { transformComponentInterfaces, transformComponents } from '../component/component-transformer';
 import { ComponentContextV1 } from '../component/component-v1';
-import { EnvironmentConfig, EnvironmentVault } from './environment-config';
+import { EnvironmentConfig } from './environment-config';
 
 interface DnsConfigSpec {
   searches?: string | string[];
@@ -32,10 +32,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
   @IsOptional({ always: true })
   @IsObject({ always: true })
   protected components?: Dictionary<ComponentConfig | string>;
-
-  @IsOptional({ always: true })
-  @IsObject({ always: true })
-  protected vaults?: Dictionary<EnvironmentVault>;
 
   @IsOptional({ always: true })
   protected dns?: DnsConfigSpec;
@@ -75,21 +71,6 @@ export class EnvironmentConfigV1 extends EnvironmentConfig {
       this.components = {};
     }
     this.components[key] = value;
-  }
-
-  getVaults() {
-    return this.vaults || {};
-  }
-
-  setVaults(value: Dictionary<EnvironmentVault>) {
-    this.vaults = value;
-  }
-
-  setVault(key: string, value: EnvironmentVault) {
-    if (!this.vaults) {
-      this.vaults = {};
-    }
-    this.vaults[key] = value;
   }
 
   getInterfaces() {

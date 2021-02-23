@@ -113,14 +113,6 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
-    // Only include in cli since it will read files off disk
-    for (const [vault_name, vault] of Object.entries(environment.getVaults())) {
-      vault.client_token = readIfFile(vault.client_token, this.config_path);
-      vault.role_id = readIfFile(vault.role_id, this.config_path);
-      vault.secret_id = readIfFile(vault.secret_id, this.config_path);
-      environment.setVault(vault_name, vault);
-    }
-
     for (const [component_name, component] of Object.entries(environment.getComponents())) {
       for (const pv of Object.values(component.getParameters())) {
         if (pv?.default) pv.default = readIfFile(pv.default, this.config_path);

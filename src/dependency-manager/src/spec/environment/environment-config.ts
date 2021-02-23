@@ -4,15 +4,6 @@ import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
 import { ComponentConfig } from '../component/component-config';
 
-export interface EnvironmentVault {
-  type: string;
-  host: string;
-  description?: string;
-  client_token?: string;
-  role_id?: string;
-  secret_id?: string;
-}
-
 export interface DnsConfig {
   searches?: string | string[];
 }
@@ -23,10 +14,6 @@ export abstract class EnvironmentConfig extends BaseConfig {
   abstract getParameters(): Dictionary<ParameterDefinitionSpec>;
   abstract setParameters(value: Dictionary<ParameterValueSpec>): void;
   abstract setParameter(key: string, value: ParameterValueSpec): void;
-
-  abstract getVaults(): Dictionary<EnvironmentVault>;
-  abstract setVaults(value: Dictionary<EnvironmentVault>): void;
-  abstract setVault(key: string, value: EnvironmentVault): void;
 
   abstract getComponents(): Dictionary<ComponentConfig>;
   abstract setComponents(value: Dictionary<ComponentConfig | string>): void;
