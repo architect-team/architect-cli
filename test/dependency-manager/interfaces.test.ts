@@ -177,19 +177,54 @@ describe('interfaces spec v1', () => {
       leaf_component.interfaces = {
         api: '${{ services.api.interfaces.main.url }}',
       };
+      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ environment.ingresses['test/leaf']['api'].url }}";
+
+      const other_leaf_component = {
+        name: 'test/other-leaf',
+        services: {
+          db: {
+            image: 'postgres:11',
+            interfaces: {
+              postgres: {
+                port: 5432,
+                protocol: 'postgres',
+              },
+            },
+          },
+          api: {
+            image: 'api:latest',
+            interfaces: {
+              main: 8080
+            },
+            environment: {
+              DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
+              DB_HOST: '${{ services.db.interfaces.postgres.host }}',
+              DB_PORT: '${{ services.db.interfaces.postgres.port }}',
+              DB_URL: '${{ services.db.interfaces.postgres.url }}',
+            },
+          },
+        },
+        interfaces: {
+          api: '${{ services.api.interfaces.main.url }}',
+        }
+      };
+
+      const test_leaf_db_other_url_safe_ref = Refs.url_safe_ref('test/other-leaf/db:latest');
+      const test_leaf_api_other_url_safe_ref = Refs.url_safe_ref('test/other-leaf/api:latest');
 
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
         '/stack/branch/architect.json': JSON.stringify(branch_component),
+        '/stack/other-leaf/architect.json': JSON.stringify(other_leaf_component),
         '/stack/environment.json': JSON.stringify({
           interfaces: {
             public: '${{ components["test/leaf"].interfaces.api.url }}',
-            publicv1: '${{ components["test/leaf:v1.0"].interfaces.api.url }}'
+            publicv1: '${{ components["test/other-leaf"].interfaces.api.url }}'
           },
           components: {
             'test/branch': 'file:/stack/branch/',
             'test/leaf': 'file:/stack/leaf/',
-            'test/leaf:v1.0': 'file:/stack/leaf/',
+            'test/other-leaf': 'file:/stack/other-leaf/',
           },
         }),
       });
@@ -209,28 +244,29 @@ describe('interfaces spec v1', () => {
         'test/leaf/db:latest',
         'test/leaf/api:latest',
 
-        'test/leaf:v1.0-interfaces',
-        'test/leaf/db:v1.0',
-        'test/leaf/api:v1.0',
+        'test/other-leaf:latest-interfaces',
+        'test/other-leaf/db:latest',
+        'test/other-leaf/api:latest',
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
         'gateway [public] -> test/leaf:latest-interfaces [api]',
-        'gateway [publicv1] -> test/leaf:v1.0-interfaces [api]',
+        'gateway [publicv1] -> test/other-leaf:latest-interfaces [api]',
 
         'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
         'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
 
-        'test/leaf/api:v1.0 [service->postgres] -> test/leaf/db:v1.0 [postgres]',
-        'test/leaf:v1.0-interfaces [api] -> test/leaf/api:v1.0 [main]',
+        'test/other-leaf/api:latest [service->postgres] -> test/other-leaf/db:latest [postgres]',
+        'test/other-leaf:latest-interfaces [api] -> test/other-leaf/api:latest [main]',
 
         'test/branch/api:latest [service->api] -> test/leaf:latest-interfaces [api]',
       ])
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=public.localhost',
-        'LEAF_PORT=80',
-        'LEAF_URL=http://public.localhost:80'
+        'LEAF_HOST=test--leaf--api--latest--lw4iacyc',
+        'LEAF_PORT=8080',
+        'LEAF_URL=http://test--leaf--api--latest--lw4iacyc:8080',
+        'EXTERNAL_INTERFACE=http://public.localhost:80',
       ])
 
       const template = await DockerComposeUtils.generate(manager);
@@ -238,18 +274,19 @@ describe('interfaces spec v1', () => {
         test_branch_url_safe_ref,
         test_leaf_db_latest_url_safe_ref,
         test_leaf_api_latest_url_safe_ref,
-        test_leaf_db_v1_url_safe_ref,
-        test_leaf_api_v1_url_safe_ref,
+        test_leaf_db_other_url_safe_ref,
+        test_leaf_api_other_url_safe_ref,
         'gateway'
       ])
 
       expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal({
         depends_on: [test_leaf_api_latest_url_safe_ref],
         environment: {
-          LEAF_HOST: 'public.localhost',
-          LEAF_PORT: '80',
+          LEAF_HOST: 'test--leaf--api--latest--lw4iacyc',
+          LEAF_PORT: '8080',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: 'http://public.localhost:80'
+          LEAF_URL: 'http://test--leaf--api--latest--lw4iacyc:8080',
+          EXTERNAL_INTERFACE: 'http://public.localhost:80'
         },
         image: 'branch:latest',
         external_links: [
@@ -291,7 +328,7 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services[test_leaf_db_v1_url_safe_ref]).to.be.deep.equal({
+      expect(template.services[test_leaf_db_other_url_safe_ref]).to.be.deep.equal({
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -302,13 +339,13 @@ describe('interfaces spec v1', () => {
         ],
       });
 
-      expect(template.services[test_leaf_api_v1_url_safe_ref]).to.be.deep.equal({
-        depends_on: [test_leaf_db_v1_url_safe_ref, 'gateway'],
+      expect(template.services[test_leaf_api_other_url_safe_ref]).to.be.deep.equal({
+        depends_on: [test_leaf_db_other_url_safe_ref, 'gateway'],
         environment: {
-          DB_HOST: test_leaf_db_v1_url_safe_ref,
+          DB_HOST: test_leaf_db_other_url_safe_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${test_leaf_db_v1_url_safe_ref}:5432`,
+          DB_URL: `postgres://${test_leaf_db_other_url_safe_ref}:5432`,
           VIRTUAL_HOST: 'publicv1.localhost',
           VIRTUAL_PORT: '8080',
           VIRTUAL_PORT_publicv1_localhost: '8080',
@@ -413,6 +450,7 @@ describe('interfaces spec v1', () => {
             API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
             ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
             PRIVATE_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.private.url }}
+            EXTERNAL_API_ADDR: \${{ environment.ingresses['voic/product-catalog']['public'].url }}
       `;
 
     const product_catalog_config = `
@@ -475,9 +513,10 @@ describe('interfaces spec v1', () => {
 
     const dashboard_node = graph.getNodeByRef('voic/admin-ui/dashboard:latest') as ServiceNode;
     expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      ADMIN_ADDR: 'http://admin2.localhost:80',
-      API_ADDR: 'http://public2.localhost:80',
-      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082'
+      ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
+      API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
+      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
+      EXTERNAL_API_ADDR: 'http://dep2.localhost:80',
     });
 
     const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');
