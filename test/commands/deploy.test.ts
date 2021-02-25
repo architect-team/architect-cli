@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
 import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
@@ -274,7 +275,7 @@ describe('local deploy environment', function () {
     }
   };
 
-  const environment_expected_compose = {
+  const environment_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
       "examples--database-seeding--app--latest--7fdljhug": {
@@ -320,8 +321,19 @@ describe('local deploy environment', function () {
     },
     "volumes": {}
   }
+  if (process.platform === 'linux') {
+    environment_expected_compose.services['examples--database-seeding--app--latest--7fdljhug'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+    environment_expected_compose.services['examples--database-seeding--my-demo-db--latest--uimfmkw0'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+    environment_expected_compose.services['examples--echo--api--latest--cpe6ciyk'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+  }
 
-  const seeding_component_expected_compose = {
+  const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
       "examples--database-seeding--app--latest--7fdljhug": {
@@ -390,8 +402,16 @@ describe('local deploy environment', function () {
     },
     "volumes": {}
   }
+  if (process.platform === 'linux') {
+    seeding_component_expected_compose.services['examples--database-seeding--app--latest--7fdljhug'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+    seeding_component_expected_compose.services['examples--database-seeding--my-demo-db--latest--uimfmkw0'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+  }
 
-  const basic_component_expected_compose = {
+  const basic_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
       "examples--hello-world--api--latest--d00ztoyu": {
@@ -405,8 +425,13 @@ describe('local deploy environment', function () {
     },
     "volumes": {}
   }
+  if (process.platform === 'linux') {
+    basic_component_expected_compose.services['examples--hello-world--api--latest--d00ztoyu'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
+  }
 
-  const component_expected_compose = {
+  const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
       "examples--hello-world--api--latest--d00ztoyu": {
@@ -449,6 +474,11 @@ describe('local deploy environment', function () {
       }
     },
     "volumes": {}
+  }
+  if (process.platform === 'linux') {
+    component_expected_compose.services['examples--hello-world--api--latest--d00ztoyu'].extra_hosts = [
+      "host.docker.internal:host-gateway"
+    ];
   }
 
   test

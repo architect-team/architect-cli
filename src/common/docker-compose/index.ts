@@ -159,7 +159,7 @@ export class DockerComposeUtils {
         }
         if (volumes.length) compose.services[url_safe_ref].volumes = volumes;
 
-        if (process.platform === 'linux') {
+        if (process.platform === 'linux') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
           compose.services[url_safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
         }
       }

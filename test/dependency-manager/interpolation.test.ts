@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 
@@ -117,7 +118,7 @@ describe('interpolation spec v1', () => {
 
     const template = await DockerComposeUtils.generate(manager);
     const url_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
-    expect(template).to.be.deep.equal({
+    const expected_compose: DockerComposeTemplate = {
       'services': {
         'concourse--web--web--latest--62arnmmt': {
           'depends_on': [],
@@ -144,7 +145,16 @@ describe('interpolation spec v1', () => {
       },
       'version': '3',
       'volumes': {},
-    })
+    };
+    if (process.platform === 'linux') {
+      expected_compose.services['concourse--web--web--latest--62arnmmt'].extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+      expected_compose.services['concourse--worker--worker--latest--umjxggst'].extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(template).to.be.deep.equal(expected_compose);
 
     const public_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/public.environment.json');
     const public_graph = await public_manager.getGraph();
@@ -160,7 +170,7 @@ describe('interpolation spec v1', () => {
     ])
 
     const public_template = await DockerComposeUtils.generate(public_manager);
-    expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal({
+    const expected_web_compose: DockerService = {
       'depends_on': ['gateway'],
       'environment': {
         'VIRTUAL_HOST': 'public.localhost',
@@ -178,8 +188,14 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack')
       }
-    })
-    expect(public_template.services['concourse--worker--worker--latest--umjxggst']).to.be.deep.equal({
+    };
+    if (process.platform === 'linux') {
+      expected_web_compose.extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal(expected_web_compose);
+    const expected_worker_compose: DockerService = {
       'depends_on': [],
       'environment': {
         'REGULAR': 'concourse--web--web--latest--62arnmmt:2222',
@@ -193,7 +209,13 @@ describe('interpolation spec v1', () => {
       external_links: [
         'gateway:public.localhost'
       ],
-    })
+    };
+    if (process.platform === 'linux') {
+      expected_worker_compose.extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(public_template.services['concourse--worker--worker--latest--umjxggst']).to.be.deep.equal(expected_worker_compose);
   });
 
   it('interpolation interfaces', async () => {
@@ -1159,7 +1181,7 @@ describe('interpolation spec v1', () => {
     expect(app_node.node_config.getEnvironmentVariables()['AUTH0_SECRET_ID']).eq('worked')
 
     const template = await DockerComposeUtils.generate(manager);
-    expect(template).to.be.deep.equal({
+    const expected_compose: DockerComposeTemplate = {
       'services': {
         'architect--cloud--app--latest--kavtrukr': {
           'depends_on': [],
@@ -1179,7 +1201,13 @@ describe('interpolation spec v1', () => {
       },
       'version': '3',
       'volumes': {},
-    })
+    };
+    if (process.platform === 'linux') {
+      expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(template).to.be.deep.equal(expected_compose);
   });
 
   it('implicit environment parameter', async () => {

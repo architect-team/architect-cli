@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
@@ -146,7 +147,7 @@ describe('external interfaces spec v1', () => {
     expect(api_node.is_external).to.be.true;
 
     const template = await DockerComposeUtils.generate(manager);
-    expect(template).to.be.deep.equal({
+    const expected_compose: DockerComposeTemplate = {
       services: {
         'architect--cloud--app--latest--kavtrukr': {
           depends_on: [],
@@ -164,6 +165,12 @@ describe('external interfaces spec v1', () => {
       },
       'version': '3',
       'volumes': {},
-    })
+    };
+    if (process.platform === 'linux') {
+      expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(template).to.be.deep.equal(expected_compose);
   });
 });
