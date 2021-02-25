@@ -158,6 +158,10 @@ export class DockerComposeUtils {
           volumes.push(volume);
         }
         if (volumes.length) compose.services[url_safe_ref].volumes = volumes;
+
+        if (process.platform === 'linux') {
+          compose.services[url_safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
+        }
       }
 
       if (node instanceof TaskNode) {
