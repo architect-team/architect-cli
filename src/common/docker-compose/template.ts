@@ -37,6 +37,7 @@ export interface DockerService {
   external_links?: string[];
   deploy?: DockerComposeDeploy;
   scale?: number;
+  extra_hosts?: string[];
 }
 
 export default interface DockerComposeTemplate {
