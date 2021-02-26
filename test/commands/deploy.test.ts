@@ -411,26 +411,6 @@ describe('local deploy environment', function () {
     ];
   }
 
-  const basic_component_expected_compose: DockerComposeTemplate = {
-    "version": "3",
-    "services": {
-      "examples--hello-world--api--latest--d00ztoyu": {
-        "ports": [
-          "50000:3000",
-        ],
-        "environment": {},
-        "image": "heroku/nodejs-hello-world",
-        "depends_on": []
-      }
-    },
-    "volumes": {}
-  }
-  if (process.platform === 'linux') {
-    basic_component_expected_compose.services['examples--hello-world--api--latest--d00ztoyu'].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-  }
-
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -443,13 +423,13 @@ describe('local deploy environment', function () {
           "gateway"
         ],
         "environment": {
-          "VIRTUAL_HOST": "test.localhost",
+          "VIRTUAL_HOST": "hello.localhost",
           "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_test_localhost": "3000",
+          "VIRTUAL_PORT_hello_localhost": "3000",
           "VIRTUAL_PROTO": "http"
         },
         "external_links": [
-          "gateway:test.localhost"
+          "gateway:hello.localhost"
         ],
         "image": "heroku/nodejs-hello-world",
       },
@@ -510,7 +490,7 @@ describe('local deploy environment', function () {
     .it('Create a basic local deploy with a component config', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(basic_component_expected_compose)
+      expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
     })
 
   test
@@ -522,7 +502,7 @@ describe('local deploy environment', function () {
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello'])
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'hello'])
     .it('Create a local deploy with a component and an interface', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
@@ -664,7 +644,7 @@ describe('local deploy environment', function () {
       expect(react_app_environment.WORLD_TEXT).to.equal('some other name');
     })
 
-    test
+  test
     .timeout(15000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
