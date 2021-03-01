@@ -8,6 +8,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
@@ -79,7 +80,7 @@ describe('components spec v1', function () {
       expect(graph.edges.map((e) => e.toString())).has.members([])
 
       const template = await DockerComposeUtils.generate(manager);
-      expect(template).to.be.deep.equal({
+      const expected_compose: DockerComposeTemplate = {
         "services": {
           "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [],
@@ -104,7 +105,16 @@ describe('components spec v1', function () {
         },
         "version": "3",
         "volumes": {},
-      })
+      };
+      if (process.platform === 'linux') {
+        expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+        expected_compose.services['architect--cloud--api--latest--zg9qionk'].extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template).to.be.deep.equal(expected_compose);
     });
 
     it('simple remote component', async () => {
@@ -262,7 +272,7 @@ describe('components spec v1', function () {
       expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${cloud_db_ref}:5432`)
 
       const template = await DockerComposeUtils.generate(manager);
-      expect(template).to.be.deep.equal({
+      const expected_compose: DockerComposeTemplate = {
         "services": {
           "architect--cloud--api--latest--zg9qionk": {
             "depends_on": [
@@ -305,7 +315,19 @@ describe('components spec v1', function () {
         },
         "version": "3",
         "volumes": {},
-      })
+      };
+      if (process.platform === 'linux') {
+        expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+        expected_compose.services['architect--cloud--api--latest--zg9qionk'].extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+        expected_compose.services['architect--cloud--db--latest--6apzjzoe'].extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template).to.be.deep.equal(expected_compose);
     });
 
     it('local component with local dependency', async () => {

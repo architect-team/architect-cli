@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
+import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { Refs, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
@@ -277,9 +278,9 @@ describe('interfaces spec v1', () => {
         test_leaf_db_other_url_safe_ref,
         test_leaf_api_other_url_safe_ref,
         'gateway'
-      ])
+      ]);
 
-      expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal({
+      const expected_leaf_compose: DockerService = {
         depends_on: [test_leaf_api_latest_url_safe_ref],
         environment: {
           LEAF_HOST: 'test--leaf--api--latest--lw4iacyc',
@@ -294,9 +295,15 @@ describe('interfaces spec v1', () => {
           'gateway:publicv1.localhost'
         ],
         ports: []
-      });
+      };
+      if (process.platform === 'linux') {
+        expected_leaf_compose.extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal(expected_leaf_compose);
 
-      expect(template.services[test_leaf_db_latest_url_safe_ref]).to.be.deep.equal({
+      const expected_leaf_db_compose: DockerService = {
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -305,9 +312,15 @@ describe('interfaces spec v1', () => {
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
-      });
+      };
+      if (process.platform === 'linux') {
+        expected_leaf_db_compose.extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template.services[test_leaf_db_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
-      expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal({
+      const expected_leaf_api_compose: DockerService = {
         depends_on: [test_leaf_db_latest_url_safe_ref, 'gateway'],
         environment: {
           DB_HOST: test_leaf_db_latest_url_safe_ref,
@@ -326,9 +339,15 @@ describe('interfaces spec v1', () => {
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
-      });
+      };
+      if (process.platform === 'linux') {
+        expected_leaf_api_compose.extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_api_compose);
 
-      expect(template.services[test_leaf_db_other_url_safe_ref]).to.be.deep.equal({
+      const expected_other_leaf_db_compose: DockerService = {
         depends_on: [],
         environment: {},
         image: 'postgres:11',
@@ -337,9 +356,15 @@ describe('interfaces spec v1', () => {
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
-      });
+      };
+      if (process.platform === 'linux') {
+        expected_other_leaf_db_compose.extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template.services[test_leaf_db_other_url_safe_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
-      expect(template.services[test_leaf_api_other_url_safe_ref]).to.be.deep.equal({
+      const expected_other_leaf_api_compose: DockerService = {
         depends_on: [test_leaf_db_other_url_safe_ref, 'gateway'],
         environment: {
           DB_HOST: test_leaf_db_other_url_safe_ref,
@@ -358,7 +383,13 @@ describe('interfaces spec v1', () => {
           'gateway:public.localhost',
           'gateway:publicv1.localhost'
         ],
-      });
+      };
+      if (process.platform === 'linux') {
+        expected_other_leaf_api_compose.extra_hosts = [
+          "host.docker.internal:host-gateway"
+        ];
+      }
+      expect(template.services[test_leaf_api_other_url_safe_ref]).to.be.deep.equal(expected_other_leaf_api_compose);
     });
   });
 
@@ -411,7 +442,7 @@ describe('interfaces spec v1', () => {
     const architect_cloud_api_url_safe_ref = Refs.url_safe_ref('architect/cloud/api:latest');
 
     const template = await DockerComposeUtils.generate(manager);
-    expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal({
+    const expected_compose: DockerService = {
       "depends_on": ["gateway"],
       "environment": {
         "VIRTUAL_HOST": "app.localhost,admin.localhost",
@@ -432,7 +463,13 @@ describe('interfaces spec v1', () => {
         "context": path.resolve("/stack")
       },
       "restart": "always"
-    });
+    };
+    if (process.platform === 'linux') {
+      expected_compose.extra_hosts = [
+        "host.docker.internal:host-gateway"
+      ];
+    }
+    expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal(expected_compose);
   });
 
   it('using multiple ports from a dependency', async () => {
