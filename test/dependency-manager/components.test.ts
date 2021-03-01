@@ -83,7 +83,6 @@ describe('components spec v1', function () {
       const expected_compose: DockerComposeTemplate = {
         "services": {
           "architect--cloud--api--latest--zg9qionk": {
-            "depends_on": [],
             "environment": {},
             "ports": [
               "50001:8080",
@@ -93,7 +92,6 @@ describe('components spec v1', function () {
             }
           },
           "architect--cloud--app--latest--kavtrukr": {
-            "depends_on": [],
             "environment": {},
             "ports": [
               "50000:8080"
@@ -303,7 +301,6 @@ describe('components spec v1', function () {
             }
           },
           "architect--cloud--db--latest--6apzjzoe": {
-            "depends_on": [],
             "environment": {},
             "ports": [
               "50002:5432"

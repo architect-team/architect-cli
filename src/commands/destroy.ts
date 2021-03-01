@@ -45,7 +45,9 @@ export default class Destroy extends DeployCommand {
       new_env_config = EnvironmentConfigBuilder.buildFromJSON({});
     }
 
-    await this.deployRemote(environment, new_env_config, false);
+    throw new Error('Not implemented');
+
+    // TODO:320 await this.deployRemote(environment, new_env_config, false);
   }
 
   removeComponents(raw_env_config: RawEnvironmentConfig, env_config: EnvironmentConfig, component_refs_to_remove: string[]): EnvironmentConfig {

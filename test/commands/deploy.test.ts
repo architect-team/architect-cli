@@ -302,7 +302,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50001:5432"
         ],
-        "depends_on": [],
         "environment": {
           "POSTGRES_DB": "seeding_demo",
           "POSTGRES_USER": "postgres",
@@ -314,7 +313,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50002:3000",
         ],
-        "depends_on": [],
         "environment": {},
         "image": "heroku/nodejs-hello-world",
       }
@@ -369,7 +367,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50001:5432"
         ],
-        "depends_on": [],
         "environment": {
           "POSTGRES_DB": "test-db",
           "POSTGRES_USER": "postgres",
@@ -381,7 +378,6 @@ describe('local deploy environment', function () {
         ]
       },
       "gateway": {
-        "depends_on": [],
         "environment": {
           "DISABLE_ACCESS_LOGS": "true",
           "HTTPS_METHOD": "noredirect",
@@ -434,7 +430,6 @@ describe('local deploy environment', function () {
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "depends_on": [],
         "environment": {
           "DISABLE_ACCESS_LOGS": "true",
           "HTTPS_METHOD": "noredirect",

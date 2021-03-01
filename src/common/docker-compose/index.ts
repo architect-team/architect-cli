@@ -50,7 +50,11 @@ export class DockerComposeUtils {
         compose.services[url_safe_ref] = {
           image: 'traefik:v2.4',
           restart: 'always',
-          command: ['--api.insecure=true', '--providers.docker'],
+          command: [
+            '--api.insecure=true',
+            '--providers.docker',
+            '--providers.docker.exposedByDefault=false',
+          ],
           ports: [
             // The HTTP port
             `${dependency_manager.gateway_port}:80`,
@@ -60,8 +64,6 @@ export class DockerComposeUtils {
           volumes: [
             '/var/run/docker.sock:/var/run/docker.sock',
           ],
-          depends_on: [],
-          labels: [],
         };
       }
 
@@ -76,9 +78,7 @@ export class DockerComposeUtils {
         }
         compose.services[url_safe_ref] = {
           ports,
-          depends_on: [],
           environment: formatted_environment_variables,
-          labels: [],
         };
 
         if (gateway_links.length) {
@@ -203,6 +203,11 @@ export class DockerComposeUtils {
             protocol = 'h2c';
           }
 
+          if (!service_to.labels) {
+            service_to.labels = [];
+          }
+
+          service_to.labels.push(`traefik.enable=true`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.localhost\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
@@ -212,7 +217,11 @@ export class DockerComposeUtils {
         }
 
         if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
-          compose.services[depends_from].depends_on.push(depends_to);
+          const service_from = compose.services[depends_from];
+          if (!service_from.depends_on) {
+            service_from.depends_on = [];
+          }
+          service_from.depends_on.push(depends_to);
           seen_edges.add(`${depends_to}__${depends_from}`);
           seen_edges.add(`${depends_from}__${depends_to}`);
         }

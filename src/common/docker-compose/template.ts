@@ -23,11 +23,10 @@ export interface DockerComposeDeploy {
 }
 
 export interface DockerService {
-  labels: string[];
-  ports: string[] | DockerComposeInterface[];
+  ports?: string[] | DockerComposeInterface[];
   image?: string;
   environment?: { [key: string]: any };
-  depends_on: string[];
+  depends_on?: string[];
   build?: DockerServiceBuild;
   volumes?: string[] | DockerComposeVolume[];
   command?: string[];
@@ -39,6 +38,7 @@ export interface DockerService {
   deploy?: DockerComposeDeploy;
   scale?: number;
   extra_hosts?: string[];
+  labels?: string[];
 }
 
 export default interface DockerComposeTemplate {

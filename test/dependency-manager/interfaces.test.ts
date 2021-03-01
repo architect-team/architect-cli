@@ -304,7 +304,6 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal(expected_leaf_compose);
 
       const expected_leaf_db_compose: DockerService = {
-        depends_on: [],
         environment: {},
         image: 'postgres:11',
         ports: ['50000:5432'],
@@ -348,7 +347,6 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_api_compose);
 
       const expected_other_leaf_db_compose: DockerService = {
-        depends_on: [],
         environment: {},
         image: 'postgres:11',
         ports: ['50002:5432'],

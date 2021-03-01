@@ -121,7 +121,6 @@ describe('interpolation spec v1', () => {
     const expected_compose: DockerComposeTemplate = {
       'services': {
         'concourse--web--web--latest--62arnmmt': {
-          'depends_on': [],
           'environment': {},
           'ports': [
             '50000:8080'
@@ -131,7 +130,6 @@ describe('interpolation spec v1', () => {
           }
         },
         'concourse--worker--worker--latest--umjxggst': {
-          'depends_on': [],
           'environment': {
             'REGULAR': `${url_safe_ref}:2222`,
             'SINGLE_QUOTE': `${url_safe_ref}:2222`,
@@ -196,7 +194,6 @@ describe('interpolation spec v1', () => {
     }
     expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal(expected_web_compose);
     const expected_worker_compose: DockerService = {
-      'depends_on': [],
       'environment': {
         'REGULAR': 'concourse--web--web--latest--62arnmmt:2222',
         'SINGLE_QUOTE': 'concourse--web--web--latest--62arnmmt:2222',
