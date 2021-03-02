@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
-import open from 'open';
+import opener from 'opener';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
@@ -231,7 +231,7 @@ export default class Deploy extends DeployCommand {
         Promise.all(promises).then(() => {
           for (const exposed_interface of exposed_interfaces) {
             this.log('Opening', chalk.blue(exposed_interface));
-            open(exposed_interface);
+            opener(exposed_interface);
           }
           this.log('(disable with --no-browser)');
           clearInterval(browser_interval);
