@@ -7,7 +7,7 @@ const PORT_RANGE = Array.from({ length: 1000 }, (_, k) => k);
 const _isPortAvailable = async (host: string, port: number) => new Promise((resolve, reject) => {
   const tester: net.Server = net.createServer()
     .once('error', err => reject(err))
-    .once('listening', () => tester.once('close', () => resolve()).close())
+    .once('listening', () => tester.once('close', () => resolve(undefined)).close())
     .listen(port, host);
 });
 
