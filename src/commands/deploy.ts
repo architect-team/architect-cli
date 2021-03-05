@@ -171,13 +171,18 @@ export default class Deploy extends DeployCommand {
 
     const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
-    if (gateway) {
-      const gateway_port = gateway.ports || [][0] && (gateway.ports || [][0] as string).split(':')[0];
+    if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
+      const gateway_port = gateway.ports[0].split(':')[0];
       for (const [service_name, service] of Object.entries(compose.services)) {
-        if (service.environment && service.environment.VIRTUAL_HOST) {
-          for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
-            this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${split_host}:${gateway_port}/`);
+        if (service.labels?.includes('traefik.enable=true')) {
+          const host_rule = service.labels.find(label => label.includes('rule=Host'));
+          if (host_rule) {
+            const host = new RegExp(/Host\(\`([A-Za-z0-9]+\.localhost)\`\)/g);
+            const host_match = host.exec(host_rule);
+            if (host_match) {
+              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            }
           }
         }
       }
@@ -224,7 +229,7 @@ export default class Deploy extends DeployCommand {
               Host: host_name,
             },
             timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500; },
+            validateStatus: (status: number) => { return status < 500 && status !== 404; },
           }));
         }
 
