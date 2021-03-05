@@ -177,7 +177,7 @@ export default class Deploy extends DeployCommand {
         if (service.labels?.includes('traefik.enable=true')) {
           const host_rule = service.labels.find(label => label.includes('rule=Host'));
           if (host_rule) {
-            const host = new RegExp(/Host\(\`([A-Za-z0-9]+\.localhost)\`\)/g);
+            const host = new RegExp(/Host\(`([A-Za-z0-9]+\.localhost)`\)/g);
             const host_match = host.exec(host_rule);
             if (host_match) {
               this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
