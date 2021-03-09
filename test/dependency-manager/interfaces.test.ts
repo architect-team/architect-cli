@@ -94,8 +94,6 @@ describe('interfaces spec v1', () => {
     const test_branch_url_safe_ref = Refs.url_safe_ref('test/branch/api:latest');
     const test_leaf_db_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/db:latest');
     const test_leaf_api_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/api:latest');
-    const test_leaf_db_v1_url_safe_ref = Refs.url_safe_ref('test/leaf/db:v1.0');
-    const test_leaf_api_v1_url_safe_ref = Refs.url_safe_ref('test/leaf/api:v1.0');
 
     it('should connect two services together', async () => {
       mock_fs({
@@ -569,5 +567,80 @@ describe('interfaces spec v1', () => {
       VIRTUAL_PORT_admin2_localhost: '8081',
       VIRTUAL_PORT_dep2_localhost: '8080'
     })
+  });
+
+  it('should support HTTP basic auth', async () => {
+    const smtp_config = `
+      name: architect/smtp
+      services:
+        maildev:
+          image: maildev/maildev
+          interfaces:
+            smtp:
+              port: 1025
+              protocol: smtp
+              username: test-user
+              password: test-pass
+            dashboard: 1080
+        test-app:
+          image: hashicorp/http-echo
+          environment:
+            SMTP_ADDR: \${{ services.maildev.interfaces.smtp.url }}
+            SMTP_USER: \${{ services.maildev.interfaces.smtp.username }}
+            SMTP_PASS: \${{ services.maildev.interfaces.smtp.password }}
+    `;
+
+    mock_fs({
+      '/stack/smtp/architect.yml': smtp_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/smtp/architect.yml');
+    const graph = await manager.getGraph();
+
+    const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
+    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      SMTP_ADDR: 'smtp://test-user:test-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_USER: 'test-user',
+      SMTP_PASS: 'test-pass',
+    });
+  });
+
+  it('should allow HTTP basic auth values to be parameters', async () => {
+    const smtp_config = `
+      name: architect/smtp
+      parameters:
+        SMTP_USER: param-user
+        SMTP_PASS: param-pass
+      services:
+        maildev:
+          image: maildev/maildev
+          interfaces:
+            smtp:
+              port: 1025
+              protocol: smtp
+              username: \${{ parameters.SMTP_USER }}
+              password: \${{ parameters.SMTP_PASS }}
+            dashboard: 1080
+        test-app:
+          image: hashicorp/http-echo
+          environment:
+            SMTP_ADDR: \${{ services.maildev.interfaces.smtp.url }}
+            SMTP_USER: \${{ services.maildev.interfaces.smtp.username }}
+            SMTP_PASS: \${{ services.maildev.interfaces.smtp.password }}
+    `;
+
+    mock_fs({
+      '/stack/smtp/architect.yml': smtp_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/smtp/architect.yml');
+    const graph = await manager.getGraph();
+
+    const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
+    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      SMTP_ADDR: 'smtp://param-user:param-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_USER: 'param-user',
+      SMTP_PASS: 'param-pass',
+    });
   });
 });

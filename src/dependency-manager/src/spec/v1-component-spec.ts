@@ -62,7 +62,7 @@ export default interface ComponentSpecV1 {
    * A set of named services that need to be run and persisted in order to power this component.
    */
   services?: {
-    [key: string]: ResourceSpecV1 & {
+    [key: string]: DebuggableResourceSpecV1 & {
       /**
        * A set of name interfaces that the service listens for traffic on. Interface definitions consist of either an object or a numerical shorthand that directly applies to the `port` field.
        */
@@ -84,6 +84,16 @@ export default interface ComponentSpecV1 {
            * A fixed host address that represents an existing location for the service. Using this field will make this service 'virtual' and will not trigger provisioning.
            */
           host?: string;
+
+          /**
+           * A username used to authenticate with the interface via HTTP basic auth
+           */
+          username?: string;
+
+          /**
+           * A password used to authenticate with the interface via HTTP basic auth
+           */
+          password?: string;
         };
       };
     };
@@ -93,7 +103,7 @@ export default interface ComponentSpecV1 {
    * A set of scheduled and triggerable tasks that get registered alongside the component. Tasks are great for data translation, reporting, and much more.
    */
   tasks?: {
-    [key: string]: ResourceSpecV1 & {
+    [key: string]: DebuggableResourceSpecV1 & {
       /**
        * A cron string indicating the schedule at which the task will run. Architect will ensure the cron jobs are instrumented correctly regardless of where the task is deployed.
        */
