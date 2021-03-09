@@ -4,5 +4,7 @@ export interface InterfaceSpec {
   port: string;
   url?: string;
   protocol?: string;
+  username?: string;
+  password?: string;
   domains?: string[];
 }
