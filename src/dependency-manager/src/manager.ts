@@ -510,8 +510,8 @@ export default abstract class DependencyManager {
       internal_protocol = interface_details.protocol || 'http';
     }
 
-    const internal_user = interface_details.username;
-    const internal_pass = interface_details.password;
+    const internal_user = interface_details.username || '';
+    const internal_pass = interface_details.password || '';
 
     let auth_slug = '';
     if (internal_user || internal_pass) {

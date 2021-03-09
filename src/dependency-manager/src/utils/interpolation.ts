@@ -103,8 +103,8 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
     if (errors.size > 0) {
       const interpolation_errors: Set<string> = new Set();
       for (const error of errors) {
-        // Dedupe host/port/protocol into url
-        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol')) {
+        // Dedupe host/port/protocol/username/password into url
+        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol') || error.endsWith('.username') || error.endsWith('.password')) {
           const keys = error.split('.');
           const key = keys.slice(0, keys.length - 1).join('.');
           if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {

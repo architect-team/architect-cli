@@ -643,4 +643,57 @@ describe('interfaces spec v1', () => {
       SMTP_PASS: 'param-pass',
     });
   });
+
+  it('should support HTTP basic auth for dependency interfaces', async () => {
+    const smtp_config = `
+      name: architect/smtp
+      services:
+        maildev:
+          image: maildev/maildev
+          interfaces:
+            smtp:
+              port: 1025
+              protocol: smtp
+              username: test-user
+              password: test-pass
+            dashboard: 1080
+      interfaces:
+        smtp: \${{ services.maildev.interfaces.smtp.url }}
+    `;
+
+    const upstream_config = `
+      name: architect/upstream
+      dependencies:
+        architect/smtp: latest
+      services:
+        test-app:
+          image: hashicorp/http-echo
+          environment:
+            SMTP_ADDR: \${{ dependencies['architect/smtp'].interfaces.smtp.url }}
+            SMTP_USER: \${{ dependencies['architect/smtp'].interfaces.smtp.username }}
+            SMTP_PASS: \${{ dependencies['architect/smtp'].interfaces.smtp.password }}
+    `;
+
+    const env_config = `
+      components:
+        architect/smtp: file:./smtp
+        architect/upstream: file:./upstream
+    `;
+
+    mock_fs({
+      '/stack/smtp/architect.yml': smtp_config,
+      '/stack/upstream/architect.yml': upstream_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+
+    const test_node = graph.getNodeByRef('architect/upstream/test-app:latest') as ServiceNode;
+    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      SMTP_ADDR: 'smtp://test-user:test-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_USER: 'test-user',
+      SMTP_PASS: 'test-pass',
+    });
+  });
 });
