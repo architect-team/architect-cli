@@ -518,7 +518,12 @@ export default abstract class DependencyManager {
       auth_slug = `${internal_user}:${internal_pass}@`
     }
 
-    const internal_url = `${internal_protocol}://${auth_slug}${internal_host}:${internal_port}`;
+    let hostname = internal_host;
+    if (!(internal_protocol === 'http' && internal_port === '80') && !(internal_protocol === 'https' && internal_port === '443')) {
+      hostname += `:${internal_port}`;
+    }
+
+    const internal_url = `${internal_protocol}://${auth_slug}${hostname}`;
 
     return {
       host: internal_host,
