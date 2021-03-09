@@ -118,7 +118,7 @@ describe('external interfaces spec v1', () => {
               interfaces: {
                 main: {
                   host: 'external.locahost',
-                  port: 80
+                  port: 443,
                 }
               }
             }
@@ -152,8 +152,8 @@ describe('external interfaces spec v1', () => {
         'architect--cloud--app--latest--kavtrukr': {
           depends_on: [],
           environment: {
-            API_ADDR: 'https://external.locahost:80',
-            EXTERNAL_API_ADDR: 'https://external.locahost:80'
+            API_ADDR: 'https://external.locahost',
+            EXTERNAL_API_ADDR: 'https://external.locahost'
           },
           ports: [
             '50000:8080'
