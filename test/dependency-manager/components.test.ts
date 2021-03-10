@@ -784,11 +784,11 @@ describe('components spec v1', function () {
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface', ci: 'ci-interface' });
       const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost:80');
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['SELF_EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['SELF_EXTERNAL_CI_URL']).eq('http://ci.localhost');
       const ci_web_node = graph.getNodeByRef('concourse/ci/web:6.2') as ServiceNode;
-      expect(ci_web_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
+      expect(ci_web_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost');
     });
 
     it('environment ingress context produces the correct values for a simple external interface', async () => {
@@ -834,7 +834,7 @@ describe('components spec v1', function () {
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
       const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost:80');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
     });
 
     it('environment ingress context produces the correct values for deep external interfaces', async () => {
@@ -943,13 +943,13 @@ describe('components spec v1', function () {
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface', ci: 'ci-interface', nested: 'top-nested-interface' });
       const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost:80');
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['SELF_EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['TOP_NESTED_INTERFACE_URL']).eq('http://nested.localhost:80');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['SELF_EXTERNAL_CI_URL']).eq('http://ci.localhost');
+      expect(cloud_api_node.node_config.getEnvironmentVariables()['TOP_NESTED_INTERFACE_URL']).eq('http://nested.localhost');
       const ci_web_node = graph.getNodeByRef('concourse/ci/web:6.2') as ServiceNode;
-      expect(ci_web_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost:80');
-      expect(ci_web_node.node_config.getEnvironmentVariables()['DEEP_NESTED_URL']).eq('http://nested.localhost:80');
+      expect(ci_web_node.node_config.getEnvironmentVariables()['EXTERNAL_CI_URL']).eq('http://ci.localhost');
+      expect(ci_web_node.node_config.getEnvironmentVariables()['DEEP_NESTED_URL']).eq('http://nested.localhost');
     });
   });
 });

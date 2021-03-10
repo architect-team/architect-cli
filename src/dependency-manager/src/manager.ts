@@ -588,7 +588,11 @@ export default abstract class DependencyManager {
             protocol: this.toExternalProtocol(),
           },
         };
-        inter.url = `${inter.protocol}://${inter.host}:${inter.port}`;
+
+        inter.url = `${inter.protocol}://${inter.host}`;
+        if (!(inter.protocol === 'http' && inter.port === '80') && !(inter.protocol === 'https' && inter.port === '443')) {
+          inter.url += `:${inter.port}`;
+        }
         component.setInterface(interface_name, inter);
       }
     }
