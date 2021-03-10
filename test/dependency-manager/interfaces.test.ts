@@ -265,7 +265,7 @@ describe('interfaces spec v1', () => {
         'LEAF_HOST=test--leaf--api--latest--lw4iacyc',
         'LEAF_PORT=8080',
         'LEAF_URL=http://test--leaf--api--latest--lw4iacyc:8080',
-        'EXTERNAL_INTERFACE=http://public.localhost:80',
+        'EXTERNAL_INTERFACE=http://public.localhost',
       ])
 
       const template = await DockerComposeUtils.generate(manager);
@@ -285,7 +285,7 @@ describe('interfaces spec v1', () => {
           LEAF_PORT: '8080',
           LEAF_PROTOCOL: 'http',
           LEAF_URL: 'http://test--leaf--api--latest--lw4iacyc:8080',
-          EXTERNAL_INTERFACE: 'http://public.localhost:80'
+          EXTERNAL_INTERFACE: 'http://public.localhost'
         },
         image: 'branch:latest',
         external_links: [
@@ -551,7 +551,7 @@ describe('interfaces spec v1', () => {
       ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
       API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
       PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
-      EXTERNAL_API_ADDR: 'http://dep2.localhost:80',
+      EXTERNAL_API_ADDR: 'http://dep2.localhost',
     });
 
     const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');

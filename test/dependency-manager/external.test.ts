@@ -173,4 +173,39 @@ describe('external interfaces spec v1', () => {
     }
     expect(template).to.be.deep.equal(expected_compose);
   });
+
+  it('should strip default ports from environment ingress references', async () => {
+    const component_config = `
+      name: architect/component
+      services:
+        app:
+          image: hashicorp/http-echo
+          interfaces:
+            api: 8080
+          environment:
+            SELF_ADDR: \${{ environment.ingresses['architect/component'].app.url }}
+      interfaces:
+        app: \${{ services.app.interfaces.api.url }}
+    `;
+
+    const env_config = `
+      components:
+        architect/component: file:./component
+      interfaces:
+        subdomain: \${{ components['architect/component'].interfaces.app.url }}
+    `;
+
+    mock_fs({
+      '/stack/component/architect.yml': component_config,
+      '/stack/environment.yml': env_config,
+    });
+
+    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+    const graph = await manager.getGraph();
+
+    const test_node = graph.getNodeByRef('architect/component/app:latest') as ServiceNode;
+    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      SELF_ADDR: 'http://subdomain.localhost',
+    });
+  });
 });
