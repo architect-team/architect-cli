@@ -26,6 +26,12 @@ export class InterfaceSpecV1 extends ValidatableConfig {
   protocol?: string;
 
   @IsOptional({ always: true })
+  username?: string;
+
+  @IsOptional({ always: true })
+  password?: string;
+
+  @IsOptional({ always: true })
   url?: string;
 
   @IsEmpty({

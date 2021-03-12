@@ -111,6 +111,10 @@ export class DockerComposeUtils {
           if (cpu) { service.deploy.resources.limits.cpus = cpu; }
           if (memory) { service.deploy.resources.limits.memory = memory; }
         }
+
+        if (process.platform === 'linux') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
+          compose.services[url_safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
+        }
       }
 
       if (node.is_local && (node instanceof ServiceNode || node instanceof TaskNode)) {
@@ -158,10 +162,6 @@ export class DockerComposeUtils {
           volumes.push(volume);
         }
         if (volumes.length) compose.services[url_safe_ref].volumes = volumes;
-
-        if (process.platform === 'linux') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
-          compose.services[url_safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
-        }
       }
 
       if (node instanceof TaskNode) {

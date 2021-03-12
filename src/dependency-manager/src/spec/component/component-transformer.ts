@@ -47,7 +47,7 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
     if (value instanceof Object && 'host' in value && 'port' in value) {
       output[key] = plainToClass(InterfaceSpecV1, value);
     } else {
-      let host, port, protocol;
+      let host, port, protocol, username, password;
       let url = value instanceof Object ? value.url : value;
 
       const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
@@ -56,11 +56,15 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
         host = `\${{ ${matches[1]}.host }}`;
         port = `\${{ ${matches[1]}.port }}`;
         protocol = `\${{ ${matches[1]}.protocol }}`;
-        url = `\${{ ${matches[1]}.protocol }}://\${{ ${matches[1]}.host }}:\${{ ${matches[1]}.port }}`;
+        username = `\${{ ${matches[1]}.username }}`;
+        password = `\${{ ${matches[1]}.password }}`;
+        url = `\${{ ${matches[1]}.url }}`;
 
         output[key] = plainToClass(InterfaceSpecV1, {
           host,
           port,
+          username,
+          password,
           protocol,
           url,
           ...(value instanceof Object && value.domains ? { domains: value.domains } : {}),

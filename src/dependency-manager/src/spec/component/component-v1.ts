@@ -241,6 +241,8 @@ export class ComponentConfigV1 extends ComponentConfig {
     const interface_filler = {
       port: '',
       host: '',
+      username: '',
+      password: '',
       protocol: '',
       url: '',
     };
