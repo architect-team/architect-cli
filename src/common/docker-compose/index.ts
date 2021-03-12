@@ -207,7 +207,9 @@ export class DockerComposeUtils {
             service_to.labels = [];
           }
 
-          service_to.labels.push(`traefik.enable=true`);
+          if (!service_to.labels.includes(`traefik.enable=true`)) {
+            service_to.labels.push(`traefik.enable=true`);
+          }
           service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.localhost\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);

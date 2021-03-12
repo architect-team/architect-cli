@@ -175,9 +175,9 @@ export default class Deploy extends DeployCommand {
       const gateway_port = gateway.ports[0].split(':')[0];
       for (const [service_name, service] of Object.entries(compose.services)) {
         if (service.labels?.includes('traefik.enable=true')) {
-          const host_rule = service.labels.find(label => label.includes('rule=Host'));
-          if (host_rule) {
-            const host = new RegExp(/Host\(`([A-Za-z0-9]+\.localhost)`\)/g);
+          const host_rules = service.labels.filter(label => label.includes('rule=Host'));
+          for (const host_rule of host_rules) {
+            const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.localhost)`\)/g);
             const host_match = host.exec(host_rule);
             if (host_match) {
               this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
@@ -282,8 +282,7 @@ export default class Deploy extends DeployCommand {
         this.app.api,
         path.resolve(untildify(args.config_or_component)),
         component_values,
-        {},
-        flags.interface.length === 0
+        {}
       );
       namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     } catch (err) {

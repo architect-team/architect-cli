@@ -77,6 +77,18 @@ export default abstract class DependencyManager {
       component_edge_map[to][env_interface] = interface_name;
     }
 
+    for (const component_interfaces_edge of graph.edges.filter(e => e.from.endsWith('-interfaces'))) {
+      for (const external_interface_name of Object.keys(component_interfaces_edge.interfaces_map || {})) {
+        const component_name_matches = (new RegExp(/(.+\/.+):.+/g)).exec(component_interfaces_edge.from);
+        if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name) && component_name_matches?.length) {
+          if (!component_edge_map[component_interfaces_edge.from]) {
+            component_edge_map[component_interfaces_edge.from] = {};
+          }
+          component_edge_map[component_interfaces_edge.from][`${component_name_matches[1].replace('/', '--')}--${external_interface_name}`] = external_interface_name;
+        }
+      }
+    }
+
     for (const [to, interfaces_map] of Object.entries(component_edge_map)) {
       const gateway = new GatewayNode();
       graph.addNode(gateway);
@@ -515,7 +527,7 @@ export default abstract class DependencyManager {
 
     let auth_slug = '';
     if (internal_user || internal_pass) {
-      auth_slug = `${internal_user}:${internal_pass}@`
+      auth_slug = `${internal_user}:${internal_pass}@`;
     }
 
     let hostname = internal_host;
