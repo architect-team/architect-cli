@@ -169,13 +169,14 @@ describe('interpolation spec v1', () => {
 
     const public_template = await DockerComposeUtils.generate(public_manager);
     const expected_web_compose: DockerService = {
-      'depends_on': ['gateway'],
-      'environment': {
-        'VIRTUAL_HOST': 'public.localhost',
-        'VIRTUAL_PORT': '8080',
-        VIRTUAL_PORT_public_localhost: '8080',
-        'VIRTUAL_PROTO': 'http'
-      },
+      environment: {},
+      "labels": [
+        "traefik.enable=true",
+        "traefik.http.routers.public.rule=Host(`public.localhost`)",
+        "traefik.http.routers.public.service=public-service",
+        "traefik.http.services.public-service.loadbalancer.server.port=8080",
+        "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+      ],
       external_links: [
         'gateway:public.localhost'
       ],

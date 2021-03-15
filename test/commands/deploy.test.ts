@@ -340,8 +340,7 @@ describe('local deploy environment', function () {
         ],
         "restart": "always",
         "depends_on": [
-          "examples--database-seeding--my-demo-db--latest--uimfmkw0",
-          "gateway"
+          "examples--database-seeding--my-demo-db--latest--uimfmkw0"
         ],
         "environment": {
           "DATABASE_HOST": "examples--database-seeding--my-demo-db--latest--uimfmkw0",
@@ -349,12 +348,15 @@ describe('local deploy environment', function () {
           "DATABASE_USER": "postgres",
           "DATABASE_PASSWORD": "architect",
           "DATABASE_SCHEMA": "test-db",
-          "AUTO_DDL": "seed",
-          "VIRTUAL_HOST": "app.localhost",
-          "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_app_localhost": "3000",
-          "VIRTUAL_PROTO": "http"
+          "AUTO_DDL": "seed"
         },
+        "labels": [
+          "traefik.enable=true",
+          "traefik.http.routers.app.rule=Host(`app.localhost`)",
+          "traefik.http.routers.app.service=app-service",
+          "traefik.http.services.app-service.loadbalancer.server.port=3000",
+          "traefik.http.services.app-service.loadbalancer.server.scheme=http"
+        ],
         "build": {
           "context": path.resolve('./examples/database-seeding'),
           "dockerfile": "Dockerfile"
@@ -378,21 +380,22 @@ describe('local deploy environment', function () {
         ]
       },
       "gateway": {
-        "environment": {
-          "DISABLE_ACCESS_LOGS": "true",
-          "HTTPS_METHOD": "noredirect",
-          "HTTP_PORT": 80
-        },
-        "image": "architectio/nginx-proxy:latest",
-        "logging": {
-          "driver": "none"
-        },
+        "image": "traefik:v2.4",
+        "command": [
+          "--api.insecure=true",
+          "--providers.docker",
+          "--providers.docker.exposedByDefault=false"
+        ],
         "ports": [
-          "80:80"
+          "80:80",
+          "8080:8080"
+        ],
+        "depends_on": [
+          "examples--database-seeding--app--latest--7fdljhug",
         ],
         "restart": "always",
         "volumes": [
-          "/var/run/docker.sock:/tmp/docker.sock:ro"
+          "/var/run/docker.sock:/var/run/docker.sock"
         ]
       }
     },
@@ -415,36 +418,36 @@ describe('local deploy environment', function () {
           "50000:3000",
         ],
         "restart": "always",
-        "depends_on": [
-          "gateway"
+        "environment": {},
+        "labels": [
+          "traefik.enable=true",
+          "traefik.http.routers.hello.rule=Host(`hello.localhost`)",
+          "traefik.http.routers.hello.service=hello-service",
+          "traefik.http.services.hello-service.loadbalancer.server.port=3000",
+          "traefik.http.services.hello-service.loadbalancer.server.scheme=http"
         ],
-        "environment": {
-          "VIRTUAL_HOST": "hello.localhost",
-          "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_hello_localhost": "3000",
-          "VIRTUAL_PROTO": "http"
-        },
         "external_links": [
           "gateway:hello.localhost"
         ],
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "environment": {
-          "DISABLE_ACCESS_LOGS": "true",
-          "HTTPS_METHOD": "noredirect",
-          "HTTP_PORT": 80
-        },
-        "image": "architectio/nginx-proxy:latest",
-        "logging": {
-          "driver": "none"
-        },
+        "image": "traefik:v2.4",
+        "command": [
+          "--api.insecure=true",
+          "--providers.docker",
+          "--providers.docker.exposedByDefault=false"
+        ],
         "ports": [
-          "80:80"
+          "80:80",
+          "8080:8080"
+        ],
+        "depends_on": [
+          "examples--hello-world--api--latest--d00ztoyu",
         ],
         "restart": "always",
         "volumes": [
-          "/var/run/docker.sock:/tmp/docker.sock:ro"
+          "/var/run/docker.sock:/var/run/docker.sock"
         ]
       }
     },
@@ -565,7 +568,6 @@ describe('local deploy environment', function () {
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
       expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
-      expect(hello_world_service.environment.VIRTUAL_HOST).to.equal('test.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
       expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
