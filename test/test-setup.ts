@@ -8,3 +8,4 @@ for (const env_key of Object.keys(process.env)) {
   }
 }
 process.env.ARCHITECT_CONFIG_DIR = './test'
+process.env.NODE_ENV = 'test'

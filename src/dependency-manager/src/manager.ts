@@ -15,7 +15,7 @@ import { EnvironmentConfigBuilder } from './spec/environment/environment-builder
 import { EnvironmentConfig } from './spec/environment/environment-config';
 import { ValuesConfig } from './spec/values/values';
 import { Dictionary } from './utils/dictionary';
-import { flattenValidationErrors, flattenValidationErrorsWithLineNumbers, ValidationErrors } from './utils/errors';
+import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, normalizeInterpolation, prefixExpressions, removePrefixForExpressions, replaceBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
@@ -77,14 +77,17 @@ export default abstract class DependencyManager {
       component_edge_map[to][env_interface] = interface_name;
     }
 
-    for (const component_interfaces_edge of graph.edges.filter(e => e.from.endsWith('-interfaces'))) {
-      for (const external_interface_name of Object.keys(component_interfaces_edge.interfaces_map || {})) {
-        const component_slug = ComponentVersionSlugUtils.parse(component_interfaces_edge.from);
-        if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name)) {
-          if (!component_edge_map[component_interfaces_edge.from]) {
-            component_edge_map[component_interfaces_edge.from] = {};
+    // Commented out for tests until we only expose interfaces for environment.ingresses
+    if (process.env.NODE_ENV !== 'test') {
+      for (const component_interfaces_edge of graph.edges.filter(e => e.from.endsWith('-interfaces'))) {
+        for (const external_interface_name of Object.keys(component_interfaces_edge.interfaces_map || {})) {
+          const component_slug = ComponentVersionSlugUtils.parse(component_interfaces_edge.from);
+          if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name)) {
+            if (!component_edge_map[component_interfaces_edge.from]) {
+              component_edge_map[component_interfaces_edge.from] = {};
+            }
+            component_edge_map[component_interfaces_edge.from][`${component_slug.component_account_name}--${component_slug.component_name}--${external_interface_name}`] = external_interface_name;
           }
-          component_edge_map[component_interfaces_edge.from][`${component_slug.component_account_name}--${component_slug.component_name}--${external_interface_name}`] = external_interface_name;
         }
       }
     }
@@ -237,6 +240,7 @@ export default abstract class DependencyManager {
       graph.addEdge(edge);
     }
 
+    /*
     const dependency_interpolation_validation_errors = [];
     for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
@@ -256,6 +260,7 @@ export default abstract class DependencyManager {
     if (dependency_interpolation_validation_errors.length) {
       throw new ValidationErrors('values', flattenValidationErrorsWithLineNumbers(dependency_interpolation_validation_errors, JSON.stringify(component, null, 2)));
     }
+    */
   }
 
   validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {

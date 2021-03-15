@@ -16,7 +16,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
-import { Environment, EnvironmentUtils } from '../common/utils/environment';
+import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -76,18 +76,9 @@ export abstract class DeployCommand extends Command {
     });
   }
 
-  async deployRemote(environment: Environment, component: string, interfaces: string[]) {
+  async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
-    const interfaces_map: Dictionary<string> = {};
-    for (const i of interfaces) {
-      const [key, value] = i.split(':');
-      interfaces_map[key] = value || key;
-    }
-
-    cli.action.start(chalk.blue('Creating pipeline'));
-    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, { component, interfaces: interfaces_map, recursive: flags.recursive });
-    cli.action.stop();
     if (!flags.auto_approve) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
       const confirmation = await inquirer.prompt({
@@ -332,7 +323,22 @@ export default class Deploy extends DeployCommand {
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-    await this.deployRemote(environment, args.config_or_component, flags.interface);
+
+    const interfaces_map: Dictionary<string> = {};
+    for (const i of flags.interface) {
+      const [key, value] = i.split(':');
+      interfaces_map[key] = value || key;
+    }
+
+    cli.action.start(chalk.blue('Creating pipeline'));
+    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, {
+      component: args.config_or_component,
+      interfaces: interfaces_map,
+      recursive: flags.recursive,
+    });
+    cli.action.stop();
+
+    await this.approvePipeline(pipeline);
   }
 
   getExtraEnvironmentVariables(parameters: string[]) {

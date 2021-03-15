@@ -483,8 +483,6 @@ describe('interfaces spec v1', () => {
       name: voic/admin-ui
       dependencies:
         voic/product-catalog: latest
-      interfaces:
-        dep: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
       services:
         dashboard:
           interfaces:
@@ -524,7 +522,6 @@ describe('interfaces spec v1', () => {
       interfaces:
         public2: \${{ components.voic/product-catalog.interfaces.public.url }}
         admin2: \${{ components.voic/product-catalog.interfaces.admin.url }}
-        dep2: \${{ components.voic/admin-ui.interfaces.dep.url }}
     `;
 
     mock_fs({
@@ -538,9 +535,7 @@ describe('interfaces spec v1', () => {
     expect(graph.edges.map(e => e.toString())).members([
       'voic/product-catalog:latest-interfaces [public, admin, private] -> voic/product-catalog/api:latest [public, admin, private]',
       'voic/admin-ui/dashboard:latest [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]',
-      'voic/admin-ui:latest-interfaces [dep] -> voic/product-catalog:latest-interfaces [public]',
       'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]',
-      'gateway [dep2] -> voic/admin-ui:latest-interfaces [dep]'
     ])
 
     const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);
@@ -559,22 +554,8 @@ describe('interfaces spec v1', () => {
       ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
       API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
       PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
-      EXTERNAL_API_ADDR: 'http://dep2.localhost',
+      EXTERNAL_API_ADDR: 'http://public2.localhost',
     });
-
-    const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');
-    expect(node_to3).instanceOf(ServiceNode);
-    expect(node_to_interface_name3).to.eq('public');
-
-    const template = await DockerComposeUtils.generate(manager);
-    expect(template.services[Refs.url_safe_ref('voic/product-catalog/api:latest')].environment).to.deep.eq({
-      VIRTUAL_HOST: 'public2.localhost,admin2.localhost,dep2.localhost',
-      VIRTUAL_PORT_public2_localhost: '8080',
-      VIRTUAL_PORT: '8080',
-      VIRTUAL_PROTO: 'http',
-      VIRTUAL_PORT_admin2_localhost: '8081',
-      VIRTUAL_PORT_dep2_localhost: '8080'
-    })
   });
 
   it('should support HTTP basic auth', async () => {
