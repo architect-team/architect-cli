@@ -302,7 +302,6 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal(expected_leaf_compose);
 
       const expected_leaf_db_compose: DockerService = {
-        depends_on: [],
         environment: {},
         image: 'postgres:11',
         ports: ['50000:5432'],
@@ -319,17 +318,20 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_leaf_db_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
       const expected_leaf_api_compose: DockerService = {
-        depends_on: [test_leaf_db_latest_url_safe_ref, 'gateway'],
+        depends_on: [test_leaf_db_latest_url_safe_ref],
         environment: {
           DB_HOST: test_leaf_db_latest_url_safe_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${test_leaf_db_latest_url_safe_ref}:5432`,
-          VIRTUAL_HOST: 'public.localhost',
-          VIRTUAL_PORT: '8080',
-          VIRTUAL_PORT_public_localhost: '8080',
-          VIRTUAL_PROTO: 'http'
+          DB_URL: `postgres://${test_leaf_db_latest_url_safe_ref}:5432`
         },
+        "labels": [
+          "traefik.enable=true",
+          "traefik.http.routers.public.rule=Host(`public.localhost`)",
+          "traefik.http.routers.public.service=public-service",
+          "traefik.http.services.public-service.loadbalancer.server.port=8080",
+          "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+        ],
         image: 'api:latest',
         ports: ['50001:8080'],
         restart: 'always',
@@ -346,7 +348,6 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_api_compose);
 
       const expected_other_leaf_db_compose: DockerService = {
-        depends_on: [],
         environment: {},
         image: 'postgres:11',
         ports: ['50002:5432'],
@@ -363,17 +364,20 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_leaf_db_other_url_safe_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
       const expected_other_leaf_api_compose: DockerService = {
-        depends_on: [test_leaf_db_other_url_safe_ref, 'gateway'],
+        depends_on: [test_leaf_db_other_url_safe_ref],
         environment: {
           DB_HOST: test_leaf_db_other_url_safe_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${test_leaf_db_other_url_safe_ref}:5432`,
-          VIRTUAL_HOST: 'publicv1.localhost',
-          VIRTUAL_PORT: '8080',
-          VIRTUAL_PORT_publicv1_localhost: '8080',
-          VIRTUAL_PROTO: 'http'
+          DB_URL: `postgres://${test_leaf_db_other_url_safe_ref}:5432`
         },
+        "labels": [
+          "traefik.enable=true",
+          "traefik.http.routers.publicv1.rule=Host(`publicv1.localhost`)",
+          "traefik.http.routers.publicv1.service=publicv1-service",
+          "traefik.http.services.publicv1-service.loadbalancer.server.port=8080",
+          "traefik.http.services.publicv1-service.loadbalancer.server.scheme=http"
+        ],
         image: 'api:latest',
         ports: ['50003:8080'],
         restart: 'always',
@@ -441,14 +445,18 @@ describe('interfaces spec v1', () => {
 
     const template = await DockerComposeUtils.generate(manager);
     const expected_compose: DockerService = {
-      "depends_on": ["gateway"],
-      "environment": {
-        "VIRTUAL_HOST": "app.localhost,admin.localhost",
-        "VIRTUAL_PORT": "8081",
-        "VIRTUAL_PORT_admin_localhost": "8081",
-        "VIRTUAL_PORT_app_localhost": "8080",
-        "VIRTUAL_PROTO": "http"
-      },
+      "environment": {},
+      "labels": [
+        "traefik.enable=true",
+        "traefik.http.routers.app.rule=Host(`app.localhost`)",
+        "traefik.http.routers.app.service=app-service",
+        "traefik.http.services.app-service.loadbalancer.server.port=8080",
+        "traefik.http.services.app-service.loadbalancer.server.scheme=http",
+        "traefik.http.routers.admin.rule=Host(`admin.localhost`)",
+        "traefik.http.routers.admin.service=admin-service",
+        "traefik.http.services.admin-service.loadbalancer.server.port=8081",
+        "traefik.http.services.admin-service.loadbalancer.server.scheme=http"
+      ],
       "external_links": [
         "gateway:app.localhost",
         "gateway:admin.localhost"
@@ -475,8 +483,6 @@ describe('interfaces spec v1', () => {
       name: voic/admin-ui
       dependencies:
         voic/product-catalog: latest
-      interfaces:
-        dep: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
       services:
         dashboard:
           interfaces:
@@ -516,7 +522,6 @@ describe('interfaces spec v1', () => {
       interfaces:
         public2: \${{ components.voic/product-catalog.interfaces.public.url }}
         admin2: \${{ components.voic/product-catalog.interfaces.admin.url }}
-        dep2: \${{ components.voic/admin-ui.interfaces.dep.url }}
     `;
 
     mock_fs({
@@ -530,9 +535,7 @@ describe('interfaces spec v1', () => {
     expect(graph.edges.map(e => e.toString())).members([
       'voic/product-catalog:latest-interfaces [public, admin, private] -> voic/product-catalog/api:latest [public, admin, private]',
       'voic/admin-ui/dashboard:latest [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]',
-      'voic/admin-ui:latest-interfaces [dep] -> voic/product-catalog:latest-interfaces [public]',
       'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]',
-      'gateway [dep2] -> voic/admin-ui:latest-interfaces [dep]'
     ])
 
     const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);
@@ -551,22 +554,8 @@ describe('interfaces spec v1', () => {
       ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
       API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
       PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
-      EXTERNAL_API_ADDR: 'http://dep2.localhost',
+      EXTERNAL_API_ADDR: 'http://public2.localhost',
     });
-
-    const [node_to3, node_to_interface_name3] = graph.followEdge(ingress_edges[1], 'dep2');
-    expect(node_to3).instanceOf(ServiceNode);
-    expect(node_to_interface_name3).to.eq('public');
-
-    const template = await DockerComposeUtils.generate(manager);
-    expect(template.services[Refs.url_safe_ref('voic/product-catalog/api:latest')].environment).to.deep.eq({
-      VIRTUAL_HOST: 'public2.localhost,admin2.localhost,dep2.localhost',
-      VIRTUAL_PORT_public2_localhost: '8080',
-      VIRTUAL_PORT: '8080',
-      VIRTUAL_PROTO: 'http',
-      VIRTUAL_PORT_admin2_localhost: '8081',
-      VIRTUAL_PORT_dep2_localhost: '8080'
-    })
   });
 
   it('should support HTTP basic auth', async () => {

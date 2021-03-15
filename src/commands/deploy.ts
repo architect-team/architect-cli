@@ -16,7 +16,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
-import { Environment, EnvironmentUtils } from '../common/utils/environment';
+import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
 import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -38,6 +38,10 @@ export abstract class DeployCommand extends Command {
       hidden: true,
       exclusive: ['local', 'compose_file'],
     }),
+    recursive: flags.boolean({
+      char: 'r',
+      default: false,
+    }),
     refresh: flags.boolean({
       default: true,
       hidden: true,
@@ -54,52 +58,43 @@ export abstract class DeployCommand extends Command {
     }),
   };
 
-  async poll(deployment_id: string, match_stage?: string) {
+  async poll(pipeline_id: string) {
     return new Promise((resolve, reject) => {
       let poll_count = 0;
       const poll = setInterval(async () => {
-        const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
-        if (deployment.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
+        const { data: pipeline } = await this.app.api.get(`/pipelines/${pipeline_id}`);
+        if (pipeline.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
           clearInterval(poll);
-          reject(new Error('Deployment failed'));
+          reject(new Error('Pipeline failed'));
         }
-
-        if (match_stage) {
-          if (deployment.stage === match_stage) {
-            clearInterval(poll);
-            resolve(deployment);
-          }
-        } else if (deployment.applied_at) {
+        if (pipeline.applied_at) {
           clearInterval(poll);
-          resolve(deployment);
+          resolve(pipeline);
         }
         poll_count += 1;
       }, DeployCommand.POLL_INTERVAL);
     });
   }
 
-  async deployRemote(environment: Environment, env_config: EnvironmentConfig, merge: boolean) {
+  async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
-    cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
-    cli.action.stop();
     if (!flags.auto_approve) {
-      this.log(`Deployment ready for review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
+      this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply?',
       });
       if (!confirmation.deploy) {
-        this.warn('Canceled deploy');
+        this.warn('Canceled pipeline');
         return;
       }
     }
 
     cli.action.start(chalk.blue('Deploying'));
-    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
-    await this.poll(deployment.id);
+    await this.app.api.post(`/pipelines/${pipeline.id}/approve`);
+    await this.poll(pipeline.id);
     cli.action.stop();
     this.log(chalk.green(`Deployed`));
   }
@@ -167,13 +162,18 @@ export default class Deploy extends DeployCommand {
 
     const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
-    if (gateway) {
-      const gateway_port = gateway.ports[0] && (gateway.ports[0] as string).split(':')[0];
+    if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
+      const gateway_port = gateway.ports[0].split(':')[0];
       for (const [service_name, service] of Object.entries(compose.services)) {
-        if (service.environment && service.environment.VIRTUAL_HOST) {
-          for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
-            this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${split_host}:${gateway_port}/`);
+        if (service.labels?.includes('traefik.enable=true')) {
+          const host_rules = service.labels.filter(label => label.includes('rule=Host'));
+          for (const host_rule of host_rules) {
+            const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.localhost)`\)/g);
+            const host_match = host.exec(host_rule);
+            if (host_match) {
+              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            }
           }
         }
       }
@@ -181,7 +181,7 @@ export default class Deploy extends DeployCommand {
     }
 
     for (const svc_name of Object.keys(compose.services)) {
-      for (const port_pair of compose.services[svc_name].ports) {
+      for (const port_pair of compose.services[svc_name].ports || []) {
         const exposed_port = port_pair && (port_pair as string).split(':')[0];
         this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
       }
@@ -220,7 +220,7 @@ export default class Deploy extends DeployCommand {
               Host: host_name,
             },
             timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500; },
+            validateStatus: (status: number) => { return status < 500 && status !== 404; },
           }));
         }
 
@@ -273,8 +273,7 @@ export default class Deploy extends DeployCommand {
         this.app.api,
         path.resolve(untildify(args.config_or_component)),
         component_values,
-        {},
-        flags.interface.length === 0
+        {}
       );
       namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
     } catch (err) {
@@ -310,45 +309,36 @@ export default class Deploy extends DeployCommand {
   protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
-    let env_config: EnvironmentConfig;
-
-    let env_config_merge: boolean;
     if (ComponentVersionSlugUtils.Validator.test(args.config_or_component)) {
       const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
       const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-
-      env_config = EnvironmentConfigBuilder.buildFromJSON({
-        components: {
-          [namespaced_component_name]: parsed_component_version.tag,
-        },
-      });
-
-      const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
-
-      env_config_merge = true;
-    } else {
-      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
-
-      const env_config_path = path.resolve(untildify(args.config_or_component));
-      // Validate env config
-      env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
-      for (const [ck, cv] of Object.entries(env_config.getComponents())) {
-        if (cv.getExtends()?.startsWith('file:')) {
-          throw new Error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
-        }
-      }
-      env_config_merge = false;
     }
 
+    /* TODO:320 kill -p flag?
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     for (const [parameter_key, parameter] of Object.entries(extra_params)) {
       env_config.setParameter(parameter_key, parameter);
     }
+    */
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-    await this.deployRemote(environment, env_config, env_config_merge);
+
+    const interfaces_map: Dictionary<string> = {};
+    for (const i of flags.interface) {
+      const [key, value] = i.split(':');
+      interfaces_map[key] = value || key;
+    }
+
+    cli.action.start(chalk.blue('Creating pipeline'));
+    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, {
+      component: args.config_or_component,
+      interfaces: interfaces_map,
+      recursive: flags.recursive,
+    });
+    cli.action.stop();
+
+    await this.approvePipeline(pipeline);
   }
 
   getExtraEnvironmentVariables(parameters: string[]) {

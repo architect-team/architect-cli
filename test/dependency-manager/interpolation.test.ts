@@ -121,7 +121,6 @@ describe('interpolation spec v1', () => {
     const expected_compose: DockerComposeTemplate = {
       'services': {
         'concourse--web--web--latest--62arnmmt': {
-          'depends_on': [],
           'environment': {},
           'ports': [
             '50000:8080'
@@ -131,7 +130,6 @@ describe('interpolation spec v1', () => {
           }
         },
         'concourse--worker--worker--latest--umjxggst': {
-          'depends_on': [],
           'environment': {
             'REGULAR': `${url_safe_ref}:2222`,
             'SINGLE_QUOTE': `${url_safe_ref}:2222`,
@@ -171,13 +169,14 @@ describe('interpolation spec v1', () => {
 
     const public_template = await DockerComposeUtils.generate(public_manager);
     const expected_web_compose: DockerService = {
-      'depends_on': ['gateway'],
-      'environment': {
-        'VIRTUAL_HOST': 'public.localhost',
-        'VIRTUAL_PORT': '8080',
-        VIRTUAL_PORT_public_localhost: '8080',
-        'VIRTUAL_PROTO': 'http'
-      },
+      environment: {},
+      "labels": [
+        "traefik.enable=true",
+        "traefik.http.routers.public.rule=Host(`public.localhost`)",
+        "traefik.http.routers.public.service=public-service",
+        "traefik.http.services.public-service.loadbalancer.server.port=8080",
+        "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+      ],
       external_links: [
         'gateway:public.localhost'
       ],
@@ -196,7 +195,6 @@ describe('interpolation spec v1', () => {
     }
     expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal(expected_web_compose);
     const expected_worker_compose: DockerService = {
-      'depends_on': [],
       'environment': {
         'REGULAR': 'concourse--web--web--latest--62arnmmt:2222',
         'SINGLE_QUOTE': 'concourse--web--web--latest--62arnmmt:2222',

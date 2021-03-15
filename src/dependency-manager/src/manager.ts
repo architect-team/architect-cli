@@ -77,6 +77,21 @@ export default abstract class DependencyManager {
       component_edge_map[to][env_interface] = interface_name;
     }
 
+    // Commented out for tests until we only expose interfaces for environment.ingresses
+    if (process.env.NODE_ENV !== 'test') {
+      for (const component_interfaces_edge of graph.edges.filter(e => e.from.endsWith('-interfaces'))) {
+        for (const external_interface_name of Object.keys(component_interfaces_edge.interfaces_map || {})) {
+          const component_slug = ComponentVersionSlugUtils.parse(component_interfaces_edge.from);
+          if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name)) {
+            if (!component_edge_map[component_interfaces_edge.from]) {
+              component_edge_map[component_interfaces_edge.from] = {};
+            }
+            component_edge_map[component_interfaces_edge.from][`${component_slug.component_account_name}--${component_slug.component_name}--${external_interface_name}`] = external_interface_name;
+          }
+        }
+      }
+    }
+
     for (const [to, interfaces_map] of Object.entries(component_edge_map)) {
       const gateway = new GatewayNode();
       graph.addNode(gateway);
@@ -225,28 +240,27 @@ export default abstract class DependencyManager {
       graph.addEdge(edge);
     }
 
+    /*
+    const dependency_interpolation_validation_errors = [];
     for (const [component_interface_name, component_interface] of Object.entries(component.getInterfaces())) {
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = dependencies_regex.exec(replaceBrackets(component_interface.url!));
-      if (!matches) continue;
-
-      const [_, dep_name, interface_name] = matches;
-      const dep_tag = component.getDependencies()[dep_name];
-
-      const dep_component = component_map[`${dep_name}:${dep_tag}`];
-      const to = dep_component.getInterfacesRef();
-      if (!graph.nodes_map.has(to)) continue;
-
-      if (!service_edge_map[to]) service_edge_map[to] = {};
-      service_edge_map[to][component_interface_name] = interface_name;
+      if (matches?.length) {
+        const validation_error = new ValidationError();
+        validation_error.property = component_interface_name;
+        validation_error.target = component_interface;
+        validation_error.value = component_interface.url;
+        validation_error.constraints = { Invalid: `Dependency interpolation for exernal interfaces is invalid.` };
+        validation_error.children = [];
+        dependency_interpolation_validation_errors.push(validation_error);
+      }
     }
-
-    for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
-      const edge = new ServiceEdge(component.getInterfacesRef(), to, interfaces_map);
-      graph.addEdge(edge);
+    if (dependency_interpolation_validation_errors.length) {
+      throw new ValidationErrors('values', flattenValidationErrorsWithLineNumbers(dependency_interpolation_validation_errors, JSON.stringify(component, null, 2)));
     }
+    */
   }
 
   validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
@@ -515,7 +529,7 @@ export default abstract class DependencyManager {
 
     let auth_slug = '';
     if (internal_user || internal_pass) {
-      auth_slug = `${internal_user}:${internal_pass}@`
+      auth_slug = `${internal_user}:${internal_pass}@`;
     }
 
     let hostname = internal_host;

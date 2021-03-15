@@ -150,7 +150,6 @@ describe('external interfaces spec v1', () => {
     const expected_compose: DockerComposeTemplate = {
       services: {
         'architect--cloud--app--latest--kavtrukr': {
-          depends_on: [],
           environment: {
             API_ADDR: 'https://external.locahost',
             EXTERNAL_API_ADDR: 'https://external.locahost'
