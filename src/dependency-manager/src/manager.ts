@@ -79,12 +79,12 @@ export default abstract class DependencyManager {
 
     for (const component_interfaces_edge of graph.edges.filter(e => e.from.endsWith('-interfaces'))) {
       for (const external_interface_name of Object.keys(component_interfaces_edge.interfaces_map || {})) {
-        const component_name_matches = (new RegExp(/(.+\/.+):.+/g)).exec(component_interfaces_edge.from);
-        if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name) && component_name_matches?.length) {
+        const component_slug = ComponentVersionSlugUtils.parse(component_interfaces_edge.from);
+        if (!Object.values(component_edge_map[component_interfaces_edge.from] || {}).find((interface_name) => interface_name === external_interface_name)) {
           if (!component_edge_map[component_interfaces_edge.from]) {
             component_edge_map[component_interfaces_edge.from] = {};
           }
-          component_edge_map[component_interfaces_edge.from][`${component_name_matches[1].replace('/', '--')}--${external_interface_name}`] = external_interface_name;
+          component_edge_map[component_interfaces_edge.from][`${component_slug.component_account_name}--${component_slug.component_name}--${external_interface_name}`] = external_interface_name;
         }
       }
     }
