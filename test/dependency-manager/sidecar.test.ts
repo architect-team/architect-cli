@@ -12,7 +12,7 @@ import PortUtil from '../../src/common/utils/port';
 import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
-describe('interfaces spec v1', () => {
+describe('sidecar spec v1', () => {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Register.prototype, 'log', sinon.stub());
@@ -37,7 +37,7 @@ describe('interfaces spec v1', () => {
     moxios.uninstall();
   });
 
-  describe('leaf-branch', () => {
+  describe('sidecar leaf-branch', () => {
     let leaf_component = {} as any,
       branch_component = {} as any;
 
@@ -95,7 +95,7 @@ describe('interfaces spec v1', () => {
     const leaf_db_ref = ComponentConfig.getServiceRef('test/leaf/db:latest');
     const leaf_api_ref = ComponentConfig.getServiceRef('test/leaf/api:latest');
 
-    it('should connect two services together', async () => {
+    it('sidecar should connect two services together', async () => {
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       });
@@ -103,6 +103,7 @@ describe('interfaces spec v1', () => {
       const manager = new LocalDependencyManager(axios.create(), {
         'test/leaf': '/stack/leaf/architect.json'
       });
+      manager.use_sidecar = true;
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('test/leaf')
       ]);
@@ -117,13 +118,13 @@ describe('interfaces spec v1', () => {
       const api_node = graph.getNodeByRef(leaf_api_ref) as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'DB_PROTOCOL=postgres',
-        `DB_HOST=${leaf_db_ref}`,
-        'DB_PORT=5432',
-        `DB_URL=postgres://${leaf_db_ref}:5432`
+        `DB_HOST=127.0.0.1`,
+        'DB_PORT=12345',
+        `DB_URL=postgres://127.0.0.1:12345`
       ])
     });
 
-    it('should connect services to dependency interfaces', async () => {
+    it('sidecar should connect services to dependency interfaces', async () => {
       leaf_component.interfaces = {
         api: {
           url: '${{ services.api.interfaces.main.url }}',
@@ -139,6 +140,7 @@ describe('interfaces spec v1', () => {
         'test/leaf': '/stack/leaf/architect.json',
         'test/branch': '/stack/branch/architect.json'
       });
+      manager.use_sidecar = true;
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('test/leaf'),
         await manager.loadComponentConfig('test/branch')
@@ -160,13 +162,13 @@ describe('interfaces spec v1', () => {
 
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        `LEAF_HOST=${leaf_api_ref}`,
-        'LEAF_PORT=8080',
-        `LEAF_URL=http://${leaf_api_ref}:8080`
+        `LEAF_HOST=127.0.0.1`,
+        'LEAF_PORT=12345',
+        `LEAF_URL=http://127.0.0.1:12345`
       ])
     });
 
-    it('should expose environment interfaces via a gateway', async () => {
+    it('sidecar should expose environment interfaces via a gateway', async () => {
       leaf_component.interfaces = {
         api: '${{ services.api.interfaces.main.url }}',
       };
@@ -213,6 +215,7 @@ describe('interfaces spec v1', () => {
         'test/branch': '/stack/branch/architect.json',
         'test/other-leaf': '/stack/other-leaf/architect.json'
       });
+      manager.use_sidecar = true;
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('test/leaf', { public: 'api' }),
         await manager.loadComponentConfig('test/branch'),
@@ -250,9 +253,9 @@ describe('interfaces spec v1', () => {
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        `LEAF_HOST=${leaf_api_ref}`,
-        'LEAF_PORT=8080',
-        `LEAF_URL=http://${leaf_api_ref}:8080`,
+        `LEAF_HOST=127.0.0.1`,
+        'LEAF_PORT=12345',
+        `LEAF_URL=http://127.0.0.1:12345`,
         'EXTERNAL_INTERFACE=http://public.localhost',
       ])
 
@@ -269,10 +272,10 @@ describe('interfaces spec v1', () => {
       const expected_leaf_compose: DockerService = {
         depends_on: [leaf_api_ref],
         environment: {
-          LEAF_HOST: leaf_api_ref,
-          LEAF_PORT: '8080',
+          LEAF_HOST: '127.0.0.1',
+          LEAF_PORT: '12345',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: `http://${leaf_api_ref}:8080`,
+          LEAF_URL: `http://127.0.0.1:12345`,
           EXTERNAL_INTERFACE: 'http://public.localhost'
         },
         image: 'branch:latest',
@@ -308,10 +311,10 @@ describe('interfaces spec v1', () => {
       const expected_leaf_api_compose: DockerService = {
         depends_on: [leaf_db_ref],
         environment: {
-          DB_HOST: leaf_db_ref,
-          DB_PORT: '5432',
+          DB_HOST: '127.0.0.1',
+          DB_PORT: '12345',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${leaf_db_ref}:5432`
+          DB_URL: `postgres://127.0.0.1:12345`
         },
         "labels": [
           "traefik.enable=true",
@@ -354,10 +357,10 @@ describe('interfaces spec v1', () => {
       const expected_other_leaf_api_compose: DockerService = {
         depends_on: [other_leaf_db_ref],
         environment: {
-          DB_HOST: other_leaf_db_ref,
-          DB_PORT: '5432',
+          DB_HOST: '127.0.0.1',
+          DB_PORT: '12345',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${other_leaf_db_ref}:5432`
+          DB_URL: `postgres://127.0.0.1:12345`
         },
         "labels": [
           "traefik.enable=true",
@@ -383,7 +386,7 @@ describe('interfaces spec v1', () => {
     });
   });
 
-  it('service with multiple public interfaces', async () => {
+  it('sidecar service with multiple public interfaces', async () => {
     const component_config = {
       name: 'architect/cloud',
       services: {
@@ -407,6 +410,7 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/cloud': '/stack/architect.json',
     });
+    manager.use_sidecar = true;
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
     ]);
@@ -458,7 +462,7 @@ describe('interfaces spec v1', () => {
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });
 
-  it('using multiple ports from a dependency', async () => {
+  it('sidecar using multiple ports from a dependency', async () => {
     const admin_ui_config = `
       name: voic/admin-ui
       dependencies:
@@ -502,6 +506,7 @@ describe('interfaces spec v1', () => {
       'voic/admin-ui': '/stack/admin-ui/architect.yml',
       'voic/product-catalog': '/stack/product-catalog/architect.yml'
     });
+    manager.use_sidecar = true;
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('voic/admin-ui'),
       await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
@@ -529,14 +534,14 @@ describe('interfaces spec v1', () => {
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
     expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      ADMIN_ADDR: `http://${api_ref}:8081`,
-      API_ADDR: `http://${api_ref}:8080`,
-      PRIVATE_ADDR: `http://${api_ref}:8082`,
+      ADMIN_ADDR: `http://127.0.0.1:12346`,
+      API_ADDR: `http://127.0.0.1:12345`,
+      PRIVATE_ADDR: `http://127.0.0.1:12347`,
       EXTERNAL_API_ADDR: 'http://public2.localhost',
     });
   });
 
-  it('should support HTTP basic auth', async () => {
+  it('sidecar should support HTTP basic auth', async () => {
     const smtp_config = `
       name: architect/smtp
       services:
@@ -564,68 +569,22 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/smtp': '/stack/smtp/architect.yml',
     });
+    manager.use_sidecar = true;
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/smtp'),
     ]);
 
-    const mail_ref = ComponentConfig.getServiceRef('architect/smtp/maildev:latest');
     const app_ref = ComponentConfig.getServiceRef('architect/smtp/test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: `smtp://test-user:test-pass@${mail_ref}:1025`,
+      SMTP_ADDR: `smtp://test-user:test-pass@127.0.0.1:12345`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
     });
   });
 
-  it('should allow HTTP basic auth values to be parameters', async () => {
-    const smtp_config = `
-      name: architect/smtp
-      parameters:
-        SMTP_USER: param-user
-        SMTP_PASS: param-pass
-      services:
-        maildev:
-          image: maildev/maildev
-          interfaces:
-            smtp:
-              port: 1025
-              protocol: smtp
-              username: \${{ parameters.SMTP_USER }}
-              password: \${{ parameters.SMTP_PASS }}
-            dashboard: 1080
-        test-app:
-          image: hashicorp/http-echo
-          environment:
-            SMTP_ADDR: \${{ services.maildev.interfaces.smtp.url }}
-            SMTP_USER: \${{ services.maildev.interfaces.smtp.username }}
-            SMTP_PASS: \${{ services.maildev.interfaces.smtp.password }}
-    `;
-
-    mock_fs({
-      '/stack/smtp/architect.yml': smtp_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), {
-      'architect/smtp': '/stack/smtp/architect.yml',
-    });
-    const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
-    ]);
-
-    const mail_ref = ComponentConfig.getServiceRef('architect/smtp/maildev:latest');
-    const app_ref = ComponentConfig.getServiceRef('architect/smtp/test-app:latest');
-
-    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: `smtp://param-user:param-pass@${mail_ref}:1025`,
-      SMTP_USER: 'param-user',
-      SMTP_PASS: 'param-pass',
-    });
-  });
-
-  it('should support HTTP basic auth for dependency interfaces', async () => {
+  it('sidecar should support HTTP basic auth for dependency interfaces', async () => {
     const smtp_config = `
       name: architect/smtp
       services:
@@ -664,6 +623,7 @@ describe('interfaces spec v1', () => {
       'architect/smtp': '/stack/smtp/architect.yml',
       'architect/upstream': '/stack/upstream/architect.yml',
     });
+    manager.use_sidecar = true;
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/smtp'),
       await manager.loadComponentConfig('architect/upstream'),
@@ -674,24 +634,9 @@ describe('interfaces spec v1', () => {
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: `smtp://test-user:test-pass@${mail_ref}:1025`,
+      SMTP_ADDR: `smtp://test-user:test-pass@127.0.0.1:12345`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
     });
   });
 });
-
-// TODO:207
-/*
-services:
-  api:
-    interfaces:
-      main:
-        username: test
-        password: test
-interfaces:
-  exposed:
-    host: ${{ services.api.interfaces.main.host }}
-    port: ${{ services.api.interfaces.main.port }}
-    protocol: ${{ services.api.interfaces.main.protocol }}
-*/

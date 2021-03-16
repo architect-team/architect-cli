@@ -1,5 +1,6 @@
 import { Dictionary } from '../../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { Refs } from '../../utils/refs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
@@ -10,7 +11,11 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;
 
   abstract getName(): ComponentSlug;
+  abstract setName(name: string): void;
+  abstract getTag(): string;
   abstract getRef(): ComponentVersionSlug;
+  abstract getInstanceId(): string;
+  abstract setInstanceId(instance_id: string): void;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;
   abstract getLocalPath(): string | undefined;
@@ -50,9 +55,18 @@ export abstract class ComponentConfig extends BaseConfig {
     return ComponentVersionSlugUtils.parse(this.getRef()).tag;
   }
 
-  getServiceRef(service_name: string): ServiceVersionSlug {
+  static getServiceRef(service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+    const parsed = ServiceVersionSlugUtils.parse(service_ref);
+    if (instance_id) {
+      service_ref = `${service_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+    }
+    return Refs.url_safe_ref(`${parsed.component_name}-${parsed.service_name}`, service_ref, max_length);
+  }
+
+  getServiceRef(service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    return ComponentConfig.getServiceRef(service_ref, this.getInstanceId(), max_length);
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {
@@ -60,20 +74,6 @@ export abstract class ComponentConfig extends BaseConfig {
       const [service_name, component_tag] = service_ref.substr(this.getName().length + 1).split(':');
       if (component_tag === this.getComponentVersion()) {
         return this.getServices()[service_name];
-      }
-    }
-  }
-
-  getTaskRef(task_name: string): ServiceVersionSlug {
-    const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, task_name, parsed.tag);
-  }
-
-  getTaskByRef(task_ref: string): TaskConfig | undefined {
-    if (task_ref.startsWith(this.getName())) {
-      const [task_name, component_tag] = task_ref.substr(this.getName().length + 1).split(':');
-      if (component_tag === this.getComponentVersion()) {
-        return this.getTasks()[task_name];
       }
     }
   }

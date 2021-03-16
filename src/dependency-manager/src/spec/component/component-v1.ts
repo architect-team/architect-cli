@@ -37,9 +37,6 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
   __version?: string;
 
-  @IsOptional({
-    groups: ['operator'],
-  })
   @IsString({ always: true })
   @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
@@ -49,6 +46,9 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['developer'],
   })
   name!: string;
+
+  @IsOptional({ always: true })
+  instance_id!: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -100,27 +100,30 @@ export class ComponentConfigV1 extends ComponentConfig {
   artifact_image?: string;
 
   getName(): ComponentSlug {
-    let split;
-    try {
-      split = ComponentSlugUtils.parse(this.name);
-    } catch {
-      split = ComponentVersionSlugUtils.parse(this.name);
-    }
+    const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
+  setName(name: string): void {
+    this.name = name;
+  }
+
+  getTag(): ComponentSlug {
+    const split = ComponentVersionSlugUtils.parse(this.name);
+    return split.tag;
+  }
+
   getRef(): ComponentVersionSlug {
-    let split;
-    if (this.extends?.startsWith(`${this.name}:`)) {
-      split = ComponentVersionSlugUtils.parse(this.extends);
-    } else {
-      try {
-        split = ComponentSlugUtils.parse(this.name);
-      } catch {
-        split = ComponentVersionSlugUtils.parse(this.name);
-      }
-    }
+    const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
+  }
+
+  getInstanceId() {
+    return this.instance_id || '';
+  }
+
+  setInstanceId(instance_id: string) {
+    this.instance_id = instance_id;
   }
 
   getExtends() {

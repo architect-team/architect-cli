@@ -1,98 +1,170 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import { plainToClass } from 'class-transformer';
-import fs from 'fs-extra';
-import path from 'path';
-import DependencyManager, { DependencyNode, EnvironmentConfig, EnvironmentConfigBuilder, Refs } from '../../dependency-manager/src';
+import DependencyManager, { ComponentVersionSlugUtils, DependencyNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
+import DependencyEdge from '../../dependency-manager/src/graph/edge';
+import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
+import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
+import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
-import { ComponentConfigV1 } from '../../dependency-manager/src/spec/component/component-v1';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
-import { readIfFile } from '../../dependency-manager/src/utils/files';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
-  config_path: string;
   linked_components: Dictionary<string>;
+  use_sidecar = false;
 
-  protected constructor(api: AxiosInstance, config_path = '', linked_components: Dictionary<string> = {}) {
+  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
-    this.config_path = config_path || '';
     this.linked_components = linked_components;
   }
 
-  static async create(api: AxiosInstance, values_dictionary: Dictionary<Dictionary<string>> = {}) {
-    return this.createFromPath(api, '', values_dictionary);
+  async getGraph(component_configs: ComponentConfig[], values?: Dictionary<Dictionary<string>>) {
+    const graph = new DependencyGraph();
+
+    const gateway_port = await PortUtil.getAvailablePort(80);
+
+    // Interpolate the component before generating then nodes to support dynamic host overrides
+    const interpolated_component_configs = await this.interpolateComponents(component_configs, `localhost:${gateway_port}`, values);
+
+    // Add nodes
+    for (const component_config of interpolated_component_configs) {
+      let nodes: DependencyNode[] = [];
+
+      nodes = nodes.concat(this.getComponentNodes(component_config));
+
+      if (Object.keys(component_config.getInterfaces()).length) {
+        const node = new InterfacesNode(component_config.getInterfacesRef());
+        nodes.push(node);
+      }
+
+      const component_interfaces: Dictionary<string> = {};
+      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
+        if (interface_obj.external_name) {
+          component_interfaces[interface_obj.external_name] = interface_name;
+        }
+      }
+
+      if (Object.keys(component_interfaces).length) {
+        nodes.push(new GatewayNode(gateway_port));
+      }
+
+      for (const node of nodes) {
+        graph.addNode(node);
+      }
+    }
+
+    const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
+
+    // Add edges
+    for (const component_config of component_configs) {
+      const instance_id = '';
+      let edges: DependencyEdge[] = [];
+      const ignore_keys = ['']; // Ignore all errors
+      const interpolated_component_config = this.interpolateInterfaces(component_config, ignore_keys);
+      edges = edges.concat(this.getComponentEdges(graph, interpolated_component_config));
+
+      const component_interfaces: Dictionary<string> = {};
+      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
+        if (interface_obj.external_name) {
+          component_interfaces[interface_obj.external_name] = interface_name;
+        }
+      }
+
+      if (gateway_node && Object.keys(component_interfaces).length) {
+        const ingress_edge = new IngressEdge(gateway_node.ref, component_config.getInterfacesRef(), component_interfaces);
+        edges.push(ingress_edge);
+      }
+
+      for (const edge of edges) {
+        graph.addEdge(edge);
+      }
+    }
+
+    return graph;
   }
 
-  static async createFromPath(api: AxiosInstance, component_config_path: string, values_dictionary: Dictionary<Dictionary<string>> = {}, linked_components: Dictionary<string> = {}): Promise<LocalDependencyManager> {
-    let env_config;
-    const dependency_manager = new LocalDependencyManager(api, component_config_path, linked_components);
-    if (component_config_path.endsWith('environment.yml') || component_config_path.endsWith('environment.json') || component_config_path.endsWith('env-mock-dev.yml') || !component_config_path) { // TODO: remove when environment configs are offically gone
-      env_config = dependency_manager.config_path
-        ? await EnvironmentConfigBuilder.buildFromPath(dependency_manager.config_path)
-        : EnvironmentConfigBuilder.buildFromJSON({});
+  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
+    const { component_account_name, component_name, tag } = ComponentVersionSlugUtils.parse(component_string);
+    const component_slug = `${component_account_name}/${component_name}`;
+    const component_ref = `${component_slug}:${tag}`;
+
+    let config: ComponentConfig;
+    // Load locally linked component config
+    if (component_slug in this.linked_components) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
+      }
+      config = await ComponentConfigBuilder.buildFromPath(this.linked_components[component_slug]);
+      config.setExtends(`file:${this.linked_components[component_slug]}`);
     } else {
-      const component_config = await ComponentConfigBuilder.buildFromPath(component_config_path);
-      const env_json: any = { components: {}, interfaces: {} };
-      env_json.components[component_config.getName()] = plainToClass(ComponentConfigV1, { extends: `file:${component_config_path}`, name: component_config.getName() });
-      env_config = EnvironmentConfigBuilder.buildFromJSON(env_json);
-    }
-    await dependency_manager.init(env_config, values_dictionary);
-    return dependency_manager;
-  }
-
-  /**
-   * @override
-   */
-  async getServicePort(starting_port?: number): Promise<number> {
-    return PortUtil.getAvailablePort(starting_port);
-  }
-
-  async loadComponentConfig(initial_config: ComponentConfig) {
-    const component_extends = initial_config.getExtends();
-    const component_name = initial_config.getName();
-
-    if (component_extends && component_extends.startsWith('file:')) {
-      return ComponentConfigBuilder.buildFromPath(component_extends.substr('file:'.length));
-    } else if (component_name in this.linked_components) {
-      initial_config.setExtends(`file:${this.linked_components[component_name]}`);
-      // Load locally linked component config
-      console.log(`Using locally linked ${chalk.blue(component_name)} found at ${chalk.blue(this.linked_components[component_name])}`);
-      return ComponentConfigBuilder.buildFromPath(this.linked_components[component_name]);
-    }
-
-    if (component_extends) {
       // Load remote component config
-      const [component_name, component_tag] = component_extends.split(':');
-      const [account_prefix, component_suffix] = component_name.split('/');
-      const { data: component_version } = await this.api.get(`/accounts/${account_prefix}/components/${component_suffix}/versions/${component_tag}`).catch((err) => {
-        err.message = `Could not download component for ${component_extends}\n${err.message}`;
+      const { data: component_version } = await this.api.get(`/accounts/${component_account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
+        err.message = `Could not download component for ${component_ref}\n${err.message}`;
         throw err;
       });
-
-      const config = ComponentConfigBuilder.buildFromJSON(component_version.config);
-      return config;
-    } else {
-      return ComponentConfigBuilder.buildFromJSON(initial_config);
+      config = ComponentConfigBuilder.buildFromJSON(component_version.config);
     }
+
+    // Set the tag
+    config.setName(component_ref);
+
+    config.setInstanceId('');
+
+    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
+      const interface_obj = config.getInterfaces()[interface_to];
+      if (!interface_obj) {
+        throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
+      }
+      interface_obj.external_name = interface_from;
+      config.setInterface(interface_to, interface_obj);
+    }
+
+    // Set debug values
+    for (const [sk, sv] of Object.entries(config.getServices())) {
+      // If debug is enabled merge in debug options ex. debug.command -> command
+      const debug_options = sv.getDebugOptions();
+      if (debug_options) {
+        config.setService(sk, sv.merge(debug_options));
+      }
+    }
+    for (const [tk, tv] of Object.entries(config.getTasks())) {
+      // If debug is enabled merge in debug options ex. debug.command -> command
+      const debug_options = tv.getDebugOptions();
+      if (debug_options) {
+        config.setTask(tk, tv.merge(debug_options));
+      }
+    }
+
+    return config;
   }
 
-  async loadComponentConfigWrapper(initial_config: ComponentConfig) {
-    const component_config = await super.loadComponentConfigWrapper(initial_config);
-    let component_path = component_config.getLocalPath();
-    if (component_path) {
-      component_path = fs.lstatSync(component_path).isFile() ? path.dirname(component_path) : component_path;
+  async loadComponentConfigs(initial_component: ComponentConfig) {
+    const component_configs = [];
+    const component_configs_queue = [initial_component];
+    const loaded_components = new Set();
+    while (component_configs_queue.length) {
+      const component_config = component_configs_queue.pop();
+      if (!component_config) { break; }
+      if (loaded_components.has(component_config.getRef())) {
+        continue;
+      }
+      loaded_components.add(component_config.getRef());
+      component_configs.push(component_config);
+
+      for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
+        const dep_component_config = await this.loadComponentConfig(`${dep_name}:${dep_tag}`);
+        component_configs_queue.push(dep_component_config);
+      }
     }
-    return component_config;
+    return component_configs;
   }
 
-  // Ignore architect context for local
-  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = ['architect.']) {
+  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]) {
     const errors = super.validateComponent(component, context, ignore_keys);
     const component_extends = component.getExtends();
     if (component_extends?.startsWith('file:') && errors.length) {
@@ -101,62 +173,5 @@ export default class LocalDependencyManager extends DependencyManager {
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
     return errors;
-  }
-
-  validateEnvironment(environment: EnvironmentConfig, enriched_environment: EnvironmentConfig) {
-    const errors = super.validateEnvironment(environment, enriched_environment);
-    if (this.config_path && errors.length) {
-      const file_contents = fs.readFileSync(this.config_path);
-      throw new ValidationErrors(this.config_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
-    }
-    return errors;
-  }
-
-  async interpolateEnvironment(graph: DependencyGraph, environment: EnvironmentConfig, component_map: Dictionary<ComponentConfig>) {
-    for (const [component_name, component] of Object.entries(environment.getComponents())) {
-      for (const pv of Object.values(component.getParameters())) {
-        if (pv?.default) pv.default = readIfFile(pv.default, this.config_path);
-      }
-      environment.setComponent(component_name, component);
-    }
-
-    return super.interpolateEnvironment(graph, environment, component_map);
-  }
-
-  toExternalHost() {
-    return 'localhost';
-  }
-
-  toExternalProtocol() {
-    return 'http';
-  }
-
-  toInternalHost(node: DependencyNode) {
-    return Refs.url_safe_ref(node.ref);
-  }
-
-  async loadComponents(graph: DependencyGraph) {
-    const components_map = await super.loadComponents(graph);
-    for (const component of Object.values(components_map)) {
-      for (const [sk, sv] of Object.entries(component.getServices())) {
-        // If debug is enabled merge in debug options ex. debug.command -> command
-        const debug_options = sv.getDebugOptions();
-        if (debug_options) {
-          component.setService(sk, sv.merge(debug_options));
-        }
-      }
-      for (const [tk, tv] of Object.entries(component.getTasks())) {
-        // If debug is enabled merge in debug options ex. debug.command -> command
-        const debug_options = tv.getDebugOptions();
-        if (debug_options) {
-          component.setTask(tk, tv.merge(debug_options));
-        }
-      }
-    }
-    return components_map;
-  }
-
-  setLinkedComponents(linked_components: Dictionary<string> = {}) {
-    this.linked_components = linked_components;
   }
 }

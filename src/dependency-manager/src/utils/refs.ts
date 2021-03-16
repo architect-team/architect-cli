@@ -1,46 +1,30 @@
 import crypto from 'crypto';
-import { GatewaySlugUtils, InterfaceSlugUtils, Slugs } from './slugs';
 
 export class Refs {
-
-  private static URL_SAFE_DELIMITER = '--';
-  private static URL_SAFE_PUNCTUATION_REPLACEMENT = '-';
   private static HASH_LENGTH = 8;
-  private static DEFAULT_MAX_LENGTH = 63;
+  public static DEFAULT_MAX_LENGTH = 63;
 
-  public static url_safe_ref(ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
-    if (ref === GatewaySlugUtils.StringLiteral) {
-      return ref;
+  public static url_safe_ref(ref: string, max_length?: number): string;
+  // eslint-disable-next-line no-dupe-class-members
+  public static url_safe_ref(ref: string, seed?: string, max_length?: number): string;
+  // eslint-disable-next-line no-dupe-class-members
+  public static url_safe_ref(ref: string, seed?: string | number, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
+    if (typeof seed == 'number') {
+      max_length = seed;
     }
-    let suffix = '';
-    let url_safe_ref = ref;
-    if (ref.endsWith(InterfaceSlugUtils.Suffix)) {
-      suffix = InterfaceSlugUtils.Suffix;
-      url_safe_ref = ref.slice(0, -1 * (InterfaceSlugUtils.Suffix.length));
-    }
-
-    const hash = Refs.to_digest(ref);
-
-    url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.NAMESPACE_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
-    url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.TAG_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
-    url_safe_ref = url_safe_ref.replace(/[^a-zA-Z0-9-]/g, Refs.URL_SAFE_PUNCTUATION_REPLACEMENT);
-
-    // slice if the whole thing is too long
-    const max_base_length = max_length - Refs.HASH_LENGTH - Refs.URL_SAFE_DELIMITER.length - suffix.length;
-    if (url_safe_ref.length > max_base_length) {
-      url_safe_ref = url_safe_ref.slice(0, max_base_length);
-      // trim any trailing dashes
-      while (url_safe_ref.charAt(url_safe_ref.length - 1) === Refs.URL_SAFE_DELIMITER[0]) {
-        url_safe_ref = url_safe_ref.substring(0, url_safe_ref.length - 1);
-      }
+    if (typeof seed == 'number' || !seed) {
+      seed = ref;
     }
 
-    // add the hash
-    url_safe_ref += Refs.URL_SAFE_DELIMITER;
-    url_safe_ref += hash.slice(0, Refs.HASH_LENGTH);
-    url_safe_ref += suffix;
+    if (max_length < Refs.HASH_LENGTH) {
+      throw new Error('Max length cannot be less than hash length');
+    }
 
-    return url_safe_ref;
+    const sanitized_ref = ref.replace(/[^a-zA-Z0-9-]/g, '-');
+    const truncated_ref = sanitized_ref.substr(0, (max_length - 1) - Refs.HASH_LENGTH);
+    const hash = Refs.to_digest(seed).substr(0, Refs.HASH_LENGTH);
+
+    return `${truncated_ref}-${hash}`;
   }
 
   /**

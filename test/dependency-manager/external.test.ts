@@ -9,9 +9,9 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
 
-describe('external interfaces spec v1', () => {
+describe('external spec v1', () => {
   beforeEach(() => {
     moxios.install();
     moxios.wait(function () {
@@ -40,46 +40,145 @@ describe('external interfaces spec v1', () => {
       services: {
         app: {
           interfaces: {
-            main: 8080
+            main: {
+              host: 'cloud.architect.io',
+              port: 8080
+            }
+          },
+          environment: {
+            HOST: '${{ services.app.interfaces.main.host }}',
+            ADDR: '${{ services.app.interfaces.main.url }}'
           }
         }
       },
       interfaces: {}
     };
 
-    const env_config = {
-      components: {
-        'architect/cloud': {
-          extends: 'file:.',
-          services: {
-            app: {
-              interfaces: {
-                main: {
-                  host: 'http://external.locahost',
-                  port: 80
-                }
-              }
+    mock_fs({
+      '/stack/architect.json': JSON.stringify(component_config),
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.json'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud:latest')
+    ]);
+
+    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      app_ref,
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([])
+    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+    expect(app_node.is_external).to.be.true;
+    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+      HOST: 'cloud.architect.io',
+      ADDR: 'http://cloud.architect.io:8080'
+    })
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template).to.be.deep.equal({
+      'services': {},
+      'version': '3',
+      'volumes': {},
+    })
+  });
+
+  it('simple no override', async () => {
+    const component_config = {
+      name: 'architect/cloud',
+      parameters: {
+        optional_host: { required: false }
+      },
+      services: {
+        app: {
+          interfaces: {
+            main: {
+              host: '${{ parameters.optional_host }}',
+              port: 8080
             }
+          },
+          environment: {
+            HOST: '${{ services.app.interfaces.main.host }}',
+            ADDR: '${{ services.app.interfaces.main.url }}'
           }
         }
-      }
+      },
+      interfaces: {}
     };
 
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.json'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud:latest')
+    ]);
+
+    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
-      'architect/cloud/app:latest',
+      app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
-    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
-    expect(app_node.is_external).to.be.true;
+    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+    expect(app_node.is_external).to.be.false;
+    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+      HOST: app_ref,
+      ADDR: `http://${app_ref}:8080`
+    })
+  });
 
-    const template = await DockerComposeUtils.generate(manager);
+  it('simple external override', async () => {
+    const component_config = {
+      name: 'architect/cloud',
+      parameters: {
+        optional_host: {}
+      },
+      services: {
+        app: {
+          interfaces: {
+            main: {
+              host: '${{ parameters.optional_host }}',
+              port: 8080
+            }
+          },
+          environment: {
+            HOST: '${{ services.app.interfaces.main.host }}',
+            ADDR: '${{ services.app.interfaces.main.url }}'
+          }
+        }
+      },
+      interfaces: {}
+    };
+
+    mock_fs({
+      '/stack/architect.json': JSON.stringify(component_config),
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.json'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud:latest')
+    ], { '*': { optional_host: 'cloud.architect.io' } });
+
+    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      app_ref,
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([])
+    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+    expect(app_node.is_external).to.be.true;
+    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+      HOST: 'cloud.architect.io',
+      ADDR: 'http://cloud.architect.io:8080'
+    })
+
+    const template = await DockerComposeUtils.generate(graph);
     expect(template).to.be.deep.equal({
       'services': {},
       'version': '3',
@@ -102,54 +201,46 @@ describe('external interfaces spec v1', () => {
         },
         api: {
           interfaces: {
-            main: 8080
+            main: {
+              protocol: 'https',
+              host: 'external.locahost',
+              port: 443,
+            }
           }
         }
       },
       interfaces: {}
     };
 
-    const env_config = {
-      components: {
-        'architect/cloud': {
-          extends: 'file:.',
-          services: {
-            api: {
-              interfaces: {
-                main: {
-                  host: 'external.locahost',
-                  port: 443,
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.json'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud:latest')
+    ]);
+    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest')
+
     expect(graph.nodes.map((n) => n.ref)).has.members([
-      'architect/cloud/app:latest',
-      'architect/cloud/api:latest'
+      app_ref,
+      api_ref
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      'architect/cloud/app:latest [service->main] -> architect/cloud/api:latest [main]'
+      `${app_ref} [service->main] -> ${api_ref} [main]`
     ])
-    const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.false;
-    const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+    const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(api_node.is_external).to.be.true;
 
-    const template = await DockerComposeUtils.generate(manager);
+    const template = await DockerComposeUtils.generate(graph);
     const expected_compose: DockerComposeTemplate = {
       services: {
-        'architect--cloud--app--latest--kavtrukr': {
+        [app_ref]: {
           environment: {
             API_ADDR: 'https://external.locahost',
             EXTERNAL_API_ADDR: 'https://external.locahost'
@@ -166,11 +257,68 @@ describe('external interfaces spec v1', () => {
       'volumes': {},
     };
     if (process.platform === 'linux') {
-      expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+      expected_compose.services[app_ref].extra_hosts = [
         "host.docker.internal:host-gateway"
       ];
     }
     expect(template).to.be.deep.equal(expected_compose);
+  });
+
+  it('dependency refs external host', async () => {
+    const component_config = `
+      name: architect/component
+      dependencies:
+        architect/dependency: latest
+      services:
+        app:
+          image: hashicorp/http-echo
+          environment:
+            DEP_ADDR: \${{ dependencies.architect/dependency.interfaces.api.url }}
+            CI_ADDR: \${{ dependencies.architect/dependency.interfaces.ci.url }}
+    `;
+
+    const dependency_config = `
+      name: architect/dependency
+      parameters:
+        optional_host: ci.architect.io
+      services:
+        app:
+          image: hashicorp/http-echo
+          interfaces:
+            api:
+              port: 443
+              protocol: https
+              host: external.localhost
+            ci:
+              port: 8501
+              protocol: https
+              host: \${{ parameters.optional_host }}
+      interfaces:
+        api: \${{ services.app.interfaces.api.url }}
+        ci: \${{ services.app.interfaces.ci.url }}
+    `;
+
+    mock_fs({
+      '/stack/component/architect.yml': component_config,
+      '/stack/dependency/architect.yml': dependency_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/component': '/stack/component/architect.yml',
+      'architect/dependency': '/stack/dependency/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/component:latest'),
+      await manager.loadComponentConfig('architect/dependency:latest')
+    ]);
+
+    const app_ref = ComponentConfig.getServiceRef('architect/component/app:latest')
+
+    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
+    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+      DEP_ADDR: `https://external.localhost`,
+      CI_ADDR: `https://ci.architect.io:8501`
+    });
   });
 
   it('should strip default ports from environment ingress references', async () => {
@@ -187,24 +335,22 @@ describe('external interfaces spec v1', () => {
         app: \${{ services.app.interfaces.api.url }}
     `;
 
-    const env_config = `
-      components:
-        architect/component: file:./component
-      interfaces:
-        subdomain: \${{ components['architect/component'].interfaces.app.url }}
-    `;
-
     mock_fs({
       '/stack/component/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/component': '/stack/component/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/component:latest')
+    ]);
 
-    const test_node = graph.getNodeByRef('architect/component/app:latest') as ServiceNode;
+    const app_ref = ComponentConfig.getServiceRef('architect/component/app:latest')
+
+    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SELF_ADDR: 'http://subdomain.localhost',
+      SELF_ADDR: `http://${app_ref}.localhost`,
     });
   });
 });

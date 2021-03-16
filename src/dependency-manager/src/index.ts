@@ -13,8 +13,6 @@ export * from './spec/common/parameter-spec';
 export * from './spec/common/volume-spec';
 export * from './spec/component/component-builder';
 export * from './spec/component/component-config';
-export * from './spec/environment/environment-builder';
-export * from './spec/environment/environment-config';
 export * from './spec/resource/resource-config';
 export * from './spec/service/service-config';
 export * from './spec/task/task-config';

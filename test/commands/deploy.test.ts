@@ -2,12 +2,10 @@ import { expect, test } from '@oclif/test';
 import path from 'path';
 import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfig, ComponentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -37,13 +35,6 @@ describe('local deploy environment', function () {
   afterEach(function () {
     sinon.restore();
   });
-
-  const local_env_config = {
-    "components": {
-      "examples/database-seeding:latest": "file:./examples/database-seeding/",
-      "examples/echo:latest": "file:./examples/hello-world/"
-    }
-  }
 
   const local_component_config = {
     "name": "examples/hello-world",
@@ -275,18 +266,22 @@ describe('local deploy environment', function () {
     }
   };
 
+  const seed_app_ref = ComponentConfig.getServiceRef('examples/database-seeding/app:latest')
+  const seed_db_ref = ComponentConfig.getServiceRef('examples/database-seeding/my-demo-db:latest')
+  const echo_ref = ComponentConfig.getServiceRef('examples/echo/api:latest')
+
   const environment_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
-      "examples--database-seeding--app--latest--7fdljhug": {
+      [seed_app_ref]: {
         "ports": [
           "50000:3000"
         ],
         "depends_on": [
-          "examples--database-seeding--my-demo-db--latest--uimfmkw0"
+          seed_db_ref
         ],
         "environment": {
-          "DATABASE_HOST": "examples--database-seeding--my-demo-db--latest--uimfmkw0",
+          "DATABASE_HOST": seed_db_ref,
           "DATABASE_PORT": "5432",
           "DATABASE_USER": "postgres",
           "DATABASE_PASSWORD": "architect",
@@ -298,7 +293,7 @@ describe('local deploy environment', function () {
           "dockerfile": "Dockerfile"
         }
       },
-      "examples--database-seeding--my-demo-db--latest--uimfmkw0": {
+      [seed_db_ref]: {
         "ports": [
           "50001:5432"
         ],
@@ -309,7 +304,7 @@ describe('local deploy environment', function () {
         },
         "image": "postgres:11"
       },
-      "examples--echo--api--latest--cpe6ciyk": {
+      [echo_ref]: {
         "ports": [
           "50002:3000",
         ],
@@ -320,13 +315,13 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
   if (process.platform === 'linux') {
-    environment_expected_compose.services['examples--database-seeding--app--latest--7fdljhug'].extra_hosts = [
+    environment_expected_compose.services[seed_app_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
-    environment_expected_compose.services['examples--database-seeding--my-demo-db--latest--uimfmkw0'].extra_hosts = [
+    environment_expected_compose.services[seed_db_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
-    environment_expected_compose.services['examples--echo--api--latest--cpe6ciyk'].extra_hosts = [
+    environment_expected_compose.services[echo_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
   }
@@ -334,16 +329,16 @@ describe('local deploy environment', function () {
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
-      "examples--database-seeding--app--latest--7fdljhug": {
+      [seed_app_ref]: {
         "ports": [
           "50000:3000"
         ],
         "restart": "always",
         "depends_on": [
-          "examples--database-seeding--my-demo-db--latest--uimfmkw0"
+          seed_db_ref
         ],
         "environment": {
-          "DATABASE_HOST": "examples--database-seeding--my-demo-db--latest--uimfmkw0",
+          "DATABASE_HOST": seed_db_ref,
           "DATABASE_PORT": "5432",
           "DATABASE_USER": "postgres",
           "DATABASE_PASSWORD": "architect",
@@ -365,7 +360,7 @@ describe('local deploy environment', function () {
           "gateway:app.localhost"
         ]
       },
-      "examples--database-seeding--my-demo-db--latest--uimfmkw0": {
+      [seed_db_ref]: {
         "ports": [
           "50001:5432"
         ],
@@ -391,7 +386,7 @@ describe('local deploy environment', function () {
           "8080:8080"
         ],
         "depends_on": [
-          "examples--database-seeding--app--latest--7fdljhug",
+          seed_app_ref,
         ],
         "restart": "always",
         "volumes": [
@@ -402,18 +397,19 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
   if (process.platform === 'linux') {
-    seeding_component_expected_compose.services['examples--database-seeding--app--latest--7fdljhug'].extra_hosts = [
+    seeding_component_expected_compose.services[seed_app_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
-    seeding_component_expected_compose.services['examples--database-seeding--my-demo-db--latest--uimfmkw0'].extra_hosts = [
+    seeding_component_expected_compose.services[seed_db_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
   }
 
+  const hello_api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest')
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
-      "examples--hello-world--api--latest--d00ztoyu": {
+      [hello_api_ref]: {
         "ports": [
           "50000:3000",
         ],
@@ -443,7 +439,7 @@ describe('local deploy environment', function () {
           "8080:8080"
         ],
         "depends_on": [
-          "examples--hello-world--api--latest--d00ztoyu",
+          hello_api_ref,
         ],
         "restart": "always",
         "volumes": [
@@ -454,42 +450,10 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
   if (process.platform === 'linux') {
-    component_expected_compose.services['examples--hello-world--api--latest--d00ztoyu'].extra_hosts = [
+    component_expected_compose.services[hello_api_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
   }
-
-  test
-    .timeout(15000)
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(local_env_config, null, 2), local_env_config];
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-l', './mock-environment.yml'])
-    .it('Create a local deploy with an environment config', ctx => {
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(environment_expected_compose)
-    })
-
-  test
-    .timeout(15000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config);
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml'])
-    .it('Create a basic local deploy with a component config', ctx => {
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      // TODO expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
-    })
 
   test
     .timeout(15000)
@@ -525,33 +489,6 @@ describe('local deploy environment', function () {
 
   test
     .timeout(15000)
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(local_env_config, null, 2), local_env_config];
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(DockerComposeUtils, 'generate', sinon.stub().returns(undefined))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .env({
-      ARC_LOG_LEVEL: 'debug',
-      ARC_aws_secret: 'test'
-    })
-    .command(['deploy', '-l', './mock-environment.yml'])
-    .it('Create a local deploy with environment parameters', ctx => {
-      const generate = DockerComposeUtils.generate as sinon.SinonStub;
-      expect(generate.calledOnce).to.be.true
-      const dependency_manager = generate.firstCall.args[0] as LocalDependencyManager;
-      expect(dependency_manager.environment.getParameters()).to.deep.equal({
-        LOG_LEVEL: { default: 'debug' },
-        aws_secret: { default: 'test' }
-      })
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-    })
-
-  test
-    .timeout(15000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -566,7 +503,7 @@ describe('local deploy environment', function () {
     .it('Create a local deploy with a basic component and a basic values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
       expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
@@ -588,7 +525,7 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
       expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
@@ -609,7 +546,7 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component and a stacked values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
       expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
@@ -633,8 +570,33 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      const hello_world_environment = (Object.values(runCompose.firstCall.args[0].services)[0] as any).environment;
-      const react_app_environment = (Object.values(runCompose.firstCall.args[0].services)[1] as any).environment;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      expect(hello_world_environment.a_required_key).to.equal('some_value');
+      expect(hello_world_environment.another_required_key).to.equal('required_value');
+      expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
+    })
+
+  test
+    .timeout(15000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'readValuesFile', () => {
+      return component_and_dependency_parameter_values;
+    })
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .reply(200, local_component_config_dependency))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml', '-r'])
+    .it('Create a local recursive deploy with a basic component, a dependency, and a values file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
+      const react_app_ref = ComponentConfig.getServiceRef('examples/react-app/app:latest');
+      const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
       expect(hello_world_environment.one_more_required_param).to.equal('one_more_value');
@@ -657,23 +619,13 @@ describe('local deploy environment', function () {
     .it('Dollar signs are escaped for environment variables in local compose deployments', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
       expect(hello_world_service.environment.compose_escaped_variable).to.equal('variable_split_$$_with_dollar$$signs');
     })
 });
 
 describe('remote deploy environment', function () {
-  const env_config = {
-    "components": {
-      "examples/database-seeding": "latest",
-      "examples/echo": "latest"
-    }
-  };
-
   const remoteDeploy = mockArchitectAuth
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(env_config, null, 2), env_config];
-    })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
     .nock(MOCK_API_HOST, api => api
@@ -695,15 +647,8 @@ describe('remote deploy environment', function () {
     .stderr({ print })
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', './mock-environment.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed')
-    })
-
-  remoteDeploy
-    .env({ 'ARCHITECT_ACCOUNT': account.name })
-    .command(['deploy', '-e', environment.name, '--auto_approve', './mock-environment.yml'])
-    .it('Creates a deployment when env exists with only env flag', ctx => {
       expect(ctx.stdout).to.contain('Deployed')
     })
 });

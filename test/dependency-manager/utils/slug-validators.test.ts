@@ -173,6 +173,13 @@ describe('slugs validators', () => {
     }
   });
 
+  it(`valid slugs are acceptable to ServiceVersionSlugValidator with instance id`, async () => {
+    for (const resource_name of valid_slugs) {
+      const slug = `${valid_slug}/${valid_slug}/${resource_name}:${valid_tag}${Slugs.INSTANCE_DELIMITER}instance-id`;
+      expect(ServiceVersionSlugUtils.Validator.test(slug)).to.be.true
+    }
+  });
+
   it(`invalid slugs are NOT acceptable to ServiceVersionSlugValidator`, async () => {
     for (const resource_name of invalid_slugs) {
       const slug = `${valid_slug}/${valid_slug}/${resource_name}:${valid_tag}`;
