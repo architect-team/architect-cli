@@ -98,18 +98,10 @@ describe('interfaces spec v1', () => {
     it('should connect two services together', async () => {
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
-        '/stack/environment.json': JSON.stringify({
-          components: {
-            'test/leaf': 'file:/stack/leaf/',
-          },
-        }),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(
-        axios.create(),
-        '/stack/environment.json',
-      );
-      const graph = await manager.getGraph();
+      const manager = new LocalDependencyManager(axios.create());
+      const graph = await manager.getGraph([]); // TODO:207
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'test/leaf/db:latest',
         'test/leaf/api:latest'
@@ -136,19 +128,10 @@ describe('interfaces spec v1', () => {
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
         '/stack/branch/architect.json': JSON.stringify(branch_component),
-        '/stack/environment.json': JSON.stringify({
-          components: {
-            'test/branch': 'file:/stack/branch/',
-            'test/leaf': 'file:/stack/leaf/',
-          },
-        }),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(
-        axios.create(),
-        '/stack/environment.json',
-      );
-      const graph = await manager.getGraph();
+      const manager = new LocalDependencyManager(axios.create());
+      const graph = await manager.getGraph([]); // TODO:207
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'test/branch/api:latest',
 
@@ -215,24 +198,10 @@ describe('interfaces spec v1', () => {
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
         '/stack/branch/architect.json': JSON.stringify(branch_component),
         '/stack/other-leaf/architect.json': JSON.stringify(other_leaf_component),
-        '/stack/environment.json': JSON.stringify({
-          interfaces: {
-            public: '${{ components["test/leaf"].interfaces.api.url }}',
-            publicv1: '${{ components["test/other-leaf"].interfaces.api.url }}'
-          },
-          components: {
-            'test/branch': 'file:/stack/branch/',
-            'test/leaf': 'file:/stack/leaf/',
-            'test/other-leaf': 'file:/stack/other-leaf/',
-          },
-        }),
       });
 
-      const manager = await LocalDependencyManager.createFromPath(
-        axios.create(),
-        '/stack/environment.json',
-      );
-      const graph = await manager.getGraph();
+      const manager = new LocalDependencyManager(axios.create());
+      const graph = await manager.getGraph([]); // TODO:207
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -268,7 +237,7 @@ describe('interfaces spec v1', () => {
         'EXTERNAL_INTERFACE=http://public.localhost',
       ])
 
-      const template = await DockerComposeUtils.generate(manager);
+      const template = await DockerComposeUtils.generate(graph);
       expect(Object.keys(template.services)).has.members([
         test_branch_url_safe_ref,
         test_leaf_db_latest_url_safe_ref,
@@ -412,25 +381,12 @@ describe('interfaces spec v1', () => {
       }
     };
 
-    const env_config = {
-      interfaces: {
-        app: '${{ components.architect/cloud.interfaces.app.url }}',
-        admin: '${{ components.architect/cloud.interfaces.admin.url }}'
-      },
-      components: {
-        'architect/cloud': {
-          'extends': 'file:.'
-        }
-      }
-    };
-
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
       'architect/cloud:latest-interfaces',
@@ -443,7 +399,7 @@ describe('interfaces spec v1', () => {
 
     const architect_cloud_api_url_safe_ref = Refs.url_safe_ref('architect/cloud/api:latest');
 
-    const template = await DockerComposeUtils.generate(manager);
+    const template = await DockerComposeUtils.generate(graph);
     const expected_compose: DockerService = {
       "environment": {},
       "labels": [
@@ -513,25 +469,13 @@ describe('interfaces spec v1', () => {
         private: \${{ services.api.interfaces.private.url }}
     `;
 
-    const env_config = `
-      components:
-        voic/admin-ui:
-          extends: file:./admin-ui
-        voic/product-catalog:
-          extends: file:./product-catalog
-      interfaces:
-        public2: \${{ components.voic/product-catalog.interfaces.public.url }}
-        admin2: \${{ components.voic/product-catalog.interfaces.admin.url }}
-    `;
-
     mock_fs({
       '/stack/product-catalog/architect.yml': product_catalog_config,
       '/stack/admin-ui/architect.yml': admin_ui_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     expect(graph.edges.map(e => e.toString())).members([
       'voic/product-catalog:latest-interfaces [public, admin, private] -> voic/product-catalog/api:latest [public, admin, private]',
       'voic/admin-ui/dashboard:latest [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]',
@@ -583,8 +527,8 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/smtp/architect.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
 
     const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
@@ -622,8 +566,8 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/smtp/architect.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
 
     const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
@@ -663,20 +607,13 @@ describe('interfaces spec v1', () => {
             SMTP_PASS: \${{ dependencies['architect/smtp'].interfaces.smtp.password }}
     `;
 
-    const env_config = `
-      components:
-        architect/smtp: file:./smtp
-        architect/upstream: file:./upstream
-    `;
-
     mock_fs({
       '/stack/smtp/architect.yml': smtp_config,
       '/stack/upstream/architect.yml': upstream_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
 
     const test_node = graph.getNodeByRef('architect/upstream/test-app:latest') as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({

@@ -1,11 +1,9 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
-import path from 'path';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
-import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
 
 describe('config spec v1', () => {
@@ -51,7 +49,6 @@ describe('config spec v1', () => {
       `
     mock_fs({
       '/architect.yml': component_yml,
-      '/environment.yml': environment_yml
     });
 
     const component_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
@@ -66,19 +63,6 @@ describe('config spec v1', () => {
       },
       "interfaces": {
         "frontend": "${{ services['stateless-app'].interfaces.main.url }}"
-      }
-    })
-
-    const env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml');
-    expect(env_config).to.deep.eq({
-      "interfaces": {
-        "frontend": "${{ components.test/component.interfaces.frontend.url }}"
-      },
-      "components": {
-        "test/component": {
-          "extends": `file:${path.resolve('/architect.yml')}`,
-          "name": "test/component"
-        }
       }
     })
   });
@@ -103,7 +87,6 @@ describe('config spec v1', () => {
       `
     mock_fs({
       '/architect.yml': component_yml,
-      '/environment.yml': environment_yml
     });
 
     const component_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
@@ -118,19 +101,6 @@ describe('config spec v1', () => {
       },
       "interfaces": {
         "frontend": "${{ services['stateless-app'].interfaces.main.url }}"
-      }
-    })
-
-    const env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml');
-    expect(env_config).to.deep.eq({
-      "interfaces": {
-        "frontend": "${{ components.test/component.interfaces.frontend.url }}"
-      },
-      "components": {
-        "test/component": {
-          "extends": `file:${path.resolve('/architect.yml')}`,
-          "name": "test/component"
-        }
       }
     })
   });

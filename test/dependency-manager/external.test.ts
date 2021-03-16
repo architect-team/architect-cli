@@ -47,31 +47,12 @@ describe('external interfaces spec v1', () => {
       interfaces: {}
     };
 
-    const env_config = {
-      components: {
-        'architect/cloud': {
-          extends: 'file:.',
-          services: {
-            app: {
-              interfaces: {
-                main: {
-                  host: 'http://external.locahost',
-                  port: 80
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
     ])
@@ -79,7 +60,7 @@ describe('external interfaces spec v1', () => {
     const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
     expect(app_node.is_external).to.be.true;
 
-    const template = await DockerComposeUtils.generate(manager);
+    const template = await DockerComposeUtils.generate(graph);
     expect(template).to.be.deep.equal({
       'services': {},
       'version': '3',
@@ -109,31 +90,12 @@ describe('external interfaces spec v1', () => {
       interfaces: {}
     };
 
-    const env_config = {
-      components: {
-        'architect/cloud': {
-          extends: 'file:.',
-          services: {
-            api: {
-              interfaces: {
-                main: {
-                  host: 'external.locahost',
-                  port: 443,
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/architect.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'architect/cloud/app:latest',
       'architect/cloud/api:latest'
@@ -146,7 +108,7 @@ describe('external interfaces spec v1', () => {
     const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
     expect(api_node.is_external).to.be.true;
 
-    const template = await DockerComposeUtils.generate(manager);
+    const template = await DockerComposeUtils.generate(graph);
     const expected_compose: DockerComposeTemplate = {
       services: {
         'architect--cloud--app--latest--kavtrukr': {
@@ -187,20 +149,12 @@ describe('external interfaces spec v1', () => {
         app: \${{ services.app.interfaces.api.url }}
     `;
 
-    const env_config = `
-      components:
-        architect/component: file:./component
-      interfaces:
-        subdomain: \${{ components['architect/component'].interfaces.app.url }}
-    `;
-
     mock_fs({
       '/stack/component/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
 
     const test_node = graph.getNodeByRef('architect/component/app:latest') as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({

@@ -10,6 +10,7 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;
 
   abstract getName(): ComponentSlug;
+  abstract setName(name: string): void;
   abstract getRef(): ComponentVersionSlug;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;

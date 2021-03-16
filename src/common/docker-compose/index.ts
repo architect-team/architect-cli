@@ -5,12 +5,13 @@ import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
 import { Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
+import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
-import LocalDependencyManager from '../dependency-manager/local-manager';
+import PortUtil from '../utils/port';
 import DockerComposeTemplate from './template';
 
 export class DockerComposeUtils {
@@ -18,7 +19,7 @@ export class DockerComposeUtils {
   // used to namespace docker-compose projects so multiple deployments can happen to local
   public static DEFAULT_PROJECT = 'architect';
 
-  public static async generate(dependency_manager: LocalDependencyManager): Promise<DockerComposeTemplate> {
+  public static async generate(graph: DependencyGraph): Promise<DockerComposeTemplate> {
     const compose: DockerComposeTemplate = {
       version: '3',
       services: {},
@@ -27,19 +28,20 @@ export class DockerComposeUtils {
 
     const limit = pLimit(5);
     const port_promises = [];
-    const graph = await dependency_manager.getGraph();
-    const environment = dependency_manager.environment;
 
     for (const node of graph.nodes) {
       if (node.is_external) continue;
       if (!(node instanceof ServiceNode)) continue;
       for (const _ of node.ports) {
-        port_promises.push(limit(() => dependency_manager.getServicePort()));
+        port_promises.push(limit(() => PortUtil.getAvailablePort()));
       }
     }
     const available_ports = (await Promise.all(port_promises)).sort();
 
-    const gateway_links = Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
+    const gateway_links: string[] = []; // TODO:207 Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
+
+    // TODO:207
+    const gateway_port = PortUtil.getAvailablePort(80);
 
     // Enrich base service details
     for (const node of graph.nodes) {
@@ -57,7 +59,7 @@ export class DockerComposeUtils {
           ],
           ports: [
             // The HTTP port
-            `${dependency_manager.gateway_port}:80`,
+            `${gateway_port}:80`,
             // The Web UI(enabled by--api.insecure = true)
             '8080:8080',
           ],
@@ -118,7 +120,6 @@ export class DockerComposeUtils {
       }
 
       if (node.is_local && (node instanceof ServiceNode || node instanceof TaskNode)) {
-        const environment_component = environment.getComponentByServiceOrTaskRef(node.ref);
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.node_config.getImage()) {
           const build = node.node_config.getBuild();
@@ -149,12 +150,8 @@ export class DockerComposeUtils {
             throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
           }
 
-          const environment_service = environment_component?.getServiceByRef(node.ref);
-          const environment_volume = environment_service?.getVolumes()[key] || environment_service?.getDebugOptions()?.getVolumes()[key];
           let volume;
-          if (environment_volume?.host_path) {
-            volume = `${path.resolve(path.dirname(dependency_manager.config_path), environment_volume?.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          } else if (spec.host_path) {
+          if (spec.host_path) {
             volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
           } else {
             volume = service_volume;
@@ -166,12 +163,6 @@ export class DockerComposeUtils {
 
       if (node instanceof TaskNode) {
         compose.services[url_safe_ref].scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
-      }
-
-      // Append the dns_search value if it was provided in the environment config
-      const dns_config = environment.getDnsConfig();
-      if (dns_config.searches) {
-        compose.services[url_safe_ref].dns_search = dns_config.searches;
       }
     }
 

@@ -6,12 +6,11 @@ import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { Refs, ServiceNode } from '../dependency-manager/src';
+import { Refs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 
 tmp.setGracefulCleanup();
@@ -32,12 +31,6 @@ export default class ComponentRegister extends Command {
       description: 'Path to a component to build',
       exclusive: ['environment'],
       multiple: true,
-      hidden: true,
-    }),
-    environment: flags.string({
-      char: 'e',
-      description: 'Path to an environment config including local components to build',
-      exclusive: ['component'],
       hidden: true,
     }),
     tag: flags.string({
@@ -62,17 +55,7 @@ export default class ComponentRegister extends Command {
       config_paths.add(path.resolve(untildify(args.component)));
     }
 
-    let dependency_manager = await LocalDependencyManager.create(this.app.api);
-    if (flags.environment) {
-      const config_path = path.resolve(untildify(flags.environment));
-      dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);
-      const graph = await dependency_manager.getGraph(false);
-      for (const node of graph.nodes) {
-        if (node.is_local && node instanceof ServiceNode) {
-          config_paths.add(node.local_path);
-        }
-      }
-    } else if (flags.components) {
+    if (flags.components) {
       for (let config_path of flags.components) {
         config_path = path.resolve(untildify(config_path));
         config_paths.add(config_path);

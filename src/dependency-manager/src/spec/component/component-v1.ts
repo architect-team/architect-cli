@@ -100,26 +100,16 @@ export class ComponentConfigV1 extends ComponentConfig {
   artifact_image?: string;
 
   getName(): ComponentSlug {
-    let split;
-    try {
-      split = ComponentSlugUtils.parse(this.name);
-    } catch {
-      split = ComponentVersionSlugUtils.parse(this.name);
-    }
+    const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
+  setName(name: string): void {
+    this.name = name;
+  }
+
   getRef(): ComponentVersionSlug {
-    let split;
-    if (this.extends?.startsWith(`${this.name}:`)) {
-      split = ComponentVersionSlugUtils.parse(this.extends);
-    } else {
-      try {
-        split = ComponentSlugUtils.parse(this.name);
-      } catch {
-        split = ComponentVersionSlugUtils.parse(this.name);
-      }
-    }
+    const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
   }
 

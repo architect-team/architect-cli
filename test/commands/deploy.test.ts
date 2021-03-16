@@ -2,12 +2,10 @@ import { expect, test } from '@oclif/test';
 import path from 'path';
 import sinon from 'sinon';
 import Deploy, { DeployCommand } from '../../src/commands/deploy';
-import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder, EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
+import { ComponentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -37,13 +35,6 @@ describe('local deploy environment', function () {
   afterEach(function () {
     sinon.restore();
   });
-
-  const local_env_config = {
-    "components": {
-      "examples/database-seeding:latest": "file:./examples/database-seeding/",
-      "examples/echo:latest": "file:./examples/hello-world/"
-    }
-  }
 
   const local_component_config = {
     "name": "examples/hello-world",
@@ -461,38 +452,6 @@ describe('local deploy environment', function () {
 
   test
     .timeout(15000)
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(local_env_config, null, 2), local_env_config];
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-l', './mock-environment.yml'])
-    .it('Create a local deploy with an environment config', ctx => {
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(environment_expected_compose)
-    })
-
-  test
-    .timeout(15000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config);
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml'])
-    .it('Create a basic local deploy with a component config', ctx => {
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      // TODO expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
-    })
-
-  test
-    .timeout(15000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config);
     })
@@ -521,33 +480,6 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
-    })
-
-  test
-    .timeout(15000)
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(local_env_config, null, 2), local_env_config];
-    })
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(DockerComposeUtils, 'generate', sinon.stub().returns(undefined))
-    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-    .stdout({ print })
-    .stderr({ print })
-    .env({
-      ARC_LOG_LEVEL: 'debug',
-      ARC_aws_secret: 'test'
-    })
-    .command(['deploy', '-l', './mock-environment.yml'])
-    .it('Create a local deploy with environment parameters', ctx => {
-      const generate = DockerComposeUtils.generate as sinon.SinonStub;
-      expect(generate.calledOnce).to.be.true
-      const dependency_manager = generate.firstCall.args[0] as LocalDependencyManager;
-      expect(dependency_manager.environment.getParameters()).to.deep.equal({
-        LOG_LEVEL: { default: 'debug' },
-        aws_secret: { default: 'test' }
-      })
-      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
     })
 
   test
@@ -663,17 +595,7 @@ describe('local deploy environment', function () {
 });
 
 describe('remote deploy environment', function () {
-  const env_config = {
-    "components": {
-      "examples/database-seeding": "latest",
-      "examples/echo": "latest"
-    }
-  };
-
   const remoteDeploy = mockArchitectAuth
-    .stub(EnvironmentConfigBuilder, 'readFromPath', () => {
-      return [JSON.stringify(env_config, null, 2), env_config];
-    })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
     .nock(MOCK_API_HOST, api => api
@@ -695,15 +617,8 @@ describe('remote deploy environment', function () {
     .stderr({ print })
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', './mock-environment.yml'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed')
-    })
-
-  remoteDeploy
-    .env({ 'ARCHITECT_ACCOUNT': account.name })
-    .command(['deploy', '-e', environment.name, '--auto_approve', './mock-environment.yml'])
-    .it('Creates a deployment when env exists with only env flag', ctx => {
       expect(ctx.stdout).to.contain('Deployed')
     })
 });

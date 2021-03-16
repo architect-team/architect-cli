@@ -80,33 +80,13 @@ describe('interpolation spec v1', () => {
       interfaces: {}
     };
 
-    const env_config = {
-      components: {
-        'concourse/web:latest': {
-          extends: 'file:./web.json'
-        },
-        'concourse/worker:latest': {
-          extends: 'file:./worker.json'
-        }
-      }
-    };
-
-    const public_env_config = {
-      ...env_config,
-      interfaces: {
-        public: '${{ components.concourse/web:latest.interfaces.main.url }}'
-      }
-    }
-
     mock_fs({
       '/stack/web.json': JSON.stringify(web_component_config),
       '/stack/worker.json': JSON.stringify(worker_component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
-      '/stack/public.environment.json': JSON.stringify(public_env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'concourse/web:latest-interfaces',
       'concourse/web/web:latest',
@@ -116,7 +96,7 @@ describe('interpolation spec v1', () => {
       'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]'
     ])
 
-    const template = await DockerComposeUtils.generate(manager);
+    const template = await DockerComposeUtils.generate(graph);
     const url_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
     const expected_compose: DockerComposeTemplate = {
       'services': {
@@ -154,8 +134,8 @@ describe('interpolation spec v1', () => {
     }
     expect(template).to.be.deep.equal(expected_compose);
 
-    const public_manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/public.environment.json');
-    const public_graph = await public_manager.getGraph();
+    const public_manager = new LocalDependencyManager(axios.create());
+    const public_graph = await public_manager.getGraph([]);  // TODO:207
     expect(public_graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
       'concourse/web:latest-interfaces',
@@ -167,7 +147,7 @@ describe('interpolation spec v1', () => {
       'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]',
     ])
 
-    const public_template = await DockerComposeUtils.generate(public_manager);
+    const public_template = await DockerComposeUtils.generate(public_graph);
     const expected_web_compose: DockerService = {
       environment: {},
       "labels": [
@@ -243,23 +223,14 @@ describe('interpolation spec v1', () => {
           EXTERNAL_API_HOST: \${{ environment.ingresses['examples/backend']['main'].url }}
           INTERNAL_APP_URL: \${{ interfaces.main.url }}
     `
-    const env_config = `
-    interfaces:
-      backend: \${{ components.examples/backend.interfaces.main.url }}
-    components:
-      examples/backend: file:./backend/architect.yml
-      examples/frontend:
-        extends: file:./frontend/architect.yml
-    `
 
     mock_fs({
       '/backend/architect.yml': backend_config,
       '/frontend/architect.yml': frontend_config,
-      '/environment.yml': env_config
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const backend_external_url = 'http://backend.localhost'
     const backend_ref = 'examples/backend/api:latest';
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
@@ -296,24 +267,15 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web/web.json'
-        }
-      }
-    };
-
     const properties = 'log_level=${{ parameters.log_level }}'
 
     mock_fs({
       '/stack/web/application.properties': properties,
       '/stack/web/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       APPLICATION_PROPERTIES: 'log_level=debug'
@@ -341,22 +303,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web/web.json'
-        }
-      }
-    };
-
     mock_fs({
       '/stack/web/test-file.txt': 'some test file data from component param',
       '/stack/web/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
@@ -384,28 +337,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      parameters: {
-        'FILE_PARAM': 'file:./test-file.txt'
-      },
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web/web.json',
-          parameters: {
-            'FILE_PARAM': '${{ parameters.FILE_PARAM }}'
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/test-file.txt': 'some test file data from environment param',
       '/stack/web/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from environment param'
@@ -433,28 +371,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      parameters: {
-        'FILE_PARAM': 'file:.env'
-      },
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web/web.json',
-          parameters: {
-            'FILE_PARAM': '${{ parameters.FILE_PARAM }}'
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/.env': 'some test file data from environment param',
       '/stack/web/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from environment param'
@@ -478,23 +401,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/test-file.txt': 'some file data',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       T3ST_FILE_DATA16: 'some file data'
@@ -521,25 +434,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-        parameters:
-          TEST_FILE_DATA: file:./test-file.txt
-    `
-
     mock_fs({
       '/stack/test-file.txt': 'some file data',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data'
@@ -563,23 +464,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/.env': 'some file data',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data'
@@ -603,68 +494,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world: latest
-    `
-
     mock_fs({
       '/stack/.env': 'some file data',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml', {}, { 'examples/hello-world': '/stack/architect.yml' });
-    const graph = await manager.getGraph();
-    const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
-      TEST_FILE_DATA: 'some file data'
-    });
-  });
-
-  it('yaml file ref as .env file in environment.yml', async () => {
-    const component_config = `
-    name: examples/hello-world
-
-    parameters:
-      test_file_data: file:.env.default
-
-    services:
-      api:
-        image: heroku/nodejs-hello-world
-        interfaces:
-          main: 3000
-        environment:
-          TEST_FILE_DATA: \${{ parameters.test_file_data }}
-
-    interfaces:
-      echo:
-        url: \${{ services.api.interfaces.main.url }}
-    `
-
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:../data/architect.yml
-        parameters:
-          test_file_data: file:.env
-    `
-
-    mock_fs({
-      '/data/.env.default': 'some default file data',
-      '/data/architect.yml': component_config,
-      '/stack/.env': 'some file data',
-      '/stack/environment.yml': env_config,
-    });
-
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create(), { 'examples/hello-world': '/stack/architect.yml' });
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data'
@@ -689,24 +525,14 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/.env': 'some file data',
       '/stack/.env-other': 'some file data from other file',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data',
@@ -731,23 +557,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/.env': 'some file data\nsome file data on a new line\n  file data indented on a new line',
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line',
@@ -775,25 +591,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web.json',
-          parameters: {
-            'FILE_PARAM': 'file:./test-file.txt'
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/test-file.txt': 'some file data\nsome file data on a new line\n  file data indented on a new line',
       '/stack/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line'
@@ -821,25 +625,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      components: {
-        'test/component:latest': {
-          extends: 'file:./web.json',
-          parameters: {
-            'FILE_PARAM': 'file:./test/test-file.txt'
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/test/test-file.txt': 'some test file data from component param',
       '/stack/web.json': JSON.stringify(component_config),
-      '/stack/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
@@ -867,25 +659,13 @@ describe('interpolation spec v1', () => {
       }
     }
 
-    const env_config = {
-      components: {
-        'test/component:latest': {
-          extends: 'file:./../test/folder/web.json',
-          parameters: {
-            'FILE_PARAM': 'file:./../test/test-file.txt'
-          }
-        }
-      }
-    };
-
     mock_fs({
       '/stack/test/test-file.txt': 'some test file data from component param',
       '/stack/test/folder/web.json': JSON.stringify(component_config),
-      '/stack/env/environment.json': JSON.stringify(env_config),
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/env/environment.json');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('test/component/web:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
@@ -909,23 +689,13 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./../arc/architect.yml
-    `
-
     mock_fs({
       '/stack/.env': 'some file data',
       '/stack/arc/architect.yml': component_config,
-      '/stack/env/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/env/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data',
@@ -952,22 +722,12 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_ENV: 'manually set test file env'
@@ -991,22 +751,12 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       data_from_my_config_file: 'regular config file data'
@@ -1031,22 +781,12 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     mock_fs({
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph();
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       ENV_PARAM: 'env_param_data'
@@ -1070,15 +810,6 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    interfaces:
-      app: \${{ components['examples/hello-world'].interfaces.echo.url }}
-
-    components:
-      examples/hello-world:
-        extends: file:./architect.yml
-    `
-
     const properties_tpl = `
     test.security.apiTrustedSecret=\${TEST_AUTH_CODE_SECRET:}
     test.security.apiTrustedSecret2=\${ TEST_AUTH_CODE_SECRET }
@@ -1087,11 +818,10 @@ describe('interpolation spec v1', () => {
     mock_fs({
       '/stack/application.properties.tpl': properties_tpl,
       '/stack/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph(true);
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]); // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       CONFIG_DATA: 'test.security.apiTrustedSecret=$${TEST_AUTH_CODE_SECRET:}\n    test.security.apiTrustedSecret2=$${ TEST_AUTH_CODE_SECRET }'
@@ -1122,24 +852,12 @@ describe('interpolation spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    const env_config = `
-    parameters:
-      aws_secret: test
-      other_secret: not-shown
-    components:
-      examples/hello-world:
-        extends: file:../data/architect.yml
-        parameters:
-          other_secret: shown
-    `
-
     mock_fs({
       '/data/architect.yml': component_config,
-      '/stack/environment.yml': env_config,
     });
 
-    const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
-    const graph = await manager.getGraph(true);
+    const manager = new LocalDependencyManager(axios.create());
+    const graph = await manager.getGraph([]);  // TODO:207
     const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
     expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
       AWS_SECRET: 'test',
@@ -1169,21 +887,15 @@ describe('interpolation spec v1', () => {
       interfaces:
       `
 
-      const env_config = `
-      components:
-        examples/hello-world: file:../data/architect.yml
-      `
-
       mock_fs({
         '/data/architect.yml': component_config,
-        '/stack/environment.yml': env_config,
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/stack/environment.yml');
+      const manager = new LocalDependencyManager(axios.create());
 
-      sinon.replace(LocalDependencyManager.prototype, 'getArchitectContext', async () => ({ vpc: { id: 'test' } }));
+      // sinon.replace(LocalDependencyManager.prototype, 'getArchitectContext', async () => ({ vpc: { id: 'test' } }));
 
-      const graph = await manager.getGraph(true)
+      const graph = await manager.getGraph([]) // TODO:207
       const node = graph.getNodeByRef('examples/hello-world/api:latest') as ServiceNode;
       expect(node.node_config.getDeploy()!.modules.aws.inputs).to.deep.eq({
         environment_name: '',

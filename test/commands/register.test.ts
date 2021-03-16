@@ -285,15 +285,6 @@ describe('register', function () {
     .it('rejects with informative error message if docker inspect fails');
 
   mockArchitectAuth
-    .stdout({ print })
-    .stderr({ print })
-    .command(['register', '-c', 'examples/hello-world/architect.yml', '-e', 'examples/stateless-component/environment.yml', '-t', '1.0.0'])
-    .catch(err => {
-      expect(err.message).to.contain('--environment= cannot also be provided when using --components=')
-    })
-    .it('it throws if both a component and an environment flag are provided; they are exclusive');
-
-  mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
