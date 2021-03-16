@@ -6,7 +6,7 @@ export class VolumeSpecV1 extends ValidatableConfig {
   @IsString({ always: true })
   mount_path?: string;
 
-  @IsOptional({ groups: ['developer', 'operator'] })
+  @IsOptional({ groups: ['developer'] })
   @IsNotEmpty({
     groups: ['debug'],
     message: 'Debug volumes require a host path to mount the volume to',

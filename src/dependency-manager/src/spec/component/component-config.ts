@@ -51,9 +51,13 @@ export abstract class ComponentConfig extends BaseConfig {
     return ComponentVersionSlugUtils.parse(this.getRef()).tag;
   }
 
-  getServiceRef(service_name: string): ServiceVersionSlug {
+  getServiceRef(service_name: string, instance_id: string): ServiceVersionSlug {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    let ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    if (instance_id) {
+      ref = `${ref}--${instance_id}`;
+    }
+    return ref;
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {
@@ -61,20 +65,6 @@ export abstract class ComponentConfig extends BaseConfig {
       const [service_name, component_tag] = service_ref.substr(this.getName().length + 1).split(':');
       if (component_tag === this.getComponentVersion()) {
         return this.getServices()[service_name];
-      }
-    }
-  }
-
-  getTaskRef(task_name: string): ServiceVersionSlug {
-    const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    return ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, task_name, parsed.tag);
-  }
-
-  getTaskByRef(task_ref: string): TaskConfig | undefined {
-    if (task_ref.startsWith(this.getName())) {
-      const [task_name, component_tag] = task_ref.substr(this.getName().length + 1).split(':');
-      if (component_tag === this.getComponentVersion()) {
-        return this.getTasks()[task_name];
       }
     }
   }

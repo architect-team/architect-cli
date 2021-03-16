@@ -10,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder, ServiceNode } from '../../src/dependency-manager/src';
+import { ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
@@ -41,7 +41,7 @@ describe('components spec v1', function () {
 
   describe('standard components', function () {
     it('simple local component', async () => {
-      const component_config = ComponentConfigBuilder.buildFromJSON({
+      const component_config_json = {
         name: 'architect/cloud',
         services: {
           app: {
@@ -56,10 +56,18 @@ describe('components spec v1', function () {
           }
         },
         interfaces: {}
+      };
+
+      mock_fs({
+        '/stack/architect.json': JSON.stringify(component_config_json),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([component_config]);
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('architect/cloud:latest')
+      ]);
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:latest',
         'architect/cloud/api:latest',
@@ -125,9 +133,9 @@ describe('components spec v1', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create());
-      const component_config = await manager.loadComponentConfig('architect/cloud:v1');
-
-      const graph = await manager.getGraph([component_config]);
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('architect/cloud:v1')
+      ]);
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/app:v1',
         'architect/cloud/api:v1',
@@ -472,7 +480,7 @@ describe('components spec v1', function () {
     */
 
     it('component with one task', async () => {
-      const component_config = {
+      const component_config_json = {
         name: 'architect/cloud',
         tasks: {
           syncer: {
@@ -483,11 +491,12 @@ describe('components spec v1', function () {
 
       moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
         status: 200,
-        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+        response: { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } }
       });
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const component_config = await manager.loadComponentConfig('architect/cloud:v1');
+      const graph = await manager.getGraph([component_config]);
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/syncer:v1',
       ])
@@ -499,7 +508,7 @@ describe('components spec v1', function () {
     });
 
     it('component with one task and one service', async () => {
-      const component_config = {
+      const component_config_json = {
         name: 'architect/cloud',
         tasks: {
           syncer: {
@@ -517,11 +526,12 @@ describe('components spec v1', function () {
 
       moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
         status: 200,
-        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
+        response: { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } }
       });
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const component_config = await manager.loadComponentConfig('architect/cloud:v1');
+      const graph = await manager.getGraph([component_config]);
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'architect/cloud/syncer:v1',
         'architect/cloud/app:v1',
@@ -581,7 +591,19 @@ describe('components spec v1', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]);  // TODO:207
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('examples/component-a:v1'),
+        await manager.loadComponentConfig('examples/component-b:v1'),
+        await manager.loadComponentConfig('examples/component-b:v2')
+      ], {
+        '*': { test_required: 'foo1' },
+        'examples/component-b:v1': {
+          test_required: 'foo3'
+        },
+        'examples/component-b:v2': {
+          test_required: 'foo2'
+        }
+      });
 
       const node_b_v1 = graph.getNodeByRef('examples/component-b/api:v1') as ServiceNode;
       expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
@@ -611,8 +633,10 @@ describe('components spec v1', function () {
         '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]);  // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.json' });
+      const graph = await manager.getGraph([
+        { config: await manager.loadComponentConfig('architect/cloud:latest'), interfaces: { api: 'api-interface' } }
+      ]);
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);

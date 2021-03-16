@@ -142,10 +142,16 @@ describe('validation spec v1', () => {
         '/component.yml': component_config,
         '/other-component.yml': other_component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+        'test/other': '/other-component.yml'
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentConfig('test/other')
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -190,10 +196,16 @@ describe('validation spec v1', () => {
         '/other-component.yml': other_component_config,
       });
 
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+        'test/other': '/other-component.yml'
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentConfig('test/other')
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -233,10 +245,14 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -299,10 +315,14 @@ describe('validation spec v1', () => {
         response: { tag: 'latest', config: yaml.safeLoad(component_config2), service: { url: 'examples/hello-world2:latest' } }
       });
 
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/architect.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('examples/hello-world'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -336,10 +356,14 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -373,8 +397,12 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
-      await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
     });
 
     it('invalid component interfaces ref', async () => {
@@ -390,10 +418,14 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -421,8 +453,12 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
-      await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
     });
 
     it('invalid component:tag ref', async () => {
@@ -438,10 +474,14 @@ describe('validation spec v1', () => {
       mock_fs({
         '/component.yml': component_config,
       });
-      const manager = new LocalDependencyManager(axios.create());
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph([]); // TODO:207
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -454,105 +494,6 @@ describe('validation spec v1', () => {
           "column": 16
         }
       })
-    });
-
-    it('invalid interface in environment spec', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main:
-              port: 8080
-      interfaces:
-        main:
-          url: \${{ services.api.interfaces.main.url }}
-      `
-      mock_fs({
-        '/component.yml': component_config,
-      });
-      let validation_err;
-      try {
-        new LocalDependencyManager(axios.create());
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "interfaces.api.domains": {
-          "isUrl": "each value in domains must be an URL address",
-          "value": "invalid_domain",
-          "line": 7,
-          "column": 18
-        }
-      })
-    });
-  });
-
-  it('validate that custom domain values are unique', async () => {
-    const component_config = `
-    name: test/component
-    services:
-      api:
-        interfaces:
-          main:
-            port: 8080
-    interfaces:
-      main:
-        url: \${{ services.api.interfaces.main.url }}
-    `
-
-    mock_fs({
-      '/component.yml': component_config,
-    });
-    let validation_err;
-    try {
-      new LocalDependencyManager(axios.create());
-    } catch (err) {
-      validation_err = err;
-    }
-    expect(validation_err).instanceOf(ValidationErrors)
-    expect(validation_err.errors).to.deep.eq({
-      "interfaces.api.domains": {
-        "arrayUnique": "All domains's elements must be unique",
-        "value": "valid-domain.net,valid-domain.net",
-        "line": 7,
-        "column": 16
-      }
-    });
-  });
-
-  it('a custom domain cannot be specified in the component config', async () => {
-    const component_config = `
-    name: test/component
-    services:
-      api:
-        interfaces:
-          main:
-            port: 8080
-    interfaces:
-      main:
-        url: \${{ services.api.interfaces.main.url }}
-        domains:
-          - api.staging.architest.dev
-    `
-    mock_fs({
-      '/component.yml': component_config,
-    });
-    let validation_err;
-    try {
-      await ComponentConfigBuilder.buildFromPath('/component.yml');
-    } catch (err) {
-      validation_err = err;
-    }
-    expect(validation_err).instanceOf(ValidationErrors)
-    expect(validation_err.errors).to.deep.eq({
-      "interfaces.main.domains": {
-        "isEmpty": "domains must be empty",
-        "value": "api.staging.architest.dev",
-        "line": 11,
-        "column": 16
-      }
     });
   });
 

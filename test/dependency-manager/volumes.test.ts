@@ -52,8 +52,12 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component/component.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('test/component')
+    ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data'])
   });
@@ -74,8 +78,12 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component/component.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('test/component')
+    ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
@@ -114,71 +122,14 @@ describe('volumes spec v1', () => {
     mock_fs({
       '/component/component.yml': component_config,
     });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component/component.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('test/component')
+    ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
     expect(template.services[test_component_app_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
-  });
-
-  it('override host_path for volume in env', async () => {
-    const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-          volumes:
-            data:
-              mount_path: /data
-      interfaces:
-      `
-    mock_fs({
-      '/component/component.yml': component_config,
-    });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
-    const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
-  });
-
-  it('override host_path for debug volume in env', async () => {
-    const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-          debug:
-            volumes:
-              data:
-                mount_path: /data
-                host_path: ./data
-      interfaces:
-      `
-
-    mock_fs({
-      '/component/component.yml': component_config,
-    });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
-    const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
-  });
-
-  it('define new volume in env', async () => {
-    const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-      interfaces:
-      `
-
-    mock_fs({
-      '/component/component.yml': component_config,
-    });
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]) // TODO:207
-    const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/data-override')}:/data-override`])
   });
 });

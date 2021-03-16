@@ -37,9 +37,6 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
   __version?: string;
 
-  @IsOptional({
-    groups: ['operator'],
-  })
   @IsString({ always: true })
   @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',

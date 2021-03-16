@@ -41,7 +41,7 @@ export class DockerComposeUtils {
     const gateway_links: string[] = []; // TODO:207 Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
 
     // TODO:207
-    const gateway_port = PortUtil.getAvailablePort(80);
+    const gateway_port = await PortUtil.getAvailablePort(80);
 
     // Enrich base service details
     for (const node of graph.nodes) {

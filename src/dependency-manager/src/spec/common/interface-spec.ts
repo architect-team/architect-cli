@@ -6,5 +6,4 @@ export interface InterfaceSpec {
   protocol?: string;
   username?: string;
   password?: string;
-  domains?: string[];
 }

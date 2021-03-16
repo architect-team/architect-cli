@@ -13,7 +13,7 @@ export default abstract class DependencyManager {
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node = new ServiceNode({
-        ref: `${component.getServiceRef(service_name)}--${instance_id}`,
+        ref: component.getServiceRef(service_name, instance_id),
         node_config: service_config,
         local_path: component.getLocalPath(),
         artifact_image: component.getArtifactImage(),
@@ -24,7 +24,7 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.getTasks())) {
       const node = new TaskNode({
-        ref: `${component.getTaskRef(task_name)}--${instance_id}`,
+        ref: component.getServiceRef(task_name, instance_id),
         node_config: task_config,
         local_path: component.getLocalPath(),
       });
@@ -73,7 +73,7 @@ export default abstract class DependencyManager {
     const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
-      const from = `${component.getServiceRef(service_name)}--${instance_id}`;
+      const from = component.getServiceRef(service_name, instance_id);
       const from_node = graph.getNodeByRef(from);
       if (from_node.is_external) {
         continue;
@@ -87,7 +87,7 @@ export default abstract class DependencyManager {
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
-        const to = `${component.getServiceRef(service_name)}--${instance_id}`;
+        const to = component.getServiceRef(service_name, instance_id);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -128,7 +128,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
-      const to = `${component.getServiceRef(service_name)}--${instance_id}`;
+      const to = component.getServiceRef(service_name, instance_id);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -181,7 +181,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  static interpolateComponent(initial_component: ComponentConfig, instance_id: string, host: string) {
+  static interpolateComponent(initial_component: ComponentConfig, interfaces: Dictionary<string>, instance_id: string, host: string, port = 443) {
     const component = initial_component;
     const component_string = replaceBrackets(serialize(component));
 
@@ -191,18 +191,21 @@ export default abstract class DependencyManager {
       ingresses: {},
     };
     // TODO:207 Support dependency ingresses
-    for (const interface_name of Object.keys(component.getInterfaces())) {
+    for (const [interface_from, interface_to] of Object.entries(interfaces)) {
       if (!context.environment.ingresses[component.getName()]) {
         context.environment.ingresses[component.getName()] = {};
       }
 
       const external_interface: InterfaceSpec = {
-        host: `${interface_name}.${host}`,
-        port: '443',
-        protocol: 'https',
+        host: `${interface_from}.${host}`,
+        port: `${port}`,
+        protocol: host === 'localhost' ? 'http' : 'https',
       };
-      external_interface.url = `${external_interface.protocol}://${external_interface.host}:${external_interface.port}`;
-      context.environment.ingresses[component.getName()][interface_name] = external_interface;
+      external_interface.url = `${external_interface.protocol}://${external_interface.host}`;
+      if (port !== 80 && port !== 443) {
+        external_interface.url = `${external_interface.url}:${external_interface.port}`;
+      }
+      context.environment.ingresses[component.getName()][interface_to] = external_interface;
     }
 
     for (const [interface_key, interface_value] of Object.entries(component.getInterfaces())) {
@@ -213,7 +216,7 @@ export default abstract class DependencyManager {
     const proxy_port_mapping: Dictionary<string> = {};
 
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
-      const service_ref = `${component.getServiceRef(service_name)}--${instance_id}`;
+      const service_ref = component.getServiceRef(service_name, instance_id);
       for (const [interface_name, interface_value] of Object.entries(service_config.getInterfaces())) {
         const consul_service = `${service_ref}--${interface_name}`;
         if (!proxy_port_mapping[consul_service]) {

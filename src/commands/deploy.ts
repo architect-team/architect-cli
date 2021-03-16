@@ -314,12 +314,13 @@ export default class Deploy extends DeployCommand {
       linked_components,
     );
 
-    const component_config = await dependency_manager.loadComponentConfig(component_version);
-    const component_configs = [component_config];
-
     const interfaces_map = this.getInterfacesMap();
     const component_values = this.getComponentValues();
-    const graph = await dependency_manager.getGraph(component_configs, interfaces_map, component_values);
+    // TODO:207 recursive
+    const component_config = await dependency_manager.loadComponentConfig(component_version);
+    const component_configs = [{ config: component_config, interfaces: interfaces_map }];
+
+    const graph = await dependency_manager.getGraph(component_configs, component_values);
 
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
