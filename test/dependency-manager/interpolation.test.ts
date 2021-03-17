@@ -85,22 +85,30 @@ describe('interpolation spec v1', () => {
       '/stack/worker.json': JSON.stringify(worker_component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'concourse/web': '/stack/web.json',
+      'concourse/worker': '/stack/worker.json'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('concourse/web'),
+      await manager.loadComponentConfig('concourse/worker')
+    ]);
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'concourse/web:latest-interfaces',
       'concourse/web/web:latest',
       'concourse/worker/worker:latest'
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]'
+      'concourse/web:latest-interfaces [main] -> concourse/web/web:latest [main]',
+      'concourse/worker/worker:latest [service->main] -> concourse/web:latest-interfaces [main]'
     ])
 
     const template = await DockerComposeUtils.generate(graph);
-    const url_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
+    const web_safe_ref = Refs.url_safe_ref('concourse/web/web:latest');
+    const worker_safe_ref = Refs.url_safe_ref('concourse/worker/worker:latest');
     const expected_compose: DockerComposeTemplate = {
       'services': {
-        'concourse--web--web--latest--62arnmmt': {
+        [web_safe_ref]: {
           'environment': {},
           'ports': [
             '50000:8080'
@@ -109,26 +117,29 @@ describe('interpolation spec v1', () => {
             'context': path.resolve('/stack')
           }
         },
-        'concourse--worker--worker--latest--umjxggst': {
+        [worker_safe_ref]: {
           'environment': {
-            'REGULAR': `${url_safe_ref}:2222`,
-            'SINGLE_QUOTE': `${url_safe_ref}:2222`,
-            'DOUBLE_QUOTE': `${url_safe_ref}:2222`,
+            'REGULAR': `${web_safe_ref}:2222`,
+            'SINGLE_QUOTE': `${web_safe_ref}:2222`,
+            'DOUBLE_QUOTE': `${web_safe_ref}:2222`,
           },
           'ports': [],
           'build': {
             'context': path.resolve('/stack')
-          }
+          },
+          'depends_on': [
+            'concourse-web-web-latest-62arnmmt'
+          ]
         },
       },
       'version': '3',
       'volumes': {},
     };
     if (process.platform === 'linux') {
-      expected_compose.services['concourse--web--web--latest--62arnmmt'].extra_hosts = [
+      expected_compose.services[web_safe_ref].extra_hosts = [
         "host.docker.internal:host-gateway"
       ];
-      expected_compose.services['concourse--worker--worker--latest--umjxggst'].extra_hosts = [
+      expected_compose.services[worker_safe_ref].extra_hosts = [
         "host.docker.internal:host-gateway"
       ];
     }

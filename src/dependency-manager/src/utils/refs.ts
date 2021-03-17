@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 export class Refs {
   private static HASH_LENGTH = 8;
-  private static DEFAULT_MAX_LENGTH = 63;
+  public static DEFAULT_MAX_LENGTH = 63;
 
   public static url_safe_ref(ref: string, max_length?: number): string;
   // eslint-disable-next-line no-dupe-class-members

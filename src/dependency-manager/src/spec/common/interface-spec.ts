@@ -6,4 +6,6 @@ export interface InterfaceSpec {
   protocol?: string;
   username?: string;
   password?: string;
+
+  external_name?: string;
 }

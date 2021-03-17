@@ -26,4 +26,7 @@ export class InterfaceSpecV1 extends ValidatableConfig {
 
   @IsOptional({ always: true })
   url?: string;
+
+  @IsOptional({ always: true })
+  external_name?: string;
 }

@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
-import { Refs, ServiceNode, TaskNode } from '../../dependency-manager/src';
+import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
@@ -38,18 +38,23 @@ export class DockerComposeUtils {
     }
     const available_ports = (await Promise.all(port_promises)).sort();
 
-    const gateway_links: string[] = []; // TODO:207 Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
+    const gateway_links: string[] = [];
+    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      for (const interface_from of Object.keys(edge.interfaces_map)) {
+        gateway_links.push(`gateway:${interface_from}.localhost`);
+      }
+    }
 
-    // TODO:207
-    const gateway_port = await PortUtil.getAvailablePort(80);
+    const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
+    const gateway_port = gateway_node?.interfaces._default.port || 80;
 
     // Enrich base service details
     for (const node of graph.nodes) {
       if (node.is_external) continue;
-      const url_safe_ref = Refs.url_safe_ref(node.ref);
+      const url_safe_ref = node.ref;
 
       if (node instanceof GatewayNode) {
-        compose.services[url_safe_ref] = {
+        compose.services[node.ref] = {
           image: 'traefik:v2.4',
           restart: 'always',
           command: [
@@ -171,11 +176,11 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
       if (node_from instanceof InterfacesNode) continue;
-      const node_from_url_safe_ref = Refs.url_safe_ref(node_from.ref);
+      const node_from_url_safe_ref = node_from.ref;
 
       for (const interface_name of Object.keys(edge.interfaces_map)) {
         const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-        const node_to_url_safe_ref = Refs.url_safe_ref(node_to.ref);
+        const node_to_url_safe_ref = node_to.ref;
 
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;

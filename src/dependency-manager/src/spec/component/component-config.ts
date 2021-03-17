@@ -1,5 +1,6 @@
 import { Dictionary } from '../../utils/dictionary';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlug, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { Refs } from '../../utils/refs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
@@ -51,13 +52,19 @@ export abstract class ComponentConfig extends BaseConfig {
     return ComponentVersionSlugUtils.parse(this.getRef()).tag;
   }
 
-  getServiceRef(service_name: string, instance_id: string): ServiceVersionSlug {
-    const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    let ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+  static getServiceRef(service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+    const parsed = ServiceVersionSlugUtils.parse(service_ref);
     if (instance_id) {
-      ref = `${ref}--${instance_id}`;
+      service_ref = `${service_ref}@${instance_id}`;
     }
-    return ref;
+    return Refs.url_safe_ref(`${parsed.component_name}-${parsed.service_name}`, service_ref, max_length);
+  }
+
+  // TODO:207 add tests with instance_id
+  getServiceRef(service_name: string, instance_id: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+    const parsed = ComponentVersionSlugUtils.parse(this.getRef());
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
+    return ComponentConfig.getServiceRef(service_ref, instance_id, max_length);
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {

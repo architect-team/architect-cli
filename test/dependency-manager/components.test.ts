@@ -10,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ServiceNode } from '../../src/dependency-manager/src';
+import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
@@ -68,28 +68,32 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:latest')
       ]);
+
+      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest');
+      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
+
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/app:latest',
-        'architect/cloud/api:latest',
+        app_ref,
+        api_ref,
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([])
 
       const template = await DockerComposeUtils.generate(graph);
       const expected_compose: DockerComposeTemplate = {
         "services": {
-          "architect--cloud--api--latest--zg9qionk": {
+          [app_ref]: {
             "environment": {},
             "ports": [
-              "50001:8080",
+              "50000:8080",
             ],
             "build": {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--app--latest--kavtrukr": {
+          [api_ref]: {
             "environment": {},
             "ports": [
-              "50000:8080"
+              "50001:8080"
             ],
             "build": {
               "context": path.resolve("/stack")
@@ -100,10 +104,10 @@ describe('components spec v1', function () {
         "volumes": {},
       };
       if (process.platform === 'linux') {
-        expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+        expected_compose.services[app_ref].extra_hosts = [
           "host.docker.internal:host-gateway"
         ];
-        expected_compose.services['architect--cloud--api--latest--zg9qionk'].extra_hosts = [
+        expected_compose.services[api_ref].extra_hosts = [
           "host.docker.internal:host-gateway"
         ];
       }
@@ -136,9 +140,13 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:v1')
       ]);
+
+      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
+      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:v1');
+
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/app:v1',
-        'architect/cloud/api:v1',
+        app_ref,
+        api_ref,
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -497,10 +505,13 @@ describe('components spec v1', function () {
       const manager = new LocalDependencyManager(axios.create());
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
+
+      const syncer_ref = ComponentConfig.getServiceRef('architect/cloud/syncer:v1');
+
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/syncer:v1',
+        syncer_ref,
       ])
-      const task_node = graph.getNodeByRef('architect/cloud/syncer:v1');
+      const task_node = graph.getNodeByRef(syncer_ref);
       expect(task_node.__type).equals('task');
       expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
 
@@ -532,11 +543,15 @@ describe('components spec v1', function () {
       const manager = new LocalDependencyManager(axios.create());
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
+
+      const syncer_ref = ComponentConfig.getServiceRef('architect/cloud/syncer:v1');
+      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
+
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/syncer:v1',
-        'architect/cloud/app:v1',
+        syncer_ref,
+        app_ref,
       ])
-      const task_node = graph.getNodeByRef('architect/cloud/syncer:v1');
+      const task_node = graph.getNodeByRef(syncer_ref);
       expect(task_node.__type).equals('task');
       expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
 
@@ -605,9 +620,12 @@ describe('components spec v1', function () {
         }
       });
 
-      const node_b_v1 = graph.getNodeByRef('examples/component-b/api:v1') as ServiceNode;
+      const api_ref = ComponentConfig.getServiceRef('examples/component-b/api:v1');
+      const api2_ref = ComponentConfig.getServiceRef('examples/component-b/api:v2');
+
+      const node_b_v1 = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
-      const node_b_v2 = graph.getNodeByRef('examples/component-b/api:v2') as ServiceNode;
+      const node_b_v2 = graph.getNodeByRef(api2_ref) as ServiceNode;
       expect(node_b_v2.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
     });
 
@@ -635,13 +653,15 @@ describe('components spec v1', function () {
 
       const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.json' });
       const graph = await manager.getGraph([
-        { config: await manager.loadComponentConfig('architect/cloud:latest'), interfaces: { api: 'api-interface' } }
+        await manager.loadComponentConfig('architect/cloud:latest', { api: 'api-interface' })
       ]);
+
+      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
-      const cloud_api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
+      const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
     });
   });

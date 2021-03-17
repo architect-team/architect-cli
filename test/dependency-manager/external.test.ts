@@ -11,7 +11,7 @@ import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { ServiceNode } from '../../src/dependency-manager/src';
 
-describe('external interfaces spec v1', () => {
+describe('external spec v1', () => {
   beforeEach(() => {
     moxios.install();
     moxios.wait(function () {

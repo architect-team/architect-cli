@@ -21,25 +21,50 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components; // TODO:207
   }
 
-  async getGraph(components: ({ config: ComponentConfig; interfaces?: Dictionary<string> } | ComponentConfig)[], values?: Dictionary<Dictionary<string>>) {
+  async interpolateComponent(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore catch circular loop
+    _interpolated_component_map[component_config.getRef()] = async () => { throw new Error('TODO:207'); };
+
+    const dependency_promises = [];
+    for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
+      const dep_component = component_map[`${dep_name}:${dep_tag}`];
+
+      if (!_interpolated_component_map[dep_component.getRef()]) {
+        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent(dep_component, component_map, external_address, _interpolated_component_map);
+      }
+      dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
+    }
+    const dependencies = await Promise.all(dependency_promises);
+
+    // TODO:207 set instance_id on component_config
+    const { interpolated_component_config } = DependencyManager.interpolateComponent(component_config, '', external_address, dependencies);
+
+    return interpolated_component_config;
+  }
+
+  async getGraph(component_configs: ComponentConfig[], values?: Dictionary<Dictionary<string>>) {
     const graph = new DependencyGraph();
 
     const gateway_port = await PortUtil.getAvailablePort(80);
 
-    // Add nodes
-    for (const component of components) {
-      const component_config = component instanceof ComponentConfig ? component : component.config;
-      const component_interfaces = component instanceof ComponentConfig ? {} : component.interfaces || {};
-
-      const instance_id = '';
-      let nodes: DependencyNode[] = [];
+    const component_map: Dictionary<ComponentConfig> = {};
+    for (const component_config of component_configs) {
       if (values) {
         // Set parameters from secrets
         DependencyManager.setValuesForComponent(component_config, values);
       }
+      component_map[component_config.getRef()] = component_config;
+    }
+
+    // Add nodes
+    for (const component_config of component_configs) {
+      const instance_id = '';
+      let nodes: DependencyNode[] = [];
 
       // Interpolate the component before generating then nodes to support dynamic host overrides
-      const { interpolated_component_config } = DependencyManager.interpolateComponent(component_config, component_interfaces, instance_id, 'localhost', gateway_port);
+      // const interpolated_component_config = await this.interpolateComponent(component_config, component_interfaces, instance_id, 'localhost', gateway_port);
+      const interpolated_component_config = await this.interpolateComponent(component_config, component_map, `localhost:${gateway_port}`);
       nodes = nodes.concat(DependencyManager.getComponentNodes(interpolated_component_config, instance_id));
 
       if (Object.keys(component_config.getInterfaces()).length) {
@@ -47,9 +72,15 @@ export default class LocalDependencyManager extends DependencyManager {
         nodes.push(node);
       }
 
+      const component_interfaces: Dictionary<string> = {};
+      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
+        if (interface_obj.external_name) {
+          component_interfaces[interface_obj.external_name] = interface_name;
+        }
+      }
+
       if (Object.keys(component_interfaces).length) {
-        // TODO:207 set gateway_port
-        nodes.push(new GatewayNode());
+        nodes.push(new GatewayNode(gateway_port));
       }
 
       for (const node of nodes) {
@@ -60,18 +91,21 @@ export default class LocalDependencyManager extends DependencyManager {
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
 
     // Add edges
-    for (const component of components) {
-      const component_config = component instanceof ComponentConfig ? component : component.config;
-      const component_interfaces = component instanceof ComponentConfig ? {} : component.interfaces || {};
-
+    for (const component_config of component_configs) {
       const instance_id = '';
       let edges: DependencyEdge[] = [];
       const ignore_keys = ['']; // Ignore all errors
       const interpolated_component_config = DependencyManager.interpolateInterfaces(component_config, ignore_keys);
       edges = edges.concat(DependencyManager.getComponentEdges(graph, interpolated_component_config, instance_id));
 
+      const component_interfaces: Dictionary<string> = {};
+      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
+        if (interface_obj.external_name) {
+          component_interfaces[interface_obj.external_name] = interface_name;
+        }
+      }
 
-      if (gateway_node && Object.keys(component_interfaces)) {
+      if (gateway_node && Object.keys(component_interfaces).length) {
         const ingress_edge = new IngressEdge(gateway_node.ref, component_config.getInterfacesRef(), component_interfaces);
         edges.push(ingress_edge);
       }
@@ -91,7 +125,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return PortUtil.getAvailablePort(starting_port);
   }
 
-  async loadComponentConfig(component_string: string): Promise<ComponentConfig> {
+  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
     const { component_account_name, component_name, tag } = ComponentVersionSlugUtils.parse(component_string);
     const component_slug = `${component_account_name}/${component_name}`;
     const component_ref = `${component_slug}:${tag}`;
@@ -115,6 +149,13 @@ export default class LocalDependencyManager extends DependencyManager {
 
     // Set the tag
     config.setName(component_ref);
+
+    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
+      const interface_obj = config.getInterfaces()[interface_to];
+      if (!interface_obj) { continue; } // TODO:207 validation?
+      interface_obj.external_name = interface_from;
+      config.setInterface(interface_to, interface_obj);
+    }
 
     // Set debug values
     for (const [sk, sv] of Object.entries(config.getServices())) {

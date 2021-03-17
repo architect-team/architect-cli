@@ -9,7 +9,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { Refs, ServiceNode } from '../../src/dependency-manager/src';
+import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
 describe('interfaces spec v1', () => {
@@ -91,30 +91,35 @@ describe('interfaces spec v1', () => {
       };
     });
 
-    const test_branch_url_safe_ref = Refs.url_safe_ref('test/branch/api:latest');
-    const test_leaf_db_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/db:latest');
-    const test_leaf_api_latest_url_safe_ref = Refs.url_safe_ref('test/leaf/api:latest');
+    const branch_ref = ComponentConfig.getServiceRef('test/branch/api:latest');
+    const leaf_db_ref = ComponentConfig.getServiceRef('test/leaf/db:latest');
+    const leaf_api_ref = ComponentConfig.getServiceRef('test/leaf/api:latest');
 
     it('should connect two services together', async () => {
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/leaf': '/stack/leaf/architect.json'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('test/leaf')
+      ]);
+
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'test/leaf/db:latest',
-        'test/leaf/api:latest'
+        leaf_db_ref,
+        leaf_api_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
+        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
       ])
-      const api_node = graph.getNodeByRef('test/leaf/api:latest') as ServiceNode;
+      const api_node = graph.getNodeByRef(leaf_api_ref) as ServiceNode;
       expect(Object.entries(api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'DB_PROTOCOL=postgres',
-        `DB_HOST=${test_leaf_db_latest_url_safe_ref}`,
+        `DB_HOST=${leaf_db_ref}`,
         'DB_PORT=5432',
-        `DB_URL=postgres://${test_leaf_db_latest_url_safe_ref}:5432`
+        `DB_URL=postgres://${leaf_db_ref}:5432`
       ])
     });
 
@@ -130,28 +135,34 @@ describe('interfaces spec v1', () => {
         '/stack/branch/architect.json': JSON.stringify(branch_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
-      expect(graph.nodes.map((n) => n.ref)).has.members([
-        'test/branch/api:latest',
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/leaf': '/stack/leaf/architect.json',
+        'test/branch': '/stack/branch/architect.json'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('test/leaf'),
+        await manager.loadComponentConfig('test/branch')
+      ]);
 
-        'test/leaf:latest-interfaces',
-        'test/leaf/db:latest',
-        'test/leaf/api:latest'
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        branch_ref,
+        leaf_db_ref,
+        leaf_api_ref,
+        'test/leaf:latest-interfaces'
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
-        'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
+        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
+        `test/leaf:latest-interfaces [api] -> ${leaf_api_ref} [main]`,
 
-        'test/branch/api:latest [service->api] -> test/leaf:latest-interfaces [api]',
+        `${branch_ref} [service->api] -> test/leaf:latest-interfaces [api]`,
       ])
-      const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+      const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        `LEAF_HOST=${test_leaf_api_latest_url_safe_ref}`,
+        `LEAF_HOST=${leaf_api_ref}`,
         'LEAF_PORT=8080',
-        `LEAF_URL=http://${test_leaf_api_latest_url_safe_ref}:8080`
+        `LEAF_URL=http://${leaf_api_ref}:8080`
       ])
     });
 
@@ -191,69 +202,77 @@ describe('interfaces spec v1', () => {
         }
       };
 
-      const test_leaf_db_other_url_safe_ref = Refs.url_safe_ref('test/other-leaf/db:latest');
-      const test_leaf_api_other_url_safe_ref = Refs.url_safe_ref('test/other-leaf/api:latest');
-
       mock_fs({
         '/stack/leaf/architect.json': JSON.stringify(leaf_component),
         '/stack/branch/architect.json': JSON.stringify(branch_component),
         '/stack/other-leaf/architect.json': JSON.stringify(other_leaf_component),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/leaf': '/stack/leaf/architect.json',
+        'test/branch': '/stack/branch/architect.json',
+        'test/other-leaf': '/stack/other-leaf/architect.json'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('test/leaf', { public: 'api' }),
+        await manager.loadComponentConfig('test/branch'),
+        await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
+      ]);
+
+      const other_leaf_api_ref = ComponentConfig.getServiceRef('test/other-leaf/api:latest');
+      const other_leaf_db_ref = ComponentConfig.getServiceRef('test/other-leaf/db:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
 
-        'test/branch/api:latest',
+        branch_ref,
 
         'test/leaf:latest-interfaces',
-        'test/leaf/db:latest',
-        'test/leaf/api:latest',
+        leaf_api_ref,
+        leaf_db_ref,
 
         'test/other-leaf:latest-interfaces',
-        'test/other-leaf/db:latest',
-        'test/other-leaf/api:latest',
+        other_leaf_api_ref,
+        other_leaf_db_ref,
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
         'gateway [public] -> test/leaf:latest-interfaces [api]',
         'gateway [publicv1] -> test/other-leaf:latest-interfaces [api]',
 
-        'test/leaf/api:latest [service->postgres] -> test/leaf/db:latest [postgres]',
-        'test/leaf:latest-interfaces [api] -> test/leaf/api:latest [main]',
+        `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
+        `test/leaf:latest-interfaces [api] -> ${leaf_api_ref} [main]`,
 
-        'test/other-leaf/api:latest [service->postgres] -> test/other-leaf/db:latest [postgres]',
-        'test/other-leaf:latest-interfaces [api] -> test/other-leaf/api:latest [main]',
+        `${other_leaf_api_ref} [service->postgres] -> ${other_leaf_db_ref} [postgres]`,
+        `test/other-leaf:latest-interfaces [api] -> ${other_leaf_api_ref} [main]`,
 
-        'test/branch/api:latest [service->api] -> test/leaf:latest-interfaces [api]',
+        `${branch_ref} [service->api] -> test/leaf:latest-interfaces [api]`,
       ])
-      const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
+      const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=test--leaf--api--latest--lw4iacyc',
+        `LEAF_HOST=${leaf_api_ref}`,
         'LEAF_PORT=8080',
-        'LEAF_URL=http://test--leaf--api--latest--lw4iacyc:8080',
+        `LEAF_URL=http://${leaf_api_ref}:8080`,
         'EXTERNAL_INTERFACE=http://public.localhost',
       ])
 
       const template = await DockerComposeUtils.generate(graph);
       expect(Object.keys(template.services)).has.members([
-        test_branch_url_safe_ref,
-        test_leaf_db_latest_url_safe_ref,
-        test_leaf_api_latest_url_safe_ref,
-        test_leaf_db_other_url_safe_ref,
-        test_leaf_api_other_url_safe_ref,
+        branch_ref,
+        leaf_db_ref,
+        leaf_api_ref,
+        other_leaf_db_ref,
+        other_leaf_api_ref,
         'gateway'
       ]);
 
       const expected_leaf_compose: DockerService = {
-        depends_on: [test_leaf_api_latest_url_safe_ref],
+        depends_on: [leaf_api_ref],
         environment: {
-          LEAF_HOST: 'test--leaf--api--latest--lw4iacyc',
+          LEAF_HOST: leaf_api_ref,
           LEAF_PORT: '8080',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: 'http://test--leaf--api--latest--lw4iacyc:8080',
+          LEAF_URL: `http://${leaf_api_ref}:8080`,
           EXTERNAL_INTERFACE: 'http://public.localhost'
         },
         image: 'branch:latest',
@@ -268,7 +287,7 @@ describe('interfaces spec v1', () => {
           "host.docker.internal:host-gateway"
         ];
       }
-      expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal(expected_leaf_compose);
+      expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
       const expected_leaf_db_compose: DockerService = {
         environment: {},
@@ -284,15 +303,15 @@ describe('interfaces spec v1', () => {
           "host.docker.internal:host-gateway"
         ];
       }
-      expect(template.services[test_leaf_db_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_db_compose);
+      expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
       const expected_leaf_api_compose: DockerService = {
-        depends_on: [test_leaf_db_latest_url_safe_ref],
+        depends_on: [leaf_db_ref],
         environment: {
-          DB_HOST: test_leaf_db_latest_url_safe_ref,
+          DB_HOST: leaf_db_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${test_leaf_db_latest_url_safe_ref}:5432`
+          DB_URL: `postgres://${leaf_db_ref}:5432`
         },
         "labels": [
           "traefik.enable=true",
@@ -314,7 +333,7 @@ describe('interfaces spec v1', () => {
           "host.docker.internal:host-gateway"
         ];
       }
-      expect(template.services[test_leaf_api_latest_url_safe_ref]).to.be.deep.equal(expected_leaf_api_compose);
+      expect(template.services[leaf_api_ref]).to.be.deep.equal(expected_leaf_api_compose);
 
       const expected_other_leaf_db_compose: DockerService = {
         environment: {},
@@ -330,15 +349,15 @@ describe('interfaces spec v1', () => {
           "host.docker.internal:host-gateway"
         ];
       }
-      expect(template.services[test_leaf_db_other_url_safe_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
+      expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
       const expected_other_leaf_api_compose: DockerService = {
-        depends_on: [test_leaf_db_other_url_safe_ref],
+        depends_on: [other_leaf_db_ref],
         environment: {
-          DB_HOST: test_leaf_db_other_url_safe_ref,
+          DB_HOST: other_leaf_db_ref,
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
-          DB_URL: `postgres://${test_leaf_db_other_url_safe_ref}:5432`
+          DB_URL: `postgres://${other_leaf_db_ref}:5432`
         },
         "labels": [
           "traefik.enable=true",
@@ -360,7 +379,7 @@ describe('interfaces spec v1', () => {
           "host.docker.internal:host-gateway"
         ];
       }
-      expect(template.services[test_leaf_api_other_url_safe_ref]).to.be.deep.equal(expected_other_leaf_api_compose);
+      expect(template.services[other_leaf_api_ref]).to.be.deep.equal(expected_other_leaf_api_compose);
     });
   });
 
@@ -385,19 +404,24 @@ describe('interfaces spec v1', () => {
       '/stack/architect.json': JSON.stringify(component_config),
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.json',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
+    ]);
+
+    const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest')
+
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
       'architect/cloud:latest-interfaces',
-      'architect/cloud/api:latest',
+      api_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      'architect/cloud:latest-interfaces [app, admin] -> architect/cloud/api:latest [main, admin]',
+      `architect/cloud:latest-interfaces [app, admin] -> ${api_ref} [main, admin]`,
       'gateway [app, admin] -> architect/cloud:latest-interfaces [app, admin]'
     ])
-
-    const architect_cloud_api_url_safe_ref = Refs.url_safe_ref('architect/cloud/api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
     const expected_compose: DockerService = {
@@ -431,7 +455,7 @@ describe('interfaces spec v1', () => {
         "host.docker.internal:host-gateway"
       ];
     }
-    expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal(expected_compose);
+    expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });
 
   it('using multiple ports from a dependency', async () => {
@@ -474,11 +498,21 @@ describe('interfaces spec v1', () => {
       '/stack/admin-ui/architect.yml': admin_ui_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'voic/admin-ui': '/stack/admin-ui/architect.yml',
+      'voic/product-catalog': '/stack/product-catalog/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('voic/admin-ui'),
+      await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+    ]);
+
+    const admin_ref = ComponentConfig.getServiceRef('voic/admin-ui/dashboard:latest')
+    const api_ref = ComponentConfig.getServiceRef('voic/product-catalog/api:latest')
+
     expect(graph.edges.map(e => e.toString())).members([
-      'voic/product-catalog:latest-interfaces [public, admin, private] -> voic/product-catalog/api:latest [public, admin, private]',
-      'voic/admin-ui/dashboard:latest [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]',
+      `voic/product-catalog:latest-interfaces [public, admin, private] -> ${api_ref} [public, admin, private]`,
+      `${admin_ref} [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]`,
       'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]',
     ])
 
@@ -493,11 +527,11 @@ describe('interfaces spec v1', () => {
     expect(node_to2).instanceOf(ServiceNode);
     expect(node_to_interface_name2).to.eq('admin');
 
-    const dashboard_node = graph.getNodeByRef('voic/admin-ui/dashboard:latest') as ServiceNode;
+    const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
     expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      ADMIN_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8081',
-      API_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8080',
-      PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082',
+      ADMIN_ADDR: `http://${api_ref}:8081`,
+      API_ADDR: `http://${api_ref}:8080`,
+      PRIVATE_ADDR: `http://${api_ref}:8082`,
       EXTERNAL_API_ADDR: 'http://public2.localhost',
     });
   });
@@ -527,12 +561,19 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/smtp': '/stack/smtp/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/smtp'),
+    ]);
 
-    const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
+    const mail_ref = ComponentConfig.getServiceRef('architect/smtp/maildev:latest');
+    const app_ref = ComponentConfig.getServiceRef('architect/smtp/test-app:latest');
+
+    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: 'smtp://test-user:test-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_ADDR: `smtp://test-user:test-pass@${mail_ref}:1025`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
     });
@@ -566,12 +607,19 @@ describe('interfaces spec v1', () => {
       '/stack/smtp/architect.yml': smtp_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/smtp': '/stack/smtp/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/smtp'),
+    ]);
 
-    const test_node = graph.getNodeByRef('architect/smtp/test-app:latest') as ServiceNode;
+    const mail_ref = ComponentConfig.getServiceRef('architect/smtp/maildev:latest');
+    const app_ref = ComponentConfig.getServiceRef('architect/smtp/test-app:latest');
+
+    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: 'smtp://param-user:param-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_ADDR: `smtp://param-user:param-pass@${mail_ref}:1025`,
       SMTP_USER: 'param-user',
       SMTP_PASS: 'param-pass',
     });
@@ -612,14 +660,38 @@ describe('interfaces spec v1', () => {
       '/stack/upstream/architect.yml': upstream_config,
     });
 
-    const manager = new LocalDependencyManager(axios.create());
-    const graph = await manager.getGraph([]); // TODO:207
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/smtp': '/stack/smtp/architect.yml',
+      'architect/upstream': '/stack/upstream/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/smtp'),
+      await manager.loadComponentConfig('architect/upstream'),
+    ]);
 
-    const test_node = graph.getNodeByRef('architect/upstream/test-app:latest') as ServiceNode;
+    const mail_ref = ComponentConfig.getServiceRef('architect/smtp/maildev:latest');
+    const app_ref = ComponentConfig.getServiceRef('architect/upstream/test-app:latest');
+
+    const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      SMTP_ADDR: 'smtp://test-user:test-pass@architect--smtp--maildev--latest--v6zeftja:1025',
+      SMTP_ADDR: `smtp://test-user:test-pass@${mail_ref}:1025`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
     });
   });
 });
+
+// TODO:207
+/*
+services:
+  api:
+    interfaces:
+      main:
+        username: test
+        password: test
+interfaces:
+  exposed:
+    host: ${{ services.api.interfaces.main.host }}
+    port: ${{ services.api.interfaces.main.port }}
+    protocol: ${{ services.api.interfaces.main.protocol }}
+*/

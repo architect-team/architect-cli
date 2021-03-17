@@ -316,9 +316,11 @@ export default class Deploy extends DeployCommand {
 
     const interfaces_map = this.getInterfacesMap();
     const component_values = this.getComponentValues();
-    // TODO:207 recursive
-    const component_config = await dependency_manager.loadComponentConfig(component_version);
-    const component_configs = [{ config: component_config, interfaces: interfaces_map }];
+    // TODO:207 recursive/tests
+    // TODO:207 host overrides via parameters tests
+    // TODO:207 dependency protocol/username/password interpolation
+    const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
+    const component_configs = [component_config];
 
     const graph = await dependency_manager.getGraph(component_configs, component_values);
 

@@ -181,35 +181,62 @@ export default abstract class DependencyManager {
     }
   }
 
-  static interpolateComponent(initial_component: ComponentConfig, interfaces: Dictionary<string>, instance_id: string, host: string, port = 443) {
+  static interpolateComponent(initial_component: ComponentConfig, instance_id: string, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
-    const component_string = replaceBrackets(serialize(component));
+    const component_string = replaceBrackets(serialize(component.expand()));
 
     const context = component.getContext();
 
     context.environment = {
       ingresses: {},
     };
-    // TODO:207 Support dependency ingresses
-    for (const [interface_from, interface_to] of Object.entries(interfaces)) {
-      if (!context.environment.ingresses[component.getName()]) {
-        context.environment.ingresses[component.getName()] = {};
-      }
 
-      const external_interface: InterfaceSpec = {
-        host: `${interface_from}.${host}`,
-        port: `${port}`,
-        protocol: host === 'localhost' ? 'http' : 'https',
-      };
-      external_interface.url = `${external_interface.protocol}://${external_interface.host}`;
-      if (port !== 80 && port !== 443) {
-        external_interface.url = `${external_interface.url}:${external_interface.port}`;
-      }
-      context.environment.ingresses[component.getName()][interface_to] = external_interface;
+    const [external_host, external_port] = external_address.split(':');
+
+    const dependencies_map: Dictionary<ComponentConfig> = {};
+    for (const dependency of dependencies) {
+      dependencies_map[dependency.getRef()] = dependency;
     }
 
-    for (const [interface_key, interface_value] of Object.entries(component.getInterfaces())) {
-      component.setInterface(interface_key, interface_value);
+    let matches;
+    const ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+    while ((matches = ingresses_regex.exec(component_string)) != null) {
+      const [_, dep_name, interface_name] = matches;
+
+      let dependency_interface;
+
+      if (dep_name === initial_component.getName()) {
+        dependency_interface = initial_component.getInterfaces()[interface_name];
+      } else {
+        const dep_tag = component.getDependencies()[dep_name];
+        if (!dep_tag) { continue; }
+        const dependency = dependencies_map[`${dep_name}:${dep_tag}`];
+        if (!dependency) { continue; }
+        dependency_interface = dependency.getInterfaces()[interface_name];
+      }
+
+      if (!dependency_interface) { continue; }
+
+      // TODO:207 set external_name if dependency interface is not already exposed
+      const interface_from = dependency_interface.external_name;
+      if (!interface_from) { continue; }
+
+      const external_interface: InterfaceSpec = {
+        host: `${interface_from}.${external_host}`,
+        port: external_port,
+        protocol: external_host === 'localhost' ? 'http' : 'https',
+        username: '',
+        password: '',
+      };
+      external_interface.url = `${external_interface.protocol}://${external_interface.host}`;
+      if (external_interface.port !== '80' && external_interface.port !== '443') {
+        external_interface.url = `${external_interface.url}:${external_interface.port}`;
+      }
+
+      if (!context.environment.ingresses[dep_name]) {
+        context.environment.ingresses[dep_name] = {};
+      }
+      context.environment.ingresses[dep_name][interface_name] = external_interface;
     }
 
     let proxy_port = 12345;
@@ -224,12 +251,17 @@ export default abstract class DependencyManager {
           proxy_port += 1;
         }
 
-        const internal_host = '127.0.0.1';
-        const internal_port = proxy_port_mapping[consul_service];
+        // TODO:207 host overrides
+        const internal_host = external_host === 'localhost' ? component.getServiceRef(service_name, instance_id) : '127.0.0.1';
+        const internal_port = external_host === 'localhost' ? interface_value.port : proxy_port_mapping[consul_service];
         const internal_protocol = interface_value.protocol || 'http';
-        const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+        let internal_url = `${internal_protocol}://${internal_host}:${internal_port}`;
+        if (interface_value.username && interface_value.password) {
+          internal_url = `${internal_protocol}://${interface_value.username}:${interface_value.password}@${internal_host}:${internal_port}`;
+        }
 
         context.services[service_name].interfaces[interface_name] = {
+          ...context.services[service_name].interfaces[interface_name],
           host: internal_host,
           port: internal_port,
           protocol: internal_protocol,
@@ -238,32 +270,35 @@ export default abstract class DependencyManager {
       }
     }
 
-    let matches;
     const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
     while ((matches = dependencies_regex.exec(component_string)) != null) {
       const [_, dep_name, interface_name] = matches;
 
       const dep_tag = component.getDependencies()[dep_name];
-      const dep_interfaces_ref = `${dep_name}:${dep_tag}${InterfaceSlugUtils.Suffix}`;
-      const consul_service = `${dep_interfaces_ref}--${interface_name}`;
-      if (!proxy_port_mapping[consul_service]) {
-        proxy_port_mapping[consul_service] = `${proxy_port}`;
-        proxy_port += 1;
-      }
-
-      const internal_host = '127.0.0.1';
-      const internal_port = proxy_port_mapping[consul_service];
-      const internal_protocol = 'http'; // TODO:320 recurse to infinity and beyond?
-      const internal_url = internal_protocol + '://' + internal_host + ':' + internal_port;
+      if (!dep_tag) { continue; }
+      const dependency = dependencies_map[`${dep_name}:${dep_tag}`];
+      if (!dependency) { continue; }
+      const dependency_interface = dependency.getInterfaces()[interface_name];
+      if (!dependency_interface) { continue; }
 
       if (!context.dependencies[dep_name]) { context.dependencies[dep_name] = {}; }
       if (!context.dependencies[dep_name].interfaces) { context.dependencies[dep_name].interfaces = {}; }
-      context.dependencies[dep_name].interfaces[interface_name] = {
-        host: internal_host,
-        port: internal_port,
-        protocol: internal_protocol,
-        url: internal_url,
-      };
+      context.dependencies[dep_name].interfaces[interface_name] = dependency_interface;
+
+      if (external_host !== 'localhost') {
+        const dep_interfaces_ref = dependency.getInterfacesRef();
+        const consul_service = `${dep_interfaces_ref}--${interface_name}`;
+        if (!proxy_port_mapping[consul_service]) {
+          proxy_port_mapping[consul_service] = `${proxy_port}`;
+          proxy_port += 1;
+        }
+
+        context.dependencies[dep_name].interfaces[interface_name] = {
+          ...context.dependencies[dep_name].interfaces[interface_name],
+          host: '127.0.0.1',
+          port: proxy_port_mapping[consul_service],
+        };
+      }
     }
 
     const ignore_keys: string[] = [];

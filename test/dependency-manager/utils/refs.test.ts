@@ -134,9 +134,9 @@ describe('Refs url_safe_ref', () => {
   });
 
   it(`Refs.url_safe_ref with max_length of 31 cuts component string to 31 chars with seed`, async () => {
-    const service_name = `frontend-boutique-shop`
+    const service_name = `boutique-shop-frontend`
     const service_ref = `example/boutique-shop/frontend:latest`;
-    const abridged_slug = `frontend-boutique-shop-w1slfipr`;
+    const abridged_slug = `boutique-shop-frontend-w1slfipr`;
 
     const url_safe_ref = Refs.url_safe_ref(service_name, service_ref, 31);
     expect(url_safe_ref).to.equal(abridged_slug);
