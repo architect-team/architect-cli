@@ -15,7 +15,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -274,7 +274,7 @@ export default class Deploy extends DeployCommand {
     if (!component_values['*']) {
       component_values['*'] = {};
     }
-    component_values['*'] = { ...component_values['*'], extra_params };
+    component_values['*'] = { ...component_values['*'], ...extra_params };
     return component_values;
   }
 
@@ -318,9 +318,13 @@ export default class Deploy extends DeployCommand {
     const component_values = this.getComponentValues();
     // TODO:207 recursive/tests
     // TODO:207 host overrides via parameters tests
-    // TODO:207 dependency protocol/username/password interpolation
     const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
-    const component_configs = [component_config];
+    let component_configs: ComponentConfig[];
+    if (flags.recursive) {
+      component_configs = await dependency_manager.loadComponentConfigs(component_config);
+    } else {
+      component_configs = [component_config];
+    }
 
     const graph = await dependency_manager.getGraph(component_configs, component_values);
 

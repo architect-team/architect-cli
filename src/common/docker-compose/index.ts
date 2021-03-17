@@ -48,31 +48,31 @@ export class DockerComposeUtils {
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
     const gateway_port = gateway_node?.interfaces._default.port || 80;
 
+    if (gateway_node) {
+      compose.services[gateway_node.ref] = {
+        image: 'traefik:v2.4',
+        restart: 'always',
+        command: [
+          '--api.insecure=true',
+          '--providers.docker',
+          '--providers.docker.exposedByDefault=false',
+        ],
+        ports: [
+          // The HTTP port
+          `${gateway_port}:80`,
+          // The Web UI(enabled by--api.insecure = true)
+          '8080:8080',
+        ],
+        volumes: [
+          '/var/run/docker.sock:/var/run/docker.sock',
+        ],
+      };
+    }
+
     // Enrich base service details
     for (const node of graph.nodes) {
       if (node.is_external) continue;
       const url_safe_ref = node.ref;
-
-      if (node instanceof GatewayNode) {
-        compose.services[node.ref] = {
-          image: 'traefik:v2.4',
-          restart: 'always',
-          command: [
-            '--api.insecure=true',
-            '--providers.docker',
-            '--providers.docker.exposedByDefault=false',
-          ],
-          ports: [
-            // The HTTP port
-            `${gateway_port}:80`,
-            // The Web UI(enabled by--api.insecure = true)
-            '8080:8080',
-          ],
-          volumes: [
-            '/var/run/docker.sock:/var/run/docker.sock',
-          ],
-        };
-      }
 
       if (node instanceof ServiceNode || node instanceof TaskNode) {
         const ports = [];

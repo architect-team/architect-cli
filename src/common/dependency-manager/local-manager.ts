@@ -28,8 +28,12 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const dependency_promises = [];
     for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
-      const dep_component = component_map[`${dep_name}:${dep_tag}`];
-
+      const dep_ref = `${dep_name}:${dep_tag}`;
+      if (!component_map[dep_ref]) {
+        // TODO:207 talk to David about what should happen in the non-recursive case
+        component_map[dep_ref] = await this.loadComponentConfig(dep_ref);
+      }
+      const dep_component = component_map[dep_ref];
       if (!_interpolated_component_map[dep_component.getRef()]) {
         _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent(dep_component, component_map, external_address, _interpolated_component_map);
       }
@@ -174,6 +178,27 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     return config;
+  }
+
+  async loadComponentConfigs(initial_component: ComponentConfig) {
+    const component_configs = [];
+    const component_configs_queue = [initial_component];
+    const loaded_components = new Set();
+    while (component_configs_queue.length) {
+      const component_config = component_configs_queue.pop();
+      if (!component_config) { break; }
+      if (loaded_components.has(component_config.getRef())) {
+        continue;
+      }
+      loaded_components.add(component_config.getRef());
+      component_configs.push(component_config);
+
+      for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
+        const dep_component_config = await this.loadComponentConfig(`${dep_name}:${dep_tag}`);
+        component_configs_queue.push(dep_component_config);
+      }
+    }
+    return component_configs;
   }
 
   /*
