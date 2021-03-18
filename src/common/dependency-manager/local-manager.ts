@@ -22,21 +22,22 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  async interpolateComponent2(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore catch circular loop
-    _interpolated_component_map[component_config.getRef()] = async () => { throw new Error('TODO:207'); };
-
+  // TODO:207 move to manager?
+  async interpolateComponent2(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '') {
     const dependency_promises = [];
     for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
       const dep_ref = `${dep_name}:${dep_tag}`;
+      if (dep_ref === _parent_ref) {
+        throw new Error(`Circular component dependency detected (${component_config.getRef()} <> ${_parent_ref})`);
+      }
+
       if (!component_map[dep_ref]) {
         // TODO:207 talk to David about what should happen in the non-recursive case
         component_map[dep_ref] = await this.loadComponentConfig(dep_ref);
       }
       const dep_component = component_map[dep_ref];
       if (!_interpolated_component_map[dep_component.getRef()]) {
-        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent2(dep_component, component_map, external_address, _interpolated_component_map);
+        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent2(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef());
       }
       dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
     }

@@ -140,7 +140,6 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:v1')
       ]);
-
       const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
       const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:v1');
 
@@ -151,7 +150,6 @@ describe('components spec v1', function () {
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
 
-    /* TODO:207
     it('simple remote component with override', async () => {
       const component_config = {
         name: 'architect/cloud',
@@ -176,12 +174,13 @@ describe('components spec v1', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
-      expect(manager.environment.getComponents()['architect/cloud'].getRef()).eq('architect/cloud:v1')
-      expect(manager.environment.getComponents()['architect/cloud'].getServiceRef('app')).eq('architect/cloud/app:v1')
-      expect(graph.nodes.map((n) => n.ref)).has.members(['architect/cloud/app:v1'])
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('architect/cloud:v1')
+      ], { '*': { log_level: 'debug' } });
+      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
+      expect(graph.nodes.map((n) => n.ref)).has.members([app_ref])
       expect(graph.edges.map((e) => e.toString())).has.members([])
-      const app_node = graph.getNodeByRef('architect/cloud/app:v1') as ServiceNode;
+      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
       expect(app_node.node_config.getEnvironmentVariables().LOG_LEVEL).eq('debug')
     });
 
@@ -218,36 +217,40 @@ describe('components spec v1', function () {
         '/stack/architect.json': JSON.stringify(component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack/architect.json'
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('architect/cloud:latest')
+      ]);
+      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest');
+      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
+      const db_ref = ComponentConfig.getServiceRef('architect/cloud/db:latest');
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/app:latest',
-        'architect/cloud/api:latest',
-        'architect/cloud/db:latest'
+        app_ref,
+        api_ref,
+        db_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'architect/cloud/app:latest [service->main] -> architect/cloud/api:latest [main]',
-        'architect/cloud/api:latest [service->main] -> architect/cloud/db:latest [main]'
+        `${app_ref} [service->main] -> ${api_ref} [main]`,
+        `${api_ref} [service->main] -> ${db_ref} [main]`
       ])
       // Test parameter values
-      const app_node = graph.getNodeByRef('architect/cloud/app:latest') as ServiceNode;
+      const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq(`http://${api_ref}:8080`)
 
-      const cloud_api_ref = Refs.url_safe_ref('architect/cloud/api:latest');
-      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq(`http://${cloud_api_ref}:8080`)
+      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${db_ref}:5432`)
 
-      const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      const cloud_db_ref = Refs.url_safe_ref('architect/cloud/db:latest');
-      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${cloud_db_ref}:5432`)
-
-      const template = await DockerComposeUtils.generate(manager);
+      const template = await DockerComposeUtils.generate(graph);
       const expected_compose: DockerComposeTemplate = {
         "services": {
-          "architect--cloud--api--latest--zg9qionk": {
+          [api_ref]: {
             "depends_on": [
-              `${cloud_db_ref}`
+              `${db_ref}`
             ],
             "environment": {
-              "DB_ADDR": `http://${cloud_db_ref}:5432`
+              "DB_ADDR": `http://${db_ref}:5432`
             },
             "ports": [
               "50001:8080",
@@ -256,12 +259,12 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--app--latest--kavtrukr": {
+          [app_ref]: {
             "depends_on": [
-              `${cloud_api_ref}`
+              `${api_ref}`
             ],
             "environment": {
-              "API_ADDR": `http://${cloud_api_ref}:8080`
+              "API_ADDR": `http://${api_ref}:8080`
             },
             "ports": [
               "50000:8080"
@@ -270,7 +273,7 @@ describe('components spec v1', function () {
               "context": path.resolve("/stack")
             }
           },
-          "architect--cloud--db--latest--6apzjzoe": {
+          [db_ref]: {
             "environment": {},
             "ports": [
               "50002:5432"
@@ -284,13 +287,13 @@ describe('components spec v1', function () {
         "volumes": {},
       };
       if (process.platform === 'linux') {
-        expected_compose.services['architect--cloud--app--latest--kavtrukr'].extra_hosts = [
+        expected_compose.services[app_ref].extra_hosts = [
           "host.docker.internal:host-gateway"
         ];
-        expected_compose.services['architect--cloud--api--latest--zg9qionk'].extra_hosts = [
+        expected_compose.services[api_ref].extra_hosts = [
           "host.docker.internal:host-gateway"
         ];
-        expected_compose.services['architect--cloud--db--latest--6apzjzoe'].extra_hosts = [
+        expected_compose.services[db_ref].extra_hosts = [
           "host.docker.internal:host-gateway"
         ];
       }
@@ -343,28 +346,36 @@ describe('components spec v1', function () {
         '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create());
-      const graph = await manager.getGraph([]); // TODO:207
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack/cloud/architect.json',
+        'concourse/ci': '/stack/concourse/architect.json'
+      });
+      const component_config = await manager.loadComponentConfig('architect/cloud:latest');
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentConfigs(component_config),
+      ]);
+      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
+      const web_ref = ComponentConfig.getServiceRef('concourse/ci/web:6.2');
+      const worker_ref = ComponentConfig.getServiceRef('concourse/ci/worker:6.2');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
-        'architect/cloud/api:latest',
+        api_ref,
 
         'concourse/ci:6.2-interfaces',
-        'concourse/ci/web:6.2',
-        'concourse/ci/worker:6.2'
+        web_ref,
+        worker_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'concourse/ci/worker:6.2 [service->main] -> concourse/ci/web:6.2 [main]',
-        'concourse/ci:6.2-interfaces [web] -> concourse/ci/web:6.2 [main]',
-        'architect/cloud/api:latest [service->web] -> concourse/ci:6.2-interfaces [web]'
+        `${worker_ref} [service->main] -> ${web_ref} [main]`,
+        `concourse/ci:6.2-interfaces [web] -> ${web_ref} [main]`,
+        `${api_ref} [service->web] -> concourse/ci:6.2-interfaces [web]`
       ])
 
       // Test parameter values
-      const api_node = graph.getNodeByRef('architect/cloud/api:latest') as ServiceNode;
-      const concourse_web_ref = Refs.url_safe_ref('concourse/ci/web:6.2');
-      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${concourse_web_ref}:8080`)
-      const worker_node = graph.getNodeByRef('concourse/ci/worker:6.2') as ServiceNode;
-      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(concourse_web_ref);
+      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
+      const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
+      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(web_ref);
     });
 
     it('circular component dependency is rejected', async () => {
@@ -409,8 +420,13 @@ describe('components spec v1', function () {
 
       let manager_error;
       try {
-        const manager = new LocalDependencyManager(axios.create());
-        await manager.getGraph();
+        const manager = new LocalDependencyManager(axios.create(), {
+          'examples/hello-world': '/stack/architect.json',
+        });
+        await manager.getGraph([
+          await manager.loadComponentConfig('examples/hello-world:latest'),
+          await manager.loadComponentConfig('examples/hello-circular-world:latest'),
+        ]);
       } catch (err) {
         manager_error = err.message;
       }
@@ -478,14 +494,19 @@ describe('components spec v1', function () {
 
       let manager_error;
       try {
-        const manager = new LocalDependencyManager(axios.create());
-        await manager.getGraph();
+        const manager = new LocalDependencyManager(axios.create(), {
+          'examples/hello-world-a': '/stack/architect.json',
+        });
+        await manager.getGraph([
+          await manager.loadComponentConfig('examples/hello-world-a:latest'),
+          await manager.loadComponentConfig('examples/hello-world-b:latest'),
+          await manager.loadComponentConfig('examples/hello-world-c:latest')
+        ]);
       } catch (err) {
         manager_error = err.message;
       }
       expect(manager_error).undefined;
     });
-    */
 
     it('component with one task', async () => {
       const component_config_json = {
