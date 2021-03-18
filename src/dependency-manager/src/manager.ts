@@ -320,7 +320,7 @@ export default abstract class DependencyManager {
 
     // Two-pass interpolation to detect optional host overrides
     const first_interpolated_component_string = interpolateString(component_string, context, ignore_keys);
-    const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
+    const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string) as ComponentConfig;
     for (const [service_name, service_config] of Object.entries(first_interpolated_component_config.getServices())) {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
         if (!interface_config.host) {
@@ -344,7 +344,7 @@ export default abstract class DependencyManager {
 
     const component_string2 = replaceBrackets(serialize(component.expand()));
     const interpolated_component_string = interpolateString(component_string2, context, ignore_keys);
-    const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
+    const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
 
     return { interpolated_component_config, proxy_port_mapping };
   }

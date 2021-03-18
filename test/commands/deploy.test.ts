@@ -397,10 +397,10 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
   if (process.platform === 'linux') {
-    seeding_component_expected_compose.services['examples--database-seeding--app--latest--7fdljhug'].extra_hosts = [
+    seeding_component_expected_compose.services[seed_app_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
-    seeding_component_expected_compose.services['examples--database-seeding--my-demo-db--latest--uimfmkw0'].extra_hosts = [
+    seeding_component_expected_compose.services[seed_db_ref].extra_hosts = [
       "host.docker.internal:host-gateway"
     ];
   }
