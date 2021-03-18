@@ -290,7 +290,7 @@ export default abstract class DependencyManager {
         const internal_protocol = interface_config.protocol || 'http';
         let internal_url;
         if (interface_config.username && interface_config.password) {
-          internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}:${internal_port}`;
+          internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}`;
         } else {
           internal_url = `${internal_protocol}://${internal_host}`;
         }
@@ -320,7 +320,7 @@ export default abstract class DependencyManager {
           const internal_protocol = interface_config.protocol || 'http';
           let internal_url;
           if (interface_config.username && interface_config.password) {
-            internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}:${internal_port}`;
+            internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}`;
           } else {
             internal_url = `${internal_protocol}://${internal_host}`;
           }
