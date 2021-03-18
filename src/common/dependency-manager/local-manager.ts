@@ -9,6 +9,7 @@ import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
+import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -18,10 +19,10 @@ export default class LocalDependencyManager extends DependencyManager {
   constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
-    this.linked_components = linked_components; // TODO:207
+    this.linked_components = linked_components;
   }
 
-  async interpolateComponent(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}) {
+  async interpolateComponent2(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore catch circular loop
     _interpolated_component_map[component_config.getRef()] = async () => { throw new Error('TODO:207'); };
@@ -35,14 +36,14 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       const dep_component = component_map[dep_ref];
       if (!_interpolated_component_map[dep_component.getRef()]) {
-        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent(dep_component, component_map, external_address, _interpolated_component_map);
+        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent2(dep_component, component_map, external_address, _interpolated_component_map);
       }
       dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
     }
     const dependencies = await Promise.all(dependency_promises);
 
     // TODO:207 set instance_id on component_config
-    const { interpolated_component_config } = DependencyManager.interpolateComponent(component_config, '', external_address, dependencies);
+    const { interpolated_component_config } = this.interpolateComponent(component_config, '', external_address, dependencies);
 
     return interpolated_component_config;
   }
@@ -56,7 +57,7 @@ export default class LocalDependencyManager extends DependencyManager {
     for (const component_config of component_configs) {
       if (values) {
         // Set parameters from secrets
-        DependencyManager.setValuesForComponent(component_config, values);
+        this.setValuesForComponent(component_config, values);
       }
       component_map[component_config.getRef()] = component_config;
     }
@@ -68,8 +69,8 @@ export default class LocalDependencyManager extends DependencyManager {
 
       // Interpolate the component before generating then nodes to support dynamic host overrides
       // const interpolated_component_config = await this.interpolateComponent(component_config, component_interfaces, instance_id, 'localhost', gateway_port);
-      const interpolated_component_config = await this.interpolateComponent(component_config, component_map, `localhost:${gateway_port}`);
-      nodes = nodes.concat(DependencyManager.getComponentNodes(interpolated_component_config, instance_id));
+      const interpolated_component_config = await this.interpolateComponent2(component_config, component_map, `localhost:${gateway_port}`);
+      nodes = nodes.concat(this.getComponentNodes(interpolated_component_config, instance_id));
 
       if (Object.keys(component_config.getInterfaces()).length) {
         const node = new InterfacesNode(component_config.getInterfacesRef());
@@ -99,8 +100,8 @@ export default class LocalDependencyManager extends DependencyManager {
       const instance_id = '';
       let edges: DependencyEdge[] = [];
       const ignore_keys = ['']; // Ignore all errors
-      const interpolated_component_config = DependencyManager.interpolateInterfaces(component_config, ignore_keys);
-      edges = edges.concat(DependencyManager.getComponentEdges(graph, interpolated_component_config, instance_id));
+      const interpolated_component_config = this.interpolateInterfaces(component_config, ignore_keys);
+      edges = edges.concat(this.getComponentEdges(graph, interpolated_component_config, instance_id));
 
       const component_interfaces: Dictionary<string> = {};
       for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
@@ -120,13 +121,6 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     return graph;
-  }
-
-  /**
-   * @override
-   */
-  async getServicePort(starting_port?: number): Promise<number> {
-    return PortUtil.getAvailablePort(starting_port);
   }
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
@@ -199,5 +193,16 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     return component_configs;
+  }
+
+  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]) {
+    const errors = super.validateComponent(component, context, ignore_keys);
+    const component_extends = component.getExtends();
+    if (component_extends?.startsWith('file:') && errors.length) {
+      const component_path = component_extends.substr('file:'.length);
+      const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(component_path);
+      throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
+    }
+    return errors;
   }
 }

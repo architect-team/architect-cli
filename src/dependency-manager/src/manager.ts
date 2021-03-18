@@ -1,14 +1,17 @@
 import { deserialize, serialize } from 'class-transformer';
+import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
 import { ComponentConfig, ComponentSlugUtils, DependencyNode, InterfaceSlugUtils, InterfaceSpec, ServiceNode, Slugs, TaskNode } from '.';
 import DependencyGraph from './graph';
 import DependencyEdge from './graph/edge';
 import ServiceEdge from './graph/edge/service';
 import { Dictionary } from './utils/dictionary';
+import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
+import { validateInterpolation } from './utils/validation';
 
 export default abstract class DependencyManager {
-  static getComponentNodes(component: ComponentConfig, instance_id: string): DependencyNode[] {
+  getComponentNodes(component: ComponentConfig, instance_id: string): DependencyNode[] {
     const nodes = [];
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
@@ -33,7 +36,7 @@ export default abstract class DependencyManager {
     return nodes;
   }
 
-  static interpolateInterfaces(initial_component: ComponentConfig, ignore_keys: string[]) {
+  interpolateInterfaces(initial_component: ComponentConfig, ignore_keys: string[]) {
     // Interpolate component to fully resolve edges between services/dependencies
     // Important for host overrides where values might comes from parameters
     const component_string = replaceBrackets(serialize(initial_component));
@@ -69,7 +72,7 @@ export default abstract class DependencyManager {
     return component;
   }
 
-  static getComponentEdges(graph: DependencyGraph, component: ComponentConfig, instance_id: string): DependencyEdge[] {
+  getComponentEdges(graph: DependencyGraph, component: ComponentConfig, instance_id: string): DependencyEdge[] {
     const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
@@ -158,7 +161,7 @@ export default abstract class DependencyManager {
     return edges;
   }
 
-  static setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string>>) {
+  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string>>) {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
     const sorted_values_dict: Dictionary<Dictionary<string>> = {};
@@ -181,7 +184,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  static interpolateComponent(initial_component: ComponentConfig, instance_id: string, external_address: string, dependencies: ComponentConfig[]) {
+  interpolateComponent(initial_component: ComponentConfig, instance_id: string, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
     const component_string = replaceBrackets(serialize(component.expand()));
 
@@ -309,6 +312,12 @@ export default abstract class DependencyManager {
     }
 
     const ignore_keys: string[] = [];
+
+    const errors = this.validateComponent(component, context, ignore_keys);
+    if (errors.length) {
+      throw new ValidationErrors(component.getRef(), flattenValidationErrors(errors));
+    }
+
     // Two-pass interpolation to detect optional host overrides
     const first_interpolated_component_string = interpolateString(component_string, context, ignore_keys);
     const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
@@ -316,7 +325,6 @@ export default abstract class DependencyManager {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
         if (!interface_config.host) {
           const internal_host = external_host === 'localhost' ? interface_config.host || component.getServiceRef(service_name, instance_id) : '127.0.0.1';
-          const internal_port = external_host === 'localhost' ? interface_config.port : 'TODO:207';
           const internal_protocol = interface_config.protocol || 'http';
           let internal_url;
           if (interface_config.username && interface_config.password) {
@@ -339,5 +347,22 @@ export default abstract class DependencyManager {
     const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
 
     return { interpolated_component_config, proxy_port_mapping };
+  }
+
+  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
+    const validation_errors = [];
+    // Check required parameters for components
+    for (const [pk, pv] of Object.entries(component.getParameters())) {
+      if (pv.required !== 'false' && (pv.default === undefined || pv.default === null)) {
+        const validation_error = new ValidationError();
+        validation_error.property = `components.${component.getName()}.parameters.${pk}`;
+        validation_error.target = pv;
+        validation_error.value = pv.default;
+        validation_error.constraints = { Required: `${pk} is required` };
+        validation_error.children = [];
+        validation_errors.push(validation_error);
+      }
+    }
+    return [...validation_errors, ...validateInterpolation(serialize(component), context, ignore_keys)];
   }
 }
