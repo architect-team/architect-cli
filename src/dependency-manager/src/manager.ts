@@ -203,23 +203,25 @@ export default abstract class DependencyManager {
     while ((matches = ingresses_regex.exec(component_string)) != null) {
       const [_, dep_name, interface_name] = matches;
 
-      let dependency_interface;
+      let dep_component;
 
       if (dep_name === initial_component.getName()) {
-        dependency_interface = initial_component.getInterfaces()[interface_name];
+        dep_component = initial_component;
       } else {
         const dep_tag = component.getDependencies()[dep_name];
         if (!dep_tag) { continue; }
-        const dependency = dependencies_map[`${dep_name}:${dep_tag}`];
-        if (!dependency) { continue; }
-        dependency_interface = dependency.getInterfaces()[interface_name];
+        dep_component = dependencies_map[`${dep_name}:${dep_tag}`];
       }
+      if (!dep_component) { continue; }
 
+      const dependency_interface = dep_component.getInterfaces()[interface_name];
       if (!dependency_interface) { continue; }
 
-      // TODO:207 set external_name if dependency interface is not already exposed
+      if (!dependency_interface.external_name) {
+        dependency_interface.external_name = dep_component.getServiceRef(interface_name, '');
+        dep_component.setInterface(interface_name, dependency_interface);
+      }
       const interface_from = dependency_interface.external_name;
-      if (!interface_from) { continue; }
 
       const external_interface: InterfaceSpec = {
         host: `${interface_from}.${external_host}`,
@@ -241,34 +243,6 @@ export default abstract class DependencyManager {
 
     let proxy_port = 12345;
     const proxy_port_mapping: Dictionary<string> = {};
-
-    for (const [service_name, service_config] of Object.entries(component.getServices())) {
-      const service_ref = component.getServiceRef(service_name, instance_id);
-      for (const [interface_name, interface_value] of Object.entries(service_config.getInterfaces())) {
-        const consul_service = `${service_ref}--${interface_name}`;
-        if (!proxy_port_mapping[consul_service]) {
-          proxy_port_mapping[consul_service] = `${proxy_port}`;
-          proxy_port += 1;
-        }
-
-        // TODO:207 host overrides
-        const internal_host = external_host === 'localhost' ? component.getServiceRef(service_name, instance_id) : '127.0.0.1';
-        const internal_port = external_host === 'localhost' ? interface_value.port : proxy_port_mapping[consul_service];
-        const internal_protocol = interface_value.protocol || 'http';
-        let internal_url = `${internal_protocol}://${internal_host}:${internal_port}`;
-        if (interface_value.username && interface_value.password) {
-          internal_url = `${internal_protocol}://${interface_value.username}:${interface_value.password}@${internal_host}:${internal_port}`;
-        }
-
-        context.services[service_name].interfaces[interface_name] = {
-          ...context.services[service_name].interfaces[interface_name],
-          host: internal_host,
-          port: internal_port,
-          protocol: internal_protocol,
-          url: internal_url,
-        };
-      }
-    }
 
     const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
     while ((matches = dependencies_regex.exec(component_string)) != null) {
@@ -301,8 +275,67 @@ export default abstract class DependencyManager {
       }
     }
 
+    for (const [service_name, service_config] of Object.entries(component.getServices())) {
+      const service_ref = component.getServiceRef(service_name, instance_id);
+      for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
+        const consul_service = `${service_ref}--${interface_name}`;
+        if (!proxy_port_mapping[consul_service]) {
+          proxy_port_mapping[consul_service] = `${proxy_port}`;
+          proxy_port += 1;
+        }
+
+        // TODO:207 host overrides
+        const internal_host = external_host === 'localhost' ? interface_config.host || component.getServiceRef(service_name, instance_id) : '127.0.0.1';
+        const internal_port = external_host === 'localhost' ? interface_config.port : proxy_port_mapping[consul_service];
+        const internal_protocol = interface_config.protocol || 'http';
+        let internal_url;
+        if (interface_config.username && interface_config.password) {
+          internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}:${internal_port}`;
+        } else {
+          internal_url = `${internal_protocol}://${internal_host}`;
+        }
+        if (interface_config.port !== '80' && interface_config.port !== '443') {
+          internal_url = `${internal_url}:${interface_config.port}`;
+        }
+
+        context.services[service_name].interfaces[interface_name] = {
+          ...context.services[service_name].interfaces[interface_name],
+          host: internal_host,
+          port: internal_port,
+          protocol: internal_protocol,
+          url: internal_url,
+        };
+      }
+    }
+
     const ignore_keys: string[] = [];
-    const interpolated_component_string = interpolateString(component_string, context, ignore_keys);
+    // Two-pass interpolation to detect optional host overrides
+    const first_interpolated_component_string = interpolateString(component_string, context, ignore_keys);
+    const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
+    for (const [service_name, service_config] of Object.entries(first_interpolated_component_config.getServices())) {
+      for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
+        if (!interface_config.host) {
+          const internal_host = external_host === 'localhost' ? interface_config.host || component.getServiceRef(service_name, instance_id) : '127.0.0.1';
+          const internal_port = external_host === 'localhost' ? interface_config.port : 'TODO:207';
+          const internal_protocol = interface_config.protocol || 'http';
+          let internal_url;
+          if (interface_config.username && interface_config.password) {
+            internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}:${internal_port}`;
+          } else {
+            internal_url = `${internal_protocol}://${internal_host}`;
+          }
+          if (interface_config.port !== '80' && interface_config.port !== '443') {
+            internal_url = `${internal_url}:${interface_config.port}`;
+          }
+
+          context['services'][service_name]['interfaces'][interface_name].url = internal_url;
+          context['services'][service_name]['interfaces'][interface_name].host = internal_host;
+        }
+      }
+    }
+
+    const component_string2 = replaceBrackets(serialize(component.expand()));
+    const interpolated_component_string = interpolateString(component_string2, context, ignore_keys);
     const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string, { enableImplicitConversion: true }) as ComponentConfig;
 
     return { interpolated_component_config, proxy_port_mapping };
