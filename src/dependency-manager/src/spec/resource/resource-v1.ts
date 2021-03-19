@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
+import { ServiceVersionSlugUtils } from '../..';
 import { Dictionary } from '../../utils/dictionary';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { BaseConfig } from '../base-spec';
@@ -91,8 +92,18 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
     return errors;
   }
 
-  getName(): string {
+  getRef(): string {
     return this.name || '';
+  }
+
+  getName(): string {
+    const split = ServiceVersionSlugUtils.parse(this.name || '');
+    return split.service_name;
+  }
+
+  getTag(): string {
+    const split = ServiceVersionSlugUtils.parse(this.name || '');
+    return split.tag;
   }
 
   getImage(): string {

@@ -18,8 +18,8 @@ export default abstract class DependencyManager {
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node = new ServiceNode({
-        ref: component.getServiceRef(service_name),
-        node_config: service_config,
+        ref: component.getNodeRef(service_name),
+        config: service_config,
         local_path: component.getLocalPath(),
         artifact_image: component.getArtifactImage(),
       });
@@ -29,8 +29,8 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.getTasks())) {
       const node = new TaskNode({
-        ref: component.getServiceRef(task_name),
-        node_config: task_config,
+        ref: component.getNodeRef(task_name),
+        config: task_config,
         local_path: component.getLocalPath(),
       });
       nodes.push(node);
@@ -78,7 +78,7 @@ export default abstract class DependencyManager {
     const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
-      const from = component.getServiceRef(service_name);
+      const from = component.getNodeRef(service_name);
       const from_node = graph.getNodeByRef(from);
       if (from_node.is_external) {
         continue;
@@ -92,7 +92,7 @@ export default abstract class DependencyManager {
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
-        const to = component.getServiceRef(service_name);
+        const to = component.getNodeRef(service_name);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -133,7 +133,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
-      const to = component.getServiceRef(service_name);
+      const to = component.getNodeRef(service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -239,7 +239,7 @@ export default abstract class DependencyManager {
       if (!dependency_interface) { continue; }
 
       if (!dependency_interface.external_name) {
-        dependency_interface.external_name = dep_component.getServiceRef(interface_name);
+        dependency_interface.external_name = dep_component.getNodeRef(interface_name);
         dep_component.setInterface(interface_name, dependency_interface);
       }
       const interface_from = dependency_interface.external_name;
@@ -296,7 +296,7 @@ export default abstract class DependencyManager {
 
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
-        const service_ref = component.getServiceRef(service_name);
+        const service_ref = component.getNodeRef(service_name);
         let internal_host = interface_config.host || service_ref;
         let internal_port = interface_config.port;
 
@@ -335,9 +335,9 @@ export default abstract class DependencyManager {
     const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string) as ComponentConfig;
     for (const [service_name, service_config] of Object.entries(first_interpolated_component_config.getServices())) {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
-        const service_ref = component.getServiceRef(service_name);
+        const service_ref = component.getNodeRef(service_name);
         if (!interface_config.host) {
-          let internal_host = component.getServiceRef(service_name);
+          let internal_host = component.getNodeRef(service_name);
           let internal_port = interface_config.port;
 
           if (this.use_sidecar) {

@@ -6,7 +6,10 @@ import { VolumeSpec } from '../common/volume-spec';
 
 export interface ResourceConfig extends ConfigSpec {
   __version?: string;
+  getRef(): string;
   getName(): string;
+  getTag(): string;
+
   getDescription(): string;
   getLanguage(): string;
   getImage(): string;

@@ -69,8 +69,8 @@ describe('components spec v1', function () {
         await manager.loadComponentConfig('architect/cloud:latest')
       ]);
 
-      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest');
-      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
+      const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest');
+      const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
@@ -140,8 +140,8 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:v1')
       ]);
-      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
-      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:v1');
+      const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:v1');
+      const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
@@ -177,11 +177,11 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:v1')
       ], { '*': { log_level: 'debug' } });
-      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
+      const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:v1');
       expect(graph.nodes.map((n) => n.ref)).has.members([app_ref])
       expect(graph.edges.map((e) => e.toString())).has.members([])
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-      expect(app_node.node_config.getEnvironmentVariables().LOG_LEVEL).eq('debug')
+      expect(app_node.config.getEnvironmentVariables().LOG_LEVEL).eq('debug')
     });
 
     it('local component with edges', async () => {
@@ -223,9 +223,9 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:latest')
       ]);
-      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest');
-      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
-      const db_ref = ComponentConfig.getServiceRef('architect/cloud/db:latest');
+      const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest');
+      const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest');
+      const db_ref = ComponentConfig.getNodeRef('architect/cloud/db:latest');
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
         api_ref,
@@ -237,10 +237,10 @@ describe('components spec v1', function () {
       ])
       // Test parameter values
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-      expect(app_node.node_config.getEnvironmentVariables().API_ADDR).eq(`http://${api_ref}:8080`)
+      expect(app_node.config.getEnvironmentVariables().API_ADDR).eq(`http://${api_ref}:8080`)
 
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(api_node.node_config.getEnvironmentVariables().DB_ADDR).eq(`http://${db_ref}:5432`)
+      expect(api_node.config.getEnvironmentVariables().DB_ADDR).eq(`http://${db_ref}:5432`)
 
       const template = await DockerComposeUtils.generate(graph);
       const expected_compose: DockerComposeTemplate = {
@@ -354,9 +354,9 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         ...await manager.loadComponentConfigs(component_config),
       ]);
-      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
-      const web_ref = ComponentConfig.getServiceRef('concourse/ci/web:6.2');
-      const worker_ref = ComponentConfig.getServiceRef('concourse/ci/worker:6.2');
+      const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest');
+      const web_ref = ComponentConfig.getNodeRef('concourse/ci/web:6.2');
+      const worker_ref = ComponentConfig.getNodeRef('concourse/ci/worker:6.2');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
@@ -373,9 +373,15 @@ describe('components spec v1', function () {
 
       // Test parameter values
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(api_node.node_config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
+      expect(api_node.config.getEnvironmentVariables().CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
+      expect(api_node.config.getName()).to.eq('api');
+      expect(api_node.config.getTag()).to.eq('latest');
+      expect(api_node.config.getRef()).to.eq('architect/cloud/api:latest');
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
-      expect(worker_node.node_config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(web_ref);
+      expect(worker_node.config.getEnvironmentVariables().CONCOURSE_TSA_HOST).eq(web_ref);
+      expect(worker_node.config.getName()).to.eq('worker');
+      expect(worker_node.config.getTag()).to.eq('6.2');
+      expect(worker_node.config.getRef()).to.eq('concourse/ci/worker:6.2');
     });
 
     it('circular component dependency is rejected', async () => {
@@ -527,14 +533,14 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = ComponentConfig.getServiceRef('architect/cloud/syncer:v1');
+      const syncer_ref = ComponentConfig.getNodeRef('architect/cloud/syncer:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
       ])
       const task_node = graph.getNodeByRef(syncer_ref);
       expect(task_node.__type).equals('task');
-      expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
+      expect((task_node as TaskNode).config.getSchedule()).equals('*/1 * * * *');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -565,8 +571,8 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = ComponentConfig.getServiceRef('architect/cloud/syncer:v1');
-      const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:v1');
+      const syncer_ref = ComponentConfig.getNodeRef('architect/cloud/syncer:v1');
+      const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
@@ -574,7 +580,7 @@ describe('components spec v1', function () {
       ])
       const task_node = graph.getNodeByRef(syncer_ref);
       expect(task_node.__type).equals('task');
-      expect((task_node as TaskNode).node_config.getSchedule()).equals('*/1 * * * *');
+      expect((task_node as TaskNode).config.getSchedule()).equals('*/1 * * * *');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -641,13 +647,13 @@ describe('components spec v1', function () {
         }
       });
 
-      const api_ref = ComponentConfig.getServiceRef('examples/component-b/api:v1');
-      const api2_ref = ComponentConfig.getServiceRef('examples/component-b/api:v2');
+      const api_ref = ComponentConfig.getNodeRef('examples/component-b/api:v1');
+      const api2_ref = ComponentConfig.getNodeRef('examples/component-b/api:v2');
 
       const node_b_v1 = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(node_b_v1.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
+      expect(node_b_v1.config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo3');
       const node_b_v2 = graph.getNodeByRef(api2_ref) as ServiceNode;
-      expect(node_b_v2.node_config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
+      expect(node_b_v2.config.getEnvironmentVariables().TEST_REQUIRED).to.eq('foo2');
     });
 
     it('environment ingress context produces the correct values for a simple external interface', async () => {
@@ -677,13 +683,13 @@ describe('components spec v1', function () {
         await manager.loadComponentConfig('architect/cloud:latest', { api: 'api-interface' })
       ]);
 
-      const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest');
+      const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest');
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(cloud_api_node.node_config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
+      expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
     });
   });
 });

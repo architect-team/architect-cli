@@ -35,8 +35,8 @@ describe('volumes spec v1', () => {
     moxios.uninstall();
   });
 
-  const test_component_api_url_safe_ref = ComponentConfig.getServiceRef('test/component/api:latest');
-  const test_component_app_url_safe_ref = ComponentConfig.getServiceRef('test/component/app:latest');
+  const test_component_api_url_safe_ref = ComponentConfig.getNodeRef('test/component/api:latest');
+  const test_component_app_url_safe_ref = ComponentConfig.getNodeRef('test/component/app:latest');
 
   it('simple volume', async () => {
     const component_config = `

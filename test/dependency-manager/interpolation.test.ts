@@ -94,8 +94,8 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('concourse/worker')
     ]);
 
-    const web_ref = ComponentConfig.getServiceRef('concourse/web/web:latest');
-    const worker_ref = ComponentConfig.getServiceRef('concourse/worker/worker:latest');
+    const web_ref = ComponentConfig.getNodeRef('concourse/web/web:latest');
+    const worker_ref = ComponentConfig.getNodeRef('concourse/worker/worker:latest');
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'concourse/web:latest-interfaces',
@@ -260,15 +260,15 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend')
     ]);
     const backend_external_url = 'http://backend.localhost'
-    const backend_ref = ComponentConfig.getServiceRef('examples/backend/api:latest');
+    const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
-    expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(backend_node.config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${backend_ref}:8081`,
       EXTERNAL_HOST: backend_external_url
     })
-    const frontend_ref = ComponentConfig.getServiceRef('examples/frontend/app:latest');
+    const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
-    expect(frontend_node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
       INTERNAL_APP_URL: `http://${frontend_ref}:8080`,
     })
@@ -308,9 +308,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('test/component'),
     ]);
-    const web_ref = ComponentConfig.getServiceRef('test/component/web:latest');
+    const web_ref = ComponentConfig.getNodeRef('test/component/web:latest');
     const node = graph.getNodeByRef(web_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       APPLICATION_PROPERTIES: 'log_level=debug'
     });
   });
@@ -347,9 +347,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('test/component'),
     ]);
-    const web_ref = ComponentConfig.getServiceRef('test/component/web:latest');
+    const web_ref = ComponentConfig.getNodeRef('test/component/web:latest');
     const node = graph.getNodeByRef(web_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some test file data from component param'
     });
   });
@@ -382,9 +382,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       T3ST_FILE_DATA16: 'some file data'
     });
   });
@@ -417,9 +417,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data'
     });
   });
@@ -452,9 +452,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data'
     });
   });
@@ -489,9 +489,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data',
       OTHER_TEST_FILE_DATA: 'some file data from other file'
     });
@@ -525,9 +525,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line',
     });
   });
@@ -561,9 +561,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('test/component'),
     ]);
-    const web_ref = ComponentConfig.getServiceRef('test/component/web:latest');
+    const web_ref = ComponentConfig.getNodeRef('test/component/web:latest');
     const node = graph.getNodeByRef(web_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line'
     });
   });
@@ -596,9 +596,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_DATA: 'some file data',
     });
   });
@@ -633,9 +633,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       TEST_FILE_ENV: 'manually set test file env'
     });
   });
@@ -667,9 +667,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       data_from_my_config_file: 'regular config file data'
     });
   });
@@ -702,9 +702,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       ENV_PARAM: 'env_param_data'
     });
   });
@@ -742,9 +742,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       CONFIG_DATA: 'test.security.apiTrustedSecret=$${TEST_AUTH_CODE_SECRET:}\n    test.security.apiTrustedSecret2=$${ TEST_AUTH_CODE_SECRET }'
     });
   });
@@ -786,9 +786,9 @@ describe('interpolation spec v1', () => {
       '*': { aws_secret: 'test' },
       'examples/hello-world*': { other_secret: 'shown' }
     });
-    const api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest');
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
       AWS_SECRET: 'test',
       OTHER_SECRET: 'shown',
       DEFAULT_SECRET: 'test3'

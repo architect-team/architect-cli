@@ -80,7 +80,7 @@ export class DockerComposeUtils {
           ports.push(`${available_ports.shift()}:${port}`);
         }
         const formatted_environment_variables: Dictionary<string> = {};
-        for (const [var_key, var_value] of Object.entries(node.node_config.getEnvironmentVariables())) {
+        for (const [var_key, var_value] of Object.entries(node.config.getEnvironmentVariables())) {
           formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
         }
         compose.services[url_safe_ref] = {
@@ -92,16 +92,16 @@ export class DockerComposeUtils {
           compose.services[url_safe_ref].external_links = gateway_links;
         }
 
-        if (node.node_config.getImage()) compose.services[url_safe_ref].image = node.node_config.getImage();
+        if (node.config.getImage()) compose.services[url_safe_ref].image = node.config.getImage();
 
-        if (node.node_config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
-          compose.services[url_safe_ref].command = node.node_config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+        if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
+          compose.services[url_safe_ref].command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
         }
-        if (node.node_config.getEntrypoint().length) {
-          compose.services[url_safe_ref].entrypoint = node.node_config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+        if (node.config.getEntrypoint().length) {
+          compose.services[url_safe_ref].entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
         }
 
-        const platforms = node.node_config.getPlatforms();
+        const platforms = node.config.getPlatforms();
         const docker_compose_config = platforms['docker-compose'];
         if (docker_compose_config) {
           compose.services[url_safe_ref] = {
@@ -110,8 +110,8 @@ export class DockerComposeUtils {
           };
         }
 
-        const cpu = node.node_config.getCpu();
-        const memory = node.node_config.getMemory();
+        const cpu = node.config.getCpu();
+        const memory = node.config.getMemory();
         if (cpu || memory) {
           const service = compose.services[url_safe_ref];
           service.deploy = { resources: { limits: {} } };
@@ -126,8 +126,8 @@ export class DockerComposeUtils {
 
       if (node.is_local && (node instanceof ServiceNode || node instanceof TaskNode)) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
-        if (!node.node_config.getImage()) {
-          const build = node.node_config.getBuild();
+        if (!node.config.getImage()) {
+          const build = node.config.getBuild();
           const args = [];
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);
@@ -147,7 +147,7 @@ export class DockerComposeUtils {
         }
 
         const volumes: string[] = [];
-        for (const [key, spec] of Object.entries(node.node_config.getVolumes())) {
+        for (const [key, spec] of Object.entries(node.config.getVolumes())) {
           let service_volume;
           if (spec.mount_path) {
             service_volume = spec.mount_path;

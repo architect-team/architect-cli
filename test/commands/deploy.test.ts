@@ -266,9 +266,9 @@ describe('local deploy environment', function () {
     }
   };
 
-  const seed_app_ref = ComponentConfig.getServiceRef('examples/database-seeding/app:latest')
-  const seed_db_ref = ComponentConfig.getServiceRef('examples/database-seeding/my-demo-db:latest')
-  const echo_ref = ComponentConfig.getServiceRef('examples/echo/api:latest')
+  const seed_app_ref = ComponentConfig.getNodeRef('examples/database-seeding/app:latest')
+  const seed_db_ref = ComponentConfig.getNodeRef('examples/database-seeding/my-demo-db:latest')
+  const echo_ref = ComponentConfig.getNodeRef('examples/echo/api:latest')
 
   const environment_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -405,7 +405,7 @@ describe('local deploy environment', function () {
     ];
   }
 
-  const hello_api_ref = ComponentConfig.getServiceRef('examples/hello-world/api:latest')
+  const hello_api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest')
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -595,7 +595,7 @@ describe('local deploy environment', function () {
     .it('Create a local recursive deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = ComponentConfig.getServiceRef('examples/react-app/app:latest');
+      const react_app_ref = ComponentConfig.getNodeRef('examples/react-app/app:latest');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');

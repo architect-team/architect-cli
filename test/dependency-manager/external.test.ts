@@ -65,14 +65,14 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
 
-    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.true;
-    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
       HOST: 'cloud.architect.io',
       ADDR: 'http://cloud.architect.io:8080'
     })
@@ -119,14 +119,14 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
 
-    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.false;
-    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
       HOST: app_ref,
       ADDR: `http://${app_ref}:8080`
     })
@@ -166,14 +166,14 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/cloud:latest')
     ], { '*': { optional_host: 'cloud.architect.io' } });
 
-    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.true;
-    expect(app_node.node_config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
       HOST: 'cloud.architect.io',
       ADDR: 'http://cloud.architect.io:8080'
     })
@@ -222,8 +222,8 @@ describe('external spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
-    const app_ref = ComponentConfig.getServiceRef('architect/cloud/app:latest')
-    const api_ref = ComponentConfig.getServiceRef('architect/cloud/api:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
+    const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
@@ -312,10 +312,10 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/dependency:latest')
     ]);
 
-    const app_ref = ComponentConfig.getServiceRef('architect/component/app:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       DEP_ADDR: `https://external.localhost`,
       CI_ADDR: `https://ci.architect.io:8501`
     });
@@ -346,10 +346,10 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/component:latest')
     ]);
 
-    const app_ref = ComponentConfig.getServiceRef('architect/component/app:latest')
+    const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.node_config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       SELF_ADDR: `http://${app_ref}.localhost`,
     });
   });

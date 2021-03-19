@@ -170,7 +170,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getServices() {
-    return transformServices(this.services) || {};
+    return transformServices(this.services || {}, this.getRef()) || {};
   }
 
   setServices(value: Dictionary<ServiceConfig>) {
