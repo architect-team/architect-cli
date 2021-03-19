@@ -5,7 +5,14 @@ export default class GatewayNode extends DependencyNode {
 
   ref = 'gateway';
 
+  port: number;
+
+  constructor(port = 80) {
+    super();
+    this.port = port;
+  }
+
   get interfaces(): { [key: string]: any } {
-    return { _default: { port: 80 } };
+    return { _default: { port: this.port } };
   }
 }

@@ -8,8 +8,6 @@ import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
 import opener from 'opener';
-import path from 'path';
-import untildify from 'untildify';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -17,8 +15,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
-import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
+import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -40,7 +37,8 @@ export abstract class DeployCommand extends Command {
     }),
     recursive: flags.boolean({
       char: 'r',
-      default: false,
+      default: true,
+      allowNo: true,
     }),
     refresh: flags.boolean({
       default: true,
@@ -250,97 +248,6 @@ export default class Deploy extends DeployCommand {
     return component_values;
   }
 
-  private async runLocal() {
-    const { args, flags } = this.parse(Deploy);
-    await Docker.verify();
-
-    if (!flags.values && fs.existsSync('./values.yml')) {
-      flags.values = './values.yml';
-    }
-
-    const component_values = this.readValuesFile(flags.values);
-
-    let dependency_manager;
-    let namespaced_component_name;
-
-    if (!args.config_or_component) {
-      args.config_or_component = './architect.yml';
-    }
-
-    // try loading the `config_or_component` as a relative path. if that fails, assume it is a component slug (which assumes 'latest' tag if none provided)
-    try {
-      dependency_manager = await LocalDependencyManager.createFromPath(
-        this.app.api,
-        path.resolve(untildify(args.config_or_component)),
-        component_values,
-        {}
-      );
-      namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
-    } catch (err) {
-      if (ComponentVersionSlugUtils.Validator.test(args.config_or_component) || ComponentSlugUtils.Validator.test(args.config_or_component)) {
-        const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
-        namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-
-        const env_config = EnvironmentConfigBuilder.buildFromJSON({
-          components: {
-            [namespaced_component_name]: parsed_component_version.tag,
-          },
-        });
-
-        dependency_manager = await LocalDependencyManager.create(this.app.api, component_values);
-        dependency_manager.environment = env_config;
-      } else {
-        throw err;
-      }
-    }
-
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
-      dependency_manager.environment.setParameter(parameter_key, parameter);
-    }
-    const extra_interfaces = this.getExtraInterfaces(flags.interface);
-    this.updateEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, namespaced_component_name);
-
-    dependency_manager.setLinkedComponents(this.app.linkedComponents);
-    const compose = await DockerComposeUtils.generate(dependency_manager);
-    await this.runCompose(compose);
-  }
-
-  protected async runRemote() {
-    const { args, flags } = this.parse(Deploy);
-
-    if (ComponentVersionSlugUtils.Validator.test(args.config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
-      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-    }
-
-    /* TODO:320 kill -p flag?
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
-      env_config.setParameter(parameter_key, parameter);
-    }
-    */
-
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-
-    const interfaces_map: Dictionary<string> = {};
-    for (const i of flags.interface) {
-      const [key, value] = i.split(':');
-      interfaces_map[key] = value || key;
-    }
-
-    cli.action.start(chalk.blue('Creating pipeline'));
-    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, {
-      component: args.config_or_component,
-      interfaces: interfaces_map,
-      recursive: flags.recursive,
-    });
-    cli.action.stop();
-
-    await this.approvePipeline(pipeline);
-  }
-
   getExtraEnvironmentVariables(parameters: string[]) {
     const extra_env_vars: { [s: string]: string | undefined } = {};
 
@@ -361,19 +268,99 @@ export default class Deploy extends DeployCommand {
     return extra_env_vars;
   }
 
-  getExtraInterfaces(interfaces: string[]) {
-    const extra_interfaces: { [s: string]: string } = {};
-    for (const component_interface of interfaces) {
-      const interface_split = component_interface.split(':');
-      extra_interfaces[interface_split[0]] = interface_split[1] || interface_split[0];
+  private getComponentValues() {
+    const { flags } = this.parse(Deploy);
+    const component_values = this.readValuesFile(flags.values);
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    if (!component_values['*']) {
+      component_values['*'] = {};
     }
-    return extra_interfaces;
+    component_values['*'] = { ...component_values['*'], ...extra_params };
+    return component_values;
   }
 
-  updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
-    for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${{ components['${component_name}'].interfaces.${interface_name}.url }}`);
+  private getInterfacesMap() {
+    const { flags } = this.parse(Deploy);
+    const interfaces_map: Dictionary<string> = {};
+    for (const i of flags.interface) {
+      const [key, value] = i.split(':');
+      interfaces_map[key] = value || key;
     }
+    return interfaces_map;
+  }
+
+  private async runLocal() {
+    const { args, flags } = this.parse(Deploy);
+    await Docker.verify();
+
+    if (!flags.values && fs.existsSync('./values.yml')) {
+      flags.values = './values.yml';
+    }
+
+    if (!args.config_or_component) {
+      args.config_or_component = './architect.yml';
+    }
+
+    const linked_components = this.app.linkedComponents;
+
+    const interfaces_map = this.getInterfacesMap();
+
+    let component_version = args.config_or_component;
+    if (!ComponentVersionSlugUtils.Validator.test(args.config_or_component) && !ComponentSlugUtils.Validator.test(args.config_or_component)) {
+      const component_config = await ComponentConfigBuilder.buildFromPath(args.config_or_component);
+      linked_components[component_config.getName()] = args.config_or_component;
+      component_version = component_config.getName();
+
+      if (Object.keys(interfaces_map).length === 0) {
+        for (const interface_name of Object.keys(component_config.getInterfaces())) {
+          interfaces_map[interface_name] = interface_name;
+        }
+      }
+    }
+
+    const dependency_manager = new LocalDependencyManager(
+      this.app.api,
+      linked_components,
+    );
+
+    const component_values = this.getComponentValues();
+    const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
+    let component_configs: ComponentConfig[];
+    if (flags.recursive) {
+      component_configs = await dependency_manager.loadComponentConfigs(component_config);
+    } else {
+      component_configs = [component_config];
+    }
+
+    const graph = await dependency_manager.getGraph(component_configs, component_values);
+
+    const compose = await DockerComposeUtils.generate(graph);
+    await this.runCompose(compose);
+  }
+
+  protected async runRemote() {
+    const { args, flags } = this.parse(Deploy);
+
+    if (ComponentVersionSlugUtils.Validator.test(args.config_or_component)) {
+      const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
+      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+    }
+
+    const interfaces_map = this.getInterfacesMap();
+    const component_values = this.getComponentValues(); // TODO:207
+
+    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+
+    cli.action.start(chalk.blue('Creating pipeline'));
+    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, {
+      component: args.config_or_component,
+      interfaces: interfaces_map,
+      recursive: flags.recursive,
+    });
+    cli.action.stop();
+
+    await this.approvePipeline(pipeline);
   }
 
   async run() {

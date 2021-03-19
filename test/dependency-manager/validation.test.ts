@@ -7,7 +7,6 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
-import { EnvironmentConfigBuilder } from '../../src/dependency-manager/src';
 import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
 import { ValuesConfig } from '../../src/dependency-manager/src/spec/values/values';
 import { ValidationErrors } from '../../src/dependency-manager/src/utils/errors';
@@ -116,82 +115,6 @@ describe('validation spec v1', () => {
     });
   })
 
-  // Environment Config Validation
-  describe('environment config validation', () => {
-    it('valid parameter ref brackets', async () => {
-      const env_config = `
-      parameters:
-        test: worked
-      components:
-        test/component:
-          parameters:
-            test2: \${{ parameters.test }}
-      `
-      mock_fs({ '/environment.yml': env_config });
-      await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
-    });
-
-    it('invalid service block', async () => {
-      const env_config = `
-      components:
-        test/component:
-      services:
-        stateless-app:
-      `
-      mock_fs({ '/environment.yml': env_config });
-      let validation_err;
-      try {
-        await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "services": {
-          "column": 15,
-          "line": 4,
-          "value": '[object Object]',
-          "whitelistValidation": "property services should not exist"
-        }
-      })
-    });
-  })
-
-  describe('environment builder validation', () => {
-    it('file reference does not misalign validation error line numbers', async () => {
-      const env_config = `
-      components:
-        test/component:
-          extends: latest
-          parameters:
-            TEST_FILE_TEXT: file:./test-file.txt
-      services:
-        stateless-app:
-      `
-
-      mock_fs({
-        '/test-file.txt': `some file text\non another line`,
-        '/environment.yml': env_config
-      });
-
-      let validation_err;
-      try {
-        await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "services": {
-          "column": 15,
-          "line": 7,
-          "value": '[object Object]',
-          "whitelistValidation": "property services should not exist"
-        }
-      })
-    });
-  })
-
   // Component Validation
   describe('component validation', () => {
     it('invalid component interfaces ref', async () => {
@@ -214,20 +137,21 @@ describe('validation spec v1', () => {
           interfaces:
           environment:
       `
-      const env_config = `
-      components:
-        test/component: file:./component.yml
-        test/other: file:./other-component.yml
-      `
+
       mock_fs({
         '/component.yml': component_config,
         '/other-component.yml': other_component_config,
-        '/environment.yml': env_config
       });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+        'test/other': '/other-component.yml'
+      });
       let validation_err;
       try {
-        await manager.getGraph();
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentConfig('test/other')
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -266,23 +190,22 @@ describe('validation spec v1', () => {
           interfaces:
           environment:
       `
-
-      const env_config = `
-      components:
-        test/component: file:./component.yml
-        test/other: file:./other-component.yml
-      `
       mock_fs({
         '/test-file.txt': `some file text\non another line`,
         '/component.yml': component_config,
         '/other-component.yml': other_component_config,
-        '/environment.yml': env_config
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+        'test/other': '/other-component.yml'
+      });
       let validation_err;
       try {
-        await manager.getGraph();
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentConfig('test/other')
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -298,35 +221,7 @@ describe('validation spec v1', () => {
     });
   });
 
-  // Environment Validation
-  describe('environment validation', () => {
-    it('invalid component syntax', async () => {
-      const env_config = `
-      components:
-        examples/stateful-component:latest
-      `
-      mock_fs({
-        '/environment.yml': env_config
-      });
-
-      let validation_err;
-      try {
-        const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-        await manager.getGraph();
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "components": {
-          "isObject": "components must be an object",
-          "value": "examples/stateful-component:latest",
-          "line": 2,
-          "column": 17
-        }
-      })
-    });
-
+  describe('required parameter validation', () => {
     it('required component parameters', async () => {
       const component_config = `
       name: test/component
@@ -346,18 +241,17 @@ describe('validation spec v1', () => {
             NOT_REQUIRED: \${{ parameters.not-required }}
       interfaces:
       `
-      const env_config = `
-      components:
-        test/component: file:./component.yml
-      `
       mock_fs({
         '/component.yml': component_config,
-        '/environment.yml': env_config
       });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph();
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -411,14 +305,8 @@ describe('validation spec v1', () => {
           url: \${{ services.api.interfaces.main.url }}
       `
 
-      const env_config = `
-      components:
-        examples/hello-world: file:./architect.yml
-      `
-
       mock_fs({
         '/architect.yml': component_config,
-        '/environment.yml': env_config,
       });
 
       moxios.stubRequest(`/accounts/examples/components/hello-world2/versions/latest`, {
@@ -426,10 +314,15 @@ describe('validation spec v1', () => {
         response: { tag: 'latest', config: yaml.safeLoad(component_config2), service: { url: 'examples/hello-world2:latest' } }
       });
 
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/architect.yml',
+      });
       let validation_err;
       try {
-        await manager.getGraph();
+        const component_config = await manager.loadComponentConfig('examples/hello-world');
+        await manager.getGraph([
+          ...await manager.loadComponentConfigs(component_config),
+        ]);
       } catch (err) {
         validation_err = err;
       }
@@ -440,325 +333,6 @@ describe('validation spec v1', () => {
           'value': null,
         }
       })
-    });
-
-    it('required environment parameters', async () => {
-      const component_config = `
-      name: test/component
-      parameters:
-        required:
-        required-explicit:
-        not-required:
-          required: false
-      services:
-        api:
-          interfaces:
-            main: 8080
-          environment:
-            REQUIRED: \${{ parameters.required }}
-            REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
-            NOT_REQUIRED: \${{ parameters.not-required }}
-      interfaces:
-      `
-      const env_config = `
-      parameters:
-        required:
-        required-explicit:
-          required: true
-        not-required:
-          required: false
-      components:
-        test/component:
-          extends: file:./component.yml
-          parameters:
-            required: \${{ parameters.required }}
-            required-explicit: \${{ parameters.required-explicit }}
-            not-required: \${{ parameters.not-required }}
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      let validation_err;
-      try {
-        await manager.getGraph();
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        'parameters.required': {
-          Required: 'required is required',
-          line: 3,
-          column: 17,
-          value: null,
-        },
-        'parameters.required-explicit': {
-          Required: 'required-explicit is required',
-          line: 4,
-          column: 26,
-          value: undefined
-        }
-      });
-    });
-
-    it('valid component interfaces ref', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main: 8080
-      interfaces:
-        api: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      interfaces:
-        public: \${{ components.test/component.interfaces.api.url }}
-      components:
-        test/component: file:./component.yml
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      await manager.getGraph();
-    });
-
-    it('invalid component interfaces ref', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main: 8080
-      interfaces:
-        api: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      interfaces:
-        public: \${{ components.test/component.interfaces.fake.url }}
-      components:
-        test/component: file:./component.yml
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      let validation_err;
-      try {
-        await manager.getGraph();
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "interpolation.components.test/component.interfaces.fake.url": {
-          "interpolation": "${{ components.test/component.interfaces.fake.url }} is invalid",
-          "value": "components.test/component.interfaces.fake.url",
-          "line": 3,
-          "column": 16
-        }
-      })
-    });
-
-    it('valid component:tag ref', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main: 8080
-      interfaces:
-        api: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      interfaces:
-        public: \${{ components['test/component:v1.0'].interfaces.api.url }}
-      components:
-        test/component:v1.0: file:./component.yml
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      await manager.getGraph();
-    });
-
-    it('invalid component:tag ref', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main: 8080
-      interfaces:
-        api: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      interfaces:
-        public: \${{ components['test/component:v2.0'].interfaces.main.url }}
-      components:
-        test/component:v1.0: file:./component.yml
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      let validation_err;
-      try {
-        await manager.getGraph();
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "interpolation.components.test/component:v2.0.interfaces.main.url": {
-          "interpolation": "${{ components.test/component:v2.0.interfaces.main.url }} is invalid",
-          "value": "components.test/component:v2.0.interfaces.main.url",
-          "line": 3,
-          "column": 16
-        }
-      })
-    });
-
-    it('invalid interface in environment spec', async () => {
-      const component_config = `
-      name: test/component
-      services:
-        api:
-          interfaces:
-            main:
-              port: 8080
-      interfaces:
-        main:
-          url: \${{ services.api.interfaces.main.url }}
-      `
-      const env_config = `
-      components:
-        test/component: file:./component.yml
-      interfaces:
-        api:
-          url: \${{ components['test/component'].interfaces.main.url }}
-          domains:
-            - invalid_domain
-      `
-      mock_fs({
-        '/component.yml': component_config,
-        '/environment.yml': env_config
-      });
-      let validation_err;
-      try {
-        await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-      } catch (err) {
-        validation_err = err;
-      }
-      expect(validation_err).instanceOf(ValidationErrors)
-      expect(validation_err.errors).to.deep.eq({
-        "interfaces.api.domains": {
-          "isUrl": "each value in domains must be an URL address",
-          "value": "invalid_domain",
-          "line": 7,
-          "column": 18
-        }
-      })
-    });
-
-    it('trailing zeros are not removed from extends tag on env config parsing', async () => {
-      const env_config = `
-      components:
-        examples/hello-world:
-          extends: 1.00
-      `
-
-      mock_fs({
-        '/environment.yml': env_config
-      });
-
-      const built_env_config = await EnvironmentConfigBuilder.buildFromPath('/environment.yml')
-      expect(built_env_config.getComponents()['examples/hello-world'].getExtends()).eq('examples/hello-world:1.00');
-    });
-  });
-
-  it('validate that custom domain values are unique', async () => {
-    const component_config = `
-    name: test/component
-    services:
-      api:
-        interfaces:
-          main:
-            port: 8080
-    interfaces:
-      main:
-        url: \${{ services.api.interfaces.main.url }}
-    `
-    const env_config = `
-    components:
-      test/component: file:./component.yml
-    interfaces:
-      api:
-        url: \${{ components['test/component'].interfaces.main.url }}
-        domains:
-          - valid-domain.net
-          - valid-domain.net
-    `
-    mock_fs({
-      '/component.yml': component_config,
-      '/environment.yml': env_config
-    });
-    let validation_err;
-    try {
-      await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
-    } catch (err) {
-      validation_err = err;
-    }
-    expect(validation_err).instanceOf(ValidationErrors)
-    expect(validation_err.errors).to.deep.eq({
-      "interfaces.api.domains": {
-        "arrayUnique": "All domains's elements must be unique",
-        "value": "valid-domain.net,valid-domain.net",
-        "line": 7,
-        "column": 16
-      }
-    });
-  });
-
-  it('a custom domain cannot be specified in the component config', async () => {
-    const component_config = `
-    name: test/component
-    services:
-      api:
-        interfaces:
-          main:
-            port: 8080
-    interfaces:
-      main:
-        url: \${{ services.api.interfaces.main.url }}
-        domains:
-          - api.staging.architest.dev
-    `
-    mock_fs({
-      '/component.yml': component_config,
-    });
-    let validation_err;
-    try {
-      await ComponentConfigBuilder.buildFromPath('/component.yml');
-    } catch (err) {
-      validation_err = err;
-    }
-    expect(validation_err).instanceOf(ValidationErrors)
-    expect(validation_err.errors).to.deep.eq({
-      "interfaces.main.domains": {
-        "isEmpty": "domains must be empty",
-        "value": "api.staging.architest.dev",
-        "line": 11,
-        "column": 16
-      }
     });
   });
 

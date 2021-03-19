@@ -10,6 +10,7 @@ export class InterpolationErrors extends Error {
   }
 }
 
+// TODO:320 test
 export const normalizeInterpolation = (value: string) => {
   return value.replace(/\./g, '__arc__');
 };
@@ -30,29 +31,6 @@ export const replaceBrackets = (value: string) => {
   while ((matches = mustache_regex.exec(value)) != null) {
     const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '').replace(/\[\\"/g, '.').replace(/\\"\]/g, '').replace(/\["/g, '.').replace(/"\]/g, '');
     res = res.replace(matches[0], sanitized_value);
-  }
-  return res;
-};
-
-export const prefixExpressions = (value: string, prefix: string) => {
-  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
-  let matches;
-  let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const prefixed_value = matches[0].replace(matches[1], `${prefix}.${matches[1]}`);
-    res = res.replace(matches[0], prefixed_value);
-  }
-  return res;
-};
-
-export const removePrefixForExpressions = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
-  let matches;
-  let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const removed_prefix = matches[1].split('.').slice(1).join('.');
-    const unprefixed_value = matches[0].replace(matches[1], removed_prefix);
-    res = res.replace(matches[0], unprefixed_value);
   }
   return res;
 };
