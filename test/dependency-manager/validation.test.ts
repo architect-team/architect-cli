@@ -319,8 +319,9 @@ describe('validation spec v1', () => {
       });
       let validation_err;
       try {
+        const component_config = await manager.loadComponentConfig('examples/hello-world');
         await manager.getGraph([
-          await manager.loadComponentConfig('examples/hello-world'),
+          ...await manager.loadComponentConfigs(component_config),
         ]);
       } catch (err) {
         validation_err = err;

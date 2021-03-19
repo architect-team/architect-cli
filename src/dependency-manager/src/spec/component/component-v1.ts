@@ -48,6 +48,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   name!: string;
 
   @IsOptional({ always: true })
+  instance_id!: string;
+
+  @IsOptional({ always: true })
   @IsString({ always: true })
   @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
@@ -105,9 +108,22 @@ export class ComponentConfigV1 extends ComponentConfig {
     this.name = name;
   }
 
+  getTag(): ComponentSlug {
+    const split = ComponentVersionSlugUtils.parse(this.name);
+    return split.tag;
+  }
+
   getRef(): ComponentVersionSlug {
     const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
+  }
+
+  getInstanceId() {
+    return this.instance_id || '';
+  }
+
+  setInstanceId(instance_id: string) {
+    this.instance_id = instance_id;
   }
 
   getExtends() {

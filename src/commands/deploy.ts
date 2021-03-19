@@ -37,7 +37,8 @@ export abstract class DeployCommand extends Command {
     }),
     recursive: flags.boolean({
       char: 'r',
-      default: false,
+      default: true,
+      allowNo: true,
     }),
     refresh: flags.boolean({
       default: true,
@@ -302,11 +303,19 @@ export default class Deploy extends DeployCommand {
 
     const linked_components = this.app.linkedComponents;
 
+    const interfaces_map = this.getInterfacesMap();
+
     let component_version = args.config_or_component;
     if (!ComponentVersionSlugUtils.Validator.test(args.config_or_component) && !ComponentSlugUtils.Validator.test(args.config_or_component)) {
       const component_config = await ComponentConfigBuilder.buildFromPath(args.config_or_component);
       linked_components[component_config.getName()] = args.config_or_component;
       component_version = component_config.getName();
+
+      if (Object.keys(interfaces_map).length === 0) {
+        for (const interface_name of Object.keys(component_config.getInterfaces())) {
+          interfaces_map[interface_name] = interface_name;
+        }
+      }
     }
 
     const dependency_manager = new LocalDependencyManager(
@@ -314,10 +323,7 @@ export default class Deploy extends DeployCommand {
       linked_components,
     );
 
-    const interfaces_map = this.getInterfacesMap();
     const component_values = this.getComponentValues();
-    // TODO:207 recursive/tests
-    // TODO:207 host overrides via parameters tests
     const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
     let component_configs: ComponentConfig[];
     if (flags.recursive) {

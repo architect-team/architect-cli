@@ -15,6 +15,7 @@ import PortUtil from '../utils/port';
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
+  use_sidecar = false;
 
   constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
     super();
@@ -22,56 +23,19 @@ export default class LocalDependencyManager extends DependencyManager {
     this.linked_components = linked_components;
   }
 
-  // TODO:207 move to manager?
-  async interpolateComponent2(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '') {
-    const dependency_promises = [];
-    for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
-      const dep_ref = `${dep_name}:${dep_tag}`;
-      if (dep_ref === _parent_ref) {
-        throw new Error(`Circular component dependency detected (${component_config.getRef()} <> ${_parent_ref})`);
-      }
-
-      if (!component_map[dep_ref]) {
-        // TODO:207 talk to David about what should happen in the non-recursive case
-        component_map[dep_ref] = await this.loadComponentConfig(dep_ref);
-      }
-      const dep_component = component_map[dep_ref];
-      if (!_interpolated_component_map[dep_component.getRef()]) {
-        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponent2(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef());
-      }
-      dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
-    }
-    const dependencies = await Promise.all(dependency_promises);
-
-    // TODO:207 set instance_id on component_config
-    const { interpolated_component_config } = this.interpolateComponent(component_config, '', external_address, dependencies);
-
-    return interpolated_component_config;
-  }
-
   async getGraph(component_configs: ComponentConfig[], values?: Dictionary<Dictionary<string>>) {
     const graph = new DependencyGraph();
 
     const gateway_port = await PortUtil.getAvailablePort(80);
 
-    const component_map: Dictionary<ComponentConfig> = {};
-    for (const component_config of component_configs) {
-      if (values) {
-        // Set parameters from secrets
-        this.setValuesForComponent(component_config, values);
-      }
-      component_map[component_config.getRef()] = component_config;
-    }
+    // Interpolate the component before generating then nodes to support dynamic host overrides
+    const interpolated_component_configs = await this.interpolateComponents(component_configs, `localhost:${gateway_port}`, values);
 
     // Add nodes
-    for (const component_config of component_configs) {
-      const instance_id = '';
+    for (const component_config of interpolated_component_configs) {
       let nodes: DependencyNode[] = [];
 
-      // Interpolate the component before generating then nodes to support dynamic host overrides
-      // const interpolated_component_config = await this.interpolateComponent(component_config, component_interfaces, instance_id, 'localhost', gateway_port);
-      const interpolated_component_config = await this.interpolateComponent2(component_config, component_map, `localhost:${gateway_port}`);
-      nodes = nodes.concat(this.getComponentNodes(interpolated_component_config, instance_id));
+      nodes = nodes.concat(this.getComponentNodes(component_config));
 
       if (Object.keys(component_config.getInterfaces()).length) {
         const node = new InterfacesNode(component_config.getInterfacesRef());
@@ -102,7 +66,7 @@ export default class LocalDependencyManager extends DependencyManager {
       let edges: DependencyEdge[] = [];
       const ignore_keys = ['']; // Ignore all errors
       const interpolated_component_config = this.interpolateInterfaces(component_config, ignore_keys);
-      edges = edges.concat(this.getComponentEdges(graph, interpolated_component_config, instance_id));
+      edges = edges.concat(this.getComponentEdges(graph, interpolated_component_config));
 
       const component_interfaces: Dictionary<string> = {};
       for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
@@ -149,9 +113,13 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set the tag
     config.setName(component_ref);
 
+    config.setInstanceId('');
+
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.getInterfaces()[interface_to];
-      if (!interface_obj) { continue; } // TODO:207 validation?
+      if (!interface_obj) {
+        throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
+      }
       interface_obj.external_name = interface_from;
       config.setInterface(interface_to, interface_obj);
     }

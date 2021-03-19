@@ -11,12 +11,14 @@ import { interpolateString, replaceBrackets } from './utils/interpolation';
 import { validateInterpolation } from './utils/validation';
 
 export default abstract class DependencyManager {
-  getComponentNodes(component: ComponentConfig, instance_id: string): DependencyNode[] {
+  use_sidecar = true;
+
+  getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       const node = new ServiceNode({
-        ref: component.getServiceRef(service_name, instance_id),
+        ref: component.getServiceRef(service_name),
         node_config: service_config,
         local_path: component.getLocalPath(),
         artifact_image: component.getArtifactImage(),
@@ -27,7 +29,7 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.getTasks())) {
       const node = new TaskNode({
-        ref: component.getServiceRef(task_name, instance_id),
+        ref: component.getServiceRef(task_name),
         node_config: task_config,
         local_path: component.getLocalPath(),
       });
@@ -72,11 +74,11 @@ export default abstract class DependencyManager {
     return component;
   }
 
-  getComponentEdges(graph: DependencyGraph, component: ComponentConfig, instance_id: string): DependencyEdge[] {
+  getComponentEdges(graph: DependencyGraph, component: ComponentConfig): DependencyEdge[] {
     const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
-      const from = component.getServiceRef(service_name, instance_id);
+      const from = component.getServiceRef(service_name);
       const from_node = graph.getNodeByRef(from);
       if (from_node.is_external) {
         continue;
@@ -90,7 +92,7 @@ export default abstract class DependencyManager {
       let matches;
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
-        const to = component.getServiceRef(service_name, instance_id);
+        const to = component.getServiceRef(service_name);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -131,7 +133,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
-      const to = component.getServiceRef(service_name, instance_id);
+      const to = component.getServiceRef(service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -184,7 +186,23 @@ export default abstract class DependencyManager {
     }
   }
 
-  interpolateComponent(initial_component: ComponentConfig, instance_id: string, external_address: string, dependencies: ComponentConfig[]) {
+  generateUrl(interface_config: InterfaceSpec, host?: string, port?: string) {
+    host = host || interface_config.host;
+    port = port || interface_config.port;
+    const protocol = interface_config.protocol || 'http';
+    let url;
+    if (interface_config.username && interface_config.password) {
+      url = `${protocol}://${interface_config.username}:${interface_config.password}@${host}`;
+    } else {
+      url = `${protocol}://${host}`;
+    }
+    if (port !== '80' && port !== '443') {
+      url = `${url}:${port}`;
+    }
+    return url;
+  }
+
+  interpolateComponent(initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
     const component_string = replaceBrackets(serialize(component.expand()));
 
@@ -221,7 +239,7 @@ export default abstract class DependencyManager {
       if (!dependency_interface) { continue; }
 
       if (!dependency_interface.external_name) {
-        dependency_interface.external_name = dep_component.getServiceRef(interface_name, '');
+        dependency_interface.external_name = dep_component.getServiceRef(interface_name);
         dep_component.setInterface(interface_name, dependency_interface);
       }
       const interface_from = dependency_interface.external_name;
@@ -233,10 +251,7 @@ export default abstract class DependencyManager {
         username: '',
         password: '',
       };
-      external_interface.url = `${external_interface.protocol}://${external_interface.host}`;
-      if (external_interface.port !== '80' && external_interface.port !== '443') {
-        external_interface.url = `${external_interface.url}:${external_interface.port}`;
-      }
+      external_interface.url = this.generateUrl(external_interface);
 
       if (!context.environment.ingresses[dep_name]) {
         context.environment.ingresses[dep_name] = {};
@@ -262,44 +277,41 @@ export default abstract class DependencyManager {
       if (!context.dependencies[dep_name].interfaces) { context.dependencies[dep_name].interfaces = {}; }
       context.dependencies[dep_name].interfaces[interface_name] = dependency_interface;
 
-      if (external_host !== 'localhost') {
-        const dep_interfaces_ref = dependency.getInterfacesRef();
-        const consul_service = `${dep_interfaces_ref}--${interface_name}`;
-        if (!proxy_port_mapping[consul_service]) {
-          proxy_port_mapping[consul_service] = `${proxy_port}`;
+      if (this.use_sidecar) {
+        const sidecar_service = `${dependency.getInterfacesRef()}--${interface_name}`;
+
+        if (!proxy_port_mapping[sidecar_service]) {
+          proxy_port_mapping[sidecar_service] = `${proxy_port}`;
           proxy_port += 1;
         }
 
         context.dependencies[dep_name].interfaces[interface_name] = {
           ...context.dependencies[dep_name].interfaces[interface_name],
           host: '127.0.0.1',
-          port: proxy_port_mapping[consul_service],
+          port: proxy_port_mapping[sidecar_service],
+          url: this.generateUrl(dependency_interface, '127.0.0.1', proxy_port_mapping[sidecar_service]),
         };
       }
     }
 
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
-      const service_ref = component.getServiceRef(service_name, instance_id);
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
-        const consul_service = `${service_ref}--${interface_name}`;
-        if (!proxy_port_mapping[consul_service]) {
-          proxy_port_mapping[consul_service] = `${proxy_port}`;
-          proxy_port += 1;
+        const service_ref = component.getServiceRef(service_name);
+        let internal_host = interface_config.host || service_ref;
+        let internal_port = interface_config.port;
+
+        if (this.use_sidecar) {
+          const sidecar_service = `${service_ref}--${interface_name}`;
+          if (!proxy_port_mapping[sidecar_service]) {
+            proxy_port_mapping[sidecar_service] = `${proxy_port}`;
+            proxy_port += 1;
+          }
+          internal_host = '127.0.0.1';
+          internal_port = proxy_port_mapping[sidecar_service];
         }
 
-        // TODO:207 host overrides
-        const internal_host = external_host === 'localhost' ? interface_config.host || component.getServiceRef(service_name, instance_id) : '127.0.0.1';
-        const internal_port = external_host === 'localhost' ? interface_config.port : proxy_port_mapping[consul_service];
         const internal_protocol = interface_config.protocol || 'http';
-        let internal_url;
-        if (interface_config.username && interface_config.password) {
-          internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}`;
-        } else {
-          internal_url = `${internal_protocol}://${internal_host}`;
-        }
-        if (interface_config.port !== '80' && interface_config.port !== '443') {
-          internal_url = `${internal_url}:${interface_config.port}`;
-        }
+        const internal_url = this.generateUrl(interface_config, internal_host, internal_port);
 
         context.services[service_name].interfaces[interface_name] = {
           ...context.services[service_name].interfaces[interface_name],
@@ -323,18 +335,17 @@ export default abstract class DependencyManager {
     const first_interpolated_component_config = deserialize(component.getClass(), first_interpolated_component_string) as ComponentConfig;
     for (const [service_name, service_config] of Object.entries(first_interpolated_component_config.getServices())) {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
+        const service_ref = component.getServiceRef(service_name);
         if (!interface_config.host) {
-          const internal_host = external_host === 'localhost' ? interface_config.host || component.getServiceRef(service_name, instance_id) : '127.0.0.1';
-          const internal_protocol = interface_config.protocol || 'http';
-          let internal_url;
-          if (interface_config.username && interface_config.password) {
-            internal_url = `${internal_protocol}://${interface_config.username}:${interface_config.password}@${internal_host}`;
-          } else {
-            internal_url = `${internal_protocol}://${internal_host}`;
+          let internal_host = component.getServiceRef(service_name);
+          let internal_port = interface_config.port;
+
+          if (this.use_sidecar) {
+            const sidecar_service = `${service_ref}--${interface_name}`;
+            internal_host = '127.0.0.1';
+            internal_port = proxy_port_mapping[sidecar_service];
           }
-          if (interface_config.port !== '80' && interface_config.port !== '443') {
-            internal_url = `${internal_url}:${interface_config.port}`;
-          }
+          const internal_url = this.generateUrl(interface_config, internal_host, internal_port);
 
           context['services'][service_name]['interfaces'][interface_name].url = internal_url;
           context['services'][service_name]['interfaces'][interface_name].host = internal_host;
@@ -346,7 +357,59 @@ export default abstract class DependencyManager {
     const interpolated_component_string = interpolateString(component_string2, context, ignore_keys);
     const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
 
-    return { interpolated_component_config, proxy_port_mapping };
+    // TODO:207
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore
+    interpolated_component_config.proxy_port_mapping = proxy_port_mapping;
+    return interpolated_component_config;
+  }
+
+  async interpolateComponents(component_configs: ComponentConfig[], external_address: string, values?: Dictionary<Dictionary<string>>) {
+    const component_map: Dictionary<ComponentConfig> = {};
+    for (const component_config of component_configs) {
+      if (values) {
+        // Set parameters from secrets
+        this.setValuesForComponent(component_config, values);
+      }
+      component_map[component_config.getRef()] = component_config;
+    }
+
+    const _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {};
+
+    for (const component_config of component_configs) {
+      if (!_interpolated_component_map[component_config.getRef()]) {
+        _interpolated_component_map[component_config.getRef()] = this.interpolateComponentWithDependencies(component_config, component_map, external_address, _interpolated_component_map, component_config.getRef());
+      }
+    }
+
+    const interpolated_component_configs = await Promise.all(Object.values(_interpolated_component_map));
+    return interpolated_component_configs;
+  }
+
+  async interpolateComponentWithDependencies(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '', depth = 0) {
+    if (depth > 50) {
+      throw new Error(`Circular component dependency detected`);
+    }
+
+    const dependency_promises = [];
+    for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
+      const dep_ref = `${dep_name}:${dep_tag}`;
+      if (dep_ref === _parent_ref) {
+        throw new Error(`Circular component dependency detected (${component_config.getRef()} <> ${_parent_ref})`);
+      }
+      // TODO:207 mock interpolation for dependencies?
+      if (!component_map[dep_ref]) {
+        continue;
+      }
+      const dep_component = component_map[dep_ref];
+      if (!_interpolated_component_map[dep_component.getRef()]) {
+        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponentWithDependencies(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef(), depth + 1);
+      }
+      dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
+    }
+    const dependencies = await Promise.all(dependency_promises);
+
+    return this.interpolateComponent(component_config, external_address, dependencies);
   }
 
   validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
