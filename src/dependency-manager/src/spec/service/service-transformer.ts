@@ -1,6 +1,6 @@
 import { plainToClass } from 'class-transformer';
-import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../..';
 import { Dictionary } from '../../utils/dictionary';
+import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
 import { ServiceConfigV1 } from './service-v1';
 
 export function transformServices(input: Dictionary<object | ServiceConfigV1>, component_ref: string): Dictionary<ServiceConfigV1> {

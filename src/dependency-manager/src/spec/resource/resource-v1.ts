@@ -1,8 +1,8 @@
 import { Type } from 'class-transformer';
 import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
-import { ServiceVersionSlugUtils } from '../..';
 import { Dictionary } from '../../utils/dictionary';
+import { ServiceVersionSlugUtils } from '../../utils/slugs';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { BaseConfig } from '../base-spec';
 import { BuildSpecV1 } from '../common/build-v1';

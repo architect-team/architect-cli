@@ -1,13 +1,18 @@
 import { deserialize, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
-import { ComponentConfig, ComponentSlugUtils, DependencyNode, InterfaceSlugUtils, InterfaceSpec, ServiceNode, Slugs, TaskNode } from '.';
 import DependencyGraph from './graph';
 import DependencyEdge from './graph/edge';
 import ServiceEdge from './graph/edge/service';
+import { DependencyNode } from './graph/node';
+import { ServiceNode } from './graph/node/service';
+import { TaskNode } from './graph/node/task';
+import { InterfaceSpec } from './spec/common/interface-spec';
+import { ComponentConfig } from './spec/component/component-config';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
+import { ComponentSlugUtils, InterfaceSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
 
 export default abstract class DependencyManager {
