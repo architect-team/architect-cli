@@ -1,4 +1,4 @@
-import { serialize, Transform } from 'class-transformer';
+import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
@@ -14,7 +14,50 @@ import { transformServices } from '../service/service-transformer';
 import { TaskConfig } from '../task/task-config';
 import { transformTasks } from '../task/task-transformer';
 import { ComponentConfig } from './component-config';
-import { transformComponentInterfaces } from './component-transformer';
+
+export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  // TODO: Be more flexible than just url ref
+  const output: Dictionary<InterfaceSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value instanceof Object && 'host' in value && 'port' in value) {
+      output[key] = plainToClass(InterfaceSpecV1, value);
+    } else {
+      let host, port, protocol, username, password;
+      let url = value instanceof Object ? value.url : value;
+
+      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
+      const matches = url_regex.exec(url);
+      if (matches) {
+        host = `\${{ ${matches[1]}.host }}`;
+        port = `\${{ ${matches[1]}.port }}`;
+        protocol = `\${{ ${matches[1]}.protocol }}`;
+        username = `\${{ ${matches[1]}.username }}`;
+        password = `\${{ ${matches[1]}.password }}`;
+        url = `\${{ ${matches[1]}.url }}`;
+
+        output[key] = plainToClass(InterfaceSpecV1, {
+          host,
+          port,
+          username,
+          password,
+          protocol,
+          url,
+        });
+      } else {
+        throw new Error(`Invalid interface regex: ${url}`);
+      }
+    }
+  }
+
+  return output;
+};
 
 interface ServiceContextV1 {
   environment: Dictionary<string>;

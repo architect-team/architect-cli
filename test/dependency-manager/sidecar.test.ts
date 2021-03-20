@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import { deserialize, serialize } from 'class-transformer';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -9,7 +10,8 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
+import { ComponentConfig, DependencyNode, ServiceNode } from '../../src/dependency-manager/src';
+import DependencyGraph from '../../src/dependency-manager/src/graph';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
 describe('sidecar spec v1', () => {
@@ -629,7 +631,11 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentConfig('architect/upstream'),
     ]);
 
-    const mail_ref = ComponentConfig.getNodeRef('architect/smtp/maildev:latest');
+    const raw = serialize(graph);
+    const new_graph = deserialize(DependencyGraph, raw)
+    expect(new_graph).instanceOf(DependencyGraph);
+    expect(new_graph.nodes[0]).instanceOf(DependencyNode);
+
     const app_ref = ComponentConfig.getNodeRef('architect/upstream/test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;

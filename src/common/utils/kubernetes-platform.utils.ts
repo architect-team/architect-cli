@@ -6,7 +6,7 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { CreatePlatformInput } from '../../commands/platforms/create';
+import { CreatePlatformInput } from './platform';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 

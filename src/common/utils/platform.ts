@@ -9,6 +9,30 @@ interface Platform {
   name: string;
 }
 
+export interface CreatePlatformInput {
+  type: string;
+  description: string;
+  credentials: PlatformCredentials;
+}
+
+export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
+
+export interface KubernetesPlatformCredentials {
+  kind: 'KUBERNETES';
+
+  host: string;
+  cluster_ca_cert: string;
+  service_token: string;
+}
+
+export interface EcsPlatformCredentials {
+  kind: 'ECS';
+
+  region: string;
+  access_key: string;
+  access_secret: string;
+}
+
 export class PlatformUtils {
   static flags = {
     platform: flags.string({

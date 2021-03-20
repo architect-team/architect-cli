@@ -1,7 +1,6 @@
 import { plainToClass } from 'class-transformer';
 import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../..';
 import { Dictionary } from '../../utils/dictionary';
-import { InterfaceSpecV1 } from '../common/interface-v1';
 import { ServiceConfigV1 } from './service-v1';
 
 export function transformServices(input: Dictionary<object | ServiceConfigV1>, component_ref: string): Dictionary<ServiceConfigV1> {
@@ -27,20 +26,3 @@ export function transformServices(input: Dictionary<object | ServiceConfigV1>, c
 
   return output;
 }
-
-export const transformServiceInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<InterfaceSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object
-      ? plainToClass(InterfaceSpecV1, value)
-      : plainToClass(InterfaceSpecV1, { port: value });
-  }
-  return output;
-};

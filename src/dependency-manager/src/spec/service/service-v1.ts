@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer';
+import { plainToClass, Transform, Type } from 'class-transformer';
 import { IsEmpty, IsInstance, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
@@ -8,7 +8,23 @@ import { LivenessProbeSpec } from '../common/liveness-probe-spec';
 import { LivenessProbeSpecV1 } from '../common/liveness-probe-v1';
 import { ResourceConfigV1 } from '../resource/resource-v1';
 import { ServiceConfig } from './service-config';
-import { transformServiceInterfaces } from './service-transformer';
+
+export const transformServiceInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  const output: Dictionary<InterfaceSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = value instanceof Object
+      ? plainToClass(InterfaceSpecV1, value)
+      : plainToClass(InterfaceSpecV1, { port: value });
+  }
+  return output;
+};
 
 export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Type(() => ServiceConfigV1)

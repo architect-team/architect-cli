@@ -6,31 +6,8 @@ import Command from '../../base-command';
 import { AccountUtils } from '../../common/utils/account';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { CreatePlatformInput } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
-
-export interface CreatePlatformInput {
-  type: string;
-  description: string;
-  credentials: PlatformCredentials;
-}
-
-export type PlatformCredentials = KubernetesPlatformCredentials | EcsPlatformCredentials;
-
-export interface KubernetesPlatformCredentials {
-  kind: 'KUBERNETES';
-
-  host: string;
-  cluster_ca_cert: string;
-  service_token: string;
-}
-
-export interface EcsPlatformCredentials {
-  kind: 'ECS';
-
-  region: string;
-  access_key: string;
-  access_secret: string;
-}
 
 export default class PlatformCreate extends Command {
   static aliases = ['platform:create', 'platforms:create'];
