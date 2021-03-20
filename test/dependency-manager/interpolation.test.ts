@@ -794,4 +794,165 @@ describe('interpolation spec v1', () => {
       DEFAULT_SECRET: 'test3'
     });
   });
+
+  it('same component with different instance ids', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+
+    const hello1 = await manager.loadComponentConfig('examples/hello-world:v1');
+    hello1.setInstanceId('hello1');
+    const hello2 = await manager.loadComponentConfig('examples/hello-world:v1');
+    hello2.setInstanceId('hello2');
+
+    const graph = await manager.getGraph([
+      hello1,
+      hello2
+    ]);
+
+    const api1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1', 'hello1');
+    const api2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1', 'hello2');
+    graph.getNodeByRef(api1_ref) as ServiceNode;
+    graph.getNodeByRef(api2_ref) as ServiceNode;
+  });
+
+  it('same component with different instance ids and dependencies with different instance ids', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    dependencies:
+      examples/dep-world: v2
+
+    interfaces:
+      api: \${{ services.api.interfaces.main.url }}
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          DEP_ADDR: \${{ dependencies.examples/dep-world.interfaces.api.url }}
+          EXT_DEP_ADDR: \${{ environment.ingresses.examples/dep-world.api.url }}
+          EXT_ADDR: \${{ environment.ingresses.examples/hello-world.api.url }}
+    `
+
+    const dep_component_config = `
+    name: examples/dep-world
+
+    interfaces:
+      api: \${{ services.api.interfaces.main.url }}
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+      '/stack/dep.yml': dep_component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+      'examples/dep-world': '/stack/dep.yml',
+    });
+
+    const hello1 = await manager.loadComponentConfig('examples/hello-world:v1', { hello1: 'api' });
+    hello1.setInstanceId('hello1');
+    hello1.setInstanceDate(new Date('4/22/1991'))
+    const hello2 = await manager.loadComponentConfig('examples/hello-world:v1', { hello2: 'api' });
+    hello2.setInstanceId('hello2');
+    hello2.setInstanceDate(new Date('4/23/1991'))
+
+    const dep1 = await manager.loadComponentConfig('examples/dep-world:v2', { dep1: 'api' });
+    dep1.setInstanceId('dep1');
+    dep1.setInstanceDate(new Date('4/21/1991'))
+    const dep2 = await manager.loadComponentConfig('examples/dep-world:v2', { dep2: 'api' });
+    dep2.setInstanceId('dep2');
+    dep2.setInstanceDate(new Date('4/23/1991'))
+
+    const graph = await manager.getGraph([
+      hello1,
+      hello2,
+      dep1,
+      dep2
+    ]);
+
+    const api1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1', 'hello1');
+    const dep1_ref = ComponentConfig.getNodeRef('examples/dep-world/api:v2', 'dep1');
+    const node1 = graph.getNodeByRef(api1_ref) as ServiceNode;
+    expect(node1.config.getEnvironmentVariables()).to.deep.eq({
+      DEP_ADDR: `http://${dep1_ref}:3000`,
+      EXT_ADDR: 'http://hello1.localhost',
+      EXT_DEP_ADDR: 'http://dep1.localhost'
+    });
+
+    const api2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1', 'hello2');
+    const dep2_ref = ComponentConfig.getNodeRef('examples/dep-world/api:v2', 'dep2');
+    const node2 = graph.getNodeByRef(api2_ref) as ServiceNode;
+    expect(node2.config.getEnvironmentVariables()).to.deep.eq({
+      DEP_ADDR: `http://${dep2_ref}:3000`,
+      EXT_ADDR: 'http://hello2.localhost',
+      EXT_DEP_ADDR: 'http://dep2.localhost'
+    });
+  });
+
+  it('component without dependency', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    dependencies:
+      examples/dep-world: v2
+
+    interfaces:
+      api: \${{ services.api.interfaces.main.url }}
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          DEP_ADDR: \${{ dependencies.examples/dep-world.interfaces.api.url }}
+          EXT_DEP_ADDR: \${{ environment.ingresses.examples/dep-world.api.url }}
+          EXT_ADDR: \${{ environment.ingresses.examples/hello-world.api.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world:v1', { hello1: 'api' })
+    ]);
+
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({
+      DEP_ADDR: `http://not-found.localhost:404`,
+      EXT_ADDR: 'http://hello1.localhost',
+      EXT_DEP_ADDR: 'http://not-found.localhost:404'
+    });
+  });
 });

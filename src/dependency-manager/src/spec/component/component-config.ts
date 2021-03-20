@@ -16,6 +16,8 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract getRef(): ComponentVersionSlug;
   abstract getInstanceId(): string;
   abstract setInstanceId(instance_id: string): void;
+  abstract getInstanceDate(): Date;
+  abstract setInstanceDate(instance_date: Date): void;
   abstract getExtends(): string | undefined;
   abstract setExtends(ext: string): void;
   abstract getLocalPath(): string | undefined;

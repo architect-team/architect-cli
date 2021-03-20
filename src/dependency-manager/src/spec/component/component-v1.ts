@@ -51,6 +51,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   instance_id!: string;
 
   @IsOptional({ always: true })
+  instance_date!: Date;
+
+  @IsOptional({ always: true })
   @IsString({ always: true })
   @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
@@ -124,6 +127,14 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   setInstanceId(instance_id: string) {
     this.instance_id = instance_id;
+  }
+
+  getInstanceDate() {
+    return this.instance_date || new Date();
+  }
+
+  setInstanceDate(instance_date: Date) {
+    this.instance_date = instance_date;
   }
 
   getExtends() {

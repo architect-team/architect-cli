@@ -224,6 +224,10 @@ export default abstract class DependencyManager {
     while ((matches = ingresses_regex.exec(component_string)) != null) {
       const [_, dep_name, interface_name] = matches;
 
+      if (!context.environment.ingresses[dep_name]) {
+        context.environment.ingresses[dep_name] = {};
+      }
+
       let dep_component;
 
       if (dep_name === initial_component.getName()) {
@@ -233,7 +237,17 @@ export default abstract class DependencyManager {
         if (!dep_tag) { continue; }
         dep_component = dependencies_map[`${dep_name}:${dep_tag}`];
       }
-      if (!dep_component) { continue; }
+      if (!dep_component) {
+        context.environment.ingresses[dep_name][interface_name] = {
+          host: 'not-found.localhost',
+          port: '404',
+          protocol: 'http',
+          url: 'http://not-found.localhost:404',
+          username: '',
+          password: '',
+        };
+        continue;
+      }
 
       const dependency_interface = dep_component.getInterfaces()[interface_name];
       if (!dependency_interface) { continue; }
@@ -253,9 +267,6 @@ export default abstract class DependencyManager {
       };
       external_interface.url = this.generateUrl(external_interface);
 
-      if (!context.environment.ingresses[dep_name]) {
-        context.environment.ingresses[dep_name] = {};
-      }
       context.environment.ingresses[dep_name][interface_name] = external_interface;
     }
 
@@ -266,15 +277,26 @@ export default abstract class DependencyManager {
     while ((matches = dependencies_regex.exec(component_string)) != null) {
       const [_, dep_name, interface_name] = matches;
 
+      if (!context.dependencies[dep_name]) { context.dependencies[dep_name] = {}; }
+      if (!context.dependencies[dep_name].interfaces) { context.dependencies[dep_name].interfaces = {}; }
+
       const dep_tag = component.getDependencies()[dep_name];
       if (!dep_tag) { continue; }
       const dependency = dependencies_map[`${dep_name}:${dep_tag}`];
-      if (!dependency) { continue; }
+      if (!dependency) {
+        context.dependencies[dep_name].interfaces[interface_name] = {
+          host: 'not-found.localhost',
+          port: '404',
+          protocol: 'http',
+          url: 'http://not-found.localhost:404',
+          username: '',
+          password: '',
+        };
+        continue;
+      }
       const dependency_interface = dependency.getInterfaces()[interface_name];
       if (!dependency_interface) { continue; }
 
-      if (!context.dependencies[dep_name]) { context.dependencies[dep_name] = {}; }
-      if (!context.dependencies[dep_name].interfaces) { context.dependencies[dep_name].interfaces = {}; }
       context.dependencies[dep_name].interfaces[interface_name] = dependency_interface;
 
       if (this.use_sidecar) {
@@ -365,20 +387,25 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponents(component_configs: ComponentConfig[], external_address: string, values?: Dictionary<Dictionary<string>>) {
-    const component_map: Dictionary<ComponentConfig> = {};
+    const component_map: Dictionary<ComponentConfig[]> = {};
     for (const component_config of component_configs) {
       if (values) {
         // Set parameters from secrets
         this.setValuesForComponent(component_config, values);
       }
-      component_map[component_config.getRef()] = component_config;
+      if (!component_map[component_config.getRef()]) {
+        component_map[component_config.getRef()] = [];
+      }
+      // Potentially multiple components with the same ref and different instance ids
+      component_map[component_config.getRef()].push(component_config);
     }
 
     const _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {};
 
     for (const component_config of component_configs) {
-      if (!_interpolated_component_map[component_config.getRef()]) {
-        _interpolated_component_map[component_config.getRef()] = this.interpolateComponentWithDependencies(component_config, component_map, external_address, _interpolated_component_map, component_config.getRef());
+      const map_key = `${component_config.getRef()}@${component_config.getInstanceId()}`;
+      if (!_interpolated_component_map[map_key]) {
+        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(component_config, component_map, external_address, _interpolated_component_map, component_config.getRef());
       }
     }
 
@@ -386,7 +413,26 @@ export default abstract class DependencyManager {
     return interpolated_component_configs;
   }
 
-  async interpolateComponentWithDependencies(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '', depth = 0) {
+  findClosestComponent(component_configs: ComponentConfig[], date: Date): ComponentConfig | undefined {
+    if (component_configs.length === 0) { return; }
+    if (component_configs.length === 1) { return component_configs[0]; }
+
+    const target_time = date.getTime();
+
+    let res = undefined;
+    let best_diff = Number.NEGATIVE_INFINITY;
+    for (const component_config of component_configs) {
+      const current_time = component_config.getInstanceDate().getTime();
+      const current_diff = current_time - target_time;
+      if (current_diff <= 0 && current_diff > best_diff) {
+        best_diff = current_diff;
+        res = component_config;
+      }
+    }
+    return res;
+  }
+
+  async interpolateComponentWithDependencies(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig[]>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '', depth = 0) {
     if (depth > 50) {
       throw new Error(`Circular component dependency detected`);
     }
@@ -397,15 +443,20 @@ export default abstract class DependencyManager {
       if (dep_ref === _parent_ref) {
         throw new Error(`Circular component dependency detected (${component_config.getRef()} <> ${_parent_ref})`);
       }
-      // TODO:207 mock interpolation for dependencies?
       if (!component_map[dep_ref]) {
         continue;
       }
-      const dep_component = component_map[dep_ref];
-      if (!_interpolated_component_map[dep_component.getRef()]) {
-        _interpolated_component_map[dep_component.getRef()] = this.interpolateComponentWithDependencies(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef(), depth + 1);
+      const dep_components = component_map[dep_ref];
+      const dep_component = this.findClosestComponent(dep_components, component_config.getInstanceDate());
+      if (!dep_component) {
+        continue;
       }
-      dependency_promises.push(_interpolated_component_map[dep_component.getRef()]);
+
+      const map_key = `${dep_component.getRef()}@${dep_component.getInstanceId()}`;
+      if (!_interpolated_component_map[map_key]) {
+        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef(), depth + 1);
+      }
+      dependency_promises.push(_interpolated_component_map[map_key]);
     }
     const dependencies = await Promise.all(dependency_promises);
 
