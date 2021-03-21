@@ -72,7 +72,7 @@ export class DockerComposeUtils {
     // Enrich base service details
     for (const node of graph.nodes) {
       if (node.is_external) continue;
-      const url_safe_ref = node.ref;
+      const safe_ref = node.ref;
 
       if (node instanceof ServiceNode || node instanceof TaskNode) {
         const ports = [];
@@ -83,44 +83,44 @@ export class DockerComposeUtils {
         for (const [var_key, var_value] of Object.entries(node.config.getEnvironmentVariables())) {
           formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
         }
-        compose.services[url_safe_ref] = {
+        compose.services[safe_ref] = {
           ports,
           environment: formatted_environment_variables,
         };
 
         if (gateway_links.length) {
-          compose.services[url_safe_ref].external_links = gateway_links;
+          compose.services[safe_ref].external_links = gateway_links;
         }
 
-        if (node.config.getImage()) compose.services[url_safe_ref].image = node.config.getImage();
+        if (node.config.getImage()) compose.services[safe_ref].image = node.config.getImage();
 
         if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
-          compose.services[url_safe_ref].command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+          compose.services[safe_ref].command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
         }
         if (node.config.getEntrypoint().length) {
-          compose.services[url_safe_ref].entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+          compose.services[safe_ref].entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
         }
 
         const platforms = node.config.getPlatforms();
         const docker_compose_config = platforms['docker-compose'];
         if (docker_compose_config) {
-          compose.services[url_safe_ref] = {
+          compose.services[safe_ref] = {
             ...docker_compose_config,
-            ...compose.services[url_safe_ref],
+            ...compose.services[safe_ref],
           };
         }
 
         const cpu = node.config.getCpu();
         const memory = node.config.getMemory();
         if (cpu || memory) {
-          const service = compose.services[url_safe_ref];
+          const service = compose.services[safe_ref];
           service.deploy = { resources: { limits: {} } };
           if (cpu) { service.deploy.resources.limits.cpus = cpu; }
           if (memory) { service.deploy.resources.limits.memory = memory; }
         }
 
         if (process.platform === 'linux') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
-          compose.services[url_safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
+          compose.services[safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
         }
       }
 
@@ -137,12 +137,12 @@ export class DockerComposeUtils {
             const compose_build: any = {};
             if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
             if (args.length) compose_build.args = args;
-            compose.services[url_safe_ref].build = compose_build;
+            compose.services[safe_ref].build = compose_build;
           }
 
           if (build.dockerfile) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            compose.services[url_safe_ref].build!.dockerfile = build.dockerfile;
+            compose.services[safe_ref].build!.dockerfile = build.dockerfile;
           }
         }
 
@@ -163,11 +163,11 @@ export class DockerComposeUtils {
           }
           volumes.push(volume);
         }
-        if (volumes.length) compose.services[url_safe_ref].volumes = volumes;
+        if (volumes.length) compose.services[safe_ref].volumes = volumes;
       }
 
       if (node instanceof TaskNode) {
-        compose.services[url_safe_ref].scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
+        compose.services[safe_ref].scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
     }
 
@@ -176,20 +176,20 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
       if (node_from instanceof InterfacesNode) continue;
-      const node_from_url_safe_ref = node_from.ref;
+      const node_from_safe_ref = node_from.ref;
 
       for (const interface_name of Object.keys(edge.interfaces_map)) {
         const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-        const node_to_url_safe_ref = node_to.ref;
+        const node_to_safe_ref = node_to.ref;
 
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
 
-        const depends_from = node_from_url_safe_ref;
-        const depends_to = node_to_url_safe_ref;
+        const depends_from = node_from_safe_ref;
+        const depends_to = node_to_safe_ref;
 
         if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to_url_safe_ref];
+          const service_to = compose.services[node_to_safe_ref];
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 

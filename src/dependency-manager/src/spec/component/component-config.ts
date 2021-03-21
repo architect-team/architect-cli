@@ -62,7 +62,7 @@ export abstract class ComponentConfig extends BaseConfig {
     if (instance_id) {
       service_ref = `${service_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
     }
-    return Refs.url_safe_ref(`${parsed.component_name}-${parsed.service_name}`, service_ref, max_length);
+    return Refs.safeRef(`${parsed.component_name}-${parsed.service_name}`, service_ref, max_length);
   }
 
   getNodeRef(service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {

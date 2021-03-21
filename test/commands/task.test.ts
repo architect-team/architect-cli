@@ -168,7 +168,7 @@ describe('task:exec', async function () {
     .it('fails with a useful message if given a bad component name');
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
-  const ref = Refs.url_safe_ref(ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG));
+  const ref = Refs.safeRef(ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG));
   mock_docker_compose_service[ref] = {};
   const mock_docker_compose = {
     services: mock_docker_compose_service

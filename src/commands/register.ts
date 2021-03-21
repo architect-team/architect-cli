@@ -82,7 +82,7 @@ export default class ComponentRegister extends Command {
     const account_name = raw_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`), unsafeCleanup: true });
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${raw_config.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
       const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;

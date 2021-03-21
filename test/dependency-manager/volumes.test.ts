@@ -35,8 +35,8 @@ describe('volumes spec v1', () => {
     moxios.uninstall();
   });
 
-  const test_component_api_url_safe_ref = ComponentConfig.getNodeRef('test/component/api:latest');
-  const test_component_app_url_safe_ref = ComponentConfig.getNodeRef('test/component/app:latest');
+  const test_component_api_safe_ref = ComponentConfig.getNodeRef('test/component/api:latest');
+  const test_component_app_safe_ref = ComponentConfig.getNodeRef('test/component/app:latest');
 
   it('simple volume', async () => {
     const component_config = `
@@ -59,7 +59,7 @@ describe('volumes spec v1', () => {
       await manager.loadComponentConfig('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data'])
+    expect(template.services[test_component_api_safe_ref].volumes).has.members(['/data'])
   });
 
   it('simple debug volume', async () => {
@@ -85,7 +85,7 @@ describe('volumes spec v1', () => {
       await manager.loadComponentConfig('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
+    expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
   it('multiple volumes and services', async () => {
@@ -129,7 +129,7 @@ describe('volumes spec v1', () => {
       await manager.loadComponentConfig('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
-    expect(template.services[test_component_app_url_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_api_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_app_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])
   });
 });
