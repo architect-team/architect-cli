@@ -62,7 +62,6 @@ export default class LocalDependencyManager extends DependencyManager {
 
     // Add edges
     for (const component_config of component_configs) {
-      const instance_id = '';
       let edges: DependencyEdge[] = [];
       const ignore_keys = ['']; // Ignore all errors
       const interpolated_component_config = this.interpolateInterfaces(component_config, ignore_keys);

@@ -58,6 +58,8 @@ export default abstract class DependencyManager {
         url: `@@{{ services.${service_name}.interfaces.${interface_name}.url }}`,
         port: `@@{{ services.${service_name}.interfaces.${interface_name}.port }}`,
         protocol: `@@{{ services.${service_name}.interfaces.${interface_name}.protocol }}`,
+        username: `@@{{ services.${service_name}.interfaces.${interface_name}.username }}`,
+        password: `@@{{ services.${service_name}.interfaces.${interface_name}.password }}`,
       };
     }
 
@@ -71,6 +73,8 @@ export default abstract class DependencyManager {
         url: `@@{{ dependencies.${dep_name}.interfaces.${interface_name}.url }}`,
         port: `@@{{ dependencies.${dep_name}.interfaces.${interface_name}.port }}`,
         protocol: `@@{{ dependencies.${dep_name}.interfaces.${interface_name}.protocol }}`,
+        username: `@@{{ dependencies.${dep_name}.interfaces.${interface_name}.username }}`,
+        password: `@@{{ dependencies.${dep_name}.interfaces.${interface_name}.password }}`,
       };
     }
 
