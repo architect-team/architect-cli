@@ -228,9 +228,9 @@ describe('interfaces spec v1', () => {
       const branch_api_node = graph.getNodeByRef('test/branch/api:latest') as ServiceNode;
       expect(Object.entries(branch_api_node.node_config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
-        'LEAF_HOST=public.localhost',
+        'LEAF_HOST=public.arc.localhost',
         'LEAF_PORT=80',
-        'LEAF_URL=http://public.localhost:80'
+        'LEAF_URL=http://public.arc.localhost:80'
       ])
 
       const template = await DockerComposeUtils.generate(manager);
@@ -246,15 +246,15 @@ describe('interfaces spec v1', () => {
       expect(template.services[test_branch_url_safe_ref]).to.be.deep.equal({
         depends_on: [test_leaf_api_latest_url_safe_ref],
         environment: {
-          LEAF_HOST: 'public.localhost',
+          LEAF_HOST: 'public.arc.localhost',
           LEAF_PORT: '80',
           LEAF_PROTOCOL: 'http',
-          LEAF_URL: 'http://public.localhost:80'
+          LEAF_URL: 'http://public.arc.localhost:80'
         },
         image: 'branch:latest',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
         ports: []
       });
@@ -265,8 +265,8 @@ describe('interfaces spec v1', () => {
         image: 'postgres:11',
         ports: ['50000:5432'],
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       });
 
@@ -277,17 +277,17 @@ describe('interfaces spec v1', () => {
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://${test_leaf_db_latest_url_safe_ref}:5432`,
-          VIRTUAL_HOST: 'public.localhost',
+          VIRTUAL_HOST: 'public.arc.localhost',
           VIRTUAL_PORT: '8080',
-          VIRTUAL_PORT_public_localhost: '8080',
+          VIRTUAL_PORT_public_arc_localhost: '8080',
           VIRTUAL_PROTO: 'http'
         },
         image: 'api:latest',
         ports: ['50001:8080'],
         restart: 'always',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       });
 
@@ -297,8 +297,8 @@ describe('interfaces spec v1', () => {
         image: 'postgres:11',
         ports: ['50002:5432'],
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       });
 
@@ -309,17 +309,17 @@ describe('interfaces spec v1', () => {
           DB_PORT: '5432',
           DB_PROTOCOL: 'postgres',
           DB_URL: `postgres://${test_leaf_db_v1_url_safe_ref}:5432`,
-          VIRTUAL_HOST: 'publicv1.localhost',
+          VIRTUAL_HOST: 'publicv1.arc.localhost',
           VIRTUAL_PORT: '8080',
-          VIRTUAL_PORT_publicv1_localhost: '8080',
+          VIRTUAL_PORT_publicv1_arc_localhost: '8080',
           VIRTUAL_PROTO: 'http'
         },
         image: 'api:latest',
         ports: ['50003:8080'],
         restart: 'always',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       });
     });
@@ -377,15 +377,15 @@ describe('interfaces spec v1', () => {
     expect(template.services[architect_cloud_api_url_safe_ref]).to.be.deep.equal({
       "depends_on": ["gateway"],
       "environment": {
-        "VIRTUAL_HOST": "app.localhost,admin.localhost",
+        "VIRTUAL_HOST": "app.arc.localhost,admin.arc.localhost",
         "VIRTUAL_PORT": "8081",
-        "VIRTUAL_PORT_admin_localhost": "8081",
-        "VIRTUAL_PORT_app_localhost": "8080",
+        "VIRTUAL_PORT_admin_arc_localhost": "8081",
+        "VIRTUAL_PORT_app_arc_localhost": "8080",
         "VIRTUAL_PROTO": "http"
       },
       "external_links": [
-        "gateway:app.localhost",
-        "gateway:admin.localhost"
+        "gateway:app.arc.localhost",
+        "gateway:admin.arc.localhost"
       ],
       "ports": [
         "50000:8080",
@@ -475,8 +475,8 @@ describe('interfaces spec v1', () => {
 
     const dashboard_node = graph.getNodeByRef('voic/admin-ui/dashboard:latest') as ServiceNode;
     expect(dashboard_node.node_config.getEnvironmentVariables()).to.deep.eq({
-      ADMIN_ADDR: 'http://admin2.localhost:80',
-      API_ADDR: 'http://public2.localhost:80',
+      ADMIN_ADDR: 'http://admin2.arc.localhost:80',
+      API_ADDR: 'http://public2.arc.localhost:80',
       PRIVATE_ADDR: 'http://voic--product-catalog--api--latest--afhqqu3p:8082'
     });
 
@@ -486,12 +486,12 @@ describe('interfaces spec v1', () => {
 
     const template = await DockerComposeUtils.generate(manager);
     expect(template.services[Refs.url_safe_ref('voic/product-catalog/api:latest')].environment).to.deep.eq({
-      VIRTUAL_HOST: 'public2.localhost,admin2.localhost,dep2.localhost',
-      VIRTUAL_PORT_public2_localhost: '8080',
+      VIRTUAL_HOST: 'public2.arc.localhost,admin2.arc.localhost,dep2.arc.localhost',
+      VIRTUAL_PORT_public2_arc_localhost: '8080',
       VIRTUAL_PORT: '8080',
       VIRTUAL_PROTO: 'http',
-      VIRTUAL_PORT_admin2_localhost: '8081',
-      VIRTUAL_PORT_dep2_localhost: '8080'
+      VIRTUAL_PORT_admin2_arc_localhost: '8081',
+      VIRTUAL_PORT_dep2_arc_localhost: '8080'
     })
   });
 });

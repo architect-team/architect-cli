@@ -38,7 +38,7 @@ export class DockerComposeUtils {
     }
     const available_ports = (await Promise.all(port_promises)).sort();
 
-    const gateway_links = Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.localhost`);
+    const gateway_links = Object.keys(environment.getInterfaces()).map((ik) => `gateway:${ik}.arc.localhost`);
 
     // Enrich base service details
     for (const node of graph.nodes) {
@@ -188,7 +188,7 @@ export class DockerComposeUtils {
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 
-          const interface_host = `${interface_name}.localhost`;
+          const interface_host = `${interface_name}.arc.localhost`;
           if (service_to.environment.VIRTUAL_HOST) {
             service_to.environment.VIRTUAL_HOST += `,${interface_host}`;
           } else {

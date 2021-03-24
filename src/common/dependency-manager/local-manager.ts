@@ -132,7 +132,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   toExternalHost() {
-    return 'localhost';
+    return 'arc.localhost';
   }
 
   toExternalProtocol() {

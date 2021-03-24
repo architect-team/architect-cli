@@ -334,9 +334,9 @@ describe('local deploy environment', function () {
           "DATABASE_PASSWORD": "architect",
           "DATABASE_SCHEMA": "test-db",
           "AUTO_DDL": "seed",
-          "VIRTUAL_HOST": "app.localhost",
+          "VIRTUAL_HOST": "app.arc.localhost",
           "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_app_localhost": "3000",
+          "VIRTUAL_PORT_app_arc_localhost": "3000",
           "VIRTUAL_PROTO": "http"
         },
         "build": {
@@ -344,7 +344,7 @@ describe('local deploy environment', function () {
           "dockerfile": "Dockerfile"
         },
         "external_links": [
-          "gateway:app.localhost"
+          "gateway:app.arc.localhost"
         ]
       },
       "examples--database-seeding--my-demo-db--latest--uimfmkw0": {
@@ -359,7 +359,7 @@ describe('local deploy environment', function () {
         },
         "image": "postgres:11",
         "external_links": [
-          "gateway:app.localhost"
+          "gateway:app.arc.localhost"
         ]
       },
       "gateway": {
@@ -412,13 +412,13 @@ describe('local deploy environment', function () {
           "gateway"
         ],
         "environment": {
-          "VIRTUAL_HOST": "test.localhost",
+          "VIRTUAL_HOST": "test.arc.localhost",
           "VIRTUAL_PORT": "3000",
-          "VIRTUAL_PORT_test_localhost": "3000",
+          "VIRTUAL_PORT_test_arc_localhost": "3000",
           "VIRTUAL_PROTO": "http"
         },
         "external_links": [
-          "gateway:test.localhost"
+          "gateway:test.arc.localhost"
         ],
         "image": "heroku/nodejs-hello-world",
       },
@@ -547,8 +547,8 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = Object.values(runCompose.firstCall.args[0].services)[0] as any;
-      expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
-      expect(hello_world_service.environment.VIRTUAL_HOST).to.equal('test.localhost');
+      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
+      expect(hello_world_service.environment.VIRTUAL_HOST).to.equal('test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
       expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
