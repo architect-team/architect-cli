@@ -41,7 +41,7 @@ export class DockerComposeUtils {
     const gateway_links: string[] = [];
     for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
       for (const interface_from of Object.keys(edge.interfaces_map)) {
-        gateway_links.push(`gateway:${interface_from}.localhost`);
+        gateway_links.push(`gateway:${interface_from}.arc.localhost`);
       }
     }
 
@@ -206,7 +206,7 @@ export class DockerComposeUtils {
           if (!service_to.labels.includes(`traefik.enable=true`)) {
             service_to.labels.push(`traefik.enable=true`);
           }
-          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.localhost\`)`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.arc.localhost\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
