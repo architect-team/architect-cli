@@ -163,13 +163,13 @@ describe('interpolation spec v1', () => {
     expect(public_template.services['concourse--web--web--latest--62arnmmt']).to.be.deep.equal({
       'depends_on': ['gateway'],
       'environment': {
-        'VIRTUAL_HOST': 'public.localhost',
+        'VIRTUAL_HOST': 'public.arc.localhost',
         'VIRTUAL_PORT': '8080',
-        VIRTUAL_PORT_public_localhost: '8080',
+        'VIRTUAL_PORT_public_arc_localhost': '8080',
         'VIRTUAL_PROTO': 'http'
       },
       external_links: [
-        'gateway:public.localhost'
+        'gateway:public.arc.localhost'
       ],
       'ports': [
         '50001:8080'
@@ -182,16 +182,16 @@ describe('interpolation spec v1', () => {
     expect(public_template.services['concourse--worker--worker--latest--umjxggst']).to.be.deep.equal({
       'depends_on': [],
       'environment': {
-        'REGULAR': 'public.localhost:2222',
-        'SINGLE_QUOTE': 'public.localhost:2222',
-        'DOUBLE_QUOTE': 'public.localhost:2222',
+        'REGULAR': 'public.arc.localhost:2222',
+        'SINGLE_QUOTE': 'public.arc.localhost:2222',
+        'DOUBLE_QUOTE': 'public.arc.localhost:2222',
       },
       'ports': [],
       'build': {
         'context': path.resolve('/stack')
       },
       external_links: [
-        'gateway:public.localhost'
+        'gateway:public.arc.localhost'
       ],
     })
   });
@@ -247,7 +247,7 @@ describe('interpolation spec v1', () => {
 
     const manager = await LocalDependencyManager.createFromPath(axios.create(), '/environment.yml');
     const graph = await manager.getGraph();
-    const backend_external_url = 'http://backend.localhost:80'
+    const backend_external_url = 'http://backend.arc.localhost:80'
     const backend_ref = 'examples/backend/api:latest';
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.node_config.getEnvironmentVariables()).to.deep.eq({
