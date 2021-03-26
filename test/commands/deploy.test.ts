@@ -378,6 +378,7 @@ describe('local deploy environment', function () {
         "image": "traefik:v2.4",
         "command": [
           "--api.insecure=true",
+          "--entryPoints.web.address=:80",
           "--providers.docker",
           "--providers.docker.exposedByDefault=false"
         ],
@@ -431,6 +432,7 @@ describe('local deploy environment', function () {
         "image": "traefik:v2.4",
         "command": [
           "--api.insecure=true",
+          "--entryPoints.web.address=:80",
           "--providers.docker",
           "--providers.docker.exposedByDefault=false"
         ],

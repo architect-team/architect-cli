@@ -54,12 +54,13 @@ export class DockerComposeUtils {
         restart: 'always',
         command: [
           '--api.insecure=true',
+          `--entryPoints.web.address=:${gateway_port}`,
           '--providers.docker',
           '--providers.docker.exposedByDefault=false',
         ],
         ports: [
           // The HTTP port
-          `${gateway_port}:80`,
+          `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
           '8080:8080',
         ],
