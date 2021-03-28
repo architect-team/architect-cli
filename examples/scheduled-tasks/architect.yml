@@ -11,10 +11,7 @@ tasks:
     command:
       - sh
       - -c
-      - curl $SERVER_URL
-
-    environment:
-      SERVER_URL: ${{ services.api.interfaces.main.url }}
+      - curl ${{ environment.ingresses['architect-ryan/scheduled-tasks']['api'].url }}
 
 services:
   api:
