@@ -270,7 +270,7 @@ export default abstract class DependencyManager {
       const external_interface: InterfaceSpec = {
         host: `${interface_from}.${external_host}`,
         port: external_port,
-        protocol: external_host === 'localhost' ? 'http' : 'https',
+        protocol: external_host.endsWith('localhost') ? 'http' : 'https',
         username: '',
         password: '',
       };

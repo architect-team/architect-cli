@@ -258,7 +258,7 @@ describe('sidecar spec v1', () => {
         `LEAF_HOST=127.0.0.1`,
         'LEAF_PORT=12345',
         `LEAF_URL=http://127.0.0.1:12345`,
-        'EXTERNAL_INTERFACE=http://public.localhost',
+        'EXTERNAL_INTERFACE=http://public.arc.localhost',
       ])
 
       const template = await DockerComposeUtils.generate(graph);
@@ -278,12 +278,12 @@ describe('sidecar spec v1', () => {
           LEAF_PORT: '12345',
           LEAF_PROTOCOL: 'http',
           LEAF_URL: `http://127.0.0.1:12345`,
-          EXTERNAL_INTERFACE: 'http://public.localhost'
+          EXTERNAL_INTERFACE: 'http://public.arc.localhost'
         },
         image: 'branch:latest',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
         ports: []
       };
@@ -299,8 +299,8 @@ describe('sidecar spec v1', () => {
         image: 'postgres:11',
         ports: ['50000:5432'],
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       };
       if (process.platform === 'linux') {
@@ -320,7 +320,7 @@ describe('sidecar spec v1', () => {
         },
         "labels": [
           "traefik.enable=true",
-          "traefik.http.routers.public.rule=Host(`public.localhost`)",
+          "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
           "traefik.http.routers.public.service=public-service",
           "traefik.http.services.public-service.loadbalancer.server.port=8080",
           "traefik.http.services.public-service.loadbalancer.server.scheme=http"
@@ -329,8 +329,8 @@ describe('sidecar spec v1', () => {
         ports: ['50001:8080'],
         restart: 'always',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       };
       if (process.platform === 'linux') {
@@ -345,8 +345,8 @@ describe('sidecar spec v1', () => {
         image: 'postgres:11',
         ports: ['50002:5432'],
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       };
       if (process.platform === 'linux') {
@@ -366,7 +366,7 @@ describe('sidecar spec v1', () => {
         },
         "labels": [
           "traefik.enable=true",
-          "traefik.http.routers.publicv1.rule=Host(`publicv1.localhost`)",
+          "traefik.http.routers.publicv1.rule=Host(`publicv1.arc.localhost`)",
           "traefik.http.routers.publicv1.service=publicv1-service",
           "traefik.http.services.publicv1-service.loadbalancer.server.port=8080",
           "traefik.http.services.publicv1-service.loadbalancer.server.scheme=http"
@@ -375,8 +375,8 @@ describe('sidecar spec v1', () => {
         ports: ['50003:8080'],
         restart: 'always',
         external_links: [
-          'gateway:public.localhost',
-          'gateway:publicv1.localhost'
+          'gateway:public.arc.localhost',
+          'gateway:publicv1.arc.localhost'
         ],
       };
       if (process.platform === 'linux') {
@@ -434,18 +434,18 @@ describe('sidecar spec v1', () => {
       "environment": {},
       "labels": [
         "traefik.enable=true",
-        "traefik.http.routers.app.rule=Host(`app.localhost`)",
+        "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
         "traefik.http.routers.app.service=app-service",
         "traefik.http.services.app-service.loadbalancer.server.port=8080",
         "traefik.http.services.app-service.loadbalancer.server.scheme=http",
-        "traefik.http.routers.admin.rule=Host(`admin.localhost`)",
+        "traefik.http.routers.admin.rule=Host(`admin.arc.localhost`)",
         "traefik.http.routers.admin.service=admin-service",
         "traefik.http.services.admin-service.loadbalancer.server.port=8081",
         "traefik.http.services.admin-service.loadbalancer.server.scheme=http"
       ],
       "external_links": [
-        "gateway:app.localhost",
-        "gateway:admin.localhost"
+        "gateway:app.arc.localhost",
+        "gateway:admin.arc.localhost"
       ],
       "ports": [
         "50000:8080",
@@ -539,7 +539,7 @@ describe('sidecar spec v1', () => {
       ADMIN_ADDR: `http://127.0.0.1:12346`,
       API_ADDR: `http://127.0.0.1:12345`,
       PRIVATE_ADDR: `http://127.0.0.1:12347`,
-      EXTERNAL_API_ADDR: 'http://public2.localhost',
+      EXTERNAL_API_ADDR: 'http://public2.arc.localhost',
     });
   });
 

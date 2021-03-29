@@ -350,7 +350,7 @@ describe('external spec v1', () => {
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
-      SELF_ADDR: `http://${app_ref}.localhost`,
+      SELF_ADDR: `http://${app_ref}.arc.localhost`,
     });
   });
 });

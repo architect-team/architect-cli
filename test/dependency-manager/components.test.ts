@@ -689,7 +689,7 @@ describe('components spec v1', function () {
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-      expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.localhost');
+      expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.arc.localhost');
     });
   });
 });

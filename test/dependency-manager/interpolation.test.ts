@@ -173,13 +173,13 @@ describe('interpolation spec v1', () => {
       environment: {},
       "labels": [
         "traefik.enable=true",
-        "traefik.http.routers.public.rule=Host(`public.localhost`)",
+        "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
         "traefik.http.routers.public.service=public-service",
         "traefik.http.services.public-service.loadbalancer.server.port=8080",
         "traefik.http.services.public-service.loadbalancer.server.scheme=http"
       ],
       external_links: [
-        'gateway:public.localhost'
+        'gateway:public.arc.localhost'
       ],
       'ports': [
         '50001:8080'
@@ -207,7 +207,7 @@ describe('interpolation spec v1', () => {
       },
       depends_on: [web_ref],
       external_links: [
-        'gateway:public.localhost'
+        'gateway:public.arc.localhost'
       ],
     };
     if (process.platform === 'linux') {
@@ -259,7 +259,7 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/backend', { backend: 'main' }),
       await manager.loadComponentConfig('examples/frontend')
     ]);
-    const backend_external_url = 'http://backend.localhost'
+    const backend_external_url = 'http://backend.arc.localhost'
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.getEnvironmentVariables()).to.deep.eq({
@@ -900,8 +900,8 @@ describe('interpolation spec v1', () => {
     const node1 = graph.getNodeByRef(api1_ref) as ServiceNode;
     expect(node1.config.getEnvironmentVariables()).to.deep.eq({
       DEP_ADDR: `http://${dep1_ref}:3000`,
-      EXT_ADDR: 'http://hello1.localhost',
-      EXT_DEP_ADDR: 'http://dep1.localhost'
+      EXT_ADDR: 'http://hello1.arc.localhost',
+      EXT_DEP_ADDR: 'http://dep1.arc.localhost'
     });
 
     const api2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1', 'hello2');
@@ -909,8 +909,8 @@ describe('interpolation spec v1', () => {
     const node2 = graph.getNodeByRef(api2_ref) as ServiceNode;
     expect(node2.config.getEnvironmentVariables()).to.deep.eq({
       DEP_ADDR: `http://${dep2_ref}:3000`,
-      EXT_ADDR: 'http://hello2.localhost',
-      EXT_DEP_ADDR: 'http://dep2.localhost'
+      EXT_ADDR: 'http://hello2.arc.localhost',
+      EXT_DEP_ADDR: 'http://dep2.arc.localhost'
     });
   });
 
@@ -951,7 +951,7 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.getEnvironmentVariables()).to.deep.eq({
       DEP_ADDR: `http://not-found.localhost:404`,
-      EXT_ADDR: 'http://hello1.localhost',
+      EXT_ADDR: 'http://hello1.arc.localhost',
       EXT_DEP_ADDR: 'http://not-found.localhost:404'
     });
   });
