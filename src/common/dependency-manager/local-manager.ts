@@ -29,7 +29,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const gateway_port = await PortUtil.getAvailablePort(80);
 
     // Interpolate the component before generating then nodes to support dynamic host overrides
-    const interpolated_component_configs = await this.interpolateComponents(component_configs, `localhost:${gateway_port}`, values);
+    const interpolated_component_configs = await this.interpolateComponents(component_configs, `arc.localhost:${gateway_port}`, values);
 
     // Add nodes
     for (const component_config of interpolated_component_configs) {

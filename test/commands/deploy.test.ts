@@ -347,7 +347,7 @@ describe('local deploy environment', function () {
         },
         "labels": [
           "traefik.enable=true",
-          "traefik.http.routers.app.rule=Host(`app.localhost`)",
+          "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
           "traefik.http.routers.app.service=app-service",
           "traefik.http.services.app-service.loadbalancer.server.port=3000",
           "traefik.http.services.app-service.loadbalancer.server.scheme=http"
@@ -357,7 +357,7 @@ describe('local deploy environment', function () {
           "dockerfile": "Dockerfile"
         },
         "external_links": [
-          "gateway:app.localhost"
+          "gateway:app.arc.localhost"
         ]
       },
       [seed_db_ref]: {
@@ -371,7 +371,7 @@ describe('local deploy environment', function () {
         },
         "image": "postgres:11",
         "external_links": [
-          "gateway:app.localhost"
+          "gateway:app.arc.localhost"
         ]
       },
       "gateway": {
@@ -418,13 +418,13 @@ describe('local deploy environment', function () {
         "environment": {},
         "labels": [
           "traefik.enable=true",
-          "traefik.http.routers.hello.rule=Host(`hello.localhost`)",
+          "traefik.http.routers.hello.rule=Host(`hello.arc.localhost`)",
           "traefik.http.routers.hello.service=hello-service",
           "traefik.http.services.hello-service.loadbalancer.server.port=3000",
           "traefik.http.services.hello-service.loadbalancer.server.scheme=http"
         ],
         "external_links": [
-          "gateway:hello.localhost"
+          "gateway:hello.arc.localhost"
         ],
         "image": "heroku/nodejs-hello-world",
       },
@@ -506,7 +506,7 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
-      expect(hello_world_service.external_links).to.contain('gateway:test.localhost');
+      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
       expect(hello_world_service.environment.a_required_key).to.equal('some_value');
       expect(hello_world_service.environment.another_required_key).to.equal('required_value');
       expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');

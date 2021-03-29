@@ -30,7 +30,7 @@ $ architect link .
 $ architect deploy --local examples/database-seeding:latest -i main:main -p AUTO_DDL=migrate
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://main.localhost/.
+Once the deploy has completed, you can reach your new service by going to http://main.arc.localhost/.
 
 ## Deploying to the cloud
 

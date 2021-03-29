@@ -166,6 +166,7 @@ export default class Deploy extends DeployCommand {
         if (service.labels?.includes('traefik.enable=true')) {
           const host_rules = service.labels.filter(label => label.includes('rule=Host'));
           for (const host_rule of host_rules) {
+            // TODO:localhost
             const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.localhost)`\)/g);
             const host_match = host.exec(host_rule);
             if (host_match) {

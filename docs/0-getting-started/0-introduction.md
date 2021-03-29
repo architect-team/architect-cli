@@ -134,7 +134,7 @@ services:
           host_path: ./frontend/src
 
 # Maps the frontend application to an external interface. Once running, it can
-# be resolved at http://app.localhost
+# be resolved at http://app.arc.localhost
 interfaces:
   app: ${{ services.app.interfaces.main.url }}
 ```
@@ -149,7 +149,7 @@ Now that we have a better understanding of what we're deploying, let's go ahead 
 $ architect deploy --local examples/react-app:latest -i app:app
 
 Using locally linked examples/react-app found at /architect-cli/examples/react-app
-http://app.localhost:80/ => examples--react-app--app--latest--aklmrtvo
+http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo
 
 http://localhost:50000/ => examples--react-app--api-db--latest--arrm58dc
 http://localhost:50001/ => examples--react-app--api--latest--1dzvo47x
