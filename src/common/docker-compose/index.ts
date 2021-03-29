@@ -142,6 +142,9 @@ export class DockerComposeUtils {
           }
 
           if (build.dockerfile) {
+            if (!build.context) {
+              throw new Error(`The context property must be set for service "${node.config.getName()}" if the dockerfile property is specified`);
+            }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             compose.services[safe_ref].build!.dockerfile = build.dockerfile;
           }
