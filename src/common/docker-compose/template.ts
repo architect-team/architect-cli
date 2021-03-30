@@ -27,7 +27,7 @@ export interface DockerService {
   image?: string;
   environment?: { [key: string]: any };
   depends_on?: string[];
-  build?: DockerServiceBuild;
+  build?: DockerServiceBuild | string;
   volumes?: string[] | DockerComposeVolume[];
   command?: string[];
   restart?: string;

@@ -12,7 +12,7 @@ import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
-import DockerComposeTemplate from './template';
+import DockerComposeTemplate, { DockerServiceBuild } from './template';
 
 export class DockerComposeUtils {
 
@@ -143,7 +143,7 @@ export class DockerComposeUtils {
 
           if (build.dockerfile) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            compose.services[safe_ref].build!.dockerfile = build.dockerfile;
+            (compose.services[safe_ref].build! as DockerServiceBuild).dockerfile = build.dockerfile;
           }
         }
 
