@@ -44,10 +44,6 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   liveness_probe?: LivenessProbeSpecV1;
 
   @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a replica count when registering services',
-  })
   @Type(() => String)
   replicas?: string;
 
