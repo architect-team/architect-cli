@@ -1,10 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidatableConfig } from '../base-spec';
 
 export class BuildSpecV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
+  @ValidateIf(o => o.context || o.dockerfile, { always: true })
+  @IsNotEmpty({ always: true })
   @IsString({ always: true })
   context?: string;
 

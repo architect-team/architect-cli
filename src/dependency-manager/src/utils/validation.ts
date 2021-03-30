@@ -61,7 +61,6 @@ export const validateDictionary = async <T extends ValidatableConfig>(
     error = errors.splice(error_index, 1)[0];
   }
 
-
   if (!isObject(property_value)) {
     error.constraints = {
       'IsObject': `${property} must be an object`,
