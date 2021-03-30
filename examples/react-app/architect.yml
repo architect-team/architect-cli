@@ -67,6 +67,7 @@ services:
     debug:
       build:
         dockerfile: Dockerfile.dev
+        context: ./frontend
       volumes:
         src:
           mount_path: /usr/src/app/src
