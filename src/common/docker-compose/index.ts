@@ -62,7 +62,7 @@ export class DockerComposeUtils {
           // The HTTP port
           `${gateway_port}:${gateway_port}`,
           // The Web UI(enabled by--api.insecure = true)
-          '8080:8080',
+          `${await PortUtil.getAvailablePort(8080)}:8080`,
         ],
         volumes: [
           '/var/run/docker.sock:/var/run/docker.sock',
