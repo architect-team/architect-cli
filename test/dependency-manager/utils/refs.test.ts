@@ -188,4 +188,37 @@ describe('Refs.safeRef', () => {
     expect(safe_hash).to.equal(trim_hash);
     expect(trim_ref).to.equal(safe_ref);
   });
+
+  it(`Refs.trimSafeRef suffix`, async () => {
+    const service_name = `boutique-shop-frontend`
+    const service_ref = `example/boutique-shop/frontend:latest`;
+
+    const safe_ref = Refs.safeRef(service_name, service_ref);
+    const safe_hash = safe_ref.split('-').pop();
+
+    const trim_length = 58;
+    const trim_ref = Refs.trimSafeRef(safe_ref, trim_length, '', '-main');
+    const trim_hash = trim_ref.split('-').pop();
+    expect(safe_hash).to.equal(trim_hash);
+    expect(trim_ref).to.not.equal(safe_ref);
+    expect(trim_ref.length).to.be.lessThan(trim_length);
+    expect(trim_ref).to.equal('boutique-shop-frontend-main-w1slfipr');
+  });
+
+  it(`Refs.trimSafeRef suffix shorten`, async () => {
+    const service_name = `boutique-shop-frontend`
+    const service_ref = `example/boutique-shop/frontend:latest`;
+
+    const safe_ref = Refs.safeRef(service_name, service_ref);
+    const safe_hash = safe_ref.split('-').pop();
+
+    const suffix = '-main';
+    const trim_length = 32;
+    const trim_ref = Refs.trimSafeRef(safe_ref, trim_length, '', suffix);
+    const trim_hash = trim_ref.split('-').pop();
+    expect(safe_hash).to.equal(trim_hash);
+    expect(trim_ref).to.not.equal(safe_ref);
+    expect(trim_ref.length).to.be.equal(trim_length);
+    expect(trim_ref).to.equal(`boutique-shop-fron${suffix}-w1slfipr`);
+  });
 });

@@ -27,18 +27,18 @@ export class Refs {
     return `${truncated_ref}-${hash}`;
   }
 
-  public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '') {
+  public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '', suffix = '') {
     const split = ref.split('-');
     const hash = split.pop();
     if (!hash || hash.length !== Refs.HASH_LENGTH) { throw new Error(`Not a valid ref: ${ref}`); }
 
-    const target_length = max_length - (hash.length + 1);
+    const target_length = max_length - (hash.length + 1 + suffix.length);
     if (target_length < 0) {
       throw new Error(`Cannot trim ref to length: ${max_length}`);
     }
 
     const trimmed_name = `${prefix}${split.join('-')}`.substr(0, target_length);
-    return `${trimmed_name}-${hash}`;
+    return `${trimmed_name}${suffix}-${hash}`;
   }
 
   /**
