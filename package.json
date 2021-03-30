@@ -118,7 +118,7 @@
     "postpack": "rm -f oclif.manifest.json",
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "coverage": "nyc --extension .ts npm test",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
+    "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
