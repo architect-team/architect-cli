@@ -58,6 +58,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
     const expanded = this.expand();
     errors = await validateNested(expanded, 'liveness_probe', errors, options);
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
+    errors = await validateNested(expanded, 'build', errors, options);
     return errors;
   }
 
