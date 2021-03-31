@@ -495,7 +495,7 @@ describe('components spec v1', function () {
       expect(manager_error).undefined;
     });
 
-    it('component with one task', async () => {
+    it('component with only one task', async () => {
       const component_config_json = {
         name: 'architect/cloud',
         tasks: {
@@ -519,9 +519,10 @@ describe('components spec v1', function () {
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
       ])
-      const task_node = graph.getNodeByRef(syncer_ref);
+      const task_node = graph.getNodeByRef(syncer_ref) as TaskNode;
       expect(task_node.__type).equals('task');
-      expect((task_node as TaskNode).config.getSchedule()).equals('*/1 * * * *');
+      expect(task_node.config.getSchedule()).equals('*/1 * * * *');
+      expect(task_node.config.getRef()).equals('architect/cloud/syncer:v1');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -559,9 +560,10 @@ describe('components spec v1', function () {
         syncer_ref,
         app_ref,
       ])
-      const task_node = graph.getNodeByRef(syncer_ref);
+      const task_node = graph.getNodeByRef(syncer_ref) as TaskNode;
       expect(task_node.__type).equals('task');
-      expect((task_node as TaskNode).config.getSchedule()).equals('*/1 * * * *');
+      expect(task_node.config.getSchedule()).equals('*/1 * * * *');
+      expect(task_node.config.getRef()).equals('architect/cloud/syncer:v1');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
