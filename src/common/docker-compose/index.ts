@@ -1,6 +1,7 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
+import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
@@ -120,7 +121,8 @@ export class DockerComposeUtils {
           if (memory) { service.deploy.resources.limits.memory = memory; }
         }
 
-        if (process.platform === 'linux') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
+        const is_wsl = os.release().toLowerCase().includes('microsoft');
+        if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
           compose.services[safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
         }
       }

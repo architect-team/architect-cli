@@ -103,14 +103,6 @@ describe('components spec v1', function () {
         "version": "3",
         "volumes": {},
       };
-      if (process.platform === 'linux') {
-        expected_compose.services[app_ref].extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-        expected_compose.services[api_ref].extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template).to.be.deep.equal(expected_compose);
     });
 
@@ -286,17 +278,6 @@ describe('components spec v1', function () {
         "version": "3",
         "volumes": {},
       };
-      if (process.platform === 'linux') {
-        expected_compose.services[app_ref].extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-        expected_compose.services[api_ref].extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-        expected_compose.services[db_ref].extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template).to.be.deep.equal(expected_compose);
     });
 

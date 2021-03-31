@@ -137,14 +137,6 @@ describe('interpolation spec v1', () => {
       'version': '3',
       'volumes': {},
     };
-    if (process.platform === 'linux') {
-      expected_compose.services[web_ref].extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-      expected_compose.services[worker_ref].extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-    }
     expect(template).to.be.deep.equal(expected_compose);
 
     const public_manager = new LocalDependencyManager(axios.create(), {
@@ -189,11 +181,6 @@ describe('interpolation spec v1', () => {
         'context': path.resolve('/stack')
       }
     };
-    if (process.platform === 'linux') {
-      expected_web_compose.extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-    }
     expect(public_template.services[web_ref]).to.be.deep.equal(expected_web_compose);
     const expected_worker_compose: DockerService = {
       'environment': {
@@ -210,11 +197,6 @@ describe('interpolation spec v1', () => {
         'gateway:public.arc.localhost'
       ],
     };
-    if (process.platform === 'linux') {
-      expected_worker_compose.extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-    }
     expect(public_template.services[worker_ref]).to.be.deep.equal(expected_worker_compose);
   });
 

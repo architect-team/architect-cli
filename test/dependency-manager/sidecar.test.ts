@@ -287,11 +287,6 @@ describe('sidecar spec v1', () => {
         ],
         ports: []
       };
-      if (process.platform === 'linux') {
-        expected_leaf_compose.extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
       const expected_leaf_db_compose: DockerService = {
@@ -303,11 +298,6 @@ describe('sidecar spec v1', () => {
           'gateway:publicv1.arc.localhost'
         ],
       };
-      if (process.platform === 'linux') {
-        expected_leaf_db_compose.extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
       const expected_leaf_api_compose: DockerService = {
@@ -333,11 +323,6 @@ describe('sidecar spec v1', () => {
           'gateway:publicv1.arc.localhost'
         ],
       };
-      if (process.platform === 'linux') {
-        expected_leaf_api_compose.extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template.services[leaf_api_ref]).to.be.deep.equal(expected_leaf_api_compose);
 
       const expected_other_leaf_db_compose: DockerService = {
@@ -349,11 +334,6 @@ describe('sidecar spec v1', () => {
           'gateway:publicv1.arc.localhost'
         ],
       };
-      if (process.platform === 'linux') {
-        expected_other_leaf_db_compose.extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
       const expected_other_leaf_api_compose: DockerService = {
@@ -379,11 +359,6 @@ describe('sidecar spec v1', () => {
           'gateway:publicv1.arc.localhost'
         ],
       };
-      if (process.platform === 'linux') {
-        expected_other_leaf_api_compose.extra_hosts = [
-          "host.docker.internal:host-gateway"
-        ];
-      }
       expect(template.services[other_leaf_api_ref]).to.be.deep.equal(expected_other_leaf_api_compose);
     });
   });
@@ -456,11 +431,6 @@ describe('sidecar spec v1', () => {
       },
       "restart": "always"
     };
-    if (process.platform === 'linux') {
-      expected_compose.extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-    }
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });
 

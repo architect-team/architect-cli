@@ -314,17 +314,6 @@ describe('local deploy environment', function () {
     },
     "volumes": {}
   }
-  if (process.platform === 'linux') {
-    environment_expected_compose.services[seed_app_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-    environment_expected_compose.services[seed_db_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-    environment_expected_compose.services[echo_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-  }
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -397,14 +386,6 @@ describe('local deploy environment', function () {
     },
     "volumes": {}
   }
-  if (process.platform === 'linux') {
-    seeding_component_expected_compose.services[seed_app_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-    seeding_component_expected_compose.services[seed_db_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
-  }
 
   const hello_api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest')
   const component_expected_compose: DockerComposeTemplate = {
@@ -450,11 +431,6 @@ describe('local deploy environment', function () {
       }
     },
     "volumes": {}
-  }
-  if (process.platform === 'linux') {
-    component_expected_compose.services[hello_api_ref].extra_hosts = [
-      "host.docker.internal:host-gateway"
-    ];
   }
 
   test

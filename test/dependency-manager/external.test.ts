@@ -256,11 +256,6 @@ describe('external spec v1', () => {
       'version': '3',
       'volumes': {},
     };
-    if (process.platform === 'linux') {
-      expected_compose.services[app_ref].extra_hosts = [
-        "host.docker.internal:host-gateway"
-      ];
-    }
     expect(template).to.be.deep.equal(expected_compose);
   });
 
