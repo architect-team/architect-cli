@@ -239,7 +239,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getTasks() {
-    return transformTasks(this.tasks) || {};
+    return transformTasks(this.tasks || {}, this.getRef()) || {};
   }
 
   setTasks(value: Dictionary<TaskConfig>) {
