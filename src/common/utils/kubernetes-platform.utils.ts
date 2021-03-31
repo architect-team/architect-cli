@@ -128,7 +128,12 @@ export class KubernetesPlatformUtils {
       'get', 'sa', SERVICE_ACCOUNT_NAME,
       '-o', 'json',
     ]);
-    const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
+
+    const secrets = JSON.parse(saRes.stdout).secrets;
+    if (!secrets) {
+      throw new Error('Unable to retrieve service account secret');
+    }
+    const sa_secret_name = secrets[0].name;
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
       'get', 'secrets', sa_secret_name,

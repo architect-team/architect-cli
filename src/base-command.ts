@@ -38,10 +38,11 @@ export default abstract class extends Command {
     } else if (err.config) {
       err.message += `${err.config.url} [${err.config.method}]`;
     }
-    if (this.app?.config?.log_level === 'debug') {
-      throw err;
-    } else {
-      this.error(chalk.red(err.stderr || err.message || err));
+
+    if (err.stack) {
+      console.log(err.stack);
     }
+
+    this.error(chalk.red(err.stderr || err.message || err));
   }
 }
