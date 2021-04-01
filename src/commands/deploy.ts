@@ -15,11 +15,11 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
+import { PipelineUtils } from '../common/utils/pipeline';
 import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
-  static POLL_INTERVAL = 10000;
 
   static flags = {
     ...Command.flags,
@@ -56,24 +56,6 @@ export abstract class DeployCommand extends Command {
     }),
   };
 
-  async poll(pipeline_id: string) {
-    return new Promise((resolve, reject) => {
-      let poll_count = 0;
-      const poll = setInterval(async () => {
-        const { data: pipeline } = await this.app.api.get(`/pipelines/${pipeline_id}`);
-        if (pipeline.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
-          clearInterval(poll);
-          reject(new Error('Pipeline failed'));
-        }
-        if (pipeline.applied_at) {
-          clearInterval(poll);
-          resolve(pipeline);
-        }
-        poll_count += 1;
-      }, DeployCommand.POLL_INTERVAL);
-    });
-  }
-
   async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
@@ -92,7 +74,7 @@ export abstract class DeployCommand extends Command {
 
     cli.action.start(chalk.blue('Deploying'));
     await this.app.api.post(`/pipelines/${pipeline.id}/approve`);
-    await this.poll(pipeline.id);
+    await PipelineUtils.pollPipeline(this.app.api, pipeline.id);
     cli.action.stop();
     this.log(chalk.green(`Deployed`));
   }

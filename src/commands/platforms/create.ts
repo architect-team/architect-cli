@@ -6,6 +6,7 @@ import Command from '../../base-command';
 import { AccountUtils } from '../../common/utils/account';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
+import { PipelineUtils } from '../../common/utils/pipeline';
 import { CreatePlatformInput } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
 
@@ -69,6 +70,13 @@ export default class PlatformCreate extends Command {
     const created_platform = await this.post_platform_to_api(platform_dto, account.id);
     cli.action.stop();
 
+    this.log(`Hang tight! We're completing the setup of your platform by installing applications that will broker networking. This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
+    this.log(`Logs here: ${this.app.config.app_host}/examples/platforms/new?platform_id=${created_platform.id}`);
+    cli.action.start(chalk.blue('Installing platform applications'));
+    const pipeline_id = await this.create_platform_applications(account.id, created_platform.id);
+    await PipelineUtils.pollPipeline(this.app.api, pipeline_id);
+    cli.action.stop();
+
     return created_platform;
   }
 
@@ -98,6 +106,11 @@ export default class PlatformCreate extends Command {
       default:
         throw new Error(`PlatformType=${selected_type} is not currently supported`);
     }
+  }
+
+  async create_platform_applications(account_id: string, platform_id: string): Promise<any> {
+    const { data: deployment } = await this.app.api.post(`/platforms/${platform_id}/apps`);
+    return deployment.pipeline.id;
   }
 
   async post_platform_to_api(dto: CreatePlatformInput, account_id: string): Promise<any> {

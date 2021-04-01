@@ -1,9 +1,10 @@
 import { expect, test } from '@oclif/test';
 import path from 'path';
 import sinon from 'sinon';
-import Deploy, { DeployCommand } from '../../src/commands/deploy';
+import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
+import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
 import { ComponentConfig, ComponentConfigBuilder } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
@@ -605,7 +606,7 @@ describe('local deploy environment', function () {
 describe('remote deploy environment', function () {
   const remoteDeploy = mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -618,9 +619,6 @@ describe('remote deploy environment', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}`)
-      .reply(200, { ...mock_pipeline, applied_at: new Date() }))
     .stdout({ print })
     .stderr({ print })
 
