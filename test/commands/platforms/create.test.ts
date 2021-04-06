@@ -92,7 +92,7 @@ describe('platform:create', function () {
     const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(create_platform_applications_spy.calledOnce).true;
@@ -136,7 +136,7 @@ describe('platform:create', function () {
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(create_platform_applications_spy.calledOnce).true;
@@ -182,7 +182,7 @@ describe('platform:create', function () {
     const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
     sinon.replace(KubernetesPlatformUtils, 'configure_kubernetes_platform', kubernetes_configuration_fake);
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;

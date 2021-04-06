@@ -7,8 +7,8 @@ import { AccountUtils } from '../../common/utils/account';
 import { PlatformUtils } from '../../common/utils/platform';
 
 export default class PlatformDestroy extends Command {
-  static aliases = ['platform:destroy', 'platforms:destroy'];
-  static description = 'Destroy a platform';
+  static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];
+  static description = 'Deregister a platform from Architect';
 
   static flags = {
     ...Command.flags,
@@ -21,7 +21,7 @@ export default class PlatformDestroy extends Command {
 
   static args = [{
     name: 'platform',
-    description: 'Name of the platform to destroy',
+    description: 'Name of the platform to deregister',
     parse: (value: string) => value.toLowerCase(),
   }];
 
@@ -47,9 +47,9 @@ export default class PlatformDestroy extends Command {
     answers = { ...args, ...flags, ...answers };
     const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
 
-    cli.action.start(chalk.blue('Destroying platform'));
+    cli.action.start(chalk.blue('Deregistering platform'));
     await this.app.api.delete(`/platforms/${account_platform.id}`);
     cli.action.stop();
-    this.log(chalk.green('Platform destroyed'));
+    this.log(chalk.green('Platform deregistered'));
   }
 }

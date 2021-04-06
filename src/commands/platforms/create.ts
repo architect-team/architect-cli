@@ -11,7 +11,7 @@ import { CreatePlatformInput } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
 
 export default class PlatformCreate extends Command {
-  static aliases = ['platform:create', 'platforms:create'];
+  static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
   static description = 'Register a new platform with Architect Cloud';
 
   static args = [{
@@ -23,6 +23,7 @@ export default class PlatformCreate extends Command {
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
+    auto_approve: flags.boolean(),
     type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
@@ -34,9 +35,7 @@ export default class PlatformCreate extends Command {
   };
 
   async run() {
-    const platform = await this.create_platform();
-    const platform_url = `${this.app.config.app_host}/${platform.account.name}/platforms/`;
-    this.log(chalk.green(`Platform created: ${platform_url}`));
+    await this.create_platform();
   }
 
   private async create_platform() {
@@ -69,9 +68,21 @@ export default class PlatformCreate extends Command {
     cli.action.start('Registering platform with Architect');
     const created_platform = await this.post_platform_to_api(platform_dto, account.id);
     cli.action.stop();
+    this.log(`Platform registered: ${this.app.config.app_host}/examples/platforms/new?platform_id=${created_platform.id}`);
 
-    this.log(`Hang tight! We're completing the setup of your platform by installing applications that will broker networking. This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
-    this.log(`Logs here: ${this.app.config.app_host}/examples/platforms/new?platform_id=${created_platform.id}`);
+    if (!flags.auto_approve) {
+      const confirmation = await inquirer.prompt({
+        type: 'confirm',
+        name: 'application_install',
+        message: `Would you like to install the requisite networking applications? This is a required step before using Architect with this platform. More details at the above URL.`,
+      });
+      if (!confirmation.application_install) {
+        this.warn(`Installation cancelled. You will be unable to deploy services to this platform.\n\nIf you decide to proceed with installation, you can do so at the above URL. Or if you would like to deregister this platform from Architect, run: \n\narchitect platform:destroy -a ${account.name} --auto_approve ${platform_name}`);
+        return;
+      }
+    }
+
+    this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
     cli.action.start(chalk.blue('Installing platform applications'));
     const pipeline_id = await this.create_platform_applications(account.id, created_platform.id);
     await PipelineUtils.pollPipeline(this.app.api, pipeline_id);
