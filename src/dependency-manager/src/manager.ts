@@ -328,8 +328,8 @@ export default abstract class DependencyManager {
     for (const [service_name, service_config] of Object.entries(component.getServices())) {
       for (const [interface_name, interface_config] of Object.entries(service_config.getInterfaces())) {
         const service_ref = component.getNodeRef(service_name);
-        let internal_host = interface_config.host || service_ref;
-        let internal_port = interface_config.port;
+        const internal_host = interface_config.host || service_ref;
+        const internal_port = interface_config.port;
 
         if (this.use_sidecar) {
           const sidecar_service = `${service_ref}--${interface_name}`;
@@ -337,8 +337,6 @@ export default abstract class DependencyManager {
             proxy_port_mapping[sidecar_service] = `${proxy_port}`;
             proxy_port += 1;
           }
-          internal_host = '127.0.0.1';
-          internal_port = proxy_port_mapping[sidecar_service];
         }
 
         const internal_protocol = interface_config.protocol || 'http';
@@ -380,12 +378,12 @@ export default abstract class DependencyManager {
 
           context['services'][service_name]['interfaces'][interface_name].url = internal_url;
           context['services'][service_name]['interfaces'][interface_name].host = internal_host;
+          context['services'][service_name]['interfaces'][interface_name].port = internal_port;
         }
       }
     }
 
-    const component_string2 = replaceBrackets(serialize(component.expand()));
-    const interpolated_component_string = interpolateString(component_string2, context, ignore_keys);
+    const interpolated_component_string = interpolateString(component_string, context, ignore_keys);
     const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
 
     // TODO:207

@@ -348,4 +348,59 @@ describe('external spec v1', () => {
       SELF_ADDR: `http://${app_ref}.arc.localhost`,
     });
   });
+
+  it('host override db via parameter', async () => {
+    const component_config = `
+      name: architect/component
+
+      parameters:
+        MYSQL_HOST:
+          required: false
+        MYSQL_DATABASE:
+          required: true
+
+      services:
+        db:
+          image: mysql:5.6.35
+          command: mysqld
+          interfaces:
+            mysql:
+              host: \${{ parameters.MYSQL_HOST }}
+              port: 3306
+              protocol: mysql
+
+        core:
+          environment:
+            MYSQL_DB_URL: jdbc:mysql://\${{ services.db.interfaces.mysql.host }}:\${{ services.db.interfaces.mysql.port }}/\${{ parameters.MYSQL_DATABASE }}?serverTimezone=UTC
+    `;
+
+    mock_fs({
+      '/stack/component/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/component': '/stack/component/architect.yml'
+    });
+    manager.use_sidecar = true;
+
+    const core_ref = ComponentConfig.getNodeRef('architect/component/core:latest')
+
+    // No host override
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/component:latest')
+    ], { '*': { MYSQL_DATABASE: 'test' }});
+    const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
+    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+      MYSQL_DB_URL: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
+    });
+
+    // Host override
+    const graph2 = await manager.getGraph([
+      await manager.loadComponentConfig('architect/component:latest')
+    ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' }});
+    const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
+    expect(test_node2.config.getEnvironmentVariables()).to.deep.eq({
+      MYSQL_DB_URL: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
+    });
+  });
 });
