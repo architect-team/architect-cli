@@ -272,10 +272,12 @@ export default class Deploy extends DeployCommand {
     const { flags } = this.parse(Deploy);
     const component_values = this.readValuesFile(flags.values);
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    if (!component_values['*']) {
-      component_values['*'] = {};
+    if (extra_params && Object.keys(extra_params).length) {
+      if (!component_values['*']) {
+        component_values['*'] = {};
+      }
+      component_values['*'] = { ...component_values['*'], ...extra_params };
     }
-    component_values['*'] = { ...component_values['*'], ...extra_params };
     return component_values;
   }
 
@@ -347,7 +349,7 @@ export default class Deploy extends DeployCommand {
     }
 
     const interfaces_map = this.getInterfacesMap();
-    const component_values = this.getComponentValues(); // TODO:207
+    const component_values = this.getComponentValues();
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -357,6 +359,7 @@ export default class Deploy extends DeployCommand {
       component: args.config_or_component,
       interfaces: interfaces_map,
       recursive: flags.recursive,
+      values: component_values,
     });
     cli.action.stop();
 
