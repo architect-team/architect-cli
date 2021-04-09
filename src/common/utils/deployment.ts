@@ -7,6 +7,6 @@ export interface Deployment {
     tag: string;
     config: {
       name: string;
-    }
+    };
   };
 }
