@@ -33,14 +33,12 @@ export default class Destroy extends DeployCommand {
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     cli.action.start(chalk.blue('Creating pipeline'));
-    let pipeline;
+    let instance_ids;
     if (flags.components) {
-      const deployment_instances = (await this.app.api.get(`/environments/${environment.id}/instances`)).data;
-      const instances_to_destroy = deployment_instances.filter((deployment: Deployment) => deployment.type === 'component' && flags.components.includes(`${deployment.component_version.config.name}:${deployment.component_version.tag}`));
-      pipeline = (await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids: instances_to_destroy.map((instance: Deployment) => instance.instance_id) } })).data;
-    } else {
-      pipeline = (await this.app.api.delete(`/environments/${environment.id}/instances`)).data;
+      const instances_to_destroy = (await this.app.api.get(`/environments/${environment.id}/instances`, { data: { component_versions: flags.components } })).data;
+      instance_ids = instances_to_destroy.map((instance: Deployment) => instance.instance_id);
     }
+    const pipeline = (await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids } })).data;
     cli.action.stop();
 
     await this.approvePipeline(pipeline);
