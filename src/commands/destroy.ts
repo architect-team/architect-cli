@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import 'reflect-metadata';
 import { AccountUtils } from '../common/utils/account';
+import { Deployment } from '../common/utils/deployment';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { DeployCommand } from './deploy';
 
@@ -31,12 +32,15 @@ export default class Destroy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    if (flags.components) {
-      throw new Error('Not implemented'); // TODO
-    }
-
     cli.action.start(chalk.blue('Creating pipeline'));
-    const { data: pipeline } = await this.app.api.delete(`/environments/${environment.id}/instances`);
+    let pipeline;
+    if (flags.components) {
+      const deployment_instances = (await this.app.api.get(`/environments/${environment.id}/instances`)).data;
+      const instances_to_destroy = deployment_instances.filter((deployment: Deployment) => deployment.type === 'component' && flags.components.includes(`${deployment.component_version.config.name}:${deployment.component_version.tag}`));
+      pipeline = (await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids: instances_to_destroy.map((instance: Deployment) => instance.instance_id) } })).data;
+    } else {
+      pipeline = (await this.app.api.delete(`/environments/${environment.id}/instances`)).data;
+    }
     cli.action.stop();
 
     await this.approvePipeline(pipeline);
