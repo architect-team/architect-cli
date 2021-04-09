@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { DeployCommand } from '../../src/commands/deploy';
+import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -33,7 +33,7 @@ describe('destroy', function () {
   }
 
   mockArchitectAuth
-    .stub(DeployCommand, 'POLL_INTERVAL', () => { return 0 })
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account))
@@ -46,9 +46,6 @@ describe('destroy', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/pipelines/${mock_pipeline.id}`)
-      .reply(200, { ...mock_pipeline, applied_at: new Date() }))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
