@@ -68,7 +68,7 @@ export default class PlatformCreate extends Command {
     cli.action.start('Registering platform with Architect');
     const created_platform = await this.post_platform_to_api(platform_dto, account.id);
     cli.action.stop();
-    this.log(`Platform registered: ${this.app.config.app_host}/examples/platforms/new?platform_id=${created_platform.id}`);
+    this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
     if (!flags.auto_approve) {
       const confirmation = await inquirer.prompt({
