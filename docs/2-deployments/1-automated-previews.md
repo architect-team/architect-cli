@@ -112,8 +112,8 @@ destroy_preview:
     ARCHITECT_ENVIRONMENT: preview-$CI_MERGE_REQUEST_ID
     ARCHITECT_COMPONENT_NAME: <your/component:here>
   script: |
-    architect destroy --auto_approve --environment $ARCHITECT_ENVIRONMENT --component $ARCHITECT_COMPONENT_NAME
-    architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT
+    architect destroy --auto_approve --environment $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
+    architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
   environment:
     name: architect/preview-$CI_MERGE_REQUEST_ID
     action: stop
