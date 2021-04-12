@@ -72,11 +72,17 @@ interfaces:
     # (required) Port that the service is listening for traffic on
     port: 8080
 
-    # Protocol that the interface responds to (default: http)
+    # (optional) Protocol that the interface responds to (default: http)
     protocol: http
 
-    # The host address of an existing service to use instead of provisioning a new one
+    # (optional) The host address of an existing service to use instead of provisioning a new one
     host: rds.amazonwebservices.com
+
+    # (optional) A basic auth username required to access the interface
+    username: ${{ parameters.API_USERNAME }}
+
+    # (optional) A basic auth password required to access the interface
+    password: ${{ parameters.API_PASSWORD }}
 ```
 
 Since many services use http for traffic, interfaces also support a simple short-hand for specifying the service port:

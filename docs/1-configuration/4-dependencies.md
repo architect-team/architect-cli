@@ -36,3 +36,5 @@ Referencing component-level interfaces is the same as referencing service-level 
 | host  | The host value of the interface being referenced. This value is usually dynamic to accomodate the differences between service discovery solutions available to each environment. |
 | port  | The port value of the interface being referenced. This will not always be the specific port that the interface is listening on as many container platforms leverage port mapping to ensure that there are no port collisions when sharing hardware in a cluster. |
 | protocol | The protocol of the interface being referenced. This will always be the specific value assigned to the interface by the developer. |
+| username | The username of the interface being referenced. Not all interfaces have usernames, so this will be an empty string if none is set. |
+| password | The password of the interface being referenced. Not all interfaces have passwords, so this will be an empty string if none is set. |
