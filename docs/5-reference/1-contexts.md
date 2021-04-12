@@ -2,9 +2,11 @@
 title: Contexts
 ---
 
+# Expressions and Context
+
 When writing [`architect.yml`](/docs/configuration/architect-yml) files, you can reference information about the runtime or environment, details that are otherwise unique to each deployed environment, through Architect's expression syntax. Encoding component's with these references can help limit the manual configuration needs of your services and make them portable from environment to environment.
 
-# Available contexts
+## Available contexts
 
 There are several context groups that contain important, dynamic information about your component and its future deployed environment. Below are the context categories available for reference:
 
@@ -15,7 +17,7 @@ There are several context groups that contain important, dynamic information abo
 | [`services`](#services-context)         | References to the dynamic outputs of each service and their interfaces         |
 | [`dependencies`](#dependencies-context) | References to the dynamic outputs of each dependency and their interfaces      |
 
-## `environment` context
+### `environment` context
 
 The `environment` context contains information about the deployed environment itself.
 
@@ -26,7 +28,7 @@ The `environment` context contains information about the deployed environment it
 | `environment.ingresses.<component>`             | `object`      | Information on an ingress rule matching the specified component |
 | `environment.ingresses.<component>.<interface>` | `object`      | Information on an ingress rule matching the specified component and interface. [See the interface context](#the-interface-context) for more details. |
 
-## `parameters` context
+### `parameters` context
 
 The `parameters` context contains all the values assigned to each parameter declared by your component.
 
@@ -35,7 +37,7 @@ The `parameters` context contains all the values assigned to each parameter decl
 | `parameters`         | `object`    | A dictionary containing the parameter values                   |
 | `parameters.<key>`   | `string`    | Resolves to the value of the specified parameter               |
 
-## `services` context
+### `services` context
 
 The `services` context contains dynamic information about all the services inside the component. This context can primarily be used to refer to the interfaces of other services inside the component.
 
@@ -46,7 +48,7 @@ The `services` context contains dynamic information about all the services insid
 | `services.<service>.interfaces`             | `object`    | Information about the specified service's interfaces |
 | `services.<service>.interfaces.<interface>` | `object`    | Information about the specified service interface. [See the interface context](#the-interface-context) for more details. |
 
-## `dependencies` context
+### `dependencies` context
 
 The `dependencies` context contains dynamic information about the dependencies of the component. This context can primarily be used to refer to the internal addresses of dependency interfaces.
 
@@ -57,7 +59,7 @@ The `dependencies` context contains dynamic information about the dependencies o
 | `dependencies.<dependency>.interfaces`              | `object`   | Information about the dependency's interfaces   |
 | `dependencies.<dependency>.interfaces.<interface>`  | `object`   | Information about the specified interface of the dependency. [See the interface context](#the-interface-context) for more details. |
 
-## The interface context
+### The interface context
 
 The interface context is one referenced in many places, `services`, `environment`, `dependencies`, and more, with a set of uniform values available to reference. These values include:
 
