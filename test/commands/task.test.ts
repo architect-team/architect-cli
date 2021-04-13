@@ -18,7 +18,7 @@ describe('task:exec', async function () {
   });
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
+  const print = true; // TODO: restore
 
   const mock_account = {
     id: "ba440d39-97d9-43c3-9f1a-a9a69adb2a41",
@@ -50,6 +50,7 @@ describe('task:exec', async function () {
 
   const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
   const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
+  const task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag);
 
   const mock_remote_task_id = 'remote-task-id';
   const mock_local_env_name = 'local';
@@ -189,6 +190,21 @@ describe('task:exec', async function () {
 
       expect(ctx.stdout).to.contain(`Running task ${namespaced_component_name}/${mock_task.name} in the local ${DockerComposeUtils.DEFAULT_PROJECT} environment...`);
       expect(ctx.stdout).to.contain('Successfully ran task.');
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
+    .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
+    .it('task to be run is found by matching hash of specified service', ctx => {
+      const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
+      const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
+      expect(runDockerCompose.calledOnce).to.be.true;
+      expect(runDockerCompose.args[0]).to.deep.equal(['examples-basic-task-curler-latest-suxxccsa', 'architect' ,'test/docker-compose/architect.yml']);
+      expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
   mockArchitectAuth
