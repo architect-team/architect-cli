@@ -6,7 +6,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentConfig, ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];
@@ -81,9 +81,8 @@ export default class TaskExec extends Command {
 
     let service_name;
     const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag);
-    const ref = Refs.safeRef(slug);
-    const service_hash = ref.substring(ref.lastIndexOf('-') + 1);
-    const matching_names = Object.keys(compose.services).filter(name => name.endsWith(service_hash));
+    const ref = ComponentConfig.getNodeRef(slug)
+    const matching_names = Object.keys(compose.services).filter(name => name.includes(ref));
     if (!matching_names?.length) {
       throw new Error(`Could not find ${args.component}/${args.task} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
     } else if (matching_names.length > 1) {
