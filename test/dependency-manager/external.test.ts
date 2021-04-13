@@ -372,6 +372,7 @@ describe('external spec v1', () => {
         core:
           environment:
             MYSQL_DB_URL: jdbc:mysql://\${{ services.db.interfaces.mysql.host }}:\${{ services.db.interfaces.mysql.port }}/\${{ parameters.MYSQL_DATABASE }}?serverTimezone=UTC
+            MYSQL_DB_URL2: jdbc:\${{ services.db.interfaces.mysql.url }}/\${{ parameters.MYSQL_DATABASE }}?serverTimezone=UTC
     `;
 
     mock_fs({
@@ -392,6 +393,7 @@ describe('external spec v1', () => {
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
+      MYSQL_DB_URL2: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
     });
 
     // Host override
@@ -401,6 +403,7 @@ describe('external spec v1', () => {
     const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node2.config.getEnvironmentVariables()).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
+      MYSQL_DB_URL2: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
     });
   });
 });
