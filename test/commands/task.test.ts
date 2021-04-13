@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
@@ -203,7 +204,7 @@ describe('task:exec', async function () {
       const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
       const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
       expect(runDockerCompose.calledOnce).to.be.true;
-      expect(runDockerCompose.args[0]).to.deep.equal(['examples-basic-task-curler-latest-suxxccsa', 'architect' ,'test/docker-compose/architect.yml']);
+      expect(runDockerCompose.args[0]).to.deep.equal(['examples-basic-task-curler-latest-suxxccsa', 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
       expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
