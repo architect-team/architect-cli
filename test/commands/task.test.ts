@@ -1,9 +1,10 @@
 import { expect } from 'chai';
+import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
+import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -50,6 +51,7 @@ describe('task:exec', async function () {
 
   const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
   const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
+  const task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag);
 
   const mock_remote_task_id = 'remote-task-id';
   const mock_local_env_name = 'local';
@@ -169,7 +171,7 @@ describe('task:exec', async function () {
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
   const ref = Refs.safeRef(ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG));
-  mock_docker_compose_service[ref] = {};
+  mock_docker_compose_service[ComponentConfig.getNodeRef(ref)] = {};
   const mock_docker_compose = {
     services: mock_docker_compose_service
   };
@@ -189,6 +191,21 @@ describe('task:exec', async function () {
 
       expect(ctx.stdout).to.contain(`Running task ${namespaced_component_name}/${mock_task.name} in the local ${DockerComposeUtils.DEFAULT_PROJECT} environment...`);
       expect(ctx.stdout).to.contain('Successfully ran task.');
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))
+    .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(mock_docker_compose))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
+    .it('task to be run is found by matching hash of specified service', ctx => {
+      const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
+      const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
+      expect(runDockerCompose.calledOnce).to.be.true;
+      expect(runDockerCompose.args[0]).to.deep.equal(['examples-basic-task-curler-latest-suxxccsa', 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
+      expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
   mockArchitectAuth
