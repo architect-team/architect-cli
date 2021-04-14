@@ -5,6 +5,7 @@ import 'reflect-metadata';
 import { AccountUtils } from '../common/utils/account';
 import { Deployment } from '../common/utils/deployment';
 import { EnvironmentUtils } from '../common/utils/environment';
+import { PipelineUtils } from '../common/utils/pipeline';
 import { DeployCommand } from './deploy';
 
 export default class Destroy extends DeployCommand {
@@ -41,6 +42,14 @@ export default class Destroy extends DeployCommand {
     const { data: pipeline } = await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids } });
     cli.action.stop();
 
-    await this.approvePipeline(pipeline);
+    const approved = await this.approvePipeline(pipeline);
+    if (!approved) {
+      return;
+    }
+
+    cli.action.start(chalk.blue('Deploying'));
+    await PipelineUtils.pollPipeline(this.app.api, pipeline.id);
+    this.log(chalk.green(`Deployed`));
+    cli.action.stop();
   }
 }

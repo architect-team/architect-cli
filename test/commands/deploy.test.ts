@@ -625,6 +625,6 @@ describe('remote deploy environment', function () {
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed')
+      expect(ctx.stdout).to.contain('Deployed');
     })
 });
