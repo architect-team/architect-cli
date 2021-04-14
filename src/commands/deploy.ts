@@ -320,7 +320,7 @@ export default class Deploy extends DeployCommand {
       linked_components,
     );
 
-    let component_configs: ComponentConfig[] = [];
+    const component_configs: ComponentConfig[] = [];
     for (const component_version of component_versions) {
       const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
 
@@ -371,7 +371,7 @@ export default class Deploy extends DeployCommand {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
         return { component_name: deployment_dto.component, pipeline };
       })
-    )
+    );
     cli.action.stop();
 
     const approved_pipelines = [];
@@ -393,7 +393,7 @@ export default class Deploy extends DeployCommand {
         await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
         this.log(chalk.green(`${pipeline.component_name} Deployed`));
       })
-    )
+    );
     cli.action.stop();
   }
 
