@@ -44,7 +44,6 @@ describe('slugs validators', () => {
     'other*punctuation',
     'other^punctuation',
     'other%punctuation',
-    'other@punctuation',
     'other~punctuation',
     'other`punctuation',
     'other,punctuation',
