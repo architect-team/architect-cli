@@ -29,6 +29,7 @@ const start = async () => {
       timeout: 10000, // throw if no response or error within millisecond timeout, default: undefined,
       match: [ // Must match error signature (ala bluebird catch) to continue
         Sequelize.ConnectionError,
+        Sequelize.ConnectionRefusedError
       ],
     }
   });

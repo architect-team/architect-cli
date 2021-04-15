@@ -24,6 +24,7 @@ const sequelize = new Sequelize(process.env.DB_ADDR, {
     timeout: 10000,
     match: [
       Sequelize.ConnectionError,
+      Sequelize.ConnectionRefusedError
     ],
   }
 });
