@@ -40,6 +40,7 @@ export interface ParsedComponentSlug extends ParsedSlug {
   kind: 'component';
   component_account_name: string;
   component_name: string;
+  instance_id: string;
 }
 
 export abstract class SlugUtils {
@@ -53,7 +54,7 @@ export class ComponentSlugUtils extends SlugUtils {
   public static Description = 'must be of the form <account-name>/<component-name>';
 
   static RegexNoMaxLength = `${Slugs.ArchitectSlugRegexNoMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexNoMaxLength}`; // does not contain character count lookaheads
-  static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}`;
+  static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
 
   public static Validator = new RegExp(`^${ComponentSlugUtils.RegexBase}$`);
 
@@ -65,11 +66,14 @@ export class ComponentSlugUtils extends SlugUtils {
     if (!ComponentSlugUtils.Validator.test(slug)) {
       throw new Error(ComponentSlugUtils.Description);
     }
-    const [account_name, component_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
+
+    const [full_component_slug, instance_id] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [account_name, component_name] = full_component_slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
       kind: 'component',
       component_account_name: account_name,
       component_name: component_name,
+      instance_id: instance_id || '',
     };
   };
 }
@@ -80,6 +84,7 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_account_name: string;
   component_name: string;
   tag: string;
+  instance_id: string;
 }
 export class ComponentVersionSlugUtils extends SlugUtils {
 
@@ -87,7 +92,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static RegexNoMaxLength = `${ComponentSlugUtils.RegexNoMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`;
   public static RegexOptionalTag = `${ComponentSlugUtils.RegexNoMaxLength}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})?`; // for when the tag is optional
-  public static RegexBase = `${ComponentSlugUtils.RegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})`; // tag is required
+  public static RegexBase = `${ComponentSlugUtils.RegexBase}(?:${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase})(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`; // tag is required
 
   public static Validator = new RegExp(`^${ComponentVersionSlugUtils.RegexBase}$`);
 
@@ -113,7 +118,8 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       } catch { }
       throw new Error(ComponentVersionSlugUtils.Description);
     }
-    const [component_slug, tag] = slug.split(Slugs.TAG_DELIMITER);
+    const [full_component_slug, instance_id] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [component_slug, tag] = full_component_slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
     }
@@ -123,6 +129,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       component_account_name,
       component_name,
       tag,
+      instance_id: instance_id || '',
     };
   };
 }
@@ -194,7 +201,7 @@ export class ServiceVersionSlugUtils extends SlugUtils {
       component_name,
       service_name,
       tag,
-      instance_id,
+      instance_id: instance_id || '',
     };
   };
 }

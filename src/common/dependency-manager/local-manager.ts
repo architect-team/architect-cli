@@ -88,7 +88,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
-    const { component_account_name, component_name, tag } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_account_name, component_name, tag, instance_id } = ComponentVersionSlugUtils.parse(component_string);
     const component_slug = `${component_account_name}/${component_name}`;
     const component_ref = `${component_slug}:${tag}`;
 
@@ -112,7 +112,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set the tag
     config.setName(component_ref);
 
-    config.setInstanceId('');
+    config.setInstanceId(instance_id);
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.getInterfaces()[interface_to];
