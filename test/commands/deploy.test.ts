@@ -1,6 +1,7 @@
 import { expect, test } from '@oclif/test';
 import path from 'path';
 import sinon from 'sinon';
+import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
@@ -601,6 +602,64 @@ describe('local deploy environment', function () {
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
       expect(hello_world_service.environment.compose_escaped_variable).to.equal('variable_split_$$_with_dollar$$signs');
     })
+
+  describe('linked deploy', function () {
+    test
+      .timeout(15000)
+      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+        return ComponentConfigBuilder.buildFromJSON(local_component_config);
+      })
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
+      .stdout({ print })
+      .stderr({ print })
+      .command(['deploy', '-l', 'examples/hello-world:latest', '-i', 'hello'])
+      .it('Create a local deploy with a component and an interface', ctx => {
+        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true
+        expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+      })
+  });
+
+  describe('instance deploys', function () {
+    const hello_api_instance_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
+    const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
+
+    test
+      .timeout(15000)
+      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+        return ComponentConfigBuilder.buildFromJSON(local_component_config);
+      })
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
+      .stdout({ print })
+      .stderr({ print })
+      .command(['deploy', '-l', 'examples/hello-world@tenant-1', '-i', 'hello'])
+      .it('Create a local deploy with instance id and no tag', ctx => {
+        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true
+        expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
+      })
+
+    test
+      .timeout(15000)
+      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+        return ComponentConfigBuilder.buildFromJSON(local_component_config);
+      })
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
+      .stdout({ print })
+      .stderr({ print })
+      .command(['deploy', '-l', 'examples/hello-world:latest@tenant-1', '-i', 'hello'])
+      .it('Create a local deploy with instance id and tag', ctx => {
+        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true
+        expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
+      })
+  });
 });
 
 describe('remote deploy environment', function () {
@@ -627,4 +686,12 @@ describe('remote deploy environment', function () {
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('Deployed');
     })
+
+  describe('instance deploys', function () {
+    remoteDeploy
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest@tenant-1'])
+      .it('Creates a remote deployment when env exists with env and account flags', ctx => {
+        expect(ctx.stdout).to.contain('Deployed')
+      })
+  });
 });
