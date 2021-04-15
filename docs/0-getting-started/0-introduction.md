@@ -99,9 +99,9 @@ services:
     build:
       context: ./backend
     interfaces:
-      main: 8080
+      main: &api-port 8080
     environment:
-      PORT: 8080
+      PORT: *api-port
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
       DB_USER: ${{ parameters.root_db_user }}
       DB_PASS: ${{ parameters.root_db_pass }}
@@ -120,9 +120,9 @@ services:
     build:
       context: ./frontend
     interfaces:
-      main: 8080
+      main: &app-port 8080
     environment:
-      PORT: ${{ services.app.interfaces.main.port }}
+      PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
       WORLD_TEXT: ${{ parameters.world_text }}
     debug:
