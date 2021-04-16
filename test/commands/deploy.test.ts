@@ -466,7 +466,7 @@ describe('local deploy environment', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'hello'])
-    .it('Create a local deploy with a component and an interface', ctx => {
+    .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain('traefik.http.services.hello-service.loadBalancer.sticky.cookie=true');
