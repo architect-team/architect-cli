@@ -436,7 +436,7 @@ describe('local deploy environment', function () {
   }
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config);
     })
@@ -452,7 +452,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
     })
@@ -468,7 +468,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -491,7 +491,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -512,7 +512,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -533,7 +533,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
     })
@@ -557,7 +557,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
     })
@@ -584,7 +584,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -605,7 +605,7 @@ describe('local deploy environment', function () {
 
   describe('linked deploy', function () {
     test
-      .timeout(15000)
+      .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         return ComponentConfigBuilder.buildFromJSON(local_component_config);
       })
@@ -627,7 +627,7 @@ describe('local deploy environment', function () {
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     test
-      .timeout(15000)
+      .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         return ComponentConfigBuilder.buildFromJSON(local_component_config);
       })
@@ -644,7 +644,7 @@ describe('local deploy environment', function () {
       })
 
     test
-      .timeout(15000)
+      .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         return ComponentConfigBuilder.buildFromJSON(local_component_config);
       })
