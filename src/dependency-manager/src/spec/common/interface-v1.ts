@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBooleanString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ValidatableConfig } from '../base-spec';
 
 export class InterfaceSpecV1 extends ValidatableConfig {
@@ -28,6 +28,7 @@ export class InterfaceSpecV1 extends ValidatableConfig {
   url?: string;
 
   @IsOptional({ always: true })
+  @IsBooleanString({ always: true })
   sticky?: string;
 
   @IsOptional({ always: true })

@@ -1,4 +1,5 @@
 import { expect, test } from '@oclif/test';
+import { classToClass } from 'class-transformer';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
@@ -45,7 +46,9 @@ describe('local deploy environment', function () {
       "api": {
         "image": "heroku/nodejs-hello-world",
         "interfaces": {
-          "main": "3000"
+          "main": {
+            "port": "3000"
+          }
         }
       }
     },
@@ -449,6 +452,24 @@ describe('local deploy environment', function () {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true
       expect(runCompose.firstCall.args[0]).to.deep.equal(component_expected_compose)
+    })
+
+  test
+    .timeout(20000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      const component_config = classToClass(local_component_config);
+      (component_config.services.api.interfaces.main as any).sticky = true;
+      return ComponentConfigBuilder.buildFromJSON(component_config);
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Create a local deploy with a component and an interface', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain('traefik.http.services.hello-service.loadBalancer.sticky.cookie=true');
     })
 
   test
