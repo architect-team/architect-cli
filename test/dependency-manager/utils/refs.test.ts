@@ -53,14 +53,6 @@ describe('Refs.safeRef', () => {
     expect(safe_ref).to.equal(expected_slug);
   });
 
-  it(`Refs.safeRef works for interface_slug`, async () => {
-    const interface_slug = `${component_account_name}/${component_name}:${tag}-interfaces`;
-    const expected_slug = `${component_account_name}-${component_name}-${transformed_tag}-interfaces-8jkiajzf`;
-
-    const safe_ref = Refs.safeRef(interface_slug);
-    expect(safe_ref).to.equal(expected_slug);
-  });
-
   it(`Refs.safeRef cuts account string to 63 chars`, async () => {
     const slug = `this-is-an-account-name-that-has-more-than-63-chars-it-should-get-lopped-off`;
     const abridged_slug = `this-is-an-account-name-that-has-more-than-63-chars-it-9xd8vqs2`;

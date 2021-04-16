@@ -161,7 +161,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getRef(): ComponentVersionSlug {
     const split = ComponentVersionSlugUtils.parse(this.name);
-    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
+    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag, this.getInstanceId());
   }
 
   getInstanceId() {

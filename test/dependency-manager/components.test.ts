@@ -336,20 +336,21 @@ describe('components spec v1', function () {
         ...await manager.loadComponentConfigs(component_config),
       ]);
       const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest');
+      const ci_ref = ComponentConfig.getNodeRef('concourse/ci:6.2');
       const web_ref = ComponentConfig.getNodeRef('concourse/ci/web:6.2');
       const worker_ref = ComponentConfig.getNodeRef('concourse/ci/worker:6.2');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
 
-        'concourse/ci:6.2-interfaces',
+        ci_ref,
         web_ref,
         worker_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
         `${worker_ref} [service->main] -> ${web_ref} [main]`,
-        `concourse/ci:6.2-interfaces [web] -> ${web_ref} [main]`,
-        `${api_ref} [service->web] -> concourse/ci:6.2-interfaces [web]`
+        `${ci_ref} [web] -> ${web_ref} [main]`,
+        `${api_ref} [service->web] -> ${ci_ref} [web]`
       ])
 
       // Test parameter values
