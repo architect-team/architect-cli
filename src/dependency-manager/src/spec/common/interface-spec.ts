@@ -10,3 +10,4 @@ export interface InterfaceSpec {
 
   external_name?: string;
 }
+
