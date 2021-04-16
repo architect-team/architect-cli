@@ -29,7 +29,7 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
     if (value instanceof Object && 'host' in value && 'port' in value) {
       output[key] = plainToClass(InterfaceSpecV1, value);
     } else {
-      let host, port, protocol, username, password, sticky;
+      let host, port, protocol, username, password;
       let url = value instanceof Object ? value.url : value;
 
       const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
@@ -41,7 +41,6 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
         username = `\${{ ${matches[1]}.username }}`;
         password = `\${{ ${matches[1]}.password }}`;
         url = `\${{ ${matches[1]}.url }}`;
-        sticky = `\${{ ${matches[1]}.sticky }}`;
 
         output[key] = plainToClass(InterfaceSpecV1, {
           host,
@@ -50,7 +49,6 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
           password,
           protocol,
           url,
-          sticky,
         });
       } else {
         throw new Error(`Invalid interface regex: ${url}`);
@@ -304,7 +302,6 @@ export class ComponentConfigV1 extends ComponentConfig {
       password: '',
       protocol: '',
       url: '',
-      sticky: '',
     };
 
     const interfaces: Dictionary<InterfaceSpec> = {};
