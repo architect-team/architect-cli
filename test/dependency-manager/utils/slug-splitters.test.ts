@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, InterfaceSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/utils/slugs';
 
 describe('slug validators', () => {
 
@@ -14,7 +14,6 @@ describe('slug validators', () => {
   const component_version_slug = `${component_account_name}/${component_name}:${tag}`;
   const service_slug = `${component_account_name}/${component_name}/${service_name}`;
   const service_version_slug = `${component_account_name}/${component_name}/${service_name}:${tag}`;
-  const interface_slug = `${component_account_name}/${component_name}:${tag}-interfaces`;
   const environment_slug = `${environment_account_name}/${environment_name}`;
 
   const invalid_slug = 'double--dashes';
@@ -24,7 +23,6 @@ describe('slug validators', () => {
   const invalid_component_version_slug = `${component_account_name}/${component_name}:${invalid_tag}`;
   const invalid_service_slug = `${component_account_name}/${component_name}/${invalid_slug}`;
   const invalid_service_version_slug = `${component_account_name}/${component_name}/${service_name}:${invalid_tag}`;
-  const invalid_interface_slug = `${component_account_name}/${component_name}:${tag}-notinterfaces`;
   const invalid_environment_slug = `@${invalid_slug}/${environment_name}`;
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
@@ -100,20 +98,5 @@ describe('slug validators', () => {
 
   it(`EnvironmentSlugUtils.parse throws exception on ${invalid_environment_slug}`, async () => {
     expect(() => EnvironmentSlugUtils.parse(invalid_environment_slug)).to.throw(`must be of the form <account-name>/<environment-name>`);
-  });
-
-  it(`InterfaceSlugUtils.parse accurately splits ${interface_slug}`, async () => {
-    const result = InterfaceSlugUtils.parse(interface_slug);
-    expect(result.kind).to.equal('interfaces');
-    expect(result.component_account_name).to.equal(component_account_name);
-    expect(result.component_name).to.equal(component_name);
-    expect(result.service_name).to.be.undefined;
-    expect(result.environment_name).to.be.undefined;
-    expect(result.environment_account_name).to.be.undefined;
-    expect(result.tag).to.equal(tag);
-  });
-
-  it(`splitServiceInstanceSlug throws exception on ${invalid_interface_slug}`, async () => {
-    expect(() => InterfaceSlugUtils.parse(invalid_interface_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>-interfaces`);
   });
 });

@@ -92,6 +92,7 @@ describe('interfaces spec v1', () => {
     });
 
     const branch_ref = ComponentConfig.getNodeRef('test/branch/api:latest');
+    const leaf_interfaces_ref = ComponentConfig.getNodeRef('test/leaf:latest');
     const leaf_db_ref = ComponentConfig.getNodeRef('test/leaf/db:latest');
     const leaf_api_ref = ComponentConfig.getNodeRef('test/leaf/api:latest');
 
@@ -148,13 +149,13 @@ describe('interfaces spec v1', () => {
         branch_ref,
         leaf_db_ref,
         leaf_api_ref,
-        'test/leaf:latest-interfaces'
+        leaf_interfaces_ref
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
         `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
-        `test/leaf:latest-interfaces [api] -> ${leaf_api_ref} [main]`,
+        `${leaf_interfaces_ref} [api] -> ${leaf_api_ref} [main]`,
 
-        `${branch_ref} [service->api] -> test/leaf:latest-interfaces [api]`,
+        `${branch_ref} [service->api] -> ${leaf_interfaces_ref} [api]`,
       ])
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
@@ -219,6 +220,7 @@ describe('interfaces spec v1', () => {
         await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
       ]);
 
+      const other_leaf_interfaces_ref = ComponentConfig.getNodeRef('test/other-leaf:latest');
       const other_leaf_api_ref = ComponentConfig.getNodeRef('test/other-leaf/api:latest');
       const other_leaf_db_ref = ComponentConfig.getNodeRef('test/other-leaf/db:latest');
 
@@ -227,25 +229,25 @@ describe('interfaces spec v1', () => {
 
         branch_ref,
 
-        'test/leaf:latest-interfaces',
+        leaf_interfaces_ref,
         leaf_api_ref,
         leaf_db_ref,
 
-        'test/other-leaf:latest-interfaces',
+        other_leaf_interfaces_ref,
         other_leaf_api_ref,
         other_leaf_db_ref,
       ])
       expect(graph.edges.map((e) => e.toString())).has.members([
-        'gateway [public] -> test/leaf:latest-interfaces [api]',
-        'gateway [publicv1] -> test/other-leaf:latest-interfaces [api]',
+        `gateway [public] -> ${leaf_interfaces_ref} [api]`,
+        `gateway [publicv1] -> ${other_leaf_interfaces_ref} [api]`,
 
         `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
-        `test/leaf:latest-interfaces [api] -> ${leaf_api_ref} [main]`,
+        `${leaf_interfaces_ref} [api] -> ${leaf_api_ref} [main]`,
 
         `${other_leaf_api_ref} [service->postgres] -> ${other_leaf_db_ref} [postgres]`,
-        `test/other-leaf:latest-interfaces [api] -> ${other_leaf_api_ref} [main]`,
+        `${other_leaf_interfaces_ref} [api] -> ${other_leaf_api_ref} [main]`,
 
-        `${branch_ref} [service->api] -> test/leaf:latest-interfaces [api]`,
+        `${branch_ref} [service->api] -> ${leaf_interfaces_ref} [api]`,
       ])
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
       expect(Object.entries(branch_api_node.config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
@@ -386,16 +388,17 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
     ]);
 
+    const cloud_interfaces_ref = ComponentConfig.getNodeRef('architect/cloud:latest')
     const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
-      'architect/cloud:latest-interfaces',
+      cloud_interfaces_ref,
       api_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `architect/cloud:latest-interfaces [app, admin] -> ${api_ref} [main, admin]`,
-      'gateway [app, admin] -> architect/cloud:latest-interfaces [app, admin]'
+      `${cloud_interfaces_ref} [app, admin] -> ${api_ref} [main, admin]`,
+      `gateway [app, admin] -> ${cloud_interfaces_ref} [app, admin]`
     ])
 
     const template = await DockerComposeUtils.generate(graph);
@@ -478,12 +481,13 @@ describe('interfaces spec v1', () => {
     ]);
 
     const admin_ref = ComponentConfig.getNodeRef('voic/admin-ui/dashboard:latest')
+    const catalog_interfaces_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest')
     const api_ref = ComponentConfig.getNodeRef('voic/product-catalog/api:latest')
 
     expect(graph.edges.map(e => e.toString())).members([
-      `voic/product-catalog:latest-interfaces [public, admin, private] -> ${api_ref} [public, admin, private]`,
-      `${admin_ref} [service->public, service->admin, service->private] -> voic/product-catalog:latest-interfaces [public, admin, private]`,
-      'gateway [public2, admin2] -> voic/product-catalog:latest-interfaces [public, admin]',
+      `${catalog_interfaces_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
+      `${admin_ref} [service->public, service->admin, service->private] -> ${catalog_interfaces_ref} [public, admin, private]`,
+      `gateway [public2, admin2] -> ${catalog_interfaces_ref} [public, admin]`,
     ])
 
     const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);

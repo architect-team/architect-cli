@@ -1,6 +1,6 @@
 import { Dictionary } from '../../utils/dictionary';
 import { Refs } from '../../utils/refs';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, InterfaceSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
@@ -49,26 +49,36 @@ export abstract class ComponentConfig extends BaseConfig {
 
   abstract getContext(): any;
 
-  getInterfacesRef() {
-    return `${this.getRef()}${InterfaceSlugUtils.Suffix}`;
-  }
-
   getComponentVersion(): ComponentTag {
     return ComponentVersionSlugUtils.parse(this.getRef()).tag;
   }
 
-  static getNodeRef(service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH) {
-    const parsed = ServiceVersionSlugUtils.parse(service_ref);
-    if (instance_id) {
-      service_ref = `${service_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+  getInterfacesRef(max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+    return ComponentConfig.getNodeRef(this.getRef(), max_length);
+  }
+
+  static getNodeRef(service_ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+    let parsed;
+    try {
+      parsed = ServiceVersionSlugUtils.parse(service_ref);
+    } catch {
+      parsed = ComponentVersionSlugUtils.parse(service_ref);
     }
-    return Refs.safeRef(`${parsed.component_name}-${parsed.service_name}`, service_ref, max_length);
+
+    let friendly_name = `${parsed.component_name}`;
+    if (parsed.service_name) {
+      friendly_name += `-${parsed.service_name}`;
+    }
+    if (parsed.instance_id) {
+      friendly_name += `-${parsed.instance_id}`;
+    }
+    return Refs.safeRef(friendly_name, service_ref, max_length);
   }
 
   getNodeRef(service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag);
-    return ComponentConfig.getNodeRef(service_ref, this.getInstanceId(), max_length);
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, this.getInstanceId());
+    return ComponentConfig.getNodeRef(service_ref, max_length);
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {

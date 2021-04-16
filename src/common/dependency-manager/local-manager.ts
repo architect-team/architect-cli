@@ -38,9 +38,21 @@ export default class LocalDependencyManager extends DependencyManager {
       nodes = nodes.concat(this.getComponentNodes(component_config));
 
       if (Object.keys(component_config.getInterfaces()).length) {
-        const node = new InterfacesNode(component_config.getInterfacesRef());
+        const node = new InterfacesNode(component_config.getInterfacesRef(), component_config.getRef());
         nodes.push(node);
       }
+
+      for (const node of nodes) {
+        graph.addNode(node);
+      }
+    }
+
+    // Add edges
+    for (const component_config of component_configs) {
+      let edges: DependencyEdge[] = [];
+      const ignore_keys = ['']; // Ignore all errors
+      const interfaces_component_config = this.interpolateInterfaces(component_config, ignore_keys);
+      edges = edges.concat(this.getComponentEdges(graph, interfaces_component_config));
 
       const component_interfaces: Dictionary<string> = {};
       for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
@@ -50,31 +62,8 @@ export default class LocalDependencyManager extends DependencyManager {
       }
 
       if (Object.keys(component_interfaces).length) {
-        nodes.push(new GatewayNode(gateway_port));
-      }
-
-      for (const node of nodes) {
-        graph.addNode(node);
-      }
-    }
-
-    const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
-
-    // Add edges
-    for (const component_config of component_configs) {
-      let edges: DependencyEdge[] = [];
-      const ignore_keys = ['']; // Ignore all errors
-      const interpolated_component_config = this.interpolateInterfaces(component_config, ignore_keys);
-      edges = edges.concat(this.getComponentEdges(graph, interpolated_component_config));
-
-      const component_interfaces: Dictionary<string> = {};
-      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
-        if (interface_obj.external_name) {
-          component_interfaces[interface_obj.external_name] = interface_name;
-        }
-      }
-
-      if (gateway_node && Object.keys(component_interfaces).length) {
+        const gateway_node = new GatewayNode(gateway_port);
+        graph.addNode(new GatewayNode(gateway_port));
         const ingress_edge = new IngressEdge(gateway_node.ref, component_config.getInterfacesRef(), component_interfaces);
         edges.push(ingress_edge);
       }

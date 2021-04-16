@@ -12,7 +12,7 @@ import { ComponentConfig } from './spec/component/component-config';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
-import { ComponentSlugUtils, InterfaceSlugUtils, Slugs } from './utils/slugs';
+import { ComponentSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
 
 export default abstract class DependencyManager {
@@ -118,7 +118,7 @@ export default abstract class DependencyManager {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
 
-        const to = `${dep_name}:${dep_tag}${InterfaceSlugUtils.Suffix}`;
+        const to = ComponentConfig.getNodeRef(`${dep_name}:${dep_tag}`);
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = {};
@@ -157,7 +157,7 @@ export default abstract class DependencyManager {
       const [_, dep_name, interface_name] = matches;
       const dep_tag = component.getDependencies()[dep_name];
 
-      const to = `${dep_name}:${dep_tag}${InterfaceSlugUtils.Suffix}`;
+      const to = ComponentConfig.getNodeRef(`${dep_name}:${dep_tag}`);
       if (!graph.nodes_map.has(to)) continue;
 
       if (!service_edge_map[to]) service_edge_map[to] = {};
