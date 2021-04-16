@@ -28,5 +28,8 @@ export class InterfaceSpecV1 extends ValidatableConfig {
   url?: string;
 
   @IsOptional({ always: true })
+  sticky?: string;
+
+  @IsOptional({ always: true })
   external_name?: string;
 }
