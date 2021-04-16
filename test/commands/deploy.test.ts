@@ -657,7 +657,6 @@ describe('local deploy environment', function () {
         expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
       })
 
-    /*
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
@@ -680,7 +679,6 @@ describe('local deploy environment', function () {
         expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_route_ref}.rule=Host(\`${tenant_1_route_ref}.arc.localhost\`)`)
         expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.${tenant_2_route_ref}.rule=Host(\`${tenant_2_route_ref}.arc.localhost\`)`)
       })
-    */
   });
 });
 
