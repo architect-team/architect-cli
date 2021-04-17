@@ -213,6 +213,9 @@ export class DockerComposeUtils {
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
+          if (node_to_interface.sticky) {
+            service_to.labels.push(`traefik.http.services.${interface_name}-service.loadBalancer.sticky.cookie=true`);
+          }
 
           service_to.restart = 'always';
         }

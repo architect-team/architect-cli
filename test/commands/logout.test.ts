@@ -11,7 +11,7 @@ import * as Docker from '../../src/common/utils/docker';
 import ARCHITECTPATHS from '../../src/paths';
 
 describe('logout', function () {
-  this.timeout(15000);
+  this.timeout(20000);
   let tmp_dir = os.tmpdir();
 
   beforeEach(function () {

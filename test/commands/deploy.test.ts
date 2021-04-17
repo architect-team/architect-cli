@@ -47,9 +47,11 @@ describe('local deploy environment', function () {
           "image": "heroku/nodejs-hello-world",
           "environment": {},
           "interfaces": {
-            "main": "3000"
+            "main": {
+              "port": "3000"
+            }
           }
-        }
+        },
       },
 
       "interfaces": {
@@ -439,7 +441,7 @@ describe('local deploy environment', function () {
   }
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
     })
@@ -455,7 +457,25 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
+    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+      const component_config = getHelloComponentConfig();
+      (component_config.services.api.interfaces.main as any).sticky = true;
+      return ComponentConfigBuilder.buildFromJSON(component_config);
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'hello'])
+    .it('Sticky label added for sticky interfaces', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain('traefik.http.services.hello-service.loadBalancer.sticky.cookie=true');
+    })
+
+  test
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
     })
@@ -471,7 +491,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -494,7 +514,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -515,7 +535,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -536,7 +556,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
     })
@@ -560,7 +580,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
     })
@@ -587,7 +607,7 @@ describe('local deploy environment', function () {
     })
 
   test
-    .timeout(15000)
+    .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
     })
@@ -608,7 +628,7 @@ describe('local deploy environment', function () {
 
   describe('linked deploy', function () {
     test
-      .timeout(15000)
+      .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
       })
@@ -630,7 +650,7 @@ describe('local deploy environment', function () {
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_deploy = test
-      .timeout(15000)
+      .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
       })
