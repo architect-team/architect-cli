@@ -1,5 +1,4 @@
 import { expect, test } from '@oclif/test';
-import { classToClass } from 'class-transformer';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
@@ -12,7 +11,7 @@ import { ComponentConfig, ComponentConfigBuilder } from '../../src/dependency-ma
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true;
 
 const account = {
   id: 'test-account-id',
@@ -39,23 +38,26 @@ describe('local deploy environment', function () {
     sinon.restore();
   });
 
-  const local_component_config = {
-    "name": "examples/hello-world",
+  function getHelloComponentConfig(): any {
+    return {
+      "name": "examples/hello-world",
 
-    "services": {
-      "api": {
-        "image": "heroku/nodejs-hello-world",
-        "interfaces": {
-          "main": {
-            "port": "3000"
+      "services": {
+        "api": {
+          "image": "heroku/nodejs-hello-world",
+          "environment": {},
+          "interfaces": {
+            "main": {
+              "port": "3000"
+            }
           }
-        }
-      }
-    },
+        },
+      },
 
-    "interfaces": {
-      "hello": {
-        "url": "${{ services.api.interfaces.main.url }}"
+      "interfaces": {
+        "hello": {
+          "url": "${{ services.api.interfaces.main.url }}"
+        }
       }
     }
   }
@@ -441,7 +443,7 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config);
+      return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -457,7 +459,7 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      const component_config = classToClass(local_component_config);
+      const component_config = getHelloComponentConfig();
       (component_config.services.api.interfaces.main as any).sticky = true;
       return ComponentConfigBuilder.buildFromJSON(component_config);
     })
@@ -628,7 +630,7 @@ describe('local deploy environment', function () {
     test
       .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
+        return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -647,16 +649,18 @@ describe('local deploy environment', function () {
     const hello_api_instance_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
-    test
+    const local_deploy = test
       .timeout(20000)
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
+        return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
       .stdout({ print })
       .stderr({ print })
+
+    local_deploy
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .command(['deploy', '-l', 'examples/hello-world@tenant-1', '-i', 'hello'])
       .it('Create a local deploy with instance id and no tag', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
@@ -664,22 +668,39 @@ describe('local deploy environment', function () {
         expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
       })
 
-    test
-      .timeout(20000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(local_component_config);
-      })
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
-      .stdout({ print })
-      .stderr({ print })
       .command(['deploy', '-l', 'examples/hello-world:latest@tenant-1', '-i', 'hello'])
       .it('Create a local deploy with instance id and tag', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
       })
+
+    /*
+    local_deploy
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
+        const config = getHelloComponentConfig();
+        config.services.api.environment.SELF_URL = `\${{ environment.ingresses['examples/hello-world']['hello'].url }}`
+        return ComponentConfigBuilder.buildFromJSON(config);
+      })
+      .command(['deploy', '-l', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
+      .it('Create a local deploy with multiple instances of the same component', ctx => {
+        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true
+
+        const tenant_1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
+        const tenant_2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-2')
+
+        const tenant_1_route_ref = ComponentConfig.getNodeRef('examples/hello-world/hello:latest@tenant-1')
+        const tenant_2_route_ref = ComponentConfig.getNodeRef('examples/hello-world/hello:latest@tenant-2')
+
+        const compose = runCompose.firstCall.args[0];
+        expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_route_ref}.rule=Host(\`${tenant_1_route_ref}.arc.localhost\`)`)
+        expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.${tenant_2_route_ref}.rule=Host(\`${tenant_2_route_ref}.arc.localhost\`)`)
+      })
+    */
   });
 });
 
