@@ -79,14 +79,11 @@ export default class TaskExec extends Command {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    let service_name;
     const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag);
     const ref = ComponentConfig.getNodeRef(slug);
-    const matching_names = Object.keys(compose.services).find(name => name === ref);
-    if (!matching_names?.length) {
+    const service_name = Object.keys(compose.services).find(name => name === ref);
+    if (!service_name) {
       throw new Error(`Could not find ${args.component}/${args.task} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
-    } else {
-      service_name = matching_names[0];
     }
 
     this.log(chalk.blue(`Running task ${args.component}/${args.task} in the local ${project_name} environment...`));
