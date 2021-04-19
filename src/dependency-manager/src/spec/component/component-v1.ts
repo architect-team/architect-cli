@@ -94,6 +94,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   instance_id!: string;
 
   @IsOptional({ always: true })
+  instance_name!: string;
+
+  @IsOptional({ always: true })
   instance_date!: Date;
 
   @IsOptional({ always: true })
@@ -161,7 +164,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   getRef(): ComponentVersionSlug {
     const split = ComponentVersionSlugUtils.parse(this.name);
-    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag, this.getInstanceId());
+    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag, this.getInstanceName());
   }
 
   getInstanceId() {
@@ -170,6 +173,14 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   setInstanceId(instance_id: string) {
     this.instance_id = instance_id;
+  }
+
+  getInstanceName() {
+    return this.instance_name || '';
+  }
+
+  setInstanceName(instance_name: string) {
+    this.instance_name = instance_name;
   }
 
   getInstanceDate() {

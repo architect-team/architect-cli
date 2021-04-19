@@ -482,14 +482,34 @@ describe('sidecar spec v1', () => {
       'voic/product-catalog': '/stack/product-catalog/architect.yml'
     });
     manager.use_sidecar = true;
+
+    const admin_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    const admin_instance_id = 'env1-tenant-1';
+    admin_component.setInstanceId(admin_instance_id);
+
+    const test_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    expect(admin_component.getInterfacesRef()).to.not.equal(test_component.getInterfacesRef());
+
+    const test2_component = await manager.loadComponentConfig('voic/admin-ui@tenant-2');
+    test2_component.setInstanceId('env1-tenant-1');
+    expect(admin_component.getInterfacesRef()).to.not.equal(test2_component.getInterfacesRef());
+
+    const test3_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    test3_component.setInstanceId('env1-tenant-1-test');
+    expect(admin_component.getInterfacesRef()).to.not.equal(test3_component.getInterfacesRef());
+
+    const catalog_component = await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' })
+    const catalog_instance_id = 'env1'
+    catalog_component.setInstanceId(catalog_instance_id);
+
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('voic/admin-ui'),
-      await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+      admin_component,
+      catalog_component,
     ]);
 
-    const admin_ref = ComponentConfig.getNodeRef('voic/admin-ui/dashboard:latest')
-    const catalog_interface_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest')
-    const api_ref = ComponentConfig.getNodeRef('voic/product-catalog/api:latest')
+    const admin_ref = ComponentConfig.getNodeRef('voic/admin-ui/dashboard:latest@tenant-1', admin_instance_id)
+    const catalog_interface_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest', catalog_instance_id)
+    const api_ref = ComponentConfig.getNodeRef('voic/product-catalog/api:latest', catalog_instance_id)
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interface_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,

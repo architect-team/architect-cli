@@ -12,7 +12,7 @@ export function transformTasks(input: Dictionary<object | TaskConfigV1>, compone
 
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    const task_ref = ServiceVersionSlugUtils.build(parsed_component.component_account_name, parsed_component.component_name, key, parsed_component.tag);
+    const task_ref = ServiceVersionSlugUtils.build(parsed_component.component_account_name, parsed_component.component_name, key, parsed_component.tag, parsed_component.instance_name);
     let config;
     if (value instanceof TaskConfigV1) {
       config = value;

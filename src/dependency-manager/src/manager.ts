@@ -83,7 +83,13 @@ export default abstract class DependencyManager {
     return component;
   }
 
-  getComponentEdges(graph: DependencyGraph, component: ComponentConfig): DependencyEdge[] {
+  getComponentEdges(graph: DependencyGraph, component: ComponentConfig, component_configs: ComponentConfig[]): DependencyEdge[] {
+    const dependency_components = this.getDependencyComponents(component, component_configs);
+    const dependency_map: Dictionary<ComponentConfig> = {};
+    for (const dependency_component of dependency_components) {
+      dependency_map[dependency_component.getRef()] = dependency_component;
+    }
+
     const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
@@ -118,7 +124,10 @@ export default abstract class DependencyManager {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.getDependencies()[dep_name];
 
-        const to = ComponentConfig.getNodeRef(`${dep_name}:${dep_tag}`);
+        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+        if (!dependency) continue;
+        const to = dependency.getInterfacesRef();
+
         if (!graph.nodes_map.has(to)) continue;
 
         if (!dep_edge_map[to]) dep_edge_map[to] = {};
@@ -157,7 +166,10 @@ export default abstract class DependencyManager {
       const [_, dep_name, interface_name] = matches;
       const dep_tag = component.getDependencies()[dep_name];
 
-      const to = ComponentConfig.getNodeRef(`${dep_name}:${dep_tag}`);
+      const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+      if (!dependency) continue;
+      const to = dependency.getInterfacesRef();
+
       if (!graph.nodes_map.has(to)) continue;
 
       if (!service_edge_map[to]) service_edge_map[to] = {};
@@ -394,17 +406,11 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponents(component_configs: ComponentConfig[], external_address: string, values?: Dictionary<Dictionary<string>>) {
-    const component_map: Dictionary<ComponentConfig[]> = {};
     for (const component_config of component_configs) {
       if (values) {
         // Set parameters from secrets
         this.setValuesForComponent(component_config, values);
       }
-      if (!component_map[component_config.getRef()]) {
-        component_map[component_config.getRef()] = [];
-      }
-      // Potentially multiple components with the same ref and different instance ids
-      component_map[component_config.getRef()].push(component_config);
     }
 
     const _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {};
@@ -412,7 +418,7 @@ export default abstract class DependencyManager {
     for (const component_config of component_configs) {
       const map_key = `${component_config.getRef()}@${component_config.getInstanceId()}`;
       if (!_interpolated_component_map[map_key]) {
-        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(component_config, component_map, external_address, _interpolated_component_map, component_config.getRef());
+        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(component_config, component_configs, external_address, _interpolated_component_map, component_config.getRef());
       }
     }
 
@@ -439,12 +445,17 @@ export default abstract class DependencyManager {
     return res;
   }
 
-  async interpolateComponentWithDependencies(component_config: ComponentConfig, component_map: Dictionary<ComponentConfig[]>, external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '', depth = 0) {
-    if (depth > 50) {
-      throw new Error(`Circular component dependency detected`);
+  getDependencyComponents(component_config: ComponentConfig, component_configs: ComponentConfig[], _parent_ref = '') {
+    const component_map: Dictionary<ComponentConfig[]> = {};
+    for (const component_config of component_configs) {
+      if (!component_map[component_config.getRef()]) {
+        component_map[component_config.getRef()] = [];
+      }
+      // Potentially multiple components with the same ref and different instance ids
+      component_map[component_config.getRef()].push(component_config);
     }
 
-    const dependency_promises = [];
+    const dependency_components = [];
     for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
       const dep_ref = `${dep_name}:${dep_tag}`;
       if (dep_ref === _parent_ref) {
@@ -458,10 +469,22 @@ export default abstract class DependencyManager {
       if (!dep_component) {
         continue;
       }
+      dependency_components.push(dep_component);
+    }
+    return dependency_components;
+  }
 
-      const map_key = `${dep_component.getRef()}@${dep_component.getInstanceId()}`;
+  async interpolateComponentWithDependencies(component_config: ComponentConfig, component_configs: ComponentConfig[], external_address: string, _interpolated_component_map: Dictionary<Promise<ComponentConfig>> = {}, _parent_ref = '', depth = 0) {
+    if (depth > 50) {
+      throw new Error(`Circular component dependency detected`);
+    }
+
+    const dependency_components = this.getDependencyComponents(component_config, component_configs, _parent_ref);
+    const dependency_promises = [];
+    for (const dependency_component of dependency_components) {
+      const map_key = `${dependency_component.getRef()}@${dependency_component.getInstanceId()}`;
       if (!_interpolated_component_map[map_key]) {
-        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(dep_component, component_map, external_address, _interpolated_component_map, component_config.getRef(), depth + 1);
+        _interpolated_component_map[map_key] = this.interpolateComponentWithDependencies(dependency_component, component_configs, external_address, _interpolated_component_map, component_config.getRef(), depth + 1);
       }
       dependency_promises.push(_interpolated_component_map[map_key]);
     }

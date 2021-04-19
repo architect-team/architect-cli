@@ -40,7 +40,7 @@ export interface ParsedComponentSlug extends ParsedSlug {
   kind: 'component';
   component_account_name: string;
   component_name: string;
-  instance_id: string;
+  instance_name: string;
 }
 
 export abstract class SlugUtils {
@@ -67,13 +67,13 @@ export class ComponentSlugUtils extends SlugUtils {
       throw new Error(ComponentSlugUtils.Description);
     }
 
-    const [full_component_slug, instance_id] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [full_component_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
     const [account_name, component_name] = full_component_slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
       kind: 'component',
       component_account_name: account_name,
       component_name: component_name,
-      instance_id: instance_id || '',
+      instance_name: instance_name || '',
     };
   };
 }
@@ -84,7 +84,7 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_account_name: string;
   component_name: string;
   tag: string;
-  instance_id: string;
+  instance_name: string;
 }
 export class ComponentVersionSlugUtils extends SlugUtils {
 
@@ -96,10 +96,10 @@ export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentVersionSlugUtils.RegexBase}$`);
 
-  public static build = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG, instance_id = ''): ComponentVersionSlug => {
+  public static build = (component_account_name: string, component_name: string, tag: string = Slugs.DEFAULT_TAG, instance_name = ''): ComponentVersionSlug => {
     let slug = `${component_account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.TAG_DELIMITER}${tag}`;
-    if (instance_id) {
-      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+    if (instance_name) {
+      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
     return slug;
   };
@@ -122,7 +122,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       } catch { }
       throw new Error(ComponentVersionSlugUtils.Description);
     }
-    const [full_component_slug, instance_id] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [full_component_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
     const [component_slug, tag] = full_component_slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
@@ -133,7 +133,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
       component_account_name,
       component_name,
       tag,
-      instance_id: instance_id || '',
+      instance_name: instance_name || '',
     };
   };
 }
@@ -176,7 +176,7 @@ export interface ParsedServiceVersionSlug extends ParsedSlug {
   component_name: string;
   service_name: string;
   tag: string;
-  instance_id?: string;
+  instance_name?: string;
 }
 export class ServiceVersionSlugUtils extends SlugUtils {
 
@@ -184,10 +184,10 @@ export class ServiceVersionSlugUtils extends SlugUtils {
   public static RegexBase = `${ServiceSlugUtils.RegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
   public static Validator = new RegExp(`^${ServiceVersionSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, component_name: string, service_name: string, tag: string, instance_id = ''): ServiceVersionSlug => {
+  public static build = (account_name: string, component_name: string, service_name: string, tag: string, instance_name = ''): ServiceVersionSlug => {
     let slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.TAG_DELIMITER}${tag}`;
-    if (instance_id) {
-      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+    if (instance_name) {
+      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
     return slug;
   };
@@ -196,7 +196,7 @@ export class ServiceVersionSlugUtils extends SlugUtils {
     if (!ServiceVersionSlugUtils.Validator.test(slug)) {
       throw new Error(ServiceVersionSlugUtils.Description);
     }
-    const [full_service_slug, instance_id] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [full_service_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
     const [service_slug, tag] = full_service_slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
       throw new Error(Slugs.ComponentTagDescription);
@@ -209,7 +209,7 @@ export class ServiceVersionSlugUtils extends SlugUtils {
       component_name,
       service_name,
       tag,
-      instance_id: instance_id || '',
+      instance_name: instance_name || '',
     };
   };
 }

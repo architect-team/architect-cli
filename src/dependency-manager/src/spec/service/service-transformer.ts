@@ -12,7 +12,7 @@ export function transformServices(input: Dictionary<object | ServiceConfigV1>, c
 
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
-    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, key, parsed.tag);
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, key, parsed.tag, parsed.instance_name);
     let config;
     if (value instanceof ServiceConfigV1) {
       config = value;

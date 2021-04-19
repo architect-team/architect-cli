@@ -52,7 +52,7 @@ export default class LocalDependencyManager extends DependencyManager {
       let edges: DependencyEdge[] = [];
       const ignore_keys = ['']; // Ignore all errors
       const interfaces_component_config = this.interpolateInterfaces(component_config, ignore_keys);
-      edges = edges.concat(this.getComponentEdges(graph, interfaces_component_config));
+      edges = edges.concat(this.getComponentEdges(graph, interfaces_component_config, component_configs));
 
       const component_interfaces: Dictionary<string> = {};
       for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
@@ -77,7 +77,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
-    const { component_account_name, component_name, tag, instance_id } = ComponentVersionSlugUtils.parse(component_string);
+    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_slug = `${component_account_name}/${component_name}`;
     const component_ref = `${component_slug}:${tag}`;
 
@@ -100,8 +100,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     // Set the tag
     config.setName(component_ref);
-
-    config.setInstanceId(instance_id);
+    config.setInstanceName(instance_name);
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.getInterfaces()[interface_to];

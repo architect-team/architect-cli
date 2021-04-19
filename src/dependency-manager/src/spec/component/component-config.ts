@@ -1,6 +1,6 @@
 import { Dictionary } from '../../utils/dictionary';
 import { Refs } from '../../utils/refs';
-import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
+import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
@@ -16,6 +16,8 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract getRef(): ComponentVersionSlug;
   abstract getInstanceId(): string;
   abstract setInstanceId(instance_id: string): void;
+  abstract getInstanceName(): string;
+  abstract setInstanceName(instance_name: string): void;
   abstract getInstanceDate(): Date;
   abstract setInstanceDate(instance_date: Date): void;
   abstract getExtends(): string | undefined;
@@ -54,10 +56,10 @@ export abstract class ComponentConfig extends BaseConfig {
   }
 
   getInterfacesRef(max_length: number = Refs.DEFAULT_MAX_LENGTH) {
-    return ComponentConfig.getNodeRef(this.getRef(), max_length);
+    return ComponentConfig.getNodeRef(this.getRef(), this.getInstanceId(), max_length);
   }
 
-  static getNodeRef(service_ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
+  static getNodeRef(service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH) {
     let parsed;
     try {
       parsed = ServiceVersionSlugUtils.parse(service_ref);
@@ -69,16 +71,21 @@ export abstract class ComponentConfig extends BaseConfig {
     if (parsed.service_name) {
       friendly_name += `-${parsed.service_name}`;
     }
-    if (parsed.instance_id) {
-      friendly_name += `-${parsed.instance_id}`;
+    if (parsed.instance_name) {
+      friendly_name += `-${parsed.instance_name}`;
     }
+
+    if (instance_id) {
+      service_ref = `${service_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+    }
+
     return Refs.safeRef(friendly_name, service_ref, max_length);
   }
 
   getNodeRef(service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) {
     const parsed = ComponentVersionSlugUtils.parse(this.getRef());
-    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, this.getInstanceId());
-    return ComponentConfig.getNodeRef(service_ref, max_length);
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, this.getInstanceName());
+    return ComponentConfig.getNodeRef(service_ref, this.getInstanceId(), max_length);
   }
 
   getServiceByRef(service_ref: string): ServiceConfig | undefined {
