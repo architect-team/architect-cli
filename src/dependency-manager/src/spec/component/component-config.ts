@@ -56,7 +56,8 @@ export abstract class ComponentConfig extends BaseConfig {
   }
 
   getInterfacesRef(max_length: number = Refs.DEFAULT_MAX_LENGTH) {
-    return ComponentConfig.getNodeRef(this.getRef(), this.getInstanceId(), max_length);
+    // instance_id is empty because interface nodes apply to all instances of a component ref
+    return ComponentConfig.getNodeRef(this.getRef(), '', max_length);
   }
 
   static getNodeRef(service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH) {
