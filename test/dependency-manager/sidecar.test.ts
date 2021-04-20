@@ -488,7 +488,7 @@ describe('sidecar spec v1', () => {
     admin_component.setInstanceId(admin_instance_id);
 
     const test_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
-    expect(admin_component.getInterfacesRef()).to.equal(test_component.getInterfacesRef());
+    expect(admin_component.getInterfacesRef()).to.not.equal(test_component.getInterfacesRef());
 
     const test2_component = await manager.loadComponentConfig('voic/admin-ui@tenant-2');
     test2_component.setInstanceId('env1-tenant-1');
@@ -496,7 +496,7 @@ describe('sidecar spec v1', () => {
 
     const test3_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
     test3_component.setInstanceId('env1-tenant-1-test');
-    expect(admin_component.getInterfacesRef()).to.equal(test3_component.getInterfacesRef());
+    expect(admin_component.getInterfacesRef()).to.not.equal(test3_component.getInterfacesRef());
 
     const catalog_component = await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' })
     const catalog_instance_id = 'env1'
@@ -508,7 +508,7 @@ describe('sidecar spec v1', () => {
     ]);
 
     const admin_ref = ComponentConfig.getNodeRef('voic/admin-ui/dashboard:latest@tenant-1', admin_instance_id)
-    const catalog_interface_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest')
+    const catalog_interface_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest', catalog_instance_id)
     const api_ref = ComponentConfig.getNodeRef('voic/product-catalog/api:latest', catalog_instance_id)
 
     expect(graph.edges.map(e => e.toString())).members([
