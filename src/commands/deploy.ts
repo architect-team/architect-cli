@@ -67,16 +67,13 @@ export abstract class DeployCommand extends Command {
         message: 'Would you like to apply?',
       });
       if (!confirmation.deploy) {
-        this.warn('Canceled pipeline');
-        return;
+        this.warn(`Canceled pipeline`);
+        return false;
       }
     }
 
-    cli.action.start(chalk.blue('Deploying'));
     await this.app.api.post(`/pipelines/${pipeline.id}/approve`);
-    await PipelineUtils.pollPipeline(this.app.api, pipeline.id);
-    cli.action.stop();
-    this.log(chalk.green(`Deployed`));
+    return true;
   }
 }
 
@@ -133,9 +130,20 @@ export default class Deploy extends DeployCommand {
   };
 
   static args = [{
-    name: 'config_or_component',
-    description: 'Path to an architect.yml file or component `account/component:latest`',
+    name: 'configs_or_components',
+    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
+
+  // overrides the oclif default parse to allow for configs_or_components to be a list of components
+  parse(options: any, argv = this.argv): any {
+    options.args = [];
+    for (const arg of argv) {
+      options.args.push({ name: 'filler' });
+    }
+    const parsed = super.parse(options, argv);
+    parsed.args.configs_or_components = parsed.argv;
+    return parsed;
+  }
 
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
@@ -281,25 +289,30 @@ export default class Deploy extends DeployCommand {
       flags.values = './values.yml';
     }
 
-    if (!args.config_or_component) {
-      args.config_or_component = './architect.yml';
+    if (!args.configs_or_components || !args.configs_or_components.length) {
+      args.configs_or_components = ['./architect.yml'];
     }
 
-    const linked_components = this.app.linkedComponents;
-
     const interfaces_map = this.getInterfacesMap();
+    const component_values = this.getComponentValues();
 
-    let component_version = args.config_or_component;
-    if (!ComponentVersionSlugUtils.Validator.test(args.config_or_component) && !ComponentSlugUtils.Validator.test(args.config_or_component)) {
-      const component_config = await ComponentConfigBuilder.buildFromPath(args.config_or_component);
-      linked_components[component_config.getName()] = args.config_or_component;
-      component_version = component_config.getName();
+    const linked_components = this.app.linkedComponents;
+    const component_versions: string[] = [];
+    for (const config_or_component of args.configs_or_components) {
 
-      if (Object.keys(interfaces_map).length === 0) {
-        for (const interface_name of Object.keys(component_config.getInterfaces())) {
-          interfaces_map[interface_name] = interface_name;
+      let component_version = config_or_component;
+      if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
+        const component_config = await ComponentConfigBuilder.buildFromPath(config_or_component);
+        linked_components[component_config.getName()] = config_or_component;
+        component_version = component_config.getName();
+
+        if (Object.keys(interfaces_map).length === 0) {
+          for (const interface_name of Object.keys(component_config.getInterfaces())) {
+            interfaces_map[interface_name] = interface_name;
+          }
         }
       }
+      component_versions.push(component_version);
     }
 
     const dependency_manager = new LocalDependencyManager(
@@ -307,13 +320,16 @@ export default class Deploy extends DeployCommand {
       linked_components,
     );
 
-    const component_values = this.getComponentValues();
-    const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
-    let component_configs: ComponentConfig[];
-    if (flags.recursive) {
-      component_configs = await dependency_manager.loadComponentConfigs(component_config);
-    } else {
-      component_configs = [component_config];
+    const component_configs: ComponentConfig[] = [];
+    for (const component_version of component_versions) {
+      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
+
+      if (flags.recursive) {
+        const dependency_configs = await dependency_manager.loadComponentConfigs(component_config);
+        component_configs.push(...dependency_configs);
+      } else {
+        component_configs.push(component_config);
+      }
     }
 
     const graph = await dependency_manager.getGraph(component_configs, component_values);
@@ -325,10 +341,7 @@ export default class Deploy extends DeployCommand {
   protected async runRemote() {
     const { args, flags } = this.parse(Deploy);
 
-    if (ComponentVersionSlugUtils.Validator.test(args.config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.config_or_component);
-      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-    }
+    const components = args.configs_or_components;
 
     const interfaces_map = this.getInterfacesMap();
     const component_values = this.getComponentValues();
@@ -336,20 +349,62 @@ export default class Deploy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    cli.action.start(chalk.blue('Creating pipeline'));
-    const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, {
-      component: args.config_or_component,
-      interfaces: interfaces_map,
-      recursive: flags.recursive,
-      values: component_values,
-    });
+    const deployment_dtos = [];
+    for (const component of components) {
+      if (ComponentVersionSlugUtils.Validator.test(component)) {
+        const parsed_component_version = ComponentVersionSlugUtils.parse(component);
+        const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+      }
+
+      const deploy_dto = {
+        component: component,
+        interfaces: interfaces_map,
+        recursive: flags.recursive,
+        values: component_values,
+      };
+      deployment_dtos.push(deploy_dto);
+    }
+
+    cli.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    const pipelines = await Promise.all(
+      deployment_dtos.map(async (deployment_dto) => {
+        const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
+        return { component_name: deployment_dto.component, pipeline };
+      })
+    );
     cli.action.stop();
 
-    await this.approvePipeline(pipeline);
+    const approved_pipelines = [];
+    for (const pipeline of pipelines) {
+      const approved = await this.approvePipeline(pipeline.pipeline);
+      if (approved) {
+        approved_pipelines.push(pipeline);
+      }
+    }
+
+    if (!approved_pipelines?.length) {
+      this.log(chalk.blue('Cancelled all pipelines'));
+      return;
+    }
+
+    cli.action.start(chalk.blue('Deploying'));
+    await Promise.all(
+      approved_pipelines.map(async (pipeline) => {
+        await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
+        this.log(chalk.green(`${pipeline.component_name} Deployed`));
+      })
+    );
+    cli.action.stop();
   }
 
   async run() {
-    const { flags } = this.parse(Deploy);
+    const { args, flags } = this.parse(Deploy);
+
+    if (args.configs_or_components && args.configs_or_components.length > 1) {
+      if (flags.interface?.length) {
+        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
+      }
+    }
 
     if (flags.local) {
       await this.runLocal();
