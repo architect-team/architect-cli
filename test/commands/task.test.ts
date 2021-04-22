@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
+import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -170,10 +170,11 @@ describe('task:exec', async function () {
     .it('fails with a useful message if given a bad component name');
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
-  const ref = Refs.safeRef(ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG));
-  mock_docker_compose_service[ComponentConfig.getNodeRef(ref)] = {};
+  const mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG);
+  const mock_ref = ComponentConfig.getNodeRef(mock_slug);
+  mock_docker_compose_service[mock_ref] = {};
   const mock_docker_compose = {
-    services: mock_docker_compose_service
+    services: mock_docker_compose_service,
   };
 
   mockArchitectAuth
@@ -204,7 +205,7 @@ describe('task:exec', async function () {
       const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
       const runDockerCompose = DockerComposeUtils.run as sinon.SinonStub;
       expect(runDockerCompose.calledOnce).to.be.true;
-      expect(runDockerCompose.args[0]).to.deep.equal(['examples-basic-task-curler-latest-suxxccsa', 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
+      expect(runDockerCompose.args[0]).to.deep.equal([mock_ref, 'architect', path.join('test', 'docker-compose', 'architect.yml')]);
       expect(loadDockerCompose.calledOnce).to.be.true;
     });
 
