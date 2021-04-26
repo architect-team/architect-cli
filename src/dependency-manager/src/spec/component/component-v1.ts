@@ -2,7 +2,7 @@ import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
-import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../../utils/validation';
+import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary, validateInterpolation } from '../../utils/validation';
 import { DictionaryType } from '../../utils/validators/dictionary_type';
 import { InterfaceSpec } from '../common/interface-spec';
 import { InterfaceSpecV1 } from '../common/interface-v1';
@@ -364,6 +364,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
+    errors = await validateDependsOn(expanded, errors); // makes sure service depends_on refers to valid other services
     if ((options.groups || []).includes('developer')) {
       errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.', 'environment.']));
     }

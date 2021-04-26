@@ -124,6 +124,15 @@ export class DockerComposeUtils {
         if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
           compose.services[safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
         }
+
+        const depends_on = graph.nodes
+          .filter(n => n.instance_id === node.instance_id && node.config.getDependsOn().includes((n as ServiceNode | TaskNode)?.config?.getName()))
+          .filter(n => n instanceof ServiceNode)
+          .map(n => n.ref);
+
+        if (depends_on?.length) {
+          compose.services[safe_ref].depends_on = depends_on;
+        }
       }
 
       if (node.is_local && (node instanceof ServiceNode || node instanceof TaskNode)) {
@@ -171,9 +180,10 @@ export class DockerComposeUtils {
       if (node instanceof TaskNode) {
         compose.services[safe_ref].scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
+
+
     }
 
-    const seen_edges = new Set();
     // Enrich service relationships
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
@@ -186,9 +196,6 @@ export class DockerComposeUtils {
 
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
-
-        const depends_from = node_from_safe_ref;
-        const depends_to = node_to_safe_ref;
 
         if (edge instanceof IngressEdge) {
           const service_to = compose.services[node_to_safe_ref];
@@ -215,16 +222,6 @@ export class DockerComposeUtils {
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${interface_name}-service.loadBalancer.sticky.cookie=true`);
           }
-        }
-
-        if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
-          const service_from = compose.services[depends_from];
-          if (!service_from.depends_on) {
-            service_from.depends_on = [];
-          }
-          service_from.depends_on.push(depends_to);
-          seen_edges.add(`${depends_to}__${depends_from}`);
-          seen_edges.add(`${depends_from}__${depends_to}`);
         }
       }
     }

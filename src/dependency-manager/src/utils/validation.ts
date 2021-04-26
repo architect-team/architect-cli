@@ -1,5 +1,6 @@
 import { isObject, matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { ValidatableConfig } from '../spec/base-spec';
+import { ComponentConfig } from '../spec/component/component-config';
 import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const validateNested = async <T extends Record<string, any>>(
@@ -155,3 +156,72 @@ export const validateCrossDictionaryCollisions = async <T extends ValidatableCon
   }
   return errors;
 };
+
+// validates that property1 and property2 do not share any common keys
+export const validateDependsOn = async <T extends ValidatableConfig>(
+  target: ComponentConfig,
+  errors: ValidationError[] = [],
+) => {
+  const depends_on_map: { [name: string]: string[] } = {};
+
+  for (const [name, service] of Object.entries(target.getServices())) {
+    const depends_on = service.getDependsOn();
+    depends_on_map[name] = depends_on;
+  }
+
+  for (const [name, dependencies] of Object.entries(depends_on_map)) {
+    for (const dependency of dependencies) {
+      if (!depends_on_map[dependency]) {
+        const error = new ValidationError();
+        error.property = 'depends_on';
+        error.target = target;
+        error.value = name;
+        error.constraints = {
+          'invalid-reference': `services.${name}.depends_on[${dependency}] must refer to a valid service`,
+        };
+        error.children = [];
+
+        errors.push(error);
+      }
+    }
+    if (isPartOfCircularReference(name, depends_on_map)) {
+      const error = new ValidationError();
+      error.property = 'depends_on';
+      error.target = target;
+      error.value = name;
+      error.constraints = {
+        'circular-reference': `services.${name}.depends_on must not contain a circular reference`,
+      };
+      error.children = [];
+
+      errors.push(error);
+    }
+  }
+
+  return errors;
+};
+
+export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []) => {
+  const next_name = current_name || search_name;
+  const dependencies = depends_on_map[next_name];
+
+  if (seen_names.includes(next_name)) {
+    return false;
+  }
+
+  seen_names.push(next_name);
+
+  if (!dependencies?.length) {
+    return false;
+  }
+
+  for (const dependency of dependencies) {
+    if (dependency === search_name) {
+      return true;
+    } else if (isPartOfCircularReference(search_name, depends_on_map, dependency, seen_names)) {
+      return true;
+    }
+  }
+
+  return false;
+}

@@ -59,6 +59,7 @@ describe('interfaces spec v1', () => {
             interfaces: {
               main: 8080
             },
+            depends_on: ['db'],
             environment: {
               DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
               DB_HOST: '${{ services.db.interfaces.postgres.host }}',
@@ -187,6 +188,7 @@ describe('interfaces spec v1', () => {
           },
           api: {
             image: 'api:latest',
+            depends_on: ['db'],
             interfaces: {
               main: 8080
             },
@@ -269,7 +271,6 @@ describe('interfaces spec v1', () => {
       ]);
 
       const expected_leaf_compose: DockerService = {
-        depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: leaf_api_ref,
           LEAF_PORT: '8080',

@@ -74,6 +74,10 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   @IsOptional({ always: true })
   deploy?: DeploySpecV1;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true, each: true })
+  depends_on?: string[];
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
@@ -200,6 +204,10 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   getDeploy(): DeploySpecV1 | undefined {
     return this.deploy;
+  }
+
+  getDependsOn(): string[] {
+    return this.depends_on || [];
   }
 
   /** @return New expanded copy of the current config */
