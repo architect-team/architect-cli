@@ -675,5 +675,59 @@ describe('components spec v1', function () {
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.arc.localhost');
     });
+
+    it('component with deep dependencies', async () => {
+      const component_a = `
+      name: examples/component-a
+      dependencies:
+        examples/component-b: latest
+      services:
+        app:
+          image: test:v1
+      `;
+
+      const component_b = `
+      name: examples/component-b
+      dependencies:
+        examples/component-c: latest
+      services:
+        api:
+          image: test:v1
+      `;
+
+      const component_c = `
+      name: examples/component-c
+      services:
+        api:
+          image: test:v1
+      `;
+
+      mock_fs({
+        '/a/architect.yaml': component_a,
+        '/b/architect.yaml': component_b,
+        '/c/architect.yaml': component_c,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/component-a': '/a/architect.yaml',
+        'examples/component-b': '/b/architect.yaml',
+        'examples/component-c': '/c/architect.yaml'
+      });
+      const root_config = await manager.loadComponentConfig('examples/component-a');
+      const graph = await manager.getGraph([
+        root_config,
+        ...await manager.loadComponentConfigs(root_config),
+      ]);
+
+      const a_ref = ComponentConfig.getNodeRef('examples/component-a/app:latest');
+      const b_ref = ComponentConfig.getNodeRef('examples/component-b/api:latest');
+      const c_ref = ComponentConfig.getNodeRef('examples/component-c/api:latest');
+
+      expect(graph.nodes.map((n) => n.ref)).has.members([
+        a_ref,
+        b_ref,
+        c_ref
+      ])
+    });
   });
 });
