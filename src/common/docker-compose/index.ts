@@ -52,7 +52,6 @@ export class DockerComposeUtils {
     if (gateway_node) {
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.4',
-        restart: 'always',
         command: [
           '--api.insecure=true',
           `--entryPoints.web.address=:${gateway_port}`,
@@ -216,8 +215,6 @@ export class DockerComposeUtils {
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${interface_name}-service.loadBalancer.sticky.cookie=true`);
           }
-
-          service_to.restart = 'always';
         }
 
         if (!seen_edges.has(`${depends_to}__${depends_from}`)) { // Detect circular refs and pick first one
