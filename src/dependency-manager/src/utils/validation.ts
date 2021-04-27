@@ -157,6 +157,31 @@ export const validateCrossDictionaryCollisions = async <T extends ValidatableCon
   return errors;
 };
 
+export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []) => {
+  const next_name = current_name || search_name;
+  const dependencies = depends_on_map[next_name];
+
+  if (seen_names.includes(next_name)) {
+    return false;
+  }
+
+  seen_names.push(next_name);
+
+  if (!dependencies?.length) {
+    return false;
+  }
+
+  for (const dependency of dependencies) {
+    if (dependency === search_name) {
+      return true;
+    } else if (isPartOfCircularReference(search_name, depends_on_map, dependency, seen_names)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 // validates that property1 and property2 do not share any common keys
 export const validateDependsOn = async <T extends ValidatableConfig>(
   target: ComponentConfig,
@@ -200,28 +225,3 @@ export const validateDependsOn = async <T extends ValidatableConfig>(
 
   return errors;
 };
-
-export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []) => {
-  const next_name = current_name || search_name;
-  const dependencies = depends_on_map[next_name];
-
-  if (seen_names.includes(next_name)) {
-    return false;
-  }
-
-  seen_names.push(next_name);
-
-  if (!dependencies?.length) {
-    return false;
-  }
-
-  for (const dependency of dependencies) {
-    if (dependency === search_name) {
-      return true;
-    } else if (isPartOfCircularReference(search_name, depends_on_map, dependency, seen_names)) {
-      return true;
-    }
-  }
-
-  return false;
-}
