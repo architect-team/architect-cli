@@ -315,7 +315,6 @@ describe('interfaces spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -351,7 +350,6 @@ describe('interfaces spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -427,7 +425,6 @@ describe('interfaces spec v1', () => {
       "build": {
         "context": path.resolve("/stack")
       },
-      "restart": "always"
     };
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });

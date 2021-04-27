@@ -330,7 +330,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50000:3000"
         ],
-        "restart": "always",
         "depends_on": [
           seed_db_ref
         ],
@@ -383,7 +382,6 @@ describe('local deploy environment', function () {
           "80:80",
           "8080:8080"
         ],
-        "restart": "always",
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock"
         ]
@@ -400,7 +398,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50000:3000",
         ],
-        "restart": "always",
         "environment": {},
         "labels": [
           "traefik.enable=true",
@@ -426,7 +423,6 @@ describe('local deploy environment', function () {
           "80:80",
           "8080:8080"
         ],
-        "restart": "always",
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock"
         ]

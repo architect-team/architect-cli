@@ -174,7 +174,6 @@ describe('interpolation spec v1', () => {
       'ports': [
         '50001:8080'
       ],
-      'restart': 'always',
       'build': {
         'context': path.resolve('/stack')
       }
