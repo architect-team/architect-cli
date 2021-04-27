@@ -29,7 +29,7 @@ export default abstract class DependencyManager {
         local_path: component.getLocalPath(),
         artifact_image: component.getArtifactImage(),
       });
-      node.instance_id = `${Refs.safeRef(component.getRef())}-local`;
+      node.instance_id = `${Refs.safeRef(component.getRef())}-component`;
       nodes.push(node);
     }
 
@@ -40,7 +40,7 @@ export default abstract class DependencyManager {
         config: task_config,
         local_path: component.getLocalPath(),
       });
-      node.instance_id = `${Refs.safeRef(component.getRef())}-local`;
+      node.instance_id = `${Refs.safeRef(component.getRef())}-component`;
       nodes.push(node);
     }
     return nodes;

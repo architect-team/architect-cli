@@ -34,6 +34,8 @@ services:
       POSTGRES_PASSWORD: ${{ parameters.db_pass }}
       POSTGRES_DATABASE: ${{ parameters.db_name }}
   my-api:
+    depends_on:
+      - database
     build:
       context: ./path/to/docker/build/context
       dockerfile: ./relative/to/context/Dockerfile

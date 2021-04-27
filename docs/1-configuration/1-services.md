@@ -168,3 +168,27 @@ When deploying to platforms of type ECS, there are constraints in the underlying
 | 1  | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
 | 2 | 4GB - 16GB (in increments of 1GB) |
 | 4 | 8GB - 30GB (in increments of 1GB) |
+
+### depends_on
+
+`depends_on` takes an array of references to other services within the component. These dictate startup order: at deployment time, services will not be started until any of their listed dependents have already started.
+
+```yaml
+services:
+  app: # here, app will not start until my-api and db have started
+    depends_on:
+      - my-api
+      - db
+    interfaces:
+      postgres: 5432
+  my-api: # here, my-api will not start until db has started
+    depends_on:
+      - db
+    interfaces:
+      admin: 8081
+  db:
+    interfaces:
+      postgres: 5432
+```
+
+Note: Circular dependencies and self-references are detected and rejected at component registration time.
