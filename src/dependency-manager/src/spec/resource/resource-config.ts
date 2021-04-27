@@ -36,4 +36,6 @@ export interface ResourceConfig extends ConfigSpec {
   getMemory(): string | undefined;
 
   getDeploy(): DeploySpec | undefined;
+
+  getDependsOn(): string[];
 }

@@ -61,6 +61,7 @@ describe('sidecar spec v1', () => {
             interfaces: {
               main: 8080
             },
+            depends_on: ['db'],
             environment: {
               DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
               DB_HOST: '${{ services.db.interfaces.postgres.host }}',
@@ -194,6 +195,7 @@ describe('sidecar spec v1', () => {
             interfaces: {
               main: 8080
             },
+            depends_on: ['db'],
             environment: {
               DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
               DB_HOST: '${{ services.db.interfaces.postgres.host }}',
@@ -274,7 +276,6 @@ describe('sidecar spec v1', () => {
       ]);
 
       const expected_leaf_compose: DockerService = {
-        depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: '127.0.0.1',
           LEAF_PORT: '12345',
@@ -319,7 +320,6 @@ describe('sidecar spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -355,7 +355,6 @@ describe('sidecar spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -432,7 +431,6 @@ describe('sidecar spec v1', () => {
       "build": {
         "context": path.resolve("/stack")
       },
-      "restart": "always"
     };
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });

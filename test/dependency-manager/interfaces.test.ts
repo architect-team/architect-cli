@@ -59,6 +59,7 @@ describe('interfaces spec v1', () => {
             interfaces: {
               main: 8080
             },
+            depends_on: ['db'],
             environment: {
               DB_PROTOCOL: '${{ services.db.interfaces.postgres.protocol }}',
               DB_HOST: '${{ services.db.interfaces.postgres.host }}',
@@ -187,6 +188,7 @@ describe('interfaces spec v1', () => {
           },
           api: {
             image: 'api:latest',
+            depends_on: ['db'],
             interfaces: {
               main: 8080
             },
@@ -269,7 +271,6 @@ describe('interfaces spec v1', () => {
       ]);
 
       const expected_leaf_compose: DockerService = {
-        depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: leaf_api_ref,
           LEAF_PORT: '8080',
@@ -314,7 +315,6 @@ describe('interfaces spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -350,7 +350,6 @@ describe('interfaces spec v1', () => {
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
-        restart: 'always',
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
@@ -426,7 +425,6 @@ describe('interfaces spec v1', () => {
       "build": {
         "context": path.resolve("/stack")
       },
-      "restart": "always"
     };
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });

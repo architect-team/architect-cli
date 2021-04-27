@@ -130,9 +130,6 @@ describe('interpolation spec v1', () => {
           'build': {
             'context': path.resolve('/stack')
           },
-          'depends_on': [
-            web_ref
-          ]
         },
       },
       'version': '3',
@@ -177,7 +174,6 @@ describe('interpolation spec v1', () => {
       'ports': [
         '50001:8080'
       ],
-      'restart': 'always',
       'build': {
         'context': path.resolve('/stack')
       }
@@ -193,7 +189,6 @@ describe('interpolation spec v1', () => {
       'build': {
         'context': path.resolve('/stack')
       },
-      depends_on: [web_ref],
       external_links: [
         'gateway:public.arc.localhost'
       ],

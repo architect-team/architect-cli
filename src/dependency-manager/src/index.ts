@@ -18,4 +18,5 @@ export * from './spec/service/service-config';
 export * from './spec/task/task-config';
 export * from './utils/refs';
 export * from './utils/slugs';
+export * from './utils/validation';
 

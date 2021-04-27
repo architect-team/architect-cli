@@ -184,6 +184,7 @@ describe('components spec v1', function () {
             interfaces: {
               main: 8080
             },
+            depends_on: ['api'],
             environment: {
               API_ADDR: '${{ services.api.interfaces.main.url }}'
             }
@@ -192,6 +193,7 @@ describe('components spec v1', function () {
             interfaces: {
               main: 8080
             },
+            depends_on: ['db'],
             environment: {
               DB_ADDR: '${{ services.db.interfaces.main.url }}'
             }

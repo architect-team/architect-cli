@@ -113,6 +113,217 @@ describe('validation spec v1', () => {
         }
       })
     });
+
+    it('valid service depends_on', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateful-app:
+          depends_on:
+            - backend
+          interfaces:
+            main: 8080
+        backend:
+          interfaces:
+            main: 5432
+      interfaces:
+        frontend: \${{ services['stateful-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+    });
+
+    it('valid task depends_on', async () => {
+      const component_config = `
+      name: test/component
+      tasks:
+        some-task:
+          depends_on:
+            - stateful-app
+          schedule: "*/5 * * * ?"
+          image: ellerbrock/alpine-bash-curl-ssl
+      services:
+        stateful-app:
+          interfaces:
+            main: 8080
+        backend:
+          interfaces:
+            main: 5432
+      interfaces:
+        frontend: \${{ services['stateful-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+    });
+
+    it('invalid task depends_on', async () => {
+      const component_config = `
+      name: test/component
+      tasks:
+        some-task:
+          schedule: "*/5 * * * ?"
+          image: ellerbrock/alpine-bash-curl-ssl
+      services:
+        stateless-app:
+          depends_on:
+            - some-task
+          interfaces:
+            main: 8080
+      interfaces:
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "no-task-dependency": "stateless-app.depends_on[some-task] must refer to a service, not a task",
+          "value": "stateless-app",
+          "line": 9,
+          "column": 21
+        }
+      })
+    });
+
+    it('invalid service self reference', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          depends_on:
+            - stateless-app
+          interfaces:
+            main: 8080
+      interfaces:
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "circular-reference": "stateless-app.depends_on must not contain a circular reference",
+          "value": "stateless-app",
+          "line": 5,
+          "column": 21
+        }
+      })
+    });
+
+    it('invalid service reference', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          depends_on:
+            - non-existant
+          interfaces:
+            main: 8080
+      interfaces:
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "invalid-reference": "stateless-app.depends_on[non-existant] must refer to a valid service",
+          "value": "stateless-app",
+          "line": 5,
+          "column": 21
+        }
+      })
+    });
+
+    it('invalid circular service reference', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateful-app:
+          depends_on:
+            - backend
+          interfaces:
+            main: 8080
+        backend:
+          depends_on:
+            - stateful-app
+          interfaces:
+            main: 5432
+      interfaces:
+        frontend: \${{ services['stateful-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "circular-reference": "backend.depends_on must not contain a circular reference",
+          "value": "backend",
+          "line": 5,
+          "column": 21
+        }
+      })
+    });
+
+    it('invalid deep circular service reference', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateful-app:
+          depends_on:
+            - api
+          interfaces:
+            main: 8080
+        api:
+          depends_on:
+            - backend
+          interfaces:
+            main: 8081
+        backend:
+          depends_on:
+            - stateful-app
+          interfaces:
+            main: 5432
+      interfaces:
+        frontend: \${{ services['stateful-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "circular-reference": "backend.depends_on must not contain a circular reference",
+          "value": "backend",
+          "line": 5,
+          "column": 21
+        }
+      })
+    });
   })
 
   // Component Validation

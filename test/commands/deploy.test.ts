@@ -243,6 +243,7 @@ describe('local deploy environment', function () {
         "interfaces": {
           "main": "3000"
         },
+        "depends_on": ["my-demo-db"],
         "environment": {
           "DATABASE_HOST": "${{ services.my-demo-db.interfaces.postgres.host }}",
           "DATABASE_PORT": "${{ services.my-demo-db.interfaces.postgres.port }}",
@@ -329,7 +330,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50000:3000"
         ],
-        "restart": "always",
         "depends_on": [
           seed_db_ref
         ],
@@ -382,10 +382,6 @@ describe('local deploy environment', function () {
           "80:80",
           "8080:8080"
         ],
-        "depends_on": [
-          seed_app_ref,
-        ],
-        "restart": "always",
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock"
         ]
@@ -402,7 +398,6 @@ describe('local deploy environment', function () {
         "ports": [
           "50000:3000",
         ],
-        "restart": "always",
         "environment": {},
         "labels": [
           "traefik.enable=true",
@@ -428,10 +423,6 @@ describe('local deploy environment', function () {
           "80:80",
           "8080:8080"
         ],
-        "depends_on": [
-          hello_api_ref,
-        ],
-        "restart": "always",
         "volumes": [
           "/var/run/docker.sock:/var/run/docker.sock"
         ]
