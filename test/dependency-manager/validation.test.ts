@@ -133,6 +133,63 @@ describe('validation spec v1', () => {
       await ComponentConfigBuilder.buildFromPath('/architect.yml')
     });
 
+    it('valid task depends_on', async () => {
+      const component_config = `
+      name: test/component
+      tasks:
+        some-task:
+          depends_on:
+            - stateful-app
+          schedule: "*/5 * * * ?"
+          image: ellerbrock/alpine-bash-curl-ssl
+      services:
+        stateful-app:
+          interfaces:
+            main: 8080
+        backend:
+          interfaces:
+            main: 5432
+      interfaces:
+        frontend: \${{ services['stateful-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+    });
+
+    it('invalid task depends_on', async () => {
+      const component_config = `
+      name: test/component
+      tasks:
+        some-task:
+          schedule: "*/5 * * * ?"
+          image: ellerbrock/alpine-bash-curl-ssl
+      services:
+        stateless-app:
+          depends_on:
+            - some-task
+          interfaces:
+            main: 8080
+      interfaces:
+        frontend: \${{ services['stateless-app'].interfaces.main.url }}
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let validation_err;
+      try {
+        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "depends_on": {
+          "no-task-dependency": "stateless-app.depends_on[some-task] must refer to a service, not a task",
+          "value": "stateless-app",
+          "line": 9,
+          "column": 21
+        }
+      })
+    });
+
     it('invalid service self reference', async () => {
       const component_config = `
       name: test/component
@@ -155,7 +212,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "depends_on": {
-          "circular-reference": "services.stateless-app.depends_on must not contain a circular reference",
+          "circular-reference": "stateless-app.depends_on must not contain a circular reference",
           "value": "stateless-app",
           "line": 5,
           "column": 21
@@ -185,7 +242,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "depends_on": {
-          "invalid-reference": "services.stateless-app.depends_on[non-existant] must refer to a valid service",
+          "invalid-reference": "stateless-app.depends_on[non-existant] must refer to a valid service",
           "value": "stateless-app",
           "line": 5,
           "column": 21
@@ -220,7 +277,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "depends_on": {
-          "circular-reference": "services.backend.depends_on must not contain a circular reference",
+          "circular-reference": "backend.depends_on must not contain a circular reference",
           "value": "backend",
           "line": 5,
           "column": 21
@@ -260,7 +317,7 @@ describe('validation spec v1', () => {
       expect(validation_err).instanceOf(ValidationErrors)
       expect(validation_err.errors).to.deep.eq({
         "depends_on": {
-          "circular-reference": "services.backend.depends_on must not contain a circular reference",
+          "circular-reference": "backend.depends_on must not contain a circular reference",
           "value": "backend",
           "line": 5,
           "column": 21

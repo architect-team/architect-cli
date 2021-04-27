@@ -125,10 +125,7 @@ export class DockerComposeUtils {
           compose.services[safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
         }
 
-        const depends_on = graph.nodes
-          .filter(n => n.instance_id === node.instance_id && node.config.getDependsOn().includes((n as ServiceNode | TaskNode)?.config?.getName()))
-          .filter(n => n instanceof ServiceNode)
-          .map(n => n.ref);
+        const depends_on = graph.getExplicitDependsOn(node).map(n => n.ref);
 
         if (depends_on?.length) {
           compose.services[safe_ref].depends_on = depends_on;

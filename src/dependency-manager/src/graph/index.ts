@@ -101,7 +101,7 @@ export default class DependencyGraph {
     return node;
   }
 
-  getNodeDependencies(node: DependencyNode): DependencyNode[] {
+  getDownstreamNodes(node: DependencyNode): DependencyNode[] {
     const nodes: Map<string, DependencyNode> = new Map();
 
     for (const edge of this.edges) {
@@ -119,8 +119,8 @@ export default class DependencyGraph {
       const ref = queue.shift();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const node = this.getNodeByRef(ref!);
-      const dependents = this.getDependentNodes(node).filter(n => !queue.includes(n.ref));
-      const dependencies = this.getNodeDependencies(node);
+      const dependents = this.getUpstreamNodes(node).filter(n => !queue.includes(n.ref));
+      const dependencies = this.getDownstreamNodes(node);
 
       if (dependents.length === 0 || node_ref === ref) {
         this.removeNodeByRef(node.ref);
@@ -136,7 +136,7 @@ export default class DependencyGraph {
     }
   }
 
-  getDependentNodes(node: DependencyNode) {
+  getUpstreamNodes(node: DependencyNode) {
     const nodes = new Map();
 
     for (const edge of this.edges) {
@@ -160,5 +160,12 @@ export default class DependencyGraph {
     } else {
       return [node_to, to_interface];
     }
+  }
+
+  getExplicitDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
+    return this.nodes
+      .filter(n => n.instance_id === node.instance_id && node.config.getDependsOn().includes((n as ServiceNode | TaskNode)?.config?.getName()))
+      .filter(n => n instanceof ServiceNode)
+      .map(n => n as ServiceNode);
   }
 }

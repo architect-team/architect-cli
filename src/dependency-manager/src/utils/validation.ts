@@ -194,15 +194,36 @@ export const validateDependsOn = async <T extends ValidatableConfig>(
     depends_on_map[name] = depends_on;
   }
 
+  const task_map: { [name: string]: boolean } = {};
+  for (const [name, service] of Object.entries(target.getTasks())) {
+    const depends_on = service.getDependsOn();
+    depends_on_map[name] = depends_on;
+    task_map[name] = true;
+  }
+
   for (const [name, dependencies] of Object.entries(depends_on_map)) {
     for (const dependency of dependencies) {
+
+      if (task_map[dependency]) {
+        const error = new ValidationError();
+        error.property = 'depends_on';
+        error.target = target;
+        error.value = name;
+        error.constraints = {
+          'no-task-dependency': `${name}.depends_on[${dependency}] must refer to a service, not a task`,
+        };
+        error.children = [];
+
+        errors.push(error);
+      }
+
       if (!depends_on_map[dependency]) {
         const error = new ValidationError();
         error.property = 'depends_on';
         error.target = target;
         error.value = name;
         error.constraints = {
-          'invalid-reference': `services.${name}.depends_on[${dependency}] must refer to a valid service`,
+          'invalid-reference': `${name}.depends_on[${dependency}] must refer to a valid service`,
         };
         error.children = [];
 
@@ -215,7 +236,7 @@ export const validateDependsOn = async <T extends ValidatableConfig>(
       error.target = target;
       error.value = name;
       error.constraints = {
-        'circular-reference': `services.${name}.depends_on must not contain a circular reference`,
+        'circular-reference': `${name}.depends_on must not contain a circular reference`,
       };
       error.children = [];
 
