@@ -12,7 +12,6 @@ import { ComponentConfig } from './spec/component/component-config';
 import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
-import { Refs } from './utils/refs';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 import { validateInterpolation } from './utils/validation';
 
@@ -29,7 +28,6 @@ export default abstract class DependencyManager {
         local_path: component.getLocalPath(),
         artifact_image: component.getArtifactImage(),
       });
-      node.instance_id = `${Refs.safeRef(component.getRef())}-component`;
       nodes.push(node);
     }
 
@@ -40,7 +38,6 @@ export default abstract class DependencyManager {
         config: task_config,
         local_path: component.getLocalPath(),
       });
-      node.instance_id = `${Refs.safeRef(component.getRef())}-component`;
       nodes.push(node);
     }
     return nodes;
