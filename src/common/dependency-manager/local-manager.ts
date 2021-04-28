@@ -1,6 +1,6 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import DependencyManager, { ComponentVersionSlugUtils, DependencyNode } from '../../dependency-manager/src';
+import DependencyManager, { ComponentVersionSlugUtils, DependencyNode, Refs } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import DependencyEdge from '../../dependency-manager/src/graph/edge';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -43,6 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
 
       for (const node of nodes) {
+        node.instance_id = `${Refs.safeRef(component_config.getRef())}-component`;
         graph.addNode(node);
       }
     }
