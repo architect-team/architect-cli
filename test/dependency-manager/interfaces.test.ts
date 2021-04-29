@@ -271,6 +271,7 @@ describe('interfaces spec v1', () => {
       ]);
 
       const expected_leaf_compose: DockerService = {
+        depends_on: [leaf_api_ref],
         environment: {
           LEAF_HOST: leaf_api_ref,
           LEAF_PORT: '8080',
