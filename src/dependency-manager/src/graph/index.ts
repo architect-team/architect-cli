@@ -187,11 +187,11 @@ export default class DependencyGraph {
     for (const i of interfaces) {
       const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
       for (const i_downstream of interface_downstreams) {
-        downstreams = downstreams.concat(i_downstream)
+        downstreams = downstreams.concat(i_downstream);
       }
     }
     downstreams = downstreams.filter((node, index, self) => self.findIndex(n => n.ref === node.ref) === index); // dedupe
-    return downstreams.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode)
+    return downstreams.filter(n => n instanceof ServiceNode).map(n => n as ServiceNode);
   }
 
   private isPartOfCircularDependency(search_node: ServiceNode | TaskNode, current_node?: ServiceNode | TaskNode, seen_nodes: string[] = []) {
