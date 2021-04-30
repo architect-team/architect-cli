@@ -83,6 +83,9 @@ interfaces:
 
     # (optional) A basic auth password required to access the interface
     password: ${{ parameters.API_PASSWORD }}
+
+    # (optional) Requests made to this interface, if made external, will use sticky sessions
+    sticky: true
 ```
 
 Since many services use http for traffic, interfaces also support a simple short-hand for specifying the service port:
