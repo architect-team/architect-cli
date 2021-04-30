@@ -84,7 +84,7 @@ interfaces:
     # (optional) A basic auth password required to access the interface
     password: ${{ parameters.API_PASSWORD }}
 
-    # (optional) Requests made to this interface, if made external, will use sticky sessions
+    # (optional) Requests made to this interface, if made external, will use sticky sessions (defaults to false)
     sticky: true
 ```
 
