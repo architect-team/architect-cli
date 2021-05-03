@@ -39,7 +39,7 @@ export default class AppService {
       },
     });
 
-    this.auth = new AuthClient(this.config, this._api);
+    this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
 
     this.linkedComponents = this.loadLinkedComponents(config_dir);
   }
@@ -92,6 +92,10 @@ export default class AppService {
 
   saveConfig() {
     this.config.save();
+  }
+
+  async checkLogin() {
+    return this.api.get('/users/me');
   }
 
   get api(): AxiosInstance {

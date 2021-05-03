@@ -1,5 +1,4 @@
 import { AuthenticationClient } from 'auth0';
-import { AxiosInstance } from 'axios';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
 import { Auth0Shim } from './auth0_shim';
@@ -24,13 +23,13 @@ export default class AuthClient {
   auth_results?: AuthResults;
   callback_server: CallbackServer;
   auth0_transaction: any;
-  architect_api: AxiosInstance;
+  checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
   public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, architect_api: AxiosInstance) {
+  constructor(config: AppConfig, checkLogin: Function) {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.auth0 = new AuthenticationClient({
@@ -38,7 +37,7 @@ export default class AuthClient {
       clientId: AuthClient.CLIENT_ID,
     });
     this.callback_server = new CallbackServer();
-    this.architect_api = architect_api;
+    this.checkLogin = checkLogin;
   }
 
   async init() {
@@ -69,35 +68,16 @@ export default class AuthClient {
     }
   }
 
-  async loginFromCli(email: string, password: string) {
+  async loginFromCli(email: string, token: string) {
     await this.logout();
 
-    let auth0_results;
-    try {
-      // TODO make sure mfa flow error is good
-      const { data } = await this.architect_api.post('/oauth/token', { email: email, token: password });
-      auth0_results = data;
-    } catch (err) {
-      try {
-        auth0_results = await this.auth0.passwordGrant({
-          realm: 'Username-Password-Authentication',
-          username: email,
-          password: password,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-          // @ts-ignore: the auth0 library is not properly typed -_-
-          audience: AuthClient.AUDIENCE,
-          scope: AuthClient.SCOPE,
-        }) as AuthResults;
-      } catch (err) {
-        if (err.name === 'mfa_required') {
-          throw new Error('Multifactor authentication required. Use personal access tokens when in non-interactive flows.');
-        } else {
-          throw err;
-        }
-      }
-    }
+    await this.setToken(email, {
+      token_type: 'Basic',
+      access_token: Buffer.from(`${email}:${token}`).toString('base64'),
+    });
 
-    await this.setToken(email, auth0_results);
+    await this.checkLogin();
+
     const new_token = await this.dockerLogin(email);
     if (!new_token) {
       throw new Error('Login failed');
@@ -172,8 +152,7 @@ export default class AuthClient {
 
     const token = JSON.parse(credential.password) as AuthResults;
     if (!token.refresh_token) {
-      await this.logout();
-      throw new LoginRequiredError();
+      return; // Don't refresh if a token doesn't exist
     }
 
     this.auth_results = await this.performOauthRefresh(token.refresh_token) as AuthResults;
@@ -228,9 +207,7 @@ export default class AuthClient {
     return auth_result;
   }
 
-  private async performOauthRefresh(
-    refresh_token: string
-  ): Promise<any> {
+  private async performOauthRefresh(refresh_token: string): Promise<any> {
     const tokenOptions = {
       baseUrl: this.config.oauth_domain,
       grant_type: 'refresh_token',
