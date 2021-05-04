@@ -112,19 +112,21 @@ export default class LocalDependencyManager extends DependencyManager {
       config.setInterface(interface_to, interface_obj);
     }
 
-    // Set debug values
-    for (const [sk, sv] of Object.entries(config.getServices())) {
-      // If debug is enabled merge in debug options ex. debug.command -> command
-      const debug_options = sv.getDebugOptions();
-      if (debug_options) {
-        config.setService(sk, sv.merge(debug_options));
+    if (config.getLocalPath()) {
+      // Set debug values
+      for (const [sk, sv] of Object.entries(config.getServices())) {
+        // If debug is enabled merge in debug options ex. debug.command -> command
+        const debug_options = sv.getDebugOptions();
+        if (debug_options) {
+          config.setService(sk, sv.merge(debug_options));
+        }
       }
-    }
-    for (const [tk, tv] of Object.entries(config.getTasks())) {
-      // If debug is enabled merge in debug options ex. debug.command -> command
-      const debug_options = tv.getDebugOptions();
-      if (debug_options) {
-        config.setTask(tk, tv.merge(debug_options));
+      for (const [tk, tv] of Object.entries(config.getTasks())) {
+        // If debug is enabled merge in debug options ex. debug.command -> command
+        const debug_options = tv.getDebugOptions();
+        if (debug_options) {
+          config.setTask(tk, tv.merge(debug_options));
+        }
       }
     }
 

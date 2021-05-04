@@ -41,12 +41,6 @@ describe('config spec v1', () => {
       interfaces:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
-    const environment_yml = `
-      interfaces:
-        frontend: \${{ components.test/component.interfaces.frontend.url }}
-      components:
-        test/component: file:./architect.yml
-      `
     mock_fs({
       '/architect.yml': component_yml,
     });
@@ -77,13 +71,6 @@ describe('config spec v1', () => {
           interfaces:
             main: 8080
       interfaces: *frontend_interface_ref
-      `
-    const environment_yml = `
-      .frontend_interface: &frontend_interface_ref
-        frontend: \${{ components.test/component.interfaces.frontend.url }}
-      interfaces: *frontend_interface_ref
-      components:
-        test/component: file:./architect.yml
       `
     mock_fs({
       '/architect.yml': component_yml,
