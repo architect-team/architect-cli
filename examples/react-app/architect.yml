@@ -38,6 +38,8 @@ services:
       POSTGRES_DB: ${{ parameters.api_db_name }}
 
   api:
+    depends_on:
+      - api-db
     build:
       context: ./backend
     interfaces:
