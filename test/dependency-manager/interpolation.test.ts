@@ -211,7 +211,8 @@ describe('interpolation spec v1', () => {
           api: 8081
         environment:
           INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
-          EXTERNAL_HOST: \${{ environment.ingresses['examples/backend']['main'].url }}
+          EXTERNAL_HOST: \${{ ingresses['main'].url }}
+          EXTERNAL_HOST2: \${{ environment.ingresses['examples/backend']['main'].url }}
     `
     const frontend_config = `
     name: examples/frontend
@@ -224,7 +225,8 @@ describe('interpolation spec v1', () => {
         interfaces:
           app: 8080
         environment:
-          EXTERNAL_API_HOST: \${{ environment.ingresses['examples/backend']['main'].url }}
+          EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_HOST2: \${{ environment.ingresses['examples/backend']['main'].url }}
           INTERNAL_APP_URL: \${{ interfaces.main.url }}
     `
 
@@ -246,13 +248,15 @@ describe('interpolation spec v1', () => {
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${backend_ref}:8081`,
-      EXTERNAL_HOST: backend_external_url
+      EXTERNAL_HOST: backend_external_url,
+      EXTERNAL_HOST2: backend_external_url
     })
     const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
-      EXTERNAL_API_HOST: backend_external_url,
       INTERNAL_APP_URL: `http://${frontend_ref}:8080`,
+      EXTERNAL_API_HOST: backend_external_url,
+      EXTERNAL_API_HOST2: backend_external_url
     })
   });
 

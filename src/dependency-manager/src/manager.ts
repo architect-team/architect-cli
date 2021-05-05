@@ -240,23 +240,52 @@ export default abstract class DependencyManager {
       dependencies_map[dependency.getRef()] = dependency;
     }
 
+    const ingresses: Dictionary<string> = {};
     let matches;
-    const ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-    while ((matches = ingresses_regex.exec(component_string)) != null) {
+    // Deprecated environment.ingresses
+    const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+    while ((matches = environment_ingresses_regex.exec(component_string)) != null) {
       const [_, dep_name, interface_name] = matches;
+      ingresses[dep_name] = interface_name;
+    }
+    const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.ingresses\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+    while ((matches = dependencies_ingresses_regex.exec(component_string)) != null) {
+      const [_, dep_name, interface_name] = matches;
+      ingresses[dep_name] = interface_name;
+    }
+    const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+    while ((matches = ingresses_regex.exec(component_string)) != null) {
+      const [_, interface_name] = matches;
+      ingresses[initial_component.getName()] = interface_name;
+    }
 
+    for (const [dep_name, interface_name] of Object.entries(ingresses)) {
       if (!context.environment.ingresses[dep_name]) {
         context.environment.ingresses[dep_name] = {};
       }
 
+      let ingresses_context;
       let dep_component;
 
       if (dep_name === initial_component.getName()) {
         dep_component = initial_component;
+
+        if (!context.ingresses) {
+          context.ingresses = {};
+        }
+        ingresses_context = context.ingresses;
       } else {
         const dep_tag = component.getDependencies()[dep_name];
         if (!dep_tag) { continue; }
         dep_component = dependencies_map[`${dep_name}:${dep_tag}`];
+
+        if (!context.dependencies[dep_name]) {
+          context.dependencies[dep_name] = {};
+        }
+        if (!context.dependencies[dep_name].ingresses) {
+          context.dependencies[dep_name].ingresses = {};
+        }
+        ingresses_context = context.dependencies[dep_name].ingresses;
       }
       if (!dep_component) {
         context.environment.ingresses[dep_name][interface_name] = {
@@ -288,7 +317,8 @@ export default abstract class DependencyManager {
       };
       external_interface.url = this.generateUrl(external_interface);
 
-      context.environment.ingresses[dep_name][interface_name] = external_interface;
+      context.environment.ingresses[dep_name][interface_name] = external_interface; // Deprecated environment.ingresses
+      ingresses_context[interface_name] = external_interface;
     }
 
     let proxy_port = 12345;

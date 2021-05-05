@@ -672,7 +672,7 @@ describe('local deploy environment', function () {
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(ComponentConfigBuilder, 'buildFromPath', () => {
         const config = getHelloComponentConfig();
-        config.services.api.environment.SELF_URL = `\${{ environment.ingresses['examples/hello-world']['hello'].url }}`
+        config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
         return ComponentConfigBuilder.buildFromJSON(config);
       })
       .command(['deploy', '-l', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])

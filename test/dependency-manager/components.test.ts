@@ -651,7 +651,8 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              EXTERNAL_APP_URL: "${{ environment.ingresses['architect/cloud']['api-interface'].url }}",
+              EXTERNAL_APP_URL: "${{ ingresses['api-interface'].url }}",
+              EXTERNAL_APP_URL2: "${{ environment.ingresses['architect/cloud']['api-interface'].url }}",
             }
           }
         },
@@ -676,6 +677,7 @@ describe('components spec v1', function () {
       expect(ingress_edge!.interfaces_map).to.deep.equal({ api: 'api-interface' });
       const cloud_api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL']).eq('http://api.arc.localhost');
+      expect(cloud_api_node.config.getEnvironmentVariables()['EXTERNAL_APP_URL2']).eq('http://api.arc.localhost');
     });
 
     it('component with deep dependencies', async () => {

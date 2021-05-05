@@ -172,7 +172,8 @@ describe('interfaces spec v1', () => {
       leaf_component.interfaces = {
         api: '${{ services.api.interfaces.main.url }}',
       };
-      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ environment.ingresses['test/leaf']['api'].url }}";
+      branch_component.services.api.environment.EXTERNAL_INTERFACE = "${{ dependencies['test/leaf'].ingresses['api'].url }}";
+      branch_component.services.api.environment.EXTERNAL_INTERFACE2 = "${{ environment.ingresses['test/leaf']['api'].url }}";
 
       const other_leaf_component = {
         name: 'test/other-leaf',
@@ -258,6 +259,7 @@ describe('interfaces spec v1', () => {
         'LEAF_PORT=8080',
         `LEAF_URL=http://${leaf_api_ref}:8080`,
         'EXTERNAL_INTERFACE=http://public.arc.localhost',
+        'EXTERNAL_INTERFACE2=http://public.arc.localhost',
       ])
 
       const template = await DockerComposeUtils.generate(graph);
@@ -277,7 +279,8 @@ describe('interfaces spec v1', () => {
           LEAF_PORT: '8080',
           LEAF_PROTOCOL: 'http',
           LEAF_URL: `http://${leaf_api_ref}:8080`,
-          EXTERNAL_INTERFACE: 'http://public.arc.localhost'
+          EXTERNAL_INTERFACE: 'http://public.arc.localhost',
+          EXTERNAL_INTERFACE2: 'http://public.arc.localhost'
         },
         image: 'branch:latest',
         external_links: [
@@ -443,7 +446,8 @@ describe('interfaces spec v1', () => {
             API_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.public.url }}
             ADMIN_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.admin.url }}
             PRIVATE_ADDR: \${{ dependencies['voic/product-catalog'].interfaces.private.url }}
-            EXTERNAL_API_ADDR: \${{ environment.ingresses['voic/product-catalog']['public'].url }}
+            EXTERNAL_API_ADDR: \${{ dependencies['voic/product-catalog'].ingresses['public'].url }}
+            EXTERNAL_API_ADDR2: \${{ environment.ingresses['voic/product-catalog']['public'].url }}
       `;
 
     const product_catalog_config = `
@@ -506,6 +510,7 @@ describe('interfaces spec v1', () => {
       API_ADDR: `http://${api_ref}:8080`,
       PRIVATE_ADDR: `http://${api_ref}:8082`,
       EXTERNAL_API_ADDR: 'http://public2.arc.localhost',
+      EXTERNAL_API_ADDR2: 'http://public2.arc.localhost',
     });
   });
 

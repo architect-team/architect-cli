@@ -325,7 +325,8 @@ describe('external spec v1', () => {
           interfaces:
             api: 8080
           environment:
-            SELF_ADDR: \${{ environment.ingresses['architect/component'].app.url }}
+            SELF_ADDR: \${{ ingresses.app.url }}
+            SELF_ADDR2: \${{ environment.ingresses['architect/component'].app.url }}
       interfaces:
         app: \${{ services.app.interfaces.api.url }}
     `;
@@ -346,6 +347,7 @@ describe('external spec v1', () => {
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       SELF_ADDR: `http://${app_ref}.arc.localhost`,
+      SELF_ADDR2: `http://${app_ref}.arc.localhost`,
     });
   });
 
@@ -389,7 +391,7 @@ describe('external spec v1', () => {
     // No host override
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/component:latest')
-    ], { '*': { MYSQL_DATABASE: 'test' }});
+    ], { '*': { MYSQL_DATABASE: 'test' } });
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
@@ -399,7 +401,7 @@ describe('external spec v1', () => {
     // Host override
     const graph2 = await manager.getGraph([
       await manager.loadComponentConfig('architect/component:latest')
-    ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' }});
+    ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' } });
     const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node2.config.getEnvironmentVariables()).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
