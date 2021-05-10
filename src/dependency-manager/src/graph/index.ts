@@ -165,7 +165,8 @@ export default class DependencyGraph {
   getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
     const explicit_depends_on = this.getExplicitDependsOn(node);
     const cross_component_depends_on = this.getInterComponentDependsOn(node);
-    return explicit_depends_on.concat(cross_component_depends_on);
+    const all_depends_on = explicit_depends_on.concat(cross_component_depends_on);
+    return all_depends_on.filter(n => !n.is_external);
   }
 
   private getExplicitDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {
