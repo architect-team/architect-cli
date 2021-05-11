@@ -102,52 +102,9 @@ export default abstract class DependencyManager {
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
       const from = component.getNodeRef(service_name);
       const from_node = graph.getNodeByRef(from);
-      if (from_node.is_external) {
-        continue;
-      }
 
       const service_string = serialize(service_config);
-
-      // TODO:ingresses only run regex once
-
-      // Add edges between services inside the component and dependencies
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const service_edge_map: Dictionary<Dictionary<string>> = {};
       let matches;
-      while ((matches = services_regex.exec(service_string)) != null) {
-        const [_, service_name, interface_name] = matches;
-        const to = component.getNodeRef(service_name);
-        if (to === from) continue;
-        if (!service_edge_map[to]) service_edge_map[to] = {};
-        service_edge_map[to][`service->${interface_name}`] = interface_name;
-      }
-      for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
-        graph.addEdge(edge);
-      }
-
-      // Add edges between services and dependencies inside the component
-      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = dependencies_regex.exec(service_string)) != null) {
-        const [_, dep_name, interface_name] = matches;
-        const dep_tag = component.getDependencies()[dep_name];
-
-        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
-        if (!dependency) continue;
-        const to = dependency.getInterfacesRef();
-
-        if (!graph.nodes_map.has(to)) continue;
-
-        if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to][`service->${interface_name}`] = interface_name;
-      }
-
-
-      for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
-        graph.addEdge(edge);
-      }
 
       // Start Ingress Edges
       const ingresses: [ComponentConfig, string][] = [];
@@ -203,6 +160,50 @@ export default abstract class DependencyManager {
         }
       }
       // End Ingress Edges
+
+      if (from_node.is_external) {
+        continue;
+      }
+
+      // TODO:ingresses only run regex once
+
+      // Add edges between services inside the component and dependencies
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const service_edge_map: Dictionary<Dictionary<string>> = {};
+      while ((matches = services_regex.exec(service_string)) != null) {
+        const [_, service_name, interface_name] = matches;
+        const to = component.getNodeRef(service_name);
+        if (to === from) continue;
+        if (!service_edge_map[to]) service_edge_map[to] = {};
+        service_edge_map[to][`service->${interface_name}`] = interface_name;
+      }
+      for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+        const edge = new ServiceEdge(from, to, interfaces_map);
+        graph.addEdge(edge);
+      }
+
+      // Add edges between services and dependencies inside the component
+      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const dep_edge_map: Dictionary<Dictionary<string>> = {};
+      while ((matches = dependencies_regex.exec(service_string)) != null) {
+        const [_, dep_name, interface_name] = matches;
+        const dep_tag = component.getDependencies()[dep_name];
+
+        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+        if (!dependency) continue;
+        const to = dependency.getInterfacesRef();
+
+        if (!graph.nodes_map.has(to)) continue;
+
+        if (!dep_edge_map[to]) dep_edge_map[to] = {};
+        dep_edge_map[to][`service->${interface_name}`] = interface_name;
+      }
+
+
+      for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
+        const edge = new ServiceEdge(from, to, interfaces_map);
+        graph.addEdge(edge);
+      }
     }
 
     // Add edges between services and the component's interfaces node
@@ -320,8 +321,10 @@ export default abstract class DependencyManager {
         subdomain: interface_from,
         dns_zone: external_host,
       };
-      external_interface.url = this.generateUrl(external_interface);
     }
+    external_interface.username = '';
+    external_interface.password = '';
+    external_interface.url = this.generateUrl(external_interface);
     return external_interface;
   }
 

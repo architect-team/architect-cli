@@ -342,22 +342,42 @@ describe('interpolation spec v1', () => {
           EXTERNAL_ADDR: \${{ ingresses.main.url }}
           EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
     `
+    const frontend_config3 = `
+    name: examples/frontend3
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app:
+            protocol: https
+            host: app.architect.io
+            port: 443
+        environment:
+          EXTERNAL_ADDR: \${{ ingresses.main.url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+    `
 
     mock_fs({
       '/backend/architect.yml': backend_config,
       '/frontend/architect.yml': frontend_config,
       '/frontend2/architect.yml': frontend_config2,
+      '/frontend3/architect.yml': frontend_config3,
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/backend': '/backend/architect.yml',
       'examples/frontend': '/frontend/architect.yml',
-      'examples/frontend2': '/frontend2/architect.yml'
+      'examples/frontend2': '/frontend2/architect.yml',
+      'examples/frontend3': '/frontend3/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/backend'),
       await manager.loadComponentConfig('examples/frontend', { frontend: 'main' }),
-      await manager.loadComponentConfig('examples/frontend2')
+      await manager.loadComponentConfig('examples/frontend2'),
+      await manager.loadComponentConfig('examples/frontend3')
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
@@ -366,7 +386,7 @@ describe('interpolation spec v1', () => {
     const frontend2_interface_ref = ComponentConfig.getNodeRef('examples/frontend2/main:latest');
 
     expect(template.services[backend_ref].environment).to.deep.eq({
-      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://${frontend2_interface_ref}.arc.localhost`]),
+      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://${frontend2_interface_ref}.arc.localhost`, 'https://app.architect.io']),
       CORS2: JSON.stringify(['http://frontend.arc.localhost'])
     })
   });
