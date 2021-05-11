@@ -185,7 +185,6 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
       if (node_from instanceof InterfacesNode) continue;
-      const node_from_safe_ref = node_from.ref;
 
       for (const interface_name of Object.keys(edge.interfaces_map)) {
         const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);

@@ -148,6 +148,26 @@ export default class Deploy extends DeployCommand {
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
 
+    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, yaml.safeDump(compose));
+    this.log(`Wrote docker-compose file to: ${compose_file}`);
+
+    if (flags.build_parallel) {
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
+    } else {
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
+    }
+
+    console.clear();
+
+    this.log('Building containers...', chalk.green('done'));
+    this.log('');
+
+    this.log('Once the containers are running they will be accessible via the following urls:');
+
     const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
     if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
@@ -170,22 +190,15 @@ export default class Deploy extends DeployCommand {
 
     for (const svc_name of Object.keys(compose.services)) {
       for (const port_pair of compose.services[svc_name].ports || []) {
-        const exposed_port = port_pair && (port_pair as string).split(':')[0];
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
+        const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
+        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
-    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
-    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+    this.log('');
+    this.log('Starting containers...');
+    this.log('');
 
-    await fs.ensureFile(compose_file);
-    await fs.writeFile(compose_file, yaml.safeDump(compose));
-    this.log(`Wrote docker-compose file to: ${compose_file}`);
     const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit', '--timeout', '0'];
-    if (flags.build_parallel) {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
-    } else {
-      compose_args.push('--build');
-    }
     if (flags.detached) {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode

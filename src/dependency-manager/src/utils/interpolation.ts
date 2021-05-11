@@ -56,6 +56,7 @@ Mustache.escape = function (text) {
   return escapeJSON(text);
 }; // turns off HTML escaping
 Mustache.tags = ['${{', '}}']; // sets custom delimiters
+Mustache.templateCache = undefined;
 
 export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const writer = new Writer();

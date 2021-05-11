@@ -71,6 +71,7 @@ interface TaskContextV1 {
 export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
+  ingresses: Dictionary<InterfaceSpec>;
   interfaces: Dictionary<InterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
   tasks: Dictionary<TaskContextV1>;
@@ -298,7 +299,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   getContext(): ComponentContextV1 {
     const dependencies: Dictionary<any> = {};
     for (const dk of Object.keys(this.getDependencies())) {
-      dependencies[dk] = {};
+      dependencies[dk] = { ingresses: {}, interfaces: {} };
     }
 
     const parameters: Dictionary<ParameterValue> = {};
@@ -316,10 +317,17 @@ export class ComponentConfigV1 extends ComponentConfig {
     };
 
     const interfaces: Dictionary<InterfaceSpec> = {};
+    const ingresses: Dictionary<InterfaceSpec> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = {
         ...interface_filler,
         ...iv,
+      };
+      ingresses[ik] = {
+        ...interface_filler,
+        consumers: [],
+        dns_zone: '',
+        subdomain: '',
       };
     }
 
@@ -348,6 +356,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     return {
       dependencies,
       parameters,
+      ingresses,
       interfaces,
       services,
       tasks,

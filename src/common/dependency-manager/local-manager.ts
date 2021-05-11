@@ -1,11 +1,6 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import DependencyManager, { ComponentVersionSlugUtils, DependencyNode, Refs } from '../../dependency-manager/src';
-import DependencyGraph from '../../dependency-manager/src/graph';
-import DependencyEdge from '../../dependency-manager/src/graph/edge';
-import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
+import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
@@ -21,60 +16,6 @@ export default class LocalDependencyManager extends DependencyManager {
     super();
     this.api = api;
     this.linked_components = linked_components;
-  }
-
-  async getGraph(component_configs: ComponentConfig[], values?: Dictionary<Dictionary<string>>) {
-    const graph = new DependencyGraph();
-
-    const gateway_port = await PortUtil.getAvailablePort(80);
-
-    // Interpolate the component before generating then nodes to support dynamic host overrides
-    const interpolated_component_configs = await this.interpolateComponents(component_configs, `arc.localhost:${gateway_port}`, values);
-
-    // Add nodes
-    for (const component_config of interpolated_component_configs) {
-      let nodes: DependencyNode[] = [];
-
-      nodes = nodes.concat(this.getComponentNodes(component_config));
-
-      if (Object.keys(component_config.getInterfaces()).length) {
-        const node = new InterfacesNode(component_config.getInterfacesRef(), component_config.getRef());
-        nodes.push(node);
-      }
-
-      for (const node of nodes) {
-        node.instance_id = `${Refs.safeRef(component_config.getRef())}-component`;
-        graph.addNode(node);
-      }
-    }
-
-    // Add edges
-    for (const component_config of component_configs) {
-      let edges: DependencyEdge[] = [];
-      const ignore_keys = ['']; // Ignore all errors
-      const interfaces_component_config = this.interpolateInterfaces(component_config, ignore_keys);
-      edges = edges.concat(this.getComponentEdges(graph, interfaces_component_config, component_configs));
-
-      const component_interfaces: Dictionary<string> = {};
-      for (const [interface_name, interface_obj] of Object.entries(component_config.getInterfaces())) {
-        if (interface_obj.external_name) {
-          component_interfaces[interface_obj.external_name] = interface_name;
-        }
-      }
-
-      if (Object.keys(component_interfaces).length) {
-        const gateway_node = new GatewayNode(gateway_port);
-        graph.addNode(new GatewayNode(gateway_port));
-        const ingress_edge = new IngressEdge(gateway_node.ref, component_config.getInterfacesRef(), component_interfaces);
-        edges.push(ingress_edge);
-      }
-
-      for (const edge of edges) {
-        graph.addEdge(edge);
-      }
-    }
-
-    return graph;
   }
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
@@ -102,6 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set the tag
     config.setName(component_ref);
     config.setInstanceName(instance_name);
+    config.setInstanceId(config.getRef());
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.getInterfaces()[interface_to];
@@ -163,5 +105,11 @@ export default class LocalDependencyManager extends DependencyManager {
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
     return errors;
+  }
+
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string>> = {}) {
+    const gateway_port = await PortUtil.getAvailablePort(80);
+    const external_addr = `arc.localhost:${gateway_port}`;
+    return super.getGraph(component_configs, values, external_addr);
   }
 }

@@ -12,21 +12,30 @@ There are several context groups that contain important, dynamic information abo
 
 | Context name                            | Description                                                                    |
 | --------------------------------------- | ------------------------------------------------------------------------------ |
-| [`environment`](#environment-context)   | Information about the environment the component was (or will be) deployed to   |
+| [`dependencies`](#dependencies-context) | References to the dynamic outputs of each dependency and their interfaces      |
+| [`ingresses`](#ingresses-context)       | References to the dynamic outputs of external interfaces                       |
 | [`parameters`](#parameters-context)     | Dynamic values for the parameters declared by your component                   |
 | [`services`](#services-context)         | References to the dynamic outputs of each service and their interfaces         |
-| [`dependencies`](#dependencies-context) | References to the dynamic outputs of each dependency and their interfaces      |
 
-### `environment` context
+### `dependencies` context
 
-The `environment` context contains information about the deployed environment itself.
+The `dependencies` context contains dynamic information about the dependencies of the component. This context can primarily be used to refer to the internal addresses of dependency interfaces.
+
+| Property                                            | Type       | Description    |
+| --------------------------------------------------- | ---------- | -------------- |
+| `dependencies`                                      | `object`   | Information about the component's dependencies  |
+| `dependencies.<dependency>`                         | `object`   | Information about the specified dependency      |
+| `dependencies.<dependency>.interfaces`              | `object`   | Information about the dependency's interfaces   |
+| `dependencies.<dependency>.interfaces.<interface>`  | `object`   | Information about the specified interface of the dependency. [See the interface values](#interface-values) for more details. |
+
+### `ingresses` context
+
+The `ingresses` context contains information about the external exposed interfaces.
 
 | Property                                        | Type          | Description   |
 | ----------------------------------------------- | ------------- | ------------- |
-| `environment`                                   | `object`      |               |
-| `environment.ingresses`                         | `object`      | Information on the ingress rules of the environments |
-| `environment.ingresses.<component>`             | `object`      | Information on an ingress rule matching the specified component |
-| `environment.ingresses.<component>.<interface>` | `object`      | Information on an ingress rule matching the specified component and interface. [See the interface context](#the-interface-context) for more details. |
+| `ingresses`                                     | `object`      | Information on the ingress rules of the component |
+| `ingresses.<interface>`                         | `object`      | Information on an ingress rule matching the interface. [See the interface values](#interface-values) for more details. |
 
 ### `parameters` context
 
@@ -46,22 +55,13 @@ The `services` context contains dynamic information about all the services insid
 | `services`                                  | `object`    | Information about each service inside the component |
 | `services.<service>`                        | `object`    | Information specific to one of the named services inside the component |
 | `services.<service>.interfaces`             | `object`    | Information about the specified service's interfaces |
-| `services.<service>.interfaces.<interface>` | `object`    | Information about the specified service interface. [See the interface context](#the-interface-context) for more details. |
+| `services.<service>.interfaces.<interface>` | `object`    | Information about the specified service interface. [See the interface values](#interface-values) for more details. |
 
-### `dependencies` context
+---
 
-The `dependencies` context contains dynamic information about the dependencies of the component. This context can primarily be used to refer to the internal addresses of dependency interfaces.
+### `interface values`
 
-| Property                                            | Type       | Description    |
-| --------------------------------------------------- | ---------- | -------------- |
-| `dependencies`                                      | `object`   | Information about the component's dependencies  |
-| `dependencies.<dependency>`                         | `object`   | Information about the specified dependency      |
-| `dependencies.<dependency>.interfaces`              | `object`   | Information about the dependency's interfaces   |
-| `dependencies.<dependency>.interfaces.<interface>`  | `object`   | Information about the specified interface of the dependency. [See the interface context](#the-interface-context) for more details. |
-
-### The interface context
-
-The interface context is one referenced in many places, `services`, `environment`, `dependencies`, and more, with a set of uniform values available to reference. These values include:
+Interface values are referenced in many places, `dependencies`, `ingresses`, `interfaces`, and `services` with a set of uniform values available to reference. These values include:
 
 | Property     | Type      | Description                                                                                            |
 | ------------ | --------- | ------------------------------------------------------------------------------------------------------ |

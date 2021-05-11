@@ -9,4 +9,7 @@ export interface InterfaceSpec {
   sticky?: string;
 
   external_name?: string;
+  consumers?: string[];
+  dns_zone?: string;
+  subdomain?: string;
 }
