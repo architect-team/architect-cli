@@ -338,6 +338,7 @@ export default abstract class DependencyManager {
     }
 
     for (const dependency of dependencies) {
+      context.dependencies[dependency.getName()].interfaces = {};
       // Set dependency interfaces
       for (const [interface_name, interface_config] of Object.entries(dependency.getInterfaces())) {
         context.dependencies[dependency.getName()].interfaces[interface_name] = interface_config;
