@@ -581,9 +581,6 @@ export default abstract class DependencyManager {
 
       for (const node of nodes) {
         node.instance_id = component_config.getInstanceId();
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-        // @ts-ignore
-        node.proxy_port_mapping = interpolated_component_config.proxy_port_mapping;
         graph.addNode(node);
       }
     }
@@ -679,6 +676,9 @@ export default abstract class DependencyManager {
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.getServices()), ...Object.entries(tree_node.interpolated_config.getTasks())]) {
         const service_ref = tree_node.interpolated_config.getNodeRef(service_name);
         const node = graph.getNodeByRef(service_ref) as ServiceNode | TaskNode;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore
+        node.proxy_port_mapping = tree_node.interpolated_config.proxy_port_mapping;
         node.config = service_config;
       }
     }
