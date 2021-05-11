@@ -299,7 +299,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   getContext(): ComponentContextV1 {
     const dependencies: Dictionary<any> = {};
     for (const dk of Object.keys(this.getDependencies())) {
-      dependencies[dk] = {};
+      dependencies[dk] = { ingresses: {}, interfaces: {} };
     }
 
     const parameters: Dictionary<ParameterValue> = {};

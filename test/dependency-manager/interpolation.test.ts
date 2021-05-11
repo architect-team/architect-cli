@@ -200,7 +200,7 @@ describe('interpolation spec v1', () => {
     expect(public_template.services[worker_ref]).to.be.deep.equal(expected_worker_compose);
   });
 
-  it('interpolation interfaces', async () => {
+  it('ingresses interpolation', async () => {
     const backend_config = `
     name: examples/backend
     interfaces:
@@ -209,10 +209,6 @@ describe('interpolation spec v1', () => {
       api:
         interfaces:
           api: 8081
-        environment:
-          INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
-          EXTERNAL_HOST: \${{ ingresses['main'].url }}
-          EXTERNAL_HOST2: \${{ environment.ingresses['examples/backend']['main'].url }}
     `
     const frontend_config = `
     name: examples/frontend
@@ -226,7 +222,114 @@ describe('interpolation spec v1', () => {
           app: 8080
         environment:
           EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
-          EXTERNAL_API_HOST2: \${{ environment.ingresses['examples/backend']['main'].url }}
+    `
+
+    mock_fs({
+      '/backend/architect.yml': backend_config,
+      '/frontend/architect.yml': frontend_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/backend': '/backend/architect.yml',
+      'examples/frontend': '/frontend/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/backend'),
+      await manager.loadComponentConfig('examples/frontend')
+    ]);
+
+    const backend_interface_ref = ComponentConfig.getNodeRef('examples/backend/main:latest');
+    const backend_external_url = `http://${backend_interface_ref}.arc.localhost`
+    const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
+    const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
+    expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
+      EXTERNAL_API_HOST: backend_external_url,
+    })
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[frontend_ref].environment).to.deep.eq({
+      EXTERNAL_API_HOST: backend_external_url,
+    })
+    const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
+    expect(template.services[backend_ref].labels?.length).to.eq(5)
+    expect(template.services[backend_ref].labels).to.deep.eq([
+      'traefik.enable=true',
+      `traefik.http.routers.${backend_interface_ref}.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
+      `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
+      `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
+      `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
+    ])
+  });
+
+  it('ingresses interpolation with no dependency deployed', async () => {
+    const frontend_config = `
+    name: examples/frontend
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app: 8080
+        environment:
+          INTERNAL_ADDR: \${{ dependencies['examples/backend'].interfaces['main'].url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+    `
+
+    mock_fs({
+      '/frontend/architect.yml': frontend_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/frontend': '/frontend/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/frontend')
+    ]);
+
+    const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
+    const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
+    expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
+      INTERNAL_ADDR: 'http://not-found.localhost:404',
+      EXTERNAL_API_ADDR: 'http://not-found.localhost:404',
+    })
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[frontend_ref].environment).to.deep.eq({
+      INTERNAL_ADDR: 'http://not-found.localhost:404',
+      EXTERNAL_API_ADDR: 'http://not-found.localhost:404',
+    })
+  });
+
+  it('interpolation interfaces', async () => {
+    const backend_config = `
+    name: examples/backend
+    interfaces:
+      main: \${{ services.api.interfaces.api.url }}
+      main2: \${{ services.api.interfaces.api.url }}
+    services:
+      api:
+        interfaces:
+          api: 8081
+        environment:
+          INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
+          EXTERNAL_HOST: \${{ ingresses['main'].url }}
+          EXTERNAL_HOST2: \${{ ingresses['main2'].url }}
+          EXTERNAL_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
+    `
+    const frontend_config = `
+    name: examples/frontend
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app: 8080
+        environment:
+          EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_HOST2: \${{ dependencies['examples/backend'].ingresses['main2'].url }}
+          EXTERNAL_API_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
           INTERNAL_APP_URL: \${{ interfaces.main.url }}
     `
 
@@ -240,23 +343,26 @@ describe('interpolation spec v1', () => {
       'examples/frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/backend', { backend: 'main' }),
+      await manager.loadComponentConfig('examples/backend', { backend: 'main', backend2: 'main2' }),
       await manager.loadComponentConfig('examples/frontend')
     ]);
     const backend_external_url = 'http://backend.arc.localhost'
+    const backend2_external_url = 'http://backend2.arc.localhost'
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_HOST: `http://${backend_ref}:8081`,
       EXTERNAL_HOST: backend_external_url,
-      EXTERNAL_HOST2: backend_external_url
+      EXTERNAL_HOST2: backend2_external_url,
+      EXTERNAL_HOST3: backend_external_url
     })
     const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
       INTERNAL_APP_URL: `http://${frontend_ref}:8080`,
       EXTERNAL_API_HOST: backend_external_url,
-      EXTERNAL_API_HOST2: backend_external_url
+      EXTERNAL_API_HOST2: backend2_external_url,
+      EXTERNAL_API_HOST3: backend_external_url
     })
   });
 

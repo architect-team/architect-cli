@@ -32,12 +32,11 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   }
 
   get ports(): string[] {
-    const ports = Object.values(this.interfaces).map((i) => i.port) as string[];
-    return [...new Set(ports)];
+    return [];
   }
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
+    return false;
   }
 
   get is_local() {
