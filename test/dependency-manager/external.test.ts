@@ -270,6 +270,8 @@ describe('external spec v1', () => {
           environment:
             DEP_ADDR: \${{ dependencies.architect/dependency.interfaces.api.url }}
             CI_ADDR: \${{ dependencies.architect/dependency.interfaces.ci.url }}
+            DEP_EXTERNAL_ADDR: \${{ dependencies.architect/dependency.ingresses.api.url }}
+            CI_EXTERNAL_ADDR: \${{ dependencies.architect/dependency.ingresses.ci.url }}
     `;
 
     const dependency_config = `
@@ -288,6 +290,11 @@ describe('external spec v1', () => {
               port: 8501
               protocol: https
               host: \${{ parameters.optional_host }}
+          environment:
+            DEP_EXTERNAL_ADDR: \${{ ingresses.api.url }}
+            CI_EXTERNAL_ADDR: \${{ ingresses.ci.url }}
+            CI_SUBDOMAIN: \${{ ingresses.ci.subdomain }}
+            CI_DNS_ZONE: \${{ ingresses.ci.dns_zone }}
       interfaces:
         api: \${{ services.app.interfaces.api.url }}
         ci: \${{ services.app.interfaces.ci.url }}
@@ -308,11 +315,21 @@ describe('external spec v1', () => {
     ]);
 
     const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
-
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
       DEP_ADDR: `https://external.localhost`,
-      CI_ADDR: `https://ci.architect.io:8501`
+      CI_ADDR: `https://ci.architect.io:8501`,
+      DEP_EXTERNAL_ADDR: `https://external.localhost`,
+      CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`
+    });
+
+    const dep_ref = ComponentConfig.getNodeRef('architect/dependency/app:latest')
+    const dep_node = graph.getNodeByRef(dep_ref) as ServiceNode;
+    expect(dep_node.config.getEnvironmentVariables()).to.deep.eq({
+      DEP_EXTERNAL_ADDR: `https://external.localhost`,
+      CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`,
+      CI_SUBDOMAIN: 'ci',
+      CI_DNS_ZONE: 'architect.io'
     });
   });
 

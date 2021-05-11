@@ -317,17 +317,17 @@ export class ComponentConfigV1 extends ComponentConfig {
     };
 
     const interfaces: Dictionary<InterfaceSpec> = {};
+    const ingresses: Dictionary<InterfaceSpec> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = {
         ...interface_filler,
         ...iv,
       };
-    }
-
-    const ingresses: Dictionary<InterfaceSpec> = {};
-    for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       ingresses[ik] = {
         ...interface_filler,
+        consumers: [],
+        dns_zone: '',
+        subdomain: '',
       };
     }
 

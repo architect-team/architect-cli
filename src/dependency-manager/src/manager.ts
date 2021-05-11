@@ -3,7 +3,6 @@ import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
 import { Refs } from '.';
 import DependencyGraph from './graph';
-import DependencyEdge from './graph/edge';
 import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
@@ -90,7 +89,7 @@ export default abstract class DependencyManager {
     return component;
   }
 
-  getComponentEdges(graph: DependencyGraph, tree_node: ComponentConfigNode): DependencyEdge[] {
+  addComponentEdges(graph: DependencyGraph, tree_node: ComponentConfigNode, gateway_port: number): void {
     const component = this.interpolateInterfaces(tree_node.config);
 
     const dependency_components = tree_node.children.map(n => n.config);
@@ -99,7 +98,6 @@ export default abstract class DependencyManager {
       dependency_map[dependency_component.getRef()] = dependency_component;
     }
 
-    const edges = [];
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.getTasks(), ...component.getServices() })) {
       const from = component.getNodeRef(service_name);
@@ -109,6 +107,8 @@ export default abstract class DependencyManager {
       }
 
       const service_string = serialize(service_config);
+
+      // TODO:ingresses only run regex once
 
       // Add edges between services inside the component and dependencies
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
@@ -123,7 +123,7 @@ export default abstract class DependencyManager {
       }
       for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
-        edges.push(edge);
+        graph.addEdge(edge);
       }
 
       // Add edges between services and dependencies inside the component
@@ -146,7 +146,7 @@ export default abstract class DependencyManager {
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
         const edge = new ServiceEdge(from, to, interfaces_map);
-        edges.push(edge);
+        graph.addEdge(edge);
       }
 
       // Start Ingress Edges
@@ -176,7 +176,6 @@ export default abstract class DependencyManager {
         ingresses.push([component, interface_name]);
       }
 
-      // TODO:ingresses don't set in service loop
       for (const [interface_name, interface_obj] of Object.entries(component.getInterfaces())) {
         if (interface_obj.external_name) {
           ingresses.push([component, interface_name]);
@@ -187,16 +186,21 @@ export default abstract class DependencyManager {
         if (!dep_component) { continue; }
         const external_name = dep_component.getInterfaces()[interface_name].external_name || dep_component.getNodeRef(interface_name);
 
-        let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef());
+        let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
         if (!ingress_edge) {
+          graph.addNode(new GatewayNode(gateway_port));
           ingress_edge = new IngressEdge('gateway', dep_component.getInterfacesRef(), {});
-          graph.edges.push(ingress_edge);
-          graph.edges_map.set(ingress_edge.ref, ingress_edge);
+          graph.addEdge(ingress_edge);
         }
 
         ingress_edge.interfaces_map[external_name] = interface_name;
 
-        edges.push(ingress_edge);
+        if (dep_component.getRef() !== component.getRef()) {
+          if (!ingress_edge.consumers_map[external_name]) {
+            ingress_edge.consumers_map[external_name] = new Set();
+          }
+          ingress_edge.consumers_map[external_name].add(from);
+        }
       }
       // End Ingress Edges
     }
@@ -238,10 +242,8 @@ export default abstract class DependencyManager {
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
       const edge = new ServiceEdge(component.getInterfacesRef(), to, interfaces_map);
-      edges.push(edge);
+      graph.addEdge(edge);
     }
-
-    return edges;
   }
 
   setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string>>) {
@@ -283,13 +285,47 @@ export default abstract class DependencyManager {
     return url;
   }
 
-  interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
-    /*
-    TODO:ingresses
-    Special Cases
-    - consumers
-    */
+  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): InterfaceSpec {
+    const interface_to = edge.interfaces_map[interface_from];
 
+    let external_interface: InterfaceSpec;
+
+    const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
+
+    const dependency_interface = node_to.interfaces[node_to_interface_name];
+    // Special case for external nodes
+    if (dependency_interface.host && dependency_interface.host !== '127.0.0.1') {
+      let subdomain = dependency_interface.host.split('.')[0];
+
+      // Don't set subdomain if the host doesn't have one
+      if (dependency_interface.host === subdomain) {
+        subdomain = '';
+      }
+
+      external_interface = {
+        ...(dependency ? dependency.getInterfaces()[interface_to] : {}),
+        ...dependency_interface,
+        consumers: [],
+        subdomain: subdomain,
+        dns_zone: dependency_interface.host.split('.').slice(1).join('.') || dependency_interface.host,
+      };
+    } else {
+      const [external_host, external_port] = external_address.split(':');
+      external_interface = {
+        host: `${interface_from}.${external_host}`,
+        port: external_port,
+        protocol: external_host.endsWith('localhost') ? 'http' : 'https',
+        username: '',
+        password: '',
+        subdomain: interface_from,
+        dns_zone: external_host,
+      };
+      external_interface.url = this.generateUrl(external_interface);
+    }
+    return external_interface;
+  }
+
+  interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
     const component_string = replaceBrackets(serialize(component.expand()));
 
@@ -301,8 +337,6 @@ export default abstract class DependencyManager {
     context.environment = {
       ingresses: {},
     };
-
-    const [external_host, external_port] = external_address.split(':');
 
     const not_found = {
       host: 'not-found.localhost',
@@ -362,17 +396,10 @@ export default abstract class DependencyManager {
 
     for (const dependency of [component, ...dependencies]) {
       // Set dependency and component ingresses
-      const ingress_edges = graph.edges.filter(edge => edge.from === 'gateway' && edge.to === dependency.getInterfacesRef());
-      for (const edge of ingress_edges) {
-        for (const [interface_from, interface_to] of Object.entries(edge.interfaces_map)) {
-          const external_interface: InterfaceSpec = {
-            host: `${interface_from}.${external_host}`,
-            port: external_port,
-            protocol: external_host.endsWith('localhost') ? 'http' : 'https',
-            username: '',
-            password: '',
-          };
-          external_interface.url = this.generateUrl(external_interface);
+      const ingress_edges = graph.edges.filter(edge => edge.from === 'gateway' && edge.to === dependency.getInterfacesRef()) as IngressEdge[];
+      for (const ingress_edge of ingress_edges) {
+        for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
+          const external_interface = this.getIngressesContext(graph, ingress_edge, interface_from, external_address, dependency);
 
           if (!context.environment.ingresses[dependency.getName()]) {
             context.environment.ingresses[dependency.getName()] = {};
@@ -381,6 +408,20 @@ export default abstract class DependencyManager {
 
           if (dependency.getRef() === component.getRef()) {
             context.ingresses[interface_to] = external_interface;
+            context.ingresses[interface_to].consumers = [];
+
+            if (ingress_edge.consumers_map[interface_from]) {
+              const interfaces_refs = graph.edges.filter(edge => ingress_edge.consumers_map[interface_from].has(edge.to) && graph.getNodeByRef(edge.from) instanceof InterfacesNode).map(edge => edge.from);
+              const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
+              const consumers = [];
+              for (const consumer_ingress_edge of consumer_ingress_edges) {
+                for (const consumer_interface_from of Object.keys(consumer_ingress_edge.interfaces_map)) {
+                  const consumer_interface = this.getIngressesContext(graph, consumer_ingress_edge, consumer_interface_from, external_address);
+                  consumers.push(consumer_interface.url);
+                }
+              }
+              context.ingresses[interface_to].consumers = consumers.sort();
+            }
           } else {
             context.dependencies[dependency.getName()].ingresses[interface_to] = external_interface;
           }
@@ -543,16 +584,7 @@ export default abstract class DependencyManager {
 
     // Add edges
     for (const tree_node of tree_nodes) {
-      let edges: DependencyEdge[] = [];
-
-      edges = edges.concat(this.getComponentEdges(graph, tree_node));
-
-      for (const edge of edges) {
-        if (edge instanceof IngressEdge) {
-          graph.addNode(new GatewayNode(gateway_port));
-        }
-        graph.addEdge(edge);
-      }
+      this.addComponentEdges(graph, tree_node, gateway_port);
     }
 
     return graph;
@@ -638,9 +670,6 @@ export default abstract class DependencyManager {
         node.config = service_config;
       }
     }
-
-    // TODO:ingresses add test for deep circular component dependencies?
-
     return graph;
   }
 }

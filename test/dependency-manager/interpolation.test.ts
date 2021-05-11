@@ -300,6 +300,77 @@ describe('interpolation spec v1', () => {
     })
   });
 
+  it('ingresses consumers interpolation', async () => {
+    const backend_config = `
+    name: examples/backend
+    interfaces:
+      main: \${{ services.api.interfaces.api.url }}
+      main2: \${{ services.api.interfaces.api.url }}
+    services:
+      api:
+        interfaces:
+          api: 8081
+        environment:
+          CORS: \${{ ingresses.main.consumers }}
+          CORS2: \${{ ingresses.main2.consumers }}
+    `
+    const frontend_config = `
+    name: examples/frontend
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app: 8080
+        environment:
+          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+          EXTERNAL_API_ADDR2: \${{ dependencies['examples/backend'].ingresses['main2'].url }}
+    `
+    const frontend_config2 = `
+    name: examples/frontend2
+    interfaces:
+      main: \${{ services.app.interfaces.app.url }}
+    dependencies:
+      examples/backend: latest
+    services:
+      app:
+        interfaces:
+          app: 8080
+        environment:
+          EXTERNAL_ADDR: \${{ ingresses.main.url }}
+          EXTERNAL_API_ADDR: \${{ dependencies['examples/backend'].ingresses['main'].url }}
+    `
+
+    mock_fs({
+      '/backend/architect.yml': backend_config,
+      '/frontend/architect.yml': frontend_config,
+      '/frontend2/architect.yml': frontend_config2,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/backend': '/backend/architect.yml',
+      'examples/frontend': '/frontend/architect.yml',
+      'examples/frontend2': '/frontend2/architect.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/backend'),
+      await manager.loadComponentConfig('examples/frontend', { frontend: 'main' }),
+      await manager.loadComponentConfig('examples/frontend2')
+    ]);
+
+    const template = await DockerComposeUtils.generate(graph);
+    const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
+
+    const frontend2_interface_ref = ComponentConfig.getNodeRef('examples/frontend2/main:latest');
+
+    expect(template.services[backend_ref].environment).to.deep.eq({
+      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://${frontend2_interface_ref}.arc.localhost`]),
+      CORS2: JSON.stringify(['http://frontend.arc.localhost'])
+    })
+  });
+
   it('interpolation interfaces', async () => {
     const backend_config = `
     name: examples/backend
@@ -311,6 +382,8 @@ describe('interpolation spec v1', () => {
         interfaces:
           api: 8081
         environment:
+          SUBDOMAIN: \${{ ingresses.main.subdomain }}
+          DNS_ZONE: \${{ ingresses.main.dns_zone }}
           INTERNAL_HOST: \${{ services.api.interfaces.api.url }}
           EXTERNAL_HOST: \${{ ingresses['main'].url }}
           EXTERNAL_HOST2: \${{ ingresses['main2'].url }}
@@ -327,6 +400,8 @@ describe('interpolation spec v1', () => {
         interfaces:
           app: 8080
         environment:
+          SUBDOMAIN: \${{ dependencies['examples/backend'].ingresses.main.subdomain }}
+          DNS_ZONE: \${{ dependencies['examples/backend'].ingresses.main.dns_zone }}
           EXTERNAL_API_HOST: \${{ dependencies['examples/backend'].ingresses['main'].url }}
           EXTERNAL_API_HOST2: \${{ dependencies['examples/backend'].ingresses['main2'].url }}
           EXTERNAL_API_HOST3: \${{ environment.ingresses['examples/backend']['main'].url }}
@@ -351,6 +426,8 @@ describe('interpolation spec v1', () => {
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.getEnvironmentVariables()).to.deep.eq({
+      DNS_ZONE: 'arc.localhost',
+      SUBDOMAIN: 'backend',
       INTERNAL_HOST: `http://${backend_ref}:8081`,
       EXTERNAL_HOST: backend_external_url,
       EXTERNAL_HOST2: backend2_external_url,
@@ -359,6 +436,8 @@ describe('interpolation spec v1', () => {
     const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.getEnvironmentVariables()).to.deep.eq({
+      DNS_ZONE: 'arc.localhost',
+      SUBDOMAIN: 'backend',
       INTERNAL_APP_URL: `http://${frontend_ref}:8080`,
       EXTERNAL_API_HOST: backend_external_url,
       EXTERNAL_API_HOST2: backend2_external_url,
