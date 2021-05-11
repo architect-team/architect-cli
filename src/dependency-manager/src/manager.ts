@@ -1,7 +1,6 @@
 import { deserialize, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
-import { Refs } from '.';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import ServiceEdge from './graph/edge/service';
@@ -89,7 +88,7 @@ export default abstract class DependencyManager {
     return component;
   }
 
-  addComponentEdges(graph: DependencyGraph, tree_node: ComponentConfigNode, gateway_port: number): void {
+  addComponentEdges(graph: DependencyGraph, tree_node: ComponentConfigNode, external_addr: string): void {
     const component = this.interpolateInterfaces(tree_node.config);
 
     const dependency_components = tree_node.children.map(n => n.config);
@@ -145,7 +144,12 @@ export default abstract class DependencyManager {
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
         if (!ingress_edge) {
-          graph.addNode(new GatewayNode(gateway_port));
+          const gateway_host = external_addr.split(':')[0];
+          const gateway_port = parseInt(external_addr.split(':')[1] || '443');
+          const gateway_node = new GatewayNode(gateway_host, gateway_port);
+          gateway_node.instance_id = 'gateway';
+          graph.addNode(gateway_node);
+
           ingress_edge = new IngressEdge('gateway', dep_component.getInterfacesRef(), {});
           graph.addEdge(ingress_edge);
         }
@@ -549,10 +553,6 @@ export default abstract class DependencyManager {
   }
 
   async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string) {
-    // TODO:ingresses make sure its compatible with api
-
-    const gateway_port = parseInt(external_addr.split(':')[1] || '443');
-
     const graph = new DependencyGraph();
 
     if (tree_nodes.length === 0) {
@@ -580,21 +580,30 @@ export default abstract class DependencyManager {
       }
 
       for (const node of nodes) {
-        node.instance_id = `${Refs.safeRef(component_config.getRef())}-component`;
+        node.instance_id = component_config.getInstanceId();
+        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // @ts-ignore
+        node.proxy_port_mapping = interpolated_component_config.proxy_port_mapping;
         graph.addNode(node);
       }
     }
 
     // Add edges
     for (const tree_node of tree_nodes) {
-      this.addComponentEdges(graph, tree_node, gateway_port);
+      this.addComponentEdges(graph, tree_node, external_addr);
+    }
+
+    for (const edge of graph.edges) {
+      const from_node = graph.getNodeByRef(edge.from);
+      if (from_node instanceof GatewayNode) {
+        const to_node = graph.getNodeByRef(edge.to);
+        edge.instance_id = to_node.instance_id;
+      } else {
+        edge.instance_id = from_node.instance_id;
+      }
     }
 
     return graph;
-  }
-
-  getContext(graph: DependencyGraph, component_config: ComponentConfig) {
-    return {};
   }
 
   createComponentTree(component_configs: ComponentConfig[]) {

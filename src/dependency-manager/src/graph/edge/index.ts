@@ -16,6 +16,8 @@ export default class DependencyEdge {
     this.interfaces_map = interfaces_map;
   }
 
+  instance_id = '';
+
   toString() {
     return `${this.from} [${Object.keys(this.interfaces_map).join(', ')}] -> ${this.to} [${Object.values(this.interfaces_map).join(', ')}]`;
   }

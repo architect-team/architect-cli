@@ -67,6 +67,9 @@ export abstract class ComponentConfig extends BaseConfig {
     } catch {
       parsed = ComponentVersionSlugUtils.parse(service_ref);
     }
+    if (!instance_id) {
+      instance_id = ComponentVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, parsed.tag, parsed.instance_name);
+    }
 
     let friendly_name = `${parsed.component_name}`;
     if (parsed.service_name) {

@@ -43,6 +43,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set the tag
     config.setName(component_ref);
     config.setInstanceName(instance_name);
+    config.setInstanceId(config.getRef());
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.getInterfaces()[interface_to];
