@@ -52,7 +52,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.name).eq(`${account_name}/test-component`);
     });
 
@@ -62,7 +62,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(Object.keys(component_config.services || {})).deep.equal(['elasticsearch', 'logstash', 'kibana']);
     });
 
@@ -72,7 +72,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getDescription()).eq('elasticsearch converted to an Architect service with "architect init"');
       expect(component_config.getServices()['kibana'].getDescription()).eq('kibana converted to an Architect service with "architect init"');
       expect(component_config.getServices()['logstash'].getDescription()).eq('logstash converted to an Architect service with "architect init"');
@@ -84,7 +84,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ES_JAVA_OPTS']).eq('-Xmx256m -Xms256m');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['ELASTIC_PASSWORD']).eq('changeme');
       expect(component_config.getServices()['elasticsearch'].getEnvironmentVariables()['DISCOVERY_TYPE']).eq('single-node');
@@ -101,7 +101,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getCommand()).deep.eq(['npm', 'run', 'start']);
     });
 
@@ -111,7 +111,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getEntrypoint()).deep.eq(['entrypoint.sh']);
     });
 
@@ -121,7 +121,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getImage()).eq('docker.elastic.co/kibana/kibana:7.8.0');
     });
 
@@ -131,7 +131,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).args!['ELK_VERSION']).eq('$ELK_VERSION');
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).context).eq('elasticsearch/');
       expect((component_config.getServices()['elasticsearch'].getBuild() as BuildSpecV1).dockerfile).eq('Dockerfile.elasticsearch');
@@ -143,7 +143,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getInterfaces()['interface0'].port).eq('5601');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].port).eq('5000');
       expect(component_config.getServices()['kibana'].getInterfaces()['interface1'].protocol).eq('udp');
@@ -168,7 +168,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface0'].port).eq('9200');
       expect(component_config.getServices()['elasticsearch'].getInterfaces()['interface1'].port).eq('9300');
     });
@@ -179,7 +179,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].port).eq('5000');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface0'].protocol).eq('tcp');
       expect(component_config.getServices()['logstash'].getInterfaces()['interface1'].port).eq('5000');
@@ -193,7 +193,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['elasticsearch'].getVolumes()['volume1'].mount_path).eq('/usr/share/elasticsearch/data');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
       expect(component_config.getServices()['elasticsearch'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
@@ -206,7 +206,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./logstash/config/logstash.yml');
       expect(component_config.getServices()['logstash'].getDebugOptions()!.getVolumes()['volume0'].readonly).eq('true');
@@ -221,7 +221,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = plainToClass(ComponentConfigV1, yaml.safeLoad(writeFileSync.args[0][1]));
+      const component_config = plainToClass(ComponentConfigV1, yaml.load(writeFileSync.args[0][1]));
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].host_path).eq('./kibana/config/kibana.yml');
       expect(component_config.getServices()['kibana'].getDebugOptions()!.getVolumes()['volume0'].readonly).eq('true');

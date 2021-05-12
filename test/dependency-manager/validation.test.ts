@@ -522,7 +522,7 @@ describe('validation spec v1', () => {
 
       moxios.stubRequest(`/accounts/examples/components/hello-world2/versions/latest`, {
         status: 200,
-        response: { tag: 'latest', config: yaml.safeLoad(component_config2), service: { url: 'examples/hello-world2:latest' } }
+        response: { tag: 'latest', config: yaml.load(component_config2), service: { url: 'examples/hello-world2:latest' } }
       });
 
       const manager = new LocalDependencyManager(axios.create(), {

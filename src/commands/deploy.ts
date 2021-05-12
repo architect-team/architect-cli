@@ -6,7 +6,7 @@ import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
-import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
+import yaml from 'js-yaml';
 import opener from 'opener';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -152,7 +152,7 @@ export default class Deploy extends DeployCommand {
     const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     await fs.ensureFile(compose_file);
-    await fs.writeFile(compose_file, yaml.safeDump(compose));
+    await fs.writeFile(compose_file, yaml.dump(compose));
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
     if (flags.build_parallel) {
@@ -246,7 +246,7 @@ export default class Deploy extends DeployCommand {
     let component_values: any = {};
     if (values_file_path && fs.statSync(values_file_path)) {
       const values_file_data = fs.readFileSync(values_file_path);
-      component_values = yaml.safeLoad(values_file_data.toString('utf-8'), { schema: FAILSAFE_SCHEMA });
+      component_values = yaml.load(values_file_data.toString('utf-8'), { schema: yaml.FAILSAFE_SCHEMA });
     }
     return component_values;
   }

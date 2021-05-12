@@ -607,15 +607,15 @@ describe('components spec v1', function () {
 
       moxios.stubRequest(`/accounts/examples/components/component-a/versions/v1`, {
         status: 200,
-        response: { tag: 'v1', config: yaml.safeLoad(component_a), service: { url: 'examples/component-a:v1' } }
+        response: { tag: 'v1', config: yaml.load(component_a), service: { url: 'examples/component-a:v1' } }
       });
       moxios.stubRequest(`/accounts/examples/components/component-b/versions/v1`, {
         status: 200,
-        response: { tag: 'v1', config: yaml.safeLoad(component_b_v1), service: { url: 'examples/component-b:v1' } }
+        response: { tag: 'v1', config: yaml.load(component_b_v1), service: { url: 'examples/component-b:v1' } }
       });
       moxios.stubRequest(`/accounts/examples/components/component-b/versions/v2`, {
         status: 200,
-        response: { tag: 'v2', config: yaml.safeLoad(component_b_v2), service: { url: 'examples/component-b:v2' } }
+        response: { tag: 'v2', config: yaml.load(component_b_v2), service: { url: 'examples/component-b:v2' } }
       });
 
       const manager = new LocalDependencyManager(axios.create());

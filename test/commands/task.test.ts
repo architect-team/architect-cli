@@ -261,8 +261,6 @@ describe('task:exec', async function () {
       expect(ctx.stdout).to.contain('Successfully ran task.');
     });
 
-  console.log(mock_docker_compose_service);
-
   mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(DockerComposeUtils, 'run', sinon.stub().returns(undefined))

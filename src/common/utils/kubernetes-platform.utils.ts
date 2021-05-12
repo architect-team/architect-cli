@@ -25,7 +25,7 @@ export class KubernetesPlatformUtils {
     }
 
     try {
-      kubeconfig = yaml.safeLoad(kubeconfig);
+      kubeconfig = yaml.load(kubeconfig);
     } catch {
       throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
     }

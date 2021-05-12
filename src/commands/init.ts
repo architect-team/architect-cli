@@ -211,7 +211,7 @@ export abstract class InitCommand extends Command {
       architect_component.setService(service_name, architect_service);
     }
 
-    const architect_yml = yaml.safeDump(yaml.safeLoad(JSON.stringify(classToPlain(architect_component))));
+    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
     fs.writeFileSync(flags.component_file, architect_yml);
     this.log(chalk.green(`Wrote Architect component config to ${flags.component_file}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));

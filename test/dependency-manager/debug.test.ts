@@ -100,7 +100,7 @@ describe('interpolation spec v1', () => {
 
     moxios.stubRequest(`/accounts/examples/components/hello-world/versions/latest`, {
       status: 200,
-      response: { tag: 'latest', config: yaml.safeLoad(component_config), service: { url: 'examples/hello-world:latest' } }
+      response: { tag: 'latest', config: yaml.load(component_config), service: { url: 'examples/hello-world:latest' } }
     });
 
     const manager = new LocalDependencyManager(axios.create());

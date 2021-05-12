@@ -131,6 +131,7 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   getEnvironmentVariables(): Dictionary<string> {
     const output: Dictionary<string> = {};
     for (const [k, v] of Object.entries(this.environment || {})) {
+      if (v === null) { continue; }
       output[k] = `${v}`;
     }
     return output;

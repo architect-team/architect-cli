@@ -268,7 +268,7 @@ export class DockerComposeUtils {
       raw_config = JSON.parse(file_contents);
     } catch {
       try {
-        raw_config = yaml.safeLoad(file_contents);
+        raw_config = yaml.load(file_contents);
         // eslint-disable-next-line no-empty
       } catch { }
     }
