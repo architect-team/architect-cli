@@ -1,6 +1,7 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
+import { ARC_NULL_TOKEN } from '../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary, validateInterpolation } from '../../utils/validation';
 import { DictionaryType } from '../../utils/validators/dictionary_type';
@@ -304,7 +305,11 @@ export class ComponentConfigV1 extends ComponentConfig {
 
     const parameters: Dictionary<ParameterValue> = {};
     for (const [pk, pv] of Object.entries(this.getParameters())) {
-      parameters[pk] = pv.default === undefined ? '' : pv.default;
+      if (pv.default === null) {
+        parameters[pk] = ARC_NULL_TOKEN;
+      } else {
+        parameters[pk] = pv.default === undefined ? '' : pv.default;
+      }
     }
 
     const interface_filler = {

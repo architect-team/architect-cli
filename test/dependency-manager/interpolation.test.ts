@@ -43,6 +43,52 @@ describe('interpolation spec v1', () => {
     moxios.uninstall();
   });
 
+  it('interpolation null value', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      null_required:
+      null_not_required:
+        required: false
+      null_not_required_default:
+        required: false
+        default: null
+      null_default:
+        default: null
+
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          NULL: null
+          NULL2: \${{ parameters.null_required }}
+          NULL3: \${{ parameters.null_not_required }}
+          NULL4: \${{ parameters.null_not_required_default }}
+          NULL5: \${{ parameters.null_default }}
+
+    interfaces:
+      echo:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world'),
+    ], { '*': { null_required: null } });
+    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.getEnvironmentVariables()).to.deep.eq({});
+  });
+
   it('interpolation dependencies', async () => {
     const web_component_config = {
       name: 'concourse/web',

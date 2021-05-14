@@ -13,10 +13,13 @@ export const transformParameters = (input?: Dictionary<any>): Dictionary<Paramet
   const output: Dictionary<ParameterDefinitionSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value && typeof value === 'object') {
+      if (!value.default && value.required === 'false') {
+        value.default = null;
+      }
       output[key] = plainToClass(ParameterDefinitionSpecV1, value);
     } else {
       output[key] = plainToClass(ParameterDefinitionSpecV1, {
-        default: value,
+        default: value === null ? undefined : value,
       });
     }
   }

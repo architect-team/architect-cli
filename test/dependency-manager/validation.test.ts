@@ -470,7 +470,7 @@ describe('validation spec v1', () => {
       expect(validation_err.errors).to.deep.eq({
         'components.test/component.parameters.required': {
           'Required': 'required is required',
-          'value': null,
+          'value': undefined,
         },
         'components.test/component.parameters.required-explicit': {
           'Required': 'required-explicit is required',
@@ -541,7 +541,7 @@ describe('validation spec v1', () => {
       expect(validation_err.errors).to.deep.eq({
         'components.examples/hello-world2.parameters.aws_secret': {
           'Required': 'aws_secret is required',
-          'value': null,
+          'value': undefined,
         }
       })
     });

@@ -107,7 +107,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return errors;
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string>> = {}) {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}) {
     const gateway_port = await PortUtil.getAvailablePort(80);
     const external_addr = `arc.localhost:${gateway_port}`;
     return super.getGraph(component_configs, values, external_addr);

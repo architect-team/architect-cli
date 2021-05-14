@@ -251,10 +251,10 @@ export default abstract class DependencyManager {
     }
   }
 
-  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string>>) {
+  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string | null>>) {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
-    const sorted_values_dict: Dictionary<Dictionary<string>> = {};
+    const sorted_values_dict: Dictionary<Dictionary<string | null>> = {};
     for (const key of sorted_values_keys) {
       sorted_values_dict[key] = all_values[key];
     }
@@ -267,7 +267,8 @@ export default abstract class DependencyManager {
       if (isMatch(component_has_tag ? component_ref : `${component_ref}:latest`, [pattern])) {
         for (const [param_key, param_value] of Object.entries(params)) {
           if (component_parameters[param_key]) {
-            component.setParameter(param_key, param_value);
+            component_parameters[param_key].default = param_value;
+            component.setParameter(param_key, component_parameters[param_key]);
           }
         }
       }
@@ -539,7 +540,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.getParameters())) {
-      if (pv.required !== 'false' && (pv.default === undefined || pv.default === null)) {
+      if (pv.required !== 'false' && (pv.default === undefined)) {
         const validation_error = new ValidationError();
         validation_error.property = `components.${component.getName()}.parameters.${pk}`;
         validation_error.target = pv;
@@ -652,7 +653,7 @@ export default abstract class DependencyManager {
     return sorted_nodes;
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string>> = {}, external_addr: string) {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, external_addr: string) {
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets

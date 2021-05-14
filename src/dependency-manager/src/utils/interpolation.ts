@@ -1,5 +1,10 @@
 import Mustache, { Context, Writer } from 'mustache';
 
+// https://github.com/janl/mustache.js/issues/599
+export const ARC_NULL_TOKEN = '__arc__null__arc__';
+const null_quoted_regex = new RegExp(`"${ARC_NULL_TOKEN}"`, 'g');
+const null_regex = new RegExp(`${ARC_NULL_TOKEN}`, 'g');
+
 export class InterpolationErrors extends Error {
   errors: string[];
   constructor(errors: string[]) {
@@ -38,7 +43,6 @@ export const replaceBrackets = (value: string) => {
 export const escapeJSON = (value: any) => {
   if (value instanceof Object) {
     value = JSON.stringify(value);
-    // return '__obj__' + value + '__obj__';
   }
 
   // Support json strings
@@ -97,7 +101,8 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
       }
       throw new InterpolationErrors([...interpolation_errors].map((e) => denormalizeInterpolation(e)));
     }
-    return result;
+
+    return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');
   };
 
   const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
@@ -105,7 +110,6 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
   while (depth < max_depth) {
     param_value = replaceBrackets(param_value);
     param_value = writer.render(param_value, context);
-    // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;
     depth += 1;
   }
