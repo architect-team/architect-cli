@@ -12,7 +12,6 @@ Architect deployments to the AWS ECS platform type will create a variety of serv
 
 * Load Balancer
 * Security Group
-* Cert Manager Certificate
 * Task Definition
 * Security Group
 * ECS Service
@@ -30,8 +29,7 @@ Architect deployments to the AWS ECS platform type will create a variety of serv
 * Security Group
 * ECS Cluster
 * Elastic File System
-* Route 53 Hosted Zone
-* Route 53 record
+* Route 53 Record
 * CloudWatch Event Rule
 * CloudWatch Event Target
 
