@@ -107,6 +107,9 @@
     },
     "macos": {
       "identifier": "io.architect.cli"
+    },
+    "warn-if-update-available": {
+      "timeoutInDays": 30
     }
   },
   "repository": "architect-team/architect-cli",
