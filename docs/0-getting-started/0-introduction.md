@@ -9,7 +9,7 @@ symlinks:
 
 The [cloud-native landscape](https://landscape.cncf.io/) is full of powerful tools, but this landscape is constantly changing and the tools aren't designed for the every day developer. If developers hope to take advantage of modern design patterns, they need a framework designed for them instead of the endless landscape of operator-focused tools being forced upon them.
 
-Architect is a self-service developer platform for cloud-native applications – enabling [continuous delivery](/docs/how-it-works/continuous-delivery), [service discovery](/docs/how-it-works/service-discovery), and [continuous security](/docs/how-it-works/continuous-security) all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
+Architect is a self-service developer platform for cloud-native applications – enabling continuous delivery, [service discovery](/docs/configuration/service-discovery), and continuous security all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
 
 ## First steps
 
@@ -99,9 +99,9 @@ services:
     build:
       context: ./backend
     interfaces:
-      main: 8080
+      main: &api-port 8080
     environment:
-      PORT: 8080
+      PORT: *api-port
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
       DB_USER: ${{ parameters.root_db_user }}
       DB_PASS: ${{ parameters.root_db_pass }}
@@ -120,9 +120,9 @@ services:
     build:
       context: ./frontend
     interfaces:
-      main: 8080
+      main: &app-port 8080
     environment:
-      PORT: ${{ services.app.interfaces.main.port }}
+      PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
       WORLD_TEXT: ${{ parameters.world_text }}
     debug:
@@ -134,7 +134,7 @@ services:
           host_path: ./frontend/src
 
 # Maps the frontend application to an external interface. Once running, it can
-# be resolved at http://app.localhost
+# be resolved at http://app.arc.localhost
 interfaces:
   app: ${{ services.app.interfaces.main.url }}
 ```
@@ -149,7 +149,7 @@ Now that we have a better understanding of what we're deploying, let's go ahead 
 $ architect deploy --local examples/react-app:latest -i app:app
 
 Using locally linked examples/react-app found at /architect-cli/examples/react-app
-http://app.localhost:80/ => examples--react-app--app--latest--aklmrtvo
+http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo
 
 http://localhost:50000/ => examples--react-app--api-db--latest--arrm58dc
 http://localhost:50001/ => examples--react-app--api--latest--1dzvo47x

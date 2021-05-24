@@ -1,5 +1,10 @@
 import Mustache, { Context, Writer } from 'mustache';
 
+// https://github.com/janl/mustache.js/issues/599
+export const ARC_NULL_TOKEN = '__arc__null__arc__';
+const null_quoted_regex = new RegExp(`"${ARC_NULL_TOKEN}"`, 'g');
+const null_regex = new RegExp(`${ARC_NULL_TOKEN}`, 'g');
+
 export class InterpolationErrors extends Error {
   errors: string[];
   constructor(errors: string[]) {
@@ -10,6 +15,7 @@ export class InterpolationErrors extends Error {
   }
 }
 
+// TODO:320 test
 export const normalizeInterpolation = (value: string) => {
   return value.replace(/\./g, '__arc__');
 };
@@ -34,33 +40,9 @@ export const replaceBrackets = (value: string) => {
   return res;
 };
 
-export const prefixExpressions = (value: string, prefix: string) => {
-  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
-  let matches;
-  let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const prefixed_value = matches[0].replace(matches[1], `${prefix}.${matches[1]}`);
-    res = res.replace(matches[0], prefixed_value);
-  }
-  return res;
-};
-
-export const removePrefixForExpressions = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
-  let matches;
-  let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const removed_prefix = matches[1].split('.').slice(1).join('.');
-    const unprefixed_value = matches[0].replace(matches[1], removed_prefix);
-    res = res.replace(matches[0], unprefixed_value);
-  }
-  return res;
-};
-
 export const escapeJSON = (value: any) => {
   if (value instanceof Object) {
     value = JSON.stringify(value);
-    // return '__obj__' + value + '__obj__';
   }
 
   // Support json strings
@@ -78,6 +60,7 @@ Mustache.escape = function (text) {
   return escapeJSON(text);
 }; // turns off HTML escaping
 Mustache.tags = ['${{', '}}']; // sets custom delimiters
+Mustache.templateCache = undefined;
 
 export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const writer = new Writer();
@@ -103,8 +86,8 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
     if (errors.size > 0) {
       const interpolation_errors: Set<string> = new Set();
       for (const error of errors) {
-        // Dedupe host/port/protocol into url
-        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol')) {
+        // Dedupe host/port/protocol/username/password into url
+        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol') || error.endsWith('.username') || error.endsWith('.password')) {
           const keys = error.split('.');
           const key = keys.slice(0, keys.length - 1).join('.');
           if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {
@@ -118,7 +101,8 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
       }
       throw new InterpolationErrors([...interpolation_errors].map((e) => denormalizeInterpolation(e)));
     }
-    return result;
+
+    return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');
   };
 
   const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
@@ -126,7 +110,6 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
   while (depth < max_depth) {
     param_value = replaceBrackets(param_value);
     param_value = writer.render(param_value, context);
-    // param_value = param_value.replace(/"__obj__/g, '').replace(/__obj__"/g, '');
     if (!mustache_regex.test(param_value)) break;
     depth += 1;
   }

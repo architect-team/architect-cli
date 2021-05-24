@@ -1,4 +1,4 @@
-import { Transform, Type } from 'class-transformer/decorators';
+import { plainToClass, Transform, Type } from 'class-transformer';
 import { IsEmpty, IsInstance, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
@@ -8,7 +8,23 @@ import { LivenessProbeSpec } from '../common/liveness-probe-spec';
 import { LivenessProbeSpecV1 } from '../common/liveness-probe-v1';
 import { ResourceConfigV1 } from '../resource/resource-v1';
 import { ServiceConfig } from './service-config';
-import { transformServiceInterfaces } from './service-transformer';
+
+export const transformServiceInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  const output: Dictionary<InterfaceSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    output[key] = value instanceof Object
+      ? plainToClass(InterfaceSpecV1, value)
+      : plainToClass(InterfaceSpecV1, { port: value });
+  }
+  return output;
+};
 
 export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Type(() => ServiceConfigV1)
@@ -17,9 +33,9 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @IsEmpty({ groups: ['debug'] })
   debug?: ServiceConfigV1;
 
-  @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of services need to expose ports' })
-  @Transform((value) => !value ? {} : value)
+  @IsOptional({ always: true })
+  @IsObject({ groups: ['developer'] })
+  @Transform((params) => !params?.value ? {} : params.value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @Type(() => LivenessProbeSpecV1)
@@ -28,10 +44,6 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   liveness_probe?: LivenessProbeSpecV1;
 
   @IsOptional({ always: true })
-  @IsEmpty({
-    groups: ['developer'],
-    message: 'Cannot hardcode a replica count when registering services',
-  })
   @Type(() => String)
   replicas?: string;
 
@@ -42,6 +54,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
     const expanded = this.expand();
     errors = await validateNested(expanded, 'liveness_probe', errors, options);
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
+    errors = await validateNested(expanded, 'build', errors, options);
     return errors;
   }
 

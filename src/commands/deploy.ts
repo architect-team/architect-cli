@@ -7,21 +7,19 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
-import open from 'open';
-import path from 'path';
-import untildify from 'untildify';
+import opener from 'opener';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
-import { Environment, EnvironmentUtils } from '../common/utils/environment';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentConfig } from '../dependency-manager/src';
-import { EnvironmentConfigBuilder } from '../dependency-manager/src/spec/environment/environment-builder';
+import * as Docker from '../common/utils/docker';
+import { EnvironmentUtils } from '../common/utils/environment';
+import { PipelineUtils } from '../common/utils/pipeline';
+import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
-  static POLL_INTERVAL = 10000;
 
   static flags = {
     ...Command.flags,
@@ -36,6 +34,11 @@ export abstract class DeployCommand extends Command {
       description: 'Be very careful with this flag. Usage: --force_unlock=<lock_id>.',
       hidden: true,
       exclusive: ['local', 'compose_file'],
+    }),
+    recursive: flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
     }),
     refresh: flags.boolean({
       default: true,
@@ -53,54 +56,24 @@ export abstract class DeployCommand extends Command {
     }),
   };
 
-  async poll(deployment_id: string, match_stage?: string) {
-    return new Promise((resolve, reject) => {
-      let poll_count = 0;
-      const poll = setInterval(async () => {
-        const { data: deployment } = await this.app.api.get(`/deploy/${deployment_id}`);
-        if (deployment.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
-          clearInterval(poll);
-          reject(new Error('Deployment failed'));
-        }
-
-        if (match_stage) {
-          if (deployment.stage === match_stage) {
-            clearInterval(poll);
-            resolve(deployment);
-          }
-        } else if (deployment.applied_at) {
-          clearInterval(poll);
-          resolve(deployment);
-        }
-        poll_count += 1;
-      }, DeployCommand.POLL_INTERVAL);
-    });
-  }
-
-  async deployRemote(environment: Environment, env_config: EnvironmentConfig, merge: boolean) {
+  async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
-    cli.action.start(chalk.blue('Creating deployment'));
-    const { data: deployment } = await this.app.api.post(`/environments/${environment.id}/deploy`, { config: env_config, merge: merge });
-    cli.action.stop();
     if (!flags.auto_approve) {
-      this.log(`Deployment ready for review: ${this.app.config.app_host}/${deployment.environment.account.name}/environments/${deployment.environment.name}/deployments/${deployment.id}`);
+      this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'deploy',
         message: 'Would you like to apply?',
       });
       if (!confirmation.deploy) {
-        this.warn('Canceled deploy');
-        return;
+        this.warn(`Canceled pipeline`);
+        return false;
       }
     }
 
-    cli.action.start(chalk.blue('Deploying'));
-    await this.app.api.post(`/deploy/${deployment.id}`, {}, { params: { lock: flags.lock, force_unlock: flags.force_unlock, refresh: flags.refresh } });
-    await this.poll(deployment.id);
-    cli.action.stop();
-    this.log(chalk.green(`Deployed`));
+    await this.app.api.post(`/pipelines/${pipeline.id}/approve`);
+    return true;
   }
 }
 
@@ -150,26 +123,65 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    values: flags.string({
+      char: 'v',
+      description: 'Path of values file',
+    }),
   };
 
   static args = [{
-    name: 'environment_config_or_component',
-    description: 'Path to an environment config file or component `account/component:latest`',
-    required: true,
+    name: 'configs_or_components',
+    description: 'Path to an architect.yml file or component `account/component:latest`. Multiple components are accepted.',
   }];
+
+  // overrides the oclif default parse to allow for configs_or_components to be a list of components
+  parse(options: any, argv = this.argv): any {
+    options.args = [];
+    for (const arg of argv) {
+      options.args.push({ name: 'filler' });
+    }
+    const parsed = super.parse(options, argv);
+    parsed.args.configs_or_components = parsed.argv;
+    return parsed;
+  }
 
   async runCompose(compose: DockerComposeTemplate) {
     const { flags } = this.parse(Deploy);
 
+    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
+    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+
+    await fs.ensureFile(compose_file);
+    await fs.writeFile(compose_file, yaml.dump(compose));
+    this.log(`Wrote docker-compose file to: ${compose_file}`);
+
+    if (flags.build_parallel) {
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
+    } else {
+      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
+    }
+
+    console.clear();
+
+    this.log('Building containers...', chalk.green('done'));
+    this.log('');
+
+    this.log('Once the containers are running they will be accessible via the following urls:');
+
     const exposed_interfaces: string[] = [];
     const gateway = compose.services['gateway'];
-    if (gateway) {
-      const gateway_port = gateway.ports[0] && (gateway.ports[0] as string).split(':')[0];
+    if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
+      const gateway_port = gateway.ports[0].split(':')[0];
       for (const [service_name, service] of Object.entries(compose.services)) {
-        if (service.environment && service.environment.VIRTUAL_HOST) {
-          for (const split_host of service.environment.VIRTUAL_HOST.split(',')) {
-            this.log(`${chalk.blue(`http://${split_host}:${gateway_port}/`)} => ${service_name}`);
-            exposed_interfaces.push(`http://${split_host}:${gateway_port}/`);
+        if (service.labels?.includes('traefik.enable=true')) {
+          const host_rules = service.labels.filter(label => label.includes('rule=Host'));
+          for (const host_rule of host_rules) {
+            const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.arc.localhost)`\)/g);
+            const host_match = host.exec(host_rule);
+            if (host_match) {
+              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+            }
           }
         }
       }
@@ -177,23 +189,16 @@ export default class Deploy extends DeployCommand {
     }
 
     for (const svc_name of Object.keys(compose.services)) {
-      for (const port_pair of compose.services[svc_name].ports) {
-        const exposed_port = port_pair && (port_pair as string).split(':')[0];
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}`);
+      for (const port_pair of compose.services[svc_name].ports || []) {
+        const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
+        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
       }
     }
-    const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
-    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+    this.log('');
+    this.log('Starting containers...');
+    this.log('');
 
-    await fs.ensureFile(compose_file);
-    await fs.writeFile(compose_file, yaml.safeDump(compose));
-    this.log(`Wrote docker-compose file to: ${compose_file}`);
-    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit'];
-    if (flags.build_parallel) {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
-    } else {
-      compose_args.push('--build');
-    }
+    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit', '--timeout', '0'];
     if (flags.detached) {
       compose_args.push('-d');
       compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
@@ -216,14 +221,14 @@ export default class Deploy extends DeployCommand {
               Host: host_name,
             },
             timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500; },
+            validateStatus: (status: number) => { return status < 500 && status !== 404; },
           }));
         }
 
         Promise.all(promises).then(() => {
           for (const exposed_interface of exposed_interfaces) {
             this.log('Opening', chalk.blue(exposed_interface));
-            open(exposed_interface);
+            opener(exposed_interface);
           }
           this.log('(disable with --no-browser)');
           clearInterval(browser_interval);
@@ -237,84 +242,13 @@ export default class Deploy extends DeployCommand {
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
-  private async runLocal() {
-    const { args, flags } = this.parse(Deploy);
-
-    let dependency_manager;
-    let namespaced_component_name;
-    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
-      namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-
-      const env_config = EnvironmentConfigBuilder.buildFromJSON({
-        components: {
-          [namespaced_component_name]: parsed_component_version.tag,
-        },
-      });
-
-      dependency_manager = await LocalDependencyManager.create(this.app.api);
-      dependency_manager.environment = env_config;
-    } else {
-      dependency_manager = await LocalDependencyManager.createFromPath(
-        this.app.api,
-        path.resolve(untildify(args.environment_config_or_component)),
-      );
-      namespaced_component_name = Object.keys(dependency_manager.environment.getComponents())[0];
+  private readValuesFile(values_file_path: string | undefined) {
+    let component_values: any = {};
+    if (values_file_path && fs.statSync(values_file_path)) {
+      const values_file_data = fs.readFileSync(values_file_path);
+      component_values = yaml.load(values_file_data.toString('utf-8'), { schema: yaml.FAILSAFE_SCHEMA });
     }
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
-      dependency_manager.environment.setParameter(parameter_key, parameter);
-    }
-    const extra_interfaces = this.getExtraInterfaces(flags.interface);
-    this.updateEnvironmentInterfaces(dependency_manager.environment, extra_interfaces, namespaced_component_name);
-
-    dependency_manager.setLinkedComponents(this.app.linkedComponents);
-    const compose = await DockerComposeUtils.generate(dependency_manager);
-    await this.runCompose(compose);
-  }
-
-  protected async runRemote() {
-    const { args, flags } = this.parse(Deploy);
-
-    let env_config: EnvironmentConfig;
-
-    let env_config_merge: boolean;
-    if (ComponentVersionSlugUtils.Validator.test(args.environment_config_or_component)) {
-      const parsed_component_version = ComponentVersionSlugUtils.parse(args.environment_config_or_component);
-      const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-
-      env_config = EnvironmentConfigBuilder.buildFromJSON({
-        components: {
-          [namespaced_component_name]: parsed_component_version.tag,
-        },
-      });
-
-      const extra_interfaces = this.getExtraInterfaces(flags.interface);
-      this.updateEnvironmentInterfaces(env_config, extra_interfaces, namespaced_component_name);
-
-      env_config_merge = true;
-    } else {
-      if (flags.interface.length) { throw new Error('Cannot combine interface flag with an environment config'); }
-
-      const env_config_path = path.resolve(untildify(args.environment_config_or_component));
-      // Validate env config
-      env_config = await EnvironmentConfigBuilder.buildFromPath(env_config_path);
-      for (const [ck, cv] of Object.entries(env_config.getComponents())) {
-        if (cv.getExtends()?.startsWith('file:')) {
-          throw new Error(`Cannot deploy component remotely with file extends: ${ck}: ${cv.getExtends()}`);
-        }
-      }
-      env_config_merge = false;
-    }
-
-    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
-    for (const [parameter_key, parameter] of Object.entries(extra_params)) {
-      env_config.setParameter(parameter_key, parameter);
-    }
-
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-    await this.deployRemote(environment, env_config, env_config_merge);
+    return component_values;
   }
 
   getExtraEnvironmentVariables(parameters: string[]) {
@@ -337,26 +271,153 @@ export default class Deploy extends DeployCommand {
     return extra_env_vars;
   }
 
-  getExtraInterfaces(interfaces: string[]) {
-    const extra_interfaces: { [s: string]: string } = {};
-    for (const component_interface of interfaces) {
-      const interface_split = component_interface.split(':');
-      if (interface_split.length !== 2) {
-        throw new Error(`Bad format for interface ${component_interface}. Please specify in the format --interface subdomain:component_interface`);
+  private getComponentValues() {
+    const { flags } = this.parse(Deploy);
+    const component_values = this.readValuesFile(flags.values);
+    const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
+    if (extra_params && Object.keys(extra_params).length) {
+      if (!component_values['*']) {
+        component_values['*'] = {};
       }
-      extra_interfaces[interface_split[0]] = interface_split[1];
+      component_values['*'] = { ...component_values['*'], ...extra_params };
     }
-    return extra_interfaces;
+    return component_values;
   }
 
-  updateEnvironmentInterfaces(env_config: EnvironmentConfig, extra_interfaces: Dictionary<string>, component_name: string) {
-    for (const [subdomain, interface_name] of Object.entries(extra_interfaces)) {
-      env_config.setInterface(subdomain, `\${{ components['${component_name}'].interfaces.${interface_name}.url }}`);
+  private getInterfacesMap() {
+    const { flags } = this.parse(Deploy);
+    const interfaces_map: Dictionary<string> = {};
+    for (const i of flags.interface) {
+      const [key, value] = i.split(':');
+      interfaces_map[key] = value || key;
     }
+    return interfaces_map;
+  }
+
+  private async runLocal() {
+    const { args, flags } = this.parse(Deploy);
+    await Docker.verify();
+
+    if (!flags.values && fs.existsSync('./values.yml')) {
+      flags.values = './values.yml';
+    }
+
+    if (!args.configs_or_components || !args.configs_or_components.length) {
+      args.configs_or_components = ['./architect.yml'];
+    }
+
+    const interfaces_map = this.getInterfacesMap();
+    const component_values = this.getComponentValues();
+
+    const linked_components = this.app.linkedComponents;
+    const component_versions: string[] = [];
+    for (const config_or_component of args.configs_or_components) {
+
+      let component_version = config_or_component;
+      if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
+        const component_config = await ComponentConfigBuilder.buildFromPath(config_or_component);
+        linked_components[component_config.getName()] = config_or_component;
+        component_version = component_config.getName();
+
+        if (Object.keys(interfaces_map).length === 0) {
+          for (const interface_name of Object.keys(component_config.getInterfaces())) {
+            interfaces_map[interface_name] = interface_name;
+          }
+        }
+      }
+      component_versions.push(component_version);
+    }
+
+    const dependency_manager = new LocalDependencyManager(
+      this.app.api,
+      linked_components,
+    );
+
+    const component_configs: ComponentConfig[] = [];
+    for (const component_version of component_versions) {
+      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
+
+      if (flags.recursive) {
+        const dependency_configs = await dependency_manager.loadComponentConfigs(component_config);
+        component_configs.push(...dependency_configs);
+      } else {
+        component_configs.push(component_config);
+      }
+    }
+
+    const graph = await dependency_manager.getGraph(component_configs, component_values);
+
+    const compose = await DockerComposeUtils.generate(graph);
+    await this.runCompose(compose);
+  }
+
+  protected async runRemote() {
+    const { args, flags } = this.parse(Deploy);
+
+    const components = args.configs_or_components;
+
+    const interfaces_map = this.getInterfacesMap();
+    const component_values = this.getComponentValues();
+
+    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+
+    const deployment_dtos = [];
+    for (const component of components) {
+      if (ComponentVersionSlugUtils.Validator.test(component)) {
+        const parsed_component_version = ComponentVersionSlugUtils.parse(component);
+        const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
+      }
+
+      const deploy_dto = {
+        component: component,
+        interfaces: interfaces_map,
+        recursive: flags.recursive,
+        values: component_values,
+      };
+      deployment_dtos.push(deploy_dto);
+    }
+
+    cli.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    const pipelines = await Promise.all(
+      deployment_dtos.map(async (deployment_dto) => {
+        const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
+        return { component_name: deployment_dto.component, pipeline };
+      })
+    );
+    cli.action.stop();
+
+    const approved_pipelines = [];
+    for (const pipeline of pipelines) {
+      const approved = await this.approvePipeline(pipeline.pipeline);
+      if (approved) {
+        approved_pipelines.push(pipeline);
+      }
+    }
+
+    if (!approved_pipelines?.length) {
+      this.log(chalk.blue('Cancelled all pipelines'));
+      return;
+    }
+
+    cli.action.start(chalk.blue('Deploying'));
+    await Promise.all(
+      approved_pipelines.map(async (pipeline) => {
+        await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
+        this.log(chalk.green(`${pipeline.component_name} Deployed`));
+      })
+    );
+    cli.action.stop();
   }
 
   async run() {
-    const { flags } = this.parse(Deploy);
+    const { args, flags } = this.parse(Deploy);
+
+    if (args.configs_or_components && args.configs_or_components.length > 1) {
+      if (flags.interface?.length) {
+        throw new Error('Interface flag not supported if deploying multiple components in the same command.');
+      }
+    }
 
     if (flags.local) {
       await this.runLocal();

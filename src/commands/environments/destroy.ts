@@ -7,8 +7,8 @@ import { AccountUtils } from '../../common/utils/account';
 import { EnvironmentUtils } from '../../common/utils/environment';
 
 export default class EnvironmentDestroy extends Command {
-  static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy'];
-  static description = 'Destroy an environment';
+  static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];
+  static description = 'Deregister an environment';
 
   static flags = {
     ...Command.flags,
@@ -26,7 +26,7 @@ export default class EnvironmentDestroy extends Command {
 
   static args = [{
     name: 'environment',
-    description: 'Name of the environment to destroy',
+    description: 'Name of the environment to deregister',
     parse: (value: string) => value.toLowerCase(),
   }];
 
@@ -39,7 +39,7 @@ export default class EnvironmentDestroy extends Command {
     let answers = await inquirer.prompt([{
       type: 'input',
       name: 'destroy',
-      message: 'Are you absolutely sure? This will destroy the environment.\nPlease type in the name of the environment to confirm.\n',
+      message: 'Are you absolutely sure? This will deregister the environment.\nPlease type in the name of the environment to confirm.\n',
       validate: (value: any, answers: any) => {
         if (value === environment.name) {
           return true;
@@ -49,7 +49,7 @@ export default class EnvironmentDestroy extends Command {
       when: !flags.auto_approve,
     }]);
 
-    cli.action.start(chalk.blue('Destroying environment'));
+    cli.action.start(chalk.blue('Deregistering environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
 
@@ -59,6 +59,6 @@ export default class EnvironmentDestroy extends Command {
       },
     });
     cli.action.stop();
-    this.log(chalk.green('Environment destroyed'));
+    this.log(chalk.green('Environment deregistered'));
   }
 }

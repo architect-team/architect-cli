@@ -6,12 +6,11 @@ import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
-import { buildImage, getDigest, pushImage, stripTagFromImage } from '../common/utils/docker';
+import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { Refs, ServiceNode } from '../dependency-manager/src';
+import { Refs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 
 tmp.setGracefulCleanup();
@@ -34,12 +33,6 @@ export default class ComponentRegister extends Command {
       multiple: true,
       hidden: true,
     }),
-    environment: flags.string({
-      char: 'e',
-      description: 'Path to an environment config including local components to build',
-      exclusive: ['component'],
-      hidden: true,
-    }),
     tag: flags.string({
       char: 't',
       description: 'Tag to give to the new component',
@@ -54,6 +47,7 @@ export default class ComponentRegister extends Command {
 
   async run() {
     const { flags, args } = this.parse(ComponentRegister);
+    await Docker.verify();
 
     const config_paths: Set<string> = new Set();
 
@@ -61,17 +55,7 @@ export default class ComponentRegister extends Command {
       config_paths.add(path.resolve(untildify(args.component)));
     }
 
-    let dependency_manager = await LocalDependencyManager.create(this.app.api);
-    if (flags.environment) {
-      const config_path = path.resolve(untildify(flags.environment));
-      dependency_manager = await LocalDependencyManager.createFromPath(this.app.api, config_path);
-      const graph = await dependency_manager.getGraph(false);
-      for (const node of graph.nodes) {
-        if (node.is_local && node instanceof ServiceNode) {
-          config_paths.add(node.local_path);
-        }
-      }
-    } else if (flags.components) {
+    if (flags.components) {
       for (let config_path of flags.components) {
         config_path = path.resolve(untildify(config_path));
         config_paths.add(config_path);
@@ -108,7 +92,7 @@ export default class ComponentRegister extends Command {
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
     const selected_registry = await this.getSelectedRegistry(selected_account.id);
 
-    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.url_safe_ref(`${raw_config.name}:${tag}`), unsafeCleanup: true });
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${raw_config.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
       const image_tag = `${selected_registry}/${raw_config.name}-${service_name}:${tag}`;
@@ -155,7 +139,7 @@ export default class ComponentRegister extends Command {
     const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key
-    const image_without_tag = stripTagFromImage(image);
+    const image_without_tag = Docker.stripTagFromImage(image);
     return `${image_without_tag}@${digest}`;
   }
 
@@ -175,7 +159,7 @@ export default class ComponentRegister extends Command {
       if (service_config.build?.args) {
         build_args = Object.entries(service_config.build?.args).map(([key, value]) => `${key}=${value}`);
       }
-      return await buildImage(build_path, image_tag, dockerfile, build_args);
+      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
@@ -186,7 +170,7 @@ export default class ComponentRegister extends Command {
   private async pushImage(image: string) {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
-      await pushImage(image);
+      await Docker.pushImage(image);
     } catch (err) {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
@@ -197,7 +181,7 @@ export default class ComponentRegister extends Command {
 
   private async getDigest(image: string) {
     cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
-    const digest = await getDigest(image).catch(err => {
+    const digest = await Docker.getDigest(image).catch(err => {
       cli.action.stop(chalk.red(`Inspect failed`));
       throw new Error(err);
     });
@@ -212,7 +196,7 @@ export default class ComponentRegister extends Command {
     const digest_match = new RegExp('Digest: (.*)').exec(stdout);
     if (digest_match) {
       const digest = digest_match[1];
-      const image_without_tag = stripTagFromImage(image);
+      const image_without_tag = Docker.stripTagFromImage(image);
       return `${image_without_tag}@${digest}`;
     } else {
       throw new Error('Unable to get digest');

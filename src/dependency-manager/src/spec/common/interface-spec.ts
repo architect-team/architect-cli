@@ -4,5 +4,12 @@ export interface InterfaceSpec {
   port: string;
   url?: string;
   protocol?: string;
-  domains?: string[];
+  username?: string;
+  password?: string;
+  sticky?: string;
+
+  external_name?: string;
+  consumers?: string[];
+  dns_zone?: string;
+  subdomain?: string;
 }

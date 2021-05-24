@@ -24,7 +24,8 @@ jobs:
     strategy:
       matrix:
         node-version: [10.x, 11.x, 12.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Tmp removing windows-latest because github actions isn't triggering
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@master

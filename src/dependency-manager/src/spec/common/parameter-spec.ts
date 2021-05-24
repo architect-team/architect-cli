@@ -1,5 +1,5 @@
 
-export type ParameterValue = string | number | boolean | undefined;
+export type ParameterValue = string | number | boolean | null | undefined;
 
 export interface ParameterDefinitionSpec {
   required?: string;

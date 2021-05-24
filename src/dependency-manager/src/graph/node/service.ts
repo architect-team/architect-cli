@@ -5,7 +5,7 @@ import { ServiceConfigV1 } from '../../spec/service/service-v1';
 
 export interface ServiceNodeOptions {
   ref: string;
-  node_config: ServiceConfig;
+  config: ServiceConfig;
   local_path?: string;
   artifact_image?: string;
 }
@@ -14,7 +14,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
   @Type(() => ServiceConfigV1)
-  node_config!: ServiceConfig;
+  config!: ServiceConfig;
 
   ref!: string;
   local_path!: string;
@@ -24,14 +24,14 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     super();
     if (options) {
       this.ref = options.ref;
-      this.node_config = options.node_config;
+      this.config = options.config;
       this.local_path = options.local_path || '';
       this.artifact_image = options.artifact_image;
     }
   }
 
   get interfaces(): { [key: string]: any } {
-    return this.node_config.getInterfaces();
+    return this.config.getInterfaces();
   }
 
   get ports(): string[] {

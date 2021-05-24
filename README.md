@@ -31,20 +31,13 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/0.8.4-rc.3 linux-x64 node-v12.20.0
+@architect-io/cli/1.0.5-rc.0 linux-x64 node-v12.22.1
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
 ...
 ```
 <!-- usagestop -->
-
-_Note: the CLI uses the [keytar](http://atom.github.io/node-keytar/) library to store
-your Architect Cloud credentials securely on your machine. If your OS doesn't support
-keytar (like many linux systems) you will see an install error in the logs during NPM
-install. Keytar is an optional dependency and the install will complete successfully
-despite this error, but [you may hide it](https://github.com/nodejs/node-gyp/issues/1236)
-by running npm install with the `--unsafe` flag._
 
 # Commands
 
@@ -53,7 +46,7 @@ by running npm install with the `--unsafe` flag._
 * [`architect config:get OPTION`](#architect-configget-option)
 * [`architect config:set OPTION VALUE`](#architect-configset-option-value)
 * [`architect config:view`](#architect-configview)
-* [`architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`](#architect-deploy-environment_config_or_component)
+* [`architect deploy [CONFIGS_OR_COMPONENTS]`](#architect-deploy-configs_or_components)
 * [`architect destroy`](#architect-destroy)
 * [`architect environments [QUERY]`](#architect-environments-query)
 * [`architect environments:create [ENVIRONMENT]`](#architect-environmentscreate-environment)
@@ -92,7 +85,7 @@ EXAMPLES
   $ architect autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v0.2.0/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v0.3.0/src/commands/autocomplete/index.ts)_
 
 ## `architect config:get OPTION`
 
@@ -109,7 +102,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -127,7 +120,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -144,18 +137,19 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/config/view.ts)_
 
-## `architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT`
+## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
 Create a deploy job on Architect Cloud or run stacks locally
 
 ```
 USAGE
-  $ architect deploy ENVIRONMENT_CONFIG_OR_COMPONENT
+  $ architect deploy [CONFIGS_OR_COMPONENTS]
 
 ARGUMENTS
-  ENVIRONMENT_CONFIG_OR_COMPONENT  Path to an environment config file or component `account/component:latest`
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
 
 OPTIONS
   -a, --account=account            Architect Account
@@ -166,12 +160,14 @@ OPTIONS
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
   -o, --compose_file=compose_file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
+  -r, --[no-]recursive
+  -v, --values=values              Path of values file
   --auto_approve
   --[no-]browser
   --[no-]build_parallel
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -186,12 +182,13 @@ OPTIONS
   -c, --components=components    Component(s) to destroy
   -e, --environment=environment  Architect Environment
   -h, --help                     show CLI help
+  -r, --[no-]recursive
   --auto_approve
   --[no-]browser
   --[no-]build_parallel
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -216,7 +213,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -241,18 +238,18 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
-Destroy an environment
+Deregister an environment
 
 ```
 USAGE
   $ architect environments:destroy [ENVIRONMENT]
 
 ARGUMENTS
-  ENVIRONMENT  Name of the environment to destroy
+  ENVIRONMENT  Name of the environment to deregister
 
 OPTIONS
   -a, --account=account  Architect Account
@@ -264,9 +261,11 @@ ALIASES
   $ architect environment:destroy
   $ architect envs:destroy
   $ architect env:destroy
+  $ architect env:deregister
+  $ architect environment:deregister
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -283,7 +282,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.1.0/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v3.2.2/src/commands/help.ts)_
 
 ## `architect init`
 
@@ -301,7 +300,7 @@ OPTIONS
   --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -315,7 +314,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -331,7 +330,7 @@ OPTIONS
   -p, --password=password  Password
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -345,7 +344,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -368,7 +367,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -387,6 +386,7 @@ OPTIONS
   -h, --host=host
   -k, --kubeconfig=kubeconfig               [default: ~/.kube/config]
   -t, --type=KUBERNETES|kubernetes|ECS|ecs
+  --auto_approve
   --aws_key=aws_key
   --aws_region=aws_region
   --aws_secret=aws_secret
@@ -394,22 +394,23 @@ OPTIONS
   --service_token=service_token             Service token
 
 ALIASES
+  $ architect platforms:register
   $ architect platform:create
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/platforms/create.ts)_
 
 ## `architect platforms:destroy [PLATFORM]`
 
-Destroy a platform
+Deregister a platform from Architect
 
 ```
 USAGE
   $ architect platforms:destroy [PLATFORM]
 
 ARGUMENTS
-  PLATFORM  Name of the platform to destroy
+  PLATFORM  Name of the platform to deregister
 
 OPTIONS
   -a, --account=account  Architect Account
@@ -417,11 +418,12 @@ OPTIONS
   --auto_approve         Automatically apply the changes
 
 ALIASES
+  $ architect platforms:deregister
   $ architect platform:destroy
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -445,7 +447,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/register.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -470,7 +472,7 @@ ALIASES
   $ architect task:exec
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/task.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -485,7 +487,7 @@ OPTIONS
   --all       Unlink all components registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/unlink.ts)_
 
 ## `architect whoami`
 
@@ -502,5 +504,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v0.8.4-rc.3/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.0.5-rc.0/src/commands/whoami.ts)_
 <!-- commandsstop -->

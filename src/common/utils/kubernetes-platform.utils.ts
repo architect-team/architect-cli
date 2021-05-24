@@ -6,7 +6,7 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { CreatePlatformInput } from '../../commands/platforms/create';
+import { CreatePlatformInput } from './platform';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 
@@ -25,7 +25,7 @@ export class KubernetesPlatformUtils {
     }
 
     try {
-      kubeconfig = yaml.safeLoad(kubeconfig);
+      kubeconfig = yaml.load(kubeconfig);
     } catch {
       throw new Error('Invalid kubeconfig format. Did you provide the correct path?');
     }
@@ -128,7 +128,12 @@ export class KubernetesPlatformUtils {
       'get', 'sa', SERVICE_ACCOUNT_NAME,
       '-o', 'json',
     ]);
-    const sa_secret_name = JSON.parse(saRes.stdout).secrets[0].name;
+
+    const secrets = JSON.parse(saRes.stdout).secrets;
+    if (!secrets) {
+      throw new Error('Unable to retrieve service account secret');
+    }
+    const sa_secret_name = secrets[0].name;
     const secret_res = await execa('kubectl', [
       ...set_kubeconfig,
       'get', 'secrets', sa_secret_name,

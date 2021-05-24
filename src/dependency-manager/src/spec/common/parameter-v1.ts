@@ -12,7 +12,7 @@ export class ParameterDefinitionSpecV1 extends ValidatableConfig implements Para
   description?: string;
 
   @IsOptional({ always: true })
-  default?: string | number | boolean;
+  default?: string | number | boolean | null;
 }
 
 export type ParameterValueSpecV1 = string | number | boolean | ParameterDefinitionSpecV1;

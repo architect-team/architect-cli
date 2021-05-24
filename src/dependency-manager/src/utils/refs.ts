@@ -1,54 +1,52 @@
 import crypto from 'crypto';
-import { GatewaySlugUtils, InterfaceSlugUtils, Slugs } from './slugs';
 
 export class Refs {
-
-  private static URL_SAFE_DELIMITER = '--';
-  private static URL_SAFE_PUNCTUATION_REPLACEMENT = '-';
   private static HASH_LENGTH = 8;
-  private static DEFAULT_MAX_LENGTH = 63;
+  public static DEFAULT_MAX_LENGTH = 63;
 
-  public static url_safe_ref(ref: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
-    if (ref === GatewaySlugUtils.StringLiteral) {
-      return ref;
+  public static safeRef(ref: string, max_length?: number): string;
+  // eslint-disable-next-line no-dupe-class-members
+  public static safeRef(ref: string, seed?: string, max_length?: number): string;
+  // eslint-disable-next-line no-dupe-class-members
+  public static safeRef(ref: string, seed?: string | number, max_length: number = Refs.DEFAULT_MAX_LENGTH): string {
+    if (typeof seed == 'number') {
+      max_length = seed;
     }
-    let suffix = '';
-    let url_safe_ref = ref;
-    if (ref.endsWith(InterfaceSlugUtils.Suffix)) {
-      suffix = InterfaceSlugUtils.Suffix;
-      url_safe_ref = ref.slice(0, -1 * (InterfaceSlugUtils.Suffix.length));
-    }
-
-    const hash = Refs.to_digest(ref);
-
-    url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.NAMESPACE_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
-    url_safe_ref = url_safe_ref.replace(new RegExp(`${Slugs.TAG_DELIMITER}`, 'g'), Refs.URL_SAFE_DELIMITER);
-    url_safe_ref = url_safe_ref.replace(/[^a-zA-Z0-9-]/g, Refs.URL_SAFE_PUNCTUATION_REPLACEMENT);
-
-    // slice if the whole thing is too long
-    const max_base_length = max_length - Refs.HASH_LENGTH - Refs.URL_SAFE_DELIMITER.length - suffix.length;
-    if (url_safe_ref.length > max_base_length) {
-      url_safe_ref = url_safe_ref.slice(0, max_base_length);
-      // trim any trailing dashes
-      while (url_safe_ref.charAt(url_safe_ref.length - 1) === Refs.URL_SAFE_DELIMITER[0]) {
-        url_safe_ref = url_safe_ref.substring(0, url_safe_ref.length - 1);
-      }
+    if (typeof seed == 'number' || !seed) {
+      seed = ref;
     }
 
-    // add the hash
-    url_safe_ref += Refs.URL_SAFE_DELIMITER;
-    url_safe_ref += hash.slice(0, Refs.HASH_LENGTH);
-    url_safe_ref += suffix;
+    if (max_length < Refs.HASH_LENGTH) {
+      throw new Error('Max length cannot be less than hash length');
+    }
 
-    return url_safe_ref;
+    const sanitized_ref = ref.replace(/[^a-zA-Z0-9-]/g, '-');
+    const truncated_ref = sanitized_ref.substr(0, (max_length - 1) - Refs.HASH_LENGTH);
+    const hash = Refs.toDigest(seed).substr(0, Refs.HASH_LENGTH);
+
+    return `${truncated_ref}-${hash}`;
+  }
+
+  public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '', suffix = '') {
+    const split = ref.split('-');
+    const hash = split.pop();
+    if (!hash || hash.length !== Refs.HASH_LENGTH) { throw new Error(`Not a valid ref: ${ref}`); }
+
+    const target_length = max_length - (hash.length + 1 + suffix.length);
+    if (target_length < 0) {
+      throw new Error(`Cannot trim ref to length: ${max_length}`);
+    }
+
+    const trimmed_name = `${prefix}${split.join('-')}`.substr(0, target_length);
+    return `${trimmed_name}${suffix}-${hash}`;
   }
 
   /**
    * This is not a standard base64 md5 hash as we lowercase and replace punctuation
-   * This method should not be used for anything beyond conveniently adding entropy to the url_safe_ref.
+   * This method should not be used for anything beyond conveniently adding entropy to the safeRef.
    * @param uri
    */
-  private static to_digest(uri: string): string {
+  private static toDigest(uri: string): string {
     return crypto.createHash('md5').update(uri)
       .digest("base64") // base64 adds entropy in a more compact string
       .toLowerCase() // we need to makes everything lower which unfortunately removes some entropy

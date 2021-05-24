@@ -32,7 +32,7 @@ $ architect link .
 $ architect deploy --local examples/react-app:latest -i app:app
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://app.localhost/.
+Once the deploy has completed, you can reach your new service by going to http://app.arc.localhost/.
 
 ## Deploying to the cloud
 

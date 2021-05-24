@@ -39,11 +39,17 @@ export default class AppService {
       },
     });
 
-    this.auth = new AuthClient(this.config, this._api);
+    this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
 
+    this.linkedComponents = this.loadLinkedComponents(config_dir);
+  }
+
+  private loadLinkedComponents(config_dir: string) {
     const linkedComponentsFile = path.join(config_dir, LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
     if (fs.existsSync(linkedComponentsFile)) {
-      this.linkedComponents = fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
+      return fs.readJSONSync(linkedComponentsFile) as Dictionary<string>;
+    } else {
+      return {};
     }
   }
 
@@ -86,6 +92,10 @@ export default class AppService {
 
   saveConfig() {
     this.config.save();
+  }
+
+  async checkLogin() {
+    return this.api.get('/users/me');
   }
 
   get api(): AxiosInstance {

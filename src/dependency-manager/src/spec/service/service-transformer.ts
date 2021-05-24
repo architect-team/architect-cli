@@ -1,45 +1,28 @@
 import { plainToClass } from 'class-transformer';
 import { Dictionary } from '../../utils/dictionary';
-import { InterfaceSpecV1 } from '../common/interface-v1';
+import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
 import { ServiceConfigV1 } from './service-v1';
 
-export function transformServices(input?: Dictionary<object | ServiceConfigV1>): Dictionary<ServiceConfigV1> {
-  if (!input) {
-    return {};
-  }
+export function transformServices(input: Dictionary<object | ServiceConfigV1>, component_ref: string): Dictionary<ServiceConfigV1> {
   if (!(input instanceof Object)) {
     return input;
   }
 
+  const parsed = ComponentVersionSlugUtils.parse(component_ref);
+
   const output: any = {};
   for (const [key, value] of Object.entries(input)) {
+    const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, key, parsed.tag, parsed.instance_name);
     let config;
     if (value instanceof ServiceConfigV1) {
       config = value;
     } else if (value instanceof Object) {
-      config = { ...value, name: key };
+      config = { ...value, name: service_ref };
     } else {
-      config = { name: key };
+      config = { name: service_ref };
     }
     output[key] = plainToClass(ServiceConfigV1, config);
   }
 
   return output;
 }
-
-export const transformServiceInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
-  if (!input) {
-    return {};
-  }
-  if (!(input instanceof Object)) {
-    return input;
-  }
-
-  const output: Dictionary<InterfaceSpecV1> = {};
-  for (const [key, value] of Object.entries(input)) {
-    output[key] = value instanceof Object
-      ? plainToClass(InterfaceSpecV1, value)
-      : plainToClass(InterfaceSpecV1, { port: value });
-  }
-  return output;
-};

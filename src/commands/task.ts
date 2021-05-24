@@ -4,8 +4,9 @@ import { cli } from 'cli-ux';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
+import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, Refs, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentConfig, ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];
@@ -59,6 +60,7 @@ export default class TaskExec extends Command {
 
   async runLocal() {
     const { flags, args } = this.parse(TaskExec);
+    await Docker.verify();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
@@ -77,19 +79,14 @@ export default class TaskExec extends Command {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    let service_name;
-    const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag);
-    const ref = Refs.url_safe_ref(slug);
-    const matching_names = Object.keys(compose.services).filter(name => name.includes(ref));
-    if (!matching_names?.length) {
-      throw new Error(`Could not find ${args.component}/${args.task} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
-    } else if (matching_names.length > 1) {
-      throw new Error(`There was more than one task in your local environment that matched ${args.component}/${args.task} running in your local environment. See ${compose_file} for available tasks and services.`);
-    } else {
-      service_name = matching_names[0];
+    const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag, parsed_slug.instance_name);
+    const ref = ComponentConfig.getNodeRef(slug);
+    const service_name = Object.keys(compose.services).find(name => name === ref);
+    if (!service_name) {
+      throw new Error(`Could not find ${slug} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
     }
 
-    this.log(chalk.blue(`Running task ${args.component}/${args.task} in the local ${project_name} environment...`));
+    this.log(chalk.blue(`Running task ${slug} in the local ${project_name} environment...`));
     this.log('\n');
     // all tasks will already exist in the docker-compose file with scale=0; all we need to do is a `run --rm` to start them and clean them up upon exit
     await DockerComposeUtils.run(service_name, project_name, compose_file);
@@ -114,6 +111,7 @@ export default class TaskExec extends Command {
     const res = await this.app.api.post(`/environments/${environment.id}/exec`, {
       component_account_name: parsed_slug.component_account_name,
       component_name: parsed_slug.component_name,
+      instance_id: parsed_slug.instance_name,
       task_name: args.task,
       tag: parsed_slug.tag,
     });

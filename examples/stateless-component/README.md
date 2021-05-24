@@ -32,7 +32,7 @@ $ architect link .
 $ architect deploy --local examples/stateless-component:latest -i frontend:frontend
 ```
 
-Once the deploy has completed, you can reach your new service by going to http://frontend.localhost/.
+Once the deploy has completed, you can reach your new service by going to http://frontend.arc.localhost/.
 
 ## Deploying to the cloud
 

@@ -72,11 +72,20 @@ interfaces:
     # (required) Port that the service is listening for traffic on
     port: 8080
 
-    # Protocol that the interface responds to (default: http)
+    # (optional) Protocol that the interface responds to (default: http)
     protocol: http
 
-    # The host address of an existing service to use instead of provisioning a new one
+    # (optional) The host address of an existing service to use instead of provisioning a new one
     host: rds.amazonwebservices.com
+
+    # (optional) A basic auth username required to access the interface
+    username: ${{ parameters.API_USERNAME }}
+
+    # (optional) A basic auth password required to access the interface
+    password: ${{ parameters.API_PASSWORD }}
+
+    # (optional, defaults to false) Requests made to this interface, if made external, will use sticky sessions
+    sticky: true
 ```
 
 Since many services use http for traffic, interfaces also support a simple short-hand for specifying the service port:
@@ -162,3 +171,27 @@ When deploying to platforms of type ECS, there are constraints in the underlying
 | 1  | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
 | 2 | 4GB - 16GB (in increments of 1GB) |
 | 4 | 8GB - 30GB (in increments of 1GB) |
+
+### depends_on
+
+`depends_on` takes an array of references to other services within the component. These dictate startup order: at deployment time, services will not be started until any of their listed dependents have already started.
+
+```yaml
+services:
+  app: # here, app will not start until my-api and db have started
+    depends_on:
+      - my-api
+      - db
+    interfaces:
+      postgres: 5432
+  my-api: # here, my-api will not start until db has started
+    depends_on:
+      - db
+    interfaces:
+      admin: 8081
+  db:
+    interfaces:
+      postgres: 5432
+```
+
+Note: Circular dependencies and self-references are detected and rejected at component registration time.

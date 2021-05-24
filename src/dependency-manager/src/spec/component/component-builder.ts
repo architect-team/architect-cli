@@ -2,11 +2,12 @@
 /* eslint-disable no-empty */
 import { plainToClass } from 'class-transformer';
 import fs from 'fs-extra';
-import yaml, { FAILSAFE_SCHEMA } from 'js-yaml';
+import yaml from 'js-yaml';
 import path from 'path';
 import { Dictionary } from '../../utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
 import { insertFileDataFromRefs } from '../../utils/files';
+import NULL_TYPE from '../../utils/yaml/null';
 import { DeploySpec } from '../common/deploy-spec';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterValueSpec } from '../common/parameter-spec';
@@ -83,23 +84,8 @@ export class ComponentConfigBuilder {
   static async rawFromPath(config_path: string): Promise<{ file_path: string; file_contents: string; raw_config: RawComponentConfig }> {
     const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(config_path);
 
-    let raw_config;
-    // Try to parse as json
-    try {
-      raw_config = JSON.parse(file_contents);
-    } catch {
-      // Try to parse as yaml
-      try {
-        raw_config = yaml.safeLoad(file_contents, { schema: FAILSAFE_SCHEMA });
-      } catch { }
-    }
-
-    if (!raw_config) {
-      throw new Error('Invalid file format. Must be json or yaml.');
-    }
-
-    raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(raw_config, null, 2), file_path));
-
+    const parsed_yml = yaml.load(file_contents, { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }) });
+    const raw_config = JSON.parse(insertFileDataFromRefs(JSON.stringify(parsed_yml, null, 2), file_path));
     return { file_path, file_contents, raw_config };
   }
 
@@ -130,11 +116,8 @@ export class ComponentConfigBuilder {
   }
 
   static saveToPath(config_path: string, config: ComponentConfig) {
-    if (config_path.endsWith('.json')) {
-      fs.writeJsonSync(config_path, config, { spaces: 2 });
-      return;
-    } else if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
-      fs.writeFileSync(config_path, yaml.safeDump(config));
+    if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
+      fs.writeFileSync(config_path, yaml.dump(config));
       return;
     }
 

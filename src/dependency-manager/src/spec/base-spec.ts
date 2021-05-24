@@ -1,5 +1,4 @@
-import { classToClass, plainToClassFromExist } from 'class-transformer';
-import { ClassType } from 'class-transformer/ClassTransformer';
+import { ClassConstructor, classToClass, plainToClassFromExist } from 'class-transformer';
 import { validate, ValidationError, ValidatorOptions } from 'class-validator';
 
 export abstract class ValidatableConfig {
@@ -15,7 +14,7 @@ export abstract class ValidatableConfig {
   }
 
   getClass() {
-    return this.constructor as ClassType<any>;
+    return this.constructor as ClassConstructor<any>;
   }
 }
 
@@ -43,7 +42,7 @@ export interface ConfigSpec {
 
   validateOrReject(options?: ValidatorOptions): Promise<undefined>;
 
-  getClass(): ClassType<any>;
+  getClass(): ClassConstructor<any>;
 
   copy(): this;
 

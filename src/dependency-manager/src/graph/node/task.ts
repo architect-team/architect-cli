@@ -5,7 +5,7 @@ import { TaskConfigV1 } from '../../spec/task/task-v1';
 
 export interface TaskNodeOptions {
   ref: string;
-  node_config: TaskConfig;
+  config: TaskConfig;
   local_path?: string;
 }
 
@@ -13,7 +13,7 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   __type = 'task';
 
   @Type(() => TaskConfigV1)
-  node_config!: TaskConfig;
+  config!: TaskConfig;
 
   ref!: string;
   local_path!: string;
@@ -22,7 +22,7 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
     super();
     if (options) {
       this.ref = options.ref;
-      this.node_config = options.node_config;
+      this.config = options.config;
       this.local_path = options.local_path || '';
     }
   }
@@ -32,12 +32,11 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
   }
 
   get ports(): string[] {
-    const ports = Object.values(this.interfaces).map((i) => i.port) as string[];
-    return [...new Set(ports)];
+    return [];
   }
 
   get is_external() {
-    return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
+    return false;
   }
 
   get is_local() {

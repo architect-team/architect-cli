@@ -16,6 +16,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   abstract get interfaces(): Dictionary<InterfaceSpec>;
 
+  instance_id = '';
+
   get is_external() {
     return false;
   }

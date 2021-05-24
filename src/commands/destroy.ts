@@ -1,10 +1,11 @@
 import { flags } from '@oclif/command';
+import chalk from 'chalk';
+import { cli } from 'cli-ux';
 import 'reflect-metadata';
 import { AccountUtils } from '../common/utils/account';
+import { Deployment } from '../common/utils/deployment';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentVersionSlugUtils, EnvironmentConfig, EnvironmentConfigBuilder, RawEnvironmentConfig } from '../dependency-manager/src';
-import { Dictionary } from '../dependency-manager/src/utils/dictionary';
-import { replaceBrackets } from '../dependency-manager/src/utils/interpolation';
+import { PipelineUtils } from '../common/utils/pipeline';
 import { DeployCommand } from './deploy';
 
 export default class Destroy extends DeployCommand {
@@ -32,61 +33,23 @@ export default class Destroy extends DeployCommand {
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    let new_env_config: EnvironmentConfig;
+    cli.action.start(chalk.blue('Creating pipeline'));
+    let instance_ids;
     if (flags.components) {
-      const { data } = await this.app.api.get(`/environments/${environment.id}/state`);
-      if (!data.env_config || Object.keys(data.env_config).length === 0) {
-        this.warn('The environment is already empty');
-        return;
-      }
-      const env_config = EnvironmentConfigBuilder.buildFromJSON(data.env_config);
-      new_env_config = this.removeComponents(data.env_config, env_config, flags.components);
-    } else {
-      new_env_config = EnvironmentConfigBuilder.buildFromJSON({});
+      const { data: instances_to_destroy } = await this.app.api.get(`/environments/${environment.id}/instances`, { params: { component_versions: flags.components } });
+      instance_ids = instances_to_destroy.map((instance: Deployment) => instance.instance_id);
+    }
+    const { data: pipeline } = await this.app.api.delete(`/environments/${environment.id}/instances`, { data: { instance_ids } });
+    cli.action.stop();
+
+    const approved = await this.approvePipeline(pipeline);
+    if (!approved) {
+      return;
     }
 
-    await this.deployRemote(environment, new_env_config, false);
-  }
-
-  removeComponents(raw_env_config: RawEnvironmentConfig, env_config: EnvironmentConfig, component_refs_to_remove: string[]): EnvironmentConfig {
-    const current_component_refs = Object.values(env_config.getComponents()).map((c) => c.getRef());
-
-    for (const component_ref of component_refs_to_remove) {
-      // Validate regex
-      if (!ComponentVersionSlugUtils.Validator.test(component_ref)) {
-        this.log(`Componenents defined in environment config:\n${current_component_refs.join('\n')}`);
-        throw new Error(`'${component_ref}' ${ComponentVersionSlugUtils.Description}`);
-      }
-      // Validate existence
-      if (!current_component_refs.includes(component_ref)) {
-        this.log(`Componenents defined in environment config:\n${current_component_refs.join('\n')}`);
-        throw new Error(`'${component_ref}' does not exist in the environment`);
-      }
-    }
-
-    // Remove components
-    const components: Dictionary<any> = {};
-    const component_names_removed = [];
-    for (const [component_name, component] of Object.entries(env_config.getComponents())) {
-      if (component_refs_to_remove.includes(component.getRef())) {
-        component_names_removed.push(component_name);
-      } else {
-        components[component_name] = raw_env_config.components[component_name];
-      }
-    }
-    env_config.setComponents(components);
-
-    // Remove interfaces for removed components
-    const interfaces: Dictionary<any> = {};
-    for (const [interface_name, interface_obj] of Object.entries(env_config.getInterfaces())) {
-      const normalized_port = replaceBrackets(interface_obj.port);
-      if (!component_names_removed.some((component_name) => normalized_port.includes(`components.${component_name}.interfaces`))) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        interfaces[interface_name] = raw_env_config.interfaces![interface_name];
-      }
-    }
-    env_config.setInterfaces(interfaces);
-
-    return env_config;
+    cli.action.start(chalk.blue('Deploying'));
+    await PipelineUtils.pollPipeline(this.app.api, pipeline.id);
+    this.log(chalk.green(`Deployed`));
+    cli.action.stop();
   }
 }

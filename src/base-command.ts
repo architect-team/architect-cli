@@ -29,6 +29,8 @@ export default abstract class extends Command {
   async catch(err: any) {
     if (err.oclif && err.oclif.exit === 0) return;
 
+    if (!err.message) { err.message = 'Error: '; }
+
     if (err.response && err.response.data) {
       let error_msg = `${err.request.path} (${err.response.status})`;
       for (const [k, v] of Object.entries(err.response.data)) {
@@ -37,11 +39,10 @@ export default abstract class extends Command {
       this.error(chalk.red(error_msg));
     } else if (err.config) {
       err.message += `${err.config.url} [${err.config.method}]`;
+    } else if (err.stderr) {
+      err.message += err.stderr;
     }
-    if (this.app?.config?.log_level === 'debug') {
-      throw err;
-    } else {
-      this.error(chalk.red(err.stderr || err.message || err));
-    }
+
+    this.error(err);
   }
 }

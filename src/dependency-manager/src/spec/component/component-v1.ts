@@ -1,8 +1,9 @@
-import { serialize, Transform } from 'class-transformer';
-import { Allow, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
+import { plainToClass, serialize, Transform } from 'class-transformer';
+import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
+import { ARC_NULL_TOKEN } from '../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
-import { validateCrossDictionaryCollisions, validateDictionary, validateInterpolation } from '../../utils/validation';
+import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary, validateInterpolation } from '../../utils/validation';
 import { DictionaryType } from '../../utils/validators/dictionary_type';
 import { InterfaceSpec } from '../common/interface-spec';
 import { InterfaceSpecV1 } from '../common/interface-v1';
@@ -14,7 +15,50 @@ import { transformServices } from '../service/service-transformer';
 import { TaskConfig } from '../task/task-config';
 import { transformTasks } from '../task/task-transformer';
 import { ComponentConfig } from './component-config';
-import { transformComponentInterfaces } from './component-transformer';
+
+export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+  if (!input) {
+    return {};
+  }
+  if (!(input instanceof Object)) {
+    return input;
+  }
+
+  // TODO: Be more flexible than just url ref
+  const output: Dictionary<InterfaceSpecV1> = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (value instanceof Object && 'host' in value && 'port' in value) {
+      output[key] = plainToClass(InterfaceSpecV1, value);
+    } else {
+      let host, port, protocol, username, password;
+      let url = value instanceof Object ? value.url : value;
+
+      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
+      const matches = url_regex.exec(url);
+      if (matches) {
+        host = `\${{ ${matches[1]}.host }}`;
+        port = `\${{ ${matches[1]}.port }}`;
+        protocol = `\${{ ${matches[1]}.protocol }}`;
+        username = `\${{ ${matches[1]}.username }}`;
+        password = `\${{ ${matches[1]}.password }}`;
+        url = `\${{ ${matches[1]}.url }}`;
+
+        output[key] = plainToClass(InterfaceSpecV1, {
+          host,
+          port,
+          username,
+          password,
+          protocol,
+          url,
+        });
+      } else {
+        throw new Error(`Invalid interface regex: ${url}`);
+      }
+    }
+  }
+
+  return output;
+};
 
 interface ServiceContextV1 {
   environment: Dictionary<string>;
@@ -28,6 +72,7 @@ interface TaskContextV1 {
 export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
+  ingresses: Dictionary<InterfaceSpec>;
   interfaces: Dictionary<InterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
   tasks: Dictionary<TaskContextV1>;
@@ -37,9 +82,6 @@ export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
   __version?: string;
 
-  @IsOptional({
-    groups: ['operator'],
-  })
   @IsString({ always: true })
   @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`), {
     message: 'Names must only include letters, numbers, dashes, and underscores',
@@ -49,6 +91,15 @@ export class ComponentConfigV1 extends ComponentConfig {
     groups: ['developer'],
   })
   name!: string;
+
+  @IsOptional({ always: true })
+  instance_id!: string;
+
+  @IsOptional({ always: true })
+  instance_name!: string;
+
+  @IsOptional({ always: true })
+  instance_date!: Date;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -68,17 +119,21 @@ export class ComponentConfigV1 extends ComponentConfig {
   author?: string;
 
   @IsOptional({ always: true })
+  @IsUrl({}, { always: true })
+  homepage?: string;
+
+  @IsOptional({ always: true })
   @IsObject({ always: true })
   parameters?: Dictionary<ParameterValueSpecV1>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform((value) => !value ? {} : value)
+  @Transform((params) => !params?.value ? {} : params.value)
   services?: Dictionary<ServiceConfig>;
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @Transform((value) => !value ? {} : value)
+  @Transform((params) => !params?.value ? {} : params.value)
   tasks?: Dictionary<TaskConfig>;
 
   @IsOptional({ always: true })
@@ -86,9 +141,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   @DictionaryType('string', { always: true, message: 'dependency versions must be strings' })
   dependencies?: Dictionary<string>;
 
-  @IsOptional({ groups: ['operator', 'debug'] })
-  @IsObject({ groups: ['developer'], message: 'interfaces must be defined even if it is empty since the majority of components need to expose services' })
-  @Transform((value) => !value ? {} : value)
+  @IsOptional({ always: true })
+  @IsObject({ groups: ['developer'] })
+  @Transform((params) => !params?.value ? {} : params.value)
   interfaces?: Dictionary<InterfaceSpecV1 | string>;
 
   @IsOptional({ always: true })
@@ -96,27 +151,46 @@ export class ComponentConfigV1 extends ComponentConfig {
   artifact_image?: string;
 
   getName(): ComponentSlug {
-    let split;
-    try {
-      split = ComponentSlugUtils.parse(this.name);
-    } catch {
-      split = ComponentVersionSlugUtils.parse(this.name);
-    }
+    const split = ComponentVersionSlugUtils.parse(this.name);
     return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
+  setName(name: string): void {
+    this.name = name;
+  }
+
+  getTag(): ComponentSlug {
+    const split = ComponentVersionSlugUtils.parse(this.name);
+    return split.tag;
+  }
+
   getRef(): ComponentVersionSlug {
-    let split;
-    if (this.extends?.startsWith(`${this.name}:`)) {
-      split = ComponentVersionSlugUtils.parse(this.extends);
-    } else {
-      try {
-        split = ComponentSlugUtils.parse(this.name);
-      } catch {
-        split = ComponentVersionSlugUtils.parse(this.name);
-      }
-    }
-    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag);
+    const split = ComponentVersionSlugUtils.parse(this.name);
+    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag, this.getInstanceName());
+  }
+
+  getInstanceId() {
+    return this.instance_id || '';
+  }
+
+  setInstanceId(instance_id: string) {
+    this.instance_id = instance_id;
+  }
+
+  getInstanceName() {
+    return this.instance_name || '';
+  }
+
+  setInstanceName(instance_name: string) {
+    this.instance_name = instance_name;
+  }
+
+  getInstanceDate() {
+    return this.instance_date || new Date();
+  }
+
+  setInstanceDate(instance_date: Date) {
+    this.instance_date = instance_date;
   }
 
   getExtends() {
@@ -143,6 +217,10 @@ export class ComponentConfigV1 extends ComponentConfig {
     return this.author || '';
   }
 
+  getHomepage() {
+    return this.homepage || '';
+  }
+
   getParameters() {
     return transformParameters(this.parameters) || {};
   }
@@ -159,7 +237,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getServices() {
-    return transformServices(this.services) || {};
+    return transformServices(this.services || {}, this.getRef()) || {};
   }
 
   setServices(value: Dictionary<ServiceConfig>) {
@@ -174,7 +252,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getTasks() {
-    return transformTasks(this.tasks) || {};
+    return transformTasks(this.tasks || {}, this.getRef()) || {};
   }
 
   setTasks(value: Dictionary<TaskConfig>) {
@@ -222,26 +300,39 @@ export class ComponentConfigV1 extends ComponentConfig {
   getContext(): ComponentContextV1 {
     const dependencies: Dictionary<any> = {};
     for (const dk of Object.keys(this.getDependencies())) {
-      dependencies[dk] = {};
+      dependencies[dk] = { ingresses: {}, interfaces: {} };
     }
 
     const parameters: Dictionary<ParameterValue> = {};
     for (const [pk, pv] of Object.entries(this.getParameters())) {
-      parameters[pk] = pv.default === undefined ? '' : pv.default;
+      if (pv.default === null) {
+        parameters[pk] = ARC_NULL_TOKEN;
+      } else {
+        parameters[pk] = pv.default === undefined ? '' : pv.default;
+      }
     }
 
     const interface_filler = {
       port: '',
       host: '',
+      username: '',
+      password: '',
       protocol: '',
       url: '',
     };
 
     const interfaces: Dictionary<InterfaceSpec> = {};
+    const ingresses: Dictionary<InterfaceSpec> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = {
         ...interface_filler,
         ...iv,
+      };
+      ingresses[ik] = {
+        ...interface_filler,
+        consumers: [],
+        dns_zone: '',
+        subdomain: '',
       };
     }
 
@@ -270,6 +361,7 @@ export class ComponentConfigV1 extends ComponentConfig {
     return {
       dependencies,
       parameters,
+      ingresses,
       interfaces,
       services,
       tasks,
@@ -286,8 +378,9 @@ export class ComponentConfigV1 extends ComponentConfig {
     errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
+    errors = await validateDependsOn(expanded, errors); // makes sure service depends_on refers to valid other services
     if ((options.groups || []).includes('developer')) {
-      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.']));
+      errors = errors.concat(validateInterpolation(serialize(expanded), this.getContext(), ['architect.', 'dependencies.', 'environment.']));
     }
     return errors;
   }

@@ -12,6 +12,7 @@ import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
+import { PipelineUtils } from '../../../src/common/utils/pipeline';
 import PortUtil from '../../../src/common/utils/port';
 import ARCHITECTPATHS from '../../../src/paths';
 
@@ -37,6 +38,7 @@ describe('platform:create', function () {
       }
     })
 
+    sinon.replace(PipelineUtils, 'pollPipeline', async () => null);
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
 
@@ -60,6 +62,9 @@ describe('platform:create', function () {
   });
 
   it('Creates an ECS platform with input', async () => {
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
     moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
       response: account
@@ -68,17 +73,29 @@ describe('platform:create', function () {
     moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
-        id: 'test-platform-id',
+        id: test_platform_id,
         account: account
       }
     });
 
+    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
+      status: 200,
+      response: {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      }
+    });
+
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).true;
   });
 
   it('Creates an ECS platform without flag input', async () => {
@@ -89,6 +106,9 @@ describe('platform:create', function () {
       aws_key: 'test-key'
     });
 
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
     moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
       response: account
@@ -97,17 +117,29 @@ describe('platform:create', function () {
     moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
-        id: 'test-platform-id',
+        id: test_platform_id,
         account: account
       }
     });
 
+    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
+      status: 200,
+      response: {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      }
+    });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).true;
   });
 
   it('Creates a Kubernetes platform with input', async () => {
@@ -118,6 +150,9 @@ describe('platform:create', function () {
       use_existing_sa: true,
     });
 
+    const test_platform_id = 'test-platform-id';
+    const test_pipeline_id = 'test-pipeline-id';
+
     moxios.stubRequest(`/accounts/${account.name}`, {
       status: 200,
       response: account
@@ -126,19 +161,31 @@ describe('platform:create', function () {
     moxios.stubRequest(`/accounts/${account.id}/platforms`, {
       status: 200,
       response: {
-        id: 'test-platform-id',
+        id: test_platform_id,
         account: account
       }
     });
 
+    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
+      status: 200,
+      response: {
+        id: 'test-deployment-id',
+        pipeline: {
+          id: test_pipeline_id,
+        },
+      }
+    });
+
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
     const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
     sinon.replace(KubernetesPlatformUtils, 'configure_kubernetes_platform', kubernetes_configuration_fake);
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(kubernetes_configuration_fake.calledOnce).true;
+    expect(create_platform_applications_spy.calledOnce).true;
   });
 });

@@ -77,22 +77,26 @@ export abstract class InitCommand extends Command {
         architect_service.image = service.image;
       } else if (service.build) {
         architect_service.build = new BuildSpecV1();
-        architect_service.build.args = {};
-        if (Array.isArray(service.build.args)) {
-          for (const arg of service.build.args) {
-            const [key, value] = arg.split('=');
-            if (key && value) {
-              architect_service.build.args[key] = value;
-            } else {
-              this.warn(chalk.yellow(`Could not convert environment variable ${arg} for service ${service_name}`));
-            }
-          }
+        if (typeof service.build === 'string') {
+          architect_service.build.context = service.build;
         } else {
-          architect_service.build.args = service.build.args;
-        }
-        architect_service.build.context = service.build.context;
-        if (service.build.dockerfile) {
-          architect_service.build.dockerfile = service.build.dockerfile;
+          if (Array.isArray(service.build.args)) {
+            architect_service.build.args = {};
+            for (const arg of service.build.args) {
+              const [key, value] = arg.split('=');
+              if (key && value) {
+                architect_service.build.args[key] = value;
+              } else {
+                this.warn(chalk.yellow(`Could not convert environment variable ${arg} for service ${service_name}`));
+              }
+            }
+          } else {
+            architect_service.build.args = service.build.args;
+          }
+          architect_service.build.context = service.build.context;
+          if (service.build.dockerfile) {
+            architect_service.build.dockerfile = service.build.dockerfile;
+          }
         }
       }
 
@@ -142,8 +146,9 @@ export abstract class InitCommand extends Command {
 
       const compose_volumes = Object.keys(docker_compose.volumes || {});
       let volume_index = 0;
-      const debug_config = new ServiceConfigV1();
+      let debug_config;
       for (const volume of (service.volumes || [])) {
+        if (!debug_config) { debug_config = new ServiceConfigV1(); }
         const volume_key = `volume${volume_index}`;
         if (typeof volume === 'string') {
           const volume_parts = volume.split(':');
@@ -190,24 +195,25 @@ export abstract class InitCommand extends Command {
         }
         volume_index++;
       }
-      architect_service.setDebugOptions(debug_config);
+      if (debug_config) {
+        architect_service.setDebugOptions(debug_config);
+      }
 
       if (service.depends_on?.length || service.external_links?.length) {
         const links = new Set((service.depends_on || []).concat(service.external_links || []));
         for (const link of links) {
-          architect_service.setEnvironmentVariable(`${link.toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
+          architect_service.setEnvironmentVariable(`${link.replace('-', '_').toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
         }
       }
 
       architect_component.setInterfaces({});
+      architect_component.setParameters({});
       architect_component.setService(service_name, architect_service);
     }
 
-    const architect_yml = yaml.safeDump(yaml.safeLoad(JSON.stringify(classToPlain(architect_component))));
+    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
     fs.writeFileSync(flags.component_file, architect_yml);
     this.log(chalk.green(`Wrote Architect component config to ${flags.component_file}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
-
-
 }

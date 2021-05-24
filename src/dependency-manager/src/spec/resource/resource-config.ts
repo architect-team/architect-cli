@@ -6,7 +6,10 @@ import { VolumeSpec } from '../common/volume-spec';
 
 export interface ResourceConfig extends ConfigSpec {
   __version?: string;
+  getRef(): string;
   getName(): string;
+  getTag(): string;
+
   getDescription(): string;
   getLanguage(): string;
   getImage(): string;
@@ -33,4 +36,6 @@ export interface ResourceConfig extends ConfigSpec {
   getMemory(): string | undefined;
 
   getDeploy(): DeploySpec | undefined;
+
+  getDependsOn(): string[];
 }

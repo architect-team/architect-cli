@@ -1,7 +1,8 @@
-import { Type } from 'class-transformer/decorators';
+import { Type } from 'class-transformer';
 import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
+import { ServiceVersionSlugUtils } from '../../utils/slugs';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { BaseConfig } from '../base-spec';
 import { BuildSpecV1 } from '../common/build-v1';
@@ -73,6 +74,10 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   @IsOptional({ always: true })
   deploy?: DeploySpecV1;
 
+  @IsOptional({ always: true })
+  @IsString({ always: true, each: true })
+  depends_on?: string[];
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
@@ -91,8 +96,18 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
     return errors;
   }
 
-  getName(): string {
+  getRef(): string {
     return this.name || '';
+  }
+
+  getName(): string {
+    const split = ServiceVersionSlugUtils.parse(this.name || '');
+    return split.service_name;
+  }
+
+  getTag(): string {
+    const split = ServiceVersionSlugUtils.parse(this.name || '');
+    return split.tag;
   }
 
   getImage(): string {
@@ -116,6 +131,7 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   getEnvironmentVariables(): Dictionary<string> {
     const output: Dictionary<string> = {};
     for (const [k, v] of Object.entries(this.environment || {})) {
+      if (v === null) { continue; }
       output[k] = `${v}`;
     }
     return output;
@@ -189,6 +205,10 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   getDeploy(): DeploySpecV1 | undefined {
     return this.deploy;
+  }
+
+  getDependsOn(): string[] {
+    return this.depends_on || [];
   }
 
   /** @return New expanded copy of the current config */
