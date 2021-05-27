@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
+import btoa from "btoa";
 import chalk from 'chalk';
-import opener from 'opener';
+import { AuthorizationCode } from 'simple-oauth2';
 import Command from '../base-command';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
@@ -32,28 +33,53 @@ export default class Login extends Command {
     const { flags } = this.parse(Login);
     await Docker.verify(); // docker is required for login because we run `docker login`
 
-    if (flags.email || flags.password) {
-      await this.runCliFlow(flags);
+    if (this.app.config.ory_auth) {
+      // run ory browser flow
+      // refresh tokens are the main thing in question (Auth0Shim is only for refresh) (try finding an oauth module for refresh, equivalent to nuxt oauth) (kill Auth0Shim with new module)
+
+      const config = {
+        client: {
+          id: 'hydra-auth-client',
+          secret: '', // 'secret' - TODO: does this need to be valid for our flow? or is it just required in the module's type?
+        },
+        auth: {
+          tokenHost: 'http://auth-hydra-public-o8avmbh2.arc.localhost:1024'
+        }
+      };
+      const client = new AuthorizationCode(config);
+
+      const authorizationUri = client.authorizeURL({
+        redirect_uri: 'http://localhost:60000',
+        scope: 'openid profile email offline_access',
+        state: btoa(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
+      });
+
+      await this.runBrowserFlow(authorizationUri.replace('/oauth/authorize', '/oauth2/auth'));
+
     } else {
-      await this.runBrowserFlow();
+      if (flags.email || flags.password) {
+        await this.runCliFlow(flags);
+      } else {
+        await this.runBrowserFlow();
+      }
     }
 
     this.log(chalk.green('Login successful'));
   }
 
-  private async runBrowserFlow() {
+  private async runBrowserFlow(hydra_url?: string) {
     if (!PromptUtils.prompts_available()) {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
     const port = await PortUtil.getAvailablePort(60000);
 
-    const url = this.app.auth.generateBrowserUrl(port);
+    const url = hydra_url || this.app.auth.generateBrowserUrl(port);
 
     try {
       this.log('To login, please navigate to the following URL in your browser:');
       this.log('\n');
       this.log(`\t${url}`);
-      opener(url);
+      // opener(url);
     } catch (err) {
       // do nothing if opener fails
     }
