@@ -31,7 +31,7 @@ export default abstract class extends Command {
 
     if (!err.message) { err.message = 'Error: '; }
 
-    if (err.response && err.response.data) {
+    if (err.response?.data instanceof Object) {
       let error_msg = `${err.request.path} (${err.response.status})`;
       for (const [k, v] of Object.entries(err.response.data)) {
         error_msg += `\n${k}: ${v}`;
