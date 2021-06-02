@@ -161,7 +161,7 @@ export default class AuthClient {
       {
         json: true,
         payload: { 'client_id': AuthClient.CLIENT_ID },
-        headers: { 'HOST': (new URL(this.config.oauth_domain)).hostname },
+        headers: { 'HOST': (new URL(this.config.oauth_domain)).hostname }, // TODO: https://github.com/architect-team/architect-cli/compare/healthcheck#diff-fa461cdc1d56b640a90289cc899610e27331eaab22f9269324af278768d0e6f4R45
       }
     );
 
@@ -217,7 +217,11 @@ export default class AuthClient {
       return; // Don't refresh if a token doesn't exist
     }
 
-    this.auth_results = await this.performOauthRefresh(token.refresh_token) as AuthResults;
+    if (this.config.oauth_domain === 'auth.architect.io') {
+      this.auth_results = await this.performOauthRefresh(token.refresh_token) as AuthResults;
+    } else {
+      this.auth_results = await this.performOryOauthRefresh(credential) as AuthResults;
+    }
 
     await this.setToken(credential.account, this.auth_results);
     await this.dockerLogin(credential.account);
@@ -274,7 +278,7 @@ export default class AuthClient {
       baseUrl: this.config.oauth_domain,
       grant_type: 'refresh_token',
       client_id: AuthClient.CLIENT_ID,
-      refresh_token: refresh_token,
+      refresh_token,
     };
 
     try {
@@ -290,6 +294,25 @@ export default class AuthClient {
       auth_result.refresh_token = refresh_token;
 
       return auth_result;
+    } catch (err) {
+      console.log(err)
+      await this.logout();
+      throw new LoginRequiredError();
+    }
+  }
+
+  private async performOryOauthRefresh(credential: any): Promise<any> {
+    try {
+      const auth_client: AuthorizationCode<'client_id'> = this.getOryAuthClient();
+      let access_token = auth_client.createToken(JSON.parse(credential.password));
+      const refreshed_token = await access_token.refresh({ scope: AuthClient.SCOPE });
+
+      if (!refreshed_token.token || !refreshed_token.token.id_token) {
+        this.logout();
+        throw new Error('Refresh auth token failed, please log in again');
+      }
+
+      return refreshed_token.token;
     } catch (err) {
       await this.logout();
       throw new LoginRequiredError();
