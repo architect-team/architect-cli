@@ -13,7 +13,7 @@ import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
-import DockerComposeTemplate, { DockerServiceBuild } from './template';
+import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
 export class DockerComposeUtils {
 
@@ -39,24 +39,26 @@ export class DockerComposeUtils {
     }
     const available_ports = (await Promise.all(port_promises)).sort();
 
-    const gateway_links: string[] = [];
-    for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-      for (const interface_from of Object.keys(edge.interfaces_map)) {
-        gateway_links.push(`gateway:${interface_from}.arc.localhost`);
-      }
-    }
-
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
     const gateway_port = gateway_node?.interfaces._default.port || 80;
 
+    const gateway_links: string[] = [];
     if (gateway_node) {
+      for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+        for (const interface_from of Object.keys(edge.interfaces_map)) {
+          gateway_links.push(`${gateway_node.ref}:${interface_from}.arc.localhost`);
+        }
+      }
+
       compose.services[gateway_node.ref] = {
         image: 'traefik:v2.4',
         command: [
           '--api.insecure=true',
+          '--pilot.dashboard=false',
           `--entryPoints.web.address=:${gateway_port}`,
-          '--providers.docker',
+          '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
+          `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
         ],
         ports: [
           // The HTTP port
@@ -65,74 +67,95 @@ export class DockerComposeUtils {
           `${await PortUtil.getAvailablePort(8080)}:8080`,
         ],
         volumes: [
-          '/var/run/docker.sock:/var/run/docker.sock',
+          '/var/run/docker.sock:/var/run/docker.sock:ro',
         ],
       };
     }
 
+    let autoheal = false;
+
+    const service_task_nodes = graph.nodes.filter((n) => n instanceof ServiceNode || n instanceof TaskNode) as (ServiceNode | TaskNode)[];
+
     // Enrich base service details
-    for (const node of graph.nodes) {
+    for (const node of service_task_nodes) {
       if (node.is_external) continue;
-      const safe_ref = node.ref;
 
-      if (node instanceof ServiceNode || node instanceof TaskNode) {
-        const ports = [];
-        for (const port of node.ports) {
-          ports.push(`${available_ports.shift()}:${port}`);
-        }
-        const formatted_environment_variables: Dictionary<string> = {};
-        for (const [var_key, var_value] of Object.entries(node.config.getEnvironmentVariables())) {
-          formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
-        }
-        compose.services[safe_ref] = {
-          ports,
-          environment: formatted_environment_variables,
+      const ports = [];
+      for (const port of node.ports) {
+        ports.push(`${available_ports.shift()}:${port}`);
+      }
+      const formatted_environment_variables: Dictionary<string> = {};
+      for (const [var_key, var_value] of Object.entries(node.config.getEnvironmentVariables())) {
+        formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+      }
+      let service = {
+        ports,
+        environment: formatted_environment_variables,
+      } as DockerService;
+
+      if (gateway_links.length) {
+        service.external_links = gateway_links;
+      }
+
+      if (node.config.getImage()) service.image = node.config.getImage();
+
+      if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
+        service.command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+      }
+      if (node.config.getEntrypoint().length) {
+        service.entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+      }
+
+      const platforms = node.config.getPlatforms();
+      const docker_compose_config = platforms['docker-compose'];
+      if (docker_compose_config) {
+        service = {
+          ...docker_compose_config,
+          ...service,
         };
+      }
 
-        if (gateway_links.length) {
-          compose.services[safe_ref].external_links = gateway_links;
-        }
+      const cpu = node.config.getCpu();
+      const memory = node.config.getMemory();
+      if (cpu || memory) {
+        service.deploy = { resources: { limits: {} } };
+        if (cpu) { service.deploy.resources.limits.cpus = cpu; }
+        if (memory) { service.deploy.resources.limits.memory = memory; }
+      }
 
-        if (node.config.getImage()) compose.services[safe_ref].image = node.config.getImage();
-
-        if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
-          compose.services[safe_ref].command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
-        }
-        if (node.config.getEntrypoint().length) {
-          compose.services[safe_ref].entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
-        }
-
-        const platforms = node.config.getPlatforms();
-        const docker_compose_config = platforms['docker-compose'];
-        if (docker_compose_config) {
-          compose.services[safe_ref] = {
-            ...docker_compose_config,
-            ...compose.services[safe_ref],
+      if (node instanceof ServiceNode) {
+        const liveness_probe = node.config.getLivenessProbe();
+        if (liveness_probe) {
+          if (!liveness_probe.command) {
+            liveness_probe.command = ['CMD', 'curl', '-f', `http://localhost:${liveness_probe.port}${liveness_probe.path}`];
+          }
+          service.healthcheck = {
+            test: liveness_probe.command,
+            interval: liveness_probe.interval,
+            timeout: liveness_probe.timeout,
+            retries: liveness_probe.failure_threshold,
+            start_period: liveness_probe.initial_delay,
           };
-        }
-
-        const cpu = node.config.getCpu();
-        const memory = node.config.getMemory();
-        if (cpu || memory) {
-          const service = compose.services[safe_ref];
-          service.deploy = { resources: { limits: {} } };
-          if (cpu) { service.deploy.resources.limits.cpus = cpu; }
-          if (memory) { service.deploy.resources.limits.memory = memory; }
-        }
-
-        const is_wsl = os.release().toLowerCase().includes('microsoft');
-        if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
-          compose.services[safe_ref].extra_hosts = ['host.docker.internal:host-gateway'];
-        }
-
-        const depends_on = graph.getDependsOn(node).map(n => n.ref);
-
-        if (depends_on?.length) {
-          compose.services[safe_ref].depends_on = depends_on;
+          if (!service.labels) {
+            service.labels = [];
+          }
+          service.labels.push(`autoheal.${gateway_port}=true`);
+          autoheal = true;
         }
       }
 
-      if (node.is_local && (node instanceof ServiceNode || node instanceof TaskNode)) {
+      const is_wsl = os.release().toLowerCase().includes('microsoft');
+      if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
+        service.extra_hosts = ['host.docker.internal:host-gateway'];
+      }
+
+      const depends_on = graph.getDependsOn(node).map(n => n.ref);
+
+      if (depends_on?.length) {
+        service.depends_on = depends_on;
+      }
+
+      if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.config.getImage()) {
           const build = node.config.getBuild();
@@ -145,12 +168,12 @@ export class DockerComposeUtils {
             const compose_build: any = {};
             if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
             if (args.length) compose_build.args = args;
-            compose.services[safe_ref].build = compose_build;
+            service.build = compose_build;
           }
 
           if (build.dockerfile) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (compose.services[safe_ref].build! as DockerServiceBuild).dockerfile = build.dockerfile;
+            (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
           }
         }
 
@@ -171,14 +194,27 @@ export class DockerComposeUtils {
           }
           volumes.push(volume);
         }
-        if (volumes.length) compose.services[safe_ref].volumes = volumes;
+        if (volumes.length) service.volumes = volumes;
       }
 
       if (node instanceof TaskNode) {
-        compose.services[safe_ref].scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
+        service.scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
 
+      compose.services[node.ref] = service;
+    }
 
+    if (autoheal) {
+      // https://github.com/moby/moby/pull/22719
+      compose.services['autoheal'] = {
+        image: 'willfarrell/autoheal:1.1.0',
+        environment: {
+          AUTOHEAL_CONTAINER_LABEL: `autoheal.${gateway_port}`,
+        },
+        volumes: [
+          '/var/run/docker.sock:/var/run/docker.sock:ro',
+        ],
+      };
     }
 
     // Enrich service relationships
@@ -188,13 +224,13 @@ export class DockerComposeUtils {
 
       for (const interface_name of Object.keys(edge.interfaces_map)) {
         const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-        const node_to_safe_ref = node_to.ref;
+        const node_to_ref = node_to.ref;
 
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
 
         if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to_safe_ref];
+          const service_to = compose.services[node_to_ref];
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 
@@ -210,6 +246,9 @@ export class DockerComposeUtils {
 
           if (!service_to.labels.includes(`traefik.enable=true`)) {
             service_to.labels.push(`traefik.enable=true`);
+          }
+          if (!service_to.labels.includes(`traefik.port=${gateway_port}`)) {
+            service_to.labels.push(`traefik.port=${gateway_port}`);
           }
           service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.arc.localhost\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);

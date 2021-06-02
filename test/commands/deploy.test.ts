@@ -343,6 +343,7 @@ describe('local deploy environment', function () {
         },
         "labels": [
           "traefik.enable=true",
+          "traefik.port=80",
           "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
           "traefik.http.routers.app.service=app-service",
           "traefik.http.services.app-service.loadbalancer.server.port=3000",
@@ -374,16 +375,18 @@ describe('local deploy environment', function () {
         "image": "traefik:v2.4",
         "command": [
           "--api.insecure=true",
+          "--pilot.dashboard=false",
           "--entryPoints.web.address=:80",
-          "--providers.docker",
-          "--providers.docker.exposedByDefault=false"
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)"
         ],
         "ports": [
           "80:80",
           "8080:8080"
         ],
         "volumes": [
-          "/var/run/docker.sock:/var/run/docker.sock"
+          "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
       }
     },
@@ -401,6 +404,7 @@ describe('local deploy environment', function () {
         "environment": {},
         "labels": [
           "traefik.enable=true",
+          "traefik.port=80",
           "traefik.http.routers.hello.rule=Host(`hello.arc.localhost`)",
           "traefik.http.routers.hello.service=hello-service",
           "traefik.http.services.hello-service.loadbalancer.server.port=3000",
@@ -415,16 +419,18 @@ describe('local deploy environment', function () {
         "image": "traefik:v2.4",
         "command": [
           "--api.insecure=true",
+          "--pilot.dashboard=false",
           "--entryPoints.web.address=:80",
-          "--providers.docker",
-          "--providers.docker.exposedByDefault=false"
+          "--providers.docker=true",
+          "--providers.docker.exposedByDefault=false",
+          "--providers.docker.constraints=Label(`traefik.port`,`80`)"
         ],
         "ports": [
           "80:80",
           "8080:8080"
         ],
         "volumes": [
-          "/var/run/docker.sock:/var/run/docker.sock"
+          "/var/run/docker.sock:/var/run/docker.sock:ro"
         ]
       }
     },

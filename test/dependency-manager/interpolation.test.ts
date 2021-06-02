@@ -212,6 +212,7 @@ describe('interpolation spec v1', () => {
       environment: {},
       "labels": [
         "traefik.enable=true",
+        "traefik.port=81",
         "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
         "traefik.http.routers.public.service=public-service",
         "traefik.http.services.public-service.loadbalancer.server.port=8080",
@@ -296,9 +297,9 @@ describe('interpolation spec v1', () => {
       EXTERNAL_API_HOST: backend_external_url,
     })
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
-    expect(template.services[backend_ref].labels?.length).to.eq(5)
     expect(template.services[backend_ref].labels).to.deep.eq([
       'traefik.enable=true',
+      "traefik.port=80",
       `traefik.http.routers.${backend_interface_ref}.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
