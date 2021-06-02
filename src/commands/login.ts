@@ -37,7 +37,6 @@ export default class Login extends Command {
     if (flags.email || flags.password) {
       await this.runCliFlow(flags);
     } else {
-      // TODO: test ory refresh tokens
       this.app.config.oauth_domain === 'auth.architect.io' ? await this.runBrowserFlow() : await this.runOryBrowserFlow();
     }
 

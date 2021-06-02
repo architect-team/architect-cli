@@ -29,7 +29,6 @@ export default class AuthClient {
   checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = 'postman10'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
@@ -37,7 +36,7 @@ export default class AuthClient {
     this.credentials = new CredentialManager(config);
     this.auth0 = new AuthenticationClient({
       domain: this.config.oauth_domain,
-      clientId: AuthClient.CLIENT_ID,
+      clientId: this.config.oauth_client_id,
     });
     this.callback_server = new CallbackServer();
     this.checkLogin = checkLogin;
@@ -89,7 +88,7 @@ export default class AuthClient {
 
   public generateBrowserUrl(port: number): string {
     const auth0_transaction = Auth0Shim.buildAuth0Transaction(
-      AuthClient.CLIENT_ID,
+      this.config.oauth_client_id,
       this.config.oauth_domain,
       {
         redirect_uri: 'http://localhost:' + port, // this is where our callback_server will listen
@@ -109,7 +108,7 @@ export default class AuthClient {
 
     const decoded_token = Auth0Shim.verifyIdToken(
       this.config.oauth_domain,
-      AuthClient.CLIENT_ID,
+      this.config.oauth_client_id,
       auth0_results.id_token,
       this.auth0_transaction.nonce
     );
@@ -130,7 +129,7 @@ export default class AuthClient {
   public getOryAuthClient() {
     const config = {
       client: {
-        id: AuthClient.CLIENT_ID,
+        id: this.config.oauth_client_id,
       },
       auth: {
         tokenHost: this.config.oauth_domain,
@@ -160,14 +159,14 @@ export default class AuthClient {
       },
       {
         json: true,
-        payload: { 'client_id': AuthClient.CLIENT_ID },
+        payload: { 'client_id': this.config.oauth_client_id },
         headers: { 'HOST': (new URL(this.config.oauth_domain)).hostname }, // TODO: https://github.com/architect-team/architect-cli/compare/healthcheck#diff-fa461cdc1d56b640a90289cc899610e27331eaab22f9269324af278768d0e6f4R45
       }
     );
 
     const decoded_token = AuthHelpers.verify({
       iss: this.config.oauth_domain + '/',
-      aud: AuthClient.CLIENT_ID,
+      aud: this.config.oauth_client_id,
       id_token: access_token.token.id_token,
       undefined,
       leeway: 60,
@@ -258,7 +257,7 @@ export default class AuthClient {
 
     const tokenOptions = {
       baseUrl: this.config.oauth_domain,
-      client_id: AuthClient.CLIENT_ID,
+      client_id: this.config.oauth_client_id,
       code_verifier: this.auth0_transaction.code_verifier,
       grant_type: 'authorization_code',
       code: oauth_code,
@@ -277,7 +276,7 @@ export default class AuthClient {
     const tokenOptions = {
       baseUrl: this.config.oauth_domain,
       grant_type: 'refresh_token',
-      client_id: AuthClient.CLIENT_ID,
+      client_id: this.config.oauth_client_id,
       refresh_token,
     };
 
@@ -295,7 +294,6 @@ export default class AuthClient {
 
       return auth_result;
     } catch (err) {
-      console.log(err)
       await this.logout();
       throw new LoginRequiredError();
     }
@@ -304,7 +302,7 @@ export default class AuthClient {
   private async performOryOauthRefresh(credential: any): Promise<any> {
     try {
       const auth_client: AuthorizationCode<'client_id'> = this.getOryAuthClient();
-      let access_token = auth_client.createToken(JSON.parse(credential.password));
+      const access_token = auth_client.createToken(JSON.parse(credential.password));
       const refreshed_token = await access_token.refresh({ scope: AuthClient.SCOPE });
 
       if (!refreshed_token.token || !refreshed_token.token.id_token) {
