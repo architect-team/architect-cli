@@ -129,7 +129,7 @@ export class Auth0Shim {
     });
   }
 
-  public static verifyOryToken(
+  public static verifyOryToken( // TODO: move to auth or ory helper file?
     auth0_client_id: string,
     id_token: string
   ) {
@@ -142,7 +142,7 @@ export class Auth0Shim {
     });
   }
 
-  private static verify(options: any) {
+  private static verify(options: any) { // TODO: move to helper file?
     if (!options.id_token) {
       throw new Error('ID token is required but missing');
     }

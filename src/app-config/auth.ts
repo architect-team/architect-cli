@@ -27,7 +27,7 @@ export default class AuthClient {
   checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = 'postman'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+  public static CLIENT_ID = 'postman10'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
