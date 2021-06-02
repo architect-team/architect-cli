@@ -198,10 +198,9 @@ export default class Deploy extends DeployCommand {
     this.log('Starting containers...');
     this.log('');
 
-    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--abort-on-container-exit', '--timeout', '0'];
+    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--timeout', '0'];
     if (flags.detached) {
       compose_args.push('-d');
-      compose_args.splice(compose_args.indexOf('--abort-on-container-exit'), 1); // cannot be used in detached mode
     }
 
     if (!isCi && flags.browser) {
