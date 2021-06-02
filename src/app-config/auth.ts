@@ -27,7 +27,7 @@ export default class AuthClient {
   checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = 'postman8'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+  public static CLIENT_ID = 'postman'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
@@ -128,16 +128,20 @@ export default class AuthClient {
   public getOryAuthClient() {
     const config = {
       client: {
-        id: 'postman8',
-        secret: 'postman8', // TODO: find out how to get this working without the secret
+        id: AuthClient.CLIENT_ID,
       },
       auth: {
-        tokenHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+        tokenHost: 'http://localhost:1024',
         tokenPath: '/oauth2/token',
         authorizeHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
-        authorizePath: '/oauth2/auth'
-      }
+        authorizePath: '/oauth2/auth',
+      },
+      options: {
+        authorizationMethod: 'body' as 'body',
+      },
     };
+    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
     return new AuthorizationCode(config);
   }
 
@@ -146,11 +150,18 @@ export default class AuthClient {
 
     const oauth_code = await this.callback_server.listenForCallback(port);
 
-    const access_token = await authorization_code.getToken({
-      code: oauth_code,
-      redirect_uri: 'http://localhost:60000',
-      scope: 'openid profile email offline_access',
-    }, { json: true });
+    const access_token = await authorization_code.getToken(
+      {
+        code: oauth_code,
+        redirect_uri: 'http://localhost:60000',
+        scope: 'openid profile email offline_access',
+      },
+      {
+        json: true,
+        payload: { 'client_id': AuthClient.CLIENT_ID },
+        headers: { 'HOST': 'auth-frontend-0jdostdd.arc.localhost' },
+      }
+    );
 
     const decoded_token = Auth0Shim.verifyOryToken( // TODO: define verifyOryToken somewhere else?
       AuthClient.CLIENT_ID,

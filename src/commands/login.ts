@@ -53,8 +53,8 @@ export default class Login extends Command {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
-    let auth_client: AuthorizationCode<'client_id'> = this.app.auth.getOryAuthClient()
-    let authorization_uri: string = auth_client.authorizeURL({
+    const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getOryAuthClient();
+    const authorization_uri: string = auth_client.authorizeURL({
       redirect_uri: 'http://localhost:60000',
       scope: 'openid profile email offline_access',
       state: btoa(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
