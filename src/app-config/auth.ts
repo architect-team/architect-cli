@@ -151,6 +151,12 @@ export default class AuthClient {
 
     const oauth_code = await this.callback_server.listenForCallback(port);
 
+    let headers;
+    const oauth_hostname = (new URL(this.config.oauth_domain)).hostname;
+    if (oauth_hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+      headers = { 'HOST': oauth_hostname };
+    }
+
     const access_token = await authorization_code.getToken(
       {
         code: oauth_code,
@@ -160,7 +166,7 @@ export default class AuthClient {
       {
         json: true,
         payload: { 'client_id': this.config.oauth_client_id },
-        headers: { 'HOST': (new URL(this.config.oauth_domain)).hostname }, // TODO: https://github.com/architect-team/architect-cli/compare/healthcheck#diff-fa461cdc1d56b640a90289cc899610e27331eaab22f9269324af278768d0e6f4R45
+        headers,
       }
     );
 
