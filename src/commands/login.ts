@@ -39,11 +39,14 @@ export default class Login extends Command {
 
       const config = {
         client: {
-          id: 'hydra-auth-client',
-          secret: '', // 'secret' - TODO: does this need to be valid for our flow? or is it just required in the module's type?
+          id: 'postman7',
+          secret: 'postman7', // 'secret' - TODO: does this need to be valid for our flow? or is it just required in the module's type?
         },
         auth: {
-          tokenHost: 'http://auth-hydra-public-o8avmbh2.arc.localhost:1024'
+          tokenHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+          tokenPath: '/oauth2/token',
+          authorizeHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+          authorizePath: '/oauth2/auth'
         }
       };
       const client = new AuthorizationCode(config);
@@ -54,8 +57,7 @@ export default class Login extends Command {
         state: btoa(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
       });
 
-      await this.runBrowserFlow(authorizationUri.replace('/oauth/authorize', '/oauth2/auth'));
-
+      await this.runBrowserFlow(authorizationUri, client);
     } else {
       if (flags.email || flags.password) {
         await this.runCliFlow(flags);
@@ -67,7 +69,7 @@ export default class Login extends Command {
     this.log(chalk.green('Login successful'));
   }
 
-  private async runBrowserFlow(hydra_url?: string) {
+  private async runBrowserFlow(hydra_url?: string, authorization_code?: AuthorizationCode) {
     if (!PromptUtils.prompts_available()) {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
@@ -79,12 +81,12 @@ export default class Login extends Command {
       this.log('To login, please navigate to the following URL in your browser:');
       this.log('\n');
       this.log(`\t${url}`);
-      // opener(url);
+      opener(url);
     } catch (err) {
       // do nothing if opener fails
     }
 
-    await this.app.auth.loginFromBrowser(port);
+    await this.app.auth.loginFromBrowser(port, authorization_code);
   }
 
   private async runCliFlow(flags: any) {

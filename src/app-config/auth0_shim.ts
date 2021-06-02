@@ -129,6 +129,19 @@ export class Auth0Shim {
     });
   }
 
+  public static verifyOryToken(
+    auth0_client_id: string,
+    id_token: string
+  ) {
+    return Auth0Shim.verify({
+      iss: 'http://auth-frontend-0jdostdd.arc.localhost:1024/', // TODO: update/replace
+      aud: auth0_client_id,
+      id_token,
+      undefined,
+      leeway: 60,
+    });
+  }
+
   private static verify(options: any) {
     if (!options.id_token) {
       throw new Error('ID token is required but missing');

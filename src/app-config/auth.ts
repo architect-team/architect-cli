@@ -1,4 +1,5 @@
 import { AuthenticationClient } from 'auth0';
+import { AuthorizationCode } from 'simple-oauth2';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
 import { Auth0Shim } from './auth0_shim';
@@ -26,7 +27,7 @@ export default class AuthClient {
   checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+  public static CLIENT_ID = 'postman7'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
@@ -98,20 +99,24 @@ export default class AuthClient {
     return 'https://' + auth0_transaction.url;
   }
 
-  async loginFromBrowser(port: number) {
+  async loginFromBrowser(port: number, authorization_code?: AuthorizationCode) {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
-    const auth0_results = await this.performOauthHandshake(oauth_code);
 
-    const decoded_token = Auth0Shim.verifyIdToken(
-      this.config.oauth_domain,
+    const accessToken = await authorization_code!.getToken({ // TODO: remove !
+      code: oauth_code,
+      redirect_uri: 'http://localhost:60000',
+      scope: 'openid profile email offline_access',
+    }, { json: true });
+
+    const decoded_token = Auth0Shim.verifyOryToken( // TODO: define verifyOryToken somewhere else?
       AuthClient.CLIENT_ID,
-      auth0_results.id_token,
-      this.auth0_transaction.nonce
+      accessToken.token.id_token,
     );
+    console.log(decoded_token)
 
-    if (!auth0_results) {
+    if (!decoded_token) {
       throw new Error('Login Failed at Oauth Handshake');
     }
 
@@ -120,7 +125,7 @@ export default class AuthClient {
     }
 
     const email = decoded_token.user.email;
-    await this.setToken(email, auth0_results);
+    await this.setToken(email, decoded_token);
     await this.dockerLogin(email);
   }
 
