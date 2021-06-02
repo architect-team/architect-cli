@@ -1,8 +1,10 @@
 import { AuthenticationClient } from 'auth0';
 import { AuthorizationCode } from 'simple-oauth2';
+import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
 import { Auth0Shim } from './auth0_shim';
+import { AuthHelpers } from './auth_helpers';
 import CallbackServer from './callback_server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
@@ -131,9 +133,9 @@ export default class AuthClient {
         id: AuthClient.CLIENT_ID,
       },
       auth: {
-        tokenHost: 'http://localhost:1024',
+        tokenHost: this.config.oauth_domain,
         tokenPath: '/oauth2/token',
-        authorizeHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+        authorizeHost: this.config.oauth_domain,
         authorizePath: '/oauth2/auth',
       },
       options: {
@@ -153,20 +155,23 @@ export default class AuthClient {
     const access_token = await authorization_code.getToken(
       {
         code: oauth_code,
-        redirect_uri: 'http://localhost:60000',
+        redirect_uri: `http://localhost:${port}`,
         scope: 'openid profile email offline_access',
       },
       {
         json: true,
         payload: { 'client_id': AuthClient.CLIENT_ID },
-        headers: { 'HOST': 'auth-frontend-0jdostdd.arc.localhost' },
+        headers: { 'HOST': (new URL(this.config.oauth_domain)).hostname },
       }
     );
 
-    const decoded_token = Auth0Shim.verifyOryToken( // TODO: define verifyOryToken somewhere else?
-      AuthClient.CLIENT_ID,
-      access_token.token.id_token,
-    );
+    const decoded_token = AuthHelpers.verify({
+      iss: this.config.oauth_domain + '/',
+      aud: AuthClient.CLIENT_ID,
+      id_token: access_token.token.id_token,
+      undefined,
+      leeway: 60,
+    });
 
     if (!access_token) {
       throw new Error('Login Failed at Oauth Handshake');

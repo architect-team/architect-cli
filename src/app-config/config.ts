@@ -9,7 +9,6 @@ export default class AppConfig {
   api_host: string;
   app_host: string;
   oauth_domain: string;
-  ory_auth: boolean;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -34,8 +33,6 @@ export default class AppConfig {
     this.app_host = 'https://cloud.architect.io';
     this.oauth_domain = 'auth.architect.io';
 
-    this.ory_auth = !!partial?.ory_auth;
-
     // Override defaults with input values
     Object.assign(this, partial);
   }
@@ -56,7 +53,6 @@ export default class AppConfig {
       api_host: this.api_host,
       app_host: this.app_host,
       oauth_domain: this.oauth_domain,
-      ory_auth: this.ory_auth,
     };
   }
 }

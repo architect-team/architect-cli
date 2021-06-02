@@ -34,15 +34,11 @@ export default class Login extends Command {
     const { flags } = this.parse(Login);
     await Docker.verify(); // docker is required for login because we run `docker login`
 
-    if (this.app.config.ory_auth) {
-      // refresh tokens are the main thing in question (Auth0Shim is only for refresh) (try finding an oauth module for refresh, equivalent to nuxt oauth) (kill Auth0Shim with new module)
-      await this.runOryBrowserFlow();
+    if (flags.email || flags.password) {
+      await this.runCliFlow(flags);
     } else {
-      if (flags.email || flags.password) {
-        await this.runCliFlow(flags);
-      } else {
-        await this.runBrowserFlow();
-      }
+      // TODO: test ory refresh tokens
+      this.app.config.oauth_domain === 'auth.architect.io' ? await this.runBrowserFlow() : await this.runOryBrowserFlow();
     }
 
     this.log(chalk.green('Login successful'));
@@ -53,14 +49,14 @@ export default class Login extends Command {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
+    const port = await PortUtil.getAvailablePort(60000);
+
     const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getOryAuthClient();
     const authorization_uri: string = auth_client.authorizeURL({
-      redirect_uri: 'http://localhost:60000',
+      redirect_uri: `http://localhost:${port}`,
       scope: 'openid profile email offline_access',
       state: btoa(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
     });
-
-    const port = await PortUtil.getAvailablePort(60000);
 
     try {
       this.log('To login, please navigate to the following URL in your browser:');
