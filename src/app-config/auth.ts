@@ -27,7 +27,7 @@ export default class AuthClient {
   checkLogin: Function;
 
   public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = 'postman7'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+  public static CLIENT_ID = 'postman8'; // '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
@@ -99,24 +99,20 @@ export default class AuthClient {
     return 'https://' + auth0_transaction.url;
   }
 
-  async loginFromBrowser(port: number, authorization_code?: AuthorizationCode) {
+  async loginFromBrowser(port: number) {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
+    const auth0_results = await this.performOauthHandshake(oauth_code);
 
-    const accessToken = await authorization_code!.getToken({ // TODO: remove !
-      code: oauth_code,
-      redirect_uri: 'http://localhost:60000',
-      scope: 'openid profile email offline_access',
-    }, { json: true });
-
-    const decoded_token = Auth0Shim.verifyOryToken( // TODO: define verifyOryToken somewhere else?
+    const decoded_token = Auth0Shim.verifyIdToken(
+      this.config.oauth_domain,
       AuthClient.CLIENT_ID,
-      accessToken.token.id_token,
+      auth0_results.id_token,
+      this.auth0_transaction.nonce
     );
-    console.log(decoded_token)
 
-    if (!decoded_token) {
+    if (!auth0_results) {
       throw new Error('Login Failed at Oauth Handshake');
     }
 
@@ -125,7 +121,52 @@ export default class AuthClient {
     }
 
     const email = decoded_token.user.email;
-    await this.setToken(email, decoded_token);
+    await this.setToken(email, auth0_results);
+    await this.dockerLogin(email);
+  }
+
+  public getOryAuthClient() {
+    const config = {
+      client: {
+        id: 'postman8',
+        secret: 'postman8', // TODO: find out how to get this working without the secret
+      },
+      auth: {
+        tokenHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+        tokenPath: '/oauth2/token',
+        authorizeHost: 'http://auth-frontend-0jdostdd.arc.localhost:1024',
+        authorizePath: '/oauth2/auth'
+      }
+    };
+    return new AuthorizationCode(config);
+  }
+
+  public async oryLoginFromBrowser(port: number, authorization_code: AuthorizationCode) {
+    await this.logout();
+
+    const oauth_code = await this.callback_server.listenForCallback(port);
+
+    const access_token = await authorization_code.getToken({
+      code: oauth_code,
+      redirect_uri: 'http://localhost:60000',
+      scope: 'openid profile email offline_access',
+    }, { json: true });
+
+    const decoded_token = Auth0Shim.verifyOryToken( // TODO: define verifyOryToken somewhere else?
+      AuthClient.CLIENT_ID,
+      access_token.token.id_token,
+    );
+
+    if (!access_token) {
+      throw new Error('Login Failed at Oauth Handshake');
+    }
+
+    if (!decoded_token.user) {
+      throw new Error('Login Failed with Invalid JWT Token');
+    }
+
+    const email = decoded_token.user.email;
+    await this.setToken(email, access_token.token);
     await this.dockerLogin(email);
   }
 
