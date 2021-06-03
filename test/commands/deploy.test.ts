@@ -376,6 +376,8 @@ describe('local deploy environment', function () {
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
           "--providers.docker.exposedByDefault=false",
@@ -420,6 +422,8 @@ describe('local deploy environment', function () {
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
+          "--accesslog=true",
+          "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
           "--providers.docker=true",
           "--providers.docker.exposedByDefault=false",
