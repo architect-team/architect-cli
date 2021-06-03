@@ -44,6 +44,11 @@ services:
       context: ./backend
     interfaces:
       main: &api-port 8080
+    liveness_probe:
+      path: /names
+      port: *api-port
+      interval: 10s
+      failure_threshold: 3
     environment:
       PORT: *api-port
       DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
@@ -62,6 +67,11 @@ services:
       context: ./frontend
     interfaces:
       main: &app-port 8080
+    liveness_probe:
+      port: *app-port
+      path: /api/names
+      interval: 10s
+      failure_threshold: 3
     environment:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
