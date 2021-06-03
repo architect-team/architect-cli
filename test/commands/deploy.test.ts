@@ -1,4 +1,5 @@
 import { expect, test } from '@oclif/test';
+import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
@@ -699,6 +700,64 @@ describe('local deploy environment', function () {
         const compose = runCompose.firstCall.args[0];
         expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_route_ref}.rule=Host(\`${tenant_1_route_ref}.arc.localhost\`)`)
         expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.${tenant_2_route_ref}.rule=Host(\`${tenant_2_route_ref}.arc.localhost\`)`)
+      })
+  });
+
+  describe('ingresses deploys', function () {
+    test
+      .timeout(20000)
+      // @ts-ignore
+      .stub(ComponentConfigBuilder, 'buildFromPath', (path: string) => {
+        let config: string;
+        if (path === './examples/react-app/architect.yml') {
+          config = `
+          name: examples/auth
+          services:
+            auth:
+              interfaces:
+                main: 8080
+              environment:
+                SELF_URL: \${{ ingresses.auth.url }} # is not auto-exposed
+                OLD_SELF_URL: \${{ environment.ingresses['examples/auth'].auth.url }} # is not auto-exposed
+          interfaces:
+            auth: \${{ services.auth.interfaces.main.url }}
+          `
+        } else {
+          config = `
+          name: examples/app
+          dependencies:
+            examples/auth: latest
+          services:
+            app:
+              interfaces:
+                main: 8080
+              environment:
+                SELF_URL: \${{ ingresses.app.url }} # successfully auto-exposed as an ingress
+                OLD_SELF_URL: \${{ environment.ingresses['examples/app'].app.url }} # successfully auto-exposed as an ingress
+                DEPENDENCY_URL: \${{ dependencies['examples/auth'].ingresses.auth.url }} # is not auto-exposed
+          interfaces:
+            app: \${{ services.app.interfaces.main.url }}
+          `
+        }
+        return ComponentConfigBuilder.buildFromJSON(yaml.load(config));
+      })
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({
+        'examples/app': './examples/hello-world/architect.yml',
+        'examples/auth': './examples/react-app/architect.yml'
+      }))
+      .stdout({ print })
+      .stderr({ print })
+      .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+      .command(['deploy', '-l', 'examples/app'])
+      .it('Create a local deploy with multiple instances of the same component', ctx => {
+        const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+        expect(runCompose.calledOnce).to.be.true
+        const compose = runCompose.firstCall.args[0];
+        const app_ref = ComponentConfig.getNodeRef('examples/app/app:latest');
+        expect(compose.services[app_ref].labels).includes('traefik.enable=true');
+        const auth_ref = ComponentConfig.getNodeRef('examples/auth/auth:latest');
+        expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });
 });
