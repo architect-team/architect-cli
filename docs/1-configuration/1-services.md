@@ -19,6 +19,9 @@ services:
         port: 8080
         protocol: http
       admin: 8081
+    liveness_probe:
+      port: 8080
+      path: /health
     environment:
       DB_ADDR: rds.amazonwebservices.com/db-name
       DB_USER: postgres
@@ -93,6 +96,26 @@ Since many services use http for traffic, interfaces also support a simple short
 ```yaml
 interfaces:
   public: 8080
+```
+
+### liveness_probe
+This configuration is essentially the health check for the service. It's important to specify so that traffic isn't load balanced to unhealthy services. Critical for rolling updates to function properly.
+```yaml
+liveness_probe:
+  # (required) Port that the http check will run against
+  port: 8080
+  # (required) Path for the http check
+  path: /health
+  # (optional, defaults to 0s) Delays the check from running for the specified amount of time
+  initial_delay: 0s
+  # (optional, defaults to 30s) The time period in seconds between each health check execution. You may specify between 5 and 300 seconds.
+  interval: 30s
+  # (optional, defaults to 5s) The time period in seconds to wait for a health check to succeed before it is considered a failure. You may specify between 2 and 60 seconds.
+  timeout: 5s
+  # (optional, defaults to 1) The number of times to retry a health check before the container is considered healthy.
+  success_threshold: 1
+  # (optional, defaults to 1) The number of times to retry a failed health check before the container is considered unhealthy. You may specify between 1 and 10 retries.
+  failure_threshold: 1
 ```
 
 ### environment
