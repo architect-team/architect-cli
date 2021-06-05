@@ -13,6 +13,7 @@ export abstract class ComponentConfig extends BaseConfig {
   abstract getName(): ComponentSlug;
   abstract setName(name: string): void;
   abstract getTag(): string;
+  abstract setTag(tag: string): void;
   abstract getRef(): ComponentVersionSlug;
   abstract getInstanceId(): string;
   abstract setInstanceId(instance_id: string): void;

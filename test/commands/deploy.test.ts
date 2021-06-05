@@ -462,7 +462,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentConfigBuilder, 'buildFromPath', () => {
       const component_config = getHelloComponentConfig();
-      (component_config.services.api.interfaces.main as any).sticky = true;
+      (component_config.services.api.interfaces.main as any).sticky = 'true';
       return ComponentConfigBuilder.buildFromJSON(component_config);
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))

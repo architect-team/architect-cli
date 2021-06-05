@@ -41,7 +41,8 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     // Set the tag
-    config.setName(component_ref);
+    config.setName(component_slug);
+    config.setTag(tag);
     config.setInstanceName(instance_name);
     config.setInstanceId(config.getRef());
 
@@ -96,8 +97,9 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_configs;
   }
 
-  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]) {
-    const errors = super.validateComponent(component, context, ignore_keys);
+  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]) {
+    const groups = ['developer'];
+    const errors = await super.validateComponent(component, context, ignore_keys, groups);
     const component_extends = component.getExtends();
     if (component_extends?.startsWith('file:') && errors.length) {
       const component_path = component_extends.substr('file:'.length);
