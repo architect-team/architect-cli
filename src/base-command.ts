@@ -19,9 +19,21 @@ export default abstract class extends Command {
   async init() {
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
-      const token = await this.app.auth.getToken();
-      if (this.auth_required() && (!token || (token.account === 'unknown' && token.password === 'unknown'))) {
-        throw new LoginRequiredError();
+      if (this.auth_required()) {
+        const token_json = await this.app.auth.getPersistedTokenJSON();
+        if (!token_json) {
+          throw new LoginRequiredError();
+        }
+        if (token_json.email === 'unknown') {
+          throw new LoginRequiredError();
+        }
+        if (token_json.expires_in) {
+          const auth_client = this.app.auth.getAuthClient();
+          const access_token = auth_client.createToken(token_json);
+          if (access_token.expired()) {
+            throw new LoginRequiredError();
+          }
+        }
       }
     }
   }

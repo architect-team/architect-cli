@@ -24,9 +24,6 @@ describe('logout', function () {
     fs.writeJSONSync(tmp_config_file, config);
     const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
     sinon.replace(AppService, 'create', app_config_stub);
-
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
   });
 
   afterEach(function () {
@@ -38,8 +35,7 @@ describe('logout', function () {
     sinon.replace(CredentialManager.prototype, 'delete', credential_spy);
 
     await Logout.run();
-    expect(credential_spy.getCalls().length).to.equal(2);
-    expect(credential_spy.firstCall.args[0]).to.equal('architect.io');
-    expect(credential_spy.secondCall.args[0]).to.equal('architect.io/token');
+    expect(credential_spy.getCalls().length).to.equal(1);
+    expect(credential_spy.firstCall.args[0]).to.equal('architect.io/token');
   });
 });

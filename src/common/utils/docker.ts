@@ -1,5 +1,17 @@
 import execa, { Options } from 'execa';
 
+export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
+  const cmd = execa('docker', args, execa_opts);
+  if (opts.stdout) {
+    cmd.stdout?.pipe(process.stdout);
+    cmd.stderr?.pipe(process.stderr);
+  }
+  return await cmd;
+};
+
 /**
  * Checks to make sure docker is installed and that the docker daemon is running. Throws with the corresponding error message if not.
  */
@@ -10,27 +22,9 @@ export const verify = async (): Promise<void> => {
     throw new Error('Architect requires Docker to be installed. Please install it and try again.');
   }
   try {
-    await execa('docker', ['stats', '--no-stream']);
+    await docker(['stats', '--no-stream'], { stdout: false });
   } catch (err) {
     throw new Error('Docker daemon is not running. Please start it and try again.');
-  }
-};
-
-export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
-  const cmd = execa('docker', args, execa_opts);
-  if (opts.stdout) {
-    cmd.stdout?.pipe(process.stdout);
-    cmd.stderr?.pipe(process.stderr);
-  }
-  try {
-    return await cmd;
-  } catch (err) {
-    try {
-      await execa('which', ['docker']);
-    } catch {
-      throw new Error('Architect requires Docker to be installed. Please install it and try again.');
-    }
-    throw err;
   }
 };
 

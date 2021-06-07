@@ -8,24 +8,21 @@ import CredentialManager from './credentials';
 const CREDENTIAL_PREFIX = 'architect.io';
 
 interface AuthResult {
+  email: string;
   access_token: string;
   token_type: string;
   refresh_token: string;
   expires_in: number;
-  issued_at: number;
+  id_token?: string;
 }
 
 export default class AuthClient {
   config: AppConfig;
   credentials: CredentialManager;
-  auth_results?: AuthResult;
+  _auth_result?: AuthResult;
   callback_server: CallbackServer;
   checkLogin: Function;
 
-  // TODO:auth figure out about audience
-  public static AUDIENCE = 'architect-hub-api';
-  // TODO:auth make config
-  public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
@@ -36,8 +33,8 @@ export default class AuthClient {
   }
 
   async init() {
-    const token = await this.getToken();
-    if (token && token.password !== 'unknown') {
+    const token = await this.getPersistedTokenJSON();
+    if (token) {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       await this.refreshToken().catch(() => { });
     } else if (!token) {
@@ -53,8 +50,7 @@ export default class AuthClient {
       } catch {
         // docker is required, but not truly necessary here
       }
-      await this.credentials.set(CREDENTIAL_PREFIX, 'unknown', 'unknown');
-      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, 'unknown', 'unknown');
+      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, 'unknown', JSON.stringify({}));
     }
   }
 
@@ -90,26 +86,31 @@ export default class AuthClient {
   }
 
   public getAuthClient() {
-    const is_auth0 = this.config.oauth_domain === 'auth.architect.io';
+    const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
 
-    const config = {
+    let oauth_token_host = this.config.oauth_host;
+    const url = new URL(this.config.oauth_host);
+    // Set HOST header for local dev
+    if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+      oauth_token_host = `http://localhost:${url.port}`;
+    }
+
+    return new AuthorizationCode({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
       client: {
-        id: AuthClient.CLIENT_ID,
+        id: this.config.oauth_client_id,
       },
       auth: {
-        // TODO:auth localhost and host header
-        tokenHost: `https://${this.config.oauth_domain}`,
+        tokenHost: oauth_token_host,
         tokenPath: is_auth0 ? '/oauth/token' : '/oauth2/token',
-        authorizeHost: `https://${this.config.oauth_domain}`,
+        authorizeHost: this.config.oauth_host,
         authorizePath: is_auth0 ? '/authorize' : '/oauth2/auth',
       },
       options: {
         authorizationMethod: 'body' as 'body',
       },
-    };
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-    // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
-    return new AuthorizationCode(config);
+    });
   }
 
   public async loginFromBrowser(port: number, authorization_code: AuthorizationCode) {
@@ -117,6 +118,7 @@ export default class AuthClient {
 
     const oauth_code = await this.callback_server.listenForCallback(port);
 
+    const url = new URL(this.config.oauth_host);
     const access_token = await authorization_code.getToken(
       {
         code: oauth_code,
@@ -125,9 +127,8 @@ export default class AuthClient {
       },
       {
         json: true,
-        payload: { 'client_id': AuthClient.CLIENT_ID },
-        // TODO:auth set header for local dev
-        // headers: { 'HOST': 'auth-frontend-0jdostdd.arc.localhost' },
+        payload: { 'client_id': this.config.oauth_client_id },
+        headers: { 'HOST': url.hostname },
       }
     );
 
@@ -147,7 +148,6 @@ export default class AuthClient {
   }
 
   async logout() {
-    await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
     try {
       await docker(['logout', this.config.registry_host], { stdout: false });
@@ -156,23 +156,28 @@ export default class AuthClient {
     }
   }
 
-  async getToken() {
-    return this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+  async getPersistedTokenJSON(): Promise<AuthResult | undefined> {
+    if (!this._auth_result) {
+      const credential = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+      if (!credential) {
+        return;
+      }
+      this._auth_result = JSON.parse(credential.password) as AuthResult;
+      this._auth_result.email = credential.account;
+    }
+    return this._auth_result;
   }
 
   async refreshToken() {
-    const credential = await this.getToken();
-    if (!credential) {
+    const token_json = await this.getPersistedTokenJSON();
+    if (!token_json) {
       await this.logout();
       throw new LoginRequiredError();
     }
-
-    if (credential.password === 'unknown') {
+    if (token_json.email === 'unknown') {
       await this.logout();
       throw new LoginRequiredError();
     }
-
-    const token_json = JSON.parse(credential.password) as AuthResult;
     if (!token_json.refresh_token) {
       return; // Don't refresh if a token doesn't exist
     }
@@ -180,13 +185,12 @@ export default class AuthClient {
     let access_token = auth_client.createToken(token_json);
 
     if (access_token.expired()) {
-      const refreshParams = {
-        scope: '<scope>',
-      };
-      access_token = await access_token.refresh(refreshParams);
+      access_token = await access_token.refresh({
+        scope: AuthClient.SCOPE,
+      });
 
-      await this.setToken(credential.account, access_token.token as AuthResult);
-      await this.dockerLogin(credential.account);
+      await this.setToken(token_json.email, access_token.token as AuthResult);
+      await this.dockerLogin(token_json.email);
     }
 
     return access_token;
@@ -198,21 +202,19 @@ export default class AuthClient {
       '-u', username,
       '--password-stdin',
     ], { stdout: false }, {
-      input: JSON.stringify(this.auth_results),
+      input: JSON.stringify(this._auth_result),
     });
   }
 
   private async setToken(email: any, token: AuthResult) {
-    // Windows credential manager password max length is 256 chars
-    this.auth_results = {
-      access_token: token.access_token,
-      refresh_token: token.refresh_token,
-      token_type: token.token_type,
-      expires_in: token.expires_in,
-      issued_at: new Date().getTime() / 1000,
+    this._auth_result = {
+      ...token,
+      email,
     };
 
-    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, email, JSON.stringify(this.auth_results));
-    return this.auth_results;
+    delete this._auth_result.id_token; // Windows credential manager password max length is 256 chars
+
+    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, email, JSON.stringify(this._auth_result));
+    return this._auth_result;
   }
 }

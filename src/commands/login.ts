@@ -39,7 +39,6 @@ export default class Login extends Command {
     } else {
       await this.runBrowserFlow();
     }
-
     this.log(chalk.green('Login successful'));
   }
 

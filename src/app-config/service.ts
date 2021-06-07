@@ -107,13 +107,13 @@ export default class AppService {
   }
 
   get api(): AxiosInstance {
-    if (this.auth.auth_results) {
-      const { token_type, access_token } = this.auth.auth_results;
+    const token_json = this.auth._auth_result;
+    if (token_json) {
+      const { token_type, access_token } = token_json;
       this._api.defaults.headers = {
         ...this._api.defaults.headers,
         Authorization: `${token_type} ${access_token}`,
       };
-
       const unauthorized_interceptor = this._api.interceptors.response.use(
         res => res,
         async err => {
@@ -126,9 +126,9 @@ export default class AppService {
             if (!new_token) {
               return Promise.reject(new LoginRequiredError());
             }
-
             // Retry the last request with the new token
             this._api.defaults.headers = {
+              ...this._api.defaults.headers,
               Authorization: `${new_token.token.token_type} ${new_token.token.access_token}`,
             };
             const error_config = err.config;

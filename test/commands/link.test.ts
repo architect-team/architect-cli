@@ -5,7 +5,6 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../src/app-config/config';
-import CredentialManager from '../../src/app-config/credentials';
 import AppService from '../../src/app-config/service';
 import Link from '../../src/commands/link';
 import ARCHITECTPATHS from '../../src/paths';
@@ -14,9 +13,6 @@ describe('link', () => {
   let tmp_dir = os.tmpdir();
 
   beforeEach(() => {
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
-
     // Stub the log_level
     const config = new AppConfig('', {
       log_level: 'info',
