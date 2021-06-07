@@ -47,14 +47,13 @@ export default class Login extends Command {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
+    const port = await PortUtil.getAvailablePort(60000);
     const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getAuthClient();
     const authorization_uri: string = auth_client.authorizeURL({
-      redirect_uri: 'http://localhost:60000',
+      redirect_uri: `http://localhost:${port}`,
       scope: AuthClient.SCOPE,
       state: Buffer.from(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)).toString('base64'),
     });
-
-    const port = await PortUtil.getAvailablePort(60000);
 
     try {
       this.log('To login, please navigate to the following URL in your browser:');

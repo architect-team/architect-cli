@@ -1,4 +1,5 @@
 import { AuthorizationCode } from 'simple-oauth2';
+import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
 import CallbackServer from './callback_server';
@@ -122,7 +123,7 @@ export default class AuthClient {
     const access_token = await authorization_code.getToken(
       {
         code: oauth_code,
-        redirect_uri: 'http://localhost:60000',
+        redirect_uri: `http://localhost:${port}`,
         scope: AuthClient.SCOPE,
       },
       {
