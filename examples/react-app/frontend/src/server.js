@@ -1,3 +1,5 @@
+require('./tracer');
+
 const express = require('express');
 const next = require('next');
 const { createProxyMiddleware } = require("http-proxy-middleware");
@@ -13,7 +15,7 @@ app.prepare()
     server.use('/api', createProxyMiddleware({
       target: process.env.API_ADDR,
       pathRewrite: {
-          '^/api': ''
+        '^/api': ''
       },
       changeOrigin: false
     }));

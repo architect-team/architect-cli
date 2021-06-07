@@ -12,7 +12,7 @@ export class VolumeSpecV1 extends ValidatableConfig {
     message: 'Debug volumes require a host path to mount the volume to',
   })
   @IsEmpty({
-    groups: ['developer'],
+    groups: ['register'],
     message: 'Cannot hardcode a host mount path in a component outside of the debug block',
   })
   @IsString({ always: true })

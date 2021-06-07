@@ -22,6 +22,14 @@ export interface DockerComposeDeploy {
   resources: { limits: { cpus?: string; memory?: string } };
 }
 
+export interface DockerComposeHealthCheck {
+  test: string[];
+  interval: string;
+  timeout: string;
+  retries: string;
+  start_period: string;
+}
+
 export interface DockerService {
   ports?: string[] | DockerComposeInterface[];
   image?: string;
@@ -39,6 +47,7 @@ export interface DockerService {
   scale?: number;
   extra_hosts?: string[];
   labels?: string[];
+  healthcheck?: DockerComposeHealthCheck;
 }
 
 export default interface DockerComposeTemplate {

@@ -93,7 +93,6 @@ export class ComponentConfigBuilder {
     const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(path);
 
     try {
-      // TODO: Figure out how to enforce services block for components during registration
       const config = ComponentConfigBuilder.buildFromJSON(raw_config);
       await config.validateOrReject({ groups: ['developer'] });
       return config;

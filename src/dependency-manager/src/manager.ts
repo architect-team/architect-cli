@@ -333,7 +333,7 @@ export default abstract class DependencyManager {
     return external_interface;
   }
 
-  interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
+  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
     const component_string = replaceBrackets(serialize(component.expand()));
 
@@ -477,7 +477,7 @@ export default abstract class DependencyManager {
 
     const ignore_keys: string[] = [];
 
-    const errors = this.validateComponent(component, context, ignore_keys);
+    const errors = await this.validateComponent(component, context, ignore_keys);
     if (errors.length) {
       throw new ValidationErrors(component.getRef(), flattenValidationErrors(errors));
     }
@@ -536,8 +536,8 @@ export default abstract class DependencyManager {
     return dependency_components;
   }
 
-  validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = []): ValidationError[] {
-    const validation_errors = [];
+  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = [], groups = ['developer', 'register']): Promise<ValidationError[]> {
+    let validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.getParameters())) {
       if (pv.required !== 'false' && (pv.default === undefined)) {
@@ -548,6 +548,15 @@ export default abstract class DependencyManager {
         validation_error.constraints = { Required: `${pk} is required` };
         validation_error.children = [];
         validation_errors.push(validation_error);
+      }
+    }
+    try {
+      await component.validateOrReject({ groups });
+    } catch (err) {
+      if (err instanceof Array) {
+        validation_errors = [...validation_errors, ...err];
+      } else {
+        throw err;
       }
     }
     return [...validation_errors, ...validateInterpolation(serialize(component), context, ignore_keys)];
@@ -672,7 +681,7 @@ export default abstract class DependencyManager {
         }
         dependencies.push(child_node.interpolated_config);
       }
-      tree_node.interpolated_config = this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
+      tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
 
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.getServices()), ...Object.entries(tree_node.interpolated_config.getTasks())]) {
         const service_ref = tree_node.interpolated_config.getNodeRef(service_name);
