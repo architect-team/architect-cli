@@ -1,5 +1,4 @@
 import Command, { flags } from '@oclif/command';
-import chalk from 'chalk';
 import 'reflect-metadata';
 import AppService from './app-config/service';
 import LoginRequiredError from './common/errors/login-required';
@@ -41,20 +40,26 @@ export default abstract class extends Command {
   async catch(err: any) {
     if (err.oclif && err.oclif.exit === 0) return;
 
-    if (!err.message) { err.message = 'Error: '; }
+    let message = err.message;
+    if (!message) { message = 'Error: '; }
 
-    if (err.response?.data instanceof Object) {
-      let error_msg = `${err.request.path} (${err.response.status})`;
-      for (const [k, v] of Object.entries(err.response.data)) {
-        error_msg += `\n${k}: ${v}`;
-      }
-      this.error(chalk.red(error_msg));
-    } else if (err.config) {
-      err.message += `${err.config.url} [${err.config.method}]`;
-    } else if (err.stderr) {
-      err.message += err.stderr;
+    if (err.config) {
+      message += `${err.config.url} [${err.config.method}]`;
     }
 
-    this.error(err);
+    if (err.response?.data instanceof Object) {
+      message += `${err.request.path} (${err.response.status})`;
+      for (const [k, v] of Object.entries(err.response.data)) {
+        message += `\n${k}: ${v}`;
+      }
+    } else if (err.stderr) {
+      message += '\n\n';
+      message += err.stderr;
+    } else if (err.stack) {
+      message += '\n\n';
+      message += err.stack;
+    }
+
+    this.error(message);
   }
 }
