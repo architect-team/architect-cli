@@ -121,7 +121,7 @@ export default class AppService {
 
             // Retry the last request with the new token
             this._api.defaults.headers = {
-              Authorization: `${new_token.token_type} ${new_token.access_token}`,
+              Authorization: `${new_token.token.token_type} ${new_token.token.access_token}`,
             };
             const error_config = err.config;
             error_config.headers.Authorization = this._api.defaults.headers.Authorization;

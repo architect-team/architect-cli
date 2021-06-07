@@ -1,8 +1,8 @@
 import { flags } from '@oclif/command';
-import btoa from "btoa";
 import chalk from 'chalk';
 import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
+import AuthClient from '../app-config/auth';
 import Command from '../base-command';
 import * as Docker from '../common/utils/docker';
 import PortUtil from '../common/utils/port';
@@ -34,30 +34,25 @@ export default class Login extends Command {
     const { flags } = this.parse(Login);
     await Docker.verify(); // docker is required for login because we run `docker login`
 
-    if (this.app.config.ory_auth) {
-      // refresh tokens are the main thing in question (Auth0Shim is only for refresh) (try finding an oauth module for refresh, equivalent to nuxt oauth) (kill Auth0Shim with new module)
-      await this.runOryBrowserFlow();
+    if (flags.email || flags.password) {
+      await this.runCliFlow(flags);
     } else {
-      if (flags.email || flags.password) {
-        await this.runCliFlow(flags);
-      } else {
-        await this.runBrowserFlow();
-      }
+      await this.runBrowserFlow();
     }
 
     this.log(chalk.green('Login successful'));
   }
 
-  private async runOryBrowserFlow() {
+  private async runBrowserFlow() {
     if (!PromptUtils.prompts_available()) {
       throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
     }
 
-    const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getOryAuthClient();
+    const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getAuthClient();
     const authorization_uri: string = auth_client.authorizeURL({
       redirect_uri: 'http://localhost:60000',
-      scope: 'openid profile email offline_access',
-      state: btoa(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)),
+      scope: AuthClient.SCOPE,
+      state: Buffer.from(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)).toString('base64'),
     });
 
     const port = await PortUtil.getAvailablePort(60000);
@@ -71,27 +66,7 @@ export default class Login extends Command {
       // do nothing if opener fails
     }
 
-    await this.app.auth.oryLoginFromBrowser(port, auth_client);
-  }
-
-  private async runBrowserFlow() {
-    if (!PromptUtils.prompts_available()) {
-      throw new Error('We detected that this environment does not have a prompt available. To login in a non-tty environment, please use both the user and password options: `architect login -e <email> -p <password>`');
-    }
-    const port = await PortUtil.getAvailablePort(60000);
-
-    const url = this.app.auth.generateBrowserUrl(port);
-
-    try {
-      this.log('To login, please navigate to the following URL in your browser:');
-      this.log('\n');
-      this.log(`\t${url}`);
-      opener(url);
-    } catch (err) {
-      // do nothing if opener fails
-    }
-
-    await this.app.auth.loginFromBrowser(port);
+    await this.app.auth.loginFromBrowser(port, auth_client);
   }
 
   private async runCliFlow(flags: any) {
