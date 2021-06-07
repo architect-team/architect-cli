@@ -45,7 +45,7 @@ export default class AppConfig {
 
   save() {
     const config_file = path.join(this.config_dir, LocalPaths.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(config_file, this);
+    fs.writeJSONSync(config_file, this, { spaces: 2 });
   }
 
   toJSON() {

@@ -63,7 +63,7 @@ export default class AppService {
 
   private saveLinkedComponents() {
     const linkedComponentsFile = path.join(this.config.getConfigDir(), LocalPaths.LINKED_COMPONENT_MAP_FILENAME);
-    fs.writeJSONSync(linkedComponentsFile, this.linkedComponents);
+    fs.writeJSONSync(linkedComponentsFile, this.linkedComponents, { spaces: 2 });
   }
 
   linkComponentPath(componentName: string, componentPath: string) {
