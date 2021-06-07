@@ -1,3 +1,4 @@
+import CredentialManager from '../src/app-config/credentials';
 import PromptUtils from '../src/common/utils/prompt-utils';
 
 PromptUtils.disable_prompts();
@@ -9,3 +10,10 @@ for (const env_key of Object.keys(process.env)) {
 }
 process.env.ARCHITECT_CONFIG_DIR = './test'
 process.env.NODE_ENV = 'test'
+
+CredentialManager.prototype.get = async (service: string) => {
+  return {
+    account: 'test',
+    password: '{}'
+  }
+}

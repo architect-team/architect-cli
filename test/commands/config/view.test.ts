@@ -5,20 +5,11 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
-import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import ConfigView from '../../../src/commands/config/view';
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('config:view', () => {
-  afterEach(function () {
-    sinon.restore();
-  });
-
-  beforeEach(function () {
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
-  });
 
   it('expects results table', async () => {
     const config = new AppConfig('', {

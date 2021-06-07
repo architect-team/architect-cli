@@ -4,7 +4,6 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
-import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import ConfigGet from '../../../src/commands/config/get';
 import ARCHITECTPATHS from '../../../src/paths';
@@ -26,19 +25,12 @@ const expectConfigValues = async (config_dir: string, config: AppConfig) => {
   await expectValueForField(config_dir, 'log_level', config.log_level);
   await expectValueForField(config_dir, 'registry_host', config.registry_host);
   await expectValueForField(config_dir, 'api_host', config.api_host);
-  await expectValueForField(config_dir, 'oauth_domain', config.oauth_domain);
+  await expectValueForField(config_dir, 'oauth_host', config.oauth_host);
+  await expectValueForField(config_dir, 'oauth_client_id', config.oauth_client_id);
 };
 
 describe('config:get', function () {
   this.timeout(20000); // otherwise this fails occaisionally in github actions at default 5000 timeout
-  afterEach(function () {
-    sinon.restore();
-  });
-
-  beforeEach(function () {
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
-  });
 
   it('expects default values', async () => {
     // Save a temporary config file and mock the app service to read from it

@@ -8,7 +8,6 @@ import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
-import CredentialManager from '../../../src/app-config/credentials';
 import AppService from '../../../src/app-config/service';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
@@ -41,9 +40,6 @@ describe('platform:create', function () {
     sinon.replace(PipelineUtils, 'pollPipeline', async () => null);
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();
-
-    const credential_spy = sinon.fake.returns('token');
-    sinon.replace(CredentialManager.prototype, 'get', credential_spy);
 
     // Stub the log_level
     const config = new AppConfig('', {

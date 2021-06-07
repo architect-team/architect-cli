@@ -9,6 +9,6 @@ export default class WhoAmI extends Command {
   }
 
   async run() {
-    this.log((await this.app.auth.getToken()).account);
+    this.log((await this.app.auth.getPersistedTokenJSON())?.email);
   }
 }

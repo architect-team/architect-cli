@@ -8,7 +8,8 @@ export default class AppConfig {
   registry_host: string;
   api_host: string;
   app_host: string;
-  oauth_domain: string;
+  oauth_host: string;
+  oauth_client_id: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -31,7 +32,8 @@ export default class AppConfig {
     this.registry_host = 'registry.architect.io';
     this.api_host = 'https://api.architect.io';
     this.app_host = 'https://cloud.architect.io';
-    this.oauth_domain = 'auth.architect.io';
+    this.oauth_host = 'https://auth.architect.io';
+    this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -52,7 +54,8 @@ export default class AppConfig {
       registry_host: this.registry_host,
       api_host: this.api_host,
       app_host: this.app_host,
-      oauth_domain: this.oauth_domain,
+      oauth_host: this.oauth_host,
+      oauth_client_id: this.oauth_client_id,
     };
   }
 }

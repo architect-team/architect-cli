@@ -23,7 +23,7 @@ export default class CredentialManager {
     return fs.writeJSON(this.credentials_file, this.credentials, { replacer: null, spaces: 2 });
   }
 
-  async get(service: string): Promise<Credential> {
+  async get(service: string): Promise<Credential | undefined> {
     return this.credentials[service];
   }
 

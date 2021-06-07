@@ -1,55 +1,43 @@
-import { AuthenticationClient } from 'auth0';
+import { AuthorizationCode } from 'simple-oauth2';
+import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
-import { Auth0Shim } from './auth0_shim';
 import CallbackServer from './callback_server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
 
 const CREDENTIAL_PREFIX = 'architect.io';
 
-interface AuthResults {
+interface AuthResult {
+  email: string;
   access_token: string;
   token_type: string;
   refresh_token: string;
   expires_in: number;
-  issued_at: number;
+  id_token?: string;
 }
 
 export default class AuthClient {
   config: AppConfig;
   credentials: CredentialManager;
-  auth0: AuthenticationClient;
-  auth_results?: AuthResults;
+  _auth_result?: AuthResult;
   callback_server: CallbackServer;
-  auth0_transaction: any;
   checkLogin: Function;
 
-  public static AUDIENCE = 'architect-hub-api';
-  public static CLIENT_ID = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
   public static SCOPE = 'openid profile email offline_access';
 
   constructor(config: AppConfig, checkLogin: Function) {
     this.config = config;
     this.credentials = new CredentialManager(config);
-    this.auth0 = new AuthenticationClient({
-      domain: this.config.oauth_domain,
-      clientId: AuthClient.CLIENT_ID,
-    });
     this.callback_server = new CallbackServer();
     this.checkLogin = checkLogin;
   }
 
   async init() {
-    const token = await this.getToken();
-    if (token && token.password !== 'unknown') {
-      this.auth_results = JSON.parse(token.password) as AuthResults;
-      const expires_at = this.auth_results.issued_at + this.auth_results.expires_in;
-      // Refresh the token if its expired to force a docker login
-      if (expires_at < (new Date().getTime() / 1000)) {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        await this.refreshToken().catch(() => { });
-      }
+    const token = await this.getPersistedTokenJSON();
+    if (token) {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      await this.refreshToken().catch(() => { });
     } else if (!token) {
       try {
         // Spoof login to production registry to enable pulling of public images (ex. architect-nginx/proxy)
@@ -63,8 +51,7 @@ export default class AuthClient {
       } catch {
         // docker is required, but not truly necessary here
       }
-      await this.credentials.set(CREDENTIAL_PREFIX, 'unknown', 'unknown');
-      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, 'unknown', 'unknown');
+      await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, 'unknown', JSON.stringify({}));
     }
   }
 
@@ -74,7 +61,7 @@ export default class AuthClient {
     await this.setToken(email, {
       token_type: 'Basic',
       access_token: Buffer.from(`${email}:${token}`).toString('base64'),
-    });
+    } as any);
 
     await this.checkLogin();
 
@@ -84,48 +71,84 @@ export default class AuthClient {
     }
   }
 
-  public generateBrowserUrl(port: number): string {
-    const auth0_transaction = Auth0Shim.buildAuth0Transaction(
-      AuthClient.CLIENT_ID,
-      this.config.oauth_domain,
-      {
-        redirect_uri: 'http://localhost:' + port, // this is where our callback_server will listen
-        audience: AuthClient.AUDIENCE,
-        scope: AuthClient.SCOPE,
-      }
-    );
-    this.auth0_transaction = auth0_transaction;
-    return 'https://' + auth0_transaction.url;
+  private decodeIdToken(token: string) {
+    const parts = token.split('.');
+    const [header, payload, signature] = parts;
+
+    if (parts.length !== 3 || !header || !payload || !signature) {
+      throw new Error('ID token could not be decoded');
+    }
+    const payloadJSON = JSON.parse(decodeURIComponent(Buffer.from(payload, 'base64').toString()));
+    const claims: any = { __raw: token };
+    Object.keys(payloadJSON).forEach(k => {
+      claims[k] = payloadJSON[k];
+    });
+    return claims;
   }
 
-  async loginFromBrowser(port: number) {
+  public getAuthClient() {
+    const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
+
+    let oauth_token_host = this.config.oauth_host;
+    const url = new URL(this.config.oauth_host);
+    // Set HOST header for local dev
+    if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+      oauth_token_host = `http://localhost:${url.port}`;
+    }
+
+    return new AuthorizationCode({
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
+      client: {
+        id: this.config.oauth_client_id,
+      },
+      auth: {
+        tokenHost: oauth_token_host,
+        tokenPath: is_auth0 ? '/oauth/token' : '/oauth2/token',
+        authorizeHost: this.config.oauth_host,
+        authorizePath: is_auth0 ? '/authorize' : '/oauth2/auth',
+      },
+      options: {
+        authorizationMethod: 'body' as 'body',
+      },
+    });
+  }
+
+  public async loginFromBrowser(port: number, authorization_code: AuthorizationCode) {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
-    const auth0_results = await this.performOauthHandshake(oauth_code);
 
-    const decoded_token = Auth0Shim.verifyIdToken(
-      this.config.oauth_domain,
-      AuthClient.CLIENT_ID,
-      auth0_results.id_token,
-      this.auth0_transaction.nonce
+    const url = new URL(this.config.oauth_host);
+    const access_token = await authorization_code.getToken(
+      {
+        code: oauth_code,
+        redirect_uri: `http://localhost:${port}`,
+        scope: AuthClient.SCOPE,
+      },
+      {
+        json: true,
+        payload: { 'client_id': this.config.oauth_client_id },
+        headers: { 'HOST': url.hostname },
+      }
     );
 
-    if (!auth0_results) {
+    const decoded_token = this.decodeIdToken(access_token.token.id_token);
+
+    if (!access_token) {
       throw new Error('Login Failed at Oauth Handshake');
     }
 
-    if (!decoded_token.user) {
+    if (!decoded_token.email) {
       throw new Error('Login Failed with Invalid JWT Token');
     }
 
-    const email = decoded_token.user.email;
-    await this.setToken(email, auth0_results);
+    const email = decoded_token.email;
+    await this.setToken(email, access_token.token as AuthResult);
     await this.dockerLogin(email);
   }
 
   async logout() {
-    await this.credentials.delete(CREDENTIAL_PREFIX);
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
     try {
       await docker(['logout', this.config.registry_host], { stdout: false });
@@ -134,32 +157,44 @@ export default class AuthClient {
     }
   }
 
-  async getToken() {
-    return this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+  async getPersistedTokenJSON(): Promise<AuthResult | undefined> {
+    if (!this._auth_result) {
+      const credential = await this.credentials.get(`${CREDENTIAL_PREFIX}/token`);
+      if (!credential) {
+        return;
+      }
+      this._auth_result = JSON.parse(credential.password) as AuthResult;
+      this._auth_result.email = credential.account;
+    }
+    return this._auth_result;
   }
 
   async refreshToken() {
-    const credential = await this.getToken();
-    if (!credential) {
+    const token_json = await this.getPersistedTokenJSON();
+    if (!token_json) {
       await this.logout();
       throw new LoginRequiredError();
     }
-
-    if (credential.password === 'unknown') {
+    if (token_json.email === 'unknown') {
       await this.logout();
       throw new LoginRequiredError();
     }
-
-    const token = JSON.parse(credential.password) as AuthResults;
-    if (!token.refresh_token) {
+    if (!token_json.refresh_token) {
       return; // Don't refresh if a token doesn't exist
     }
+    const auth_client = this.getAuthClient();
+    let access_token = auth_client.createToken(token_json);
 
-    this.auth_results = await this.performOauthRefresh(token.refresh_token) as AuthResults;
+    if (access_token.expired()) {
+      access_token = await access_token.refresh({
+        scope: AuthClient.SCOPE,
+      });
 
-    await this.setToken(credential.account, this.auth_results);
-    await this.dockerLogin(credential.account);
-    return this.auth_results;
+      await this.setToken(token_json.email, access_token.token as AuthResult);
+      await this.dockerLogin(token_json.email);
+    }
+
+    return access_token;
   }
 
   async dockerLogin(username: string) {
@@ -168,69 +203,19 @@ export default class AuthClient {
       '-u', username,
       '--password-stdin',
     ], { stdout: false }, {
-      input: JSON.stringify(this.auth_results),
+      input: JSON.stringify(this._auth_result),
     });
   }
 
-  private async setToken(email: any, auth0_results: any) {
-    // Windows credential manager password max length is 256 chars
-    this.auth_results = {
-      access_token: auth0_results.access_token,
-      refresh_token: auth0_results.refresh_token,
-      token_type: auth0_results.token_type,
-      expires_in: auth0_results.expires_in,
-      issued_at: new Date().getTime() / 1000,
+  private async setToken(email: any, token: AuthResult) {
+    this._auth_result = {
+      ...token,
+      email,
     };
 
-    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, email, JSON.stringify(this.auth_results));
-    return this.auth_results;
-  }
+    delete this._auth_result.id_token; // Windows credential manager password max length is 256 chars
 
-  private async performOauthHandshake(
-    oauth_code: string
-  ): Promise<any> {
-
-    const tokenOptions = {
-      baseUrl: this.config.oauth_domain,
-      client_id: AuthClient.CLIENT_ID,
-      code_verifier: this.auth0_transaction.code_verifier,
-      grant_type: 'authorization_code',
-      code: oauth_code,
-      redirect_uri: this.auth0_transaction.redirect_uri,
-    };
-
-    const auth_result = await this.auth0.oauth?.authorizationCodeGrant(tokenOptions);
-    if (!auth_result || !auth_result.id_token) {
-      throw new Error('Login failed during oauth handshake');
-    }
-
-    return auth_result;
-  }
-
-  private async performOauthRefresh(refresh_token: string): Promise<any> {
-    const tokenOptions = {
-      baseUrl: this.config.oauth_domain,
-      grant_type: 'refresh_token',
-      client_id: AuthClient.CLIENT_ID,
-      refresh_token: refresh_token,
-    };
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore: the auth0 library is not properly typed -_-
-      const auth_result = await this.auth0.oauth?.refreshToken(tokenOptions);
-      if (!auth_result || !auth_result.id_token) {
-        this.logout();
-        throw new Error('Refresh auth token failed, please log in again');
-      }
-
-      // set refresh token back in the results for persistence again
-      auth_result.refresh_token = refresh_token;
-
-      return auth_result;
-    } catch (err) {
-      await this.logout();
-      throw new LoginRequiredError();
-    }
+    await this.credentials.set(`${CREDENTIAL_PREFIX}/token`, email, JSON.stringify(this._auth_result));
+    return this._auth_result;
   }
 }
