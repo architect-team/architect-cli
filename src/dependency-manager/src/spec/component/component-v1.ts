@@ -93,6 +93,9 @@ export class ComponentConfigV1 extends ComponentConfig {
   name!: string;
 
   @IsOptional({ always: true })
+  tag?: string;
+
+  @IsOptional({ always: true })
   instance_id!: string;
 
   @IsOptional({ always: true })
@@ -103,7 +106,7 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   @IsOptional({ always: true })
   @IsString({ always: true })
-  @Matches(/^(?!file:).*$/g, { groups: ['developer'], message: 'Cannot hardcode a filesystem location when registering a component' })
+  @Matches(/^(?!file:).*$/g, { groups: ['register'], message: 'Cannot hardcode a filesystem location when registering a component' })
   extends?: string;
 
   @IsOptional({ always: true })
@@ -151,7 +154,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   artifact_image?: string;
 
   getName(): ComponentSlug {
-    const split = ComponentVersionSlugUtils.parse(this.name);
+    const split = ComponentSlugUtils.parse(this.name);
     return ComponentSlugUtils.build(split.component_account_name, split.component_name);
   }
 
@@ -160,13 +163,16 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getTag(): ComponentSlug {
-    const split = ComponentVersionSlugUtils.parse(this.name);
-    return split.tag;
+    return this.tag || 'latest';
+  }
+
+  setTag(tag: string) {
+    this.tag = tag;
   }
 
   getRef(): ComponentVersionSlug {
-    const split = ComponentVersionSlugUtils.parse(this.name);
-    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, split.tag, this.getInstanceName());
+    const split = ComponentSlugUtils.parse(this.name);
+    return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, this.getTag(), this.getInstanceName());
   }
 
   getInstanceId() {

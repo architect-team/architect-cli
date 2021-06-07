@@ -312,6 +312,7 @@ describe('interfaces spec v1', () => {
         },
         "labels": [
           "traefik.enable=true",
+          "traefik.port=80",
           "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
           "traefik.http.routers.public.service=public-service",
           "traefik.http.services.public-service.loadbalancer.server.port=8080",
@@ -347,6 +348,7 @@ describe('interfaces spec v1', () => {
         },
         "labels": [
           "traefik.enable=true",
+          "traefik.port=80",
           "traefik.http.routers.publicv1.rule=Host(`publicv1.arc.localhost`)",
           "traefik.http.routers.publicv1.service=publicv1-service",
           "traefik.http.services.publicv1-service.loadbalancer.server.port=8080",
@@ -409,6 +411,7 @@ describe('interfaces spec v1', () => {
       "environment": {},
       "labels": [
         "traefik.enable=true",
+        "traefik.port=80",
         "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
         "traefik.http.routers.app.service=app-service",
         "traefik.http.services.app-service.loadbalancer.server.port=8080",

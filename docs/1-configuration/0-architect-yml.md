@@ -46,6 +46,9 @@ services:
         port: 8080
         protocol: http
       admin: 8081
+    liveness_probe:
+      port: 8080
+      path: /health
     environment:
       DB_ADDR: ${{ services.database.interfaces.pg.url }}/${{ parameters.db_name }}
       DB_USER: ${{ parameters.db_user }}
@@ -55,6 +58,9 @@ services:
       context: .
     interfaces:
       webapp: 3000
+    liveness_probe:
+      port: 3000
+      path: /health
     environment:
       API_ADDR: ${{ services['my-api'].interfaces.public.url }}
     debug:

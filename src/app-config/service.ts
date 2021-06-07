@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
+import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../paths';
@@ -38,6 +39,13 @@ export default class AppService {
         'Cli-Version': this.version,
       },
     });
+
+    const url = new URL(this.config.api_host);
+    // Set HOST header for local dev
+    if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+      this._api.defaults.baseURL = `http://localhost:${url.port}`;
+      this._api.defaults.headers.HOST = url.hostname;
+    }
 
     this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
 

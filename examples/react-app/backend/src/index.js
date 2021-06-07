@@ -1,3 +1,5 @@
+require('./tracer');
+
 const winston = require('winston');
 const express = require('express');
 const cors = require('cors');
