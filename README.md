@@ -23,7 +23,11 @@ Our unique approach to continuous delivery is powered by an embedded dependency 
 
 Architect's CLI, which provides the full developer experience needed to create [components](https://www.architect.io/docs/getting-started/core-concepts#components) and operate local [environments](https://www.architect.io/docs/getting-started/core-concepts#environments), is fully open-source. The CLI can deploy components locally using docker-compose, enrich the deployments with components found in Architect's Cloud registry, and allows developers to publish their own components to the registry both publicly and privately for free.
 
-# Usage
+## Requirements
+* [**Docker**](https://docs.docker.com/get-docker/) must be installed
+* [**Node.js** `v12`](https://nodejs.org/en/download/) or higher must be installed
+
+## Usage
 
 <!-- usage -->
 ```sh-session
@@ -39,7 +43,7 @@ USAGE
 ```
 <!-- usagestop -->
 
-# Commands
+## Commands
 
 <!-- commands -->
 * [`architect autocomplete [SHELL]`](#architect-autocomplete-shell)
