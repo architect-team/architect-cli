@@ -1,4 +1,6 @@
-export default class MissingContextError extends Error {
+import ArchitectError from './architect';
+
+export default class MissingContextError extends ArchitectError {
   constructor() {
     super();
     this.name = 'missing_build_context';

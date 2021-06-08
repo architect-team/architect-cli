@@ -1,4 +1,6 @@
-export default class LoginRequiredError extends Error {
+import ArchitectError from './architect';
+
+export default class LoginRequiredError extends ArchitectError {
   constructor() {
     super();
     this.name = 'login_required';

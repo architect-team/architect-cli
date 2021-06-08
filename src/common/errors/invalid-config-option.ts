@@ -1,4 +1,6 @@
-export default class InvalidConfigOption extends Error {
+import ArchitectError from './architect';
+
+export default class InvalidConfigOption extends ArchitectError {
   constructor(option: string) {
     super();
     this.name = 'invalid_config_option';
