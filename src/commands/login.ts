@@ -1,6 +1,7 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import opener from 'opener';
+import { AuthorizationCode } from 'simple-oauth2';
 import AuthClient from '../app-config/auth';
 import Command from '../base-command';
 import * as Docker from '../common/utils/docker';
@@ -47,8 +48,8 @@ export default class Login extends Command {
     }
 
     const port = await PortUtil.getAvailablePort(60000);
-    const oauth_client = this.app.auth.getOAuthClient();
-    const authorization_uri: string = oauth_client.authorizationCode.authorizeURL({
+    const auth_client: AuthorizationCode<'client_id'> = this.app.auth.getAuthClient();
+    const authorization_uri: string = auth_client.authorizeURL({
       redirect_uri: `http://localhost:${port}`,
       scope: AuthClient.SCOPE,
       state: Buffer.from(Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)).toString('base64'),
@@ -63,7 +64,7 @@ export default class Login extends Command {
       // do nothing if opener fails
     }
 
-    await this.app.auth.loginFromBrowser(port, oauth_client);
+    await this.app.auth.loginFromBrowser(port, auth_client);
   }
 
   private async runCliFlow(flags: any) {
