@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - run: npm install
+      - run: npm ci
       - run: npm run lint
   test:
     strategy:
@@ -60,7 +60,7 @@ jobs:
         working-directory: ./src/dependency-manager
       - run: rm -r node_modules
         working-directory: ./src/dependency-manager
-      - run: npm install
+      - run: npm ci
       - run: npm run build
       - run: npm test
   cut_release:
