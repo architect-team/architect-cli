@@ -96,7 +96,6 @@ export default class Deploy extends DeployCommand {
       exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     production: flags.boolean({
-      default: false,
       description: 'Build and run components without debug blocks',
       dependsOn: ['local'],
     }),
