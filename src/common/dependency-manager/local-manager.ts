@@ -11,11 +11,13 @@ export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
   use_sidecar = false;
+  production = false;
 
-  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
+  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}, production = false) {
     super();
     this.api = api;
     this.linked_components = linked_components;
+    this.production = production;
   }
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
@@ -55,7 +57,7 @@ export default class LocalDependencyManager extends DependencyManager {
       config.setInterface(interface_to, interface_obj);
     }
 
-    if (config.getLocalPath()) {
+    if (config.getLocalPath() && !this.production) {
       // Set debug values
       for (const [sk, sv] of Object.entries(config.getServices())) {
         // If debug is enabled merge in debug options ex. debug.command -> command

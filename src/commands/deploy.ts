@@ -95,6 +95,11 @@ export default class Deploy extends DeployCommand {
       description: 'Deploy the stack locally instead of via Architect Cloud',
       exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
+    production: flags.boolean({
+      default: false,
+      description: 'Build and run components without debug blocks',
+      dependsOn: ['local'],
+    }),
     compose_file: flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
@@ -105,11 +110,6 @@ export default class Deploy extends DeployCommand {
       description: 'Run in detached mode',
       char: 'd',
       dependsOn: ['local'],
-    }),
-    build_prod: flags.boolean({
-      description: 'Build without debug config',
-      hidden: true,
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
     }),
     parameter: flags.string({
       char: 'p',
@@ -330,6 +330,7 @@ export default class Deploy extends DeployCommand {
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
       linked_components,
+      flags.production
     );
 
     const component_configs: ComponentConfig[] = [];
