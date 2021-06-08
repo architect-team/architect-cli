@@ -28,8 +28,8 @@ export default abstract class extends Command {
           throw new LoginRequiredError();
         }
         if (token_json.expires_in) {
-          const auth_client = this.app.auth.getAuthClient();
-          const access_token = auth_client.createToken(token_json);
+          const oauth_client = this.app.auth.getOAuthClient();
+          const access_token = oauth_client.accessToken.create(token_json);
           if (access_token.expired()) {
             throw new LoginRequiredError();
           }

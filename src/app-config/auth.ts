@@ -1,4 +1,4 @@
-import { AuthorizationCode } from 'simple-oauth2';
+import { create as createOAuthClient, OAuthClient } from 'simple-oauth2'; // Don't upgrade to 4+ because it drops support for node 10
 import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
@@ -86,7 +86,7 @@ export default class AuthClient {
     return claims;
   }
 
-  public getAuthClient() {
+  public getOAuthClient(): OAuthClient {
     const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
 
     let oauth_token_host = this.config.oauth_host;
@@ -96,7 +96,7 @@ export default class AuthClient {
       oauth_token_host = `http://localhost:${url.port}`;
     }
 
-    return new AuthorizationCode({
+    return createOAuthClient({
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
       client: {
@@ -114,13 +114,13 @@ export default class AuthClient {
     });
   }
 
-  public async loginFromBrowser(port: number, authorization_code: AuthorizationCode) {
+  public async loginFromBrowser(port: number, oauth_client: OAuthClient) {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
 
     const url = new URL(this.config.oauth_host);
-    const access_token = await authorization_code.getToken(
+    const access_token = await oauth_client.authorizationCode.getToken(
       {
         code: oauth_code,
         redirect_uri: `http://localhost:${port}`,
@@ -133,7 +133,7 @@ export default class AuthClient {
       }
     );
 
-    const decoded_token = this.decodeIdToken(access_token.token.id_token);
+    const decoded_token = this.decodeIdToken(access_token.id_token);
 
     if (!access_token) {
       throw new Error('Login Failed at Oauth Handshake');
@@ -144,7 +144,7 @@ export default class AuthClient {
     }
 
     const email = decoded_token.email;
-    await this.setToken(email, access_token.token as AuthResult);
+    await this.setToken(email, access_token as AuthResult);
     await this.dockerLogin(email);
   }
 
@@ -182,8 +182,8 @@ export default class AuthClient {
     if (!token_json.refresh_token) {
       return; // Don't refresh if a token doesn't exist
     }
-    const auth_client = this.getAuthClient();
-    let access_token = auth_client.createToken(token_json);
+    const oauth_client = this.getOAuthClient();
+    let access_token = oauth_client.accessToken.create(token_json);
 
     if (access_token.expired()) {
       access_token = await access_token.refresh({
