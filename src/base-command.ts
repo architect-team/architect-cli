@@ -41,9 +41,7 @@ export default abstract class extends Command {
   async catch(err: any) {
     if (err.oclif && err.oclif.exit === 0) return;
 
-    let message = err.message;
-    if (!message) { message = 'Error: '; }
-
+    let message = '';
     if (err.config) {
       message += `${err.config.url} [${err.config.method}]`;
     }
@@ -59,6 +57,8 @@ export default abstract class extends Command {
     } else if (err.stack && !(err instanceof ArchitectError)) {
       message += '\n\n';
       message += err.stack;
+    } else {
+      message += err.message || 'Unknown error';
     }
 
     this.error(message);
