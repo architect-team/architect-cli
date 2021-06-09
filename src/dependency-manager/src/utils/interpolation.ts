@@ -1,19 +1,10 @@
+import { ValidationError } from 'class-validator';
 import Mustache, { Context, Writer } from 'mustache';
 
 // https://github.com/janl/mustache.js/issues/599
 export const ARC_NULL_TOKEN = '__arc__null__arc__';
 const null_quoted_regex = new RegExp(`"${ARC_NULL_TOKEN}"`, 'g');
 const null_regex = new RegExp(`${ARC_NULL_TOKEN}`, 'g');
-
-export class InterpolationErrors extends Error {
-  errors: string[];
-  constructor(errors: string[]) {
-    super();
-    this.name = 'InterpolationErrors';
-    this.errors = errors;
-    this.message = JSON.stringify(errors, null, 2);
-  }
-}
 
 // TODO:320 test
 export const normalizeInterpolation = (value: string) => {
@@ -99,7 +90,22 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
           interpolation_errors.add(error);
         }
       }
-      throw new InterpolationErrors([...interpolation_errors].map((e) => denormalizeInterpolation(e)));
+
+      const validation_error = new ValidationError();
+      validation_error.property = 'interpolation';
+      validation_error.children = [];
+      for (let e of interpolation_errors) {
+        e = denormalizeInterpolation(e);
+        const interpolation_error = new ValidationError();
+        interpolation_error.property = e;
+        interpolation_error.value = e;
+        interpolation_error.children = [];
+        interpolation_error.constraints = {
+          'interpolation': `\${{ ${e} }} is invalid`,
+        };
+        validation_error.children.push(interpolation_error);
+      }
+      throw validation_error;
     }
 
     return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');

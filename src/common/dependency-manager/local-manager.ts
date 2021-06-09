@@ -1,5 +1,6 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import { ValidationError } from 'class-validator';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
@@ -99,16 +100,16 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_configs;
   }
 
-  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]) {
-    const groups = ['developer'];
-    const errors = await super.validateComponent(component, context, ignore_keys, groups);
+  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]): Promise<[ComponentConfig, ValidationError[]]> {
+    const groups = ['deploy', 'developer'];
+    const [interpolated_component, errors] = await super.validateComponent(component, context, ignore_keys, groups);
     const component_extends = component.getExtends();
     if (component_extends?.startsWith('file:') && errors.length) {
       const component_path = component_extends.substr('file:'.length);
       const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
-    return errors;
+    return [interpolated_component, errors];
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}) {

@@ -15,7 +15,6 @@ import { Dictionary } from './utils/dictionary';
 import { flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
-import { validateInterpolation } from './utils/validation';
 
 interface ComponentConfigNode {
   config: ComponentConfig;
@@ -477,13 +476,10 @@ export default abstract class DependencyManager {
 
     const ignore_keys: string[] = [];
 
-    const errors = await this.validateComponent(component, context, ignore_keys);
-    if (errors.length) {
-      throw new ValidationErrors(component.getRef(), flattenValidationErrors(errors));
+    const [interpolated_component_config, validation_errors] = await this.validateComponent(component, context, ignore_keys);
+    if (validation_errors.length) {
+      throw new ValidationErrors(component.getRef(), flattenValidationErrors(validation_errors));
     }
-
-    const interpolated_component_string = interpolateString(component_string, context, ignore_keys);
-    const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
     // @ts-ignore
@@ -536,8 +532,8 @@ export default abstract class DependencyManager {
     return dependency_components;
   }
 
-  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = [], groups = ['developer', 'register']): Promise<ValidationError[]> {
-    let validation_errors = [];
+  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[] = [], groups = ['deploy', 'developer', 'register']): Promise<[ComponentConfig, ValidationError[]]> {
+    const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.getParameters())) {
       if (pv.required !== 'false' && (pv.default === undefined)) {
@@ -550,16 +546,24 @@ export default abstract class DependencyManager {
         validation_errors.push(validation_error);
       }
     }
+    if (validation_errors.length) {
+      return [component, validation_errors];
+    }
+
     try {
-      await component.validateOrReject({ groups });
+      const component_string = replaceBrackets(serialize(component.expand()));
+      const interpolated_component_string = interpolateString(component_string, context, ignore_keys);
+      const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
+      // Deploy time validation of interpolated component
+      const validation_errors = await interpolated_component_config.validate({ groups });
+      return [interpolated_component_config, validation_errors];
     } catch (err) {
-      if (err instanceof Array) {
-        validation_errors = [...validation_errors, ...err];
+      if (err instanceof ValidationError) {
+        return [component, [err]];
       } else {
         throw err;
       }
     }
-    return [...validation_errors, ...validateInterpolation(serialize(component), context, ignore_keys)];
   }
 
   async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string) {

@@ -1,7 +1,6 @@
 import { isObject, matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { ValidatableConfig } from '../spec/base-spec';
 import { ComponentConfig } from '../spec/component/component-config';
-import { interpolateString, InterpolationErrors } from './interpolation';
 
 export const validateNested = async <T extends Record<string, any>>(
   target: T,
@@ -95,33 +94,6 @@ export const validateDictionary = async <T extends ValidatableConfig>(
     errors.push(error);
   }
 
-  return errors;
-};
-
-export const validateInterpolation = (param_value: string, context: any, ignore_keys: string[] = []): ValidationError[] => {
-  const errors = [];
-  try {
-    interpolateString(param_value, context, ignore_keys, 1);
-  } catch (err) {
-    if (err instanceof InterpolationErrors) {
-      const validation_error = new ValidationError();
-      validation_error.property = 'interpolation';
-      validation_error.children = [];
-      for (const e of err.errors) {
-        const interpolation_error = new ValidationError();
-        interpolation_error.property = e;
-        interpolation_error.value = e;
-        interpolation_error.children = [];
-        interpolation_error.constraints = {
-          'interpolation': `\${{ ${e} }} is invalid`,
-        };
-        validation_error.children.push(interpolation_error);
-      }
-      errors.push(validation_error);
-    } else {
-      throw err;
-    }
-  }
   return errors;
 };
 

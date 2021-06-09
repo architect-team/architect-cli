@@ -376,6 +376,46 @@ describe('validation spec v1', () => {
         }
       })
     });
+
+    it('deploy time validation', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        app_liveness_path: /health
+      services:
+        app:
+          liveness_probe:
+            path: \${{ parameters.app_liveness_path }}
+            port: 8080
+        api:
+          liveness_probe:
+            path: http://localhost/
+            port: 8080
+      `
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let validation_err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.api.liveness_probe.path": {
+          "matches": "Path should start with /. Ex. /health",
+          "value": "http://localhost/",
+          "column": 17,
+          "line": 12,
+        }
+      })
+    });
   });
 
   describe('component builder validation', () => {
