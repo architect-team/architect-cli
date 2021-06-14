@@ -274,6 +274,13 @@ export default abstract class DependencyManager {
     }
   }
 
+  generateAddress(host: string, port: string) {
+    if (port !== '80' && port !== '443') {
+      host = `${host}:${port}`;
+    }
+    return host;
+  }
+
   generateUrl(interface_config: InterfaceSpec, host?: string, port?: string) {
     host = host || interface_config.host;
     port = port || interface_config.port;
@@ -284,9 +291,7 @@ export default abstract class DependencyManager {
     } else {
       url = `${protocol}://${host}`;
     }
-    if (port !== '80' && port !== '443') {
-      url = `${url}:${port}`;
-    }
+    url = this.generateAddress(url, port);
     return url;
   }
 
@@ -312,7 +317,7 @@ export default abstract class DependencyManager {
         ...dependency_interface,
         consumers: [],
         subdomain: subdomain,
-        dns_zone: dependency_interface.host.split('.').slice(1).join('.') || dependency_interface.host,
+        dns_zone: this.generateAddress(dependency_interface.host.split('.').slice(1).join('.') || dependency_interface.host, dependency_interface.port),
       };
     } else {
       const [external_host, external_port] = external_address.split(':');
@@ -323,7 +328,7 @@ export default abstract class DependencyManager {
         username: '',
         password: '',
         subdomain: interface_from,
-        dns_zone: external_host,
+        dns_zone: this.generateAddress(external_host, external_port),
       };
     }
     external_interface.username = '';
