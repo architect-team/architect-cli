@@ -52,11 +52,9 @@ export default abstract class extends Command {
         message += `\n${k}: ${v}`;
       }
     } else if (err.stderr) {
-      message += '\n\n';
       message += err.stderr;
     } else if (err.stack && !(err instanceof ArchitectError)) {
-      message += '\n\n';
-      message += err.stack;
+      message += err.stack.replace('Error: ', '');
     } else {
       message += err.message || 'Unknown error';
     }
