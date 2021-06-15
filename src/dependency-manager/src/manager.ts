@@ -324,7 +324,7 @@ export default abstract class DependencyManager {
       external_interface = {
         host: `${interface_from}.${external_host}`,
         port: external_port,
-        protocol: external_host.endsWith('localhost') ? 'http' : 'https',
+        protocol: external_host === 'arc.localhost' ? 'http' : 'https',
         username: '',
         password: '',
         subdomain: interface_from,
