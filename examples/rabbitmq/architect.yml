@@ -9,7 +9,7 @@ keywords:
   - python
 
 parameters:
-  QUEUE_NAME:
+  queue_name:
     required: true
 
 services:
@@ -28,7 +28,7 @@ services:
       app: 3000
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
-      QUEUE_NAME: ${{ parameters.QUEUE_NAME }}
+      QUEUE_NAME: ${{ parameters.queue_name }}
     command:
       - sh
       - -c
@@ -42,7 +42,7 @@ services:
     interfaces:
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
-      QUEUE_NAME: ${{ parameters.QUEUE_NAME }}
+      QUEUE_NAME: ${{ parameters.queue_name }}
     command:
       - sh
       - -c

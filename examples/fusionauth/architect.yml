@@ -3,34 +3,34 @@ description: An example fusion auth Architect component
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/fusionauth
 
 parameters:
-  DB_NAME:
+  db_name:
     description: Name of the database containing FusionAuth tables
     default: fusionauth
-  ROOT_DB_USER:
+  root_db_user:
     description: Root database user. Should only be used for running migrations.
     default: root
-  ROOT_DB_PASS:
+  root_db_pass:
     description: Root database password. Should only be used for running migrations.
     default: secret
-  FUSIONAUTH_DB_USER:
+  fusionauth_db_user:
     description: Username used by FusionAuth to regularly access the database
-    default: ${{ parameters.ROOT_DB_USER }}
-  FUSIONAUTH_DB_PASS:
+    default: ${{ parameters.root_db_user }}
+  fusionauth_db_pass:
     description: Username used by FusionAuth to regularly access the database
-    default: ${{ parameters.ROOT_DB_PASS }}
-  FUSIONAUTH_MEMORY:
+    default: ${{ parameters.root_db_pass }}
+  fusionauth_memory:
     description: Memory to allocate to the FusionAuth JVM
     default: 512M
-  DEFAULT_API_KEY:
+  default_api_key:
     description: API key to seed with the FusionAuth instance. Used to dynamically generate oauth clients at deploy-time.
     default: 4600268f-5408-4cb5-8298-5407703713f3
-  ADMIN_USER_EMAIL:
+  admin_user_email:
     description: Email address of the default admin user
     default: test@test.com
-  ADMIN_USER_PASSWORD:
+  admin_user_password:
     description: Password for the default admin user
     default: password
-  FUSIONAUTH_DB_HOST:
+  fusionauth_db_host:
     required: true
 
 interfaces:
@@ -45,29 +45,29 @@ services:
       postgres:
         protocol: postgresql
         port: 5432
-        host: ${{ parameters.FUSIONAUTH_DB_HOST }}
+        host: ${{ parameters.fusionauth_db_host }}
     environment:
-      POSTGRES_USER: ${{ parameters.ROOT_DB_USER }}
-      POSTGRES_PASSWORD: ${{ parameters.ROOT_DB_PASS }}
-      POSTGRES_DB: ${{ parameters.DB_NAME }}
+      POSTGRES_USER: ${{ parameters.root_db_user }}
+      POSTGRES_PASSWORD: ${{ parameters.root_db_pass }}
+      POSTGRES_DB: ${{ parameters.db_name }}
 
   fusionauth:
     image: fusionauth/fusionauth-app:latest
     interfaces:
       public: 9011
     environment:
-      DATABASE_URL: jdbc:${{ services.fusionauth-db.interfaces.postgres.url }}/${{ parameters.DB_NAME }}
-      DATABASE_ROOT_USER: ${{ parameters.ROOT_DB_USER }}
-      DATABASE_ROOT_PASSWORD: ${{ parameters.ROOT_DB_PASS }}
-      DATABASE_USER: ${{ parameters.FUSIONAUTH_DB_USER }}
-      DATABASE_PASSWORD: ${{ parameters.FUSIONAUTH_DB_PASS }}
-      FUSIONAUTH_MEMORY: ${{ parameters.FUSIONAUTH_MEMORY }}
+      DATABASE_URL: jdbc:${{ services.fusionauth-db.interfaces.postgres.url }}/${{ parameters.db_name }}
+      DATABASE_ROOT_USER: ${{ parameters.root_db_user }}
+      DATABASE_ROOT_PASSWORD: ${{ parameters.root_db_pass }}
+      DATABASE_USER: ${{ parameters.fusionauth_db_user }}
+      DATABASE_PASSWORD: ${{ parameters.fusionauth_db_pass }}
+      FUSIONAUTH_MEMORY: ${{ parameters.fusionauth_memory }}
       FUSIONAUTH_SEARCH_ENGINE_TYPE: database
       FUSIONAUTH_URL: ${{ interfaces.app.url }}
       FUSIONAUTH_RUNTIME_MODE: development
-      FUSIONAUTH_API_KEY: ${{ parameters.DEFAULT_API_KEY }}
-      ADMIN_USER_EMAIL: ${{ parameters.ADMIN_USER_EMAIL }}
-      ADMIN_USER_PASSWORD: ${{ parameters.ADMIN_USER_PASSWORD }}
+      FUSIONAUTH_API_KEY: ${{ parameters.default_api_key }}
+      ADMIN_USER_EMAIL: ${{ parameters.admin_user_email }}
+      ADMIN_USER_PASSWORD: ${{ parameters.admin_user_password }}
       KICKSTART_CONTENTS: file:./config/kickstart.json
       FUSIONAUTH_KICKSTART: /usr/local/fusionauth/kickstart.json
       FUSIONAUTH_APP_SILENT_MODE: false

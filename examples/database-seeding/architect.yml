@@ -9,16 +9,16 @@ keywords:
   - express-js
 
 parameters:
-  AUTO_DDL:
+  auto_ddl:
     description: Options are 'none', 'migrate', and 'seed'; none- no ddl; migrate- runs unrun database migrations at application start; seed- runs unrun migrations and test data seeding script at application start
     default: none
-  DB_USER:
+  db_user:
     description: Username used to access the database
     default: postgres
-  DB_PASS:
+  db_pass:
     description: Password used to access the database
     default: architect
-  DB_NAME:
+  db_name:
     description: Name of the database instance containing the relevant API tables
     default: seeding_demo
 
@@ -35,16 +35,16 @@ services:
       DATABASE_USER: ${{ services.my-demo-db.environment.POSTGRES_USER }}
       DATABASE_PASSWORD: ${{ services.my-demo-db.environment.POSTGRES_PASSWORD }}
       DATABASE_SCHEMA: ${{ services.my-demo-db.environment.POSTGRES_DB }}
-      AUTO_DDL: ${{ parameters.AUTO_DDL }}
+      AUTO_DDL: ${{ parameters.auto_ddl }}
 
   my-demo-db:
     image: postgres:11
     interfaces:
       postgres: 5432
     environment:
-      POSTGRES_DB: ${{ parameters.DB_NAME }}
-      POSTGRES_USER: ${{ parameters.DB_USER }}
-      POSTGRES_PASSWORD: ${{ parameters.DB_PASS }}
+      POSTGRES_DB: ${{ parameters.db_name }}
+      POSTGRES_USER: ${{ parameters.db_user }}
+      POSTGRES_PASSWORD: ${{ parameters.db_pass }}
 
 interfaces:
   main:
