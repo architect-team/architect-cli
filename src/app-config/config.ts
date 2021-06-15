@@ -18,15 +18,6 @@ export default class AppConfig {
       partial.registry_host = partial.registry_host.replace('http://', '').replace('https://', '');
     }
 
-    if (partial?.api_host) {
-      partial.api_host = partial.api_host.replace('http://', '').replace('https://', '');
-      if (partial?.api_host.includes('localhost') || partial?.api_host.includes('0.0.0.0')) {
-        partial.api_host = `http://${partial.api_host}`;
-      } else {
-        partial.api_host = `https://${partial.api_host}`;
-      }
-    }
-
     // Set defaults
     this.log_level = 'info';
     this.registry_host = 'registry.architect.io';

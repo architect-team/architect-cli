@@ -130,6 +130,7 @@ export default class AuthClient {
         json: true,
         payload: { 'client_id': this.config.oauth_client_id },
         headers: { 'HOST': url.hostname },
+        rejectUnauthorized: !url.hostname.endsWith('.localhost'),
       }
     );
 

@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import fs from 'fs-extra';
+import https from 'https';
 import path from 'path';
 import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
@@ -43,8 +44,11 @@ export default class AppService {
     const url = new URL(this.config.api_host);
     // Set HOST header for local dev
     if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
-      this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}`;
+      this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}${url.pathname}`;
       this._api.defaults.headers.HOST = url.hostname;
+      this._api.defaults.httpsAgent = new https.Agent({
+        rejectUnauthorized: false,
+      });
     }
 
     this.auth = new AuthClient(this.config, this.checkLogin.bind(this));
