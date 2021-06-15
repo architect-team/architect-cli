@@ -4,7 +4,7 @@ title: Services
 
 # Services
 
-Services describe the runtimes that power your application. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balanced seamlessly between instances.
+Services describe the runtimes that power your application. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balancing seamlessly between instances.
 
 ```yaml
 services:
@@ -97,6 +97,33 @@ Since many services use http for traffic, interfaces also support a simple short
 interfaces:
   public: 8080
 ```
+
+#### Overriding service hosts
+
+Architect supports overriding a service with the URL of an external host. When this is done, the service will not be created by Architect, but all of the interpolated values of the service will continue to be produced. This is a common pattern in cases where a user wants Architect to manage everything for local development, but wants to reference a managed service such as a database instance for staging or production. For example, the service below represents a Postgres database service that can be either managed by Architect or effectively an external reference:
+
+```yml
+...
+parameters:
+  postgres_host:
+    required: false
+...
+services:
+  api-db:
+    image: postgres:11
+    interfaces:
+      postgres:
+        host: ${{ parameters.postgres_host }}
+        port: 5432
+        protocol: postgresql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: architect
+      POSTGRES_DB: architect_postgres_db
+...
+```
+
+The parameter `postgres_host` will determine whether or not the service will be provisioned by Architect. If `postgres_host` is not set, Architect will provision the `api-db` service and create a `postgres:11` container. If the `postgres_host` parameter is set, `image: postgres:11` will be ignored and the container will not be provisioned by Architect. Any interpolated values that include the `api-db` service will produce the correct output in either instance with the difference being that `${{ services.api-db.interfaces.postgres.host }}` and `${{ services.api-db.interfaces.postgres.url }}` will change based on the `host` of the interface. Note that if a service has multiple interfaces and you would like to reference an external service, all of the Architect service's interfaces must specify the `host` override.
 
 ### liveness_probe
 This configuration is essentially the health check for the service. It's important to specify so that traffic isn't load balanced to unhealthy services. Critical for rolling updates to function properly.

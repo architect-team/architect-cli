@@ -13,7 +13,7 @@ interfaces:
     url: ${{ services['my-service'].interfaces.api.url }}
 ```
 
-Interfaces at the service-level support a short-hand to quickly specify the listening port. Component-level interfaces support a similar shorthand, but instead of assigning to the `port` value, the short-hand maps to the `url` value. This can make it easier to create interfaces that map directly to the interfaces of a service inside the component:
+Interfaces at the service level support a shorthand to quickly specify the listening port. Component-level interfaces support a similar shorthand, but instead of assigning to the `port` value, the short-hand maps to the `url` value. This can make it easier to create interfaces that map directly to the interfaces of a service inside the component:
 
 ```yaml
 interfaces:
