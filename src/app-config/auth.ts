@@ -93,7 +93,7 @@ export default class AuthClient {
     const url = new URL(this.config.oauth_host);
     // Set HOST header for local dev
     if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
-      oauth_token_host = `http://localhost:${url.port}`;
+      oauth_token_host = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}`;
     }
 
     return new AuthorizationCode({
