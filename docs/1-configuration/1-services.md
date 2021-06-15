@@ -125,7 +125,6 @@ services:
 
 The parameter `postgres_host` will determine whether or not the service will be provisioned by Architect. If `postgres_host` is not set, Architect will provision the `api-db` service and create a `postgres:11` container. If the `postgres_host` parameter is set, `image: postgres:11` will be ignored and the container will not be provisioned by Architect. Any interpolated values that include the `api-db` service will produce the correct output in either instance with the difference being that `${{ services.api-db.interfaces.postgres.host }}` and `${{ services.api-db.interfaces.postgres.url }}` will change based on the `host` of the interface. Note that if a service has multiple interfaces and you would like to reference an external service, all of the Architect service's interfaces must specify the `host` override.
 
-
 ### liveness_probe
 This configuration is essentially the health check for the service. It's important to specify so that traffic isn't load balanced to unhealthy services. Critical for rolling updates to function properly.
 ```yaml
