@@ -32,12 +32,11 @@ jobs:
       matrix: ${{fromJson(needs.detect-changes.outputs.matrix)}}
     steps:
       - uses: actions/checkout@master
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '14'
       - name: Install Architect CLI
-        run: npm i -g @architect-io/cli
+        run: sudo npm install -g @architect-io/cli
       - name: Architect login
         run: architect login -e ${{ secrets.ARCHITECT_EXAMPLES_ACCT_EMAIL }} -p ${{ secrets.ARCHITECT_EXAMPLES_ACCT_PASSWORD }}
       - name: Register component

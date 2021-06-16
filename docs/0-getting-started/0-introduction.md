@@ -36,6 +36,11 @@ The best way to install the CLI is via NPM:
 $ npm install -g @architect-io/cli
 ```
 
+If you hit a permission issue with writing to node_modules try:
+```bash
+$ sudo npm install -g @architect-io/cli
+```
+
 Alternatively, you can download the binary for your system architecture from [Github](https://github.com/architect-team/architect-cli/releases/latest). Just download the appropriate bundle, extract it, and link the included `bin` folder to your user home directory.
 
 ## Run a sample component

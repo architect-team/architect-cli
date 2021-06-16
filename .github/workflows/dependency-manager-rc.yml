@@ -8,18 +8,6 @@ env:
   NPM_CACHE_NAME: dependency-manager-node-modules
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: '12.x'
-      # - run: npm install
-      #   working-directory: ./src/dependency-manager
-      # - run: npm run lint
-      #   working-directory: ./src/dependency-manager
   test:
     strategy:
       matrix:
@@ -32,7 +20,7 @@ jobs:
         with:
           submodules: recursive
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
@@ -41,14 +29,13 @@ jobs:
         working-directory: ./src/dependency-manager
   cut_release:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [lint, test]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '14'
       - run: npm install
         working-directory: ./src/dependency-manager
       - run: npm run build

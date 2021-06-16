@@ -33,11 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
       - name: Tests
         run: echo "Run your tests here"
       - name: Install Architect CLI
-        run: npm install -g @architect-io/cli
+        run: sudo npm install -g @architect-io/cli
       - name: Login to Architect Cloud
         run: architect login # credentials loaded automatically from envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
       - name: Tag and Register Component
@@ -81,11 +83,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
       - name: Tests
         run: echo "Run your tests here"
       - name: Install Architect CLI
-        run: npm install -g @architect-io/cli
+        run: sudo npm install -g @architect-io/cli
       - name: Login to Architect Cloud
         run: architect login # credentials loaded automatically from envs ARCHITECT_EMAIL/ARCHITECT_PASSWORD
       - name: Tag and Register Component

@@ -27,16 +27,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-      - name: Architect Create Preview
-        uses: architect-team/create-preview@v1.0.1
+      - uses: actions/setup-node@v2
         with:
-          email: ${{ secrets.ARCHITECT_EMAIL }}
-          password: ${{ secrets.ARCHITECT_PASSWORD }}
-          account: <account-name>
-          platform: <platform-name>
-          environment: preview-${{ github.event.number }}
-          component_name: <component-name>
+          node-version: '14'
+      - name: Install Architect CLI
+        run: sudo npm install -g @architect-io/cli
+      - name: Login to Architect Cloud
+        run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - name: Register component w/ Architect
+        run: architect register ./architect.yml -t preview-${{ github.event.number }}
+      - name: Create env if not exists
+        run: architect environment:create preview-${{ github.event.number }} -a <account-name> --platform <platform-name> || exit 0
+      - name: Deploy component
+        run: architect deploy --auto_approve -a <account-name> -e preview-${{ github.event.number }} <component-name>:preview-${{ github.event.number }}
 ```
 
 ### Cleanup preview environment
@@ -57,15 +60,17 @@ jobs:
   architect_destroy_preview:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v1
-      - name: Architect Destroy Preview
-        uses: architect-team/destroy-preview@v1.0.1
+      - uses: actions/setup-node@v2
         with:
-          email: ${{ secrets.ARCHITECT_EMAIL }}
-          password: ${{ secrets.ARCHITECT_PASSWORD }}
-          account: <account-name>
-          environment: preview-${{ github.event.number }}
-          component_name: <component-name>
+          node-version: '14'
+      - name: Install Architect CLI
+        run: sudo npm install -g @architect-io/cli
+      - name: Login to Architect Cloud
+        run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - name: Clear the environment
+        run: architect destroy --auto_approve -a <account-name> -e preview-${{ github.event.number }}
+      - name: Cleanup the environment
+        run: architect env:destroy --auto_approve -a <account-name> preview-${{ github.event.number }}
 ```
 
 ## Gitlab CI

@@ -21,10 +21,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: 'master'
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '14'
       - run: npm install
         working-directory: ./src/dependency-manager
       - run: npm run build
@@ -52,10 +51,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: 'master'
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '14'
       - run: npm install
       - run: npm run build
       - name: Set NPM version
