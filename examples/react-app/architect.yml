@@ -24,6 +24,9 @@ parameters:
   api_db_name:
     description: Name of the database used by the API
     default: test_database
+  app_replicas:
+    description: Number of instances of the react frontend
+    default: 1
 
 services:
   api-db:
@@ -72,6 +75,7 @@ services:
       path: /api/names
       interval: 10s
       failure_threshold: 3
+    replicas: ${{ parameters.app_replicas }}
     environment:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
