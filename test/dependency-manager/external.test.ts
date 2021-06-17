@@ -329,7 +329,7 @@ describe('external spec v1', () => {
       DEP_EXTERNAL_ADDR: `https://external.localhost`,
       CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`,
       CI_SUBDOMAIN: 'ci',
-      CI_DNS_ZONE: 'architect.io:8501'
+      CI_DNS_ZONE: 'architect.io'
     });
   });
 

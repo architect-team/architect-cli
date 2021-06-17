@@ -317,7 +317,7 @@ export default abstract class DependencyManager {
         ...dependency_interface,
         consumers: [],
         subdomain: subdomain,
-        dns_zone: this.generateAddress(dependency_interface.host.split('.').slice(1).join('.') || dependency_interface.host, dependency_interface.port),
+        dns_zone: dependency_interface.host.split('.').slice(1).join('.'),
       };
     } else {
       const [external_host, external_port] = external_address.split(':');
@@ -328,7 +328,7 @@ export default abstract class DependencyManager {
         username: '',
         password: '',
         subdomain: interface_from,
-        dns_zone: this.generateAddress(external_host, external_port),
+        dns_zone: external_host,
       };
     }
     external_interface.username = '';
