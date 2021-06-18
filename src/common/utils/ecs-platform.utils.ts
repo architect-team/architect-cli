@@ -37,7 +37,7 @@ export class EcsPlatformUtils {
 
     return {
       type: 'ECS',
-      description: 'description',
+      description: '',
       credentials: {
         kind: 'ECS',
         region: flags.aws_region || new_platform_answers.aws_region,
