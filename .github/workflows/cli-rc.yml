@@ -77,12 +77,6 @@ jobs:
         id: npm-version-bump
         run: |
           echo "::set-output name=version::$(npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX})"
-          git config --global user.name "Github Actions"
-          git config --global user.email "bot@architect.io"
-          git add package.json package-lock.json
-          git commit -m "New CLI RC from commit: ${{ github.sha }}"
-          git pull
-          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
       - name: oclif-dev pack
         run: sudo npx oclif-dev pack
       - name: Archive artifact
