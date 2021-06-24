@@ -51,8 +51,7 @@ export abstract class DeployCommand extends Command {
       allowNo: true,
     }),
     build_parallel: flags.boolean({
-      default: true,
-      allowNo: true,
+      default: false,
     }),
   };
 
