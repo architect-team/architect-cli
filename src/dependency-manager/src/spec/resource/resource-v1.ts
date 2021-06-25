@@ -2,7 +2,7 @@ import { Type } from 'class-transformer';
 import { Allow, IsEmpty, IsInstance, IsObject, IsOptional, IsString, Matches, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
-import { ServiceVersionSlugUtils } from '../../utils/slugs';
+import { ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateDictionary, validateNested } from '../../utils/validation';
 import { BaseConfig } from '../base-spec';
 import { BuildSpecV1 } from '../common/build-v1';
@@ -91,8 +91,8 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
       volumes_options.groups = ['debug'];
     }
     errors = await validateDictionary(expanded, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-    errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options);
-    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
+    errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
+    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
     return errors;
   }
 

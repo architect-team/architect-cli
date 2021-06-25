@@ -2,7 +2,7 @@ import { plainToClass, Transform, Type } from 'class-transformer';
 import { IsEmpty, IsInstance, IsObject, IsOptional, ValidatorOptions } from 'class-validator';
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
-import { validateDictionary, validateNested } from '../../utils/validation';
+import { validateNested } from '../../utils/validation';
 import { InterfaceSpecV1 } from '../common/interface-v1';
 import { LivenessProbeSpec } from '../common/liveness-probe-spec';
 import { LivenessProbeSpecV1 } from '../common/liveness-probe-v1';
@@ -53,7 +53,6 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateNested(expanded, 'liveness_probe', errors, options);
-    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options);
     errors = await validateNested(expanded, 'build', errors, options);
     return errors;
   }
