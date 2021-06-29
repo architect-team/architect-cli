@@ -12,6 +12,7 @@ import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { Refs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
+import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
 
@@ -26,10 +27,14 @@ export default class ComponentRegister extends Command {
 
   static flags = {
     ...Command.flags,
+    arg: flags.string({
+      char: 'a',
+      description: 'Build arg(s) to pass to docker build',
+      multiple: true,
+    }),
     components: flags.string({
       char: 'c',
       description: 'Path to a component to build',
-      exclusive: ['environment'],
       multiple: true,
       hidden: true,
     }),
@@ -134,6 +139,8 @@ export default class ComponentRegister extends Command {
   }
 
   private async buildImage(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+    const { flags } = this.parse(ComponentRegister);
+
     const build_context = service_config?.build?.context;
     if (!build_context) {
       throw new Error(`Service ${service_name} does not specify an image or a build.context. It must contain one or the other.`);
@@ -147,7 +154,15 @@ export default class ComponentRegister extends Command {
       }
       let build_args: string[] = [];
       if (service_config.build?.args) {
-        build_args = Object.entries(service_config.build?.args).map(([key, value]) => `${key}=${value}`);
+        const build_args_map: Dictionary<string> = service_config.build?.args || {};
+        for (const arg of flags.arg || []) {
+          const [key, value] = arg.split('=');
+          if (!value) {
+            throw new Error('--arg must be in the format key=value');
+          }
+          build_args_map[key] = value;
+        }
+        build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       }
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
