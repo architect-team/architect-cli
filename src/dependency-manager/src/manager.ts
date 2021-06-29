@@ -11,8 +11,9 @@ import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { InterfaceSpec } from './spec/common/interface-spec';
 import { ComponentConfig } from './spec/component/component-config';
+import { ComponentInterfaceSpec } from './spec/component/component-interface-spec';
 import { Dictionary } from './utils/dictionary';
-import { flattenValidationErrors, ValidationErrors } from './utils/errors';
+import { ArchitectError, flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
@@ -132,14 +133,14 @@ export default abstract class DependencyManager {
       }
 
       for (const [interface_name, interface_obj] of Object.entries(component.getInterfaces())) {
-        if (interface_obj.external_name) {
+        if (interface_obj.ingress?.subdomain) {
           ingresses.push([component, interface_name]);
         }
       }
 
       for (const [dep_component, interface_name] of ingresses) {
         if (!dep_component) { continue; }
-        const external_name = dep_component.getInterfaces()[interface_name].external_name || dep_component.getNodeRef(interface_name);
+        const subdomain = dep_component.getInterfaces()[interface_name].ingress?.subdomain || interface_name;
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
         if (!ingress_edge) {
@@ -153,13 +154,13 @@ export default abstract class DependencyManager {
           graph.addEdge(ingress_edge);
         }
 
-        ingress_edge.interfaces_map[external_name] = interface_name;
+        ingress_edge.interfaces_map[subdomain] = interface_name;
 
         if (dep_component.getRef() !== component.getRef()) {
-          if (!ingress_edge.consumers_map[external_name]) {
-            ingress_edge.consumers_map[external_name] = new Set();
+          if (!ingress_edge.consumers_map[subdomain]) {
+            ingress_edge.consumers_map[subdomain] = new Set();
           }
-          ingress_edge.consumers_map[external_name].add(from);
+          ingress_edge.consumers_map[subdomain].add(from);
         }
       }
       // End Ingress Edges
@@ -298,7 +299,7 @@ export default abstract class DependencyManager {
   getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): InterfaceSpec {
     const interface_to = edge.interfaces_map[interface_from];
 
-    let external_interface: InterfaceSpec;
+    let external_interface: ComponentInterfaceSpec;
 
     const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
 
@@ -656,7 +657,7 @@ export default abstract class DependencyManager {
         const { node, seen_nodes } = stack.pop()!;
 
         if (seen_nodes.includes(node.config.getRef())) {
-          throw new Error(`Circular component dependency detected (${seen_nodes.join(' <> ')})`);
+          throw new ArchitectError(`Circular component dependency detected (${seen_nodes.join(' <> ')})`);
         }
 
         for (const child_node of node.children) {
@@ -669,6 +670,26 @@ export default abstract class DependencyManager {
     // Sort so leaves are first and roots are last
     const sorted_nodes = Object.values(nodes).sort((a, b) => (a.level < b.level) ? 1 : -1);
     return sorted_nodes;
+  }
+
+  validateGraph(graph: DependencyGraph) {
+    // Check for duplicate subdomains
+    const seen_subdomains: Dictionary<string[]> = {};
+    for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
+      for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
+        if (!seen_subdomains[interface_from]) {
+          seen_subdomains[interface_from] = [];
+        }
+        const node = graph.getNodeByRef(ingress_edge.to) as InterfacesNode;
+        seen_subdomains[interface_from].push(`${node.slug}.${interface_to}`);
+      }
+    }
+
+    for (const [subdomain, values] of Object.entries(seen_subdomains)) {
+      if (values.length > 1) {
+        throw new ArchitectError(`The subdomain '${subdomain}' is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> to avoid conflicts.`);
+      }
+    }
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, external_addr: string) {

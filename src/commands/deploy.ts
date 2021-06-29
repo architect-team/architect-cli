@@ -344,6 +344,7 @@ export default class Deploy extends DeployCommand {
     }
 
     const graph = await dependency_manager.getGraph(component_configs, component_values);
+    dependency_manager.validateGraph(graph);
 
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);

@@ -6,7 +6,6 @@ import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersi
 import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary } from '../../utils/validation';
 import { DictionaryType } from '../../utils/validators/dictionary_type';
 import { InterfaceSpec } from '../common/interface-spec';
-import { InterfaceSpecV1 } from '../common/interface-v1';
 import { ParameterValue } from '../common/parameter-spec';
 import { transformParameters } from '../common/parameter-transformer';
 import { ParameterValueSpecV1 } from '../common/parameter-v1';
@@ -15,8 +14,10 @@ import { transformServices } from '../service/service-transformer';
 import { TaskConfig } from '../task/task-config';
 import { transformTasks } from '../task/task-transformer';
 import { ComponentConfig } from './component-config';
+import { ComponentInterfaceSpec } from './component-interface-spec';
+import { ComponentInterfaceSpecV1 } from './component-interface-v1';
 
-export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1> | undefined {
+export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<ComponentInterfaceSpecV1> | undefined {
   if (!input) {
     return {};
   }
@@ -25,10 +26,10 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
   }
 
   // TODO: Be more flexible than just url ref
-  const output: Dictionary<InterfaceSpecV1> = {};
+  const output: Dictionary<ComponentInterfaceSpecV1> = {};
   for (const [key, value] of Object.entries(input)) {
     if (value instanceof Object && 'host' in value && 'port' in value) {
-      output[key] = plainToClass(InterfaceSpecV1, value);
+      output[key] = plainToClass(ComponentInterfaceSpecV1, value);
     } else {
       let host, port, protocol, username, password;
       let url = value instanceof Object ? value.url : value;
@@ -43,7 +44,7 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
         password = `\${{ ${matches[1]}.password }}`;
         url = `\${{ ${matches[1]}.url }}`;
 
-        output[key] = plainToClass(InterfaceSpecV1, {
+        output[key] = plainToClass(ComponentInterfaceSpecV1, {
           host,
           port,
           username,
@@ -71,8 +72,8 @@ interface TaskContextV1 {
 export interface ComponentContextV1 {
   dependencies: Dictionary<ComponentContextV1>;
   parameters: Dictionary<ParameterValue>;
-  ingresses: Dictionary<InterfaceSpec>;
-  interfaces: Dictionary<InterfaceSpec>;
+  ingresses: Dictionary<ComponentInterfaceSpec>;
+  interfaces: Dictionary<ComponentInterfaceSpec>;
   services: Dictionary<ServiceContextV1>;
   tasks: Dictionary<TaskContextV1>;
 }
@@ -146,7 +147,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   @IsOptional({ always: true })
   @IsObject({ groups: ['developer'] })
   @Transform((params) => !params?.value ? {} : params.value)
-  interfaces?: Dictionary<InterfaceSpecV1 | string>;
+  interfaces?: Dictionary<ComponentInterfaceSpecV1 | string>;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -283,11 +284,11 @@ export class ComponentConfigV1 extends ComponentConfig {
     return transformComponentInterfaces(this.interfaces) || {};
   }
 
-  setInterfaces(value: Dictionary<InterfaceSpecV1 | string>) {
+  setInterfaces(value: Dictionary<ComponentInterfaceSpecV1 | string>) {
     this.interfaces = value;
   }
 
-  setInterface(key: string, value: InterfaceSpecV1 | string) {
+  setInterface(key: string, value: ComponentInterfaceSpecV1 | string) {
     if (!this.interfaces) {
       this.interfaces = {};
     }
@@ -326,8 +327,8 @@ export class ComponentConfigV1 extends ComponentConfig {
       url: '',
     };
 
-    const interfaces: Dictionary<InterfaceSpec> = {};
-    const ingresses: Dictionary<InterfaceSpec> = {};
+    const interfaces: Dictionary<ComponentInterfaceSpec> = {};
+    const ingresses: Dictionary<ComponentInterfaceSpec> = {};
     for (const [ik, iv] of Object.entries(this.getInterfaces())) {
       interfaces[ik] = {
         ...interface_filler,

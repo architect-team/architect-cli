@@ -360,11 +360,10 @@ describe('external spec v1', () => {
     ]);
 
     const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
-
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
-      SELF_ADDR: `http://${app_ref}.arc.localhost`,
-      SELF_ADDR2: `http://${app_ref}.arc.localhost`,
+      SELF_ADDR: `http://app.arc.localhost`,
+      SELF_ADDR2: `http://app.arc.localhost`,
     });
   });
 

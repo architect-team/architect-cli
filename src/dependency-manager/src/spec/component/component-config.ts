@@ -2,10 +2,10 @@ import { Dictionary } from '../../utils/dictionary';
 import { Refs } from '../../utils/refs';
 import { ComponentSlug, ComponentTag, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { BaseConfig } from '../base-spec';
-import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterDefinitionSpec, ParameterValueSpec } from '../common/parameter-spec';
 import { ServiceConfig } from '../service/service-config';
 import { TaskConfig } from '../task/task-config';
+import { ComponentInterfaceSpec } from './component-interface-spec';
 
 export abstract class ComponentConfig extends BaseConfig {
   abstract __version?: string;
@@ -43,9 +43,9 @@ export abstract class ComponentConfig extends BaseConfig {
 
   abstract getDependencies(): Dictionary<string>;
 
-  abstract getInterfaces(): Dictionary<InterfaceSpec>;
-  abstract setInterfaces(value: Dictionary<InterfaceSpec | string>): void;
-  abstract setInterface(key: string, value: InterfaceSpec | string): void;
+  abstract getInterfaces(): Dictionary<ComponentInterfaceSpec>;
+  abstract setInterfaces(value: Dictionary<ComponentInterfaceSpec | string>): void;
+  abstract setInterface(key: string, value: ComponentInterfaceSpec | string): void;
 
   abstract setArtifactImage(image: string): void;
   abstract getArtifactImage(): string | undefined;

@@ -54,7 +54,10 @@ export default class LocalDependencyManager extends DependencyManager {
       if (!interface_obj) {
         throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
       }
-      interface_obj.external_name = interface_from;
+      if (!interface_obj.ingress) {
+        interface_obj.ingress = {};
+      }
+      interface_obj.ingress.subdomain = interface_from;
       config.setInterface(interface_to, interface_obj);
     }
 

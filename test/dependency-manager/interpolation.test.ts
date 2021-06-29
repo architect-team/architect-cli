@@ -285,7 +285,7 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend')
     ]);
 
-    const backend_interface_ref = ComponentConfig.getNodeRef('examples/backend/main:latest');
+    const backend_interface_ref = 'main';
     const backend_external_url = `http://${backend_interface_ref}.arc.localhost`
     const frontend_ref = ComponentConfig.getNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
@@ -378,7 +378,10 @@ describe('interpolation spec v1', () => {
     const frontend_config2 = `
     name: examples/frontend2
     interfaces:
-      main: \${{ services.app.interfaces.app.url }}
+      main:
+        ingress:
+          subdomain: frontend2
+        url: \${{ services.app.interfaces.app.url }}
     dependencies:
       examples/backend: latest
     services:
@@ -392,7 +395,10 @@ describe('interpolation spec v1', () => {
     const frontend_config3 = `
     name: examples/frontend3
     interfaces:
-      main: \${{ services.app.interfaces.app.url }}
+      main:
+        ingress:
+          subdomain: frontend3
+        url: \${{ services.app.interfaces.app.url }}
     dependencies:
       examples/backend: latest
     services:
@@ -427,13 +433,12 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend3')
     ]);
 
+    manager.validateGraph(graph);
+
     const template = await DockerComposeUtils.generate(graph);
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
-
-    const frontend2_interface_ref = ComponentConfig.getNodeRef('examples/frontend2/main:latest');
-
     expect(template.services[backend_ref].environment).to.deep.eq({
-      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://${frontend2_interface_ref}.arc.localhost`, 'https://app.architect.io']),
+      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://frontend2.arc.localhost`, 'https://app.architect.io']),
       CORS2: JSON.stringify(['http://frontend.arc.localhost'])
     })
   });

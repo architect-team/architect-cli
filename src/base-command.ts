@@ -1,8 +1,8 @@
 import Command, { flags } from '@oclif/command';
 import 'reflect-metadata';
 import AppService from './app-config/service';
-import ArchitectError from './common/errors/architect';
 import LoginRequiredError from './common/errors/login-required';
+import { ArchitectError } from './dependency-manager/src/utils/errors';
 
 export default abstract class extends Command {
   app!: AppService;
