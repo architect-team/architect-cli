@@ -133,7 +133,7 @@ export default abstract class DependencyManager {
       }
 
       for (const [interface_name, interface_obj] of Object.entries(component.getInterfaces())) {
-        if (interface_obj.ingress?.subdomain) {
+        if (interface_obj.ingress?.subdomain && interface_obj.ingress?.enabled) {
           ingresses.push([component, interface_name]);
         }
       }

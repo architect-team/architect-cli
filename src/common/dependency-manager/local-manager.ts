@@ -58,6 +58,7 @@ export default class LocalDependencyManager extends DependencyManager {
         interface_obj.ingress = {};
       }
       interface_obj.ingress.subdomain = interface_from;
+      interface_obj.ingress.enabled = true;
       config.setInterface(interface_to, interface_obj);
     }
 

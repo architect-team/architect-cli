@@ -1,6 +1,7 @@
 import { InterfaceSpec } from '../common/interface-spec';
 
 export interface IngressSpec {
+  enabled?: boolean;
   subdomain?: string;
 }
 
