@@ -38,7 +38,7 @@ export interface RawServiceConfig {
   build?: {
     context?: string;
     dockerfile?: string;
-    args?: string[];
+    args?: Dictionary<string>;
   };
   image?: string;
   deploy?: DeploySpec;

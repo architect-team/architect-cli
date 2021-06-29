@@ -12,21 +12,21 @@ interfaces:
   app: ${{ services.app.interfaces.main.url }}
 
 parameters:
-  world_text:
-    description: Default greeting text for the landing page
-    default: world
-  root_db_user:
-    description: Root user to assign to the generated database
-    default: postgres
-  root_db_pass:
-    description: Root password to assign to the generated database
-    default: architect
   api_db_name:
     description: Name of the database used by the API
     default: test_database
   app_replicas:
     description: Number of instances of the react frontend
     default: 1
+  root_db_pass:
+    description: Root password to assign to the generated database
+    default: architect
+  root_db_user:
+    description: Root user to assign to the generated database
+    default: postgres
+  world_text:
+    description: Default greeting text for the landing page
+    default: world
 
 services:
   api-db:
@@ -45,6 +45,8 @@ services:
       - api-db
     build:
       context: ./backend
+      args:
+        NODE_ENV: production
     interfaces:
       main: &api-port 8080
     liveness_probe:
@@ -68,6 +70,8 @@ services:
   app:
     build:
       context: ./frontend
+      args:
+        NODE_ENV: production
     interfaces:
       main: &app-port 8080
     liveness_probe:

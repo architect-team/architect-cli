@@ -340,4 +340,26 @@ describe('register', function () {
       expect(buildImage.args[0][0].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding'));
       expect(buildImage.args[0][2].toLowerCase()).to.eq(path.join(current_path, 'examples/database-seeding/dockerfile'));
     });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .it('override build arg specified in architect.yml', ctx => {
+      const buildImage = Docker.buildImage as sinon.SinonStub;
+      expect(buildImage.calledTwice).to.be.true;
+      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
+    });
 });
