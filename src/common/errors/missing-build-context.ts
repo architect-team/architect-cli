@@ -1,4 +1,4 @@
-import ArchitectError from './architect';
+import { ArchitectError } from '../../dependency-manager/src/utils/errors';
 
 export default class MissingContextError extends ArchitectError {
   constructor() {

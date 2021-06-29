@@ -30,7 +30,4 @@ export class InterfaceSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @IsBooleanString({ always: true })
   sticky?: string;
-
-  @IsOptional({ always: true })
-  external_name?: string;
 }

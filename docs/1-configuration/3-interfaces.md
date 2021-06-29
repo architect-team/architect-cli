@@ -10,6 +10,8 @@ Interfaces are the primary means by which services and components advertise thei
 interfaces:
   public:
     description: A human-readable description of the interface
+    ingress:
+      subdomain: pub # Results in https://pub.<addr>
     url: ${{ services['my-service'].interfaces.api.url }}
 ```
 
@@ -29,3 +31,9 @@ The address that the interface brokers traffic to. This will usually be a refere
 ### description
 
 (optional) A human-readable description of the interface that informs users of what it should be used for.
+
+### ingress
+
+#### subdomain
+
+(optional) The subdomain that will be used if the interface is exposed externally (defaults to the interface name)

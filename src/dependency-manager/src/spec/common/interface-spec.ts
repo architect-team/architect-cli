@@ -7,9 +7,4 @@ export interface InterfaceSpec {
   username?: string;
   password?: string;
   sticky?: string;
-
-  external_name?: string;
-  consumers?: string[];
-  dns_zone?: string;
-  subdomain?: string;
 }

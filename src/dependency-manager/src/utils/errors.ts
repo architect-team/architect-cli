@@ -2,7 +2,9 @@ import { ValidationError } from 'class-validator';
 import { Dictionary } from './dictionary';
 import { replaceBrackets } from './interpolation';
 
-export class ValidationErrors extends Error {
+export class ArchitectError extends Error { }
+
+export class ValidationErrors extends ArchitectError {
   errors: Dictionary<Dictionary<string | number>>;
   constructor(ref: string, errors: Dictionary<Dictionary<string | number>>) {
     super();

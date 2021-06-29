@@ -43,6 +43,10 @@ describe('local deploy environment', function () {
     return {
       "name": "examples/hello-world",
 
+      "parameters": {
+        "hello_ingress": "hello"
+      },
+
       "services": {
         "api": {
           "image": "heroku/nodejs-hello-world",
@@ -57,6 +61,9 @@ describe('local deploy environment', function () {
 
       "interfaces": {
         "hello": {
+          "ingress": {
+            "subdomain": "${{ parameters.hello_ingress }}"
+          },
           "url": "${{ services.api.interfaces.main.url }}"
         }
       }
@@ -686,7 +693,17 @@ describe('local deploy environment', function () {
         config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
         return ComponentConfigBuilder.buildFromJSON(config);
       })
-      .command(['deploy', '-l', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
+      .stub(Deploy.prototype, 'readValuesFile', () => {
+        return {
+          'examples/hello-world:latest@tenant-1': {
+            'hello_ingress': 'hello-1'
+          },
+          'examples/hello-world:latest@tenant-2': {
+            'hello_ingress': 'hello-2'
+          }
+        };
+      })
+      .command(['deploy', '-l', '-v', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
       .it('Create a local deploy with multiple instances of the same component', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
@@ -694,12 +711,9 @@ describe('local deploy environment', function () {
         const tenant_1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
         const tenant_2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-2')
 
-        const tenant_1_route_ref = ComponentConfig.getNodeRef('examples/hello-world/hello:latest@tenant-1')
-        const tenant_2_route_ref = ComponentConfig.getNodeRef('examples/hello-world/hello:latest@tenant-2')
-
         const compose = runCompose.firstCall.args[0];
-        expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.${tenant_1_route_ref}.rule=Host(\`${tenant_1_route_ref}.arc.localhost\`)`)
-        expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.${tenant_2_route_ref}.rule=Host(\`${tenant_2_route_ref}.arc.localhost\`)`)
+        expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.hello-1.rule=Host(\`hello-1.arc.localhost\`)`)
+        expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.hello-2.rule=Host(\`hello-2.arc.localhost\`)`)
       })
   });
 
@@ -750,7 +764,7 @@ describe('local deploy environment', function () {
       .stderr({ print })
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .command(['deploy', '-l', 'examples/app'])
-      .it('Create a local deploy with multiple instances of the same component', ctx => {
+      .it('Deploy component with dependency with ingresses', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];

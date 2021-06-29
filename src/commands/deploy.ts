@@ -315,12 +315,6 @@ export default class Deploy extends DeployCommand {
         const component_config = await ComponentConfigBuilder.buildFromPath(config_or_component);
         linked_components[component_config.getName()] = config_or_component;
         component_version = component_config.getName();
-
-        if (Object.keys(interfaces_map).length === 0) {
-          for (const interface_name of Object.keys(component_config.getInterfaces())) {
-            interfaces_map[interface_name] = interface_name;
-          }
-        }
       }
       component_versions.push(component_version);
     }
@@ -344,6 +338,7 @@ export default class Deploy extends DeployCommand {
     }
 
     const graph = await dependency_manager.getGraph(component_configs, component_values);
+    dependency_manager.validateGraph(graph);
 
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
