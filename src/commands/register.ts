@@ -28,7 +28,6 @@ export default class ComponentRegister extends Command {
   static flags = {
     ...Command.flags,
     arg: flags.string({
-      char: 'a',
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
@@ -158,7 +157,7 @@ export default class ComponentRegister extends Command {
         for (const arg of flags.arg || []) {
           const [key, value] = arg.split('=');
           if (!value) {
-            throw new Error('--arg must be in the format key=value');
+            throw new Error(`--arg must be in the format key=value: ${arg}`);
           }
           build_args_map[key] = value;
         }
