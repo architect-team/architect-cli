@@ -1,6 +1,7 @@
 import { plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidationError, ValidatorOptions } from 'class-validator';
 import { Dictionary } from '../../utils/dictionary';
+import { ArchitectError } from '../../utils/errors';
 import { ARC_NULL_TOKEN, interpolateString } from '../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary } from '../../utils/validation';
@@ -17,7 +18,7 @@ import { ComponentConfig } from './component-config';
 import { ComponentInterfaceSpec } from './component-interface-spec';
 import { ComponentInterfaceSpecV1 } from './component-interface-v1';
 
-export const transformComponentInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<ComponentInterfaceSpecV1> | undefined {
+const transformComponentInterfaces = function (input: Dictionary<string | Dictionary<any>> = {}, parent_ref: string): Dictionary<ComponentInterfaceSpecV1> | undefined {
   if (!input) {
     return {};
   }
@@ -53,6 +54,8 @@ export const transformComponentInterfaces = function (input?: Dictionary<string 
           url,
           ...(value instanceof Object ? value : {}),
         });
+      } else {
+        throw new ArchitectError(`Invalid interface url value for '${parent_ref}.interfaces.${key}'.\nExpected format: \${{ services.<name>.interfaces.<name>.url }}.`);
       }
     }
   }
@@ -281,7 +284,7 @@ export class ComponentConfigV1 extends ComponentConfig {
   }
 
   getInterfaces() {
-    return transformComponentInterfaces(this.interfaces) || {};
+    return transformComponentInterfaces(this.interfaces, this.getRef()) || {};
   }
 
   setInterfaces(value: Dictionary<ComponentInterfaceSpecV1 | string>) {

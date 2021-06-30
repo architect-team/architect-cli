@@ -692,7 +692,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, external_addr: string) {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string) {
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets
@@ -711,7 +711,12 @@ export default abstract class DependencyManager {
         }
         dependencies.push(child_node.interpolated_config);
       }
-      tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
+
+      if (interpolate) {
+        tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
+      } else {
+        tree_node.interpolated_config = tree_node.config;
+      }
 
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.getServices()), ...Object.entries(tree_node.interpolated_config.getTasks())]) {
         const service_ref = tree_node.interpolated_config.getNodeRef(service_name);
