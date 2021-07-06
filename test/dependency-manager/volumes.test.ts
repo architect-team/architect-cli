@@ -88,6 +88,31 @@ describe('volumes spec v1', () => {
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
 
+  it('simple external volume', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+          volumes:
+            data:
+              mount_path: /data
+              key: /user/app/data
+      interfaces:
+      `
+    mock_fs({
+      '/component/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component/component.yml'
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('test/component')
+    ])
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[test_component_api_safe_ref].volumes).has.members([`/user/app/data:/data`])
+  });
+
   it('multiple volumes and services', async () => {
     const component_config = `
       name: test/component

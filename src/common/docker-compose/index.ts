@@ -191,6 +191,9 @@ export class DockerComposeUtils {
           let volume;
           if (spec.host_path) {
             volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+          } else if (spec.key) {
+            compose.volumes[spec.key] = { external: true };
+            volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
           } else {
             volume = service_volume;
           }
