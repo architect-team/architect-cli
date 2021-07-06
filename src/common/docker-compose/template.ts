@@ -53,5 +53,5 @@ export interface DockerService {
 export default interface DockerComposeTemplate {
   version: '3';
   services: { [key: string]: DockerService };
-  volumes: {};
+  volumes: { [key: string]: { external: boolean } };
 }

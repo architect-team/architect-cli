@@ -4,4 +4,5 @@ export interface VolumeSpec {
   host_path?: string;
   description?: string;
   readonly?: string;
+  key?: string;
 }
