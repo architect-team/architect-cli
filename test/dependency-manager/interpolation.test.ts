@@ -426,6 +426,14 @@ describe('interpolation spec v1', () => {
       'examples/frontend2': '/frontend2/architect.yml',
       'examples/frontend3': '/frontend3/architect.yml'
     });
+
+    manager.subdomainTransformer = (external_addr, subdomain) => {
+      if (external_addr.endsWith('.localhost')) {
+        return `${subdomain}--hash`;
+      } else {
+        return subdomain;
+      }
+    }
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/backend'),
       await manager.loadComponentConfig('examples/frontend', { frontend: 'main' }),
@@ -438,9 +446,13 @@ describe('interpolation spec v1', () => {
     const template = await DockerComposeUtils.generate(graph);
     const backend_ref = ComponentConfig.getNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].environment).to.deep.eq({
-      CORS: JSON.stringify(['http://frontend.arc.localhost', `http://frontend2.arc.localhost`, 'https://app.architect.io']),
-      CORS2: JSON.stringify(['http://frontend.arc.localhost'])
+      CORS: JSON.stringify(['http://frontend--hash.arc.localhost', `http://frontend2--hash.arc.localhost`, 'https://app.architect.io']),
+      CORS2: JSON.stringify(['http://frontend--hash.arc.localhost'])
     })
+    expect(template.services[backend_ref].labels).includes(
+      'traefik.http.routers.main--hash.rule=Host(`main--hash.arc.localhost`)',
+      'traefik.http.routers.main2--hash.rule=Host(`main2--hash.arc.localhost`)'
+    )
   });
 
   it('interpolation interfaces', async () => {

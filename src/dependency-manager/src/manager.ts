@@ -27,6 +27,7 @@ interface ComponentConfigNode {
 
 export default abstract class DependencyManager {
   use_sidecar = true;
+  subdomainTransformer?: (external_host: string, subdomain: string) => string;
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
@@ -140,7 +141,11 @@ export default abstract class DependencyManager {
 
       for (const [dep_component, interface_name] of ingresses) {
         if (!dep_component) { continue; }
-        const subdomain = dep_component.getInterfaces()[interface_name].ingress?.subdomain || interface_name;
+        let subdomain = dep_component.getInterfaces()[interface_name].ingress?.subdomain || interface_name;
+        // Transform for potential namespacing of subdomains
+        if (this.subdomainTransformer) {
+          subdomain = this.subdomainTransformer(external_addr.split(':')[0], subdomain);
+        }
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
         if (!ingress_edge) {
@@ -572,7 +577,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string) {
+  protected async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string) {
     const graph = new DependencyGraph();
 
     if (tree_nodes.length === 0) {
@@ -581,7 +586,6 @@ export default abstract class DependencyManager {
 
     // Add nodes
     for (const tree_node of tree_nodes) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const component_config = tree_node.config;
 
       const context = component_config.getContext();
