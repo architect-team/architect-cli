@@ -63,7 +63,6 @@ export default class PlatformCreate extends Command {
     }
 
     const flags_map: Dictionary<boolean> = {};
-    console.log(flags.flag);
     for (const flag of flags.flag) {
       flags_map[flag] = true;
     }
