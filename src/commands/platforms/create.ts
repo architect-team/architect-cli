@@ -9,6 +9,7 @@ import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.
 import { PipelineUtils } from '../../common/utils/pipeline';
 import { CreatePlatformInput } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
+import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 
 export default class PlatformCreate extends Command {
   static aliases = ['platforms:register', 'platform:create', 'platforms:create'];
@@ -32,13 +33,14 @@ export default class PlatformCreate extends Command {
     aws_region: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
     service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
     cluster_ca_cert: flags.string({ description: 'File path of cluster_ca_cert', env: 'ARCHITECT_CLUSTER_CA_CERT' }),
+    flag: flags.string({ multiple: true, default: [] }),
   };
 
   async run() {
-    await this.create_platform();
+    await this.createPlatform();
   }
 
-  private async create_platform() {
+  private async createPlatform() {
     const { args, flags } = this.parse(PlatformCreate);
 
     const answers: any = await inquirer.prompt([
@@ -60,13 +62,20 @@ export default class PlatformCreate extends Command {
       throw new Error(`platform ${Slugs.ArchitectSlugDescription}`);
     }
 
+    const flags_map: Dictionary<boolean> = {};
+    console.log(flags.flag);
+    for (const flag of flags.flag) {
+      flags_map[flag] = true;
+    }
+
     const account = await AccountUtils.getAccount(this.app.api, flags.account, 'Select an account to register the platform with');
 
-    const platform = await this.create_architect_platform(flags);
-    const platform_dto = { name: platform_name, ...platform };
+    const platform = await this.createArchitectPlatform(flags);
+
+    const platform_dto = { name: platform_name, ...platform, flags: flags_map };
 
     cli.action.start('Registering platform with Architect');
-    const created_platform = await this.post_platform_to_api(platform_dto, account.id);
+    const created_platform = await this.postPlatformToApi(platform_dto, account.id);
     cli.action.stop();
     this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
@@ -84,14 +93,14 @@ export default class PlatformCreate extends Command {
 
     this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
     cli.action.start(chalk.blue('Installing platform applications'));
-    const pipeline_id = await this.create_platform_applications(account.id, created_platform.id);
+    const pipeline_id = await this.createPlatformApplications(created_platform.id);
     await PipelineUtils.pollPipeline(this.app.api, pipeline_id);
     cli.action.stop();
 
     return created_platform;
   }
 
-  async create_architect_platform(flags: any) {
+  async createArchitectPlatform(flags: any) {
     const platform_type_answers: any = await inquirer.prompt([
       {
         when: !flags.type,
@@ -109,9 +118,9 @@ export default class PlatformCreate extends Command {
 
     switch (selected_type) {
       case 'kubernetes':
-        return await KubernetesPlatformUtils.configure_kubernetes_platform(flags);
+        return await KubernetesPlatformUtils.configureKubernetesPlatform(flags);
       case 'ecs':
-        return await EcsPlatformUtils.configure_ecs_platform(flags);
+        return await EcsPlatformUtils.configureEcsPlatform(flags);
       case 'architect':
         throw new Error(`You cannot create an Architect platform from the CLI. One Architect platform is registered by default per account.`);
       default:
@@ -119,12 +128,12 @@ export default class PlatformCreate extends Command {
     }
   }
 
-  async create_platform_applications(account_id: string, platform_id: string): Promise<any> {
+  async createPlatformApplications(platform_id: string): Promise<any> {
     const { data: deployment } = await this.app.api.post(`/platforms/${platform_id}/apps`);
     return deployment.pipeline.id;
   }
 
-  async post_platform_to_api(dto: CreatePlatformInput, account_id: string): Promise<any> {
+  async postPlatformToApi(dto: CreatePlatformInput, account_id: string): Promise<any> {
     const { data: platform } = await this.app.api.post(`/accounts/${account_id}/platforms`, dto);
     return platform;
   }

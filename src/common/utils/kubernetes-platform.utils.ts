@@ -12,7 +12,7 @@ const SERVICE_ACCOUNT_NAME = 'architect';
 
 export class KubernetesPlatformUtils {
 
-  public static async configure_kubernetes_platform(
+  public static async configureKubernetesPlatform(
     flags: any,
   ): Promise<CreatePlatformInput> {
 

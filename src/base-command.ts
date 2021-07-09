@@ -43,7 +43,7 @@ export default abstract class extends Command {
 
     let message = '';
     if (err.config) {
-      message += `${err.config.url} [${err.config.method}]`;
+      message += `${err.config.url} [${err.config.method}] `;
     }
 
     if (err.response?.data instanceof Object) {

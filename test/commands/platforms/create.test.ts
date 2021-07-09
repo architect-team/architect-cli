@@ -84,9 +84,9 @@ describe('platform:create', function () {
       }
     });
 
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
 
     await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
@@ -128,9 +128,9 @@ describe('platform:create', function () {
       }
     });
 
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
 
     await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;
@@ -172,11 +172,11 @@ describe('platform:create', function () {
       }
     });
 
-    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'create_platform_applications');
-    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'create_architect_platform');
-    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'post_platform_to_api');
+    const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
+    const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
+    const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
     const kubernetes_configuration_fake = sinon.fake.returns({ name: 'new_k8s_platform', type: 'KUBERNETES' });
-    sinon.replace(KubernetesPlatformUtils, 'configure_kubernetes_platform', kubernetes_configuration_fake);
+    sinon.replace(KubernetesPlatformUtils, 'configureKubernetesPlatform', kubernetes_configuration_fake);
 
     await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'kubernetes', '--auto_approve']);
     expect(create_platform_spy.calledOnce).true;

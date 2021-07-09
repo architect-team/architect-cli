@@ -3,7 +3,7 @@ import { CreatePlatformInput } from './platform';
 
 export class EcsPlatformUtils {
 
-  public static async configure_ecs_platform(
+  public static async configureEcsPlatform(
     flags: any,
   ): Promise<CreatePlatformInput> {
     const new_platform_answers: any = await inquirer.prompt([
