@@ -220,7 +220,7 @@ In order to use the persistent volume above in a service, include a block of the
 
 #### ECS
 
-Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS volume in a component configure the volume like so:
+Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS volume in a component configure the volume in the service config like so:
 
 ```yml
 ...
@@ -229,12 +229,12 @@ Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS 
       # Directory at which the volume will be mounted inside the container
       mount_path: /usr/app/images
 
-      # Name of the EFS volume that has been created in AWS.
-      # The first half of the key must be the ID of the VPC in which the platform apps for the target environment were deployed to.
-      # The second half of the key must be the ID of the EFS volume to mount
-      key: my-platform-apps-vpc-id/my-efs-id
+      # ID of the EFS volume that has been created in AWS
+      key: my-efs-id
 ...
 ```
+
+The config above assumes that a volume has been created in EFS with the ID `my-efs-id`. The volume should be mounted with an AWS volume mount into the same VPC as the platform apps that were installed, which is a VPC named `arc-managed-apps--<architect account name>-<architect platform name>`. The security group of the volume mount should have an inbound rule allowing NFS type traffic to port 2049 from a source which is the CIDR block of the previously-mentioned VPC.
 
 ### debug
 
