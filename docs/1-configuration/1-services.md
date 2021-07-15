@@ -178,7 +178,6 @@ volumes:
     host_path: ./relative/to/architect.yml
 
     # (optional) The name of a `docker-compose` volume that has already been created on the host machine.
-    # This is primarily used for local debugging
     key: my-compose-volume
 ```
 
