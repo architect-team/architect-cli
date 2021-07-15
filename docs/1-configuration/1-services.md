@@ -184,24 +184,21 @@ volumes:
 
 #### Kubernetes
 
-Kubernetes persistent volumes should be created in advance of a deployment requiring one. An example of a persistent volume configuration is below:
+Kubernetes persistent volume claims should be created in advance of a deployment requiring volumes. A persistent volume will in turn be created by the persistent volume claim as long as the cluster has a default storage class set as the default. Be sure to create the claim(s) in the same namespace that the services will be created in. Also a label with key `architect.io/component` and value `<component-account-name>-<component-name>` must be added to any node in the cluster in the event that the volume is shared between component services. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
 
 ```yml
-kind: PersistentVolume
+kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: my-volume
+  name: my-claim
 spec:
-  capacity:
-    storage: 20Gi
   accessModes:
     - ReadWriteOnce
-    - ReadWriteMany
-    - ReadOnlyMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual # must be set to manual
-  hostPath:
-    path: "/tmp/data"
+    - ReadWriteMany # The PVC may not be created if the Kubernetes provider doesn't support this. If the PVC is stuck in a "Pending" state, try to create the claim without this accessMode
+    - ReadOnlyMany # see note above
+  resources:
+    requests:
+      storage: 5Gi
 ```
 
 In order to use the persistent volume above in a service, include a block of the type below:
@@ -213,8 +210,8 @@ In order to use the persistent volume above in a service, include a block of the
       # Directory at which the volume will be mounted inside the container
       mount_path: /usr/app/images
 
-      # Name of the persistent volume that has been created in the Kubernetes cluster
-      key: my-persistent-volume-name
+      # Name of the persistent volume claim that has been created in the Kubernetes cluster
+      key: my-claim-name
 ...
 ```
 
