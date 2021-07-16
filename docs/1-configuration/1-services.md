@@ -178,7 +178,7 @@ volumes:
     host_path: ./relative/to/architect.yml
 
     # (optional) The name of a `docker-compose` volume that has already been created on the host machine.
-    key: my-compose-volume
+    key: my-compose-volume-name
 ```
 
 #### Kubernetes
@@ -191,7 +191,7 @@ apiVersion: v1
 metadata:
   name: my-claim
 spec:
-  storageClass: "" # Set this to the storageClass that supports the accessModes below
+  storageClass: "" # Set this to a storageClass that supports the accessModes below
   accessModes:
     - ReadWriteMany # The PVC storageClass must support this accessMode
     - ReadOnlyMany # The PVC storageClass must support this accessMode
@@ -210,7 +210,7 @@ In order to use the persistent volume above in a service, include a block of the
       mount_path: /usr/app/images
 
       # Name of the persistent volume claim that has been created in the Kubernetes cluster
-      key: my-claim-name
+      key: my-claim
 ...
 ```
 
