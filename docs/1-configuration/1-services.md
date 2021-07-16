@@ -183,7 +183,7 @@ volumes:
 
 #### Kubernetes
 
-Kubernetes persistent volume claims should be created in advance of a deployment requiring volumes. A persistent volume will in turn be created by the persistent volume claim as long as the cluster has a default storage class set as the default. Be sure to create the claim(s) in the same namespace that the services will be created in. Also a label with key `architect.io/component` and value `<component-account-name>-<component-name>` must be added to any node in the cluster in the event that the volume is shared between component services. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
+Kubernetes persistent volume claims should be created in advance of a deployment requiring volumes. Be sure to create the claim(s) in the same namespace that the services will be created in. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
 
 ```yml
 kind: PersistentVolumeClaim
@@ -191,10 +191,10 @@ apiVersion: v1
 metadata:
   name: my-claim
 spec:
+  storageClass: "" # Set this to the storageClass that supports the accessModes below
   accessModes:
-    - ReadWriteOnce
-    - ReadWriteMany # The PVC may not be created if the Kubernetes provider doesn't support this. If the PVC is stuck in a "Pending" state, try to create the claim without this accessMode
-    - ReadOnlyMany # see note above
+    - ReadWriteMany # The PVC storageClass must support this accessMode
+    - ReadOnlyMany # The PVC storageClass must support this accessMode
   resources:
     requests:
       storage: 5Gi
