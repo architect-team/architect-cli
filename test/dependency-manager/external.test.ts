@@ -89,14 +89,15 @@ describe('external spec v1', () => {
     const component_config = {
       name: 'architect/cloud',
       parameters: {
-        optional_host: { required: false }
+        optional_host: { required: false },
+        optional_port: { default: '8080' }
       },
       services: {
         app: {
           interfaces: {
             main: {
               host: '${{ parameters.optional_host }}',
-              port: 8080
+              port: '${{ parameters.optional_port }}'
             }
           },
           environment: {
@@ -136,14 +137,15 @@ describe('external spec v1', () => {
     const component_config = {
       name: 'architect/cloud',
       parameters: {
-        optional_host: {}
+        optional_host: {},
+        optional_port: { default: '8080' }
       },
       services: {
         app: {
           interfaces: {
             main: {
               host: '${{ parameters.optional_host }}',
-              port: 8080
+              port: '${{ parameters.optional_port }}'
             }
           },
           environment: {
@@ -164,7 +166,7 @@ describe('external spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
-    ], { '*': { optional_host: 'cloud.architect.io' } });
+    ], { '*': { optional_host: 'cloud.architect.io', optional_port: '8081' } });
 
     const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -175,7 +177,7 @@ describe('external spec v1', () => {
     expect(app_node.is_external).to.be.true;
     expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
       HOST: 'cloud.architect.io',
-      ADDR: 'http://cloud.architect.io:8080'
+      ADDR: 'http://cloud.architect.io:8081'
     })
 
     const template = await DockerComposeUtils.generate(graph);

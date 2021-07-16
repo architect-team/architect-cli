@@ -164,8 +164,13 @@ export default class AuthClient {
       if (!credential) {
         return;
       }
-      this._auth_result = JSON.parse(credential.password) as AuthResult;
-      this._auth_result.email = credential.account;
+      try {
+        this._auth_result = JSON.parse(credential.password) as AuthResult;
+        this._auth_result.email = credential.account;
+      } catch {
+        await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
+        throw new LoginRequiredError();
+      }
     }
     return this._auth_result;
   }
