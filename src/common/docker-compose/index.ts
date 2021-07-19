@@ -135,7 +135,7 @@ export class DockerComposeUtils {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
             timeout: liveness_probe.timeout,
-            retries: liveness_probe.failure_threshold,
+            retries: parseInt(liveness_probe.failure_threshold),
             start_period: liveness_probe.initial_delay,
           };
           if (!service.labels) {
