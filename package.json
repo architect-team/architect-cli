@@ -52,6 +52,7 @@
     "@types/mustache": "^4.1.1",
     "@types/node": "14.14.31",
     "@types/opener": "^1.4.0",
+    "@types/semver": "^7.3.7",
     "@types/shell-quote": "^1.7.0",
     "@types/simple-oauth2": "^4.1.0",
     "@types/sinon": "9.0.10",
@@ -117,7 +118,9 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "coverage": "nyc --extension .ts npm test",
     "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "requirements-check": "node bin/check-version.js",
+    "postinstall": "npm run requirements-check"
   },
   "types": "lib/index.d.ts"
 }
