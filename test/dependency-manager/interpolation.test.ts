@@ -10,6 +10,7 @@ import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
+import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -1050,166 +1051,67 @@ describe('interpolation spec v1', () => {
     });
   });
 
-  /*
-  it('same component with different instance ids', async () => {
+  it('dependency interpolation from values.yml', async () => {
     const component_config = `
     name: examples/hello-world
-
-    services:
-      api:
-        image: heroku/nodejs-hello-world
-        interfaces:
-          main: 3000
-    `
-
-    mock_fs({
-      '/stack/architect.yml': component_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
-    });
-
-    const hello1 = await manager.loadComponentConfig('examples/hello-world:v1');
-    hello1.setInstanceId('hello1');
-    const hello2 = await manager.loadComponentConfig('examples/hello-world:v1');
-    hello2.setInstanceId('hello2');
-
-    const graph = await manager.getGraph([
-      hello1,
-      hello2
-    ]);
-
-    const api1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1@hello1');
-    const api2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1@hello2');
-    graph.getNodeByRef(api1_ref) as ServiceNode;
-    graph.getNodeByRef(api2_ref) as ServiceNode;
-  });
-
-  it('same component with different instance ids and dependencies with different instance ids', async () => {
-    const component_config = `
-    name: examples/hello-world
-
     dependencies:
-      examples/dep-world: v2
-
+      examples/dependency: latest
     interfaces:
-      api: \${{ services.api.interfaces.main.url }}
-
+      api: \${{ services.api.interfaces.api.url }}
     services:
       api:
-        image: heroku/nodejs-hello-world
         interfaces:
-          main: 3000
+          api: 8080
         environment:
-          DEP_ADDR: \${{ dependencies.examples/dep-world.interfaces.api.url }}
-          EXT_DEP_ADDR: \${{ environment.ingresses.examples/dep-world.api.url }}
-          EXT_ADDR: \${{ environment.ingresses.examples/hello-world.api.url }}
+          ADDR: \${{ ingresses.api.url }}
+          DEP_ADDR: \${{ dependencies.examples/dependency.ingresses.app.url }}
     `
 
-    const dep_component_config = `
-    name: examples/dep-world
-
+    const component_config2 = `
+    name: examples/dependency
     interfaces:
-      api: \${{ services.api.interfaces.main.url }}
-
+      app:
+        url: \${{ services.app.interfaces.app.url }}
+        ingress:
+          subdomain: \${{ parameters.test_subdomain }}
     services:
-      api:
-        image: heroku/nodejs-hello-world
+      app:
         interfaces:
-          main: 3000
+          app: 8080
+        environment:
+          ADDR: \${{ ingresses.app.url }}
+          CORS_URLS: \${{ ingresses.app.consumers }}
+          DNS_ZONE: \${{ ingresses.app.dns_zone }}
+    parameters:
+      test_subdomain:
+        required: true
     `
 
     mock_fs({
       '/stack/architect.yml': component_config,
-      '/stack/dep.yml': dep_component_config,
+      '/stack2/architect.yml': component_config2,
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
-      'examples/dep-world': '/stack/dep.yml',
+      'examples/dependency': '/stack2/architect.yml',
     });
-
-    const hello1 = await manager.loadComponentConfig('examples/hello-world:v1', { hello1: 'api' });
-    hello1.setInstanceId('hello1');
-    hello1.setInstanceDate(new Date('4/22/1991'))
-    const hello2 = await manager.loadComponentConfig('examples/hello-world:v1', { hello2: 'api' });
-    hello2.setInstanceId('hello2');
-    hello2.setInstanceDate(new Date('4/23/1991'))
-
-    const dep1 = await manager.loadComponentConfig('examples/dep-world:v2', { dep1: 'api' });
-    dep1.setInstanceId('dep1');
-    dep1.setInstanceDate(new Date('4/21/1991'))
-    const dep2 = await manager.loadComponentConfig('examples/dep-world:v2', { dep2: 'api' });
-    dep2.setInstanceId('dep2');
-    dep2.setInstanceDate(new Date('4/23/1991'))
-
-    const graph = await manager.getGraph([
-      hello1,
-      hello2,
-      dep1,
-      dep2
-    ]);
-
-    const api1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1@hello1');
-    const dep1_ref = ComponentConfig.getNodeRef('examples/dep-world/api:v2@dep1');
-    const node1 = graph.getNodeByRef(api1_ref) as ServiceNode;
-    expect(node1.config.getEnvironmentVariables()).to.deep.eq({
-      DEP_ADDR: `http://${dep1_ref}:3000`,
-      EXT_ADDR: 'http://hello1.arc.localhost',
-      EXT_DEP_ADDR: 'http://dep1.arc.localhost'
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')), {
+      '*': { test_subdomain: 'test-subdomain' },
     });
-
-    const api2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1@hello2');
-    const dep2_ref = ComponentConfig.getNodeRef('examples/dep-world/api:v2@dep2');
-    const node2 = graph.getNodeByRef(api2_ref) as ServiceNode;
-    expect(node2.config.getEnvironmentVariables()).to.deep.eq({
-      DEP_ADDR: `http://${dep2_ref}:3000`,
-      EXT_ADDR: 'http://hello2.arc.localhost',
-      EXT_DEP_ADDR: 'http://dep2.arc.localhost'
-    });
-  });
-
-  it('component without dependency', async () => {
-    const component_config = `
-    name: examples/hello-world
-
-    dependencies:
-      examples/dep-world: v2
-
-    interfaces:
-      api: \${{ services.api.interfaces.main.url }}
-
-    services:
-      api:
-        image: heroku/nodejs-hello-world
-        interfaces:
-          main: 3000
-        environment:
-          DEP_ADDR: \${{ dependencies.examples/dep-world.interfaces.api.url }}
-          EXT_DEP_ADDR: \${{ environment.ingresses.examples/dep-world.api.url }}
-          EXT_ADDR: \${{ environment.ingresses.examples/hello-world.api.url }}
-    `
-
-    mock_fs({
-      '/stack/architect.yml': component_config,
-    });
-
-    const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
-    });
-
-    const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world:v1', { hello1: 'api' })
-    ]);
-
-    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:v1');
-    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    const app_ref = ComponentConfig.getNodeRef('examples/dependency/app:latest');
+    const node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(node.config.getEnvironmentVariables()).to.deep.eq({
-      DEP_ADDR: `http://not-found.localhost:404`,
-      EXT_ADDR: 'http://hello1.arc.localhost',
-      EXT_DEP_ADDR: 'http://not-found.localhost:404'
+      ADDR: 'http://test-subdomain.arc.localhost',
+      CORS_URLS: '["http://api.arc.localhost"]',
+      DNS_ZONE: 'arc.localhost'
     });
+
+    const ingress_edge = graph.edges.find((edge) => edge.to === ComponentConfig.getNodeRef('examples/dependency:latest')) as IngressEdge
+    expect(ingress_edge.interfaces_map).to.deep.eq({
+      'test-subdomain': 'app'
+    })
+    expect(ingress_edge.consumers_map).keys('test-subdomain')
   });
-  */
 });

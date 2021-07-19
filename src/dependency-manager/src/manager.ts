@@ -146,6 +146,7 @@ export default abstract class DependencyManager {
         if (this.subdomainTransformer) {
           subdomain = this.subdomainTransformer(external_addr.split(':')[0], subdomain);
         }
+        subdomain = interpolateString(subdomain, dep_component.getContext());
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
         if (!ingress_edge) {
