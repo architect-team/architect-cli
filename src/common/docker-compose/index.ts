@@ -132,7 +132,7 @@ export class DockerComposeUtils {
         const liveness_probe = node.config.getLivenessProbe();
         if (liveness_probe) {
           if (!liveness_probe.command) {
-            liveness_probe.command = ['CMD', 'curl', '-f', `http://localhost:${liveness_probe.port}${liveness_probe.path}`];
+            liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
           }
           service.healthcheck = {
             test: liveness_probe.command,
