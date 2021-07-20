@@ -157,11 +157,16 @@ environment:
 
 ### volumes
 
-(optional) A dictionary containing a set of named volumes that the service will request and mount to each service instance.
+(optional) A dictionary containing a set of named volumes that the service will request and mount to each service instance. Architect can take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.
+
+#### Local configuration
+
+If you would like to use the local filesystem as a volume or a `docker-compose` volume, use the options below in the **debug** block of your service:
+
 
 ```yaml
 volumes:
-  tmp-imgs:
+  my-volume-name:
     # Directory at which the volume will be mounted inside the container
     mount_path: /usr/app/images
 
@@ -169,9 +174,63 @@ volumes:
     description: Description of my volume
 
     # (optional) A directory on the host machine to sync with the mount_path on the docker image.
-    # This is primarily used for local debugging.
+    # This is primarily used for local debugging
     host_path: ./relative/to/architect.yml
+
+    # (optional) The name of a `docker-compose` volume that has already been created on the host machine.
+    key: my-compose-volume-name
 ```
+
+#### Kubernetes
+
+Kubernetes persistent volume claims should be created in advance of a deployment requiring volumes. Be sure to create the claim(s) in the same namespace that the services will be created in. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
+
+```yml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: my-claim
+spec:
+  storageClass: "" # Set this to a storageClass that supports the accessModes below
+  accessModes:
+    - ReadWriteMany # The PVC storageClass must support this accessMode
+    - ReadOnlyMany # The PVC storageClass must support this accessMode
+  resources:
+    requests:
+      storage: 5Gi
+```
+
+In order to use the persistent volume above in a service, include a block of the type below:
+
+```yml
+...
+  volumes:
+    my-volume:
+      # Directory at which the volume will be mounted inside the container
+      mount_path: /usr/app/images
+
+      # Name of the persistent volume claim that has been created in the Kubernetes cluster
+      key: my-claim
+...
+```
+
+#### ECS
+
+Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS volume in a component configure the volume in the service config like so:
+
+```yml
+...
+  volumes:
+    my-volume:
+      # Directory at which the volume will be mounted inside the container
+      mount_path: /usr/app/images
+
+      # ID of the EFS volume that has been created in AWS
+      key: my-efs-id
+...
+```
+
+The config above assumes that a volume has been created in EFS with the ID `my-efs-id`. The volume should be mounted with an AWS volume mount into the same VPC as the platform apps that were installed, which is a VPC named `arc-managed-apps--<architect account name>-<architect platform name>`. The security group of the volume mount should have an inbound rule allowing NFS type traffic to port 2049 from a source which is the CIDR block of the previously-mentioned VPC.
 
 ### debug
 
