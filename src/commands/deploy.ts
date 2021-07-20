@@ -196,11 +196,6 @@ export default class Deploy extends DeployCommand {
     this.log('Starting containers...');
     this.log('');
 
-    const compose_args = ['-f', compose_file, '-p', project_name, '--compatibility', 'up', '--timeout', '0'];
-    if (flags.detached) {
-      compose_args.push('-d');
-    }
-
     if (!isCi && flags.browser) {
       let open_browser_attempts = 0;
       const poll_interval = 2000;
@@ -236,6 +231,10 @@ export default class Deploy extends DeployCommand {
       }, poll_interval);
     }
 
+    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--timeout', '0'];
+    if (flags.detached) {
+      compose_args.push('-d');
+    }
     await execa('docker-compose', compose_args, { stdio: 'inherit' });
   }
 
