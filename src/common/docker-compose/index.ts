@@ -91,9 +91,12 @@ export class DockerComposeUtils {
         formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
       let service = {
-        ports,
         environment: formatted_environment_variables,
       } as DockerService;
+
+      if (ports.length) {
+        service.ports = ports;
+      }
 
       if (gateway_links.length) {
         service.external_links = gateway_links;
@@ -135,7 +138,7 @@ export class DockerComposeUtils {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
             timeout: liveness_probe.timeout,
-            retries: liveness_probe.failure_threshold,
+            retries: parseInt(liveness_probe.failure_threshold),
             start_period: liveness_probe.initial_delay,
           };
           if (!service.labels) {

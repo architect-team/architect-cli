@@ -26,7 +26,7 @@ export interface DockerComposeHealthCheck {
   test: string[];
   interval: string;
   timeout: string;
-  retries: string;
+  retries: number;
   start_period: string;
 }
 
