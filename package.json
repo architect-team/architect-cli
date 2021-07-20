@@ -31,7 +31,6 @@
     "opener": "^1.5.2",
     "p-limit": "^3.1.0",
     "reflect-metadata": "0.1.13",
-    "semver": "^7.3.5",
     "shell-quote": "^1.7.2",
     "simple-oauth2": "^4.2.0",
     "tmp": "^0.2.1",
@@ -118,9 +117,7 @@
     "prepack": "oclif-dev manifest && oclif-dev readme",
     "coverage": "nyc --extension .ts npm test",
     "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
-    "version": "oclif-dev readme && git add README.md",
-    "requirements-check": "node bin/check-version.js",
-    "postinstall": "npm run requirements-check"
+    "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
 }
