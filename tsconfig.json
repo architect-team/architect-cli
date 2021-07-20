@@ -15,8 +15,7 @@
     "composite": true
   },
   "include": [
-    "./src/**/*",
-    "bin/check-version.js"
+    "./src/**/*"
   ],
   "exclude": [
     "node_modules",
