@@ -173,7 +173,6 @@ describe('interpolation spec v1', () => {
             'SINGLE_QUOTE': `${web_ref}:2222`,
             'DOUBLE_QUOTE': `${web_ref}:2222`,
           },
-          'ports': [],
           'build': {
             'context': path.resolve('/stack')
           },
@@ -236,7 +235,6 @@ describe('interpolation spec v1', () => {
         'SINGLE_QUOTE': `${web_ref}:2222`,
         'DOUBLE_QUOTE': `${web_ref}:2222`,
       },
-      'ports': [],
       'build': {
         'context': path.resolve('/stack')
       },

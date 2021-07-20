@@ -291,8 +291,7 @@ describe('sidecar spec v1', () => {
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
-        ],
-        ports: []
+        ]
       };
       expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
