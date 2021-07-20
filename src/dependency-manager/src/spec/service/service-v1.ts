@@ -77,7 +77,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
 
     const liveness_probe = {
       success_threshold: '1',
-      failure_threshold: '1',
+      failure_threshold: '3',
       timeout: '5s',
       interval: '30s',
       initial_delay: '0s',
