@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsInstance, IsOptional } from 'class-validator';
+import { IsInstance, IsOptional, IsString } from 'class-validator';
 import { ValidatableConfig } from '../base-spec';
 
 export class ScalingMetricsSpecV1 extends ValidatableConfig {
@@ -13,14 +13,15 @@ export class ScalingMetricsSpecV1 extends ValidatableConfig {
 }
 
 export class ScalingSpecV1 extends ValidatableConfig {
-  @IsOptional({ always: true })
+  @IsString({ always: true })
   @Type(() => String)
-  min_replicas?: string;
+  min_replicas!: string;
 
-  @IsOptional({ always: true })
+  @IsString({ always: true })
   @Type(() => String)
-  max_replicas?: string;
+  max_replicas!: string;
 
+  @Type(() => ScalingMetricsSpecV1)
   @IsOptional({ always: true })
   @IsInstance(ScalingMetricsSpecV1, { always: true })
   metrics?: ScalingMetricsSpecV1;

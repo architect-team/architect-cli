@@ -116,8 +116,8 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
       max_replicas: '1',
       ...this.scaling,
       metrics: {
-        cpu: '80',
-        memory: '80',
+        cpu: '95',
+        memory: '95',
         ...(this.scaling?.metrics || {}),
       },
     };

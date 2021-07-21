@@ -4,7 +4,7 @@ export interface ScalingMetricsSpec {
 }
 
 export interface ScalingSpec {
-  min_replicas?: string;
-  max_replicas?: string;
+  min_replicas: string;
+  max_replicas: string;
   metrics?: ScalingMetricsSpec;
 }
