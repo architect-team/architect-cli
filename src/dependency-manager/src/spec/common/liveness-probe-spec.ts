@@ -1,4 +1,3 @@
-
 export interface LivenessProbeSpec {
   success_threshold: string;
   failure_threshold: string;

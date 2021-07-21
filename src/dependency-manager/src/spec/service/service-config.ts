@@ -1,6 +1,7 @@
 import { Dictionary } from '../../utils/dictionary';
 import { InterfaceSpec } from '../common/interface-spec';
 import { LivenessProbeSpec } from '../common/liveness-probe-spec';
+import { ScalingMetricsSpec, ScalingSpec } from '../common/scaling-spec';
 import { ResourceConfig } from '../resource/resource-config';
 
 export interface ServiceConfig extends ResourceConfig {
@@ -13,4 +14,5 @@ export interface ServiceConfig extends ResourceConfig {
 
   getReplicas(): string;
   getLivenessProbe(): LivenessProbeSpec | undefined;
+  getScaling(): ScalingSpec | undefined;
 }

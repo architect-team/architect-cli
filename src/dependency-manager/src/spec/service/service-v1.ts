@@ -6,6 +6,7 @@ import { validateNested } from '../../utils/validation';
 import { InterfaceSpecV1 } from '../common/interface-v1';
 import { LivenessProbeSpec } from '../common/liveness-probe-spec';
 import { LivenessProbeSpecV1 } from '../common/liveness-probe-v1';
+import { ScalingSpecV1 } from '../common/scaling-v1';
 import { ResourceConfigV1 } from '../resource/resource-v1';
 import { ServiceConfig } from './service-config';
 
@@ -47,12 +48,18 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   @Type(() => String)
   replicas?: string;
 
+  @Type(() => ScalingSpecV1)
+  @IsOptional({ always: true })
+  @IsInstance(ScalingSpecV1, { always: true })
+  scaling?: ScalingSpecV1;
+
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
     let errors = await super.validate(options);
     if (errors.length) return errors;
     const expanded = this.expand();
     errors = await validateNested(expanded, 'liveness_probe', errors, options);
+    errors = await validateNested(expanded, 'scaling', errors, options);
     errors = await validateNested(expanded, 'build', errors, options);
     return errors;
   }
@@ -101,6 +108,19 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
 
   getReplicas() {
     return this.replicas || '1';
+  }
+
+  getScaling() {
+    return {
+      min_replicas: '1',
+      max_replicas: '1',
+      ...this.scaling,
+      metrics: {
+        cpu: '80',
+        memory: '80',
+        ...(this.scaling?.metrics || {}),
+      },
+    };
   }
 
   /** @return New expanded copy of the current config */
