@@ -235,7 +235,22 @@ export default class Deploy extends DeployCommand {
     if (flags.detached) {
       compose_args.push('-d');
     }
-    await execa('docker-compose', compose_args, { stdio: 'inherit' });
+
+    const cmd = execa('docker-compose', compose_args);
+    cmd.stdin?.pipe(process.stdin);
+    cmd.stdout?.pipe(process.stdout);
+    cmd.stderr?.pipe(process.stderr);
+
+    process.on('SIGINT', () => {
+      this.log('Interrupt received.');
+      this.warn('Please wait for architect to exit or containers will still be running in the background.');
+      this.log('Gracefully shutting down...');
+      execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
+      this.log('Stopping operation...');
+      process.exit(0);
+    });
+
+    await cmd;
   }
 
   private readValuesFile(values_file_path: string | undefined) {
