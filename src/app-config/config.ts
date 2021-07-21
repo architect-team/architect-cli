@@ -28,6 +28,11 @@ export default class AppConfig {
 
     // Override defaults with input values
     Object.assign(this, partial);
+
+    // Use new cloud address
+    if (this.app_host.includes('app.architect.io')) {
+      this.app_host = 'https://cloud.architect.io';
+    }
   }
 
   getConfigDir() {
