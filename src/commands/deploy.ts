@@ -159,98 +159,98 @@ export default class Deploy extends DeployCommand {
       await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
     }
 
-    console.clear();
+    // console.clear();
 
-    this.log('Building containers...', chalk.green('done'));
-    this.log('');
+    // this.log('Building containers...', chalk.green('done'));
+    // this.log('');
 
-    this.log('Once the containers are running they will be accessible via the following urls:');
+    // this.log('Once the containers are running they will be accessible via the following urls:');
 
-    const exposed_interfaces: string[] = [];
-    const gateway = compose.services['gateway'];
-    if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
-      const gateway_port = gateway.ports[0].split(':')[0];
-      for (const [service_name, service] of Object.entries(compose.services)) {
-        if (service.labels?.includes('traefik.enable=true')) {
-          const host_rules = service.labels.filter(label => label.includes('rule=Host'));
-          for (const host_rule of host_rules) {
-            const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.arc.localhost)`\)/g);
-            const host_match = host.exec(host_rule);
-            if (host_match) {
-              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
-            }
-          }
-        }
-      }
-      this.log('');
-    }
+    // const exposed_interfaces: string[] = [];
+    // const gateway = compose.services['gateway'];
+    // if (gateway?.ports?.length && typeof gateway.ports[0] === 'string') {
+    //   const gateway_port = gateway.ports[0].split(':')[0];
+    //   for (const [service_name, service] of Object.entries(compose.services)) {
+    //     if (service.labels?.includes('traefik.enable=true')) {
+    //       const host_rules = service.labels.filter(label => label.includes('rule=Host'));
+    //       for (const host_rule of host_rules) {
+    //         const host = new RegExp(/Host\(`([A-Za-z0-9-]+\.arc.localhost)`\)/g);
+    //         const host_match = host.exec(host_rule);
+    //         if (host_match) {
+    //           this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
+    //           exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+    //         }
+    //       }
+    //     }
+    //   }
+    //   this.log('');
+    // }
 
-    for (const svc_name of Object.keys(compose.services)) {
-      for (const port_pair of compose.services[svc_name].ports || []) {
-        const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
-        this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
-      }
-    }
-    this.log('');
-    this.log('Starting containers...');
-    this.log('');
+    // for (const svc_name of Object.keys(compose.services)) {
+    //   for (const port_pair of compose.services[svc_name].ports || []) {
+    //     const [exposed_port, internal_port] = port_pair && (port_pair as string).split(':');
+    //     this.log(`${chalk.blue(`http://localhost:${exposed_port}/`)} => ${svc_name}:${internal_port}`);
+    //   }
+    // }
+    // this.log('');
+    // this.log('Starting containers...');
+    // this.log('');
 
-    if (!isCi && flags.browser) {
-      let open_browser_attempts = 0;
-      const poll_interval = 2000;
-      const browser_interval = setInterval(async () => {
-        if (open_browser_attempts === 300) {
-          clearInterval(browser_interval);
-          return;
-        }
+    // if (!isCi && flags.browser) {
+    //   let open_browser_attempts = 0;
+    //   const poll_interval = 2000;
+    //   const browser_interval = setInterval(async () => {
+    //     if (open_browser_attempts === 300) {
+    //       clearInterval(browser_interval);
+    //       return;
+    //     }
 
-        const promises: Promise<AxiosResponse<any>>[] = [];
-        for (const exposed_interface of exposed_interfaces) {
-          const [host_name, port] = exposed_interface.replace('http://', '').split(':');
-          promises.push(axios.get(`http://localhost:${port}`, {
-            headers: {
-              Host: host_name,
-            },
-            timeout: poll_interval,
-            validateStatus: (status: number) => { return status < 500 && status !== 404; },
-          }));
-        }
+    //     const promises: Promise<AxiosResponse<any>>[] = [];
+    //     for (const exposed_interface of exposed_interfaces) {
+    //       const [host_name, port] = exposed_interface.replace('http://', '').split(':');
+    //       promises.push(axios.get(`http://localhost:${port}`, {
+    //         headers: {
+    //           Host: host_name,
+    //         },
+    //         timeout: poll_interval,
+    //         validateStatus: (status: number) => { return status < 500 && status !== 404; },
+    //       }));
+    //     }
 
-        Promise.all(promises).then(() => {
-          for (const exposed_interface of exposed_interfaces) {
-            this.log('Opening', chalk.blue(exposed_interface));
-            opener(exposed_interface);
-          }
-          this.log('(disable with --no-browser)');
-          clearInterval(browser_interval);
-        }).catch(err => {
-          // at least one exposed service is not yet ready
-        });
-        open_browser_attempts++;
-      }, poll_interval);
-    }
+    //     Promise.all(promises).then(() => {
+    //       for (const exposed_interface of exposed_interfaces) {
+    //         this.log('Opening', chalk.blue(exposed_interface));
+    //         opener(exposed_interface);
+    //       }
+    //       this.log('(disable with --no-browser)');
+    //       clearInterval(browser_interval);
+    //     }).catch(err => {
+    //       // at least one exposed service is not yet ready
+    //     });
+    //     open_browser_attempts++;
+    //   }, poll_interval);
+    // }
 
-    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--timeout', '0'];
-    if (flags.detached) {
-      compose_args.push('-d');
-    }
+    // const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--timeout', '0'];
+    // if (flags.detached) {
+    //   compose_args.push('-d');
+    // }
 
-    const cmd = execa('docker-compose', compose_args);
-    cmd.stdin?.pipe(process.stdin);
-    cmd.stdout?.pipe(process.stdout);
-    cmd.stderr?.pipe(process.stderr);
+    // const cmd = execa('docker-compose', compose_args);
+    // cmd.stdin?.pipe(process.stdin);
+    // cmd.stdout?.pipe(process.stdout);
+    // cmd.stderr?.pipe(process.stderr);
 
-    process.on('SIGINT', () => {
-      this.log('Interrupt received.');
-      this.warn('Please wait for architect to exit or containers will still be running in the background.');
-      this.log('Gracefully shutting down...');
-      execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
-      this.log('Stopping operation...');
-      process.exit(0);
-    });
+    // process.on('SIGINT', () => {
+    //   this.log('Interrupt received.');
+    //   this.warn('Please wait for architect to exit or containers will still be running in the background.');
+    //   this.log('Gracefully shutting down...');
+    //   execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
+    //   this.log('Stopping operation...');
+    //   process.exit(0);
+    // });
 
-    await cmd;
+    // await cmd;
   }
 
   private readValuesFile(values_file_path: string | undefined) {
