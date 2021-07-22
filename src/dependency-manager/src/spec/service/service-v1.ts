@@ -111,16 +111,7 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
   }
 
   getScaling() {
-    return {
-      min_replicas: '1',
-      max_replicas: '1',
-      ...this.scaling,
-      metrics: {
-        cpu: '95',
-        memory: '95',
-        ...(this.scaling?.metrics || {}),
-      },
-    };
+    return this.scaling;
   }
 
   /** @return New expanded copy of the current config */
