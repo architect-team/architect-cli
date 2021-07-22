@@ -683,4 +683,42 @@ describe('validation spec v1', () => {
       expect(string_validation_error.column).eq(19);
     }
   });
+
+  describe('AtLeastOne and scaling validation', () => {
+    it('required component parameters', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          scaling:
+            min_replicas: 1
+            max_replicas: 1
+            metrics:
+      `
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let validation_err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (err) {
+        validation_err = err;
+      }
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.api.scaling.metrics": {
+          at_least_one: "Either a cpu metric, a memory metric, or both must be defined.",
+          column: 20,
+          line: 10,
+          value: null,
+        }});
+      })
+    });
 });
