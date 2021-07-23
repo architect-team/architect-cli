@@ -456,7 +456,7 @@ describe('validation spec v1', () => {
           labels:
             environment: dev
             environment2: \${{ parameters.environment }}
-            Architect.io/environment: dev
+            architect.io/Environment: dev
       `
       mock_fs({
         '/component.yml': component_config,
@@ -479,7 +479,7 @@ describe('validation spec v1', () => {
           "column": 17,
           "line": 7,
           "matchesvalues": "each value must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
-          "value": "{\"environment\":\"dev\",\"environment2\":\"dev$%^%^%$&\",\"Architect.io/environment\":\"dev\"}"
+          "value": "{\"environment\":\"dev\",\"environment2\":\"dev$%^%^%$&\",\"architect.io/Environment\":\"dev\"}"
         }
       })
     });
@@ -514,7 +514,7 @@ describe('validation spec v1', () => {
         "services.app.labels": {
           "column": 17,
           "line": 7,
-          "matcheskeys": "each <prefix>/<key> must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
+          "matcheskeys": "prefix must be lowercase and is optional, each <prefix>/<key> must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
           "value": "{\"architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io\":\"architect.io\"}"
         }
       })

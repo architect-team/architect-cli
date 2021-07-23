@@ -82,7 +82,7 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   @IsOptional({ always: true })
   @IsObject({ always: true })
-  @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
+  @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
   @MatchesValues(Slugs.LabelValueSlugValidator, { groups: ['deploy'], message: `each value ${Slugs.LabelSlugDescription}` })
   labels?: Map<string, string>;
 
