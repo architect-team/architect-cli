@@ -79,7 +79,7 @@ describe('validation spec v1', () => {
       expect(validation_err.errors).to.deep.eq({
         "services.stateless-app.debug.debug": {
           "isEmpty": "debug must be empty",
-          "value": "[object Object]",
+          "value": "{\"environment\":{\"LOG_LEVEL\":\"debug\"}}",
           "line": 11,
           "column": 18
         }
@@ -416,6 +416,109 @@ describe('validation spec v1', () => {
         }
       })
     });
+
+    it('valid labels', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        environment: dev
+      services:
+        app:
+          labels:
+            environment: dev
+            environment2: \${{ parameters.environment }}
+      `
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let validation_err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (err) {
+        validation_err = err;
+      }
+
+      expect(validation_err).to.be.undefined;
+    });
+
+    it('invalid labels', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        environment: dev$%^%^%$&
+      services:
+        app:
+          labels:
+            environment: dev
+            environment2: \${{ parameters.environment }}
+            Architect.io/environment: dev
+      `
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let validation_err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (err) {
+        validation_err = err;
+      }
+
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.app.labels": {
+          "column": 17,
+          "line": 7,
+          "matchesvalues": "each value must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
+          "value": "{\"environment\":\"dev\",\"environment2\":\"dev$%^%^%$&\",\"Architect.io/environment\":\"dev\"}"
+        }
+      })
+    });
+
+    it('invalid labels length v2', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        environment: dev$%^%^%$&
+      services:
+        app:
+          labels:
+            architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io: architect.io
+      `
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let validation_err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (err) {
+        validation_err = err;
+      }
+
+      expect(validation_err).instanceOf(ValidationErrors)
+      expect(validation_err.errors).to.deep.eq({
+        "services.app.labels": {
+          "column": 17,
+          "line": 7,
+          "matcheskeys": "each <prefix>/<key> must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
+          "value": "{\"architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io\":\"architect.io\"}"
+        }
+      })
+    });
   });
 
   describe('component builder validation', () => {
@@ -718,7 +821,8 @@ describe('validation spec v1', () => {
           column: 20,
           line: 10,
           value: null,
-        }});
-      })
-    });
+        }
+      });
+    })
+  });
 });

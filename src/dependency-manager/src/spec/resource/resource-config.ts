@@ -38,4 +38,7 @@ export interface ResourceConfig extends ConfigSpec {
   getDeploy(): DeploySpec | undefined;
 
   getDependsOn(): string[];
+
+  setLabels(labels: Map<string, string>): void;
+  getLabels(): Map<string, string>;
 }

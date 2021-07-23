@@ -4,6 +4,8 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary } from '../../utils/dictionary';
 import { ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { validateDictionary, validateNested } from '../../utils/validation';
+import { MatchesKeys } from '../../utils/validators/matches-keys';
+import { MatchesValues } from '../../utils/validators/matches-values';
 import { BaseConfig } from '../base-spec';
 import { BuildSpecV1 } from '../common/build-v1';
 import { DeploySpecV1 } from '../common/deploy-v1';
@@ -77,6 +79,12 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   @IsOptional({ always: true })
   @IsString({ always: true, each: true })
   depends_on?: string[];
+
+  @IsOptional({ always: true })
+  @IsObject({ always: true })
+  @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
+  @MatchesValues(Slugs.LabelValueSlugValidator, { groups: ['deploy'], message: `each value ${Slugs.LabelSlugDescription}` })
+  labels?: Map<string, string>;
 
   async validate(options?: ValidatorOptions) {
     if (!options) { options = {}; }
@@ -209,6 +217,14 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   getDependsOn(): string[] {
     return this.depends_on || [];
+  }
+
+  setLabels(labels: Map<string, string>) {
+    this.labels = labels;
+  }
+
+  getLabels(): Map<string, string> {
+    return this.labels || new Map();
   }
 
   /** @return New expanded copy of the current config */

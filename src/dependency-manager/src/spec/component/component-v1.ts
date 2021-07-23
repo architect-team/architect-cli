@@ -86,9 +86,6 @@ export class ComponentConfigV1 extends ComponentConfig {
   __version?: string;
 
   @IsString({ always: true })
-  @Matches(new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`), {
-    message: 'Names must only include letters, numbers, and dashes',
-  })
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
     message: 'Names must only include letters, numbers, and dashes. Names must be prefixed with an account name (e.g. architect/component-name).',
     groups: ['developer'],

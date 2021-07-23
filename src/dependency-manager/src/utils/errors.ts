@@ -32,7 +32,18 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
         property = property.replace('services.service.', '').replace('components.', 'services.');
       }
       // Truncate objects because they can take over the msg
-      res[property] = { ...error.constraints, value: error.value instanceof Object ? `${error.value}` : error.value };
+      let value = error.value;
+      if (value instanceof Object) {
+        try {
+          value = JSON.stringify(value);
+          if (value.length > 1000) {
+            value = value.substring(0, 1000) + '...';
+          }
+        } catch {
+          value = `${value}`;
+        }
+      }
+      res[property] = { ...error.constraints, value };
     }
 
     if (error.children && error.children.length) {
