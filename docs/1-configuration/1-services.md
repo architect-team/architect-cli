@@ -14,18 +14,22 @@ services:
       dockerfile: ./relative/to/context/Dockerfile
     command: npm start
     entrypoint: entrypoint override for dockerfile ENTRYPOINT
+    environment:
+      DB_ADDR: rds.amazonwebservices.com/db-name
+      DB_USER: postgres
+      DB_PASS: password
     interfaces:
       public:
         port: 8080
         protocol: http
       admin: 8081
+    labels:
+      architect.io/environment: dev
+      architect.io/service: api
     liveness_probe:
       port: 8080
       path: /health
-    environment:
-      DB_ADDR: rds.amazonwebservices.com/db-name
-      DB_USER: postgres
-      DB_PASS: password
+    replicas: 2
     debug:
       command: npm run dev
       volumes:
@@ -124,6 +128,17 @@ services:
 ```
 
 The parameter `postgres_host` will determine whether or not the service will be provisioned by Architect. If `postgres_host` is not set, Architect will provision the `api-db` service and create a `postgres:11` container. If the `postgres_host` parameter is set, `image: postgres:11` will be ignored and the container will not be provisioned by Architect. Any interpolated values that include the `api-db` service will produce the correct output in either instance with the difference being that `${{ services.api-db.interfaces.postgres.host }}` and `${{ services.api-db.interfaces.postgres.url }}` will change based on the `host` of the interface. Note that if a service has multiple interfaces and you would like to reference an external service, all of the Architect service's interfaces must specify the `host` override.
+
+### labels
+Dictionary of string keys and values that can be used to organize and categorize (scope and select) the service.
+
+Syntax and character set
+Labels are key/value pairs. Valid label keys have two segments: an optional prefix and name, separated by a slash (/). The name segment is required and must be 63 characters or less, beginning and ending with an alphanumeric character ([a-z0-9A-Z]) with dashes (-), underscores (_), dots (.), and alphanumerics between. The prefix is optional. If specified, the prefix must be a DNS subdomain: a series of DNS labels separated by dots (.), not longer than 63 characters in total, followed by a slash (/).
+
+Valid label value:
+must be 63 characters or less (can be empty),
+unless empty, must begin and end with an alphanumeric character ([a-z0-9A-Z]),
+could contain dashes (-), underscores (_), dots (.), and alphanumerics between.
 
 ### liveness_probe
 This configuration is essentially the health check for the service. It's important to specify so that traffic isn't load balanced to unhealthy services. Critical for rolling updates to function properly.

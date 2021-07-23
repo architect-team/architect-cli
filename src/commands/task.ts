@@ -25,13 +25,13 @@ export default class TaskExec extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'auto_approve', 'refresh'],
     }),
     compose_file: flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'environment', 'auto_approve', 'refresh'],
     }),
   };
 

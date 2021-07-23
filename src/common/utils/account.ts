@@ -11,7 +11,7 @@ export interface Account {
 export class AccountUtils {
   static flags = {
     account: flags.string({
-      description: 'Architect Account',
+      description: 'Architect account',
       env: 'ARCHITECT_ACCOUNT',
       char: 'a',
     }),

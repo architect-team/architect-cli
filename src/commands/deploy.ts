@@ -23,22 +23,15 @@ export abstract class DeployCommand extends Command {
 
   static flags = {
     ...Command.flags,
-    auto_approve: flags.boolean({ exclusive: ['local', 'compose_file'] }),
-    lock: flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
+    auto_approve: flags.boolean({
       exclusive: ['local', 'compose_file'],
-    }),
-    force_unlock: flags.integer({
-      description: 'Be very careful with this flag. Usage: --force_unlock=<lock_id>.',
-      hidden: true,
-      exclusive: ['local', 'compose_file'],
+      description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
     }),
     recursive: flags.boolean({
       char: 'r',
       default: true,
       allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
     }),
     refresh: flags.boolean({
       default: true,
@@ -49,9 +42,11 @@ export abstract class DeployCommand extends Command {
     browser: flags.boolean({
       default: true,
       allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
     }),
     build_parallel: flags.boolean({
       default: false,
+      description: '[default: false] Build docker images in parallel',
     }),
   };
 
@@ -92,7 +87,7 @@ export default class Deploy extends DeployCommand {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'auto_approve', 'refresh'],
     }),
     production: flags.boolean({
       description: 'Build and run components without debug blocks',
@@ -102,7 +97,7 @@ export default class Deploy extends DeployCommand {
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto_approve', 'lock', 'force_unlock', 'refresh'],
+      exclusive: ['account', 'environment', 'auto_approve', 'refresh'],
     }),
     detached: flags.boolean({
       description: 'Run in detached mode',
@@ -124,6 +119,12 @@ export default class Deploy extends DeployCommand {
     values: flags.string({
       char: 'v',
       description: 'Path of values file',
+    }),
+    'deletion-protection': flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle for deletion protection on deployments',
+      exclusive: ['local'],
     }),
   };
 
@@ -381,6 +382,7 @@ export default class Deploy extends DeployCommand {
         interfaces: interfaces_map,
         recursive: flags.recursive,
         values: component_values,
+        prevent_destroy: flags['deletion-protection'],
       };
       deployment_dtos.push(deploy_dto);
     }

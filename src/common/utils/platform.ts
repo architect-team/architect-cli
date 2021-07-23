@@ -36,7 +36,7 @@ export interface EcsPlatformCredentials {
 export class PlatformUtils {
   static flags = {
     platform: flags.string({
-      description: 'Architect Platform',
+      description: 'Architect platform',
       env: 'ARCHITECT_PLATFORM',
     }),
   };

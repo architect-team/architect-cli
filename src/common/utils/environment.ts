@@ -15,7 +15,7 @@ export interface Environment {
 export class EnvironmentUtils {
   static flags = {
     environment: flags.string({
-      description: 'Architect Environment',
+      description: 'Architect environment',
       char: 'e',
       env: 'ARCHITECT_ENVIRONMENT',
     }),
