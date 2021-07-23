@@ -1,10 +1,10 @@
-import { plainToClass, serialize, Transform } from 'class-transformer';
+import { deserialize, plainToClass, serialize, Transform } from 'class-transformer';
 import { Allow, IsObject, IsOptional, IsString, IsUrl, Matches, ValidationError, ValidatorOptions } from 'class-validator';
+import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary } from '../..';
 import { Dictionary } from '../../utils/dictionary';
 import { ArchitectError } from '../../utils/errors';
 import { ARC_NULL_TOKEN, interpolateString } from '../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../utils/slugs';
-import { validateCrossDictionaryCollisions, validateDependsOn, validateDictionary } from '../../utils/validation';
 import { DictionaryType } from '../../utils/validators/dictionary_type';
 import { InterfaceSpec } from '../common/interface-spec';
 import { ParameterValue } from '../common/parameter-spec';
@@ -376,26 +376,40 @@ export class ComponentConfigV1 extends ComponentConfig {
 
   async validate(options?: ValidatorOptions) {
     if (!options) options = {};
-    let errors = await super.validate(options);
-    if (errors.length) return errors;
-    const expanded = this.expand();
-    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
-    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
-    errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: (options.groups || []).concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
-    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
-    errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
-    errors = await validateDependsOn(expanded, errors); // makes sure service depends_on refers to valid other services
-    if (!(options.groups || []).includes('deploy')) {  // Deploy already does component interpolation validation
+    const groups = [...options.groups || []];
+
+    if (!(groups || []).includes('deploy')) {  // Deploy already does component interpolation validation
       try {
-        interpolateString(serialize(expanded), this.getContext(), ['architect.', 'dependencies.', 'environment.'], 1);
+        const context = this.getContext();
+        for (const [parameter_key, parameter_value] of Object.entries(this.getParameters())) {
+          if (parameter_value.default === null || parameter_value.default === undefined) {
+            context.parameters[parameter_key] = '1';
+          }
+        }
+        const expanded = this.expand();
+        const interpolated_string = interpolateString(serialize(expanded), context, ['architect.', 'dependencies.', 'environment.']);
+        const interpolated_config = deserialize(expanded.getClass(), interpolated_string) as ComponentConfig;
+        return interpolated_config.validate({ ...options, groups: groups.concat('deploy') });
       } catch (err) {
         if (err instanceof ValidationError) {
-          errors.push(err);
+          return [err];
         } else {
           throw err;
         }
       }
     }
+
+    let errors = await super.validate(options);
+    if (errors.length) return errors;
+
+    const expanded = this.expand();
+    errors = await validateDictionary(expanded, 'parameters', errors, undefined, options, new RegExp(`^${Slugs.ComponentParameterRegexBase}$`));
+    errors = await validateDictionary(expanded, 'services', errors, undefined, { ...options, groups: groups.concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
+    errors = await validateDictionary(expanded, 'tasks', errors, undefined, { ...options, groups: groups.concat('component') }, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
+    errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
+    errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
+    errors = await validateDependsOn(expanded, errors); // makes sure service depends_on refers to valid other services
+
     return errors;
   }
 }

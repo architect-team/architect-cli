@@ -446,6 +446,34 @@ describe('validation spec v1', () => {
       expect(validation_err).to.be.undefined;
     });
 
+    it('parameter value interpolation', async () => {
+      const component_config_yml = `
+      name: test/component
+      parameters:
+        environment:
+        path:
+      services:
+        app:
+          liveness_probe:
+            path: /\${{ parameters.path }}
+            port: 8080
+          labels:
+            environment: \${{ parameters.environment }}
+      `
+      mock_fs({
+        '/component.yml': component_config_yml,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      const component_config = await manager.loadComponentConfig('test/component');
+      component_config.setExtends('latest');
+
+      expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(0);
+      component_config.setParameter('environment', '@error');
+      expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(1);
+    });
+
     it('invalid labels', async () => {
       const component_config = `
       name: test/component

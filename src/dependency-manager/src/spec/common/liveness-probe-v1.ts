@@ -27,7 +27,7 @@ export class LivenessProbeSpecV1 extends ValidatableConfig {
   @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command), { always: true })
   @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
   @IsString({ always: true })
-  @Matches(/^\/.*$/, { groups: ['deploy'], message: 'Path should start with /. Ex. /health' })
+  @Matches(/^\/.*$/, { always: true, message: 'Path should start with /. Ex. /health' })
   path?: string;
 
   @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command), { always: true })
