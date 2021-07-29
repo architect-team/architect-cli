@@ -28,15 +28,23 @@ export const verify = async (): Promise<void> => {
   }
 };
 
-export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
+export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = [], cache_from?: string) => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   for (const build_arg of build_args) {
     dockerfile_args.push('--build-arg');
     dockerfile_args.push(build_arg);
   }
 
+  const docker_args = [];
+  if (cache_from) {
+    docker_args.push('buildx');
+    dockerfile_args.push('--cache-from');
+    dockerfile_args.push(cache_from);
+  }
+  docker_args.push('build');
+
   await docker([
-    'build',
+    ...docker_args,
     '--compress',
     '-t', image_tag,
     ...dockerfile_args,

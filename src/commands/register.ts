@@ -42,6 +42,9 @@ export default class ComponentRegister extends Command {
       description: 'Tag to give to the new component',
       default: 'latest',
     }),
+    docker_cache_from: flags.string({
+      description: `Arg to be passed to Docker's --cache-from flag`,
+    }),
   };
 
   static args = [{
@@ -163,7 +166,7 @@ export default class ComponentRegister extends Command {
         }
         build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       }
-      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
+      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args, flags.docker_cache_from);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
