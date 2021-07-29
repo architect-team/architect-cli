@@ -105,10 +105,10 @@ export class DockerComposeUtils {
       if (node.config.getImage()) service.image = node.config.getImage();
 
       if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
-        service.command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+        service.command = node.config.getCommand().map(command_part => command_part.replace(/\$([a-zA-Z0-9-_\W]+)/g, '$$$$$1')); // TODO: check this with Errol's issue
       }
       if (node.config.getEntrypoint().length) {
-        service.entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_]+)/g, '$$$$$1'));
+        service.entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$([a-zA-Z0-9-_\W]+)/g, '$$$$$1'));
       }
 
       const platforms = node.config.getPlatforms();
