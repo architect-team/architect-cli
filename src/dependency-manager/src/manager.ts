@@ -293,8 +293,8 @@ export default abstract class DependencyManager {
     port = port || interface_config.port;
     const protocol = interface_config.protocol || 'http';
     let url;
-    if (interface_config.username && interface_config.password) {
-      url = `${protocol}://${interface_config.username}:${interface_config.password}@${host}`;
+    if (interface_config.password) {
+      url = `${protocol}://${interface_config.username || ''}:${interface_config.password}@${host}`;
     } else {
       url = `${protocol}://${host}`;
     }
