@@ -128,12 +128,26 @@ export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
 
   getCommand() {
     if (!this.command) return [];
-    return this.command instanceof Array ? this.command : shell_parse(this.command).map(e => `${e}`);
+    if (this.command instanceof Array) {
+      return this.command;
+    }
+    const env: Dictionary<string> = {};
+    for (const key of Object.keys(this.getEnvironmentVariables())) {
+      env[key] = `$${key}`;
+    }
+    return shell_parse(this.command, env).map(e => `${e}`);
   }
 
   getEntrypoint() {
     if (!this.entrypoint) return [];
-    return this.entrypoint instanceof Array ? this.entrypoint : shell_parse(this.entrypoint).map(e => `${e}`);
+    if (this.entrypoint instanceof Array) {
+      return this.entrypoint;
+    }
+    const env: Dictionary<string> = {};
+    for (const key of Object.keys(this.getEnvironmentVariables())) {
+      env[key] = `$${key}`;
+    }
+    return shell_parse(this.entrypoint, env).map(e => `${e}`);
   }
 
   getEnvironmentVariables(): Dictionary<string> {

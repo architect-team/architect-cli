@@ -92,7 +92,11 @@ export class ServiceConfigV1 extends ResourceConfigV1 implements ServiceConfig {
     };
 
     if (this.liveness_probe.command && typeof this.liveness_probe.command === 'string') {
-      liveness_probe.command = shell_parse(this.liveness_probe.command).map(e => `${e}`);
+      const env: Dictionary<string> = {};
+      for (const key of Object.keys(this.getEnvironmentVariables())) {
+        env[key] = `$${key}`;
+      }
+      liveness_probe.command = shell_parse(this.liveness_probe.command, env).map(e => `${e}`);
     }
 
     return liveness_probe as LivenessProbeSpec;
