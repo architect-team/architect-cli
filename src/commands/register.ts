@@ -42,9 +42,6 @@ export default class ComponentRegister extends Command {
       description: 'Tag to give to the new component',
       default: 'latest',
     }),
-    docker_cache_from: flags.string({
-      description: `Arg to be passed to Docker's --cache-from flag`,
-    }),
   };
 
   static args = [{
@@ -130,6 +127,10 @@ export default class ComponentRegister extends Command {
       return service_config.image;
     }
 
+    //
+    const cache_image = await this.buildImage(config_path, service_name, service_config, image_tag.replace(/:[a-zA-Z0-9]+$/g, ':architect-cache'));
+    await this.pushImage(cache_image);
+
     // otherwise we build and push the image to our repository
     const image = await this.buildImage(config_path, service_name, service_config, image_tag);
     await this.pushImage(image);
@@ -166,7 +167,7 @@ export default class ComponentRegister extends Command {
         }
         build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       }
-      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args, flags.docker_cache_from);
+      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
