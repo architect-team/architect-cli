@@ -128,10 +128,10 @@ export default class ComponentRegister extends Command {
     }
 
     // pull cache and regular image if they exist
-    if (await Docker.imageExists(Docker.toCacheTag(image_tag))) {
+    if (!(await Docker.imageExists(Docker.toCacheTag(image_tag)))) {
       await Docker.pullImage(Docker.toCacheTag(image_tag));
     }
-    if (await Docker.imageExists(image_tag)) {
+    if (!(await Docker.imageExists(image_tag))) {
       await Docker.pullImage(image_tag);
     }
     // build and push cache image
