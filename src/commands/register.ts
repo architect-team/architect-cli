@@ -140,7 +140,7 @@ export default class ComponentRegister extends Command {
     const cache_image = await this.buildImage(config_path, service_name, service_config, Docker.toCacheTag(image_tag));
     await this.pushImage(cache_image);
 
-    // otherwise we build and push the image to our repository
+    // build and push the image to our repository
     const image = await this.buildImage(config_path, service_name, service_config, image_tag);
     await this.pushImage(image);
     const digest = await this.getDigest(image);
