@@ -127,8 +127,15 @@ export default class ComponentRegister extends Command {
       return service_config.image;
     }
 
-    //
-    const cache_image = await this.buildImage(config_path, service_name, service_config, image_tag.replace(/:[a-zA-Z0-9]+$/g, ':architect-cache'));
+    // pull cache and regular image if they exist
+    if (await Docker.imageExists(Docker.toCacheTag(image_tag))) {
+      await Docker.pullImage(Docker.toCacheTag(image_tag));
+    }
+    if (await Docker.imageExists(image_tag)) {
+      await Docker.pullImage(image_tag);
+    }
+    // build and push cache image
+    const cache_image = await this.buildImage(config_path, service_name, service_config, Docker.toCacheTag(image_tag));
     await this.pushImage(cache_image);
 
     // otherwise we build and push the image to our repository

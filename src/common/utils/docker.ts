@@ -1,5 +1,7 @@
 import execa, { Options } from 'execa';
 
+const CACHE_TAG = 'architect-cache';
+
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   if (process.env.NODE_ENV === 'test') {
     return;
@@ -28,6 +30,10 @@ export const verify = async (): Promise<void> => {
   }
 };
 
+export const toCacheTag = (image_ref: string) => {
+  return image_ref.replace( /:[a-zA-Z0-9]+$/g, `:${CACHE_TAG}`);
+}
+
 export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   for (const build_arg of build_args) {
@@ -37,7 +43,7 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
 
   if (!image_tag.endsWith(':architect-cache')) {
     dockerfile_args.push('--cache-from');
-    dockerfile_args.push(image_tag.replace(/:[a-zA-Z0-9]+$/g, ':architect-cache'));
+    dockerfile_args.push(toCacheTag(image_tag));
   }
 
   await docker([
@@ -53,6 +59,10 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
 export const pushImage = async (image_ref: string) => {
   await docker(['push', image_ref]);
 };
+
+export const pullImage = async (image_ref: string) => {
+  await docker(['pull', image_ref]);
+}
 
 export const getDigest = async (image_ref: string): Promise<string> => {
   await docker(['pull', image_ref], { stdout: false });
