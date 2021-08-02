@@ -1,590 +1,597 @@
 {
-  "InterfaceSpecV1": {
-    "properties": {
-      "description": {
-        "type": "string"
-      },
-      "host": {
-        "type": "string"
-      },
-      "port": {
-        "minLength": 1,
-        "type": "string"
-      },
-      "protocol": {},
-      "username": {},
-      "password": {},
-      "url": {},
-      "sticky": {
-        "enum": [
-          "true",
-          "false"
-        ],
-        "type": "string"
-      }
-    },
-    "type": "object",
-    "required": [
-      "port"
-    ]
-  },
-  "LivenessProbeSpecV1": {
-    "properties": {
-      "success_threshold": {},
-      "failure_threshold": {},
-      "timeout": {
-        "type": "string"
-      },
-      "interval": {
-        "type": "string"
-      },
-      "initial_delay": {
-        "type": "string"
-      },
-      "path": {
-        "pattern": "^\\/.*$",
-        "type": "string"
-      },
-      "command": {
-        "items": {
+  "title": "JSON Schema for Architect.io configuration",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "definitions": {
+    "InterfaceSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
           "type": "string"
         },
-        "type": "array",
-        "$ref": "#/definitions/Object"
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "protocol": {},
+        "username": {},
+        "password": {},
+        "url": {},
+        "sticky": {
+          "enum": [
+            "true",
+            "false"
+          ],
+          "type": "string"
+        }
       },
-      "port": {
-        "minLength": 1,
-        "type": "string"
-      }
+      "type": "object",
+      "required": [
+        "port"
+      ]
     },
-    "type": "object"
-  },
-  "ScalingMetricsSpecV1": {
-    "properties": {
-      "cpu": {},
-      "memory": {}
-    },
-    "type": "object"
-  },
-  "ScalingSpecV1": {
-    "properties": {
-      "min_replicas": {
-        "type": "string"
-      },
-      "max_replicas": {
-        "type": "string"
-      },
-      "metrics": {
-        "$ref": "#/definitions/ScalingMetricsSpecV1"
-      }
-    },
-    "type": "object",
-    "required": [
-      "min_replicas",
-      "max_replicas",
-      "metrics"
-    ]
-  },
-  "BuildSpecV1": {
-    "properties": {
-      "context": {
-        "type": "string",
-        "minLength": 1
-      },
-      "args": {
-        "type": "object"
-      },
-      "dockerfile": {
-        "type": "string"
-      }
-    },
-    "type": "object"
-  },
-  "DeployModuleSpecV1": {
-    "properties": {
-      "path": {
-        "type": "string"
-      },
-      "inputs": {
-        "type": "object"
-      }
-    },
-    "type": "object",
-    "required": [
-      "path",
-      "inputs"
-    ]
-  },
-  "DeploySpecV1": {
-    "properties": {
-      "strategy": {
-        "type": "string"
-      },
-      "modules": {
-        "type": "object"
-      }
-    },
-    "type": "object",
-    "required": [
-      "strategy",
-      "modules"
-    ]
-  },
-  "VolumeSpecV1": {
-    "properties": {
-      "mount_path": {
-        "type": "string"
-      },
-      "host_path": {
-        "type": "string",
-        "anyOf": [
-          {
-            "type": "string",
-            "enum": [
-              ""
-            ]
+    "LivenessProbeSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "success_threshold": {},
+        "failure_threshold": {},
+        "timeout": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "initial_delay": {
+          "type": "string"
+        },
+        "path": {
+          "pattern": "^\\/.*$",
+          "type": "string"
+        },
+        "command": {
+          "items": {
+            "type": "string"
           },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                }
+          "type": [
+            "array",
+            "string"
+          ]
+        },
+        "port": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ScalingMetricsSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "cpu": {},
+        "memory": {}
+      },
+      "type": "object"
+    },
+    "ScalingSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "min_replicas": {
+          "type": "string"
+        },
+        "max_replicas": {
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/definitions/ScalingMetricsSpecV1"
+        }
+      },
+      "type": "object",
+      "required": [
+        "min_replicas",
+        "max_replicas",
+        "metrics"
+      ]
+    },
+    "BuildSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "object"
+        },
+        "dockerfile": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeployModuleSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "inputs": {
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "inputs"
+      ]
+    },
+    "DeploySpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string"
+        },
+        "modules": {
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "strategy",
+        "modules"
+      ]
+    },
+    "VolumeSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "mount_path": {
+          "type": "string"
+        },
+        "host_path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                ""
               ]
             },
-            "nullable": true
-          }
-        ],
-        "minLength": 1
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              "nullable": true
+            }
+          ],
+          "minLength": 1
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "readonly": {
+          "enum": [
+            "true",
+            "false"
+          ],
+          "type": "string"
+        }
       },
-      "key": {
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "readonly": {
-        "enum": [
-          "true",
-          "false"
-        ],
-        "type": "string"
-      }
+      "type": "object"
     },
-    "type": "object"
-  },
-  "ResourceConfigV1": {
-    "properties": {
-      "__version": {},
-      "name": {
-        "pattern": "^[a-zA-Z0-9-_]+$",
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "image": {
-        "type": "string"
-      },
-      "command": {
-        "items": {
+    "ResourceConfigV1": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
           "type": "string"
         },
-        "type": "array"
-      },
-      "entrypoint": {
-        "items": {
+        "description": {
           "type": "string"
         },
-        "type": "array"
-      },
-      "language": {
-        "type": "string"
-      },
-      "debug": {
-        "anyOf": [
-          {
-            "type": "string",
-            "enum": [
-              ""
-            ]
+        "image": {
+          "type": "string"
+        },
+        "command": {
+          "items": {
+            "type": "string"
           },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                }
+          "type": "array"
+        },
+        "entrypoint": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "debug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                ""
               ]
             },
-            "nullable": true
-          }
-        ],
-        "$ref": "#/definitions/ResourceConfigV1"
-      },
-      "environment": {
-        "type": "object"
-      },
-      "platforms": {},
-      "volumes": {
-        "type": "object"
-      },
-      "build": {},
-      "cpu": {},
-      "memory": {},
-      "deploy": {},
-      "depends_on": {
-        "items": {
-          "type": "string"
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              "nullable": true
+            }
+          ],
+          "$ref": "#/definitions/ResourceConfigV1"
         },
-        "type": "array"
-      },
-      "labels": {
-        "$ref": "#/definitions/Map",
-        "type": "object"
-      }
-    },
-    "type": "object",
-    "required": [
-      "__version"
-    ]
-  },
-  "ServiceConfigV1": {
-    "properties": {
-      "debug": {
-        "anyOf": [
-          {
-            "type": "string",
-            "enum": [
-              ""
-            ]
+        "environment": {
+          "type": "object"
+        },
+        "platforms": {},
+        "volumes": {
+          "type": "object"
+        },
+        "build": {},
+        "cpu": {},
+        "memory": {},
+        "deploy": {},
+        "depends_on": {
+          "items": {
+            "type": "string"
           },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                }
+          "type": "array"
+        },
+        "labels": {
+          "$ref": "#/definitions/Map",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "ServiceConfigV1": {
+      "additionalProperties": false,
+      "properties": {
+        "debug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                ""
               ]
             },
-            "nullable": true
-          }
-        ],
-        "$ref": "#/definitions/ServiceConfigV1"
-      },
-      "interfaces": {
-        "type": "object"
-      },
-      "liveness_probe": {
-        "$ref": "#/definitions/LivenessProbeSpecV1"
-      },
-      "replicas": {},
-      "scaling": {
-        "$ref": "#/definitions/ScalingSpecV1"
-      },
-      "__version": {},
-      "name": {
-        "pattern": "^[a-zA-Z0-9-_]+$",
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "image": {
-        "type": "string"
-      },
-      "command": {
-        "items": {
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              "nullable": true
+            }
+          ],
+          "$ref": "#/definitions/ServiceConfigV1"
+        },
+        "interfaces": {
+          "type": "object"
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/LivenessProbeSpecV1"
+        },
+        "replicas": {},
+        "scaling": {
+          "$ref": "#/definitions/ScalingSpecV1"
+        },
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
           "type": "string"
         },
-        "type": "array"
-      },
-      "entrypoint": {
-        "items": {
+        "description": {
           "type": "string"
         },
-        "type": "array"
-      },
-      "language": {
-        "type": "string"
-      },
-      "environment": {
-        "type": "object"
-      },
-      "platforms": {},
-      "volumes": {
-        "type": "object"
-      },
-      "build": {},
-      "cpu": {},
-      "memory": {},
-      "deploy": {},
-      "depends_on": {
-        "items": {
+        "image": {
           "type": "string"
         },
-        "type": "array"
-      },
-      "labels": {
-        "$ref": "#/definitions/Map",
-        "type": "object"
-      }
-    },
-    "type": "object",
-    "required": [
-      "__version"
-    ]
-  },
-  "TaskConfigV1": {
-    "properties": {
-      "debug": {
-        "anyOf": [
-          {
-            "type": "string",
-            "enum": [
-              ""
-            ]
+        "command": {
+          "items": {
+            "type": "string"
           },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                }
+          "type": "array"
+        },
+        "entrypoint": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "object"
+        },
+        "platforms": {},
+        "volumes": {
+          "type": "object"
+        },
+        "build": {},
+        "cpu": {},
+        "memory": {},
+        "deploy": {},
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "labels": {
+          "$ref": "#/definitions/Map",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "TaskConfigV1": {
+      "additionalProperties": false,
+      "properties": {
+        "debug": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                ""
               ]
             },
-            "nullable": true
-          }
-        ],
-        "$ref": "#/definitions/TaskConfigV1"
-      },
-      "schedule": {
-        "type": "string"
-      },
-      "__version": {},
-      "name": {
-        "pattern": "^[a-zA-Z0-9-_]+$",
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "image": {
-        "type": "string"
-      },
-      "command": {
-        "items": {
+            {
+              "not": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              },
+              "nullable": true
+            }
+          ],
+          "$ref": "#/definitions/TaskConfigV1"
+        },
+        "schedule": {
           "type": "string"
         },
-        "type": "array"
-      },
-      "entrypoint": {
-        "items": {
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
           "type": "string"
         },
-        "type": "array"
-      },
-      "language": {
-        "type": "string"
-      },
-      "environment": {
-        "type": "object"
-      },
-      "platforms": {},
-      "volumes": {
-        "type": "object"
-      },
-      "build": {},
-      "cpu": {},
-      "memory": {},
-      "deploy": {},
-      "depends_on": {
-        "items": {
+        "description": {
           "type": "string"
         },
-        "type": "array"
-      },
-      "labels": {
-        "$ref": "#/definitions/Map",
-        "type": "object"
-      }
-    },
-    "type": "object",
-    "required": [
-      "__version"
-    ]
-  },
-  "ParameterDefinitionSpecV1": {
-    "properties": {
-      "required": {
-        "enum": [
-          "true",
-          "false"
-        ],
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "default": {}
-    },
-    "type": "object"
-  },
-  "IngressSpecV1": {
-    "properties": {
-      "subdomain": {
-        "type": "string"
-      }
-    },
-    "type": "object"
-  },
-  "ComponentInterfaceSpecV1": {
-    "properties": {
-      "ingress": {
-        "$ref": "#/definitions/IngressSpecV1"
-      },
-      "description": {
-        "type": "string"
-      },
-      "host": {
-        "type": "string"
-      },
-      "port": {
-        "minLength": 1,
-        "type": "string"
-      },
-      "protocol": {},
-      "username": {},
-      "password": {},
-      "url": {},
-      "sticky": {
-        "enum": [
-          "true",
-          "false"
-        ],
-        "type": "string"
-      }
-    },
-    "type": "object",
-    "required": [
-      "port"
-    ]
-  },
-  "ComponentConfigV1": {
-    "properties": {
-      "__version": {},
-      "name": {
-        "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
-        "type": "string"
-      },
-      "tag": {},
-      "instance_id": {},
-      "instance_name": {},
-      "instance_date": {},
-      "extends": {
-        "pattern": "^(?!file:).*$",
-        "type": "string"
-      },
-      "description": {
-        "type": "string"
-      },
-      "keywords": {
-        "items": {
+        "image": {
           "type": "string"
         },
-        "type": "array"
+        "command": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "entrypoint": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "language": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "object"
+        },
+        "platforms": {},
+        "volumes": {
+          "type": "object"
+        },
+        "build": {},
+        "cpu": {},
+        "memory": {},
+        "deploy": {},
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "labels": {
+          "$ref": "#/definitions/Map",
+          "type": "object"
+        }
       },
-      "author": {
-        "type": "string"
-      },
-      "homepage": {
-        "format": "url",
-        "type": "string"
-      },
-      "parameters": {
-        "type": "object"
-      },
-      "services": {
-        "type": "object"
-      },
-      "tasks": {
-        "type": "object"
-      },
-      "dependencies": {
-        "$ref": "#/definitions/Object",
-        "type": "object"
-      },
-      "interfaces": {
-        "type": "object"
-      },
-      "artifact_image": {
-        "type": "string"
-      }
+      "type": "object"
     },
-    "type": "object",
-    "required": [
-      "__version",
-      "name"
-    ]
-  }
+    "ParameterDefinitionSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "enum": [
+            "true",
+            "false"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {}
+      },
+      "type": "object"
+    },
+    "IngressSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "subdomain": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ComponentInterfaceSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/IngressSpecV1"
+        },
+        "description": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "protocol": {},
+        "username": {},
+        "password": {},
+        "url": {},
+        "sticky": {
+          "enum": [
+            "true",
+            "false"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "port"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "type": "string"
+    },
+    "tag": {},
+    "instance_id": {},
+    "instance_name": {},
+    "instance_date": {},
+    "extends": {
+      "pattern": "^(?!file:).*$",
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "author": {
+      "type": "string"
+    },
+    "homepage": {
+      "format": "url",
+      "type": "string"
+    },
+    "parameters": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "services": {
+      "type": "object"
+    },
+    "tasks": {
+      "type": "object"
+    },
+    "dependencies": {
+      "type": "object"
+    },
+    "interfaces": {
+      "type": "object"
+    },
+    "artifact_image": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [
+    "name"
+  ]
 }

@@ -1,3 +1,4 @@
+import Ajv from "ajv";
 import fs from 'fs-extra';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
@@ -39,14 +40,31 @@ describe('example component validation', function () {
     for (const example_dir of example_architect_dirs) {
       if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/architect.yml`)) {
 
-        it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes validOrReject for the developer group`, async () => {
-          const component_config = await ComponentConfigBuilder.buildFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+        // it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes validOrReject for the developer group`, async () => {
+        //   const component_config = await ComponentConfigBuilder.buildFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
 
-          try {
-            await component_config.validateOrReject({ groups: ['developer'] });
-          } catch (err) {
-            console.log('An example architect file is failing the #validateOrReject() method', err);
-            throw err;
+        //   try {
+        //     await component_config.validateOrReject({ groups: ['developer'] });
+        //   } catch (err) {
+        //     console.log('An example architect file is failing the #validateOrReject() method', err);
+        //     throw err;
+        //   }
+        // });
+
+        it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes ajv json schema validation`, async () => {
+          const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+          const config = ComponentConfigBuilder.buildFromJSON(raw_config);
+
+          console.log(JSON.stringify(config));
+
+          const schema_string = fs.readFileSync('/Users/dp/code/architect/architect-cli/src/dependency-manager/src/spec/architect.schema.json', 'utf-8');
+          const schema = JSON.parse(schema_string);
+          const ajv = new Ajv();
+          const validate = ajv.compile(schema);
+          const valid = validate(config);
+          if (!valid) {
+            console.debug(validate.errors);
+            throw new Error();
           }
         });
 
