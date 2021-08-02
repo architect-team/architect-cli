@@ -61,7 +61,7 @@ export const pushImage = async (image_ref: string) => {
 };
 
 export const pullImage = async (image_ref: string) => {
-  await docker(['pull', image_ref]);
+  await docker(['pull', '-q', image_ref], { stdout: false });
 }
 
 export const getDigest = async (image_ref: string): Promise<string> => {
