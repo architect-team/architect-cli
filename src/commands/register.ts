@@ -130,9 +130,11 @@ export default class ComponentRegister extends Command {
     // pull cache and actual image if they exist
     try {
       await Docker.pullImage(Docker.toCacheTag(image_tag));
+      /* eslint-disable-next-line no-empty */
     } catch {}
     try {
       await Docker.pullImage(image_tag);
+      /* eslint-disable-next-line no-empty */
     } catch {}
     // build and push cache image
     const cache_image = await this.buildImage(config_path, service_name, service_config, Docker.toCacheTag(image_tag));

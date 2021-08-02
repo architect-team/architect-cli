@@ -32,7 +32,7 @@ export const verify = async (): Promise<void> => {
 
 export const toCacheTag = (image_ref: string) => {
   return image_ref.replace( /:[a-zA-Z0-9]+$/g, `:${CACHE_TAG}`);
-}
+};
 
 export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
@@ -62,7 +62,7 @@ export const pushImage = async (image_ref: string) => {
 
 export const pullImage = async (image_ref: string) => {
   await docker(['pull', '-q', image_ref], { stdout: false });
-}
+};
 
 export const getDigest = async (image_ref: string): Promise<string> => {
   await docker(['pull', image_ref], { stdout: false });
