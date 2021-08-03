@@ -1,4 +1,5 @@
 import execa, { Options } from 'execa';
+import { Slugs } from '../../dependency-manager/src/utils/slugs';
 
 const CACHE_TAG = 'architect-cache';
 
@@ -31,7 +32,7 @@ export const verify = async (): Promise<void> => {
 };
 
 export const toCacheImage = (image_ref: string) => {
-  return image_ref.replace( /:[a-zA-Z0-9]+$/g, `:${CACHE_TAG}`);
+  return image_ref.replace(new RegExp(`:${Slugs.ComponentTagRegexBase}$`), `:${CACHE_TAG}`);
 };
 
 export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
@@ -41,14 +42,13 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
     dockerfile_args.push(build_arg);
   }
 
-  if (!image_tag.endsWith(`:${CACHE_TAG}`)) {
-    dockerfile_args.push('--cache-from');
-    dockerfile_args.push(toCacheImage(image_tag));
-  }
+  const cache_tag = toCacheImage(image_tag);
 
   await docker([
     'build',
-    '--compress',
+    '--cache-from',
+    cache_tag,
+    '-t', cache_tag,
     '-t', image_tag,
     ...dockerfile_args,
     build_path,

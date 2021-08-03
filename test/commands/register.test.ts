@@ -149,7 +149,7 @@ describe('register', function () {
       const pushImage = Docker.pushImage as sinon.SinonStub;
       const getDigest = Docker.getDigest as sinon.SinonStub;
 
-      expect(buildImage.calledTwice).to.be.true;
+      expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
       expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
@@ -278,7 +278,7 @@ describe('register', function () {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
       const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(buildImage.calledTwice).to.be.true;
+      expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
       expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
@@ -311,7 +311,7 @@ describe('register', function () {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
       const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(buildImage.calledTwice).to.be.true; // there are two components but only one of them needs to build the docker image
+      expect(buildImage.calledOnce).to.be.true; // there are two components but only one of them needs to build the docker image
       expect(buildImage.calledBefore(pushImage)).to.be.true;
       expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
@@ -366,7 +366,7 @@ describe('register', function () {
     .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev'])
     .it('override build arg specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
-      expect(buildImage.callCount).to.eq(4);
+      expect(buildImage.callCount).to.eq(2);
       expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
     });
 });

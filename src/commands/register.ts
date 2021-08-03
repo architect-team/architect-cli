@@ -10,7 +10,7 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { Refs } from '../dependency-manager/src';
+import { ArchitectError, Refs, Slugs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -70,6 +70,10 @@ export default class ComponentRegister extends Command {
       throw new MissingContextError();
     }
 
+    if (!Slugs.ComponentTagValidator.test(flags.tag)) {
+      throw new ArchitectError(Slugs.ComponentTagDescription);
+    }
+
     for (const config_path of config_paths) {
       await this.registerComponent(config_path, flags.tag);
     }
@@ -127,22 +131,17 @@ export default class ComponentRegister extends Command {
       return service_config.image;
     }
 
-    // pull cache and actual image if they exist
+    this.log('Attempting to pull a previously built image for use with docker --cache-from...')
     try {
       await Docker.pullImage(Docker.toCacheImage(image_tag));
-      /* eslint-disable-next-line no-empty */
-    } catch {}
-    try {
-      await Docker.pullImage(image_tag);
-      /* eslint-disable-next-line no-empty */
-    } catch {}
-    // build and push cache image
-    const cache_image = await this.buildImage(config_path, service_name, service_config, Docker.toCacheImage(image_tag));
-    await this.pushImage(cache_image);
+    } catch {
+      this.log('No previously cached image found. The docker build will proceed without using a cached image')
+    }
 
     // build and push the image to our repository
     const image = await this.buildImage(config_path, service_name, service_config, image_tag);
     await this.pushImage(image);
+    await this.pushImage(Docker.toCacheImage(image_tag));
     const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key
