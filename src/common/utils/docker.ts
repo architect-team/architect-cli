@@ -1,4 +1,7 @@
 import execa, { Options } from 'execa';
+import { Slugs } from '../../dependency-manager/src/utils/slugs';
+
+const CACHE_TAG = 'architect-cache';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
   if (process.env.NODE_ENV === 'test') {
@@ -28,6 +31,10 @@ export const verify = async (): Promise<void> => {
   }
 };
 
+export const toCacheImage = (image_ref: string) => {
+  return image_ref.replace(new RegExp(`:${Slugs.ComponentTagRegexBase}$`), `:${CACHE_TAG}`);
+};
+
 export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   for (const build_arg of build_args) {
@@ -35,9 +42,13 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
     dockerfile_args.push(build_arg);
   }
 
+  const cache_tag = toCacheImage(image_tag);
+
   await docker([
     'build',
-    '--compress',
+    '--cache-from',
+    cache_tag,
+    '-t', cache_tag,
     '-t', image_tag,
     ...dockerfile_args,
     build_path,
@@ -47,6 +58,10 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
 
 export const pushImage = async (image_ref: string) => {
   await docker(['push', image_ref]);
+};
+
+export const pullImage = async (image_ref: string) => {
+  await docker(['pull', '-q', image_ref], { stdout: false });
 };
 
 export const getDigest = async (image_ref: string): Promise<string> => {
