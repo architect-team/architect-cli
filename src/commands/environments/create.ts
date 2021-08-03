@@ -18,6 +18,9 @@ export default class EnvironmentCreate extends Command {
     description: flags.string({
       description: 'Environment Description',
     }),
+    ttl: flags.string({
+      description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
+    }),
   };
 
   static args = [{
@@ -57,6 +60,7 @@ export default class EnvironmentCreate extends Command {
       name: environment_name,
       description: flags.description,
       platform_id: platform.id,
+      ttl: flags.ttl,
     };
     await this.app.api.post(`/accounts/${account.id}/environments`, dto);
 
