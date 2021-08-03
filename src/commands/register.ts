@@ -131,11 +131,11 @@ export default class ComponentRegister extends Command {
       return service_config.image;
     }
 
-    this.log('Attempting to pull a previously built image for use with docker --cache-from...')
+    this.log('Attempting to pull a previously built image for use with docker --cache-from...');
     try {
       await Docker.pullImage(Docker.toCacheImage(image_tag));
     } catch {
-      this.log('No previously cached image found. The docker build will proceed without using a cached image')
+      this.log('No previously cached image found. The docker build will proceed without using a cached image');
     }
 
     // build and push the image to our repository
