@@ -2,6 +2,7 @@ import { IsBooleanString, IsEmpty, IsNotEmpty, IsOptional, IsString } from 'clas
 import { Exclusive } from '../../utils/validators/exclusive';
 import { ValidatableConfig } from '../base-spec';
 
+//TODO:269:delete
 export class VolumeSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @IsString({ always: true })
@@ -17,12 +18,12 @@ export class VolumeSpecV1 extends ValidatableConfig {
     message: 'Cannot hardcode a host mount path in a component outside of the debug block',
   })
   @IsString({ always: true })
-  @Exclusive(['key'], { always: true, message: 'host_path and key are exclusive'})
+  @Exclusive(['key'], { always: true, message: 'host_path and key are exclusive' })
   host_path?: string;
 
   @IsOptional({ always: true })
   @IsString({ always: true })
-  @Exclusive(['host_path'], { always: true, message: 'Key and host_path are exclusive'})
+  @Exclusive(['host_path'], { always: true, message: 'Key and host_path are exclusive' })
   key?: string;
 
   @IsOptional({ always: true })

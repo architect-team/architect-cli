@@ -33,13 +33,13 @@
     "@types/js-yaml": "^4.0.1",
     "@types/mustache": "^4.1.1",
     "@types/shell-quote": "^1.7.0",
-    "typescript": "^3.9.7",
-    "typescript-json-schema": "^0.49.0"
+    "class-validator-jsonschema": "^3.1.0",
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b",
-    "generate:schema:v1": "typescript-json-schema ./src/spec/v1-component-spec.ts ComponentSpecV1 > ./v1-component-schema.json"
+    "generate:schema": "ts-node --project ./tsconfig.json-schema.json ./src/schema/generate-json-schema.ts"
   },
   "main": "lib/index.js",
   "files": [

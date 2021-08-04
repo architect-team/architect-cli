@@ -3,6 +3,7 @@ import { IsNotEmpty, IsOptional, IsString, Matches, ValidateIf } from 'class-val
 import { Exclusive } from '../../utils/validators/exclusive';
 import { ValidatableConfig } from '../base-spec';
 
+//TODO:269:delete
 export class LivenessProbeSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @Type(() => String)

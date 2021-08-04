@@ -81,6 +81,7 @@ export interface ComponentContextV1 {
   tasks: Dictionary<TaskContextV1>;
 }
 
+//TODO:269:delete
 export class ComponentConfigV1 extends ComponentConfig {
   @Allow({ always: true })
   __version?: string;

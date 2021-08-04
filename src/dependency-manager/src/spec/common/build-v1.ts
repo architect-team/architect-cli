@@ -3,6 +3,7 @@ import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateIf } from 'class-va
 import { Dictionary } from '../../utils/dictionary';
 import { ValidatableConfig } from '../base-spec';
 
+//TODO:269:delete
 export class BuildSpecV1 extends ValidatableConfig {
   @ValidateIf(o => o.context || o.dockerfile, { always: true })
   @IsNotEmpty({ always: true })

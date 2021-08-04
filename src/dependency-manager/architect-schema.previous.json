@@ -1,0 +1,159 @@
+{
+  "title": "JSON Schema for Architect.io configuration",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "properties": {
+    "name": {
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "extends": {
+      "pattern": "^(?!file:).*$",
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "author": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/definitions/ParameterDefinitionSpec"
+          }
+        ]
+      }
+    },
+    "artifact_image": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "definitions": {
+    "ParameterDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "type": "object"
+    },
+    "ComponentSpec": {
+      "properties": {
+        "name": {
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "extends": {
+          "pattern": "^(?!file:).*$",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "author": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/definitions/ParameterDefinitionSpec"
+              }
+            ]
+          }
+        },
+        "artifact_image": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    }
+  }
+}

@@ -4,6 +4,7 @@ import { validateNested } from '../..';
 import { AtLeastOne } from '../../utils/validators/at-least-one';
 import { ValidatableConfig } from '../base-spec';
 
+//TODO:269:delete
 export class ScalingMetricsSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @Type(() => String)
@@ -14,6 +15,7 @@ export class ScalingMetricsSpecV1 extends ValidatableConfig {
   memory?: string;
 }
 
+//TODO:269:delete
 export class ScalingSpecV1 extends ValidatableConfig {
   @IsString({ always: true })
   @Type(() => String)

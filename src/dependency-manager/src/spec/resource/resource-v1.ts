@@ -13,6 +13,7 @@ import { transformVolumes } from '../common/volume-transformer';
 import { VolumeSpecV1 } from '../common/volume-v1';
 import { ResourceConfig } from './resource-config';
 
+//TODO:269:delete
 export class ResourceConfigV1 extends BaseConfig implements ResourceConfig {
   @Allow({ always: true })
   __version?: string;

@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import { IsBooleanString, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ValidatableConfig } from '../base-spec';
 
+//TODO:269:delete
 export class InterfaceSpecV1 extends ValidatableConfig {
   @IsOptional({ always: true })
   @IsString({ always: true })
