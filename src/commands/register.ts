@@ -1,7 +1,10 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
+import colors from 'colors';
+import * as Diff from 'diff';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -10,9 +13,10 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { ArchitectError, Refs, Slugs } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, Refs, Slugs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import NULL_TYPE from './../dependency-manager/src/utils/yaml/null';
 
 tmp.setGracefulCleanup();
 
@@ -80,7 +84,7 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
+    const { raw_config, file_path, file_contents } = await ComponentConfigBuilder.rawFromPath(config_path);
     const component_path = path.dirname(file_path);
 
     if (!raw_config.name) {
@@ -119,10 +123,33 @@ export default class ComponentRegister extends Command {
       config: raw_config,
     };
 
+    let previous_config_data;
+    try {
+      previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${ComponentSlugUtils.parse(raw_config.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+    /* eslint-disable-next-line no-empty */
+    } catch {}
+
     cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop();
+
     this.log(chalk.green(`Successfully registered component`));
+
+    if (previous_config_data) {
+      const current_version_yml = yaml.dump(previous_config_data, { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }), lineWidth: -1 });
+      const component_config_diff = Diff.diffLines(current_version_yml, file_contents);
+      component_config_diff.forEach((part) => {
+        if (part.added) {
+          process.stdout.write(colors.green(part.value));
+        } else if (part.removed) {
+          process.stdout.write(colors.red(part.value));
+        } else {
+          process.stdout.write(colors.grey(part.value));
+        }
+      });
+    } else {
+      this.log('No diff to show as the component was newly registered');
+    }
   }
 
   private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
