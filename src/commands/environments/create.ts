@@ -7,6 +7,13 @@ import { AccountUtils } from '../../common/utils/account';
 import { PlatformUtils } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
 
+interface CreateEnvironmentDto {
+  name: string;
+  description?: string;
+  platform_id: string;
+  ttl?: string;
+}
+
 export default class EnvironmentCreate extends Command {
   static aliases = ['environment:create', 'envs:create', 'env:create'];
   static description = 'Register a new environment with Architect Cloud';
@@ -17,6 +24,9 @@ export default class EnvironmentCreate extends Command {
     ...PlatformUtils.flags,
     description: flags.string({
       description: 'Environment Description',
+    }),
+    ttl: flags.string({
+      description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
     }),
   };
 
@@ -53,11 +63,14 @@ export default class EnvironmentCreate extends Command {
 
     cli.action.start(chalk.blue('Registering environment with Architect'));
 
-    const dto = {
+    const dto: CreateEnvironmentDto = {
       name: environment_name,
       description: flags.description,
       platform_id: platform.id,
     };
+    if (flags.ttl) {
+      dto.ttl = flags.ttl;
+    }
     await this.app.api.post(`/accounts/${account.id}/environments`, dto);
 
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
