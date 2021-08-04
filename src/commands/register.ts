@@ -131,13 +131,17 @@ export default class ComponentRegister extends Command {
 
     if (previous_config_data) {
       const current_version_yml = yaml.dump(previous_config_data, { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }), lineWidth: -1 });
-      const component_config_diff = Diff.diffLines(current_version_yml, file_contents);
+      const clean_file_contents_yml = yaml.dump(yaml.load(file_contents, { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }) }), { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }), lineWidth: -1 });
+      const component_config_diff = Diff.diffLines(current_version_yml, clean_file_contents_yml);
       component_config_diff.forEach((part) => {
         if (part.added) {
           process.stdout.write(colors.green(part.value));
         } else if (part.removed) {
-          if (!part.value.trimStart().startsWith('image:')) {
-            process.stdout.write(colors.red(part.value));
+          const removed_lines = part.value.split('\n');
+          for (const removed_line of removed_lines) {
+            if (!removed_line.trimStart().startsWith('image:') && removed_line.trim().length > 0) {
+              process.stdout.write(colors.red(removed_line) + '\n');
+            }
           }
         } else {
           process.stdout.write(colors.grey(part.value));
