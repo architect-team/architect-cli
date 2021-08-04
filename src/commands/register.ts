@@ -129,12 +129,6 @@ export default class ComponentRegister extends Command {
     /* eslint-disable-next-line no-empty */
     } catch {}
 
-    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
-    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
-    cli.action.stop();
-
-    this.log(chalk.green(`Successfully registered component`));
-
     if (previous_config_data) {
       const current_version_yml = yaml.dump(previous_config_data, { schema: yaml.FAILSAFE_SCHEMA.extend({ implicit: [NULL_TYPE] }), lineWidth: -1 });
       const component_config_diff = Diff.diffLines(current_version_yml, file_contents);
@@ -142,7 +136,9 @@ export default class ComponentRegister extends Command {
         if (part.added) {
           process.stdout.write(colors.green(part.value));
         } else if (part.removed) {
-          process.stdout.write(colors.red(part.value));
+          if (!part.value.trimStart().startsWith('image:')) {
+            process.stdout.write(colors.red(part.value));
+          }
         } else {
           process.stdout.write(colors.grey(part.value));
         }
@@ -150,6 +146,11 @@ export default class ComponentRegister extends Command {
     } else {
       this.log('No diff to show as the component was newly registered');
     }
+
+    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
+    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
+    cli.action.stop();
+    this.log(chalk.green(`Successfully registered component`));
   }
 
   private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
