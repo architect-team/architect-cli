@@ -136,13 +136,13 @@ export default class ComponentRegister extends Command {
     this.log(chalk.blue(`Begin component config diff`));
     const current_config_data = await this.getComponentConfig(selected_account.name, component_name, tag);
     const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(current_config_data));
-    for (const part of component_config_diff) {
-      const line_parts = part.value.split('\n');
+    for (const diff_section of component_config_diff) {
+      const line_parts = diff_section.value.split('\n');
       line_parts.pop(); // last element will be a newline that we don't want
       for (const line_part of line_parts) {
-        if (part.added) {
+        if (diff_section.added) {
           process.stdout.write(chalk.green(`+ ${line_part}`));
-        } else if (part.removed) {
+        } else if (diff_section.removed) {
           process.stdout.write(chalk.red(`- ${line_part}`));
         } else {
           process.stdout.write(chalk.grey(`  ${line_part}`));
