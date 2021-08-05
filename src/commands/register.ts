@@ -128,14 +128,8 @@ export default class ComponentRegister extends Command {
     /* eslint-disable-next-line no-empty */
     } catch {}
 
-    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
-    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
-    cli.action.stop();
-    this.log(chalk.green(`Successfully registered component`));
-
     this.log(chalk.blue(`Begin component config diff`));
-    const current_config_data = await this.getComponentConfig(selected_account.name, component_name, tag);
-    const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(current_config_data));
+    const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(component_dto.config));
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
       line_parts.pop(); // last element will be a newline that we don't want
@@ -151,6 +145,11 @@ export default class ComponentRegister extends Command {
       }
     }
     this.log(chalk.blue(`End component config diff`));
+
+    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
+    await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
+    cli.action.stop();
+    this.log(chalk.green(`Successfully registered component`));
   }
 
   private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
