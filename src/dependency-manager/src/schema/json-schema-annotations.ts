@@ -60,12 +60,7 @@ export const AnyOf = (...args: any): DecoratorSchema => {
   }
 
   return {
-    type: "object",
-    properties: {
-      name: {
-        anyOf,
-      },
-    },
+    anyOf,
   } as DecoratorSchema;
 };
 

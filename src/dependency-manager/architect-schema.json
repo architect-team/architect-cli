@@ -119,19 +119,14 @@
           "type": "string"
         },
         "readonly": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         }
       },
       "type": "object"
@@ -213,17 +208,39 @@
           "additionalProperties": {}
         },
         "volumes": {
-          "type": "object",
+          "properties": {
+            "mount_path": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "readonly": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
           "additionalProperties": {
-            "anyOf": [
+            "oneOf": [
               {
-                "$ref": "#/definitions/VolumeSpec"
+                "host_path": {
+                  "type": "string"
+                }
               },
               {
-                "type": "string"
+                "key": {
+                  "type": "string"
+                }
               }
             ]
-          }
+          },
+          "type": "object"
         },
         "build": {
           "$ref": "#/definitions/BuildSpec"
@@ -293,19 +310,14 @@
           "type": "string"
         },
         "sticky": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         }
       },
       "type": "object"
@@ -313,79 +325,54 @@
     "LivenessProbeSpec": {
       "properties": {
         "success_threshold": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "failure_threshold": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "timeout": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "interval": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "initial_delay": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "path": {
           "pattern": "^\\/.*$",
@@ -475,17 +462,39 @@
           "additionalProperties": {}
         },
         "volumes": {
-          "type": "object",
+          "properties": {
+            "mount_path": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "readonly": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
           "additionalProperties": {
-            "anyOf": [
+            "oneOf": [
               {
-                "$ref": "#/definitions/VolumeSpec"
+                "host_path": {
+                  "type": "string"
+                }
               },
               {
-                "type": "string"
+                "key": {
+                  "type": "string"
+                }
               }
             ]
-          }
+          },
+          "type": "object"
         },
         "build": {
           "$ref": "#/definitions/BuildSpec"
@@ -571,17 +580,39 @@
           "additionalProperties": {}
         },
         "volumes": {
-          "type": "object",
+          "properties": {
+            "mount_path": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "readonly": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
           "additionalProperties": {
-            "anyOf": [
+            "oneOf": [
               {
-                "$ref": "#/definitions/VolumeSpec"
+                "host_path": {
+                  "type": "string"
+                }
               },
               {
-                "type": "string"
+                "key": {
+                  "type": "string"
+                }
               }
             ]
-          }
+          },
+          "type": "object"
         },
         "build": {
           "$ref": "#/definitions/BuildSpec"
@@ -640,19 +671,14 @@
           "type": "string"
         },
         "sticky": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         }
       },
       "type": "object"
@@ -660,40 +686,30 @@
     "ParameterDefinitionSpec": {
       "properties": {
         "required": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "description": {
           "type": "string"
         },
         "default": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
             }
-          }
+          ]
         }
       },
       "type": "object"

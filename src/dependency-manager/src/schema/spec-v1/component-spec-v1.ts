@@ -1,42 +1,39 @@
 import { IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { Dictionary } from '../utils/dictionary';
-import { ComponentSlugUtils } from '../utils/slugs';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from './json-schema-annotations';
-import { InterfaceSpec, ServiceSpec } from './service-spec';
-import { TaskSpec } from './task-spec';
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSlugUtils } from '../../utils/slugs';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
+import { InterfaceSpecV1, ServiceSpecV1 } from './service-spec-v1';
+import { TaskSpecV1 } from './task-spec-v1';
 
-export class IngressSpec {
+// TODO:269: kill versions from naming
+export class IngressSpecV1 {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   subdomain?: string;
 }
 
-export class ComponentInterfaceSpec extends InterfaceSpec {
+export class ComponentInterfaceSpecV1 extends InterfaceSpecV1 {
   @IsOptional()
   @ValidateNested()
-  ingress?: IngressSpec;
+  ingress?: IngressSpecV1;
 }
 
-export class ParameterDefinitionSpec {
+export class ParameterDefinitionSpecV1 {
   @IsOptional()
-  @JSONSchema(AnyOf('boolean', 'string'))
-  required?: boolean | string;
+  @JSONSchema({ type: 'boolean' })
+  required?: boolean;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('boolean', 'number', 'string'))
-  default?: boolean | number | string;
+  @JSONSchema(AnyOf('boolean', 'number', 'string', 'null'))
+  default?: boolean | number | string | null;
 }
 
-export class ComponentSpec {
-  // TODO:269:misc
-  // @Allow()
-  // __version?: string;
-
+export class ComponentSpecV1 {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
     message: 'Names must only include letters, numbers, and dashes. Names must be prefixed with an account name (e.g. architect/component-name).',
     groups: ['developer'],
@@ -47,16 +44,6 @@ export class ComponentSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   tag?: string;
-
-  // TODO:269:add-to-config
-  // @IsOptional()
-  // instance_id!: string;
-
-  // @IsOptional()
-  // instance_name!: string;
-
-  // @IsOptional()
-  // instance_date!: Date;
 
   @IsOptional()
   @Matches(/^(?!file:).*$/g) // TODO:269:factor out into a constant
@@ -80,24 +67,24 @@ export class ComponentSpec {
   homepage?: string;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec))
-  parameters?: Dictionary<ParameterDefinitionSpec>;
+  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpecV1))
+  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpecV1>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(ServiceSpec))
-  services?: Dictionary<ServiceSpec>;
+  @JSONSchema(DictionaryOf(ServiceSpecV1))
+  services?: Dictionary<ServiceSpecV1>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(TaskSpec))
-  tasks?: Dictionary<TaskSpec>;
+  @JSONSchema(DictionaryOf(TaskSpecV1))
+  tasks?: Dictionary<TaskSpecV1>;
 
   @IsOptional()
   @JSONSchema(DictionaryOf('string'))
   dependencies?: Dictionary<string>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', ComponentInterfaceSpec))
-  interfaces?: Dictionary<string | ComponentInterfaceSpec>;
+  @JSONSchema(DictionaryOfAny('string', ComponentInterfaceSpecV1))
+  interfaces?: Dictionary<string | ComponentInterfaceSpecV1>;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })

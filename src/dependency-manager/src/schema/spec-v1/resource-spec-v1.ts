@@ -1,9 +1,9 @@
 import { IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { Dictionary } from '../utils/dictionary';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from './json-schema-annotations';
+import { Dictionary } from '../../utils/dictionary';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
 
-export class DeployModuleSpec {
+export class DeployModuleSpecV1 {
   @JSONSchema({ type: 'string' })
   path!: string;
 
@@ -11,16 +11,15 @@ export class DeployModuleSpec {
   inputs!: Dictionary<string>;
 }
 
-//TODO:269:delete
-export class DeploySpec {
+export class DeploySpecV1 {
   @JSONSchema({ type: 'string' })
   strategy!: string;
 
-  @JSONSchema(DictionaryOf(DeployModuleSpec))
-  modules!: Dictionary<DeployModuleSpec>;
+  @JSONSchema(DictionaryOf(DeployModuleSpecV1))
+  modules!: Dictionary<DeployModuleSpecV1>;
 }
 
-export class VolumeSpec {
+export class VolumeSpecV1 {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   mount_path?: string;
@@ -55,7 +54,7 @@ export class VolumeSpec {
   readonly?: boolean | string;
 }
 
-export class BuildSpec {
+export class BuildSpecV1 {
   // @ValidateIf(o => o.context || o.dockerfile, )
   // TODO:269:next: exclusive OR across properties
   @IsOptional()
@@ -84,7 +83,7 @@ export class BuildSpec {
   dockerfile?: string;
 }
 
-export class ResourceSpec {
+export class ResourceSpecV1 {
   // TODO:269:misc
   // @Allow()
   // __version?: string;
@@ -149,7 +148,7 @@ export class ResourceSpec {
   @JSONSchema({
     type: 'object',
     additionalProperties: {}, // any property
-  }) // TODO:269: why is this any? Can we type this?
+  }) // TODO:269: kill this. double check on simplecommands
   platforms?: Dictionary<any>;
 
   @IsOptional()
@@ -179,9 +178,9 @@ export class ResourceSpec {
   // TODO:269:special case: key/value matching
   // @IsOptional()
   // @IsObject()
-  // @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
-  // @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
-  // labels?: Map<string, string>;
+  @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
+  @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
+  labels?: Map<string, string>;
 
   // TODO:269:validation
   // async validate(options?: ValidatorOptions) {
