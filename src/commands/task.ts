@@ -25,13 +25,18 @@ export default class TaskExec extends Command {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
     }),
     compose_file: flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    'compose-file': flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
     }),
   };
 
@@ -48,6 +53,18 @@ export default class TaskExec extends Command {
     },
   ];
 
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
+
   async run() {
     const { flags } = this.parse(TaskExec);
 
@@ -63,7 +80,7 @@ export default class TaskExec extends Command {
     await Docker.verify();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
-    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     let compose;
     try {
