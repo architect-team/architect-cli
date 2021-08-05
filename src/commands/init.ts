@@ -63,7 +63,6 @@ export abstract class InitCommand extends Command {
 
   async run() {
     const { flags } = this.parse(InitCommand);
-    this.checkFlagDeprecations(flags, InitCommand.flags);
 
     const from_path = path.resolve(untildify(flags['from-compose']));
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);

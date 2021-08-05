@@ -22,7 +22,8 @@ export default abstract class extends Command {
 
   checkFlagDeprecations(flags: any, flagDefinitions: any) {
     Object.keys(flags).forEach((flagName: string) => {
-      const description: string = flagDefinitions[flagName].description;
+      const flagConfig = flagDefinitions[flagName] || {};
+      const description = flagConfig.description || '';
       if (description?.startsWith(DEPRECATED_LABEL)) {
         this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
       }
@@ -30,6 +31,10 @@ export default abstract class extends Command {
   }
 
   async init() {
+    const { flags } = this.parse(this.constructor as any);
+    const flag_definitions = (this.constructor as any).flags;
+    this.checkFlagDeprecations(flags, flag_definitions);
+
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
       if (this.auth_required()) {

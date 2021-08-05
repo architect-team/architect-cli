@@ -29,7 +29,6 @@ export default class Destroy extends DeployCommand {
 
   async run() {
     const { flags } = this.parse(Destroy);
-    this.checkFlagDeprecations(flags, Destroy.flags);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);

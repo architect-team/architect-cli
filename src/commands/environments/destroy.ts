@@ -47,7 +47,6 @@ export default class EnvironmentDestroy extends Command {
 
   async run() {
     const { args, flags } = this.parse(EnvironmentDestroy);
-    this.checkFlagDeprecations(flags, EnvironmentDestroy.flags);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);

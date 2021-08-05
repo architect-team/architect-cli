@@ -95,9 +95,6 @@ export default class PlatformCreate extends Command {
   }
 
   async run() {
-    const { flags } = this.parse(PlatformCreate);
-    this.checkFlagDeprecations(flags, PlatformCreate.flags);
-
     await this.createPlatform();
   }
 

@@ -42,7 +42,6 @@ export default class PlatformDestroy extends Command {
 
   async run() {
     const { args, flags } = this.parse(PlatformDestroy);
-    this.checkFlagDeprecations(flags, PlatformDestroy.flags);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);

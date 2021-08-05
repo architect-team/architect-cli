@@ -443,7 +443,6 @@ export default class Deploy extends DeployCommand {
 
   async run() {
     const { args, flags } = this.parse(Deploy);
-    this.checkFlagDeprecations(flags, Deploy.flags);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
       if (flags.interface?.length) {
