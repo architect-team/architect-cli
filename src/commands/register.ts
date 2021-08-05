@@ -136,7 +136,7 @@ export default class ComponentRegister extends Command {
     this.log(chalk.blue(`Begin component config diff`));
     const current_config_data = await this.getComponentConfig(selected_account.name, component_name, tag);
     const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(current_config_data));
-    component_config_diff.forEach((part) => {
+    for (const part of component_config_diff) {
       const line_parts = part.value.split('\n');
       line_parts.pop(); // last element will be a newline that we don't want
       for (const line_part of line_parts) {
