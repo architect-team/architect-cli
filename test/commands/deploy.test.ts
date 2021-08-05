@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
+import Command from '../../src/base-command';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
@@ -796,16 +797,43 @@ describe('remote deploy environment', function () {
     .stderr({ print })
 
   remoteDeploy
-    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
       expect(ctx.stdout).to.contain('Deployed');
     })
 
   describe('instance deploys', function () {
     remoteDeploy
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest@tenant-1'])
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
         expect(ctx.stdout).to.contain('Deployed')
       })
   });
+});
+
+describe('auto-approve flag with underscore style still works', function () {
+  const remoteDeploy = mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`)
+      .reply(200, mock_pipeline))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/pipelines/${mock_pipeline.id}/approve`)
+      .reply(200, {}))
+    .stdout({ print })
+    .stderr({ print })
+
+  remoteDeploy
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+    .it('works but also emits a deprication warning', ctx => {
+      expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
+      expect(ctx.stdout).to.contain('Deployed');
+    });
 });

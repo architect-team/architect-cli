@@ -49,7 +49,7 @@ describe('destroy', function () {
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto_approve'])
+    .command(['destroy', '-a', mock_account.name, '-e', mock_env.name, '--auto-approve'])
     .it('destroy completes', ctx => {
       expect(ctx.stdout).to.contain('Deployed\n')
     });
