@@ -10,19 +10,19 @@ export class EcsPlatformUtils {
       {
         type: 'input',
         name: 'aws_region',
-        when: !flags.aws_region,
+        when: !flags['aws-region'],
         message: 'In which AWS region would you like Architect to operate?',
       },
       {
         type: 'input',
         name: 'aws_key',
-        when: !flags.aws_key,
+        when: !flags['aws-key'],
         message: 'What is the AccessKeyId for the AWS user that Architect will drive?',
       },
       {
         type: 'input',
         name: 'aws_secret',
-        when: !flags.aws_secret,
+        when: !flags['aws-secret'],
         message: 'What is the SecretAccessKey for the AWS user that Architect will drive?',
       },
     ]);
