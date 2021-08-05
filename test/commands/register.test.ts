@@ -48,6 +48,11 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
@@ -73,6 +78,11 @@ describe('register', function () {
       })
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
@@ -97,6 +107,11 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/hello-world/versions/latest`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
@@ -140,6 +155,11 @@ describe('register', function () {
         return body;
       })
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
@@ -187,6 +207,11 @@ describe('register', function () {
         return body;
       })
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/architect/components/fusionauth/versions/1.0.0`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
@@ -304,6 +329,11 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/stateless-component/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0'])
@@ -337,6 +367,11 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
@@ -360,6 +395,11 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .persist()
+      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
