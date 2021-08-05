@@ -204,10 +204,6 @@ describe('register', function () {
       })
       .reply(200, {})
     )
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/architect/components/fusionauth/versions/1.0.0`)
-      .reply(200)
-    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])

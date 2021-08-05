@@ -121,10 +121,9 @@ export default class ComponentRegister extends Command {
       config: raw_config,
     };
 
-    const component_name = ComponentSlugUtils.parse(raw_config.name).component_name;
     let previous_config_data;
     try {
-      previous_config_data = await this.getComponentConfig(selected_account.name, component_name, tag);
+      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(raw_config.name).component_name}/versions/${tag || 'latest'}`)).data.config;
     /* eslint-disable-next-line no-empty */
     } catch {}
 
@@ -244,9 +243,5 @@ export default class ComponentRegister extends Command {
     } else {
       throw new Error('Unable to get digest');
     }
-  }
-
-  private async getComponentConfig(account_name: string, component_name: string, tag: string) {
-    return (await this.app.api.get(`/accounts/${account_name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
   }
 }
