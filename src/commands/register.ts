@@ -149,7 +149,7 @@ export default class ComponentRegister extends Command {
         }
         process.stdout.write('\n');
       }
-    };
+    }
     this.log(chalk.blue(`End component config diff`));
   }
 
