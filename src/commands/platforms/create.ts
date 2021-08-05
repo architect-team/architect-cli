@@ -31,7 +31,11 @@ export default class PlatformCreate extends Command {
     ['auto-approve']: flags.boolean(),
     type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
-    kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service-token', 'cluster-ca-cert', 'host'] }),
+    kubeconfig: flags.string({
+      char: 'k',
+      default: '~/.kube/config',
+      exclusive: ['service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+    }),
     aws_key: flags.string({
       exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
       description: `${Command.DEPRECATED} Please use --aws-key.`,
@@ -46,22 +50,22 @@ export default class PlatformCreate extends Command {
       hidden: true,
     }),
     ['aws-secret']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'cluster-ca-cert', 'host']
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
     }),
     aws_region: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'cluster-ca-cert', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
       description: `${Command.DEPRECATED} Please use --aws-region.`,
       hidden: true,
     }),
     ['aws-region']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'cluster-ca-cert', 'host']
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
     }),
     service_token: flags.string({
       description: `${Command.DEPRECATED} Please use --service-token.`,
       hidden: true,
     }),
     ['service-token']: flags.string({
-      description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN'
+      description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN',
     }),
     cluster_ca_cert: flags.string({
       description: `${Command.DEPRECATED} Please use --cluster-ca-cert.`,
@@ -69,7 +73,7 @@ export default class PlatformCreate extends Command {
     }),
     ['cluster-ca-cert']: flags.string({
       description: 'File path of cluster-ca-cert',
-      env: 'ARCHITECT_CLUSTER_CA_CERT'
+      env: 'ARCHITECT_CLUSTER_CA_CERT',
     }),
     flag: flags.string({ multiple: true, default: [] }),
   };
@@ -91,12 +95,14 @@ export default class PlatformCreate extends Command {
   }
 
   async run() {
+    const { flags } = this.parse(PlatformCreate);
+    this.checkFlagDeprecations(flags, PlatformCreate.flags);
+
     await this.createPlatform();
   }
 
   private async createPlatform() {
     const { args, flags } = this.parse(PlatformCreate);
-    this.checkFlagDeprecations(flags, PlatformCreate.flags);
 
     const answers: any = await inquirer.prompt([
       {

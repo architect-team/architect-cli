@@ -22,7 +22,7 @@ export default abstract class extends Command {
 
   checkFlagDeprecations(flags: any, flagDefinitions: any) {
     Object.keys(flags).forEach((flagName: string) => {
-      const description: string = flagDefinitions[flagName].description
+      const description: string = flagDefinitions[flagName].description;
       if (description?.startsWith(DEPRECATED_LABEL)) {
         this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
       }
