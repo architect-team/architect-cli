@@ -4,7 +4,11 @@ import AppService from './app-config/service';
 import LoginRequiredError from './common/errors/login-required';
 import { ArchitectError } from './dependency-manager/src/utils/errors';
 
+const DEPRECATED_LABEL = '[deprecated]';
+
 export default abstract class extends Command {
+  static readonly DEPRECATED: string = DEPRECATED_LABEL;
+
   app!: AppService;
   accounts?: any;
 
@@ -15,6 +19,15 @@ export default abstract class extends Command {
   static flags = {
     help: flags.help({ char: 'h' }),
   };
+
+  checkFlagDeprecations(flags: any, flagDefinitions: any) {
+    Object.keys(flags).forEach((flagName: string) => {
+      const description: string = flagDefinitions[flagName].description
+      if (description?.startsWith(DEPRECATED_LABEL)) {
+        this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
+      }
+    });
+  }
 
   async init() {
     if (!this.app) {
