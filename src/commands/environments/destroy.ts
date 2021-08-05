@@ -14,6 +14,10 @@ export default class EnvironmentDestroy extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     auto_approve: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+    }),
+    ['auto-approve']: flags.boolean({
       description: 'Automatically apply the changes',
       default: false,
     }),
@@ -30,8 +34,20 @@ export default class EnvironmentDestroy extends Command {
     parse: (value: string) => value.toLowerCase(),
   }];
 
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
+
   async run() {
     const { args, flags } = this.parse(EnvironmentDestroy);
+    this.checkFlagDeprecations(flags, EnvironmentDestroy.flags);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
@@ -46,7 +62,7 @@ export default class EnvironmentDestroy extends Command {
         }
         return `Name must match: ${chalk.blue(environment.name)}`;
       },
-      when: !flags.auto_approve,
+      when: !flags['auto-approve'],
     }]);
 
     cli.action.start(chalk.blue('Deregistering environment'));
