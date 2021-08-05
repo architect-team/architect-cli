@@ -1,7 +1,9 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
+import * as Diff from 'diff';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -10,7 +12,7 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { ArchitectError, Refs, Slugs } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, Refs, Slugs } from '../dependency-manager/src';
 import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -80,7 +82,7 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
+    const { raw_config, file_path, file_contents } = await ComponentConfigBuilder.rawFromPath(config_path);
     const component_path = path.dirname(file_path);
 
     if (!raw_config.name) {
@@ -118,6 +120,30 @@ export default class ComponentRegister extends Command {
       tag: tag,
       config: raw_config,
     };
+
+    let previous_config_data;
+    try {
+      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(raw_config.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+    /* eslint-disable-next-line no-empty */
+    } catch {}
+
+    this.log(chalk.blue(`Begin component config diff`));
+    const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(component_dto.config));
+    for (const diff_section of component_config_diff) {
+      const line_parts = diff_section.value.split('\n');
+      line_parts.pop(); // last element will be a newline that we don't want
+      for (const line_part of line_parts) {
+        if (diff_section.added) {
+          process.stdout.write(chalk.green(`+ ${line_part}`));
+        } else if (diff_section.removed) {
+          process.stdout.write(chalk.red(`- ${line_part}`));
+        } else {
+          process.stdout.write(chalk.grey(`  ${line_part}`));
+        }
+        process.stdout.write('\n');
+      }
+    }
+    this.log(chalk.blue(`End component config diff`));
 
     cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
