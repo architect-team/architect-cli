@@ -20,10 +20,10 @@ export default abstract class extends Command {
     help: flags.help({ char: 'h' }),
   };
 
-  checkFlagDeprecations(flags: any, flagDefinitions: any) {
+  checkFlagDeprecations(flags: any, flag_definitions: any) {
     Object.keys(flags).forEach((flagName: string) => {
-      const flagConfig = flagDefinitions[flagName] || {};
-      const description = flagConfig.description || '';
+      const flag_config = flag_definitions[flagName] || {};
+      const description = flag_config.description || '';
       if (description?.startsWith(DEPRECATED_LABEL)) {
         this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
       }
