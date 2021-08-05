@@ -14,6 +14,10 @@ export default class PlatformDestroy extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     auto_approve: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+    }),
+    ['auto-approve']: flags.boolean({
       description: 'Automatically apply the changes',
       default: false,
     }),
@@ -25,8 +29,20 @@ export default class PlatformDestroy extends Command {
     parse: (value: string) => value.toLowerCase(),
   }];
 
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
+
   async run() {
     const { args, flags } = this.parse(PlatformDestroy);
+    this.checkFlagDeprecations(flags, PlatformDestroy.flags);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
@@ -41,7 +57,7 @@ export default class PlatformDestroy extends Command {
         }
         return `Name must match: ${chalk.blue(platform.name)}`;
       },
-      when: !flags.auto_approve,
+      when: !flags['auto-approve'],
     }]);
 
     answers = { ...args, ...flags, ...answers };
