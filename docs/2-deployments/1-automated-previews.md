@@ -39,7 +39,7 @@ jobs:
       - name: Create env if not exists
         run: architect environment:create preview-${{ github.event.number }} -a <account-name> --platform <platform-name> || exit 0
       - name: Deploy component
-        run: architect deploy --auto_approve -a <account-name> -e preview-${{ github.event.number }} <component-name>:preview-${{ github.event.number }}
+        run: architect deploy --auto-approve -a <account-name> -e preview-${{ github.event.number }} <component-name>:preview-${{ github.event.number }}
 ```
 
 ### Cleanup preview environment
@@ -68,9 +68,9 @@ jobs:
       - name: Login to Architect Cloud
         run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - name: Clear the environment
-        run: architect destroy --auto_approve -a <account-name> -e preview-${{ github.event.number }}
+        run: architect destroy --auto-approve -a <account-name> -e preview-${{ github.event.number }}
       - name: Cleanup the environment
-        run: architect env:destroy --auto_approve -a <account-name> preview-${{ github.event.number }}
+        run: architect env:destroy --auto-approve -a <account-name> preview-${{ github.event.number }}
 ```
 
 ## Gitlab CI
@@ -103,7 +103,7 @@ deploy_preview:
   script: |
     architect register architect.yml --tag $ARCHITECT_ENVIRONMENT
     architect environment:create $ARCHITECT_ENVIRONMENT || true
-    architect deploy --auto_approve --account $ARCHITECT_ACCOUNT --environment $ARCHITECT_ENVIRONMENT $ARCHITECT_COMPONENT_NAME
+    architect deploy --auto-approve --account $ARCHITECT_ACCOUNT --environment $ARCHITECT_ENVIRONMENT $ARCHITECT_COMPONENT_NAME
   environment:
     name: architect/preview-$CI_MERGE_REQUEST_ID
     url: https://cloud.architect.io/$ARCHITECT_ACCOUNT/environments/preview-$CI_MERGE_REQUEST_ID/
@@ -117,8 +117,8 @@ destroy_preview:
     ARCHITECT_ENVIRONMENT: preview-$CI_MERGE_REQUEST_ID
     ARCHITECT_COMPONENT_NAME: <your/component:here>
   script: |
-    architect destroy --auto_approve --environment $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
-    architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
+    architect destroy --auto-approve --environment $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
+    architect env:destroy --auto-approve $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
   environment:
     name: architect/preview-$CI_MERGE_REQUEST_ID
     action: stop
