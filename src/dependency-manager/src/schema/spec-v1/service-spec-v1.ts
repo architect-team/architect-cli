@@ -4,24 +4,6 @@ import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
 import { ResourceSpecV1 } from './resource-spec-v1';
 
-// TODO:269:transform
-// export const transformServiceInterfaces = function (input?: Dictionary<string | Dictionary<any>>): Dictionary<InterfaceSpecV1V1> | undefined {
-//   if (!input) {
-//     return {};
-//   }
-//   if (!(input instanceof Object)) {
-//     return input;
-//   }
-
-//   const output: Dictionary<InterfaceSpecV1V1> = {};
-//   for (const [key, value] of Object.entries(input)) {
-//     output[key] = value instanceof Object
-//       ? plainToClass(InterfaceSpecV1V1, value)
-//       : plainToClass(InterfaceSpecV1V1, { port: value });
-//   }
-//   return output;
-// };
-
 export class ScalingMetricsSpecV1 {
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -89,25 +71,24 @@ export class InterfaceSpecV1 {
 
 export class LivenessProbeSpecV1 {
   @IsOptional()
-  @JSONSchema(AnyOf('number', 'string'))
-  success_threshold?: number | string;
+  @JSONSchema({ type: 'string' })
+  success_threshold?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('number', 'string'))
-  failure_threshold?: number | string;
+  @JSONSchema({ type: 'string' })
+  failure_threshold?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('number', 'string'))
-  timeout?: number | string;
+  @JSONSchema({ type: 'string' })
+  timeout?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('number', 'string'))
-  interval?: number | string;
+  @JSONSchema({ type: 'string' })
+  interval?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('number', 'string'))
-  initial_delay?: number | string;
-
+  @JSONSchema({ type: 'string' })
+  initial_delay?: string;
 
   // TODO:269:next: exclusive OR across properties
   // @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
@@ -174,38 +155,6 @@ export class ServiceSpecV1 extends ResourceSpecV1 {
   //   errors = await validateNested(expanded, 'scaling', errors, options);
   //   errors = await validateNested(expanded, 'build', errors, options);
   //   return errors;
-  // }
-
-  // TODO:269:transform
-  // getInterfaces() {
-  //   return transformServiceInterfaces(this.interfaces) || {};
-  // }
-
-  // getLivenessProbe(): LivenessProbeSpecV1 | undefined {
-  //   if (!this.liveness_probe || !Object.keys(this.liveness_probe).length) { return undefined; }
-
-  //   const liveness_probe = {
-  //     success_threshold: '1',
-  //     failure_threshold: '3',
-  //     timeout: '5s',
-  //     interval: '30s',
-  //     initial_delay: '0s',
-  //     ...this.liveness_probe,
-  //   };
-
-  //   if (this.liveness_probe.command && typeof this.liveness_probe.command === 'string') {
-  //     const env: Dictionary<string> = {};
-  //     for (const key of Object.keys(this.getEnvironmentVariables())) {
-  //       env[key] = `$${key}`;
-  //     }
-  //     liveness_probe.command = shell_parse(this.liveness_probe.command, env).map(e => `${e}`);
-  //   }
-
-  //   return liveness_probe as LivenessProbeSpecV1;
-  // }
-
-  // getReplicas() {
-  //   return this.replicas || '1';
   // }
 
   // /** @return New expanded copy of the current config */

@@ -3,7 +3,6 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { ResourceSpecV1 } from './resource-spec-v1';
 
 export class TaskSpecV1 extends ResourceSpecV1 {
-
   // TODO:269:validation
   // @IsEmpty({ groups: ['debug'] })
   @IsOptional()

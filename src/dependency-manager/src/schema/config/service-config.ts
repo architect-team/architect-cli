@@ -24,14 +24,14 @@ export interface InterfaceConfig {
 }
 
 export interface LivenessProbeConfig {
-  success_threshold?: number;
-  failure_threshold?: number;
-  timeout?: number;
-  interval?: number;
-  initial_delay?: number;
+  success_threshold?: string;
+  failure_threshold?: string;
+  timeout?: string;
+  interval?: string;
+  initial_delay?: string;
   path?: string;
   command?: string[];
-  port: number;
+  port: number | string;
 }
 
 export interface ServiceConfig extends ResourceConfig {

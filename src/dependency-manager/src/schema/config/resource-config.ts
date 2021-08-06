@@ -15,17 +15,18 @@ export interface VolumeConfig {
   host_path?: string;
   key?: string;
   description?: string;
-  readonly?: boolean;
+  readonly?: boolean | string;
 }
 
 export interface BuildConfig {
   context?: string;
-  args: Dictionary<string>;
+  args?: Dictionary<string>;
   dockerfile?: string;
 }
 
 export interface ResourceConfig {
   name: string;
+  tag: string;
   description?: string;
   image?: string;
   command?: string[];
@@ -33,7 +34,6 @@ export interface ResourceConfig {
   language: string;
   debug?: ResourceConfig;
   environment: Dictionary<string>;
-  platforms: Dictionary<any>;
   volumes: Dictionary<VolumeConfig>;
   build?: BuildConfig;
   cpu?: string;

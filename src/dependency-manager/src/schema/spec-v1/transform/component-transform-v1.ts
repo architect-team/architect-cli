@@ -8,6 +8,8 @@ import { ComponentContext, ServiceContext, TaskContext } from '../../config/cont
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
 import { ComponentInterfaceSpecV1, ComponentSpecV1, ParameterDefinitionSpecV1 } from '../component-spec-v1';
+import { transformServiceSpecV1 } from './service-transform-v1';
+import { transformTaskSpecV1 } from './task-transform-v1';
 
 export const transformComponentSpecV1Name = (name: string): ComponentSlug => {
   const split = ComponentSlugUtils.parse(name);
@@ -60,6 +62,10 @@ const transformComponentInterfaceSpecV1 = function (key: string, interface_spec:
   } else {
     let host, port, protocol, username, password;
     let url = interface_spec instanceof Object ? interface_spec.url : interface_spec;
+
+    if (!url) {
+      throw new Error('url is not set'); // TODO:269: this url was previously untyped so we shouldn't hit this. will type appropriately and remove after testing.
+    }
 
     const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
     const matches = url_regex.exec(url);
@@ -179,10 +185,10 @@ export const transformComponentSpecV1 = (spec: ComponentSpecV1): ComponentConfig
     tag,
     ref: transformComponentSpecV1Ref(spec.name, tag, instance_name),
 
-    // TODO:269: when do these get set in the lifecycle?
-    // instance_id: string;
-    // instance_name: string;
-    // instance_date: Date;
+    //TODO:269:instance
+    instance_id: '',
+    instance_name: '',
+    instance_date: new Date(),
 
     extends: spec.extends,
     local_path: transformLocalPathV1(spec.extends),
@@ -203,7 +209,6 @@ export const transformComponentSpecV1 = (spec: ComponentSpecV1): ComponentConfig
 
     artifact_image: spec.artifact_image,
 
-    // TODO:269: I'm not sure we want to be setting the context here
     context: transformComponentContext(
       dependencies,
       parameters,

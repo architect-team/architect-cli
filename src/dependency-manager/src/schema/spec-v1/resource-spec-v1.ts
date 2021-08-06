@@ -61,19 +61,6 @@ export class BuildSpecV1 {
   @JSONSchema({ type: 'string' })
   context?: string;
 
-  // TODO:269: transform
-  // @Transform(params => {
-  //   if (params?.value) {
-  //     if (!(params.value instanceof Object)) {
-  //       return params.value;
-  //     }
-  //     const output: Dictionary<string> = {};
-  //     for (const [k, v] of Object.entries(params.value)) {
-  //       output[k] = `${v}`;
-  //     }
-  //     return output;
-  //   }
-  // })
   @IsOptional()
   @JSONSchema(DictionaryOf('string'))
   args?: Dictionary<string>;
@@ -84,10 +71,6 @@ export class BuildSpecV1 {
 }
 
 export class ResourceSpecV1 {
-  // TODO:269:misc
-  // @Allow()
-  // __version?: string;
-
   @IsOptional()
   @JSONSchema({ type: 'string' })
   @Matches(/^[a-zA-Z0-9-_]+$/, { message: 'Names must only include letters, numbers, dashes, and underscores' }) //TODO:269: move match to description
@@ -138,26 +121,19 @@ export class ResourceSpecV1 {
 
   @IsOptional()
   @ValidateNested()
-  debug?: ResourceSpec;
+  debug?: ResourceSpecV1;
 
   @IsOptional()
   @JSONSchema(DictionaryOf('string'))
   environment?: Dictionary<string>;
 
   @IsOptional()
-  @JSONSchema({
-    type: 'object',
-    additionalProperties: {}, // any property
-  }) // TODO:269: kill this. double check on simplecommands
-  platforms?: Dictionary<any>;
-
-  @IsOptional()
-  @JSONSchema(DictionaryOfAny(VolumeSpec, 'string'))
-  volumes?: Dictionary<VolumeSpec | string>;
+  @JSONSchema(DictionaryOfAny(VolumeSpecV1, 'string'))
+  volumes?: Dictionary<VolumeSpecV1 | string>;
 
   @IsOptional()
   @ValidateNested()
-  build?: BuildSpec;
+  build?: BuildSpecV1;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -169,7 +145,7 @@ export class ResourceSpecV1 {
 
   @IsOptional()
   @ValidateNested()
-  deploy?: DeploySpec;
+  deploy?: DeploySpecV1;
 
   @IsOptional()
   @JSONSchema(ArrayOf('string'))
@@ -178,8 +154,8 @@ export class ResourceSpecV1 {
   // TODO:269:special case: key/value matching
   // @IsOptional()
   // @IsObject()
-  @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
-  @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
+  // @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
+  // @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
   labels?: Map<string, string>;
 
   // TODO:269:validation
@@ -199,75 +175,5 @@ export class ResourceSpecV1 {
   //   errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
   //   errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
   //   return errors;
-  // }
-
-  // TODO:269:transform
-  // getName(): string {
-  //   const split = ServiceVersionSlugUtils.parse(this.name || '');
-  //   return split.service_name;
-  // }
-
-  // getTag(): string {
-  //   const split = ServiceVersionSlugUtils.parse(this.name || '');
-  //   return split.tag;
-  // }
-
-  // getCommand() {
-  //   if (!this.command) return [];
-  //   if (this.command instanceof Array) {
-  //     return this.command;
-  //   }
-  //   const env: Dictionary<string> = {};
-  //   for (const key of Object.keys(this.getEnvironmentVariables())) {
-  //     env[key] = `$${key}`;
-  //   }
-  //   return shell_parse(this.command, env).map(e => `${e}`);
-  // }
-
-  // getEntrypoint() {
-  //   if (!this.entrypoint) return [];
-  //   if (this.entrypoint instanceof Array) {
-  //     return this.entrypoint;
-  //   }
-  //   const env: Dictionary<string> = {};
-  //   for (const key of Object.keys(this.getEnvironmentVariables())) {
-  //     env[key] = `$${key}`;
-  //   }
-  //   return shell_parse(this.entrypoint, env).map(e => `${e}`);
-  // }
-
-  // getEnvironmentVariables(): Dictionary<string> {
-  //   const output: Dictionary<string> = {};
-  //   for (const [k, v] of Object.entries(this.environment || {})) {
-  //     if (v === null) { continue; }
-  //     output[k] = `${v}`;
-  //   }
-  //   return output;
-  // }
-
-  // getVolumes(): Dictionary<VolumeSpec> {
-  //   return transformVolumes(this.volumes) || {};
-  // }
-
-  // getBuild() {
-  //   if (!this.build && !this.image) {
-  //     this.build = new BuildSpec();
-  //     this.build.context = '.';
-  //   }
-  //   return this.build || {};
-  // }
-
-  // /** @return New expanded copy of the current config */
-  // expand() {
-  //   const config = this.copy();
-
-  //   const debug = config.getDebugOptions();
-  //   if (debug) {
-  //     config.setDebugOptions(debug.expand());
-  //   }
-  //   for (const [key, value] of Object.entries(this.getVolumes())) {
-  //     config.setVolume(key, value);
-  //   }
-  //   return config;
   // }
 }
