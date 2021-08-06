@@ -26,6 +26,10 @@ export abstract class InitCommand extends Command {
   static flags = {
     ...Command.flags,
     component_file: flags.string({
+      description: `${Command.DEPRECATED} Please use --component-file.`,
+      hidden: true,
+    }),
+    'component-file': flags.string({
       char: 'o',
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
@@ -37,13 +41,30 @@ export abstract class InitCommand extends Command {
       char: 'n',
     }),
     from_compose: flags.string({
+      description: `${Command.DEPRECATED} Please use --from-compose.`,
+      hidden: true,
+    }),
+    'from-compose': flags.string({
       default: process.cwd(),
     }),
   };
 
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['component-file'] = flags.component_file ? flags.component_file : flags['component-file'];
+    flags['from-compose'] = flags.from_compose ? flags.from_compose : flags['from-compose'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
+
   async run() {
     const { flags } = this.parse(InitCommand);
-    const from_path = path.resolve(untildify(flags.from_compose));
+
+    const from_path = path.resolve(untildify(flags['from-compose']));
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
@@ -212,8 +233,8 @@ export abstract class InitCommand extends Command {
     }
 
     const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
-    fs.writeFileSync(flags.component_file, architect_yml);
-    this.log(chalk.green(`Wrote Architect component config to ${flags.component_file}`));
+    fs.writeFileSync(flags['component-file'], architect_yml);
+    this.log(chalk.green(`Wrote Architect component config to ${flags['component-file']}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
 }

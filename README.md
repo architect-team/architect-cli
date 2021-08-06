@@ -162,17 +162,17 @@ OPTIONS
   -h, --help                       show CLI help
   -i, --interface=interface        [default: ] Component interfaces
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
-  -o, --compose_file=compose_file  Path where the compose file should be written to
+  -o, --compose-file=compose-file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
   -r, --[no-]recursive             [default: true] Toggle to automatically deploy all dependencies
   -v, --values=values              Path of values file
 
-  --auto_approve                   Automatically approve the deployment without a review step. Used for debugging and CI
+  --auto-approve                   Automatically approve the deployment without a review step. Used for debugging and CI
                                    flows.
 
   --[no-]browser                   [default: true] Automatically open urls in the browser for local deployments
 
-  --build_parallel                 [default: false] Build docker images in parallel
+  --build-parallel                 [default: false] Build docker images in parallel
 
   --[no-]deletion-protection       [default: true] Toggle for deletion protection on deployments
 
@@ -196,12 +196,12 @@ OPTIONS
   -h, --help                     show CLI help
   -r, --[no-]recursive           [default: true] Toggle to automatically deploy all dependencies
 
-  --auto_approve                 Automatically approve the deployment without a review step. Used for debugging and CI
+  --auto-approve                 Automatically approve the deployment without a review step. Used for debugging and CI
                                  flows.
 
   --[no-]browser                 [default: true] Automatically open urls in the browser for local deployments
 
-  --build_parallel               [default: false] Build docker images in parallel
+  --build-parallel               [default: false] Build docker images in parallel
 ```
 
 _See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.2-rc.2/src/commands/destroy.ts)_
@@ -272,7 +272,7 @@ OPTIONS
   -a, --account=account  Architect account
   -f, --force            Force the deletion even if the environment is not empty
   -h, --help             show CLI help
-  --auto_approve         Automatically apply the changes
+  --auto-approve         Automatically apply the changes
 
 ALIASES
   $ architect environment:destroy
@@ -313,8 +313,8 @@ OPTIONS
   -a, --account=account
   -h, --help                           show CLI help
   -n, --name=name
-  -o, --component_file=component_file  [default: architect.yml] Path where the component file should be written to
-  --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
+  -o, --component-file=component-file  [default: architect.yml] Path where the component file should be written to
+  --from-compose=from-compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
 _See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.11.2-rc.2/src/commands/init.ts)_
@@ -403,13 +403,13 @@ OPTIONS
   -h, --host=host
   -k, --kubeconfig=kubeconfig               [default: ~/.kube/config]
   -t, --type=KUBERNETES|kubernetes|ECS|ecs
-  --auto_approve
-  --aws_key=aws_key
-  --aws_region=aws_region
-  --aws_secret=aws_secret
-  --cluster_ca_cert=cluster_ca_cert         File path of cluster_ca_cert
+  --auto-approve
+  --aws-key=aws-key
+  --aws-region=aws-region
+  --aws-secret=aws-secret
+  --cluster-ca-cert=cluster-ca-cert         File path of cluster-ca-cert
   --flag=flag                               [default: ]
-  --service_token=service_token             Service token
+  --service-token=service-token             Service token
 
 ALIASES
   $ architect platforms:register
@@ -433,7 +433,7 @@ ARGUMENTS
 OPTIONS
   -a, --account=account  Architect account
   -h, --help             show CLI help
-  --auto_approve         Automatically apply the changes
+  --auto-approve         Automatically apply the changes
 
 ALIASES
   $ architect platforms:deregister
@@ -485,7 +485,7 @@ OPTIONS
   -e, --environment=environment    Architect environment
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
-  -o, --compose_file=compose_file  Path where the compose file should be written to
+  -o, --compose-file=compose-file  Path where the compose file should be written to
 
 ALIASES
   $ architect task:exec

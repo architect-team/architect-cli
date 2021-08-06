@@ -24,17 +24,75 @@ export default class PlatformCreate extends Command {
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
-    auto_approve: flags.boolean(),
+    auto_approve: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+    }),
+    ['auto-approve']: flags.boolean(),
     type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
     host: flags.string({ char: 'h' }),
-    kubeconfig: flags.string({ char: 'k', default: '~/.kube/config', exclusive: ['service_token', 'cluster_ca_cert', 'host'] }),
-    aws_key: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
-    aws_secret: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
-    aws_region: flags.string({ exclusive: ['awsconfig', 'kubeconfig', 'service_token', 'cluster_ca_cert', 'host'] }),
-    service_token: flags.string({ description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN' }),
-    cluster_ca_cert: flags.string({ description: 'File path of cluster_ca_cert', env: 'ARCHITECT_CLUSTER_CA_CERT' }),
+    kubeconfig: flags.string({
+      char: 'k',
+      default: '~/.kube/config',
+      exclusive: ['service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+    }),
+    aws_key: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+      description: `${Command.DEPRECATED} Please use --aws-key.`,
+      hidden: true,
+    }),
+    ['aws-key']: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+    }),
+    aws_secret: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+      description: `${Command.DEPRECATED} Please use --aws-secret.`,
+      hidden: true,
+    }),
+    ['aws-secret']: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+    }),
+    aws_region: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+      description: `${Command.DEPRECATED} Please use --aws-region.`,
+      hidden: true,
+    }),
+    ['aws-region']: flags.string({
+      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'cluster-ca-cert', 'cluster_ca_cert', 'host'],
+    }),
+    service_token: flags.string({
+      description: `${Command.DEPRECATED} Please use --service-token.`,
+      hidden: true,
+    }),
+    ['service-token']: flags.string({
+      description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN',
+    }),
+    cluster_ca_cert: flags.string({
+      description: `${Command.DEPRECATED} Please use --cluster-ca-cert.`,
+      hidden: true,
+    }),
+    ['cluster-ca-cert']: flags.string({
+      description: 'File path of cluster-ca-cert',
+      env: 'ARCHITECT_CLUSTER_CA_CERT',
+    }),
     flag: flags.string({ multiple: true, default: [] }),
   };
+
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    flags['aws-key'] = flags.aws_key ? flags.aws_key : flags['aws-key'];
+    flags['aws-secret'] = flags.aws_secret ? flags.aws_secret : flags['aws-secret'];
+    flags['aws-region'] = flags.aws_region ? flags.aws_region : flags['aws-region'];
+    flags['service-token'] = flags.service_token ? flags.service_token : flags['service-token'];
+    flags['cluster-ca-cert'] = flags.cluster_ca_cert ? flags.cluster_ca_cert : flags['cluster-ca-cert'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
 
   async run() {
     await this.createPlatform();
@@ -78,7 +136,7 @@ export default class PlatformCreate extends Command {
     cli.action.stop();
     this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
-    if (!flags.auto_approve) {
+    if (!flags['auto-approve']) {
       const confirmation = await inquirer.prompt({
         type: 'confirm',
         name: 'application_install',

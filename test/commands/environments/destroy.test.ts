@@ -1,87 +1,74 @@
-import fs from 'fs-extra';
-import moxios from 'moxios';
-import os from 'os';
-import path from 'path';
 import sinon from 'sinon';
-import AppConfig from '../../../src/app-config/config';
-import AppService from '../../../src/app-config/service';
-import EnvironmentDestroy from '../../../src/commands/environments/destroy';
-import ARCHITECTPATHS from '../../../src/paths';
+import { expect } from 'chai';
+import { PipelineUtils } from '../../../src/common/utils/pipeline';
+import PortUtil from '../../../src/common/utils/port';
+import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environment:destroy', () => {
-  let tmp_dir = os.tmpdir();
-
-  beforeEach(function () {
-    // Stub the log_level
-    const config = new AppConfig('', {
-      log_level: 'debug',
-    });
-    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
-    sinon.replace(AppService, 'create', app_config_stub);
-
-    sinon.replace(EnvironmentDestroy.prototype, 'log', sinon.stub());
-    moxios.install();
+  beforeEach(() => {
+    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
+    PortUtil.reset();
   });
 
-  afterEach(function () {
-    // Restore stubs
+  afterEach(() => {
     sinon.restore();
-    moxios.uninstall();
-
-    // Remove the registry_host stub
-    fs.removeSync(path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME));
   });
 
-  // TODO: determine why moxios doesn't seem to intercept DELETE requests
+  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
+  const print = false;
 
-  // it('should generate destroy deployment', done => {
-  //   let environment_name = 'fake-account/test';
+  const mock_account = {
+    id: 'test-account-id',
+    name: 'test-account'
+  }
 
-  //   sinon.stub(inquirer, 'prompt').resolves({
-  //     environment: environment_name,
-  //     destroy: true,
-  //   });
+  const mock_env = {
+    id: 'test-env-id',
+    name: 'test-env'
+  }
 
-  //   moxios.stubOnce('DELETE', `/environments/${environment_name}`, {
-  //     status: 204,
-  //   });
+  const mock_pipeline = {
+    id: 'test-pipeline-id'
+  }
 
-  //   moxios.wait(function () {
-  //     let request = moxios.requests.mostRecent();
-  //     console.log(request);
-  //     const match = request.url.match(/^.*\/environments\/(.*)/);
-  //     expect(match).not.to.equal(null);
-  //     expect(match!.length).to.be.greaterThan(1);
-  //     expect(match![1]).to.equal(environment_name);
-  //     done();
-  //   });
+  mockArchitectAuth
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
+      .times(2)
+      .reply(200, mock_env))
+    .nock(MOCK_API_HOST, api => api
+      .delete(`/environments/${mock_env.id}?force=0`)
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve'])
+    .it('should generate destroy deployment', ctx => {
+      expect(ctx.stdout).to.contain('Environment deregistered\n')
+    });
 
-  //   EnvironmentDestroy.run([environment_name]);
-  // });
+  mockArchitectAuth
+    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.name}`)
+      .reply(200, mock_account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
+      .times(2)
+      .reply(200, mock_env))
+    .nock(MOCK_API_HOST, api => api
+      .delete(`/environments/${mock_env.id}?force=1`)
+      .reply(200, mock_pipeline))
+    .stdout({ print })
+    .stderr({ print })
+    .timeout(20000)
+    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve', '--force'])
+    .it('should force apply destroy job', ctx => {
+      expect(ctx.stdout).to.contain('Environment deregistered\n')
+    });
 
-  // it('should force apply destroy job', done => {
-  //   let environment_name = 'fake-account/test';
-
-  //   sinon.stub(inquirer, 'prompt').resolves({
-  //     environment: environment_name,
-  //     destroy: true,
-  //   });
-
-  //   moxios.stubOnce('DELETE', `/environments/${environment_name}`, {
-  //     status: 204,
-  //   });
-
-  //   moxios.wait(function () {
-  //     let request = moxios.requests.mostRecent();
-  //     const match = request.url.match(/^.*\/environments\/(.*)\?force=1/);
-  //     expect(match).not.to.equal(null);
-  //     expect(match!.length).to.be.greaterThan(1);
-  //     expect(match![1]).to.equal(environment_name);
-  //     done();
-  //   });
-
-  //   EnvironmentDestroy.run([environment_name, '--force']);
-  // });
 });

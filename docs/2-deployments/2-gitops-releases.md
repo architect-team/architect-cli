@@ -49,7 +49,7 @@ jobs:
           architect deploy \
             --account ${{ env.ARCHITECT_ACCOUNT }} \
             --environment staging \
-            --auto_approve \
+            --auto-approve \
             examples/my-component:${{ env.MAINLINE_TAG_NAME }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
 ```
 
@@ -99,6 +99,6 @@ jobs:
           architect deploy \
             --account ${{ env.ARCHITECT_ACCOUNT }} \
             --environment production \
-            --auto_approve \
+            --auto-approve \
             examples/my-component:${{ github.event.release.tag_name }} -i interface:interface -p PARAM_A=some_value PARAM_B=another_value
 ```
