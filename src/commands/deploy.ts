@@ -62,7 +62,7 @@ export abstract class DeployCommand extends Command {
   async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
-    if (!flags['auto-approve']) {
+    if (!flags['auto-approve'] && !flags.auto_approve) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
