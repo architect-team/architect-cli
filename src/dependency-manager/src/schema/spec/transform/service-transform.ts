@@ -1,8 +1,8 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { InterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../config/service-config';
-import { InterfaceSpecV1, LivenessProbeSpecV1, ServiceSpecV1 } from '../service-spec-v1';
-import { transformResourceSpecV1 } from './resource-transform-v1';
+import { InterfaceSpecV1, LivenessProbeSpecV1, ServiceSpecV1 } from '../service-spec';
+import { transformResourceSpecV1 } from './resource-transform';
 
 export const transformInterfaceSpecV1 = function (key: string, interface_spec: InterfaceSpecV1 | string): InterfaceConfig {
   if (interface_spec instanceof Object) {

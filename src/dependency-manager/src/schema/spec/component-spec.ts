@@ -3,8 +3,8 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlugUtils } from '../../utils/slugs';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
-import { InterfaceSpecV1, ServiceSpecV1 } from './service-spec-v1';
-import { TaskSpecV1 } from './task-spec-v1';
+import { InterfaceSpecV1, ServiceSpecV1 } from './service-spec';
+import { TaskSpecV1 } from './task-spec';
 
 // TODO:269: kill versions from naming
 export class IngressSpecV1 {

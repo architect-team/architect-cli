@@ -2,7 +2,7 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ServiceVersionSlugUtils } from '../../../utils/slugs';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
-import { BuildSpecV1, ResourceSpecV1, VolumeSpecV1 } from '../resource-spec-v1';
+import { BuildSpecV1, ResourceSpecV1, VolumeSpecV1 } from '../resource-spec';
 
 export const transformResourceSpecV1Name = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');

@@ -2,7 +2,7 @@ import { IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
-import { ResourceSpecV1 } from './resource-spec-v1';
+import { ResourceSpecV1 } from './resource-spec';
 
 export class ScalingMetricsSpecV1 {
   @IsOptional()

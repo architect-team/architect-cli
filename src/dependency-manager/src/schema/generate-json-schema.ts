@@ -1,7 +1,7 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import fs from 'fs-extra';
 import { REF_PREFIX } from './json-schema-annotations';
-import { ComponentSpecV1 } from './spec-v1/component-spec-v1';
+import { ComponentSpecV1 } from './spec/component-spec';
 
 const component_spec = new ComponentSpecV1();
 

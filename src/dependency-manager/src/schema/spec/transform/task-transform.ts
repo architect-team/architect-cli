@@ -1,6 +1,6 @@
 import { TaskConfig } from '../../config/task-config';
-import { TaskSpecV1 } from '../task-spec-v1';
-import { transformResourceSpecV1 } from './resource-transform-v1';
+import { TaskSpecV1 } from '../task-spec';
+import { transformResourceSpecV1 } from './resource-transform';
 
 export const transformTaskSpecV1 = (key: string, spec: TaskSpecV1): TaskConfig => {
   const resource_config = transformResourceSpecV1(key, spec);

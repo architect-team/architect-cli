@@ -7,9 +7,9 @@ import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } 
 import { ComponentContext, ServiceContext, TaskContext } from '../../config/context';
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
-import { ComponentInterfaceSpecV1, ComponentSpecV1, ParameterDefinitionSpecV1 } from '../component-spec-v1';
-import { transformServiceSpecV1 } from './service-transform-v1';
-import { transformTaskSpecV1 } from './task-transform-v1';
+import { ComponentInterfaceSpecV1, ComponentSpecV1, ParameterDefinitionSpecV1 } from '../component-spec';
+import { transformServiceSpecV1 } from './service-transform';
+import { transformTaskSpecV1 } from './task-transform';
 
 export const transformComponentSpecV1Name = (name: string): ComponentSlug => {
   const split = ComponentSlugUtils.parse(name);

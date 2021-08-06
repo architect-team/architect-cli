@@ -1,6 +1,6 @@
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { ResourceSpecV1 } from './resource-spec-v1';
+import { ResourceSpecV1 } from './resource-spec';
 
 export class TaskSpecV1 extends ResourceSpecV1 {
   // TODO:269:validation
