@@ -82,7 +82,7 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { raw_config, file_path, file_contents } = await ComponentConfigBuilder.rawFromPath(config_path);
+    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
     const component_path = path.dirname(file_path);
 
     if (!raw_config.name) {
