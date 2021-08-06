@@ -51,5 +51,7 @@ export interface ComponentConfig {
 
   artifact_image?: string;
 
+  source_yml: string;
+
   context: ComponentContext;
 }

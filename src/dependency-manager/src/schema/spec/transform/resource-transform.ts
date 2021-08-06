@@ -119,18 +119,3 @@ export const transformResourceSpec = (key: string, spec: ResourceSpec): Resource
     labels: spec.labels || new Map(),
   };
 };
-
-  // TODO:269: where does expand fit in?
-  // /** @return New expanded copy of the current config */
-  // expand() {
-  //   const config = this.copy();
-
-  //   const debug = config.getDebugOptions();
-  //   if (debug) {
-  //     config.setDebugOptions(debug.expand());
-  //   }
-  //   for (const [key, value] of Object.entries(this.getVolumes())) {
-  //     config.setVolume(key, value);
-  //   }
-  //   return config;
-  // }

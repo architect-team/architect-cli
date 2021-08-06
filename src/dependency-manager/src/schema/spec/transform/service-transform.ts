@@ -55,13 +55,4 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec): ServiceCon
   };
 };
 
-// TODO:269:expand
-  // /** @return New expanded copy of the current config */
-  // expand() {
-  //   const config = super.expand();
-  //   for (const [key, value] of Object.entries(this.getInterfaces())) {
-  //     config.setInterface(key, value);
-  //   }
-  //   return config;
-  // }
 

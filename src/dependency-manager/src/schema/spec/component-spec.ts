@@ -45,7 +45,7 @@ export class ComponentSpec {
   tag?: string;
 
   @IsOptional()
-  @Matches(/^(?!file:).*$/g) // TODO:269:factor out into a constant
+  @Matches(/^(?!file:).*$/g) // TODO:269:refactor into a constant
   @JSONSchema({ type: 'string' })
   extends?: string;
 
@@ -88,38 +88,4 @@ export class ComponentSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   artifact_image?: string;
-
-  // TODO:269:validation
-  async validate(options?: ValidatorOptions) {
-    if (!options) options = {};
-    const groups = [...options.groups || []];
-
-    if (!(groups || []).includes('deploy')) {  // Deploy already does component interpolation validation
-      try {
-        const context = this.getContext();
-        for (const [parameter_key, parameter_value] of Object.entries(this.getParameters())) {
-          if (parameter_value.default === null || parameter_value.default === undefined) {
-            context.parameters[parameter_key] = '1';
-          }
-        }
-        const expanded = this.expand();
-        const interpolated_string = interpolateString(serialize(expanded), context, ['architect.', 'dependencies.', 'environment.']);
-        const interpolated_config = deserialize(expanded.getClass(), interpolated_string) as ComponentConfig;
-        return interpolated_config.validate({ ...options, groups: groups.concat('deploy') });
-      } catch (err) {
-        if (err instanceof ValidationError) {
-          return [err];
-        } else {
-          throw err;
-        }
-      }
-    }
-
-    let errors = await super.validate(options);
-    if (errors.length) return errors;
-
-    // errors = await validateCrossDictionaryCollisions(expanded, 'services', 'tasks', errors); // makes sure services and tasks don't have any common keys
-
-    return errors;
-  }
 }

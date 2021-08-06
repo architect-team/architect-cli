@@ -170,24 +170,26 @@ export const transformComponentContext = (
   };
 };
 
-export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
+export const transformComponentSpec = (spec: ComponentSpec, source_yml: string): ComponentConfig => {
 
   const tag = transformComponentSpecTag(spec.tag);
-  const instance_name = ''; // TODO:269: when do these get set?
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
   const services = transformDictionary(transformServiceSpec, spec.services);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 
-  return {
-    name: transformComponentSpecName(spec.name),
-    tag,
-    ref: transformComponentSpecRef(spec.name, tag, instance_name),
+  const name = transformComponentSpecName(spec.name);
+  const { instance_name } = ComponentVersionSlugUtils.parse(name); // TODO:269:double-check
+  const ref = transformComponentSpecRef(spec.name, tag, instance_name);
 
-    //TODO:269:instance
-    instance_id: '',
-    instance_name: '',
+  return {
+    name,
+    tag,
+    ref,
+
+    instance_id: ref,
+    instance_name,
     instance_date: new Date(),
 
     extends: spec.extends,
@@ -209,6 +211,9 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
 
     artifact_image: spec.artifact_image,
 
+    source_yml, //TODO:269: this may not belong on here
+
+    //TODO:269: this may not belong on here
     context: transformComponentContext(
       dependencies,
       parameters,

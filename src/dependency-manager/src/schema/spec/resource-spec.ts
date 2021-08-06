@@ -24,14 +24,11 @@ export class VolumeSpec {
   @JSONSchema({ type: 'string' })
   mount_path?: string;
 
-  // TODO:269:next: exclusive OR across properties
-  // @Exclusive(['key'], { always: true, message: 'host_path and key are exclusive' })
+  // TODO:269:jsonschema (key || hostpath || neither)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   host_path?: string;
 
-  // TODO:269:next: exclusive OR across properties
-  // @Exclusive(['host_path'], { always: true, message: 'Key and host_path are exclusive' })
   @IsOptional()
   @JSONSchema({ type: 'string' })
   key?: string;
@@ -46,8 +43,7 @@ export class VolumeSpec {
 }
 
 export class BuildSpec {
-  // @ValidateIf(o => o.context || o.dockerfile, )
-  // TODO:269:next: exclusive OR across properties
+  // TODO:269:jsonschema (context || dockerfile)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   context?: string;
@@ -142,10 +138,7 @@ export class ResourceSpec {
   @JSONSchema(ArrayOf('string'))
   depends_on?: string[];
 
-  // TODO:269:special case: key/value matching
-  // @IsOptional()
-  // @IsObject()
-  // @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
-  // @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
+  // TODO:269:jsonschema (keys:${Slugs.LabelSlugDescription} && values:${Slugs.LabelSlugDescription}
+  @IsOptional()
   labels?: Map<string, string>;
 }

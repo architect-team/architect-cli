@@ -21,19 +21,9 @@ export class ScalingSpec {
   @JSONSchema({ type: 'string' })
   max_replicas!: string;
 
-  // TODO:269:next "at least one"
-  // @AtLeastOne(['cpu', 'memory'], { always: true, message: `Either a cpu metric, a memory metric, or both must be defined.` })
+  // TODO:269:jsonschema (cpu || memory)
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
-
-  // TODO:269:validate
-  // async validate(options?: ValidatorOptions) {
-  //   if (!options) { options = {}; }
-  //   let errors = await super.validate(options);
-  //   if (errors.length) return errors;
-  //   errors = await validateNested(this, 'metrics', errors, options);
-  //   return errors;
-  // }
 }
 
 export class InterfaceSpec {
@@ -90,17 +80,14 @@ export class LivenessProbeSpec {
   @JSONSchema({ type: 'string' })
   initial_delay?: string;
 
-  // TODO:269:next: exclusive OR across properties
-  // @Exclusive(['command'], { always: true, message: 'Path with port and command are exclusive' })
-  // @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command),)
+  // TODO:269:jsonschema: (path XOR command)
+  // TODO:269:jsonschema: (!command || (path || port) && command)
   @Matches(/^\/.*$/, { message: 'Path should start with /. Ex. /health' }) // TODO:269: factor out into constant
   @JSONSchema({ type: 'string' })
   path?: string;
 
-  // TODO:269:next: exclusive OR across properties
-  // @Exclusive(['path', 'port'], { always: true, message: 'Command and path with port are exclusive' })
-  // @ValidateIf(obj => !obj.path || ((obj.path || obj.port) && obj.command),)
-  @JSONSchema({ // TODO:269: there are few instances of string[] | string, we should consider factoring out
+  // TODO:269:refactor: there are few instances of string[] | string, we should consider factoring out
+  @JSONSchema({
     anyOf: [
       {
         type: "array",
@@ -115,16 +102,11 @@ export class LivenessProbeSpec {
   })
   command?: string[] | string;
 
-  // TODO:269:next: exclusive OR across properties
-  // @ValidateIf(obj => !obj.command || ((obj.path || obj.port) && obj.command),)
-  // @Exclusive(['command'], { always: true, message: 'Command and path with port are exclusive' })
   @JSONSchema(AnyOf('number', 'string'))
   port!: number | string;
 }
 
 export class ServiceSpec extends ResourceSpec {
-  // TODO:269:validation
-  // @IsEmpty({ groups: ['debug'] })
   @IsOptional()
   @ValidateNested()
   debug?: ServiceSpec;
@@ -141,19 +123,12 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema({ type: 'string' })
   replicas?: string;
 
+  //TODO:269: JSONschema for interpolation
+  // @IsOptional()/
+  // @JSONSchema({ type: ['string', 'interpolation_ref'] })
+  // replicas?: string | InterpolationString; // try making this generic on Config
+
   @IsOptional()
   @ValidateNested()
   scaling?: ScalingSpec;
-
-  // TODO:269:validation
-  // async validate(options?: ValidatorOptions) {
-  //   if (!options) { options = {}; }
-  //   let errors = await super.validate(options);
-  //   if (errors.length) return errors;
-  //   const expanded = this.expand();
-  //   errors = await validateNested(expanded, 'liveness_probe', errors, options);
-  //   errors = await validateNested(expanded, 'scaling', errors, options);
-  //   errors = await validateNested(expanded, 'build', errors, options);
-  //   return errors;
-  // }
 }

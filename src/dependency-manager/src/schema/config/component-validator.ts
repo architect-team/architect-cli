@@ -1,4 +1,3 @@
-import { deserialize, serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
 import { interpolateString } from '../../utils/interpolation';
 import { ComponentConfig } from './component-config';
@@ -59,11 +58,11 @@ export const validateInterpolation = (component: ComponentConfig): ValidationErr
         context.parameters[parameter_key] = '1';
       }
     }
-    const interpolated_string = interpolateString(serialize(component), context, ['architect.', 'dependencies.', 'environment.']);
-    const interpolated_config = deserialize(ComponentConfig, interpolated_string) as ComponentConfig;
+    const interpolated_string = interpolateString(JSON.stringify(component), context, ['architect.', 'dependencies.', 'environment.']);
+    const interpolated_config = JSON.parse(interpolated_string) as ComponentConfig;
 
     // TODO:269:?: what validator should we use for the interpolated_config?
-    return interpolated_config.validate({ ...options, groups: groups.concat('deploy') });
+    return interpolated_config.validate();
   } catch (err) {
     if (err instanceof ValidationError) {
       return [err];
@@ -136,9 +135,8 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
 const validate = (component: ComponentConfig): ValidationError[] => {
   const errors: ValidationError[] = [];
 
-  errors.push(...validateServiceAndTaskKeys(component));
+  errors.push(...validateServiceAndTaskKeys(component)); //TODO:269: make new ticket to explore moving this to JSONSchema
   errors.push(...validateDependsOn(component));
-  errors.push(...validateInterpolation(component));
 
   return errors;
 };
