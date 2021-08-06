@@ -1,4 +1,4 @@
-import { expect } from '@oclif/test';
+import { expect, test } from '@oclif/test';
 import Table from 'cli-table3';
 import fs from 'fs-extra';
 import os from 'os';
@@ -10,8 +10,7 @@ import ConfigView from '../../../src/commands/config/view';
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('config:view', () => {
-
-  it('expects results table', async () => {
+  describe('expects results table', () => {
     const config = new AppConfig('', {
       registry_host: 'registry.config.test',
       api_host: 'https://registry.config.test',
@@ -29,17 +28,22 @@ describe('config:view', () => {
     const tmp_config_file = path.join(tmp_config_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
 
-    // Watch for log results
     const app_config_spy = sinon.fake.resolves(new AppService(tmp_config_dir, '0.0.1'));
     const log_spy = sinon.fake.returns(null);
-    sinon.replace(AppService, 'create', app_config_spy);
-    sinon.replace(ConfigView.prototype, 'log', log_spy);
 
-    await ConfigView.run();
-    expect(app_config_spy.calledOnce).to.equal(true);
-    expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(table.toString());
+    // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
+    const print = false;
 
-    fs.removeSync(tmp_config_file);
+    test
+      .timeout(20000)
+      .stub(AppService, 'create', app_config_spy)
+      .stub(ConfigView.prototype, 'log', log_spy)
+      .stderr({ print })
+      .command(['config:view'])
+      .it('calls app config and outputs expected log value', () => {
+        expect(app_config_spy.calledOnce).to.equal(true);
+        expect(log_spy.calledOnce).to.equal(true);
+        expect(log_spy.firstCall.args[0]).to.equal(table.toString());
+      });
   });
 })

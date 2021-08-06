@@ -1,41 +1,24 @@
-import { expect } from '@oclif/test';
-import fs from 'fs-extra';
-import os from 'os';
-import path from 'path';
+import { expect, test } from '@oclif/test';
 import sinon from 'sinon';
-import AppConfig from '../../src/app-config/config';
 import CredentialManager from '../../src/app-config/credentials';
-import AppService from '../../src/app-config/service';
-import Logout from '../../src/commands/logout';
 import * as Docker from '../../src/common/utils/docker';
-import ARCHITECTPATHS from '../../src/paths';
 
-describe('logout', function () {
-  this.timeout(20000);
-  let tmp_dir = os.tmpdir();
+describe('logout', () => {
+  // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
+  const print = false;
 
-  beforeEach(function () {
-    sinon.replace(Logout.prototype, 'log', sinon.stub());
-    sinon.replace(Docker, 'verify', sinon.stub().returns(Promise.resolve()));
-
-
-    const config = new AppConfig('', {});
-    const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
-    fs.writeJSONSync(tmp_config_file, config);
-    const app_config_stub = sinon.stub().resolves(new AppService(tmp_dir, '0.0.1'));
-    sinon.replace(AppService, 'create', app_config_stub);
-  });
-
-  afterEach(function () {
-    sinon.restore();
-  });
-
-  it('deletes local credentials', async () => {
+  describe('deletes local credentails', () => {
     const credential_spy = sinon.fake.returns(null);
-    sinon.replace(CredentialManager.prototype, 'delete', credential_spy);
 
-    await Logout.run();
-    expect(credential_spy.getCalls().length).to.equal(1);
-    expect(credential_spy.firstCall.args[0]).to.equal('architect.io/token');
+    test
+      .timeout(20000)
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(CredentialManager.prototype, 'delete', credential_spy)
+      .stderr({ print })
+      .command(['logout'])
+      .it('delete is called with expected params', () => {
+        expect(credential_spy.getCalls().length).to.equal(1);
+        expect(credential_spy.firstCall.args[0]).to.equal('architect.io/token');
+      });
   });
 });
