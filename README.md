@@ -407,9 +407,7 @@ OPTIONS
   --aws-key=aws-key
   --aws-region=aws-region
   --aws-secret=aws-secret
-  --cluster-ca-cert=cluster-ca-cert         File path of cluster-ca-cert
   --flag=flag                               [default: ]
-  --service-token=service-token             Service token
 
 ALIASES
   $ architect platforms:register
