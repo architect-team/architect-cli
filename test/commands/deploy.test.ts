@@ -13,7 +13,7 @@ import { ComponentConfig, ComponentConfigBuilder } from '../../src/dependency-ma
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = true;
+const print = false;
 
 const account = {
   id: 'test-account-id',
