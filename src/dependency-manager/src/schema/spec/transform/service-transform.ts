@@ -1,10 +1,10 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { InterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../config/service-config';
-import { InterfaceSpecV1, LivenessProbeSpecV1, ServiceSpecV1 } from '../service-spec';
-import { transformResourceSpecV1 } from './resource-transform';
+import { InterfaceSpec, LivenessProbeSpec, ServiceSpec } from '../service-spec';
+import { transformResourceSpec } from './resource-transform';
 
-export const transformInterfaceSpecV1 = function (key: string, interface_spec: InterfaceSpecV1 | string): InterfaceConfig {
+export const transformInterfaceSpec = function (key: string, interface_spec: InterfaceSpec | string): InterfaceConfig {
   if (interface_spec instanceof Object) {
     return interface_spec;
   } else {
@@ -12,7 +12,7 @@ export const transformInterfaceSpecV1 = function (key: string, interface_spec: I
   }
 };
 
-export const transformLivenessProbeSpecV1Command = function (command: string[] | string | undefined, environment: Dictionary<string>): string[] | undefined {
+export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined, environment: Dictionary<string>): string[] | undefined {
   if (!command) {
     return undefined;
   }
@@ -27,7 +27,7 @@ export const transformLivenessProbeSpecV1Command = function (command: string[] |
   }
 };
 
-export const transformLivenessProbeSpecV1 = function (liveness_probe: LivenessProbeSpecV1 | undefined, environment: Dictionary<string>): LivenessProbeConfig | undefined {
+export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined, environment: Dictionary<string>): LivenessProbeConfig | undefined {
   if (!liveness_probe || !Object.keys(liveness_probe).length) { return undefined; }
 
   return {
@@ -37,19 +37,19 @@ export const transformLivenessProbeSpecV1 = function (liveness_probe: LivenessPr
     interval: liveness_probe.interval || '30s',
     initial_delay: liveness_probe.initial_delay || '0s',
     path: liveness_probe.path,
-    command: transformLivenessProbeSpecV1Command(liveness_probe.command, environment),
+    command: transformLivenessProbeSpecCommand(liveness_probe.command, environment),
     port: liveness_probe.port,
   };
 };
 
-export const transformServiceSpecV1 = (key: string, spec: ServiceSpecV1): ServiceConfig => {
-  const resource_config = transformResourceSpecV1(key, spec);
+export const transformServiceSpec = (key: string, spec: ServiceSpec): ServiceConfig => {
+  const resource_config = transformResourceSpec(key, spec);
 
   return {
     ...resource_config,
-    debug: spec.debug ? transformServiceSpecV1(key, spec.debug) : undefined,
-    interfaces: transformDictionary(transformInterfaceSpecV1, spec.interfaces),
-    liveness_probe: transformLivenessProbeSpecV1(spec.liveness_probe, resource_config.environment),
+    debug: spec.debug ? transformServiceSpec(key, spec.debug) : undefined,
+    interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
+    liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
     replicas: spec.replicas || '1',
     scaling: spec.scaling,
   };

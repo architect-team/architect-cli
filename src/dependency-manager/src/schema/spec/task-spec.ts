@@ -1,13 +1,13 @@
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { ResourceSpecV1 } from './resource-spec';
+import { ResourceSpec } from './resource-spec';
 
-export class TaskSpecV1 extends ResourceSpecV1 {
+export class TaskSpec extends ResourceSpec {
   // TODO:269:validation
   // @IsEmpty({ groups: ['debug'] })
   @IsOptional()
   @ValidateNested()
-  debug?: TaskSpecV1;
+  debug?: TaskSpec;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })

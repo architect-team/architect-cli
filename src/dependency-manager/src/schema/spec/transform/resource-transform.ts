@@ -2,19 +2,19 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ServiceVersionSlugUtils } from '../../../utils/slugs';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
-import { BuildSpecV1, ResourceSpecV1, VolumeSpecV1 } from '../resource-spec';
+import { BuildSpec, ResourceSpec, VolumeSpec } from '../resource-spec';
 
-export const transformResourceSpecV1Name = (name: string | undefined): string => {
+export const transformResourceSpecName = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');
   return split.service_name;
 };
 
-export const transformResourceSpecV1Tag = (name: string | undefined): string => {
+export const transformResourceSpecTag = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');
   return split.tag;
 };
 
-export const transformResourceSpecV1Command = (command: string | string[] | undefined, environment: Dictionary<string>): string[] => {
+export const transformResourceSpecCommand = (command: string | string[] | undefined, environment: Dictionary<string>): string[] => {
   if (!command) return [];
 
   if (command instanceof Array) {
@@ -29,7 +29,7 @@ export const transformResourceSpecV1Command = (command: string | string[] | unde
   return shell_parse(command, env).map(e => `${e}`);
 };
 
-export const transformResourceSpecV1EntryPoint = (entrypoint: string | string[] | undefined, environment: Dictionary<string>): string[] => {
+export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined, environment: Dictionary<string>): string[] => {
   if (!entrypoint) return [];
   if (entrypoint instanceof Array) {
     return entrypoint;
@@ -41,7 +41,7 @@ export const transformResourceSpecV1EntryPoint = (entrypoint: string | string[] 
   return shell_parse(entrypoint, env).map(e => `${e}`);
 };
 
-export const transformResourceSpecV1Environment = (environment: Dictionary<string> | undefined): Dictionary<string> => {
+export const transformResourceSpecEnvironment = (environment: Dictionary<string> | undefined): Dictionary<string> => {
   const output: Dictionary<string> = {};
   for (const [k, v] of Object.entries(environment || {})) {
     if (v === null) { continue; }
@@ -50,7 +50,7 @@ export const transformResourceSpecV1Environment = (environment: Dictionary<strin
   return output;
 };
 
-export const transformBuildSpecV1Args = (args?: Dictionary<string>): Dictionary<string> => {
+export const transformBuildSpecArgs = (args?: Dictionary<string>): Dictionary<string> => {
   if (!args) {
     return {};
   }
@@ -66,7 +66,7 @@ export const transformBuildSpecV1Args = (args?: Dictionary<string>): Dictionary<
   return output;
 };
 
-export const transformBuildSpecV1 = (build: BuildSpecV1 | undefined, image?: string): BuildConfig => {
+export const transformBuildSpec = (build: BuildSpec | undefined, image?: string): BuildConfig => {
   if (!build && !image) {
     build = {
       context: '.',
@@ -76,12 +76,12 @@ export const transformBuildSpecV1 = (build: BuildSpecV1 | undefined, image?: str
   }
   return {
     context: build.context,
-    args: transformBuildSpecV1Args(build.args),
+    args: transformBuildSpecArgs(build.args),
     dockerfile: build.dockerfile,
   };
 };
 
-export const transformVolumeSpecV1 = (key: string, volume: VolumeSpecV1 | string): VolumeConfig => {
+export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): VolumeConfig => {
   if (volume instanceof Object) {
     return {
       mount_path: volume.mount_path,
@@ -97,21 +97,21 @@ export const transformVolumeSpecV1 = (key: string, volume: VolumeSpecV1 | string
   }
 };
 
-export const transformResourceSpecV1 = (key: string, spec: ResourceSpecV1): ResourceConfig => {
-  const environment = transformResourceSpecV1Environment(spec.environment);
+export const transformResourceSpec = (key: string, spec: ResourceSpec): ResourceConfig => {
+  const environment = transformResourceSpecEnvironment(spec.environment);
 
   return {
-    name: transformResourceSpecV1Name(spec.name),
-    tag: transformResourceSpecV1Tag(spec.name),
+    name: transformResourceSpecName(spec.name),
+    tag: transformResourceSpecTag(spec.name),
     description: spec.description,
     image: spec.image,
-    command: transformResourceSpecV1Command(spec.command, environment),
-    entrypoint: transformResourceSpecV1EntryPoint(spec.entrypoint, environment),
+    command: transformResourceSpecCommand(spec.command, environment),
+    entrypoint: transformResourceSpecEntryPoint(spec.entrypoint, environment),
     language: spec.language,
-    debug: spec.debug ? transformResourceSpecV1(key, spec.debug) : undefined,
+    debug: spec.debug ? transformResourceSpec(key, spec.debug) : undefined,
     environment,
-    volumes: transformDictionary(transformVolumeSpecV1, spec.volumes),
-    build: transformBuildSpecV1(spec.build, spec.image),
+    volumes: transformDictionary(transformVolumeSpec, spec.volumes),
+    build: transformBuildSpec(spec.build, spec.image),
     cpu: spec.cpu,
     memory: spec.memory,
     deploy: spec.deploy,

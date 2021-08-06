@@ -3,23 +3,22 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlugUtils } from '../../utils/slugs';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
-import { InterfaceSpecV1, ServiceSpecV1 } from './service-spec';
-import { TaskSpecV1 } from './task-spec';
+import { InterfaceSpec, ServiceSpec } from './service-spec';
+import { TaskSpec } from './task-spec';
 
-// TODO:269: kill versions from naming
-export class IngressSpecV1 {
+export class IngressSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   subdomain?: string;
 }
 
-export class ComponentInterfaceSpecV1 extends InterfaceSpecV1 {
+export class ComponentInterfaceSpec extends InterfaceSpec {
   @IsOptional()
   @ValidateNested()
-  ingress?: IngressSpecV1;
+  ingress?: IngressSpec;
 }
 
-export class ParameterDefinitionSpecV1 {
+export class ParameterDefinitionSpec {
   @IsOptional()
   @JSONSchema({ type: 'boolean' })
   required?: boolean;
@@ -33,7 +32,7 @@ export class ParameterDefinitionSpecV1 {
   default?: boolean | number | string | null;
 }
 
-export class ComponentSpecV1 {
+export class ComponentSpec {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
     message: 'Names must only include letters, numbers, and dashes. Names must be prefixed with an account name (e.g. architect/component-name).',
     groups: ['developer'],
@@ -67,24 +66,24 @@ export class ComponentSpecV1 {
   homepage?: string;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpecV1))
-  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpecV1>;
+  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec))
+  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(ServiceSpecV1))
-  services?: Dictionary<ServiceSpecV1>;
+  @JSONSchema(DictionaryOf(ServiceSpec))
+  services?: Dictionary<ServiceSpec>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(TaskSpecV1))
-  tasks?: Dictionary<TaskSpecV1>;
+  @JSONSchema(DictionaryOf(TaskSpec))
+  tasks?: Dictionary<TaskSpec>;
 
   @IsOptional()
   @JSONSchema(DictionaryOf('string'))
   dependencies?: Dictionary<string>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', ComponentInterfaceSpecV1))
-  interfaces?: Dictionary<string | ComponentInterfaceSpecV1>;
+  @JSONSchema(DictionaryOfAny('string', ComponentInterfaceSpec))
+  interfaces?: Dictionary<string | ComponentInterfaceSpec>;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })

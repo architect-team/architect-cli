@@ -2,9 +2,9 @@ import { IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
-import { ResourceSpecV1 } from './resource-spec';
+import { ResourceSpec } from './resource-spec';
 
-export class ScalingMetricsSpecV1 {
+export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   cpu?: string;
@@ -14,7 +14,7 @@ export class ScalingMetricsSpecV1 {
   memory?: string;
 }
 
-export class ScalingSpecV1 {
+export class ScalingSpec {
   @JSONSchema({ type: 'string' })
   min_replicas!: string;
 
@@ -24,7 +24,7 @@ export class ScalingSpecV1 {
   // TODO:269:next "at least one"
   // @AtLeastOne(['cpu', 'memory'], { always: true, message: `Either a cpu metric, a memory metric, or both must be defined.` })
   @ValidateNested()
-  metrics!: ScalingMetricsSpecV1;
+  metrics!: ScalingMetricsSpec;
 
   // TODO:269:validate
   // async validate(options?: ValidatorOptions) {
@@ -36,7 +36,7 @@ export class ScalingSpecV1 {
   // }
 }
 
-export class InterfaceSpecV1 {
+export class InterfaceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;
@@ -69,7 +69,7 @@ export class InterfaceSpecV1 {
   sticky?: boolean | string;
 }
 
-export class LivenessProbeSpecV1 {
+export class LivenessProbeSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   success_threshold?: string;
@@ -122,20 +122,20 @@ export class LivenessProbeSpecV1 {
   port!: number | string;
 }
 
-export class ServiceSpecV1 extends ResourceSpecV1 {
+export class ServiceSpec extends ResourceSpec {
   // TODO:269:validation
   // @IsEmpty({ groups: ['debug'] })
   @IsOptional()
   @ValidateNested()
-  debug?: ServiceSpecV1;
+  debug?: ServiceSpec;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny(InterfaceSpecV1, 'string'))
-  interfaces?: Dictionary<InterfaceSpecV1 | string>;
+  @JSONSchema(DictionaryOfAny(InterfaceSpec, 'string'))
+  interfaces?: Dictionary<InterfaceSpec | string>;
 
   @IsOptional()
   @ValidateNested()
-  liveness_probe?: LivenessProbeSpecV1;
+  liveness_probe?: LivenessProbeSpec;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -143,7 +143,7 @@ export class ServiceSpecV1 extends ResourceSpecV1 {
 
   @IsOptional()
   @ValidateNested()
-  scaling?: ScalingSpecV1;
+  scaling?: ScalingSpec;
 
   // TODO:269:validation
   // async validate(options?: ValidatorOptions) {

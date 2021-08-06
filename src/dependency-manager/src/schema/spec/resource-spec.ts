@@ -3,7 +3,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
 
-export class DeployModuleSpecV1 {
+export class DeployModuleSpec {
   @JSONSchema({ type: 'string' })
   path!: string;
 
@@ -11,15 +11,15 @@ export class DeployModuleSpecV1 {
   inputs!: Dictionary<string>;
 }
 
-export class DeploySpecV1 {
+export class DeploySpec {
   @JSONSchema({ type: 'string' })
   strategy!: string;
 
-  @JSONSchema(DictionaryOf(DeployModuleSpecV1))
-  modules!: Dictionary<DeployModuleSpecV1>;
+  @JSONSchema(DictionaryOf(DeployModuleSpec))
+  modules!: Dictionary<DeployModuleSpec>;
 }
 
-export class VolumeSpecV1 {
+export class VolumeSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   mount_path?: string;
@@ -54,7 +54,7 @@ export class VolumeSpecV1 {
   readonly?: boolean | string;
 }
 
-export class BuildSpecV1 {
+export class BuildSpec {
   // @ValidateIf(o => o.context || o.dockerfile, )
   // TODO:269:next: exclusive OR across properties
   @IsOptional()
@@ -70,7 +70,7 @@ export class BuildSpecV1 {
   dockerfile?: string;
 }
 
-export class ResourceSpecV1 {
+export class ResourceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   @Matches(/^[a-zA-Z0-9-_]+$/, { message: 'Names must only include letters, numbers, dashes, and underscores' }) //TODO:269: move match to description
@@ -121,19 +121,19 @@ export class ResourceSpecV1 {
 
   @IsOptional()
   @ValidateNested()
-  debug?: ResourceSpecV1;
+  debug?: ResourceSpec;
 
   @IsOptional()
   @JSONSchema(DictionaryOf('string'))
   environment?: Dictionary<string>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny(VolumeSpecV1, 'string'))
-  volumes?: Dictionary<VolumeSpecV1 | string>;
+  @JSONSchema(DictionaryOfAny(VolumeSpec, 'string'))
+  volumes?: Dictionary<VolumeSpec | string>;
 
   @IsOptional()
   @ValidateNested()
-  build?: BuildSpecV1;
+  build?: BuildSpec;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -145,7 +145,7 @@ export class ResourceSpecV1 {
 
   @IsOptional()
   @ValidateNested()
-  deploy?: DeploySpecV1;
+  deploy?: DeploySpec;
 
   @IsOptional()
   @JSONSchema(ArrayOf('string'))

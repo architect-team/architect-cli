@@ -1,8 +1,110 @@
 {
   "title": "JSON Schema for Architect.io configuration",
   "$schema": "http://json-schema.org/draft-07/schema",
+  "properties": {
+    "name": {
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "extends": {
+      "pattern": "^(?!file:).*$",
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "author": {
+      "type": "string"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "url"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/definitions/ParameterDefinitionSpec"
+          }
+        ]
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/ServiceSpec"
+          }
+        ]
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/TaskSpec"
+          }
+        ]
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "interfaces": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/definitions/ComponentInterfaceSpec"
+          }
+        ]
+      }
+    },
+    "artifact_image": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [
+    "name"
+  ],
   "definitions": {
-    "VolumeSpecV1": {
+    "VolumeSpec": {
       "properties": {
         "mount_path": {
           "type": "string"
@@ -29,7 +131,7 @@
       },
       "type": "object"
     },
-    "BuildSpecV1": {
+    "BuildSpec": {
       "properties": {
         "context": {
           "type": "string"
@@ -50,7 +152,7 @@
       },
       "type": "object"
     },
-    "ResourceSpecV1": {
+    "ResourceSpec": {
       "properties": {
         "name": {
           "pattern": "^[a-zA-Z0-9-_]+$",
@@ -89,7 +191,7 @@
           ]
         },
         "debug": {
-          "$ref": "#/definitions/ResourceSpecV1"
+          "$ref": "#/definitions/ResourceSpec"
         },
         "environment": {
           "type": "object",
@@ -106,7 +208,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/VolumeSpecV1"
+                "$ref": "#/definitions/VolumeSpec"
               },
               {
                 "type": "string"
@@ -115,7 +217,7 @@
           }
         },
         "build": {
-          "$ref": "#/definitions/BuildSpecV1"
+          "$ref": "#/definitions/BuildSpec"
         },
         "cpu": {
           "type": "string"
@@ -124,7 +226,7 @@
           "type": "string"
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpecV1"
+          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -139,7 +241,7 @@
       },
       "type": "object"
     },
-    "ScalingMetricsSpecV1": {
+    "ScalingMetricsSpec": {
       "properties": {
         "cpu": {
           "type": "string"
@@ -150,10 +252,10 @@
       },
       "type": "object"
     },
-    "ScalingSpecV1": {
+    "ScalingSpec": {
       "properties": {
         "metrics": {
-          "$ref": "#/definitions/ScalingMetricsSpecV1"
+          "$ref": "#/definitions/ScalingMetricsSpec"
         }
       },
       "type": "object",
@@ -161,7 +263,7 @@
         "metrics"
       ]
     },
-    "InterfaceSpecV1": {
+    "InterfaceSpec": {
       "properties": {
         "description": {
           "type": "string"
@@ -194,7 +296,7 @@
       },
       "type": "object"
     },
-    "LivenessProbeSpecV1": {
+    "LivenessProbeSpec": {
       "properties": {
         "success_threshold": {
           "type": "string"
@@ -221,17 +323,17 @@
         "path"
       ]
     },
-    "ServiceSpecV1": {
+    "ServiceSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/ServiceSpecV1"
+          "$ref": "#/definitions/ServiceSpec"
         },
         "interfaces": {
           "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/InterfaceSpecV1"
+                "$ref": "#/definitions/InterfaceSpec"
               },
               {
                 "type": "string"
@@ -240,13 +342,13 @@
           }
         },
         "liveness_probe": {
-          "$ref": "#/definitions/LivenessProbeSpecV1"
+          "$ref": "#/definitions/LivenessProbeSpec"
         },
         "replicas": {
           "type": "string"
         },
         "scaling": {
-          "$ref": "#/definitions/ScalingSpecV1"
+          "$ref": "#/definitions/ScalingSpec"
         },
         "name": {
           "pattern": "^[a-zA-Z0-9-_]+$",
@@ -299,7 +401,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/VolumeSpecV1"
+                "$ref": "#/definitions/VolumeSpec"
               },
               {
                 "type": "string"
@@ -308,7 +410,7 @@
           }
         },
         "build": {
-          "$ref": "#/definitions/BuildSpecV1"
+          "$ref": "#/definitions/BuildSpec"
         },
         "cpu": {
           "type": "string"
@@ -317,7 +419,7 @@
           "type": "string"
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpecV1"
+          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -332,10 +434,10 @@
       },
       "type": "object"
     },
-    "TaskSpecV1": {
+    "TaskSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/TaskSpecV1"
+          "$ref": "#/definitions/TaskSpec"
         },
         "schedule": {
           "type": "string"
@@ -391,7 +493,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/VolumeSpecV1"
+                "$ref": "#/definitions/VolumeSpec"
               },
               {
                 "type": "string"
@@ -400,7 +502,7 @@
           }
         },
         "build": {
-          "$ref": "#/definitions/BuildSpecV1"
+          "$ref": "#/definitions/BuildSpec"
         },
         "cpu": {
           "type": "string"
@@ -409,7 +511,7 @@
           "type": "string"
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpecV1"
+          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -424,7 +526,7 @@
       },
       "type": "object"
     },
-    "IngressSpecV1": {
+    "IngressSpec": {
       "properties": {
         "subdomain": {
           "type": "string"
@@ -432,10 +534,10 @@
       },
       "type": "object"
     },
-    "ComponentInterfaceSpecV1": {
+    "ComponentInterfaceSpec": {
       "properties": {
         "ingress": {
-          "$ref": "#/definitions/IngressSpecV1"
+          "$ref": "#/definitions/IngressSpec"
         },
         "description": {
           "type": "string"
@@ -468,7 +570,7 @@
       },
       "type": "object"
     },
-    "ParameterDefinitionSpecV1": {
+    "ParameterDefinitionSpec": {
       "properties": {
         "required": {
           "type": "boolean"
@@ -495,7 +597,7 @@
       },
       "type": "object"
     },
-    "ComponentSpecV1": {
+    "ComponentSpec": {
       "properties": {
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
@@ -542,7 +644,7 @@
                 "type": "boolean"
               },
               {
-                "$ref": "#/definitions/ParameterDefinitionSpecV1"
+                "$ref": "#/definitions/ParameterDefinitionSpec"
               }
             ]
           }
@@ -552,7 +654,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/ServiceSpecV1"
+                "$ref": "#/definitions/ServiceSpec"
               }
             ]
           }
@@ -562,7 +664,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/TaskSpecV1"
+                "$ref": "#/definitions/TaskSpec"
               }
             ]
           }
@@ -585,7 +687,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/definitions/ComponentInterfaceSpecV1"
+                "$ref": "#/definitions/ComponentInterfaceSpec"
               }
             ]
           }

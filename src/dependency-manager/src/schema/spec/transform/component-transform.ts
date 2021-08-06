@@ -7,24 +7,24 @@ import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } 
 import { ComponentContext, ServiceContext, TaskContext } from '../../config/context';
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
-import { ComponentInterfaceSpecV1, ComponentSpecV1, ParameterDefinitionSpecV1 } from '../component-spec';
-import { transformServiceSpecV1 } from './service-transform';
-import { transformTaskSpecV1 } from './task-transform';
+import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
+import { transformServiceSpec } from './service-transform';
+import { transformTaskSpec } from './task-transform';
 
-export const transformComponentSpecV1Name = (name: string): ComponentSlug => {
+export const transformComponentSpecName = (name: string): ComponentSlug => {
   const split = ComponentSlugUtils.parse(name);
   return ComponentSlugUtils.build(split.component_account_name, split.component_name);
 };
 
-export const transformComponentSpecV1Tag = (tag?: string): string => {
+export const transformComponentSpecTag = (tag?: string): string => {
   return tag || Slugs.DEFAULT_TAG;
 };
 
-export const transformLocalPathV1 = (component_extends?: string): string | undefined => {
+export const transformLocalPath = (component_extends?: string): string | undefined => {
   return component_extends?.startsWith('file:') ? component_extends?.substr('file:'.length) : undefined;
 };
 
-export const transformComponentSpecV1Ref = (name: string, tag: string, instance_name: string): ComponentVersionSlug => {
+export const transformComponentSpecRef = (name: string, tag: string, instance_name: string): ComponentVersionSlug => {
   const split = ComponentSlugUtils.parse(name);
   return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, tag, instance_name);
 };
@@ -41,7 +41,7 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformParameterDefinitionSpecV1 = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpecV1): ParameterDefinitionConfig => {
+export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec): ParameterDefinitionConfig => {
   if (parameter_spec && typeof parameter_spec === 'object') {
     return {
       required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : false,
@@ -55,7 +55,7 @@ export const transformParameterDefinitionSpecV1 = (key: string, parameter_spec: 
   }
 };
 
-const transformComponentInterfaceSpecV1 = function (key: string, interface_spec: ComponentInterfaceSpecV1 | string): ComponentInterfaceConfig {
+const transformComponentInterfaceSpec = function (key: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
   // TODO: Be more flexible than just url ref
   if (interface_spec instanceof Object && 'host' in interface_spec && 'port' in interface_spec) {
     return interface_spec;
@@ -170,20 +170,20 @@ export const transformComponentContext = (
   };
 };
 
-export const transformComponentSpecV1 = (spec: ComponentSpecV1): ComponentConfig => {
+export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
 
-  const tag = transformComponentSpecV1Tag(spec.tag);
+  const tag = transformComponentSpecTag(spec.tag);
   const instance_name = ''; // TODO:269: when do these get set?
-  const parameters = transformDictionary(transformParameterDefinitionSpecV1, spec.parameters);
-  const services = transformDictionary(transformServiceSpecV1, spec.services);
-  const tasks = transformDictionary(transformTaskSpecV1, spec.tasks);
-  const interfaces = transformDictionary(transformComponentInterfaceSpecV1, spec.interfaces);
+  const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
+  const services = transformDictionary(transformServiceSpec, spec.services);
+  const tasks = transformDictionary(transformTaskSpec, spec.tasks);
+  const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 
   return {
-    name: transformComponentSpecV1Name(spec.name),
+    name: transformComponentSpecName(spec.name),
     tag,
-    ref: transformComponentSpecV1Ref(spec.name, tag, instance_name),
+    ref: transformComponentSpecRef(spec.name, tag, instance_name),
 
     //TODO:269:instance
     instance_id: '',
@@ -191,7 +191,7 @@ export const transformComponentSpecV1 = (spec: ComponentSpecV1): ComponentConfig
     instance_date: new Date(),
 
     extends: spec.extends,
-    local_path: transformLocalPathV1(spec.extends),
+    local_path: transformLocalPath(spec.extends),
 
     description: spec.description,
     keywords: spec.keywords || [],
