@@ -1,5 +1,5 @@
 import { Dictionary } from '../../utils/dictionary';
-import { ComponentContext } from './context';
+import { ComponentContext } from './component-context';
 import { InterfaceConfig, ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
@@ -51,5 +51,5 @@ export interface ComponentConfig {
 
   artifact_image?: string;
 
-  context: ComponentContext; // TODO: this should potentially live on its own
+  context: ComponentContext;
 }

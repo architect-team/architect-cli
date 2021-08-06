@@ -4,7 +4,7 @@ import { ArchitectError } from '../../../utils/errors';
 import { ARC_NULL_TOKEN } from '../../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../../utils/slugs';
 import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
-import { ComponentContext, ServiceContext, TaskContext } from '../../config/context';
+import { ComponentContext, ServiceContext, TaskContext } from '../../config/component-context';
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
 import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';

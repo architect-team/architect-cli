@@ -156,13 +156,4 @@ export class ServiceSpec extends ResourceSpec {
   //   errors = await validateNested(expanded, 'build', errors, options);
   //   return errors;
   // }
-
-  // /** @return New expanded copy of the current config */
-  // expand() {
-  //   const config = super.expand();
-  //   for (const [key, value] of Object.entries(this.getInterfaces())) {
-  //     config.setInterface(key, value);
-  //   }
-  //   return config;
-  // }
 }

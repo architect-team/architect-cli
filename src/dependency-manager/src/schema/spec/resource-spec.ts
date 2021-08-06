@@ -24,15 +24,6 @@ export class VolumeSpec {
   @JSONSchema({ type: 'string' })
   mount_path?: string;
 
-  // TODO:269:validation
-  // @IsNotEmpty({
-  //   groups: ['debug'],
-  //   message: 'Debug volumes require a host path to mount the volume to',
-  // })
-  // @IsEmpty({
-  //   groups: ['register'],
-  //   message: 'Cannot hardcode a host mount path in a component outside of the debug block',
-  // })
   // TODO:269:next: exclusive OR across properties
   // @Exclusive(['key'], { always: true, message: 'host_path and key are exclusive' })
   @IsOptional()
@@ -117,7 +108,7 @@ export class ResourceSpec {
   entrypoint?: string | string[];
 
   @JSONSchema({ type: 'string' })
-  language!: string; //TODO:269: double check to make sure this was required for good reason. was throwing an Error in the getter if not set.
+  language!: string; //TODO:269:? double check to make sure this was required for good reason. was throwing an Error in the getter if not set.
 
   @IsOptional()
   @ValidateNested()
@@ -157,23 +148,4 @@ export class ResourceSpec {
   // @MatchesKeys(Slugs.LabelKeySlugValidator, { always: true, message: `prefix must be lowercase and is optional, each <prefix>/<key> ${Slugs.LabelSlugDescription}` })
   // @MatchesValues(Slugs.LabelValueSlugValidator, { always: true, message: `each value ${Slugs.LabelSlugDescription}` })
   labels?: Map<string, string>;
-
-  // TODO:269:validation
-  // async validate(options?: ValidatorOptions) {
-  //   if (!options) { options = {}; }
-  //   let errors = await super.validate(options);
-  //   if (errors.length) return errors;
-  //   const expanded = this.expand();
-  //   errors = await validateNested(expanded, 'debug', errors, { ...options, groups: (options.groups || []).concat('debug') });
-  //   errors = await validateNested(expanded, 'liveness_probe', errors, options);
-  //   // Hack to overcome conflicting IsEmpty vs IsNotEmpty with developer vs debug
-  //   const volumes_options = { ...options };
-  //   if (volumes_options.groups && volumes_options.groups.includes('debug')) {
-  //     volumes_options.groups = ['debug'];
-  //   }
-  //   errors = await validateDictionary(expanded, 'environment', errors, undefined, options, /^[a-zA-Z0-9_]+$/);
-  //   errors = await validateDictionary(expanded, 'volumes', errors, undefined, volumes_options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
-  //   errors = await validateDictionary(expanded, 'interfaces', errors, undefined, options, new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`));
-  //   return errors;
-  // }
 }

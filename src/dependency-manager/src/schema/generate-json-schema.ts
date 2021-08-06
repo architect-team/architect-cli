@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import { REF_PREFIX } from './json-schema-annotations';
 import { ComponentSpec } from './spec/component-spec';
 
+// importing this class into this file is required for the class-validator-jsonschema to pick this up. doesn't work by just referencing the tsconfig.json
 const component_spec = new ComponentSpec();
 
 const definitions = validationMetadatasToSchemas({

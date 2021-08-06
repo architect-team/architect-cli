@@ -97,6 +97,7 @@ export const validateDictionary = async <T extends ValidatableConfig>(
   return errors;
 };
 
+// TODO:269:delete
 // validates that property1 and property2 do not share any common keys
 export const validateCrossDictionaryCollisions = async <T extends ValidatableConfig>(
   target: T,
@@ -129,6 +130,7 @@ export const validateCrossDictionaryCollisions = async <T extends ValidatableCon
   return errors;
 };
 
+// TODO:269:delete
 export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []) => {
   const next_name = current_name || search_name;
   const dependencies = depends_on_map[next_name];
@@ -154,6 +156,7 @@ export const isPartOfCircularReference = (search_name: string, depends_on_map: {
   return false;
 };
 
+// TODO:269:delete
 // validates that property1 and property2 do not share any common keys
 export const validateDependsOn = async <T extends ValidatableConfig>(
   target: ComponentConfig,
