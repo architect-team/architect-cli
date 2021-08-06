@@ -34,38 +34,31 @@ export default class PlatformCreate extends Command {
     kubeconfig: flags.string({
       char: 'k',
       default: '~/.kube/config',
-      exclusive: ['service-token', 'service_token', 'host'],
+      exclusive: ['host'],
     }),
     aws_key: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
       description: `${Command.DEPRECATED} Please use --aws-key.`,
       hidden: true,
     }),
     ['aws-key']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
     }),
     aws_secret: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
       description: `${Command.DEPRECATED} Please use --aws-secret.`,
       hidden: true,
     }),
     ['aws-secret']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
     }),
     aws_region: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
       description: `${Command.DEPRECATED} Please use --aws-region.`,
       hidden: true,
     }),
     ['aws-region']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'service-token', 'service_token', 'host'],
-    }),
-    service_token: flags.string({
-      description: `${Command.DEPRECATED} Please use --service-token.`,
-      hidden: true,
-    }),
-    ['service-token']: flags.string({
-      description: 'Service token', env: 'ARCHITECT_SERVICE_TOKEN',
+      exclusive: ['awsconfig', 'kubeconfig', 'host'],
     }),
     flag: flags.string({ multiple: true, default: [] }),
   };
@@ -79,7 +72,6 @@ export default class PlatformCreate extends Command {
     flags['aws-key'] = flags.aws_key ? flags.aws_key : flags['aws-key'];
     flags['aws-secret'] = flags.aws_secret ? flags.aws_secret : flags['aws-secret'];
     flags['aws-region'] = flags.aws_region ? flags.aws_region : flags['aws-region'];
-    flags['service-token'] = flags.service_token ? flags.service_token : flags['service-token'];
     parsed.flags = flags;
 
     return parsed;
