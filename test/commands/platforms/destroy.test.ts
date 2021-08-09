@@ -41,7 +41,7 @@ describe('environment:destroy', () => {
       .times(2)
       .reply(200, mock_platform))
     .nock(MOCK_API_HOST, api => api
-      .delete(`/platforms/${mock_platform.id}?force=0`)
+      .delete(`/platforms/${mock_platform.id}`)
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
