@@ -11,7 +11,8 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { Refs } from '../dependency-manager/src';
-import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
+import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
+import { RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -76,20 +77,20 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
-    const component_path = path.dirname(file_path);
+    const { component_config, source_path } = buildConfigFromPath(config_path);
+    const component_path = path.dirname(source_path);
 
-    if (!raw_config.name) {
+    if (!component_config.name) {
       throw new Error('Component Config must have a name');
     }
 
-    const account_name = raw_config.name.split('/')[0];
+    const account_name = component_config.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${raw_config.name}:${tag}`), unsafeCleanup: true });
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${component_config.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
-    for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
+    for (const [service_name, service_config] of Object.entries(component_config.services || {})) {
+      const image_tag = `${this.app.config.registry_host}/${component_config.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
 
@@ -99,23 +100,23 @@ export default class ComponentRegister extends Command {
       }
     }
     if (set_artifact_image) {
-      raw_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
+      component_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${component_config.name}:${tag}`, tmpobj.name);
     }
 
     tmpobj.removeCallback();
 
-    for (const [task_name, task_config] of Object.entries(raw_config.tasks || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
+    for (const [task_name, task_config] of Object.entries(component_config.tasks || {})) {
+      const image_tag = `${this.app.config.registry_host}/${component_config.name}-${task_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
     }
 
     const component_dto = {
       tag: tag,
-      config: raw_config,
+      config: component_config,
     };
 
-    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
+    cli.action.start(chalk.blue(`Registering component ${component_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop();
     this.log(chalk.green(`Successfully registered component`));

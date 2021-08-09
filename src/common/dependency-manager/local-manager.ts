@@ -3,9 +3,8 @@ import chalk from 'chalk';
 import { ValidationError } from 'class-validator';
 import deepmerge from 'deepmerge';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
-import { buildFromPath, buildFromYml } from '../../dependency-manager/src/schema/component-builder';
+import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/schema/config/component-config';
-import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
@@ -34,7 +33,8 @@ export default class LocalDependencyManager extends DependencyManager {
       if (process.env.NODE_ENV !== 'test') {
         console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
       }
-      config = await buildFromPath(this.linked_components[component_slug]);
+      const { component_config } = buildConfigFromPath(this.linked_components[component_slug]);
+      config = component_config;
       config.extends = `file:${this.linked_components[component_slug]}`;
     } else {
       // Load remote component config
@@ -42,7 +42,7 @@ export default class LocalDependencyManager extends DependencyManager {
         err.message = `Could not download component for ${component_ref}\n${err.message}`;
         throw err;
       });
-      config = buildFromYml(component_version.config);
+      config = buildConfigFromYml(component_version.config);
     }
 
     // Set the tag
@@ -110,7 +110,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const [interpolated_component, errors] = await super.validateComponent(component, context, ignore_keys, groups);
     if (component.extends?.startsWith('file:') && errors.length) {
       const component_path = component.extends.substr('file:'.length);
-      const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(component_path);
+      const { file_path, file_contents } = loadSpecFromPathOrReject(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
     return [interpolated_component, errors];

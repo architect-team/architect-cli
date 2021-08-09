@@ -30,7 +30,7 @@ export const specPaths = (input: string) => {
   ];
 };
 
-export const trySpecFromPath = (config_path: string): { file_path: string; file_contents: string } => {
+export const loadSpecFromPathOrReject = (config_path: string): { file_path: string; file_contents: string } => {
   try {
     const try_files = specPaths(config_path);
     return tryReadFromPaths(try_files);
@@ -43,7 +43,7 @@ export const parseSourceYml = (source_yml: string): ParsedYaml => {
   return yaml.load(source_yml, { schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }) });
 };
 
-export const buildFromYml = (source_yml: string): ComponentConfig => {
+export const buildConfigFromYml = (source_yml: string): ComponentConfig => {
   const parsed_yml = parseSourceYml(source_yml);
 
   const spec = validateOrRejectSpec(parsed_yml);
@@ -52,17 +52,20 @@ export const buildFromYml = (source_yml: string): ComponentConfig => {
   return config;
 };
 
-export const buildFromPath = async (spec_path: string): Promise<ComponentConfig> => {
-  const { file_path: source_path, file_contents: source_yml } = trySpecFromPath(spec_path);
+export const buildConfigFromPath = (spec_path: string): { component_config: ComponentConfig; source_path: string } => {
+  const { file_path: source_path, file_contents: source_yml } = loadSpecFromPathOrReject(spec_path);
 
   try {
-    return buildFromYml(source_yml);
+    return {
+      component_config: buildConfigFromYml(source_yml),
+      source_path,
+    };
   } catch (err) {
     throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
   }
 };
 
-export const saveToPath = (config_path: string, config: ComponentConfig) => {
+export const saveComponentConfigToPath = (config_path: string, config: ComponentConfig) => {
   // TODO:269:we need to be able to reverse transform for this. until then, save the parsed_yml
   if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
     fs.writeFileSync(config_path, config.source_yml);
