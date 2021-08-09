@@ -44,7 +44,7 @@ jobs:
 
 ### Cleanup preview environment
 
-You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close. Alternatively, set the `--ttl` flag on environment creation similar to the example above for this to happen automatically in a specified time.
+You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close. Alternatively, set the `--ttl` flag on environment creation similar to the example above for this to happen automatically in a specified period of time.
 
 ```yaml
 name: Architect Destroy Preview
