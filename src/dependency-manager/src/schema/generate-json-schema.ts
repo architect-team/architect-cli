@@ -20,7 +20,7 @@ const schema = {
   definitions,
 };
 
-fs.copyFileSync('./src/schema/spec/architect-schema.json', './src/schema/spec/architect-schema.json');
-fs.writeFileSync('./src/schema/spec/architect-schema.json', JSON.stringify(schema, null, 2));
+// fs.copyFileSync('./architect-schema.json', './architect-schema.json');
+fs.writeFileSync('./architect-schema.json', JSON.stringify(schema, null, 2));
 
 console.log(JSON.stringify(schema));

@@ -1,6 +1,5 @@
 
 /* eslint-disable no-empty */
-import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
@@ -63,14 +62,4 @@ export const buildConfigFromPath = (spec_path: string): { component_config: Comp
   } catch (err) {
     throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
   }
-};
-
-export const saveComponentConfigToPath = (config_path: string, config: ComponentConfig) => {
-  // TODO:269:we need to be able to reverse transform for this. until then, save the parsed_yml
-  if (config_path.endsWith('.yml') || config_path.endsWith('.yaml')) {
-    fs.writeFileSync(config_path, config.source_yml);
-    return;
-  }
-
-  throw new Error(`Cannot save config to invalid path: ${config_path}`);
 };

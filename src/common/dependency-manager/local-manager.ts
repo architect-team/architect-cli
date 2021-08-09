@@ -46,10 +46,9 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     // Set the tag
-    // TODO:269:? why do these get set out here, why not in transform?
-    config.name = component_slug;
     config.tag = tag;
     config.instance_name = instance_name;
+    // todo:269:resolve component ref
     config.instance_id = config.ref;
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {

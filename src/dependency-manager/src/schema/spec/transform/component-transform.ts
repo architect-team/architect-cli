@@ -1,10 +1,9 @@
-import { ParameterValue } from '../../../spec/common/parameter-spec';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ArchitectError } from '../../../utils/errors';
 import { ARC_NULL_TOKEN } from '../../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../../utils/slugs';
 import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
-import { ComponentContext, ServiceContext, TaskContext } from '../../config/component-context';
+import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
 import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
@@ -60,12 +59,9 @@ const transformComponentInterfaceSpec = function (key: string, interface_spec: C
   if (interface_spec instanceof Object && 'host' in interface_spec && 'port' in interface_spec) {
     return interface_spec;
   } else {
+    // TODO:269: consider pushing this back to interpolation time instead of config transform
     let host, port, protocol, username, password;
     let url = interface_spec instanceof Object ? interface_spec.url : interface_spec;
-
-    if (!url) {
-      throw new Error('url is not set'); // TODO:269: this url was previously untyped so we shouldn't hit this. will type appropriately and remove after testing.
-    }
 
     const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
     const matches = url_regex.exec(url);
@@ -171,8 +167,6 @@ export const transformComponentContext = (
 };
 
 export const transformComponentSpec = (spec: ComponentSpec, source_yml: string): ComponentConfig => {
-
-  const tag = transformComponentSpecTag(spec.tag);
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
   const services = transformDictionary(transformServiceSpec, spec.services);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks);
@@ -180,17 +174,9 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string):
   const dependencies = spec.dependencies || {};
 
   const name = transformComponentSpecName(spec.name);
-  const { instance_name } = ComponentVersionSlugUtils.parse(name); // TODO:269:double-check
-  const ref = transformComponentSpecRef(spec.name, tag, instance_name);
 
   return {
     name,
-    tag,
-    ref,
-
-    instance_id: ref,
-    instance_name,
-    instance_date: new Date(),
 
     extends: spec.extends,
     local_path: transformLocalPath(spec.extends),

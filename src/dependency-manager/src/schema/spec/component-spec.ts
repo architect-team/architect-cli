@@ -41,10 +41,6 @@ export class ComponentSpec {
   name!: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  tag?: string;
-
-  @IsOptional()
   @Matches(/^(?!file:).*$/g) // TODO:269:refactor into a constant
   @JSONSchema({ type: 'string' })
   extends?: string;

@@ -26,14 +26,18 @@ export interface ParameterDefinitionConfig {
   default?: boolean | number | string | null;
 }
 
-export interface ComponentConfig {
-  name: string;
+export interface ComponentMetadata {
   tag: string;
   ref: string;
-
-  instance_id: string;
   instance_name: string;
+  instance_id: string;
   instance_date: Date;
+}
+
+export interface ComponentConfig {
+  name: string;
+
+  // metadata: ComponentMetadata;
 
   extends?: string;
   local_path?: string;

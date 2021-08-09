@@ -1,5 +1,4 @@
 import { ValidationError } from 'class-validator';
-import { interpolateString } from '../../utils/interpolation';
 import { ComponentConfig } from './component-config';
 
 export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): ValidationError[] => {
@@ -48,28 +47,6 @@ export const isPartOfCircularReference = (search_name: string, depends_on_map: {
   }
 
   return false;
-};
-
-export const validateInterpolation = (component: ComponentConfig): ValidationError[] => {
-  try {
-    const context = component.context;
-    for (const [parameter_key, parameter_value] of Object.entries(component.parameters)) {
-      if (parameter_value.default === null || parameter_value.default === undefined) {
-        context.parameters[parameter_key] = '1';
-      }
-    }
-    const interpolated_string = interpolateString(JSON.stringify(component), context, ['architect.', 'dependencies.', 'environment.']);
-    const interpolated_config = JSON.parse(interpolated_string) as ComponentConfig;
-
-    // TODO:269:?: what validator should we use for the interpolated_config?
-    return interpolated_config.validate();
-  } catch (err) {
-    if (err instanceof ValidationError) {
-      return [err];
-    } else {
-      throw err;
-    }
-  }
 };
 
 export const validateDependsOn = (component: ComponentConfig): ValidationError[] => {

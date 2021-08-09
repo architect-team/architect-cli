@@ -50,9 +50,8 @@ export class InterfaceSpec {
   @JSONSchema({ type: 'string' })
   password?: string;
 
-  @IsOptional()
   @JSONSchema({ type: 'string' })
-  url?: string;
+  url!: string;
 
   @IsOptional()
   @JSONSchema(AnyOf('boolean', 'string'))

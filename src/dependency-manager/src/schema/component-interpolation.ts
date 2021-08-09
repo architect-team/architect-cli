@@ -23,6 +23,6 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
   const spec_errors = validateSpec(parsed_yml);
   const interpolated_component_config = transformComponentSpec(parsed_yml as ComponentSpec, config.source_yml);
   const config_errors = validateConfig(interpolated_component_config);
-  //TODO:269:next: map JSONSchema errors to class-validator errors
+  //TODO:269:?: map JSONSchema errors to class-validator errors
   return { interpolated_config: interpolated_component_config, errors: [...spec_errors, config_errors] };
 };

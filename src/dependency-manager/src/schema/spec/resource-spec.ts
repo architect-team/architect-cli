@@ -103,8 +103,9 @@ export class ResourceSpec {
   })
   entrypoint?: string | string[];
 
+  @IsOptional()
   @JSONSchema({ type: 'string' })
-  language!: string; //TODO:269:? double check to make sure this was required for good reason. was throwing an Error in the getter if not set.
+  language?: string;
 
   @IsOptional()
   @ValidateNested()
