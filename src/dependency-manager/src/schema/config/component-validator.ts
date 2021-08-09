@@ -132,7 +132,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
   return errors;
 };
 
-const validate = (component: ComponentConfig): ValidationError[] => {
+export const validateConfig = (component: ComponentConfig): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   errors.push(...validateServiceAndTaskKeys(component)); //TODO:269: make new ticket to explore moving this to JSONSchema
@@ -141,8 +141,8 @@ const validate = (component: ComponentConfig): ValidationError[] => {
   return errors;
 };
 
-const validateOrReject = (component: ComponentConfig): void => {
-  const errors = validate(component);
+export const validateOrRejectConfig = (component: ComponentConfig): void => {
+  const errors = validateConfig(component);
 
   if (errors.length) {
     throw new Error(JSON.stringify(errors));

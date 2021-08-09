@@ -2,8 +2,9 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import { ValidationError } from 'class-validator';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
+import { buildFromPath, buildFromYml } from '../../dependency-manager/src/schema/component-builder';
+import { ComponentConfig } from '../../dependency-manager/src/schema/config/component-config';
 import { ComponentConfigBuilder } from '../../dependency-manager/src/spec/component/component-builder';
-import { ComponentConfig } from '../../dependency-manager/src/spec/component/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
@@ -32,25 +33,26 @@ export default class LocalDependencyManager extends DependencyManager {
       if (process.env.NODE_ENV !== 'test') {
         console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
       }
-      config = await ComponentConfigBuilder.buildFromPath(this.linked_components[component_slug]);
-      config.setExtends(`file:${this.linked_components[component_slug]}`);
+      config = await buildFromPath(this.linked_components[component_slug]);
+      config.extends = `file:${this.linked_components[component_slug]}`;
     } else {
       // Load remote component config
       const { data: component_version } = await this.api.get(`/accounts/${component_account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
         err.message = `Could not download component for ${component_ref}\n${err.message}`;
         throw err;
       });
-      config = ComponentConfigBuilder.buildFromJSON(component_version.config);
+      config = buildFromYml(component_version.config);
     }
 
     // Set the tag
-    config.setName(component_slug);
-    config.setTag(tag);
-    config.setInstanceName(instance_name);
-    config.setInstanceId(config.getRef());
+    // TODO:269:? why do these get set out here, why not in transform?
+    config.name = component_slug;
+    config.tag = tag;
+    config.instance_name = instance_name;
+    config.instance_id = config.ref;
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      const interface_obj = config.getInterfaces()[interface_to];
+      const interface_obj = config.interfaces[interface_to];
       if (!interface_obj) {
         throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
       }
@@ -59,23 +61,21 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       interface_obj.ingress.subdomain = interface_from;
       interface_obj.ingress.enabled = true;
-      config.setInterface(interface_to, interface_obj);
+      config.interfaces[interface_to] = interface_obj;
     }
 
-    if (config.getLocalPath() && !this.production) {
+    if (config.local_path && !this.production) {
       // Set debug values
-      for (const [sk, sv] of Object.entries(config.getServices())) {
+      for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
-        const debug_options = sv.getDebugOptions();
-        if (debug_options) {
-          config.setService(sk, sv.merge(debug_options));
+        if (sv.debug) {
+          config.services[sk] = sv.merge(sv.debug); // TODO:269:merge
         }
       }
-      for (const [tk, tv] of Object.entries(config.getTasks())) {
+      for (const [tk, tv] of Object.entries(config.tasks)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
-        const debug_options = tv.getDebugOptions();
-        if (debug_options) {
-          config.setTask(tk, tv.merge(debug_options));
+        if (tv.debug) {
+          config.tasks[tk] = tv.merge(tv.debug); // TODO:269:merge
         }
       }
     }
@@ -90,13 +90,13 @@ export default class LocalDependencyManager extends DependencyManager {
     while (component_configs_queue.length) {
       const component_config = component_configs_queue.pop();
       if (!component_config) { break; }
-      if (loaded_components.has(component_config.getRef())) {
+      if (loaded_components.has(component_config.ref)) {
         continue;
       }
-      loaded_components.add(component_config.getRef());
+      loaded_components.add(component_config.ref);
       component_configs.push(component_config);
 
-      for (const [dep_name, dep_tag] of Object.entries(component_config.getDependencies())) {
+      for (const [dep_name, dep_tag] of Object.entries(component_config.dependencies)) {
         const dep_component_config = await this.loadComponentConfig(`${dep_name}:${dep_tag}`);
         component_configs_queue.push(dep_component_config);
       }

@@ -11,6 +11,7 @@
     "rootDir": "src",
     "strict": true,
     "resolveJsonModule": true,
+    "moduleResolution": "node",
     "target": "es2017",
     "composite": true
   },
