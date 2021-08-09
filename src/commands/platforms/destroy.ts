@@ -21,6 +21,11 @@ export default class PlatformDestroy extends Command {
       description: 'Automatically apply the changes',
       default: false,
     }),
+    force: flags.boolean({
+      description: 'Force the deletion even if the platform is not empty',
+      char: 'f',
+      default: false,
+    }),
   };
 
   static args = [{
@@ -63,7 +68,11 @@ export default class PlatformDestroy extends Command {
     const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
 
     cli.action.start(chalk.blue('Deregistering platform'));
-    await this.app.api.delete(`/platforms/${account_platform.id}`);
+    await this.app.api.delete(`/platforms/${account_platform.id}`, {
+      params: {
+        force: answers.force ? 1 : 0,
+      },
+    });
     cli.action.stop();
     this.log(chalk.green('Platform deregistered'));
   }

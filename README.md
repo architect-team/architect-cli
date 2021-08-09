@@ -425,6 +425,7 @@ ARGUMENTS
 
 OPTIONS
   -a, --account=account  Architect account
+  -f, --force            Force the deletion even if the platform is not empty
   -h, --help             show CLI help
   --auto-approve         Automatically apply the changes
 
