@@ -20,6 +20,7 @@
     "class-validator": "^0.13.1",
     "cli-table3": "0.6.0",
     "cli-ux": "5.4.9",
+    "deepmerge": "^4.2.2",
     "execa": "5.0.0",
     "fs-extra": "9.1.0",
     "inquirer": "7.3.3",

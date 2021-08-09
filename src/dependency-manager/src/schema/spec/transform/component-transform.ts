@@ -211,9 +211,8 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string):
 
     artifact_image: spec.artifact_image,
 
-    source_yml, //TODO:269: this may not belong on here
+    source_yml,
 
-    //TODO:269: this may not belong on here
     context: transformComponentContext(
       dependencies,
       parameters,

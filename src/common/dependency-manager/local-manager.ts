@@ -1,6 +1,7 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import { ValidationError } from 'class-validator';
+import deepmerge from 'deepmerge';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { buildFromPath, buildFromYml } from '../../dependency-manager/src/schema/component-builder';
 import { ComponentConfig } from '../../dependency-manager/src/schema/config/component-config';
@@ -69,13 +70,13 @@ export default class LocalDependencyManager extends DependencyManager {
       for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (sv.debug) {
-          config.services[sk] = sv.merge(sv.debug); // TODO:269:merge
+          config.services[sk] = deepmerge(sv, sv.debug);
         }
       }
       for (const [tk, tv] of Object.entries(config.tasks)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (tv.debug) {
-          config.tasks[tk] = tv.merge(tv.debug); // TODO:269:merge
+          config.tasks[tk] = deepmerge(tv, tv.debug);
         }
       }
     }
@@ -107,9 +108,8 @@ export default class LocalDependencyManager extends DependencyManager {
   async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]): Promise<[ComponentConfig, ValidationError[]]> {
     const groups = ['deploy', 'developer'];
     const [interpolated_component, errors] = await super.validateComponent(component, context, ignore_keys, groups);
-    const component_extends = component.getExtends();
-    if (component_extends?.startsWith('file:') && errors.length) {
-      const component_path = component_extends.substr('file:'.length);
+    if (component.extends?.startsWith('file:') && errors.length) {
+      const component_path = component.extends.substr('file:'.length);
       const [file_path, file_contents] = ComponentConfigBuilder.readFromPath(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }

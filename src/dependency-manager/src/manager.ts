@@ -1,4 +1,4 @@
-import { deserialize, serialize } from 'class-transformer';
+import { serialize } from 'class-transformer';
 import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
 import DependencyGraph from './graph';
@@ -9,11 +9,10 @@ import GatewayNode from './graph/node/gateway';
 import InterfacesNode from './graph/node/interfaces';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
-import { interpolateConfig } from './schema/component-interpolation';
-import { ComponentConfig } from './schema/config/component-config';
+import { interpolateConfig, interpolateConfigOrReject } from './schema/component-interpolation';
+import { buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
-import { InterfaceSpec } from './spec/common/interface-spec';
-import { ComponentInterfaceSpec } from './spec/component/component-interface-spec';
+import { InterfaceConfig } from './schema/config/service-config';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, flattenValidationErrors, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
@@ -36,7 +35,7 @@ export default abstract class DependencyManager {
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.services)) {
       const node = new ServiceNode({
-        ref: component.getNodeRef(service_name),
+        ref: buildNodeRef(component, service_name),
         config: service_config,
         local_path: component.local_path,
         artifact_image: component.artifact_image,
@@ -47,7 +46,7 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.tasks)) {
       const node = new TaskNode({
-        ref: component.getNodeRef(task_name),
+        ref: buildNodeRef(component, task_name),
         config: task_config,
         local_path: component.local_path,
       });
@@ -101,7 +100,7 @@ export default abstract class DependencyManager {
 
     // Add edges FROM services to other services
     for (const [service_name, service_config] of Object.entries({ ...component.tasks, ...component.services })) {
-      const from = component.getNodeRef(service_name);
+      const from = buildNodeRef(component, service_name);
       const from_node = graph.getNodeByRef(from);
 
       const service_string = serialize(service_config);
@@ -149,7 +148,7 @@ export default abstract class DependencyManager {
         }
         subdomain = interpolateString(subdomain, dep_component.context);
 
-        let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
+        let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
           const gateway_host = external_addr.split(':')[0];
           const gateway_port = parseInt(external_addr.split(':')[1] || '443');
@@ -157,7 +156,7 @@ export default abstract class DependencyManager {
           gateway_node.instance_id = 'gateway';
           graph.addNode(gateway_node);
 
-          ingress_edge = new IngressEdge('gateway', dep_component.getInterfacesRef(), {});
+          ingress_edge = new IngressEdge('gateway', buildInterfacesRef(dep_component), {});
           graph.addEdge(ingress_edge);
         }
 
@@ -183,7 +182,7 @@ export default abstract class DependencyManager {
       const service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
-        const to = component.getNodeRef(service_name);
+        const to = buildNodeRef(component, service_name);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -202,7 +201,7 @@ export default abstract class DependencyManager {
 
         const dependency = dependency_map[`${dep_name}:${dep_tag}`];
         if (!dependency) continue;
-        const to = dependency.getInterfacesRef();
+        const to = buildInterfacesRef(dependency);
 
         if (!graph.nodes_map.has(to)) continue;
 
@@ -227,7 +226,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
-      const to = component.getNodeRef(service_name);
+      const to = buildNodeRef(component, service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -244,7 +243,7 @@ export default abstract class DependencyManager {
 
       const dependency = dependency_map[`${dep_name}:${dep_tag}`];
       if (!dependency) continue;
-      const to = dependency.getInterfacesRef();
+      const to = buildInterfacesRef(dependency);
 
       if (!graph.nodes_map.has(to)) continue;
 
@@ -253,7 +252,7 @@ export default abstract class DependencyManager {
     }
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
-      const edge = new ServiceEdge(component.getInterfacesRef(), to, interfaces_map);
+      const edge = new ServiceEdge(buildInterfacesRef(component), to, interfaces_map);
       graph.addEdge(edge);
     }
   }
@@ -289,7 +288,7 @@ export default abstract class DependencyManager {
     return host;
   }
 
-  generateUrl(interface_config: InterfaceSpec, host?: string, port?: string) {
+  generateUrl(interface_config: InterfaceConfig, host?: string, port?: string) {
     host = host || interface_config.host;
     port = port || interface_config.port;
     const protocol = interface_config.protocol || 'http';
@@ -303,10 +302,10 @@ export default abstract class DependencyManager {
     return url;
   }
 
-  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): InterfaceSpec {
+  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): InterfaceConfig {
     const interface_to = edge.interfaces_map[interface_from];
 
-    let external_interface: ComponentInterfaceSpec;
+    let external_interface: ComponentInterfaceConfig;
 
     const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
 
@@ -347,7 +346,7 @@ export default abstract class DependencyManager {
 
   async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
     const component = initial_component;
-    const component_string = replaceBrackets(serialize(component.expand()));
+    const component_string = replaceBrackets(component.source_yml);
 
     let proxy_port = 12345;
     const proxy_port_mapping: Dictionary<string> = {};
@@ -397,7 +396,7 @@ export default abstract class DependencyManager {
       for (const [interface_name, interface_config] of Object.entries(dependency.interfaces)) {
         context.dependencies[dependency.name].interfaces[interface_name] = interface_config;
         if (this.use_sidecar && interface_config.host === '127.0.0.1') {
-          const sidecar_service = `${dependency.getInterfacesRef()}--${interface_name}`;
+          const sidecar_service = `${buildInterfacesRef(dependency)}--${interface_name}`;
 
           if (!proxy_port_mapping[sidecar_service]) {
             proxy_port_mapping[sidecar_service] = `${proxy_port}`;
@@ -416,7 +415,7 @@ export default abstract class DependencyManager {
 
     for (const dependency of [component, ...dependencies]) {
       // Set dependency and component ingresses
-      const ingress_edges = graph.edges.filter(edge => edge.from === 'gateway' && edge.to === dependency.getInterfacesRef()) as IngressEdge[];
+      const ingress_edges = graph.edges.filter(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dependency)) as IngressEdge[];
       for (const ingress_edge of ingress_edges) {
         for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
           const external_interface = this.getIngressesContext(graph, ingress_edge, interface_from, external_address, dependency);
@@ -433,11 +432,13 @@ export default abstract class DependencyManager {
             if (ingress_edge.consumers_map[interface_from]) {
               const interfaces_refs = graph.edges.filter(edge => ingress_edge.consumers_map[interface_from].has(edge.to) && graph.getNodeByRef(edge.from) instanceof InterfacesNode).map(edge => edge.from);
               const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
-              const consumers = [];
+              const consumers: string[] = [];
               for (const consumer_ingress_edge of consumer_ingress_edges) {
                 for (const consumer_interface_from of Object.keys(consumer_ingress_edge.interfaces_map)) {
                   const consumer_interface = this.getIngressesContext(graph, consumer_ingress_edge, consumer_interface_from, external_address);
-                  consumers.push(consumer_interface.url);
+                  if (consumer_interface.url) {
+                    consumers.push(consumer_interface.url);
+                  }
                 }
               }
               context.ingresses[interface_to].consumers = consumers.sort();
@@ -451,7 +452,7 @@ export default abstract class DependencyManager {
 
     // Set service interfaces
     for (const [service_name, service_config] of Object.entries(component.services)) {
-      const service_ref = component.getNodeRef(service_name);
+      const service_ref = buildNodeRef(component, service_name);
       const service_node = graph.getNodeByRef(service_ref);
       for (const [interface_name, interface_config] of Object.entries(service_config.interfaces)) {
         let internal_host;
@@ -564,12 +565,8 @@ export default abstract class DependencyManager {
     }
 
     try {
-      const component_string = replaceBrackets(serialize(component.expand()));
-      const interpolated_component_string = interpolateString(component_string, context, ignore_keys);
-      const interpolated_component_config = deserialize(component.getClass(), interpolated_component_string) as ComponentConfig;
-      // Deploy time validation of interpolated component
-      const validation_errors = await interpolated_component_config.validate({ groups });
-      return [interpolated_component_config, validation_errors];
+      const { interpolated_config, errors } = interpolateConfig(component, ignore_keys);
+      return [interpolated_config, errors];
     } catch (err) {
       if (err instanceof ValidationError) {
         return [component, [err]];
@@ -590,14 +587,14 @@ export default abstract class DependencyManager {
     for (const tree_node of tree_nodes) {
       const component_config = tree_node.config;
 
-      const interpolated_component_config = interpolateConfig(component_config, ['']);
+      const interpolated_component_config = interpolateConfigOrReject(component_config, ['']);
 
       let nodes: DependencyNode[] = [];
 
       nodes = nodes.concat(this.getComponentNodes(interpolated_component_config));
 
       if (Object.keys(component_config.interfaces).length) {
-        const node = new InterfacesNode(component_config.getInterfacesRef(), component_config.ref);
+        const node = new InterfacesNode(buildInterfacesRef(component_config), component_config.ref);
         nodes.push(node);
       }
 
@@ -721,7 +718,7 @@ export default abstract class DependencyManager {
       }
 
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.services), ...Object.entries(tree_node.interpolated_config.tasks)]) {
-        const service_ref = tree_node.interpolated_config.getNodeRef(service_name);
+        const service_ref = buildNodeRef(tree_node.interpolated_config, service_name);
         const node = graph.getNodeByRef(service_ref) as ServiceNode | TaskNode;
         // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
         // @ts-ignore

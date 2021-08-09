@@ -19,6 +19,7 @@
   "dependencies": {
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
+    "deepmerge": "^4.2.2",
     "fs-extra": "^8.1.0",
     "js-yaml": "^4.1.0",
     "matcher": "^4.0.0",

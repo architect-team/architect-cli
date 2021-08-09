@@ -20,4 +20,7 @@ export interface ComponentContext {
   interfaces: Dictionary<InterfaceConfig>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
+
+  environment?: any; //TODO:269: we should be able to type this better
+  [name: string]: any; //TODO:269: we should be able to type this better
 }

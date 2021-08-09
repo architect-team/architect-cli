@@ -36,7 +36,7 @@ export interface LivenessProbeConfig {
 
 export interface ServiceConfig extends ResourceConfig {
   debug?: ServiceConfig;
-  interfaces?: Dictionary<InterfaceConfig>;
+  interfaces: Dictionary<InterfaceConfig>;
   liveness_probe?: LivenessProbeConfig;
   replicas: string;
   scaling?: ScalingConfig;
