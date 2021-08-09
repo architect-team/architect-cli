@@ -10,7 +10,7 @@ import InterfacesNode from './graph/node/interfaces';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { interpolateConfig, interpolateConfigOrReject } from './schema/component-interpolation';
-import { buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
+import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
 import { InterfaceConfig } from './schema/config/service-config';
 import { Dictionary } from './utils/dictionary';
@@ -95,7 +95,8 @@ export default abstract class DependencyManager {
     const dependency_components = tree_node.children.map(n => n.config);
     const dependency_map: Dictionary<ComponentConfig> = {};
     for (const dependency_component of dependency_components) {
-      dependency_map[dependency_component.ref] = dependency_component;
+      const dependency_ref = buildComponentRef(dependency_component);
+      dependency_map[dependency_ref] = dependency_component;
     }
 
     // Add edges FROM services to other services
@@ -162,7 +163,7 @@ export default abstract class DependencyManager {
 
         ingress_edge.interfaces_map[subdomain] = interface_name;
 
-        if (dep_component.ref !== component.ref) {
+        if (buildComponentRef(dep_component) !== buildComponentRef(component)) {
           if (!ingress_edge.consumers_map[subdomain]) {
             ingress_edge.consumers_map[subdomain] = new Set();
           }
@@ -265,7 +266,7 @@ export default abstract class DependencyManager {
       sorted_values_dict[key] = all_values[key];
     }
 
-    const component_ref = component.ref;
+    const component_ref = buildComponentRef(component);
     const component_parameters = component.parameters;
     // add values from values file to all existing, matching components
     for (const [pattern, params] of Object.entries(sorted_values_dict)) {
@@ -425,7 +426,7 @@ export default abstract class DependencyManager {
           }
           context.environment.ingresses[dependency.name][interface_to] = external_interface; // Deprecated environment.ingresses
 
-          if (dependency.ref === component.ref) {
+          if (buildComponentRef(dependency) === buildComponentRef(component)) {
             context.ingresses[interface_to] = external_interface;
             context.ingresses[interface_to].consumers = [];
 
@@ -492,7 +493,7 @@ export default abstract class DependencyManager {
 
     const [interpolated_component_config, validation_errors] = await this.validateComponent(component, context, ignore_keys);
     if (validation_errors.length) {
-      throw new ValidationErrors(component.ref, flattenValidationErrors(validation_errors));
+      throw new ValidationErrors(buildComponentRef(component), flattenValidationErrors(validation_errors));
     }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
@@ -510,7 +511,10 @@ export default abstract class DependencyManager {
     let res = undefined;
     let best_diff = Number.NEGATIVE_INFINITY;
     for (const component_config of component_configs) {
-      const current_time = component_config.instance_date.getTime();
+      if (!component_config.instance_metadata) {
+        throw new Error(`Instance metadata has not been set on component: ${component_config.name}`);
+      }
+      const current_time = component_config.instance_metadata?.instance_date.getTime();
       const current_diff = current_time - target_time;
       if (current_diff <= 0 && current_diff > best_diff) {
         best_diff = current_diff;
@@ -523,11 +527,12 @@ export default abstract class DependencyManager {
   getDependencyComponents(component_config: ComponentConfig, component_configs: ComponentConfig[]) {
     const component_map: Dictionary<ComponentConfig[]> = {};
     for (const component_config of component_configs) {
-      if (!component_map[component_config.ref]) {
-        component_map[component_config.ref] = [];
+      const ref = buildComponentRef(component_config);
+      if (!component_map[ref]) {
+        component_map[ref] = [];
       }
       // Potentially multiple components with the same ref and different instance ids
-      component_map[component_config.ref].push(component_config);
+      component_map[ref].push(component_config);
     }
 
     const dependency_components = [];
@@ -537,7 +542,10 @@ export default abstract class DependencyManager {
         continue;
       }
       const dep_components = component_map[dep_ref];
-      const dep_component = this.findClosestComponent(dep_components, component_config.instance_date);
+      if (!component_config.instance_metadata) {
+        throw new Error(`Instance metadata has not been set on component: ${component_config.name}`);
+      }
+      const dep_component = this.findClosestComponent(dep_components, component_config.instance_metadata?.instance_date);
       if (!dep_component) {
         continue;
       }
@@ -550,7 +558,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.parameters)) {
-      if (pv.required !== 'false' && (pv.default === undefined)) {
+      if (pv.required !== `false` && (pv.default === undefined)) {
         const validation_error = new ValidationError();
         validation_error.property = `components.${component.name}.parameters.${pk}`;
         validation_error.target = pv;
@@ -594,12 +602,13 @@ export default abstract class DependencyManager {
       nodes = nodes.concat(this.getComponentNodes(interpolated_component_config));
 
       if (Object.keys(component_config.interfaces).length) {
-        const node = new InterfacesNode(buildInterfacesRef(component_config), component_config.ref);
+        const ref = buildComponentRef(component_config);
+        const node = new InterfacesNode(buildInterfacesRef(component_config), ref);
         nodes.push(node);
       }
 
       for (const node of nodes) {
-        node.instance_id = component_config.instance_id;
+        node.instance_id = component_config.instance_metadata?.instance_id || '';
         graph.addNode(node);
       }
     }
@@ -626,7 +635,8 @@ export default abstract class DependencyManager {
     const nodes: Dictionary<ComponentConfigNode> = {};
     // Initialize nodes
     for (const component_config of component_configs) {
-      nodes[component_config.ref] = {
+      const ref = buildComponentRef(component_config);
+      nodes[ref] = {
         config: component_config,
         parents: [],
         children: [],
@@ -636,10 +646,12 @@ export default abstract class DependencyManager {
 
     // Set parents/children
     for (const component_config of component_configs) {
-      const node = nodes[component_config.ref];
+      const ref = buildComponentRef(component_config);
+      const node = nodes[ref];
       const dependency_components = this.getDependencyComponents(component_config, component_configs);
       for (const dependency_component of dependency_components) {
-        const child_node = nodes[dependency_component.ref];
+        const dependency_ref = buildComponentRef(dependency_component);
+        const child_node = nodes[dependency_ref];
         node.children.push(child_node);
         child_node.parents.push(node);
       }
@@ -655,13 +667,14 @@ export default abstract class DependencyManager {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const { node, seen_nodes } = stack.pop()!;
 
-        if (seen_nodes.includes(node.config.ref)) {
+        const ref = buildComponentRef(node.config);
+        if (seen_nodes.includes(ref)) {
           throw new ArchitectError(`Circular component dependency detected (${seen_nodes.join(' <> ')})`);
         }
 
         for (const child_node of node.children) {
           child_node.level = Math.max(child_node.level, node.level + 1);
-          stack.push({ node: child_node, seen_nodes: [node.config.ref, ...seen_nodes] });
+          stack.push({ node: child_node, seen_nodes: [ref, ...seen_nodes] });
         }
       }
     }

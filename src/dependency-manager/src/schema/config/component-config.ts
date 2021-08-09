@@ -1,6 +1,6 @@
 import { Dictionary } from '../../utils/dictionary';
 import { Refs } from '../../utils/refs';
-import { ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { ComponentContext } from './component-context';
 import { InterfaceConfig, ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
@@ -26,18 +26,22 @@ export interface ParameterDefinitionConfig {
   default?: boolean | number | string | null;
 }
 
-export interface ComponentMetadata {
-  tag: string;
-  ref: string;
+export interface ComponentInstanceMetadata {
   instance_name: string;
   instance_id: string;
   instance_date: Date;
 }
 
+export interface ComponentVersionMetadata {
+  tag: string;
+}
+
 export interface ComponentConfig {
   name: string;
 
-  // metadata: ComponentMetadata;
+  // TODO:269: we should consider allowing these to live next to the ComponentConfig instead of attached to it
+  tag: string;
+  instance_metadata?: ComponentInstanceMetadata;
 
   extends?: string;
   local_path?: string;
@@ -62,13 +66,18 @@ export interface ComponentConfig {
   context: ComponentContext;
 }
 
+export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {
+  const split = ComponentSlugUtils.parse(config.name);
+  return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, config.tag, config.instance_metadata?.instance_name);
+};
+
 // TODO:269: is there any real use case for buildNodeRef? why is it separate from `getNodeRef`?
-export const buildRef = (service_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
+export const buildResourceRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
-    parsed = ServiceVersionSlugUtils.parse(service_ref);
+    parsed = ServiceVersionSlugUtils.parse(resource_ref);
   } catch {
-    parsed = ComponentVersionSlugUtils.parse(service_ref);
+    parsed = ComponentVersionSlugUtils.parse(resource_ref);
   }
   if (!instance_id) {
     instance_id = ComponentVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, parsed.tag, parsed.instance_name);
@@ -83,21 +92,23 @@ export const buildRef = (service_ref: string, instance_id = '', max_length: numb
   }
 
   if (instance_id) {
-    service_ref = `${service_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
+    resource_ref = `${resource_ref}${Slugs.INSTANCE_DELIMITER}${instance_id}`;
   }
 
-  return Refs.safeRef(friendly_name, service_ref, max_length);
+  return Refs.safeRef(friendly_name, resource_ref, max_length);
 };
 
 export const buildNodeRef = (component_config: ComponentConfig, service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH) => {
-  const parsed = ComponentVersionSlugUtils.parse(component_config.ref);
-  const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.instance_name);
-  return buildRef(service_ref, component_config.instance_id, max_length);
+  const component_ref = buildComponentRef(component_config);
+  const parsed = ComponentVersionSlugUtils.parse(component_ref);
+  const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.instance_metadata?.instance_name);
+  return buildResourceRef(service_ref, component_config.instance_metadata?.instance_id, max_length);
 };
 
 export const buildInterfacesRef = (component_config: ComponentConfig, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   // instance_id must be set to be unique across environments
-  return buildRef(component_config.ref, component_config.instance_id, max_length);
+  const component_ref = buildComponentRef(component_config);
+  return buildResourceRef(component_ref, component_config.instance_metadata?.instance_id, max_length);
 };
 
 export const getServiceByRef = (component_config: ComponentConfig, service_ref: string): ServiceConfig | undefined => {

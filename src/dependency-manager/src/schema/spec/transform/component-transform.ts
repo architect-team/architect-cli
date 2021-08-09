@@ -1,7 +1,7 @@
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ArchitectError } from '../../../utils/errors';
 import { ARC_NULL_TOKEN } from '../../../utils/interpolation';
-import { ComponentSlug, ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, Slugs } from '../../../utils/slugs';
+import { ComponentSlug, ComponentSlugUtils, Slugs } from '../../../utils/slugs';
 import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
 import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
 import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
@@ -21,11 +21,6 @@ export const transformComponentSpecTag = (tag?: string): string => {
 
 export const transformLocalPath = (component_extends?: string): string | undefined => {
   return component_extends?.startsWith('file:') ? component_extends?.substr('file:'.length) : undefined;
-};
-
-export const transformComponentSpecRef = (name: string, tag: string, instance_name: string): ComponentVersionSlug => {
-  const split = ComponentSlugUtils.parse(name);
-  return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, tag, instance_name);
 };
 
 export const transformBooleanString = (boolean_string: string | boolean): boolean => {
@@ -166,7 +161,7 @@ export const transformComponentContext = (
   };
 };
 
-export const transformComponentSpec = (spec: ComponentSpec, source_yml: string): ComponentConfig => {
+export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
   const services = transformDictionary(transformServiceSpec, spec.services);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks);
@@ -177,6 +172,7 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string):
 
   return {
     name,
+    tag,
 
     extends: spec.extends,
     local_path: transformLocalPath(spec.extends),

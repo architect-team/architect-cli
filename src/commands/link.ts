@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
+import { Slugs } from '../dependency-manager/src';
 import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
 
 declare const process: NodeJS.Process;
@@ -30,7 +31,7 @@ export default class Link extends Command {
 
     // Try to load the component from the path to ensure it exists and is valid
     try {
-      const { component_config } = buildConfigFromPath(component_path);
+      const { component_config } = buildConfigFromPath(component_path, Slugs.DEFAULT_TAG);
       this.app.linkComponentPath(component_config.name, component_path);
       this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
     } catch (err) {

@@ -4,7 +4,7 @@ import { ValidationError } from 'class-validator';
 import deepmerge from 'deepmerge';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
-import { ComponentConfig } from '../../dependency-manager/src/schema/config/component-config';
+import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
@@ -33,7 +33,7 @@ export default class LocalDependencyManager extends DependencyManager {
       if (process.env.NODE_ENV !== 'test') {
         console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
       }
-      const { component_config } = buildConfigFromPath(this.linked_components[component_slug]);
+      const { component_config } = buildConfigFromPath(this.linked_components[component_slug], tag);
       config = component_config;
       config.extends = `file:${this.linked_components[component_slug]}`;
     } else {
@@ -42,14 +42,16 @@ export default class LocalDependencyManager extends DependencyManager {
         err.message = `Could not download component for ${component_ref}\n${err.message}`;
         throw err;
       });
-      config = buildConfigFromYml(component_version.config);
+      config = buildConfigFromYml(component_version.config, tag);
     }
 
-    // Set the tag
-    config.tag = tag;
-    config.instance_name = instance_name;
-    // todo:269:resolve component ref
-    config.instance_id = config.ref;
+    const instance_metadata: ComponentInstanceMetadata = {
+      instance_name,
+      instance_id: component_ref,
+      instance_date: new Date(),
+    };
+
+    config.instance_metadata = instance_metadata;
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.interfaces[interface_to];
@@ -90,10 +92,11 @@ export default class LocalDependencyManager extends DependencyManager {
     while (component_configs_queue.length) {
       const component_config = component_configs_queue.pop();
       if (!component_config) { break; }
-      if (loaded_components.has(component_config.ref)) {
+      const ref = buildComponentRef(component_config);
+      if (loaded_components.has(ref)) {
         continue;
       }
-      loaded_components.add(component_config.ref);
+      loaded_components.add(ref);
       component_configs.push(component_config);
 
       for (const [dep_name, dep_tag] of Object.entries(component_config.dependencies)) {

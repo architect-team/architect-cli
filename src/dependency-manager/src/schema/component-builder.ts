@@ -42,21 +42,21 @@ export const parseSourceYml = (source_yml: string): ParsedYaml => {
   return yaml.load(source_yml, { schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }) });
 };
 
-export const buildConfigFromYml = (source_yml: string): ComponentConfig => {
+export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
   const parsed_yml = parseSourceYml(source_yml);
 
   const spec = validateOrRejectSpec(parsed_yml);
-  const config = transformComponentSpec(spec, source_yml);
+  const config = transformComponentSpec(spec, source_yml, tag);
   validateOrRejectConfig(config);
   return config;
 };
 
-export const buildConfigFromPath = (spec_path: string): { component_config: ComponentConfig; source_path: string } => {
+export const buildConfigFromPath = (spec_path: string, tag: string): { component_config: ComponentConfig; source_path: string } => {
   const { file_path: source_path, file_contents: source_yml } = loadSpecFromPathOrReject(spec_path);
 
   try {
     return {
-      component_config: buildConfigFromYml(source_yml),
+      component_config: buildConfigFromYml(source_yml, tag),
       source_path,
     };
   } catch (err) {

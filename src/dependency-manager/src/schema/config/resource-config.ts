@@ -31,7 +31,7 @@ export interface ResourceConfig {
   image?: string;
   command?: string[];
   entrypoint?: string[];
-  language: string;
+  language?: string;
   debug?: ResourceConfig;
   environment: Dictionary<string>;
   volumes: Dictionary<VolumeConfig>;

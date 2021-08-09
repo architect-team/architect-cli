@@ -77,7 +77,8 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { component_config, source_path } = buildConfigFromPath(config_path);
+
+    const { component_config, source_path } = buildConfigFromPath(config_path, tag);
     const component_path = path.dirname(source_path);
 
     if (!component_config.name) {
