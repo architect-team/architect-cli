@@ -1,11 +1,10 @@
-import Ajv from "ajv";
 import fs from 'fs-extra';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src';
+import { buildConfigFromPath, Slugs } from '../../src/dependency-manager/src';
 
 // This test validates the architect.yml file for each of our example components to ensure that none go out of date
 describe('example component validation', function () {
@@ -38,18 +37,7 @@ describe('example component validation', function () {
     var example_architect_dirs = fs.readdirSync(EXAMPLES_DIR);
 
     it(`${EXAMPLES_DIR}/hello-world/architect.yml passes ajv json schema validation`, async () => {
-      const { file_path, file_contents, raw_config } = await ComponentConfigBuilder.rawFromPath(`${EXAMPLES_DIR}/hello-world/architect.yml`);
-      const config = ComponentConfigBuilder.buildFromJSON(raw_config);
-
-      const schema_string = fs.readFileSync('/Users/dp/code/architect/architect-cli/src/dependency-manager/architect-schema.json', 'utf-8');
-      const schema = JSON.parse(schema_string);
-      const ajv = new Ajv();
-      const validate = ajv.compile(schema);
-      const valid = validate(config);
-      if (!valid) {
-        console.debug(validate.errors);
-        throw new Error();
-      }
+      const { component_config, source_path } = buildConfigFromPath(`${EXAMPLES_DIR}/hello-world/architect.yml`, Slugs.DEFAULT_TAG);
     });
 
     // for (const example_dir of example_architect_dirs) {

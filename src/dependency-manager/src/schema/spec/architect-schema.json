@@ -1,0 +1,705 @@
+{
+  "title": "JSON Schema for Architect.io configuration",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "properties": {
+    "name": {
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "type": "string"
+    },
+    "tag": {
+      "type": "string"
+    },
+    "extends": {
+      "pattern": "^(?!file:).*$",
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "author": {
+      "type": "string"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "url"
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "$ref": "#/definitions/ParameterDefinitionSpec"
+          }
+        ]
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/ServiceSpec"
+          }
+        ]
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/TaskSpec"
+          }
+        ]
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "interfaces": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/definitions/ComponentInterfaceSpec"
+          }
+        ]
+      }
+    },
+    "artifact_image": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "definitions": {
+    "VolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "type": "string"
+        },
+        "host_path": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "BuildSpec": {
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "dockerfile": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ResourceSpec": {
+      "properties": {
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "debug": {
+          "$ref": "#/definitions/ResourceSpec"
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "volumes": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/VolumeSpec"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "type": "object"
+    },
+    "ScalingMetricsSpec": {
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ScalingSpec": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/definitions/ScalingMetricsSpec"
+        }
+      },
+      "type": "object",
+      "required": [
+        "metrics"
+      ]
+    },
+    "InterfaceSpec": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "LivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "type": "string"
+        },
+        "failure_threshold": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "string"
+        },
+        "initial_delay": {
+          "type": "string"
+        },
+        "path": {
+          "pattern": "^\\/.*$",
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "path"
+      ]
+    },
+    "ServiceSpec": {
+      "properties": {
+        "debug": {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        "interfaces": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/InterfaceSpec"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/LivenessProbeSpec"
+        },
+        "replicas": {
+          "type": "string"
+        },
+        "scaling": {
+          "$ref": "#/definitions/ScalingSpec"
+        },
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "volumes": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/VolumeSpec"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "type": "object"
+    },
+    "TaskSpec": {
+      "properties": {
+        "debug": {
+          "$ref": "#/definitions/TaskSpec"
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "name": {
+          "pattern": "^[a-zA-Z0-9-_]+$",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "volumes": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/VolumeSpec"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "type": "object"
+    },
+    "IngressSpec": {
+      "properties": {
+        "subdomain": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ComponentInterfaceSpec": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/IngressSpec"
+        },
+        "description": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ParameterDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ComponentSpec": {
+      "properties": {
+        "name": {
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "extends": {
+          "pattern": "^(?!file:).*$",
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "author": {
+          "type": "string"
+        },
+        "homepage": {
+          "type": "string",
+          "format": "url"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/definitions/ParameterDefinitionSpec"
+              }
+            ]
+          }
+        },
+        "services": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ServiceSpec"
+              }
+            ]
+          }
+        },
+        "tasks": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/TaskSpec"
+              }
+            ]
+          }
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "interfaces": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/ComponentInterfaceSpec"
+              }
+            ]
+          }
+        },
+        "artifact_image": {
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    }
+  }
+}

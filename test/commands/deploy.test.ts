@@ -8,7 +8,7 @@ import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
-import { buildResourceRef, Slugs } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/schema/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -264,9 +264,9 @@ describe('local deploy environment', function () {
     }
   };
 
-  const seed_app_ref = buildResourceRef('examples/database-seeding/app:latest');
-  const seed_db_ref = buildResourceRef('examples/database-seeding/my-demo-db:latest');
-  const echo_ref = buildResourceRef('examples/echo/api:latest');
+  const seed_app_ref = resourceRefToNodeRef('examples/database-seeding/app:latest');
+  const seed_db_ref = resourceRefToNodeRef('examples/database-seeding/my-demo-db:latest');
+  const echo_ref = resourceRefToNodeRef('examples/echo/api:latest');
 
   const environment_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -385,7 +385,7 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = buildResourceRef('examples/hello-world/api:latest');
+  const hello_api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -589,7 +589,7 @@ describe('local deploy environment', function () {
     .it('Create a local recursive deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = buildResourceRef('examples/react-app/app:latest');
+      const react_app_ref = resourceRefToNodeRef('examples/react-app/app:latest');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
@@ -637,7 +637,7 @@ describe('local deploy environment', function () {
   });
 
   describe('instance deploys', function () {
-    const hello_api_instance_ref = buildResourceRef('examples/hello-world/api:latest@tenant-1');
+    const hello_api_instance_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_deploy = test
@@ -690,8 +690,8 @@ describe('local deploy environment', function () {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
 
-        const tenant_1_ref = buildResourceRef('examples/hello-world/api:latest@tenant-1');
-        const tenant_2_ref = buildResourceRef('examples/hello-world/api:latest@tenant-2');
+        const tenant_1_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
+        const tenant_2_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
         expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.hello-1.rule=Host(\`hello-1.arc.localhost\`)`)
@@ -703,7 +703,7 @@ describe('local deploy environment', function () {
     test
       .timeout(20000)
       // @ts-ignore
-      .stub(ComponentConfigBuilder, 'buildFromPath', (path: string) => {
+      .stub(ComponentBuilder, 'buildConfigFromPath', (path: string) => {
         let config: string;
         if (path === './examples/react-app/architect.yml') {
           config = `
@@ -750,9 +750,9 @@ describe('local deploy environment', function () {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];
-        const app_ref = buildResourceRef('examples/app/app:latest');
+        const app_ref = resourceRefToNodeRef('examples/app/app:latest');
         expect(compose.services[app_ref].labels).includes('traefik.enable=true');
-        const auth_ref = buildResourceRef('examples/auth/auth:latest');
+        const auth_ref = resourceRefToNodeRef('examples/auth/auth:latest');
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });

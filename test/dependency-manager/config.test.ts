@@ -4,7 +4,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
+import { buildConfigFromPath, Slugs } from '../../src/dependency-manager/src';
 
 describe('config spec v1', () => {
   beforeEach(async () => {
@@ -45,7 +45,7 @@ describe('config spec v1', () => {
       '/architect.yml': component_yml,
     });
 
-    const component_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
+    const component_config = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     expect(component_config).to.deep.eq({
       "name": "test/component",
       "services": {
@@ -76,7 +76,7 @@ describe('config spec v1', () => {
       '/architect.yml': component_yml,
     });
 
-    const component_config = await ComponentConfigBuilder.buildFromPath('/architect.yml');
+    const component_config = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     expect(component_config).to.deep.eq({
       "name": "test/component",
       "services": {

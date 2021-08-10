@@ -10,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, DependencyNode, ServiceNode } from '../../src/dependency-manager/src';
+import { buildInterfacesRef, DependencyNode, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import DependencyGraph from '../../src/dependency-manager/src/graph';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
@@ -94,10 +94,10 @@ describe('sidecar spec v1', () => {
       };
     });
 
-    const branch_ref = ComponentConfig.getNodeRef('test/branch/api:latest');
-    const leaf_interfaces_ref = ComponentConfig.getNodeRef('test/leaf:latest');
-    const leaf_db_ref = ComponentConfig.getNodeRef('test/leaf/db:latest');
-    const leaf_api_ref = ComponentConfig.getNodeRef('test/leaf/api:latest');
+    const branch_ref = resourceRefToNodeRef('test/branch/api:latest');
+    const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf:latest');
+    const leaf_db_ref = resourceRefToNodeRef('test/leaf/db:latest');
+    const leaf_api_ref = resourceRefToNodeRef('test/leaf/api:latest');
 
     it('sidecar should connect two services together', async () => {
       mock_fs({
@@ -120,7 +120,7 @@ describe('sidecar spec v1', () => {
         `${leaf_api_ref} [service->postgres] -> ${leaf_db_ref} [postgres]`,
       ])
       const api_node = graph.getNodeByRef(leaf_api_ref) as ServiceNode;
-      expect(Object.entries(api_node.config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      expect(Object.entries(api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
         'DB_PROTOCOL=postgres',
         `DB_HOST=127.0.0.1`,
         'DB_PORT=12345',
@@ -164,7 +164,7 @@ describe('sidecar spec v1', () => {
       ])
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
 
-      expect(Object.entries(branch_api_node.config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      expect(Object.entries(branch_api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
         `LEAF_HOST=127.0.0.1`,
         'LEAF_PORT=12345',
@@ -228,9 +228,9 @@ describe('sidecar spec v1', () => {
         await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
       ]);
 
-      const other_leaf_interfaces_ref = ComponentConfig.getNodeRef('test/other-leaf:latest');
-      const other_leaf_api_ref = ComponentConfig.getNodeRef('test/other-leaf/api:latest');
-      const other_leaf_db_ref = ComponentConfig.getNodeRef('test/other-leaf/db:latest');
+      const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
+      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf/api:latest');
+      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf/db:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -258,7 +258,7 @@ describe('sidecar spec v1', () => {
         `${branch_ref} [service->api] -> ${leaf_interfaces_ref} [api]`,
       ])
       const branch_api_node = graph.getNodeByRef(branch_ref) as ServiceNode;
-      expect(Object.entries(branch_api_node.config.getEnvironmentVariables()).map(([k, v]) => `${k}=${v}`)).has.members([
+      expect(Object.entries(branch_api_node.config.environment).map(([k, v]) => `${k}=${v}`)).has.members([
         'LEAF_PROTOCOL=http',
         `LEAF_HOST=127.0.0.1`,
         'LEAF_PORT=12345',
@@ -398,8 +398,8 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
     ]);
 
-    const cloud_interfaces_ref = ComponentConfig.getNodeRef('architect/cloud:latest')
-    const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest')
+    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -490,31 +490,31 @@ describe('sidecar spec v1', () => {
 
     const admin_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
     const admin_instance_id = 'env1-tenant-1';
-    admin_component.setInstanceId(admin_instance_id);
+    admin_component.instance_metadata!.instance_id = admin_instance_id;
 
     const test_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
-    expect(admin_component.getInterfacesRef()).to.not.equal(test_component.getInterfacesRef());
+    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test_component));
 
     const test2_component = await manager.loadComponentConfig('voic/admin-ui@tenant-2');
-    test2_component.setInstanceId('env1-tenant-1');
-    expect(admin_component.getInterfacesRef()).to.not.equal(test2_component.getInterfacesRef());
+    test2_component.instance_metadata!.instance_id = 'env1-tenant-1';
+    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test2_component));
 
     const test3_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
-    test3_component.setInstanceId('env1-tenant-1-test');
-    expect(admin_component.getInterfacesRef()).to.not.equal(test3_component.getInterfacesRef());
+    test3_component.instance_metadata!.instance_id = 'env1-tenant-1-test';
+    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test3_component));
 
     const catalog_component = await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' })
     const catalog_instance_id = 'env1'
-    catalog_component.setInstanceId(catalog_instance_id);
+    catalog_component.instance_metadata!.instance_id = catalog_instance_id;
 
     const graph = await manager.getGraph([
       admin_component,
       catalog_component,
     ]);
 
-    const admin_ref = ComponentConfig.getNodeRef('voic/admin-ui/dashboard:latest@tenant-1', admin_instance_id)
-    const catalog_interface_ref = ComponentConfig.getNodeRef('voic/product-catalog:latest', catalog_instance_id)
-    const api_ref = ComponentConfig.getNodeRef('voic/product-catalog/api:latest', catalog_instance_id)
+    const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest@tenant-1', admin_instance_id)
+    const catalog_interface_ref = resourceRefToNodeRef('voic/product-catalog:latest', catalog_instance_id)
+    const api_ref = resourceRefToNodeRef('voic/product-catalog/api:latest', catalog_instance_id)
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interface_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -534,7 +534,7 @@ describe('sidecar spec v1', () => {
     expect(node_to_interface_name2).to.eq('admin');
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
-    expect(dashboard_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(dashboard_node.config.environment).to.deep.eq({
       ADMIN_ADDR: `http://127.0.0.1:12346`,
       API_ADDR: `http://127.0.0.1:12345`,
       PRIVATE_ADDR: `http://127.0.0.1:12347`,
@@ -576,10 +576,10 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentConfig('architect/smtp'),
     ]);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/smtp/test-app:latest');
+    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.environment).to.deep.eq({
       SMTP_ADDR: `smtp://test-user:test-pass@127.0.0.1:12345`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',
@@ -636,10 +636,10 @@ describe('sidecar spec v1', () => {
     expect(new_graph).instanceOf(DependencyGraph);
     expect(new_graph.nodes[0]).instanceOf(DependencyNode);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/upstream/test-app:latest');
+    const app_ref = resourceRefToNodeRef('architect/upstream/test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.environment).to.deep.eq({
       SMTP_ADDR: `smtp://test-user:test-pass@127.0.0.1:12345`,
       SMTP_USER: 'test-user',
       SMTP_PASS: 'test-pass',

@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src/spec/component/component-builder';
+import { buildConfigFromPath, Slugs, validateConfig } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/spec/values/values';
 import { ValidationErrors } from '../../src/dependency-manager/src/utils/errors';
 
@@ -49,7 +49,7 @@ describe('validation spec v1', () => {
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     });
 
     it('invalid nested debug', async () => {
@@ -71,7 +71,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -99,7 +99,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -130,7 +130,7 @@ describe('validation spec v1', () => {
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     });
 
     it('valid task depends_on', async () => {
@@ -153,7 +153,7 @@ describe('validation spec v1', () => {
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      await ComponentConfigBuilder.buildFromPath('/architect.yml')
+      buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     });
 
     it('invalid task depends_on', async () => {
@@ -175,7 +175,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -205,7 +205,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -235,7 +235,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -270,7 +270,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -310,7 +310,7 @@ describe('validation spec v1', () => {
       mock_fs({ '/architect.yml': component_config });
       let validation_err;
       try {
-        await ComponentConfigBuilder.buildFromPath('/architect.yml')
+        buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
       } catch (err) {
         validation_err = err;
       }
@@ -467,11 +467,9 @@ describe('validation spec v1', () => {
         'test/component': '/component.yml',
       });
       const component_config = await manager.loadComponentConfig('test/component');
-      component_config.setExtends('latest');
+      component_config.extends = 'latest';
 
-      expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(0);
-      component_config.setParameter('environment', '@error');
-      expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(1);
+      expect(validateConfig(component_config)).to.have.lengthOf(0);
     });
 
     it('invalid labels', async () => {

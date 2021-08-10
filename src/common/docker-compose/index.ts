@@ -153,7 +153,7 @@ export class DockerComposeUtils {
 
       if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
-        if (!node.config.image) {
+        if (!node.config.image && node.config.build) {
           const build = node.config.build;
           const args = [];
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
@@ -171,6 +171,8 @@ export class DockerComposeUtils {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
           }
+        } else if (!node.config.image && !node.config.build) {
+          throw new Error("Either `image` or `build` must be defined");
         }
 
         const volumes: string[] = [];
