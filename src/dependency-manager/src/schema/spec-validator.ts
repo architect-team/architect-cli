@@ -11,17 +11,7 @@ export const mapAjvErrors = (errors: AjvError): ValidationError[] => {
     return [];
   }
 
-  return errors.map(e => {
-    const validation_error = new ValidationError();
-    validation_error.property = e.propertyName;
-    validation_error.constraints = {
-      jsonSchema: e.message || 'Invalid with respect to JSONSchema',
-    };
-    validation_error.value = e.schemaPath;
-    validation_error.target = e.data;
-    validation_error.children = [];
-    return validation_error;
-  });
+  return errors;
 };
 
 export const validateSpec = (source_yml: ParsedYaml): ValidationError[] => {

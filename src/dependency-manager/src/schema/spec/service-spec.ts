@@ -1,4 +1,4 @@
-import { IsOptional, Matches, ValidateNested } from 'class-validator';
+import { IsNumberString, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
@@ -15,9 +15,11 @@ export class ScalingMetricsSpec {
 }
 
 export class ScalingSpec {
+  @IsString()
   @JSONSchema({ type: 'string' })
   min_replicas!: string;
 
+  @IsString()
   @JSONSchema({ type: 'string' })
   max_replicas!: string;
 
@@ -35,6 +37,7 @@ export class InterfaceSpec {
   @JSONSchema({ type: 'string' })
   host?: string;
 
+  @IsString()
   @JSONSchema({ type: 'string' })
   port!: string;
 
@@ -50,6 +53,7 @@ export class InterfaceSpec {
   @JSONSchema({ type: 'string' })
   password?: string;
 
+  @IsString()
   @JSONSchema({ type: 'string' })
   url!: string;
 
@@ -101,6 +105,7 @@ export class LivenessProbeSpec {
   })
   command?: string[] | string;
 
+  @IsNumberString()
   @JSONSchema(AnyOf('number', 'string'))
   port!: number | string;
 }

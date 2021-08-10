@@ -1,3 +1,4 @@
+import { ErrorParameters } from 'ajv';
 import { Dictionary } from './dictionary';
 import { replaceBrackets } from './interpolation';
 
@@ -14,6 +15,20 @@ export class ValidationError {
   contexts?: {
     [type: string]: any;
   };
+
+  // TODO:269: we should try to condense this info down into a readable message as best we can
+  keyword?: string;
+  dataPath?: string;
+  schemaPath?: string;
+  params?: ErrorParameters;
+  // Added to validation errors of propertyNames keyword schema
+  propertyName?: string;
+  // Excluded if messages set to false.
+  message?: string;
+  // These are added with the `verbose` option.
+  schema?: any;
+  parentSchema?: object;
+  data?: any;
 }
 
 export class ValidationErrors extends ArchitectError {

@@ -1,20 +1,24 @@
-import { IsOptional, Matches, ValidateNested } from 'class-validator';
+import { IsObject, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
 
 export class DeployModuleSpec {
+  @IsString()
   @JSONSchema({ type: 'string' })
   path!: string;
 
+  @IsObject()
   @JSONSchema(DictionaryOf('string'))
   inputs!: Dictionary<string>;
 }
 
 export class DeploySpec {
+  @IsString()
   @JSONSchema({ type: 'string' })
   strategy!: string;
 
+  @IsObject()
   @JSONSchema(DictionaryOf(DeployModuleSpec))
   modules!: Dictionary<DeployModuleSpec>;
 }
