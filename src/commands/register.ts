@@ -10,17 +10,11 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { Refs } from '../dependency-manager/src';
+import { Refs, ResourceConfig } from '../dependency-manager/src';
 import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
-import { RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
-
-export interface PutComponentVersionDto {
-  tag: string;
-  config: RawComponentConfig;
-}
 
 export default class ComponentRegister extends Command {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
@@ -123,14 +117,14 @@ export default class ComponentRegister extends Command {
     this.log(chalk.green(`Successfully registered component`));
   }
 
-  private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async pushImageIfNecessary(config_path: string, resource_name: string, resource_config: ResourceConfig, image_tag: string) {
     // if the image field is set, we just take their image as is
-    if (service_config.image) {
-      return service_config.image;
+    if (resource_config.image) {
+      return resource_config.image;
     }
 
     // otherwise we build and push the image to our repository
-    const image = await this.buildImage(config_path, service_name, service_config, image_tag);
+    const image = await this.buildImage(config_path, resource_name, resource_config, image_tag);
     await this.pushImage(image);
     const digest = await this.getDigest(image);
 
@@ -139,23 +133,23 @@ export default class ComponentRegister extends Command {
     return `${image_without_tag}@${digest}`;
   }
 
-  private async buildImage(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async buildImage(config_path: string, resource_name: string, resource_config: ResourceConfig, image_tag: string) {
     const { flags } = this.parse(ComponentRegister);
 
-    const build_context = service_config?.build?.context;
+    const build_context = resource_config?.build?.context;
     if (!build_context) {
-      throw new Error(`Service ${service_name} does not specify an image or a build.context. It must contain one or the other.`);
+      throw new Error(`Service ${resource_name} does not specify an image or a build.context. It must contain one or the other.`);
     }
     try {
       const component_path = fs.lstatSync(config_path).isFile() ? path.dirname(config_path) : config_path;
       const build_path = path.resolve(component_path, untildify(build_context));
       let dockerfile;
-      if (service_config.build?.dockerfile) {
-        dockerfile = path.join(build_path, service_config.build.dockerfile);
+      if (resource_config.build?.dockerfile) {
+        dockerfile = path.join(build_path, resource_config.build.dockerfile);
       }
       let build_args: string[] = [];
-      if (service_config.build?.args) {
-        const build_args_map: Dictionary<string> = service_config.build?.args || {};
+      if (resource_config.build?.args) {
+        const build_args_map: Dictionary<string> = resource_config.build?.args || {};
         for (const arg of flags.arg || []) {
           const [key, value] = arg.split('=');
           if (!value) {

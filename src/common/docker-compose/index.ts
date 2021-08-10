@@ -87,10 +87,10 @@ export class DockerComposeUtils {
         ports.push(`${available_ports.shift()}:${port}`);
       }
       const formatted_environment_variables: Dictionary<string> = {};
-      for (const [var_key, var_value] of Object.entries(node.config.getEnvironmentVariables())) {
+      for (const [var_key, var_value] of Object.entries(node.config.environment)) {
         formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
-      let service = {
+      const service = {
         environment: formatted_environment_variables,
       } as DockerService;
 
@@ -102,26 +102,17 @@ export class DockerComposeUtils {
         service.external_links = gateway_links;
       }
 
-      if (node.config.getImage()) service.image = node.config.getImage();
+      if (node.config.image) service.image = node.config.image;
 
-      if (node.config.getCommand().length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
-        service.command = node.config.getCommand().map(command_part => command_part.replace(/\$/g, '$$$$'));
+      if (node.config.command?.length) { // docker-compose expects environment variables used in commands/entrypoints to be prefixed with $$, not $ in order to use variables local to the container
+        service.command = node.config.command.map(command_part => command_part.replace(/\$/g, '$$$$'));
       }
-      if (node.config.getEntrypoint().length) {
-        service.entrypoint = node.config.getEntrypoint().map(entrypoint_part => entrypoint_part.replace(/\$/g, '$$$$'));
-      }
-
-      const platforms = node.config.getPlatforms();
-      const docker_compose_config = platforms['docker-compose'];
-      if (docker_compose_config) {
-        service = {
-          ...docker_compose_config,
-          ...service,
-        };
+      if (node.config.entrypoint?.length) {
+        service.entrypoint = node.config.entrypoint.map(entrypoint_part => entrypoint_part.replace(/\$/g, '$$$$'));
       }
 
-      const cpu = node.config.getCpu();
-      const memory = node.config.getMemory();
+      const cpu = node.config.cpu;
+      const memory = node.config.memory;
       if (cpu || memory) {
         service.deploy = { resources: { limits: {} } };
         if (cpu) { service.deploy.resources.limits.cpus = cpu; }
@@ -129,7 +120,7 @@ export class DockerComposeUtils {
       }
 
       if (node instanceof ServiceNode) {
-        const liveness_probe = node.config.getLivenessProbe();
+        const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
           if (!liveness_probe.command) {
             liveness_probe.command = ['CMD-SHELL', `curl -f http://localhost:${liveness_probe.port}${liveness_probe.path} || exit 1`];
@@ -162,8 +153,8 @@ export class DockerComposeUtils {
 
       if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
-        if (!node.config.getImage()) {
-          const build = node.config.getBuild();
+        if (!node.config.image) {
+          const build = node.config.build;
           const args = [];
           for (const [arg_key, arg] of Object.entries(build.args || {})) {
             args.push(`${arg_key}=${arg}`);
@@ -183,7 +174,7 @@ export class DockerComposeUtils {
         }
 
         const volumes: string[] = [];
-        for (const [key, spec] of Object.entries(node.config.getVolumes())) {
+        for (const [key, spec] of Object.entries(node.config.volumes)) {
           let service_volume;
           if (spec.mount_path) {
             service_volume = spec.mount_path;

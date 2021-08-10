@@ -10,11 +10,9 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
-import { BuildSpecV1 } from '../dependency-manager/src/spec/common/build-v1';
-import { InterfaceSpecV1 } from '../dependency-manager/src/spec/common/interface-v1';
-import { VolumeSpecV1 } from '../dependency-manager/src/spec/common/volume-v1';
-import { ComponentConfigV1 } from '../dependency-manager/src/spec/component/component-v1';
-import { ServiceConfigV1 } from '../dependency-manager/src/spec/service/service-v1';
+import { ComponentSpec } from '../dependency-manager/src/schema/spec/component-spec';
+import { VolumeSpec } from '../dependency-manager/src/schema/spec/resource-spec';
+import { InterfaceSpec, ServiceSpec } from '../dependency-manager/src/schema/spec/service-spec';
 
 export abstract class InitCommand extends Command {
   auth_required() {
@@ -63,10 +61,11 @@ export abstract class InitCommand extends Command {
       },
     ]);
 
-    const architect_component = new ComponentConfigV1();
+    const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
+    architect_component.services = {};
     for (const [service_name, service] of Object.entries(docker_compose.services || {})) {
-      const architect_service = new ServiceConfigV1();
+      const architect_service: Partial<ServiceSpec> = {};
       architect_service.name = service_name;
       architect_service.description = `${service_name} converted to an Architect service with "architect init"`;
       architect_service.environment = service.environment;
@@ -76,7 +75,7 @@ export abstract class InitCommand extends Command {
       if (service.image) {
         architect_service.image = service.image;
       } else if (service.build) {
-        architect_service.build = new BuildSpecV1();
+        architect_service.build = {};
         if (typeof service.build === 'string') {
           architect_service.build.context = service.build;
         } else {
@@ -101,6 +100,7 @@ export abstract class InitCommand extends Command {
       }
 
       let port_index = 0;
+      architect_service.interfaces = {};
       for (const port of service.ports || []) {
         if (typeof port === 'string' || typeof port === 'number') {
           const single_number_port_regex = new RegExp('^\\d+$');
@@ -108,25 +108,25 @@ export abstract class InitCommand extends Command {
           const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
           if (single_number_port_regex.test(port)) {
-            architect_service.setInterface(`interface${port_index}`, port);
+            architect_service.interfaces[`interface${port_index}`] = port;
             port_index++;
           } else if (single_port_regex.test(port)) {
             const matches = single_port_regex.exec(port);
-            const interface_spec = new InterfaceSpecV1();
+            const interface_spec: Partial<InterfaceSpec> = {};
             if (matches && matches.length >= 3) {
               interface_spec.protocol = matches[2];
             }
             if (matches && matches.length >= 2) {
               interface_spec.port = matches[1].split(':')[1];
             }
-            architect_service.setInterface(`interface${port_index}`, interface_spec);
+            (architect_service.interfaces[`interface${port_index}`] as Partial<InterfaceSpec>) = interface_spec;
             port_index++;
           } else if (port_range_regex.test(port)) {
             const matches = port_range_regex.exec(port);
             if (matches && matches.length >= 2) {
               const [start, end] = matches[1].split('-');
               for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-                architect_service.setInterface(`interface${port_index}`, i.toString());
+                architect_service.interfaces[`interface${port_index}`] = i.toString();
                 port_index++;
               }
             }
@@ -134,30 +134,31 @@ export abstract class InitCommand extends Command {
             this.warn(chalk.yellow(`Could not convert port with spec ${port} for service ${service_name}`));
           }
         } else {
-          const interface_spec = new InterfaceSpecV1();
+          const interface_spec: Partial<InterfaceSpec> = {};
           interface_spec.port = port.target.toString();
           if (port.protocol) {
             interface_spec.protocol = port.protocol;
           }
-          architect_service.setInterface(`interface${port_index}`, interface_spec);
+          (architect_service.interfaces[`interface${port_index}`] as Partial<InterfaceSpec>) = interface_spec;
           port_index++;
         }
       }
 
       const compose_volumes = Object.keys(docker_compose.volumes || {});
       let volume_index = 0;
-      let debug_config;
+      const debug_config: Partial<ServiceSpec> = {};
+      debug_config.volumes = {};
+      architect_service.volumes = {};
       for (const volume of (service.volumes || [])) {
-        if (!debug_config) { debug_config = new ServiceConfigV1(); }
         const volume_key = `volume${volume_index}`;
         if (typeof volume === 'string') {
           const volume_parts = volume.split(':');
           if (volume_parts.length === 1) {
-            const service_volume = new VolumeSpecV1();
+            const service_volume: Partial<VolumeSpec> = {};
             service_volume.mount_path = volume_parts[0];
-            architect_service.setVolume(volume_key, service_volume);
+            architect_service.volumes[volume_key] = service_volume;
           } else if (volume_parts.length === 2 || volume_parts.length === 3) {
-            const service_volume = new VolumeSpecV1();
+            const service_volume: Partial<VolumeSpec> = {};
             if (!compose_volumes.includes(volume_parts[0])) {
               service_volume.host_path = volume_parts[0];
             }
@@ -165,13 +166,13 @@ export abstract class InitCommand extends Command {
             if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
               service_volume.readonly = 'true';
             }
-            debug_config.setVolume(volume_key, service_volume);
+            (debug_config.volumes[volume_key] as Partial<VolumeSpec>) = service_volume;
           } else {
             this.warn(chalk.yellow(`Could not convert volume with spec ${volume} for service ${service_name}`));
           }
         } else {
           if (volume.source) { // debug volume
-            const service_volume = new VolumeSpecV1();
+            const service_volume: Partial<VolumeSpec> = {};
             service_volume.host_path = volume.source;
             service_volume.mount_path = volume.target;
             if (volume.read_only) {
@@ -180,35 +181,36 @@ export abstract class InitCommand extends Command {
 
             if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
               service_volume.host_path = undefined;
-              architect_service.setVolume(volume_key, service_volume);
+              architect_service.volumes[volume_key] = service_volume;
             } else {
-              debug_config.setVolume(volume_key, service_volume);
+              debug_config.volumes[volume_key] = service_volume;
             }
           } else {
-            const service_volume = new VolumeSpecV1();
+            const service_volume: Partial<VolumeSpec> = {};
             service_volume.mount_path = volume.target;
             if (volume.read_only) {
               service_volume.readonly = volume.read_only.toString();
             }
-            architect_service.setVolume(volume_key, service_volume);
+            architect_service.volumes[volume_key] = service_volume;
           }
         }
         volume_index++;
       }
       if (debug_config) {
-        architect_service.setDebugOptions(debug_config);
+        architect_service.debug = debug_config;
       }
 
       if (service.depends_on?.length || service.external_links?.length) {
         const links = new Set((service.depends_on || []).concat(service.external_links || []));
         for (const link of links) {
-          architect_service.setEnvironmentVariable(`${link.replace('-', '_').toUpperCase()}_URL`, `\${{ services.${link}.interfaces.interface0.url }}`);
+          architect_service.environment = architect_service.environment || {};
+          architect_service.environment[`${link.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${link}.interfaces.interface0.url }}`;
         }
       }
 
-      architect_component.setInterfaces({});
-      architect_component.setParameters({});
-      architect_component.setService(service_name, architect_service);
+      architect_component.interfaces = {};
+      architect_component.parameters = {};
+      architect_component.services[service_name] = architect_service;
     }
 
     const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
