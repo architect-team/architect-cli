@@ -1,5 +1,4 @@
 import { serialize } from 'class-transformer';
-import { ValidationError } from 'class-validator';
 import { isMatch } from 'matcher';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
@@ -14,7 +13,7 @@ import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, C
 import { ComponentContext } from './schema/config/component-context';
 import { InterfaceConfig } from './schema/config/service-config';
 import { Dictionary } from './utils/dictionary';
-import { ArchitectError, flattenValidationErrors, ValidationErrors } from './utils/errors';
+import { ArchitectError, flattenValidationErrors, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 

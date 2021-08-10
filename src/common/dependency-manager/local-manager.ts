@@ -1,12 +1,11 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
-import { ValidationError } from 'class-validator';
 import deepmerge from 'deepmerge';
 import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../dependency-manager/src/utils/errors';
+import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {

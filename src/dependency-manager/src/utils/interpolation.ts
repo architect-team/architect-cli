@@ -1,5 +1,5 @@
-import { ValidationError } from 'class-validator';
 import Mustache, { Context, Writer } from 'mustache';
+import { ValidationError } from './errors';
 
 // https://github.com/janl/mustache.js/issues/599
 export const ARC_NULL_TOKEN = '__arc__null__arc__';

@@ -1,8 +1,20 @@
-import { ValidationError } from 'class-validator';
 import { Dictionary } from './dictionary';
 import { replaceBrackets } from './interpolation';
 
 export class ArchitectError extends Error { }
+
+export class ValidationError {
+  target?: object;
+  property?: string;
+  value?: any;
+  constraints?: {
+    [type: string]: string;
+  };
+  children?: ValidationError[];
+  contexts?: {
+    [type: string]: any;
+  };
+}
 
 export class ValidationErrors extends ArchitectError {
   errors: Dictionary<Dictionary<string | number>>;
