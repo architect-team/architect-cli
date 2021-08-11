@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Platforms extends Command {
   static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];
@@ -29,7 +30,15 @@ export default class Platforms extends Command {
     for (const row of platforms) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      table.push([row.name, row.account.name, row.properties.host, row.type, 'Encrypted on Server', row.created_at, row.updated_at]);
+      table.push([
+        row.name,
+        row.account.name,
+        row.properties.host,
+        row.type,
+        'Encrypted on Server',
+        localizedTimestamp(row.created_at),
+        localizedTimestamp(row.updated_at)
+      ]);
     }
 
     this.log(table.toString());
