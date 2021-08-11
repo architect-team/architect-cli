@@ -1,5 +1,5 @@
-import Table from 'cli-table3';
 import Command from '../../base-command';
+import Table from '../../base-table';
 
 export default class Platforms extends Command {
   static aliases = ['platform', 'platform:search', 'platforms', 'platforms:search'];

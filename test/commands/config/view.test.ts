@@ -16,7 +16,12 @@ describe('config:view', () => {
       api_host: 'https://registry.config.test',
       log_level: 'test',
     });
-    const table = new Table({ head: ['Name', 'Value'] });
+    const table = new Table({
+      head: ['Name', 'Value'],
+      style: {
+        head: ['green']
+      }
+    });
     for (const entry of Object.entries(config.toJSON())) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
