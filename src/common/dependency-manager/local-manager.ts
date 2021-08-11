@@ -27,6 +27,11 @@ export default class LocalDependencyManager extends DependencyManager {
     const component_ref = `${component_slug}:${tag}`;
 
     let config: ComponentConfig;
+    const instance_metadata: ComponentInstanceMetadata = {
+      instance_name,
+      instance_id: component_ref,
+      instance_date: new Date(),
+    };
     // Load locally linked component config
     if (component_slug in this.linked_components) {
       if (process.env.NODE_ENV !== 'test') {
@@ -34,7 +39,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       const { component_config } = buildConfigFromPath(this.linked_components[component_slug], tag);
       config = component_config;
-      config.extends = `file:${this.linked_components[component_slug]}`;
+      instance_metadata.local_path = `file:${this.linked_components[component_slug]}`;
     } else {
       // Load remote component config
       const { data: component_version } = await this.api.get(`/accounts/${component_account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
@@ -43,12 +48,6 @@ export default class LocalDependencyManager extends DependencyManager {
       });
       config = buildConfigFromYml(component_version.config, tag);
     }
-
-    const instance_metadata: ComponentInstanceMetadata = {
-      instance_name,
-      instance_id: component_ref,
-      instance_date: new Date(),
-    };
 
     config.instance_metadata = instance_metadata;
 
@@ -65,7 +64,7 @@ export default class LocalDependencyManager extends DependencyManager {
       config.interfaces[interface_to] = interface_obj;
     }
 
-    if (config.local_path && !this.production) {
+    if (config.instance_metadata?.local_path && !this.production) {
       // Set debug values
       for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
@@ -109,8 +108,8 @@ export default class LocalDependencyManager extends DependencyManager {
   async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]): Promise<[ComponentConfig, ValidationError[]]> {
     const groups = ['deploy', 'developer'];
     const [interpolated_component, errors] = await super.validateComponent(component, context, ignore_keys, groups);
-    if (component.extends?.startsWith('file:') && errors.length) {
-      const component_path = component.extends.substr('file:'.length);
+    if (component.instance_metadata?.local_path?.startsWith('file:') && errors.length) {
+      const component_path = component.instance_metadata.local_path.substr('file:'.length);
       const { file_path, file_contents } = loadSpecFromPathOrReject(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }

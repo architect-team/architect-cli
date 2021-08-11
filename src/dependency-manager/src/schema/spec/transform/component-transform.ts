@@ -163,8 +163,8 @@ export const transformComponentContext = (
 
 export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
-  const services = transformDictionary(transformServiceSpec, spec.services);
-  const tasks = transformDictionary(transformTaskSpec, spec.tasks);
+  const services = transformDictionary(transformServiceSpec, spec.services, tag);
+  const tasks = transformDictionary(transformTaskSpec, spec.tasks, tag);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 
@@ -173,9 +173,6 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
   return {
     name,
     tag,
-
-    extends: spec.extends,
-    local_path: transformLocalPath(spec.extends),
 
     description: spec.description,
     keywords: spec.keywords || [],

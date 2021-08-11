@@ -36,7 +36,7 @@ export default abstract class DependencyManager {
       const node = new ServiceNode({
         ref: buildNodeRef(component, service_name),
         config: service_config,
-        local_path: component.local_path,
+        local_path: component.instance_metadata?.local_path,
         artifact_image: component.artifact_image,
       });
       nodes.push(node);
@@ -47,7 +47,7 @@ export default abstract class DependencyManager {
       const node = new TaskNode({
         ref: buildNodeRef(component, task_name),
         config: task_config,
-        local_path: component.local_path,
+        local_path: component.instance_metadata?.local_path,
       });
       nodes.push(node);
     }
@@ -290,7 +290,7 @@ export default abstract class DependencyManager {
 
   generateUrl(interface_config: InterfaceConfig, host?: string, port?: string) {
     host = host || interface_config.host;
-    port = port || interface_config.port;
+    port = port || `${interface_config.port}`;
     const protocol = interface_config.protocol || 'http';
     let url;
     if (interface_config.password) {
@@ -476,7 +476,7 @@ export default abstract class DependencyManager {
         }
 
         const internal_protocol = interface_config.protocol || 'http';
-        const internal_url = this.generateUrl(interface_config, internal_host, internal_port);
+        const internal_url = this.generateUrl(interface_config, internal_host, `${internal_port}`);
 
         context.services[service_name].interfaces[interface_name] = {
           ...context.services[service_name].interfaces[interface_name],

@@ -467,7 +467,6 @@ describe('validation spec v1', () => {
         'test/component': '/component.yml',
       });
       const component_config = await manager.loadComponentConfig('test/component');
-      component_config.extends = 'latest';
 
       expect(validateConfig(component_config)).to.have.lengthOf(0);
     });

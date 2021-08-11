@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
+import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
@@ -62,11 +62,6 @@ export class BuildSpec {
 }
 
 export class ResourceSpec {
-  @IsOptional()
-  @JSONSchema({ type: 'string' })
-  @Matches(/^[a-zA-Z0-9-_]+$/, { message: 'Names must only include letters, numbers, dashes, and underscores' }) //TODO:269: move match to description
-  name?: string;
-
   @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;

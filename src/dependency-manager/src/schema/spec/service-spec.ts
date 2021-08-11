@@ -38,8 +38,8 @@ export class InterfaceSpec {
   host?: string;
 
   @IsString()
-  @JSONSchema({ type: 'string' })
-  port!: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  port!: number | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -116,8 +116,8 @@ export class ServiceSpec extends ResourceSpec {
   debug?: ServiceSpec;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny(InterfaceSpec, 'string'))
-  interfaces?: Dictionary<InterfaceSpec | string>;
+  @JSONSchema(DictionaryOfAny(InterfaceSpec, 'string', 'number'))
+  interfaces?: Dictionary<InterfaceSpec | string | number>;
 
   @IsOptional()
   @ValidateNested()

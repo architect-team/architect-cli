@@ -41,11 +41,6 @@ export class ComponentSpec {
   name!: string;
 
   @IsOptional()
-  @Matches(/^(?!file:).*$/g) // TODO:269:refactor into a constant
-  @JSONSchema({ type: 'string' })
-  extends?: string;
-
-  @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;
 
@@ -58,7 +53,7 @@ export class ComponentSpec {
   author?: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string', format: 'url' })
+  @JSONSchema({ type: 'string' })
   homepage?: string;
 
   @IsOptional()

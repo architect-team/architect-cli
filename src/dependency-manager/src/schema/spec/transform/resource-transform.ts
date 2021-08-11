@@ -97,18 +97,18 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
   }
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec): ResourceConfig => {
+export const transformResourceSpec = (key: string, spec: ResourceSpec, tag: string): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
 
   return {
-    name: transformResourceSpecName(spec.name),
-    tag: transformResourceSpecTag(spec.name),
+    name: key,
+    tag,
     description: spec.description,
     image: spec.image,
     command: transformResourceSpecCommand(spec.command, environment),
     entrypoint: transformResourceSpecEntryPoint(spec.entrypoint, environment),
     language: spec.language,
-    debug: spec.debug ? transformResourceSpec(key, spec.debug) : undefined,
+    debug: spec.debug ? transformResourceSpec(key, spec.debug, tag) : undefined,
     environment,
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     build: transformBuildSpec(spec.build, spec.image),

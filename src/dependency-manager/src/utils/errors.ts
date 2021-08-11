@@ -1,4 +1,3 @@
-import { ErrorParameters } from 'ajv';
 import { Dictionary } from './dictionary';
 import { replaceBrackets } from './interpolation';
 
@@ -20,7 +19,7 @@ export class ValidationError {
   keyword?: string;
   dataPath?: string;
   schemaPath?: string;
-  params?: ErrorParameters;
+  // params?: ErrorParameters;
   // Added to validation errors of propertyNames keyword schema
   propertyName?: string;
   // Excluded if messages set to false.
@@ -29,6 +28,14 @@ export class ValidationError {
   schema?: any;
   parentSchema?: object;
   data?: any;
+
+  error?: string;
+  path?: string;
+  suggestion?: string;
+
+  start?: { line: number; column: number; offset: number };
+  end?: { line: number; column: number; offset: number };
+
 }
 
 export class ValidationErrors extends ArchitectError {

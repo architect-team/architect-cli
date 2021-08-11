@@ -4,7 +4,7 @@ import { InterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../confi
 import { InterfaceSpec, LivenessProbeSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
-export const transformInterfaceSpec = function (key: string, interface_spec: InterfaceSpec | string): InterfaceConfig {
+export const transformInterfaceSpec = function (key: string, interface_spec: InterfaceSpec | string | number): InterfaceConfig {
   if (interface_spec instanceof Object) {
     return interface_spec;
   } else {
@@ -42,12 +42,12 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
   };
 };
 
-export const transformServiceSpec = (key: string, spec: ServiceSpec): ServiceConfig => {
-  const resource_config = transformResourceSpec(key, spec);
+export const transformServiceSpec = (key: string, spec: ServiceSpec, tag: string): ServiceConfig => {
+  const resource_config = transformResourceSpec(key, spec, tag);
 
   return {
     ...resource_config,
-    debug: spec.debug ? transformServiceSpec(key, spec.debug) : undefined,
+    debug: spec.debug ? transformServiceSpec(key, spec.debug, tag) : undefined,
     interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
     liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
     replicas: spec.replicas || '1',

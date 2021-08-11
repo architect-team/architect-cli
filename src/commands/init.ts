@@ -66,7 +66,6 @@ export abstract class InitCommand extends Command {
     architect_component.services = {};
     for (const [service_name, service] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
-      architect_service.name = service_name;
       architect_service.description = `${service_name} converted to an Architect service with "architect init"`;
       architect_service.environment = service.environment;
       architect_service.command = service.command;

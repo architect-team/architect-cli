@@ -30,6 +30,8 @@ export interface ComponentInstanceMetadata {
   instance_name: string;
   instance_id: string;
   instance_date: Date;
+
+  local_path?: string;
 }
 
 export interface ComponentVersionMetadata {
@@ -60,9 +62,6 @@ export interface ComponentConfig {
   tag: string;
   instance_metadata?: ComponentInstanceMetadata;
 
-  extends?: string;
-  local_path?: string;
-
   description?: string;
   keywords: string[];
   author?: string;
@@ -79,7 +78,6 @@ export interface ComponentConfig {
   artifact_image?: string;
 
   source_yml: string;
-
   context: ComponentContext;
 }
 
