@@ -44,6 +44,9 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
 export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
   const output: Dictionary<string> = {};
   for (const [k, v] of Object.entries(environment || {})) {
+    if (v === undefined || v === null) {
+      continue;
+    }
     output[k] = `${v}`;
   }
   return output;

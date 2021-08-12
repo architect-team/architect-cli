@@ -495,7 +495,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       return {
-        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
         source_path: './examples/hello-world/architect.yml',
       }
     })
@@ -521,7 +521,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       return {
-        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
         source_path: './examples/hello-world/architect.yml',
       }
     })
@@ -545,7 +545,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       return {
-        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
         source_path: './examples/hello-world/architect.yml',
       }
     })
@@ -626,7 +626,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       return {
-        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
         source_path: './examples/hello-world/architect.yml',
       }
     })
@@ -731,6 +731,7 @@ describe('local deploy environment', function () {
         const tenant_2_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
+        expect(Object.keys(compose.services)).includes(tenant_1_ref, tenant_2_ref)
         expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.hello-1.rule=Host(\`hello-1.arc.localhost\`)`)
         expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.hello-2.rule=Host(\`hello-2.arc.localhost\`)`)
       })

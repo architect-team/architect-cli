@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ComponentVersionSlugUtils, ServiceSpec, validateOrRejectSpec } from '../../dependency-manager/src';
+import DependencyManager, { ComponentVersionSlugUtils, ServiceSpec, TaskSpec, validateOrRejectSpec } from '../../dependency-manager/src';
 import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject, parseSourceYml } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
@@ -54,6 +54,10 @@ export default class LocalDependencyManager extends DependencyManager {
 
     config.instance_metadata = instance_metadata;
 
+    // Set debug values
+    const parsed_yml = parseSourceYml(config.source_yml);
+    const merged_spec = validateOrRejectSpec(parsed_yml);
+
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.interfaces[interface_to];
       if (!interface_obj) {
@@ -65,13 +69,14 @@ export default class LocalDependencyManager extends DependencyManager {
       interface_obj.ingress.subdomain = interface_from;
       interface_obj.ingress.enabled = true;
       config.interfaces[interface_to] = interface_obj;
+
+      // TODO:269 find way to avoid modifying source_yml - def non-trivial with interpolation
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      merged_spec.interfaces[interface_to] = interface_obj;
     }
 
     if (config.instance_metadata?.local_path && !this.production) {
-      // Set debug values
-      const parsed_yml = parseSourceYml(config.source_yml);
-      const merged_spec = validateOrRejectSpec(parsed_yml);
-
       for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (sv.debug) {
@@ -90,14 +95,16 @@ export default class LocalDependencyManager extends DependencyManager {
         services[sk] = deepmerge(sv, sv.debug || {});
       }
 
-      const tasks: Dictionary<ServiceSpec> = {};
-      for (const [sk, sv] of Object.entries(merged_spec.services || {})) {
+      // TODO:269 add test for task debug block
+      const tasks: Dictionary<TaskSpec> = {};
+      for (const [sk, sv] of Object.entries(merged_spec.tasks || {})) {
         tasks[sk] = deepmerge(sv, sv.debug || {});
       }
 
       merged_spec.services = services;
-      config.source_yml = yaml.dump(merged_spec);
+      merged_spec.tasks = tasks;
     }
+    config.source_yml = yaml.dump(merged_spec);
 
     return config;
   }

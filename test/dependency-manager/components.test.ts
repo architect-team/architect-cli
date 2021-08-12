@@ -525,7 +525,8 @@ describe('components spec v1', function () {
       const task_node = graph.getNodeByRef(syncer_ref) as TaskNode;
       expect(task_node.__type).equals('task');
       expect(task_node.config.schedule).equals('*/1 * * * *');
-      expect(task_node.config.name).equals('architect/cloud/syncer:v1');
+      expect(task_node.config.name).equals('syncer');
+      expect(task_node.config.ref).equals('architect/cloud/syncer:v1');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -566,7 +567,7 @@ describe('components spec v1', function () {
       const task_node = graph.getNodeByRef(syncer_ref) as TaskNode;
       expect(task_node.__type).equals('task');
       expect(task_node.config.schedule).equals('*/1 * * * *');
-      expect(task_node.config.name).equals('architect/cloud/syncer:v1');
+      expect(task_node.config.name).equals('syncer');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
