@@ -10,6 +10,7 @@ import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/schema/component-builder';
+import { buildConfigFromYml } from '../../src/dependency-manager/src/schema/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -434,7 +435,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -452,7 +456,10 @@ describe('local deploy environment', function () {
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       const component_config = getHelloComponentConfig();
       (component_config.services.api.interfaces.main as any).sticky = 'true';
-      return ComponentBuilder.buildConfigFromYml(component_config, Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(component_config, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -468,7 +475,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_database_seeding_component_config), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_database_seeding_component_config), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -484,7 +494,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return basic_parameter_values;
@@ -507,7 +520,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return wildcard_parameter_values;
@@ -528,7 +544,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -549,7 +568,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -573,7 +595,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -600,7 +625,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      return ComponentBuilder.buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG);
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_parameters), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return basic_parameter_values;
@@ -621,7 +649,10 @@ describe('local deploy environment', function () {
     test
       .timeout(20000)
       .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-        return ComponentBuilder.buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
+        return {
+          component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -643,7 +674,10 @@ describe('local deploy environment', function () {
     const local_deploy = test
       .timeout(20000)
       .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-        return ComponentBuilder.buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
+        return {
+          component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
@@ -673,7 +707,10 @@ describe('local deploy environment', function () {
       .stub(ComponentBuilder, 'buildConfigFromPath', () => {
         const config = getHelloComponentConfig();
         config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
-        return ComponentBuilder.buildConfigFromYml(config, Slugs.DEFAULT_TAG);
+        return {
+          component_config: buildConfigFromYml(config, Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Deploy.prototype, 'readValuesFile', () => {
         return {
@@ -735,7 +772,10 @@ describe('local deploy environment', function () {
             app: \${{ services.app.interfaces.main.url }}
           `
         }
-        return ComponentBuilder.buildConfigFromYml(config, Slugs.DEFAULT_TAG);
+        return {
+          component_config: buildConfigFromYml(config, Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({

@@ -22,7 +22,7 @@ export interface ComponentInterfaceConfig {
 
   ingress?: IngressConfig;
 
-  consumers?: string[];
+  consumers?: string;
   dns_zone?: string;
   subdomain?: string;
 }
@@ -88,6 +88,8 @@ export interface ComponentConfig {
 
   source_yml: string;
   context: ComponentContext;
+
+  proxy_port_mapping?: any; // TODO:269:?proxy_port_mapping
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {

@@ -1,8 +1,9 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
-import DependencyManager, { ComponentVersionSlugUtils } from '../../dependency-manager/src';
-import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
+import yaml from 'js-yaml';
+import DependencyManager, { ComponentVersionSlugUtils, ServiceSpec, validateOrRejectSpec } from '../../dependency-manager/src';
+import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject, parseSourceYml } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
@@ -39,7 +40,7 @@ export default class LocalDependencyManager extends DependencyManager {
       }
       const { component_config } = buildConfigFromPath(this.linked_components[component_slug], tag);
       config = component_config;
-      instance_metadata.local_path = `file:${this.linked_components[component_slug]}`;
+      instance_metadata.local_path = this.linked_components[component_slug];
     } else {
       // Load remote component config
       const { data: component_version } = await this.api.get(`/accounts/${component_account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
@@ -66,6 +67,9 @@ export default class LocalDependencyManager extends DependencyManager {
 
     if (config.instance_metadata?.local_path && !this.production) {
       // Set debug values
+      const parsed_yml = parseSourceYml(config.source_yml);
+      const merged_spec = validateOrRejectSpec(parsed_yml);
+
       for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (sv.debug) {
@@ -78,6 +82,19 @@ export default class LocalDependencyManager extends DependencyManager {
           config.tasks[tk] = deepmerge(tv, tv.debug);
         }
       }
+
+      const services: Dictionary<ServiceSpec> = {};
+      for (const [sk, sv] of Object.entries(merged_spec.services || {})) {
+        services[sk] = deepmerge(sv, sv.debug || {});
+      }
+
+      const tasks: Dictionary<ServiceSpec> = {};
+      for (const [sk, sv] of Object.entries(merged_spec.services || {})) {
+        tasks[sk] = deepmerge(sv, sv.debug || {});
+      }
+
+      merged_spec.services = services;
+      config.source_yml = yaml.dump(merged_spec);
     }
 
     return config;
@@ -105,15 +122,14 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_configs;
   }
 
-  async validateComponent(component: ComponentConfig, context: object, ignore_keys: string[]): Promise<[ComponentConfig, ValidationError[]]> {
-    const groups = ['deploy', 'developer'];
-    const [interpolated_component, errors] = await super.validateComponent(component, context, ignore_keys, groups);
+  async validateComponent(component: ComponentConfig): Promise<[ComponentConfig, ValidationError[]]> {
+    const [validated_component, errors] = await super.validateComponent(component);
     if (component.instance_metadata?.local_path?.startsWith('file:') && errors.length) {
       const component_path = component.instance_metadata.local_path.substr('file:'.length);
       const { file_path, file_contents } = loadSpecFromPathOrReject(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
-    return [interpolated_component, errors];
+    return [validated_component, errors];
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true) {

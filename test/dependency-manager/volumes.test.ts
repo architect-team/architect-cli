@@ -83,7 +83,7 @@ describe('volumes spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('test/component')
-    ])
+    ]);
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });

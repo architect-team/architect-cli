@@ -9,7 +9,7 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
 
   const output: Dictionary<U> = {};
   for (const [key, value] of Object.entries(input)) {
-    output[key] = transform(key, value, args);
+    output[key] = transform(key, value, ...args);
   }
   return output;
 };

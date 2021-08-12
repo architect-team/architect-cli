@@ -151,7 +151,6 @@ export class DockerComposeUtils {
         service.depends_on = depends_on;
       }
 
-      console.log('node:');
       if (node.is_local) {
         const component_path = fs.lstatSync(node.local_path).isFile() ? path.dirname(node.local_path) : node.local_path;
         if (!node.config.image) {

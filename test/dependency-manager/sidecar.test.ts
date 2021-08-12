@@ -401,6 +401,7 @@ describe('sidecar spec v1', () => {
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
     const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
 
+    console.log(JSON.stringify(graph.nodes));
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
       cloud_interfaces_ref,

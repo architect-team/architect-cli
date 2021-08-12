@@ -17,10 +17,12 @@ export const mapAjvErrors = (errors: AjvError): ValidationError[] => {
 };
 
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
-  const ajv = new Ajv({ strict: false }); // TODO:269:NEXT: remove this
+  const ajv = new Ajv(); // TODO:269: upgrade ajv to 8.*
   const validate = ajv.compile(ARCHITECT_JSON_SCHEMA);
   const valid = validate(parsed_yml);
   if (!valid) {
+    console.error('failed spec:'); //TODO:269
+    console.error(JSON.stringify(parsed_yml, null, 2));
     return mapAjvErrors(validate.errors);
   }
   return [];
@@ -29,6 +31,8 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
   if (errors && errors.length) {
+    console.error('failed spec:'); //TODO:269
+    console.error(JSON.stringify(parsed_yml, null, 2));
     throw new Error(JSON.stringify(errors));
   }
 

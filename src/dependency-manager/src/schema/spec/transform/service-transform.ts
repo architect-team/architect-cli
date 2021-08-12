@@ -1,6 +1,6 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
-import { LivenessProbeConfig, ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
+import { ServiceInterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../config/service-config';
 import { LivenessProbeSpec, ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
