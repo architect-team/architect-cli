@@ -47,7 +47,9 @@ export default class LocalDependencyManager extends DependencyManager {
         err.message = `Could not download component for ${component_ref}\n${err.message}`;
         throw err;
       });
-      config = buildConfigFromYml(component_version.config, tag);
+
+      const config_yaml = yaml.dump(component_version.config);
+      config = buildConfigFromYml(config_yaml, tag);
     }
 
     config.instance_metadata = instance_metadata;
