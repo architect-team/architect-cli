@@ -705,10 +705,10 @@ describe('local deploy environment', function () {
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-        const config = getHelloComponentConfig();
+        const config = buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
         config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
         return {
-          component_config: buildConfigFromYml(config, Slugs.DEFAULT_TAG),
+          component_config: config,
           source_path: './examples/hello-world/architect.yml',
         }
       })
@@ -725,7 +725,7 @@ describe('local deploy environment', function () {
       .command(['deploy', '-l', '-v', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
       .it('Create a local deploy with multiple instances of the same component', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
+        expect(runCompose.calledOnce).to.be.true;
 
         const tenant_1_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
         const tenant_2_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-2');
