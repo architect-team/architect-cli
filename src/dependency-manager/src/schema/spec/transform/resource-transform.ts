@@ -2,7 +2,7 @@ import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../../../utils/slugs';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
-import { BuildSpec, ResourceSpec, VolumeSpec } from '../resource-spec';
+import { BuildSpec, EnvironmentSpecValue, ResourceSpec, VolumeSpec } from '../resource-spec';
 
 export const transformResourceSpecName = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');
@@ -41,7 +41,7 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   return shell_parse(entrypoint, env).map(e => `${e}`);
 };
 
-export const transformResourceSpecEnvironment = (environment: Dictionary<string | null> | undefined): Dictionary<string | null> => {
+export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
   const output: Dictionary<string> = {};
   for (const [k, v] of Object.entries(environment || {})) {
     output[k] = `${v}`;

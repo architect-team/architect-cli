@@ -46,6 +46,9 @@ export class VolumeSpec {
   readonly?: boolean | string;
 }
 
+export type EnvironmentSpecValue = boolean | null | number | string;
+export const EnvironmentDictiory = DictionaryOfAny('boolean', 'null', 'number', 'string');
+
 export class BuildSpec {
   // TODO:269:jsonschema (context || dockerfile)
   @IsOptional()
@@ -111,8 +114,8 @@ export class ResourceSpec {
   debug?: ResourceSpec;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', 'null'))
-  environment?: Dictionary<string | null>;
+  @JSONSchema(EnvironmentDictiory)
+  environment?: Dictionary<EnvironmentSpecValue>;
 
   @IsOptional()
   @JSONSchema(DictionaryOfAny(VolumeSpec, 'string'))
