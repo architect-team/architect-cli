@@ -29,7 +29,7 @@ export default class Platforms extends Command {
     for (const row of platforms) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      table.push([row.name, row.account.name, row.host, row.type, 'Encrypted on Server', row.created_at, row.updated_at]);
+      table.push([row.name, row.account.name, row.properties.host, row.type, 'Encrypted on Server', row.created_at, row.updated_at]);
     }
 
     this.log(table.toString());
