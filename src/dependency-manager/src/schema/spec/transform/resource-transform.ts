@@ -98,6 +98,8 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
 
 export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
+  console.log('component_ref');
+  console.log(component_ref);
   const { component_account_name, component_name } = ComponentSlugUtils.parse(component_ref);
   return {
     name: key,

@@ -12,7 +12,7 @@ export interface IngressConfig {
 
 export interface ComponentInterfaceConfig {
   description?: string;
-  host?: string;
+  host?: null | string;
   port?: number | string;
   protocol?: string;
   username?: string;

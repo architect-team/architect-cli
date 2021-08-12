@@ -299,8 +299,8 @@ export default abstract class DependencyManager {
     return host;
   }
 
-  generateUrl(interface_config: ServiceInterfaceConfig, host?: string, port?: string) {
-    host = host || interface_config.host;
+  generateUrl(interface_config: ServiceInterfaceConfig, host?: string | null, port?: string) {
+    host = host || interface_config.host || undefined;
     port = port || `${interface_config.port}`;
     const protocol = interface_config.protocol || 'http';
     let url;

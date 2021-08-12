@@ -14,7 +14,7 @@ export interface ScalingConfig {
 
 export interface ServiceInterfaceConfig {
   description?: string;
-  host?: string;
+  host?: null | string;
   port?: number | string;
   protocol?: string;
   username?: string;

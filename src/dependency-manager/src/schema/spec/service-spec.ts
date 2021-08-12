@@ -34,8 +34,8 @@ export class ServiceInterfaceSpec {
   description?: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  host?: string;
+  @JSONSchema(AnyOf('null', 'string'))
+  host?: null | string;
 
   // TODO:269:jsonschema: port XOR url
   @Allow()
