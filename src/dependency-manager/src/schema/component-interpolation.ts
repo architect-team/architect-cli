@@ -11,7 +11,7 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
   const interpolated_component_string = interpolateString(config.source_yml, config.context, ignore_keys);
   const parsed_yml = parseSourceYml(interpolated_component_string);
   const spec_errors = validateSpec(parsed_yml);
-  if (spec_errors) {
+  if (spec_errors?.length) {
     // TODO:269 return null for interpolated_config?
     return { interpolated_config: config, errors: spec_errors };
   }
