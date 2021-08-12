@@ -25,11 +25,11 @@ export default class Platforms extends Command {
       return;
     }
 
-    const table = new Table({ head: ['Name', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
+    const table = new Table({ head: ['Name', 'Account', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
     for (const row of platforms) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      table.push([row.name, row.host, row.type, 'Encrypted on Server', row.created_at, row.updated_at]);
+      table.push([row.name, row.account.name, row.properties.host, row.type, 'Encrypted on Server', row.created_at, row.updated_at]);
     }
 
     this.log(table.toString());
