@@ -1,5 +1,5 @@
-import Table from 'cli-table3';
 import Command from '../../base-command';
+import Table from '../../base-table';
 
 export default class Environments extends Command {
   static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search'];
