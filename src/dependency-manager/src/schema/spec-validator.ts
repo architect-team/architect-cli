@@ -38,7 +38,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
 
   // TODO:269 make replaceBrackets more generic and add new method replaceInterpolationBrackets
   function replaceBracketsTmp(value: string) {
-    return value.replace(/\['/g, '.').replace(/'\]/g, '').replace(/\[\\"/g, '.').replace(/\\"\]/g, '').replace(/\["/g, '.').replace(/"\]/g, '');
+    return value.replace(/\[["|']?([^\]|"|']+)["|']?\]/g, '.$1');
   }
 
   const errors: ValidationError[] = [];

@@ -148,13 +148,13 @@ describe('local deploy environment', function () {
 
     "parameters": {
       'a_required_key': {
-        'required': 'true'
+        'required': true
       },
       'another_required_key': {
-        'required': 'true'
+        'required': true
       },
       'one_more_required_param': {
-        'required': 'true'
+        'required': true
       }
     },
 
