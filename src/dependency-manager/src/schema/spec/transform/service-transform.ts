@@ -1,6 +1,6 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
-import { ServiceInterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../config/service-config';
+import { LivenessProbeConfig, ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 import { LivenessProbeSpec, ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
@@ -42,12 +42,13 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
   };
 };
 
-export const transformServiceSpec = (key: string, spec: ServiceSpec, tag: string): ServiceConfig => {
-  const resource_config = transformResourceSpec(key, spec, tag);
+// TODO:269: pass tag in with component_ref
+export const transformServiceSpec = (key: string, spec: ServiceSpec, component_ref: string, tag: string): ServiceConfig => {
+  const resource_config = transformResourceSpec(key, spec, component_ref, tag);
 
   return {
     ...resource_config,
-    debug: spec.debug ? transformServiceSpec(key, spec.debug, tag) : undefined,
+    debug: spec.debug ? transformServiceSpec(key, spec.debug, component_ref, tag) : undefined,
     interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
     liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
     replicas: spec.replicas || 1,

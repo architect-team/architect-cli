@@ -1,6 +1,6 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
-import { ServiceVersionSlugUtils } from '../../../utils/slugs';
+import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../../../utils/slugs';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
 import { BuildSpec, ResourceSpec, VolumeSpec } from '../resource-spec';
 
@@ -96,18 +96,19 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
   }
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec, tag: string): ResourceConfig => {
+export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
-
+  const { component_account_name, component_name } = ComponentSlugUtils.parse(component_ref);
   return {
     name: key,
+    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, tag),
     tag,
     description: spec.description,
     image: spec.image,
     command: transformResourceSpecCommand(spec.command, environment),
     entrypoint: transformResourceSpecEntryPoint(spec.entrypoint, environment),
     language: spec.language,
-    debug: spec.debug ? transformResourceSpec(key, spec.debug, tag) : undefined,
+    debug: spec.debug ? transformResourceSpec(key, spec.debug, component_ref, tag) : undefined,
     environment,
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     build: transformBuildSpec(spec.build, spec.image),

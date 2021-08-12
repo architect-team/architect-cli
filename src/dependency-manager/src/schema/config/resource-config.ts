@@ -26,6 +26,7 @@ export interface BuildConfig {
 
 export interface ResourceConfig {
   name: string;
+  ref: string;
   tag: string;
   description?: string;
   image?: string;

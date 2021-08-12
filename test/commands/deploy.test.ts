@@ -454,10 +454,10 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      const component_config = getHelloComponentConfig();
+      const component_config = buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
       (component_config.services.api.interfaces.main as any).sticky = 'true';
       return {
-        component_config: buildConfigFromYml(component_config, Slugs.DEFAULT_TAG),
+        component_config,
         source_path: './examples/hello-world/architect.yml',
       }
     })

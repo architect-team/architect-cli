@@ -360,12 +360,12 @@ describe('components spec v1', function () {
       expect(api_node.config.environment.CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
       expect(api_node.config.name).to.eq('api');
       expect(api_node.config.tag).to.eq('latest');
-      expect(api_node.config.name).to.eq('architect/cloud/api:latest');
+      expect(api_node.config.ref).to.eq('architect/cloud/api:latest');
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
       expect(worker_node.config.tag).to.eq('6.2');
-      expect(worker_node.config.name).to.eq('concourse/ci/worker:6.2');
+      expect(worker_node.config.ref).to.eq('concourse/ci/worker:6.2');
     });
 
     it('circular component dependency is rejected', async () => {
