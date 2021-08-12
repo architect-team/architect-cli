@@ -86,9 +86,9 @@ export class DockerComposeUtils {
       for (const port of node.ports) {
         ports.push(`${available_ports.shift()}:${port}`);
       }
-      const formatted_environment_variables: Dictionary<string> = {};
+      const formatted_environment_variables: Dictionary<string | null> = {};
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
-        formatted_environment_variables[var_key] = var_value.replace(/\$/g, '$$$'); // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+        formatted_environment_variables[var_key] = var_value ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
       const service = {
         environment: formatted_environment_variables,
@@ -115,7 +115,7 @@ export class DockerComposeUtils {
       const memory = node.config.memory;
       if (cpu || memory) {
         service.deploy = { resources: { limits: {} } };
-        if (cpu) { service.deploy.resources.limits.cpus = cpu; }
+        if (cpu) { service.deploy.resources.limits.cpus = `${cpu}`; }
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
 
@@ -129,7 +129,7 @@ export class DockerComposeUtils {
             test: liveness_probe.command,
             interval: liveness_probe.interval,
             timeout: liveness_probe.timeout,
-            retries: parseInt(liveness_probe.failure_threshold),
+            retries: typeof liveness_probe.failure_threshold === 'string' ? parseInt(liveness_probe.failure_threshold) : liveness_probe.failure_threshold,
             start_period: liveness_probe.initial_delay,
           };
           if (!service.labels) {

@@ -1,4 +1,4 @@
-import { IsNumberString, IsOptional, IsString, Matches, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
@@ -6,8 +6,8 @@ import { ResourceSpec } from './resource-spec';
 
 export class ScalingMetricsSpec {
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  cpu?: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  cpu?: number | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -15,20 +15,20 @@ export class ScalingMetricsSpec {
 }
 
 export class ScalingSpec {
-  @IsString()
-  @JSONSchema({ type: 'string' })
-  min_replicas!: string;
+  @Allow()
+  @JSONSchema(AnyOf('number', 'string'))
+  min_replicas!: number | string;
 
-  @IsString()
-  @JSONSchema({ type: 'string' })
-  max_replicas!: string;
+  @Allow()
+  @JSONSchema(AnyOf('number', 'string'))
+  max_replicas!: number | string;
 
   // TODO:269:jsonschema (cpu || memory)
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
 }
 
-export class InterfaceSpec {
+export class ServiceInterfaceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;
@@ -37,7 +37,8 @@ export class InterfaceSpec {
   @JSONSchema({ type: 'string' })
   host?: string;
 
-  @IsString()
+  // TODO:269:jsonschema: port XOR url
+  @Allow()
   @JSONSchema(AnyOf('number', 'string'))
   port!: number | string;
 
@@ -53,9 +54,10 @@ export class InterfaceSpec {
   @JSONSchema({ type: 'string' })
   password?: string;
 
-  @IsString()
+  // TODO:269:? this can't remain required, it's not required in the spec
+  @IsOptional()
   @JSONSchema({ type: 'string' })
-  url!: string;
+  url?: string;
 
   @IsOptional()
   @JSONSchema(AnyOf('boolean', 'string'))
@@ -64,12 +66,12 @@ export class InterfaceSpec {
 
 export class LivenessProbeSpec {
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  success_threshold?: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  success_threshold?: number | string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  failure_threshold?: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  failure_threshold?: number | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -105,7 +107,7 @@ export class LivenessProbeSpec {
   })
   command?: string[] | string;
 
-  @IsNumberString()
+  @Allow()
   @JSONSchema(AnyOf('number', 'string'))
   port!: number | string;
 }
@@ -116,16 +118,16 @@ export class ServiceSpec extends ResourceSpec {
   debug?: ServiceSpec;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny(InterfaceSpec, 'string', 'number'))
-  interfaces?: Dictionary<InterfaceSpec | string | number>;
+  @JSONSchema(DictionaryOfAny(ServiceInterfaceSpec, 'string', 'number'))
+  interfaces?: Dictionary<ServiceInterfaceSpec | string | number>;
 
   @IsOptional()
   @ValidateNested()
   liveness_probe?: LivenessProbeSpec;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  replicas?: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  replicas?: number | string;
 
   //TODO:269: JSONschema for interpolation
   // @IsOptional()/

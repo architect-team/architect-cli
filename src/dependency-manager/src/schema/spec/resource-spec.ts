@@ -9,8 +9,8 @@ export class DeployModuleSpec {
   path!: string;
 
   @IsObject()
-  @JSONSchema(DictionaryOf('string'))
-  inputs!: Dictionary<string>;
+  @JSONSchema(DictionaryOfAny('string', 'null'))
+  inputs!: Dictionary<string | null>;
 }
 
 export class DeploySpec {
@@ -53,8 +53,8 @@ export class BuildSpec {
   context?: string;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf('string'))
-  args?: Dictionary<string>;
+  @JSONSchema(DictionaryOfAny('string', 'null'))
+  args?: Dictionary<string | null>;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -111,8 +111,8 @@ export class ResourceSpec {
   debug?: ResourceSpec;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf('string'))
-  environment?: Dictionary<string>;
+  @JSONSchema(DictionaryOfAny('string', 'null'))
+  environment?: Dictionary<string | null>;
 
   @IsOptional()
   @JSONSchema(DictionaryOfAny(VolumeSpec, 'string'))
@@ -123,8 +123,8 @@ export class ResourceSpec {
   build?: BuildSpec;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  cpu?: string;
+  @JSONSchema(AnyOf('number', 'string'))
+  cpu?: number | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })

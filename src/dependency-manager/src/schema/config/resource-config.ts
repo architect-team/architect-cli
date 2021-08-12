@@ -2,7 +2,7 @@ import { Dictionary } from '../../utils/dictionary';
 
 export interface DeployModuleConfig {
   path: string;
-  inputs: Dictionary<string>;
+  inputs: Dictionary<string | null>;
 }
 
 export interface DeployConfig {
@@ -33,10 +33,10 @@ export interface ResourceConfig {
   entrypoint?: string[];
   language?: string;
   debug?: ResourceConfig;
-  environment: Dictionary<string>;
+  environment: Dictionary<string | null>;
   volumes: Dictionary<VolumeConfig>;
   build?: BuildConfig;
-  cpu?: string;
+  cpu?: number | string;
   memory?: string;
   deploy?: DeployConfig;
   depends_on: string[];

@@ -46,7 +46,6 @@ export const parseSourceYml = (source_yml: string): ParsedYaml => {
 
 export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
   const parsed_yml = parseSourceYml(source_yml);
-  console.log(JSON.stringify(parsed_yml));
 
   const spec = validateOrRejectSpec(parsed_yml);
   const config = transformComponentSpec(spec, source_yml, tag);

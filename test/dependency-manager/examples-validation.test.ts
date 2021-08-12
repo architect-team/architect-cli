@@ -36,8 +36,8 @@ describe('example component validation', function () {
     const EXAMPLES_DIR = 'examples';
     var example_architect_dirs = fs.readdirSync(EXAMPLES_DIR);
 
-    it(`${EXAMPLES_DIR}/hello-world/architect.yml passes ajv json schema validation`, async () => {
-      const { component_config, source_path } = buildConfigFromPath(`${EXAMPLES_DIR}/hello-world/architect.yml`, Slugs.DEFAULT_TAG);
+    it(`${EXAMPLES_DIR}/superset/architect.yml passes ajv json schema validation`, async () => {
+      const { component_config, source_path } = buildConfigFromPath(`${EXAMPLES_DIR}/superset/architect.yml`, Slugs.DEFAULT_TAG);
     });
 
     // for (const example_dir of example_architect_dirs) {

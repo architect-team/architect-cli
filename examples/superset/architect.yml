@@ -1,0 +1,200 @@
+name: examples/superset
+description: A spec with every field
+keywords:
+  - architect
+  - spec
+author: Dan Barrett
+homepage: https://architect.io
+
+parameters:
+  param_string: architect
+  param_number: 3000
+  param_boolean: true
+  param_required:
+    required: true
+    description: Root password to assign to the component's DB
+    default: secret
+  param_optional:
+    required: false
+    description: Name of the DB the component will store content in
+    default: stateful
+  param_default_undefined:
+    required: false
+    description: Default undefined
+    default:
+  param_default_boolean:
+    required: false
+    default: true
+  param_unset:
+
+services:
+  api-db:
+    description: api-db service description
+    image: postgres:12
+    command: 'postgres'
+    entrypoint:
+      - 'echo'
+      - 'hello'
+    language: postgresql
+    environment:
+      POSTGRES_USER: ${{ parameters.param_string }}
+      POSTGRES_PASSWORD: ${{ parameters.param_required }}
+      POSTGRES_DB: ${{ parameters.param_optional }}
+      ENVIRONMENT_UNSET:
+    volumes: # TODO:269:? allowed outside of debug block now?
+    build:
+      context: .
+      args:
+        build_arg_string: arg_value
+        build_arg_unset:
+      dockerfile: ./Dockerfile
+    cpu: 2
+    memory: 4GB
+    deploy:
+      strategy: deploy-strategy
+      modules:
+        deploy_module:
+          path: ./deploy/module
+          inputs:
+            deploy_input_string: some_deploy_input
+            deploy_input_unset:
+    depends_on:
+      - stateful-api
+    labels:
+      label_string: some_label
+      label_number: 12
+      label_boolean: 15
+      label_unset:
+    interfaces:
+      postgres:
+        port: 5432
+        protocol: postgresql
+    liveness_probe:
+      success_threshold: 3
+      failure_threshold: 3
+      timeout: '12s'
+      interval: '20s'
+      initial_delay: '30s'
+      path: /liveness
+      command:
+        - 'check'
+        - 'liveness'
+      port: 5432
+    replicas: 2
+    scaling:
+      min_replicas: 1
+      max_replicas: 3
+      metrics:
+        cpu: 8
+        memory: 2GB
+    debug:
+      description: api-db service debug
+      image: postgres:12
+      command: 'postgres'
+      entrypoint:
+        - 'echo'
+        - 'hello'
+      language: postgresql
+      environment:
+        POSTGRES_USER: ${{ parameters.param_string }}
+        POSTGRES_PASSWORD: ${{ parameters.param_required }}
+        POSTGRES_DB: ${{ parameters.param_optional }}
+        ENVIRONMENT_UNSET:
+      volumes:
+        volume_string: ./some-volume
+        volume_object:
+          mount_path: ./mount-path
+          host_path: ./host-path
+          key: volume-key
+          description: Volume description
+          readonly: false
+      build:
+        context: .
+        args:
+          build_arg_string: arg_value
+          build_arg_unset:
+        dockerfile: ./Dockerfile
+      cpu: 2
+      memory: 4GB
+      deploy:
+        strategy: deploy-strategy
+        modules:
+          deploy_module:
+            path: ./deploy/module
+            inputs:
+              deploy_input_string: some_deploy_input
+              deploy_input_unset:
+      depends_on:
+        - stateful-api
+      labels:
+        label_string: some_label
+        label_number: 12
+        label_boolean: 15
+        label_unset:
+      interfaces:
+        postgres:
+          port: 5432
+          protocol: postgresql
+      liveness_probe:
+        success_threshold: 3
+        failure_threshold: 3
+        timeout: '12s'
+        interval: '20s'
+        initial_delay: '30s'
+        path: /liveness
+        command:
+          - 'check'
+          - 'liveness'
+        port: 5432
+      replicas: 2
+      scaling:
+        min_replicas: 1
+        max_replicas: 3
+        metrics:
+          cpu: 80
+          memory: 2GB
+
+  stateful-api:
+    build:
+      context: ./backend
+    interfaces:
+      http: 8080
+    environment:
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.param_optional }}
+      DB_USER: ${{ parameters.param_string }}
+      DB_PASS: ${{ parameters.param_required }}
+  frontend:
+    build:
+      context: ./frontend
+    interfaces:
+      web: 8081
+    environment:
+      API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+  stateless-api:
+    image: heroku/nodejs-hello-world
+    interfaces:
+      main: ${{ parameters.param_number }}
+
+tasks:
+  curler:
+    schedule: "*/5 * * * ?"
+    image: ellerbrock/alpine-bash-curl-ssl
+    command:
+      - sh
+      - -c
+      - $RUN_CURL && $SERVER_URL
+
+    environment:
+      SERVER_URL: ${{ services.stateless-api.interfaces.http.url }}
+      RUN_CURL: ${{ parameters.param_boolean }}
+
+dependencies:
+  examples/hello-world: latest
+
+interfaces:
+  api: ${{ services.stateless-api.interfaces.http.url }} ## TODO:269:? is this a port OR url?
+  frontend:
+    description: Exposes the sign in webapp to upstreams
+    url: ${{ services.frontend.interfaces.web.url }}
+
+artifact_image: some-image ## TODO:269:? should we remove from spec?

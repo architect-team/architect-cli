@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { InterfaceConfig, ServiceConfig } from '../../schema/config/service-config';
+import { ServiceInterfaceConfig, ServiceConfig } from '../../schema/config/service-config';
 
 export interface ServiceNodeOptions {
   ref: string;
@@ -27,7 +27,7 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
   }
 
-  get interfaces(): { [key: string]: InterfaceConfig } {
+  get interfaces(): { [key: string]: ServiceInterfaceConfig } {
     return this.config.interfaces;
   }
 

@@ -11,7 +11,7 @@ import { TaskNode } from './graph/node/task';
 import { interpolateConfig, interpolateConfigOrReject } from './schema/component-interpolation';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
-import { InterfaceConfig } from './schema/config/service-config';
+import { ServiceInterfaceConfig } from './schema/config/service-config';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, flattenValidationErrors, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceBrackets } from './utils/interpolation';
@@ -288,7 +288,7 @@ export default abstract class DependencyManager {
     return host;
   }
 
-  generateUrl(interface_config: InterfaceConfig, host?: string, port?: string) {
+  generateUrl(interface_config: ServiceInterfaceConfig, host?: string, port?: string) {
     host = host || interface_config.host;
     port = port || `${interface_config.port}`;
     const protocol = interface_config.protocol || 'http';
@@ -302,10 +302,10 @@ export default abstract class DependencyManager {
     return url;
   }
 
-  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): InterfaceConfig {
+  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): ComponentInterfaceConfig {
     const interface_to = edge.interfaces_map[interface_from];
 
-    let external_interface: ComponentInterfaceConfig;
+    let partial_external_interface: Partial<ComponentInterfaceConfig>;
 
     const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
 
@@ -319,7 +319,7 @@ export default abstract class DependencyManager {
         subdomain = '';
       }
 
-      external_interface = {
+      partial_external_interface = {
         ...(dependency ? dependency.interfaces[interface_to] : {}),
         ...dependency_interface,
         consumers: [],
@@ -328,7 +328,7 @@ export default abstract class DependencyManager {
       };
     } else {
       const [external_host, external_port] = external_address.split(':');
-      external_interface = {
+      partial_external_interface = {
         host: `${interface_from}.${external_host}`,
         port: external_port,
         protocol: external_host === 'arc.localhost' ? 'http' : 'https',
@@ -338,9 +338,12 @@ export default abstract class DependencyManager {
         dns_zone: external_host,
       };
     }
-    external_interface.username = '';
-    external_interface.password = '';
-    external_interface.url = this.generateUrl(external_interface);
+    const external_interface = {
+      ...partial_external_interface,
+      username: '',
+      password: '',
+      url: this.generateUrl(partial_external_interface),
+    };
     return external_interface;
   }
 

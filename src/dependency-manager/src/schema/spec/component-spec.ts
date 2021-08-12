@@ -1,9 +1,9 @@
-import { IsOptional, Matches, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentSlugUtils } from '../../utils/slugs';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
-import { InterfaceSpec, ServiceSpec } from './service-spec';
+import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 
 export class IngressSpec {
@@ -12,10 +12,43 @@ export class IngressSpec {
   subdomain?: string;
 }
 
-export class ComponentInterfaceSpec extends InterfaceSpec {
+export class ComponentInterfaceSpec {
   @IsOptional()
   @ValidateNested()
   ingress?: IngressSpec;
+
+  @IsOptional()
+  @JSONSchema({ type: 'string' })
+  description?: string;
+
+  @IsOptional()
+  @JSONSchema({ type: 'string' })
+  host?: string;
+
+  // TODO:269:jsonschema: port XOR url
+  @IsOptional()
+  @JSONSchema(AnyOf('number', 'string'))
+  port?: number | string;
+
+  @IsOptional()
+  @JSONSchema({ type: 'string' })
+  protocol?: string;
+
+  @IsOptional()
+  @JSONSchema({ type: 'string' })
+  username?: string;
+
+  @IsOptional()
+  @JSONSchema({ type: 'string' })
+  password?: string;
+
+  @Allow()
+  @JSONSchema({ type: 'string' })
+  url!: string;
+
+  @IsOptional()
+  @JSONSchema(AnyOf('boolean', 'string'))
+  sticky?: boolean | string;
 }
 
 export class ParameterDefinitionSpec {
@@ -57,8 +90,8 @@ export class ComponentSpec {
   homepage?: string;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec))
-  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec>;
+  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'))
+  parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema(DictionaryOf(ServiceSpec))

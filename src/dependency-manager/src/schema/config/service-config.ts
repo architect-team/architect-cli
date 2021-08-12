@@ -2,20 +2,20 @@ import { Dictionary } from '../../utils/dictionary';
 import { ResourceConfig } from './resource-config';
 
 export interface ScalingMetricsConfig {
-  cpu?: string;
+  cpu?: number | string;
   memory?: string;
 }
 
 export interface ScalingConfig {
-  min_replicas: string;
-  max_replicas: string;
+  min_replicas: number | string;
+  max_replicas: number | string;
   metrics: ScalingMetricsConfig;
 }
 
-export interface InterfaceConfig {
+export interface ServiceInterfaceConfig {
   description?: string;
   host?: string;
-  port: number | string;
+  port?: number | string;
   protocol?: string;
   username?: string;
   password?: string;
@@ -24,8 +24,8 @@ export interface InterfaceConfig {
 }
 
 export interface LivenessProbeConfig {
-  success_threshold: string;
-  failure_threshold: string;
+  success_threshold: number | string;
+  failure_threshold: number | string;
   timeout: string;
   interval: string;
   initial_delay: string;
@@ -36,8 +36,8 @@ export interface LivenessProbeConfig {
 
 export interface ServiceConfig extends ResourceConfig {
   debug?: ServiceConfig;
-  interfaces: Dictionary<InterfaceConfig>;
+  interfaces: Dictionary<ServiceInterfaceConfig>;
   liveness_probe?: LivenessProbeConfig;
-  replicas: string;
+  replicas: number | string;
   scaling?: ScalingConfig;
 }

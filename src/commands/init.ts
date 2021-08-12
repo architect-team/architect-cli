@@ -12,7 +12,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import { ComponentSpec } from '../dependency-manager/src/schema/spec/component-spec';
 import { VolumeSpec } from '../dependency-manager/src/schema/spec/resource-spec';
-import { InterfaceSpec, ServiceSpec } from '../dependency-manager/src/schema/spec/service-spec';
+import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/schema/spec/service-spec';
 
 export abstract class InitCommand extends Command {
   auth_required() {
@@ -111,14 +111,14 @@ export abstract class InitCommand extends Command {
             port_index++;
           } else if (single_port_regex.test(port)) {
             const matches = single_port_regex.exec(port);
-            const interface_spec: Partial<InterfaceSpec> = {};
+            const interface_spec: Partial<ServiceInterfaceSpec> = {};
             if (matches && matches.length >= 3) {
               interface_spec.protocol = matches[2];
             }
             if (matches && matches.length >= 2) {
               interface_spec.port = matches[1].split(':')[1];
             }
-            (architect_service.interfaces[`interface${port_index}`] as Partial<InterfaceSpec>) = interface_spec;
+            (architect_service.interfaces[`interface${port_index}`] as Partial<ServiceInterfaceSpec>) = interface_spec;
             port_index++;
           } else if (port_range_regex.test(port)) {
             const matches = port_range_regex.exec(port);
@@ -133,12 +133,12 @@ export abstract class InitCommand extends Command {
             this.warn(chalk.yellow(`Could not convert port with spec ${port} for service ${service_name}`));
           }
         } else {
-          const interface_spec: Partial<InterfaceSpec> = {};
+          const interface_spec: Partial<ServiceInterfaceSpec> = {};
           interface_spec.port = port.target.toString();
           if (port.protocol) {
             interface_spec.protocol = port.protocol;
           }
-          (architect_service.interfaces[`interface${port_index}`] as Partial<InterfaceSpec>) = interface_spec;
+          (architect_service.interfaces[`interface${port_index}`] as Partial<ServiceInterfaceSpec>) = interface_spec;
           port_index++;
         }
       }

@@ -14,7 +14,7 @@ export const transformResourceSpecTag = (name: string | undefined): string => {
   return split.tag;
 };
 
-export const transformResourceSpecCommand = (command: string | string[] | undefined, environment: Dictionary<string>): string[] => {
+export const transformResourceSpecCommand = (command: string | string[] | undefined, environment: Dictionary<string | null>): string[] => {
   if (!command) return [];
 
   if (command instanceof Array) {
@@ -29,7 +29,7 @@ export const transformResourceSpecCommand = (command: string | string[] | undefi
   return shell_parse(command, env).map(e => `${e}`);
 };
 
-export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined, environment: Dictionary<string>): string[] => {
+export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined, environment: Dictionary<string | null>): string[] => {
   if (!entrypoint) return [];
   if (entrypoint instanceof Array) {
     return entrypoint;
@@ -41,16 +41,15 @@ export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | 
   return shell_parse(entrypoint, env).map(e => `${e}`);
 };
 
-export const transformResourceSpecEnvironment = (environment: Dictionary<string> | undefined): Dictionary<string> => {
+export const transformResourceSpecEnvironment = (environment: Dictionary<string | null> | undefined): Dictionary<string | null> => {
   const output: Dictionary<string> = {};
   for (const [k, v] of Object.entries(environment || {})) {
-    if (v === null) { continue; }
     output[k] = `${v}`;
   }
   return output;
 };
 
-export const transformBuildSpecArgs = (args?: Dictionary<string>): Dictionary<string> => {
+export const transformBuildSpecArgs = (args?: Dictionary<string | null>): Dictionary<string> => {
   if (!args) {
     return {};
   }

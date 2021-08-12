@@ -2,7 +2,7 @@ import { Dictionary } from '../../utils/dictionary';
 import { Refs } from '../../utils/refs';
 import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../utils/slugs';
 import { ComponentContext } from './component-context';
-import { InterfaceConfig, ServiceConfig } from './service-config';
+import { ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
 export interface IngressConfig {
@@ -10,7 +10,16 @@ export interface IngressConfig {
   subdomain?: string;
 }
 
-export interface ComponentInterfaceConfig extends InterfaceConfig {
+export interface ComponentInterfaceConfig {
+  description?: string;
+  host?: string;
+  port?: number | string;
+  protocol?: string;
+  username?: string;
+  password?: string;
+  url: string;
+  sticky?: boolean | string;
+
   ingress?: IngressConfig;
 
   consumers?: string[];

@@ -4,7 +4,7 @@ import { ARC_NULL_TOKEN } from '../../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, Slugs } from '../../../utils/slugs';
 import { ComponentConfig, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
 import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
-import { InterfaceConfig, ServiceConfig } from '../../config/service-config';
+import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 import { TaskConfig } from '../../config/task-config';
 import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
 import { transformServiceSpec } from './service-transform';
@@ -35,7 +35,7 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
   }
 };
 
-export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec): ParameterDefinitionConfig => {
+export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec | null): ParameterDefinitionConfig => {
   if (parameter_spec && typeof parameter_spec === 'object') {
     return {
       required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : false,
@@ -59,6 +59,8 @@ const transformComponentInterfaceSpec = function (key: string, interface_spec: C
     let url = interface_spec instanceof Object ? interface_spec.url : interface_spec;
 
     const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
+
+    // TODO:269:? this can't remain required, it's not required in the spec
     const matches = url_regex.exec(url);
     if (matches) {
       host = `\${{ ${matches[1]}.host }}`;
@@ -87,7 +89,7 @@ const transformComponentInterfaceSpec = function (key: string, interface_spec: C
 export const transformComponentContext = (
   dependencies: Dictionary<string>,
   parameters: Dictionary<ParameterDefinitionConfig>,
-  interfaces: Dictionary<InterfaceConfig>,
+  interfaces: Dictionary<ServiceInterfaceConfig>,
   services: Dictionary<ServiceConfig>,
   tasks: Dictionary<TaskConfig>,
 ): ComponentContext => {
@@ -131,8 +133,8 @@ export const transformComponentContext = (
 
   const service_context: Dictionary<ServiceContext> = {};
   for (const [sk, sv] of Object.entries(services)) {
-    const service_interfaces: Dictionary<InterfaceConfig> = {};
-    for (const [ik, iv] of Object.entries(interfaces)) {
+    const service_interfaces: Dictionary<ServiceInterfaceConfig> = {};
+    for (const [ik, iv] of Object.entries(sv.interfaces)) {
       service_interfaces[ik] = {
         ...interface_filler,
         ...iv,

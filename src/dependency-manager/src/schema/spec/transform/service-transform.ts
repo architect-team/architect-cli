@@ -1,10 +1,10 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
-import { InterfaceConfig, LivenessProbeConfig, ServiceConfig } from '../../config/service-config';
-import { InterfaceSpec, LivenessProbeSpec, ServiceSpec } from '../service-spec';
+import { LivenessProbeConfig, ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
+import { LivenessProbeSpec, ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
-export const transformInterfaceSpec = function (key: string, interface_spec: InterfaceSpec | string | number): InterfaceConfig {
+export const transformInterfaceSpec = function (key: string, interface_spec: ServiceInterfaceSpec | string | number): ServiceInterfaceConfig {
   if (interface_spec instanceof Object) {
     return interface_spec;
   } else {
@@ -12,7 +12,7 @@ export const transformInterfaceSpec = function (key: string, interface_spec: Int
   }
 };
 
-export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined, environment: Dictionary<string>): string[] | undefined {
+export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined, environment: Dictionary<string | null>): string[] | undefined {
   if (!command) {
     return undefined;
   }
@@ -27,12 +27,12 @@ export const transformLivenessProbeSpecCommand = function (command: string[] | s
   }
 };
 
-export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined, environment: Dictionary<string>): LivenessProbeConfig | undefined {
+export const transformLivenessProbeSpec = function (liveness_probe: LivenessProbeSpec | undefined, environment: Dictionary<string | null>): LivenessProbeConfig | undefined {
   if (!liveness_probe || !Object.keys(liveness_probe).length) { return undefined; }
 
   return {
-    success_threshold: liveness_probe.success_threshold || '1',
-    failure_threshold: liveness_probe.failure_threshold || '3',
+    success_threshold: liveness_probe.success_threshold || 1,
+    failure_threshold: liveness_probe.failure_threshold || 3,
     timeout: liveness_probe.timeout || '5s',
     interval: liveness_probe.interval || '30s',
     initial_delay: liveness_probe.initial_delay || '0s',
@@ -50,7 +50,7 @@ export const transformServiceSpec = (key: string, spec: ServiceSpec, tag: string
     debug: spec.debug ? transformServiceSpec(key, spec.debug, tag) : undefined,
     interfaces: transformDictionary(transformInterfaceSpec, spec.interfaces),
     liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
-    replicas: spec.replicas || '1',
+    replicas: spec.replicas || 1,
     scaling: spec.scaling,
   };
 };
