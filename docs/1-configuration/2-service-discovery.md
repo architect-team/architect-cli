@@ -35,7 +35,7 @@ By referencing a peer service in this way, Architect is able to resolve this ref
 
 ## Service referencing syntax
 
-It is extremely common for developers to connect to peer services and interfaces, and the `${{ services.*.interfaces.* }}` expresion context is available for exactly this purpose. Developers can reference service interfaces by name using this format, and then will have access to the following fields attached to the interface:
+It is extremely common for developers to connect to peer services and interfaces, and the `${{ services.*.interfaces.* }}` expression context is available for exactly this purpose. Developers can reference service interfaces by name using this format, and then will have access to the following fields attached to the interface:
 
 | field | description |
 | ----- | ----------- |
