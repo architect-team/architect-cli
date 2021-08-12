@@ -1,5 +1,5 @@
 import Mustache, { Context, Writer } from 'mustache';
-import { ValidationError } from './errors';
+import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from './errors';
 
 // https://github.com/janl/mustache.js/issues/599
 export const ARC_NULL_TOKEN = '__arc__null__arc__';
@@ -105,7 +105,7 @@ export const interpolateString = (param_value: string, context: any, ignore_keys
         };
         validation_error.children.push(interpolation_error);
       }
-      throw validation_error;
+      throw new ValidationErrors('values', flattenValidationErrorsWithLineNumbers([validation_error], param_value));
     }
 
     return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');
