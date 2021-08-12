@@ -65,10 +65,10 @@ describe('interpolation spec v1', () => {
           main: 3000
         environment:
           NULL: null
-          NULL2: "\${{ parameters.null_required }}
-          NULL3: "\${{ parameters.null_not_required }}
-          NULL4: "\${{ parameters.null_not_required_default }}
-          NULL5: "\${{ parameters.null_default }}
+          NULL2: \${{ parameters.null_required }}
+          NULL3: \${{ parameters.null_not_required }}
+          NULL4: \${{ parameters.null_not_required_default }}
+          NULL5: \${{ parameters.null_default }}
 
     interfaces:
       echo:
@@ -870,7 +870,7 @@ describe('interpolation spec v1', () => {
         interfaces:
           main: 3000
         environment:
-          TEST_FILE_ENV: "\${{ parameters.TEST_FILE }}
+          TEST_FILE_ENV: \${{ parameters.TEST_FILE }}
 
     interfaces:
       echo:
@@ -1071,7 +1071,7 @@ describe('interpolation spec v1', () => {
       app:
         url: \${{ services.app.interfaces.app.url }}
         ingress:
-          subdomain: "\${{ parameters.test_subdomain }}
+          subdomain: \${{ parameters.test_subdomain }}
     services:
       app:
         interfaces:

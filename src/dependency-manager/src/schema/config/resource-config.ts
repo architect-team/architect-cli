@@ -35,7 +35,7 @@ export interface ResourceConfig {
   debug?: ResourceConfig;
   environment: Dictionary<string | null>;
   volumes: Dictionary<VolumeConfig>;
-  build?: BuildConfig;
+  build: BuildConfig;
   cpu?: number | string;
   memory?: string;
   deploy?: DeployConfig;

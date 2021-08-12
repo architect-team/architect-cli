@@ -75,7 +75,7 @@ export default abstract class DependencyManager {
       let c = context;
       for (const name of names) {
         if (!--iterations) {
-          c[name] = `@@{{ ${match} }}`;
+          c[name] = `>>{{ ${match} }}`; // TODO:269:? was @ required for any reason other than pattern matching below?
         } else {
           if (!c[name]) { c[name] = {}; }
           c = c[name];
@@ -84,7 +84,7 @@ export default abstract class DependencyManager {
     }
 
     const ignore_keys = ['']; // Ignore all errors
-    const interpolated_component_string = interpolateString(component_string, context, ignore_keys).replace(/@@{{/g, '${{');
+    const interpolated_component_string = interpolateString(component_string, context, ignore_keys).replace(/>>{{/g, '${{');
     return JSON.parse(interpolated_component_string) as ComponentConfig;
   }
 
