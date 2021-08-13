@@ -104,12 +104,20 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
   }
 
   const errors = [];
+
+  const max_distance = 10;
   for (const miss of misses) {
+    const miss_length = miss.length;
     const shortest_distance = Infinity;
     let potential_match = '';
     for (const key of context_keys) {
+      // https://github.com/sindresorhus/leven/issues/14
+      if (Math.abs(miss_length - key.length) >= max_distance) {
+        continue;
+      }
+
       const distance = leven(miss, key);
-      if (distance < shortest_distance && distance <= 10) {
+      if (distance < shortest_distance && distance < max_distance) {
         potential_match = key;
       }
     }
