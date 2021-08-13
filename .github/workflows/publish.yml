@@ -23,7 +23,7 @@ jobs:
           ref: 'master'
       - uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'
       - run: npm install
         working-directory: ./src/dependency-manager
       - run: npm run build
@@ -53,7 +53,7 @@ jobs:
           ref: 'master'
       - uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'
       - run: npm install
       - run: npm run build
       - name: Set NPM version
