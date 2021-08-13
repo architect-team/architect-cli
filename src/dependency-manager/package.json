@@ -22,6 +22,7 @@
     "deepmerge": "^4.2.2",
     "fs-extra": "^8.1.0",
     "js-yaml": "^4.1.0",
+    "leven": "^3.1.0",
     "matcher": "^4.0.0",
     "reflect-metadata": "0.1.13",
     "shell-quote": "^1.7.2",

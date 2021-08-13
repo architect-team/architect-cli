@@ -1,3 +1,4 @@
+import leven from 'leven';
 import { Dictionary } from './dictionary';
 
 /*
@@ -73,11 +74,13 @@ export const buildContextMap = (context: any) => {
 const interpolation_regex = new RegExp(`\\\${{\\s*([A-Za-z0-9._/-]+)\\s*?}}`, 'g');
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const context_map = buildContextMap(context);
+  const context_keys = Object.keys(context_map);
 
   let res = raw_value;
 
   let has_matches = true;
   let depth = 0;
+  const misses: string[] = [];
   while (has_matches) {
     has_matches = false;
     depth += 1;
@@ -90,17 +93,39 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
 
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
-        // TODO:269 improve error msg by suggesting a value from Object.keys(context_map) based on the user input
-        // ex. `services.parameter.test` would find the closest match and suggest `services.parameters.test`
-        // must be some kind of npm package for this kind of fuzzy search with accuracy
         if (!ignored) {
-          throw new Error(`Invalid interpolation: ${sanitized_value}`);
+          misses.push(sanitized_value);
         }
       }
 
       res = res.replace(match[0], value);
       has_matches = true;
     }
+  }
+
+  const errors = [];
+  for (const miss of misses) {
+    const shortest_distance = Infinity;
+    let potential_match = '';
+    for (const key of context_keys) {
+      const distance = leven(miss, key);
+      if (distance < shortest_distance && distance <= 10) {
+        potential_match = key;
+      }
+    }
+
+    let message = `Invalid interpolation ref: \${{ ${miss} }}.`;
+    if (potential_match) {
+      message += ` Did you mean \${{ ${potential_match} }}?`;
+    }
+    errors.push({
+      dataPath: `.${miss}`,
+      message,
+    });
+  }
+
+  if (errors.length) {
+    throw new Error(JSON.stringify(errors, null, 2));
   }
 
   return res;
