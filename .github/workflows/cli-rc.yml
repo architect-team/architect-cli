@@ -86,7 +86,7 @@ jobs:
       - name: oclif-dev pack
         run: sudo npx oclif-dev pack
       - name: Archive artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: dist
           path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
