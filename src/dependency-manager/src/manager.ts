@@ -9,7 +9,7 @@ import InterfacesNode from './graph/node/interfaces';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { parseSourceYml } from './schema/component-builder';
-import { interpolateConfigOrReject } from './schema/component-interpolation';
+import { interpolateConfig, interpolateConfigOrReject } from './schema/component-interpolation';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
 import { validateOrRejectConfig } from './schema/config/component-validator';
@@ -18,7 +18,7 @@ import { validateOrRejectSpec } from './schema/spec-validator';
 import { transformComponentContext, transformComponentSpec } from './schema/spec/transform/component-transform';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError } from './utils/errors';
-import { interpolateString, replaceBrackets } from './utils/interpolation';
+import { interpolateString, replaceBracketsOld } from './utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 interface ComponentConfigNode {
@@ -61,8 +61,7 @@ export default abstract class DependencyManager {
   interpolateInterfaces(initial_component: ComponentConfig) {
     // Interpolate component to fully resolve edges between dependencies/ingress/services
     // Important for host overrides where values might comes from parameters
-    // const component_string = replaceBrackets(initial_component.source_yml);
-    initial_component.source_yml = replaceBrackets(initial_component.source_yml);
+    initial_component.source_yml = replaceBracketsOld(initial_component.source_yml);
     const context: ComponentContext = JSON.parse(JSON.stringify(initial_component.context));
 
     const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
@@ -233,7 +232,7 @@ export default abstract class DependencyManager {
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = services_regex.exec(replaceBrackets(component_interface.url!));
+      const matches = services_regex.exec(replaceBracketsOld(component_interface.url!));
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
@@ -246,7 +245,7 @@ export default abstract class DependencyManager {
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = dependencies_regex.exec(replaceBrackets(component_interface.url!));
+      const matches = dependencies_regex.exec(replaceBracketsOld(component_interface.url!));
       if (!matches) continue;
 
       const [_, dep_name, interface_name] = matches;
@@ -359,7 +358,7 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
-    const component_string = replaceBrackets(initial_component.source_yml);
+    const component_string = replaceBracketsOld(initial_component.source_yml);
 
     let proxy_port = 12345;
     const proxy_port_mapping: Dictionary<string> = {};
@@ -592,11 +591,12 @@ export default abstract class DependencyManager {
     for (const tree_node of tree_nodes) {
       const component_config = tree_node.config;
 
-      // const interpolated_component_config = interpolateConfigOrReject(component_config, ['']);
-
       let nodes: DependencyNode[] = [];
 
-      nodes = nodes.concat(this.getComponentNodes(component_config));
+      // Interpolate to determine if there are external nodes
+      // ex. host: ${{ parameter.optional_host }}
+      const { interpolated_config } = interpolateConfig(component_config, ['']);
+      nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
       if (Object.keys(component_config.interfaces).length) {
         const ref = buildComponentRef(component_config);

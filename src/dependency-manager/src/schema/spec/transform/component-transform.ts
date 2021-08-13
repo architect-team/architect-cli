@@ -1,5 +1,4 @@
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
-import { ARC_NULL_TOKEN } from '../../../utils/interpolation';
 import { ComponentSlug, ComponentSlugUtils, Slugs } from '../../../utils/slugs';
 import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
 import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
@@ -63,7 +62,7 @@ export const transformComponentContext = (
   const parameter_context: Dictionary<ParameterValue> = {};
   for (const [pk, pv] of Object.entries(config.parameters)) {
     if (pv.default === null) {
-      parameter_context[pk] = ARC_NULL_TOKEN;
+      parameter_context[pk] = null;
     } else {
       parameter_context[pk] = pv.default === undefined ? '' : pv.default;
     }

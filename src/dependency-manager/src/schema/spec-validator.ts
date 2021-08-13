@@ -1,27 +1,12 @@
 import Ajv, { ErrorObject } from "ajv";
 import { Dictionary } from '../utils/dictionary';
 import { ValidationError } from '../utils/errors';
+import { buildContextMap } from '../utils/interpolation';
 import { ParsedYaml } from './component-builder';
 import { ARCHITECT_JSON_SCHEMA } from './json-schema';
 import { ComponentSpec } from './spec/component-spec';
 
 export type AjvError = ErrorObject[] | null | undefined;
-
-function getVal(path: string[], obj: any): any {
-  if (path[0] === '') {
-    path.shift();
-  }
-  if (obj === undefined) {
-    return '<unknown>';
-  }
-  if (path.length === 1) {
-    return obj[path[0]];
-  }
-  else {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return getVal(path, obj[path.shift()!]);
-  }
-}
 
 export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): ValidationError[] => {
   if (!ajv_errors?.length) {
@@ -36,17 +21,15 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     ajv_error_map[ajv_error.dataPath].push(ajv_error.message || 'unknown');
   }
 
-  // TODO:269 make replaceBrackets more generic and add new method replaceInterpolationBrackets
-  function replaceBracketsTmp(value: string) {
-    return value.replace(/\[["|']?([^\]|"|']+)["|']?\]/g, '.$1');
-  }
+  const context_map = buildContextMap(parsed_yml);
 
   const errors: ValidationError[] = [];
   for (const [data_path, messages] of Object.entries(ajv_error_map)) {
+    const value = context_map[data_path?.startsWith('.') ? data_path.substr(1) : data_path];
     errors.push({
       dataPath: data_path,
       message: messages.join(' or '),
-      value: getVal(replaceBracketsTmp(data_path).split('.'), parsed_yml),
+      value: value === undefined ? '<unknown>' : value,
     });
   }
 
@@ -60,8 +43,6 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   const validate = ajv.compile(ARCHITECT_JSON_SCHEMA);
   const valid = validate(parsed_yml);
   if (!valid) {
-    console.error('failed spec:'); //TODO:269
-    console.error(JSON.stringify(parsed_yml, null, 2));
     return mapAjvErrors(parsed_yml, validate.errors);
   }
   return [];

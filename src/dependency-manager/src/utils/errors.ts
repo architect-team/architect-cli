@@ -1,5 +1,5 @@
 import { Dictionary } from './dictionary';
-import { replaceBrackets } from './interpolation';
+import { replaceBracketsOld } from './interpolation';
 
 export class ArchitectError extends Error { }
 
@@ -91,7 +91,7 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
 };
 
 export const flattenValidationErrorsWithLineNumbers = (errors: ValidationError[], file_contents: string): Dictionary<Dictionary<string | number>> => {
-  file_contents = replaceBrackets(file_contents);
+  file_contents = replaceBracketsOld(file_contents);
 
   const res = flattenValidationErrors(errors);
   for (const [error_key, error_obj] of Object.entries(res)) {

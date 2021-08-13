@@ -1,26 +1,12 @@
-import Mustache, { Context, Writer } from 'mustache';
-import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from './errors';
-
-// https://github.com/janl/mustache.js/issues/599
-export const ARC_NULL_TOKEN = '__arc__null__arc__';
-const null_quoted_regex = new RegExp(`"${ARC_NULL_TOKEN}"`, 'g');
-const null_regex = new RegExp(`${ARC_NULL_TOKEN}`, 'g');
-
-// TODO:320 test
-export const normalizeInterpolation = (value: string) => {
-  return value.replace(/\./g, '__arc__');
-};
-
-export const denormalizeInterpolation = (value: string) => {
-  return value.replace(/__arc__/g, '.');
-};
+import { Dictionary } from './dictionary';
 
 /*
 Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}
 ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cloud.services }}
 */
-export const replaceBrackets = (value: string) => {
+// TODO:269 remove this and mustache
+export const replaceBracketsOld = (value: string) => {
   const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
   let matches;
   let res = value;
@@ -29,6 +15,10 @@ export const replaceBrackets = (value: string) => {
     res = res.replace(matches[0], sanitized_value);
   }
   return res;
+};
+
+export const replaceBrackets = (value: string) => {
+  return value.replace(/\[["|']?([^\]|"|']+)["|']?\]/g, '.$1');
 };
 
 export const escapeJSON = (value: any) => {
@@ -47,80 +37,71 @@ export const escapeJSON = (value: any) => {
   return value;
 };
 
-Mustache.escape = function (text) {
-  return escapeJSON(text);
-}; // turns off HTML escaping
-Mustache.tags = ['${{', '}}']; // sets custom delimiters
-Mustache.templateCache = undefined;
-
-export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
-  const writer = new Writer();
-  const errors: Set<string> = new Set();
-
-  const render = writer.render;
-  writer.render = function (template, view, partials) {
-
-    view = new Context(view, undefined);
-    const lookup = view.lookup;
-    view.lookup = function (name: string) {
-      const value = lookup.bind(this)(name);
-      if (value === undefined) {
-        const ignored = ignore_keys.some((k) => name.startsWith(k));
-        if (!ignored) {
-          errors.add(name);
-        }
+const matches = (text: string, pattern: RegExp) => ({
+  [Symbol.iterator]: function* () {
+    const clone = new RegExp(pattern.source, pattern.flags);
+    let match = null;
+    do {
+      match = clone.exec(text);
+      if (match) {
+        yield match;
       }
-      return value;
-    };
+    } while (match);
+  },
+});
 
-    const result = render.bind(this)(template, view, partials);
-    if (errors.size > 0) {
-      const interpolation_errors: Set<string> = new Set();
-      for (const error of errors) {
-        // Dedupe host/port/protocol/username/password into url
-        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol') || error.endsWith('.username') || error.endsWith('.password')) {
-          const keys = error.split('.');
-          const key = keys.slice(0, keys.length - 1).join('.');
-          if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {
-            interpolation_errors.add(`${key}.url`);
-          } else {
-            interpolation_errors.add(error);
-          }
-        } else {
-          interpolation_errors.add(error);
-        }
-      }
+export const buildContextMap = (context: any) => {
+  const context_map: Dictionary<any> = {};
+  const queue = [['', context]];
+  while (queue.length) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const [prefix, c] = queue.shift()!;
 
-      const validation_error = new ValidationError();
-      validation_error.property = 'interpolation';
-      validation_error.children = [];
-      for (let e of interpolation_errors) {
-        e = denormalizeInterpolation(e);
-        const interpolation_error = new ValidationError();
-        interpolation_error.property = e;
-        interpolation_error.value = e;
-        interpolation_error.children = [];
-        interpolation_error.constraints = {
-          'interpolation': `\${{ ${e} }} is invalid`,
-        };
-        validation_error.children.push(interpolation_error);
-      }
-      throw new ValidationErrors('values', flattenValidationErrorsWithLineNumbers([validation_error], param_value));
+    if (prefix) {
+      context_map[prefix] = c;
     }
 
-    return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');
-  };
-
-  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
-  let depth = 0;
-  while (depth < max_depth) {
-    param_value = replaceBrackets(param_value);
-    param_value = writer.render(param_value, context);
-    if (!mustache_regex.test(param_value)) break;
-    depth += 1;
+    if (c instanceof Object) {
+      for (const [key, value] of Object.entries(c)) {
+        queue.push([prefix ? `${prefix}.${key}` : key, value]);
+      }
+    }
   }
-
-  return param_value;
+  return context_map;
 };
 
+const interpolation_regex = new RegExp(`\\\${{\\s*([A-Za-z0-9._/-]+)\\s*?}}`, 'g');
+export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
+  const context_map = buildContextMap(context);
 
+  let res = raw_value;
+
+  let has_matches = true;
+  let depth = 0;
+  while (has_matches) {
+    has_matches = false;
+    depth += 1;
+    if (depth >= max_depth) {
+      throw new Error('Max interpolation depth exceeded');
+    }
+    for (const match of matches(res, interpolation_regex)) {
+      const sanitized_value = replaceBrackets(match[1]);
+      const value = context_map[sanitized_value];
+
+      if (value === undefined) {
+        const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
+        // TODO:269 improve error msg by suggesting a value from Object.keys(context_map) based on the user input
+        // ex. `services.parameter.test` would find the closest match and suggest `services.parameters.test`
+        // must be some kind of npm package for this kind of fuzzy search with accuracy
+        if (!ignored) {
+          throw new Error(`Invalid interpolation: ${sanitized_value}`);
+        }
+      }
+
+      res = res.replace(match[0], value);
+      has_matches = true;
+    }
+  }
+
+  return res;
+};
