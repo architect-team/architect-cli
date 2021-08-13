@@ -80,7 +80,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
 
   let has_matches = true;
   let depth = 0;
-  const misses: string[] = [];
+  const misses = new Set<string>();
   while (has_matches) {
     has_matches = false;
     depth += 1;
@@ -94,7 +94,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
         if (!ignored) {
-          misses.push(sanitized_value);
+          misses.add(sanitized_value);
         }
       }
 
@@ -126,6 +126,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     if (potential_match) {
       message += ` Did you mean \${{ ${potential_match} }}?`;
     }
+    // TODO:269 provide line numbers - should be able to derive from raw_value
     errors.push({
       dataPath: `.${miss}`,
       message,
