@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ComponentVersionSlugUtils, ServiceSpec, TaskSpec, validateOrRejectSpec } from '../../dependency-manager/src';
+import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec, validateOrRejectSpec } from '../../dependency-manager/src';
 import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject, parseSourceYml } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
@@ -24,8 +24,8 @@ export default class LocalDependencyManager extends DependencyManager {
 
   async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const component_slug = `${component_account_name}/${component_name}`;
-    const component_ref = `${component_slug}:${tag}`;
+    const component_slug = ComponentSlugUtils.build(component_account_name, component_name);
+    const component_ref = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
 
     let config: ComponentConfig;
     const instance_metadata: ComponentInstanceMetadata = {

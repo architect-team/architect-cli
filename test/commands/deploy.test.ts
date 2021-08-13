@@ -696,7 +696,7 @@ describe('local deploy environment', function () {
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .command(['deploy', '-l', 'examples/hello-world:latest@tenant-1', '-i', 'hello'])
-      .it('Create a local deploy with instance id and tag', ctx => {
+      .it('Create a local deploy with instance name and tag', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
