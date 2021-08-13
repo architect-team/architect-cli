@@ -37,7 +37,7 @@ export default class Platforms extends Command {
         row.type,
         'Encrypted on Server',
         localizedTimestamp(row.created_at),
-        localizedTimestamp(row.updated_at)
+        localizedTimestamp(row.updated_at),
       ]);
     }
 

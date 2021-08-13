@@ -34,7 +34,7 @@ export default class Environments extends Command {
         env.account.name,
         env.namespace,
         localizedTimestamp(env.created_at),
-        localizedTimestamp(env.updated_at)
+        localizedTimestamp(env.updated_at),
       ]);
     }
 

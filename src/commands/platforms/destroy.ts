@@ -70,7 +70,7 @@ export default class PlatformDestroy extends Command {
     cli.action.start(chalk.blue('Deregistering platform'));
     const params: any = {};
     if (answers.force) {
-      params.force = 1
+      params.force = 1;
     }
     await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
     cli.action.stop();
