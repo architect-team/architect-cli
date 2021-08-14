@@ -1,25 +1,36 @@
 import leven from 'leven';
 import { Dictionary } from './dictionary';
 
+const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
+
+export const replaceBrackets = (value: string) => {
+  return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
+};
+
+const matches = (text: string, pattern: RegExp) => ({
+  [Symbol.iterator]: function* () {
+    const clone = new RegExp(pattern.source, pattern.flags);
+    let match = null;
+    do {
+      match = clone.exec(text);
+      if (match) {
+        yield match;
+      }
+    } while (match);
+  },
+});
+
 /*
-Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}
 ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cloud.services }}
 */
-// TODO:269 remove this and mustache
+// TODO:269 remove?
 export const replaceBracketsOld = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
-  let matches;
   let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const sanitized_value = matches[0].replace(/\[["|']?([^\]|"|']+)["|']?\]/g, '.$1');
-    res = res.replace(matches[0], sanitized_value);
+  for (const match of matches(value, interpolation_regex)) {
+    res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
   }
   return res;
-};
-
-export const replaceBrackets = (value: string) => {
-  return value.replace(/\[["|']?([^\]|"|']+)["|']?\]/g, '.$1');
 };
 
 export const escapeJSON = (value: any) => {
@@ -37,19 +48,6 @@ export const escapeJSON = (value: any) => {
   } catch { }
   return value;
 };
-
-const matches = (text: string, pattern: RegExp) => ({
-  [Symbol.iterator]: function* () {
-    const clone = new RegExp(pattern.source, pattern.flags);
-    let match = null;
-    do {
-      match = clone.exec(text);
-      if (match) {
-        yield match;
-      }
-    } while (match);
-  },
-});
 
 export const buildContextMap = (context: any, include_objects = false) => {
   const context_map: Dictionary<any> = {};
@@ -72,7 +70,6 @@ export const buildContextMap = (context: any, include_objects = false) => {
   return context_map;
 };
 
-const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);

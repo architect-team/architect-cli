@@ -45,20 +45,8 @@ describe('config spec v1', () => {
       '/architect.yml': component_yml,
     });
 
-    const component_config = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
-    expect(component_config).to.deep.eq({
-      "name": "test/component",
-      "services": {
-        "stateless-app": {
-          "interfaces": {
-            "main": "8080"
-          }
-        }
-      },
-      "interfaces": {
-        "frontend": "${{ services['stateless-app'].interfaces.main.url }}"
-      }
-    })
+    const { component_config } = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+    expect(component_config.interfaces.frontend.url).to.eq("${{ services['stateless-app'].interfaces.main.url }}")
   });
 
   it('configs with yaml refs', async () => {
@@ -76,19 +64,7 @@ describe('config spec v1', () => {
       '/architect.yml': component_yml,
     });
 
-    const component_config = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
-    expect(component_config).to.deep.eq({
-      "name": "test/component",
-      "services": {
-        "stateless-app": {
-          "interfaces": {
-            "main": "8080"
-          }
-        }
-      },
-      "interfaces": {
-        "frontend": "${{ services['stateless-app'].interfaces.main.url }}"
-      }
-    })
+    const { component_config } = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+    expect(component_config.interfaces.frontend.url).to.eq("${{ services['stateless-app'].interfaces.main.url }}")
   });
 });

@@ -1102,7 +1102,7 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       ADDR: 'http://test-subdomain.arc.localhost',
-      CORS_URLS: '[\\\"http://api.arc.localhost\\\"]',
+      CORS_URLS: '["http://api.arc.localhost"]',
       DNS_ZONE: 'arc.localhost'
     }); // TODO:269: pass in consumers to hello-world and print out ENVIRONMENT variable
 
