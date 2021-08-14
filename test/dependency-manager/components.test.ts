@@ -41,25 +41,20 @@ describe('components spec v1', function () {
 
   describe('standard components', function () {
     it('simple local component', async () => {
-      const component_config_json = {
-        name: 'architect/cloud',
-        services: {
-          app: {
-            interfaces: {
+      const component_config_yml = `
+        name: architect/cloud
+        services:
+          app:
+            interfaces:
               main: 8080
-            }
-          },
-          api: {
-            interfaces: {
+          api:
+            interfaces:
               main: 8080
-            }
-          }
-        },
-        interfaces: {}
-      };
+        interfaces:
+      `
 
       mock_fs({
-        '/stack/architect.json': JSON.stringify(component_config_json),
+        '/stack/architect.yml': component_config_yml,
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
@@ -208,11 +203,11 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/architect.json': JSON.stringify(component_config),
+        '/stack/architect.yml': yaml.dump(component_config),
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack/architect.json'
+        'architect/cloud': '/stack/architect.yml'
       });
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:latest')
@@ -325,13 +320,13 @@ describe('components spec v1', function () {
       }
 
       mock_fs({
-        '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
-        '/stack/concourse/architect.json': JSON.stringify(concourse_component_config),
+        '/stack/cloud/architect.yml': yaml.dump(cloud_component_config),
+        '/stack/concourse/architect.yml': yaml.dump(concourse_component_config),
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack/cloud/architect.json',
-        'concourse/ci': '/stack/concourse/architect.json'
+        'architect/cloud': '/stack/cloud/architect.yml',
+        'concourse/ci': '/stack/concourse/architect.yml'
       });
       const component_config = await manager.loadComponentConfig('architect/cloud:latest');
       const graph = await manager.getGraph([
@@ -400,7 +395,7 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/architect.json': JSON.stringify(component_config),
+        '/stack/architect.yml': yaml.dump(component_config),
       });
 
       moxios.stubRequest(`/accounts/examples/components/hello-circular-world/versions/latest`, {
@@ -411,7 +406,7 @@ describe('components spec v1', function () {
       let manager_error;
       try {
         const manager = new LocalDependencyManager(axios.create(), {
-          'examples/hello-world': '/stack/architect.json',
+          'examples/hello-world': '/stack/architect.yml',
         });
         await manager.getGraph([
           await manager.loadComponentConfig('examples/hello-world:latest'),
@@ -469,7 +464,7 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/architect.json': JSON.stringify(component_config_a),
+        '/stack/architect.yml': yaml.dump(component_config_a),
       });
 
       moxios.stubRequest(`/accounts/examples/components/hello-world-b/versions/latest`, {
@@ -485,7 +480,7 @@ describe('components spec v1', function () {
       let manager_error;
       try {
         const manager = new LocalDependencyManager(axios.create(), {
-          'examples/hello-world-a': '/stack/architect.json',
+          'examples/hello-world-a': '/stack/architect.yml',
         });
         await manager.getGraph([
           await manager.loadComponentConfig('examples/hello-world-a:latest'),
@@ -663,10 +658,10 @@ describe('components spec v1', function () {
       };
 
       mock_fs({
-        '/stack/cloud/architect.json': JSON.stringify(cloud_component_config),
+        '/stack/cloud/architect.yml': yaml.dump(cloud_component_config),
       });
 
-      const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.json' });
+      const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.yml' });
       const graph = await manager.getGraph([
         await manager.loadComponentConfig('architect/cloud:latest', { api: 'api-interface' })
       ]);

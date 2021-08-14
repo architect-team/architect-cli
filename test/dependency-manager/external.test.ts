@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -55,11 +56,11 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
@@ -110,11 +111,11 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
@@ -158,11 +159,11 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
@@ -215,11 +216,11 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')

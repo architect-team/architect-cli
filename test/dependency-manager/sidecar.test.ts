@@ -1,6 +1,7 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import { deserialize, serialize } from 'class-transformer';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -101,11 +102,11 @@ describe('sidecar spec v1', () => {
 
     it('sidecar should connect two services together', async () => {
       mock_fs({
-        '/stack/leaf/architect.json': JSON.stringify(leaf_component),
+        '/stack/leaf/architect.yml': yaml.dump(leaf_component),
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.json'
+        'test/leaf': '/stack/leaf/architect.yml'
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
@@ -136,13 +137,13 @@ describe('sidecar spec v1', () => {
       };
 
       mock_fs({
-        '/stack/leaf/architect.json': JSON.stringify(leaf_component),
-        '/stack/branch/architect.json': JSON.stringify(branch_component),
+        '/stack/leaf/architect.yml': yaml.dump(leaf_component),
+        '/stack/branch/architect.yml': yaml.dump(branch_component),
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.json',
-        'test/branch': '/stack/branch/architect.json'
+        'test/leaf': '/stack/leaf/architect.yml',
+        'test/branch': '/stack/branch/architect.yml'
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
@@ -211,15 +212,15 @@ describe('sidecar spec v1', () => {
       };
 
       mock_fs({
-        '/stack/leaf/architect.json': JSON.stringify(leaf_component),
-        '/stack/branch/architect.json': JSON.stringify(branch_component),
-        '/stack/other-leaf/architect.json': JSON.stringify(other_leaf_component),
+        '/stack/leaf/architect.yml': yaml.dump(leaf_component),
+        '/stack/branch/architect.yml': yaml.dump(branch_component),
+        '/stack/other-leaf/architect.yml': yaml.dump(other_leaf_component),
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'test/leaf': '/stack/leaf/architect.json',
-        'test/branch': '/stack/branch/architect.json',
-        'test/other-leaf': '/stack/other-leaf/architect.json'
+        'test/leaf': '/stack/leaf/architect.yml',
+        'test/branch': '/stack/branch/architect.yml',
+        'test/other-leaf': '/stack/other-leaf/architect.yml'
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
@@ -387,11 +388,11 @@ describe('sidecar spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json',
+      'architect/cloud': '/stack/architect.yml',
     });
     manager.use_sidecar = true;
     const graph = await manager.getGraph([
