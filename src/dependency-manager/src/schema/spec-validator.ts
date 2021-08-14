@@ -1,7 +1,7 @@
 import Ajv, { ErrorObject } from "ajv";
 import { Dictionary } from '../utils/dictionary';
 import { ValidationError } from '../utils/errors';
-import { buildContextMap } from '../utils/interpolation';
+import { buildContextMap, replaceBrackets } from '../utils/interpolation';
 import { ParsedYaml } from './component-builder';
 import { ARCHITECT_JSON_SCHEMA } from './json-schema';
 import { ComponentSpec } from './spec/component-spec';
@@ -21,11 +21,12 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     ajv_error_map[ajv_error.dataPath].push(ajv_error.message || 'unknown');
   }
 
-  const context_map = buildContextMap(parsed_yml);
+  const context_map = buildContextMap(parsed_yml, true);
 
   const errors: ValidationError[] = [];
   for (const [data_path, messages] of Object.entries(ajv_error_map)) {
-    const value = context_map[data_path?.startsWith('.') ? data_path.substr(1) : data_path];
+    const normalized_path = replaceBrackets(data_path);
+    const value = context_map[normalized_path?.startsWith('.') ? normalized_path.substr(1) : normalized_path];
     errors.push({
       dataPath: data_path,
       message: messages.join(' or '),

@@ -141,11 +141,12 @@ describe('init', function () {
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
+      // TODO:269 update spec/tests to expect number for port unless its an interpolation ref
       expect(component_config.services['kibana'].interfaces['interface0'].port).eq('5601');
       expect(component_config.services['kibana'].interfaces['interface1'].port).eq('5000');
       expect(component_config.services['kibana'].interfaces['interface1'].protocol).eq('udp');
       expect(component_config.services['kibana'].interfaces['interface2'].port).eq('8001');
-      expect(component_config.services['kibana'].interfaces['interface3'].port).eq('3000');
+      expect(component_config.services['kibana'].interfaces['interface3'].port).eq(3000);
       expect(component_config.services['kibana'].interfaces['interface4'].port).eq('4000');
       expect(component_config.services['kibana'].interfaces['interface9'].port).eq('4005');
       expect(component_config.services['kibana'].interfaces['interface10'].port).eq('1240');

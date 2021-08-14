@@ -9,7 +9,7 @@ import InterfacesNode from './graph/node/interfaces';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { parseSourceYml } from './schema/component-builder';
-import { interpolateConfig, interpolateConfigOrReject } from './schema/component-interpolation';
+import { interpolateConfigOrReject } from './schema/component-interpolation';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
 import { validateOrRejectConfig } from './schema/config/component-validator';
@@ -403,10 +403,9 @@ export default abstract class DependencyManager {
     }
 
     for (const dependency of dependencies) {
-      context.dependencies[dependency.name].interfaces = {};
+      context.dependencies[dependency.name].interfaces = dependency.context.interfaces;
       // Set dependency interfaces
       for (const [interface_name, interface_config] of Object.entries(dependency.interfaces)) {
-        context.dependencies[dependency.name].interfaces[interface_name] = interface_config;
         if (this.use_sidecar && interface_config.host === '127.0.0.1') {
           const sidecar_service = `${buildInterfacesRef(dependency)}--${interface_name}`;
 
@@ -496,6 +495,19 @@ export default abstract class DependencyManager {
           port: internal_port,
           protocol: internal_protocol,
           url: internal_url,
+        };
+      }
+    }
+
+    // Set component interfaces
+    for (const [interface_name, interface_config] of Object.entries(initial_component.interfaces)) {
+      const url_regex = new RegExp(`\\\${{\\s*services\\.(.*?)\\.interfaces\\.(.*?)\\.url\\s*}}`, 'g');
+      const matches = url_regex.exec(interface_config.url);
+      if (matches) {
+        const [_, service_name, service_interface_name] = matches;
+        context.interfaces[interface_name] = {
+          ...context.interfaces[interface_name],
+          ...context.services[service_name].interfaces[service_interface_name],
         };
       }
     }
@@ -595,7 +607,7 @@ export default abstract class DependencyManager {
 
       // Interpolate to determine if there are external nodes
       // ex. host: ${{ parameter.optional_host }}
-      const { interpolated_config } = interpolateConfig(component_config, ['']);
+      const interpolated_config = interpolateConfigOrReject(component_config, [''], false);
       nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
       if (Object.keys(component_config.interfaces).length) {

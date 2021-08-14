@@ -51,27 +51,28 @@ const matches = (text: string, pattern: RegExp) => ({
   },
 });
 
-export const buildContextMap = (context: any) => {
+export const buildContextMap = (context: any, include_objects = false) => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
   while (queue.length) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const [prefix, c] = queue.shift()!;
 
-    if (prefix) {
-      context_map[prefix] = c;
-    }
-
     if (c instanceof Object) {
+      if (prefix && include_objects) {
+        context_map[prefix] = c;
+      }
       for (const [key, value] of Object.entries(c)) {
         queue.push([prefix ? `${prefix}.${key}` : key, value]);
       }
+    } else if (prefix) {
+      context_map[prefix] = c;
     }
   }
   return context_map;
 };
 
-const interpolation_regex = new RegExp(`\\\${{\\s*([A-Za-z0-9._/-]+)\\s*?}}`, 'g');
+const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
@@ -94,11 +95,11 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
         if (!ignored) {
-          misses.add(sanitized_value);
+          misses.add(match[1]);
         }
       }
 
-      res = res.replace(match[0], value);
+      res = res.replace(match[0], value === undefined ? '' : value);
       has_matches = true;
     }
   }
@@ -122,13 +123,13 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       }
     }
 
-    let message = `Invalid interpolation ref: \${{ ${miss} }}.`;
+    let message = `Invalid interpolation ref: \${{ ${miss} }}`;
     if (potential_match) {
-      message += ` Did you mean \${{ ${potential_match} }}?`;
+      message += ` - Did you mean \${{ ${potential_match} }}?`;
     }
     // TODO:269 provide line numbers - should be able to derive from raw_value
     errors.push({
-      dataPath: `.${miss}`,
+      dataPath: `TODO:269 find path`,
       message,
     });
   }

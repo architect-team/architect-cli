@@ -1,6 +1,5 @@
 
 /* eslint-disable no-empty */
-import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
@@ -9,7 +8,6 @@ import NULL_TYPE from '../utils/yaml/null';
 import { ComponentConfig } from './config/component-config';
 import { validateOrRejectConfig } from './config/component-validator';
 import { validateOrRejectSpec } from './spec-validator';
-import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec } from './spec/transform/component-transform';
 
 class MissingConfigFileError extends Error {
@@ -51,16 +49,6 @@ export const buildConfigFromYml = (source_yml: string, tag: string): ComponentCo
   const config = transformComponentSpec(spec, source_yml, tag);
   validateOrRejectConfig(config);
   return config;
-};
-
-export const deepMergeSpecIntoComponent = (src: Partial<ComponentSpec>, target: ComponentConfig): ComponentConfig => {
-  const parsed_yml = parseSourceYml(target.source_yml);
-  const spec = validateOrRejectSpec(parsed_yml);
-  const merged_yml = deepmerge(src, spec);
-  const new_spec = validateOrRejectSpec(merged_yml);
-  const merged_string = yaml.dump(merged_yml);
-
-  return transformComponentSpec(new_spec, merged_string, target.tag);
 };
 
 export const buildConfigFromPath = (spec_path: string, tag: string): { component_config: ComponentConfig; source_path: string } => {

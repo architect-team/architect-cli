@@ -52,8 +52,9 @@ describe('local deploy environment', function () {
       api:
         image: heroku/nodejs-hello-world
         interfaces:
-          main: 3000
-        environment:
+          main:
+            port: 3000
+        environment: {}
 
     interfaces:
       hello:
@@ -454,8 +455,9 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-      const component_config = buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
-      (component_config.services.api.interfaces.main as any).sticky = 'true';
+      const hello_json = yaml.load(getHelloComponentConfig()) as any;
+      hello_json.services.api.interfaces.main.sticky = 'true';
+      const component_config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
       return {
         component_config,
         source_path: './examples/hello-world/architect.yml',
@@ -705,8 +707,9 @@ describe('local deploy environment', function () {
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .stub(ComponentBuilder, 'buildConfigFromPath', () => {
-        const config = buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG);
-        config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
+        const hello_json = yaml.load(getHelloComponentConfig()) as any;
+        hello_json.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
+        const config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
         return {
           component_config: config,
           source_path: './examples/hello-world/architect.yml',
