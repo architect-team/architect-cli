@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Environments extends Command {
   static aliases = ['environments', 'envs', 'env', 'environments:search', 'envs:search', 'env:search'];
@@ -28,7 +29,13 @@ export default class Environments extends Command {
     for (const env of environments) {
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
-      table.push([env.name, env.account.name, env.namespace, env.created_at, env.updated_at]);
+      table.push([
+        env.name,
+        env.account.name,
+        env.namespace,
+        localizedTimestamp(env.created_at),
+        localizedTimestamp(env.updated_at),
+      ]);
     }
 
     this.log(table.toString());
