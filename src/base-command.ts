@@ -56,6 +56,33 @@ export default abstract class extends Command {
     }
   }
 
+  // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
+  parse(options: any, argv = this.argv): any {
+    const flag_definitions = (this.constructor as any).flags;
+
+    const args = [];
+    const flags = [];
+    let flag_option = false;
+    for (const arg of argv) {
+      const is_flag = arg.startsWith('-');
+
+      if (is_flag || flag_option) {
+        flags.push(arg);
+      } else {
+        args.push(arg);
+      }
+
+      if (is_flag) {
+        const flag = arg.startsWith('--') ? flag_definitions[arg.replace('--', '')] : Object.values(flag_definitions).find((f: any) => f.char === arg.replace('-', ''));
+        flag_option = flag?.type === 'option';
+      } else {
+        flag_option = false;
+      }
+    }
+
+    return super.parse(options, [...args, ...flags]);
+  }
+
   async catch(err: any) {
     if (err.oclif && err.oclif.exit === 0) return;
 
