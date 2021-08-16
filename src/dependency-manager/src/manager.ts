@@ -405,7 +405,7 @@ export default abstract class DependencyManager {
     for (const dependency of dependencies) {
       context.dependencies[dependency.name].interfaces = dependency.context.interfaces;
       // Set dependency interfaces
-      for (const [interface_name, interface_config] of Object.entries(dependency.interfaces)) {
+      for (const [interface_name, interface_config] of Object.entries(dependency.context.interfaces)) {
         if (this.use_sidecar && interface_config.host === '127.0.0.1') {
           const sidecar_service = `${buildInterfacesRef(dependency)}--${interface_name}`;
 
@@ -501,13 +501,16 @@ export default abstract class DependencyManager {
 
     // Set component interfaces
     for (const [interface_name, interface_config] of Object.entries(initial_component.interfaces)) {
-      const url_regex = new RegExp(`\\\${{\\s*services\\.(.*?)\\.interfaces\\.(.*?)\\.url\\s*}}`, 'g');
+      const url_regex = new RegExp(`\\\${{\\s*(.*?)\\.url\\s*}}`, 'g');
       const matches = url_regex.exec(interface_config.url);
       if (matches) {
-        const [_, service_name, service_interface_name] = matches;
         context.interfaces[interface_name] = {
-          ...context.interfaces[interface_name],
-          ...context.services[service_name].interfaces[service_interface_name],
+          host: interface_config.host || `\${{ ${matches[1]}.host }}`,
+          port: interface_config.port || `\${{ ${matches[1]}.port }}`,
+          username: interface_config.username || `\${{ ${matches[1]}.username }}`,
+          password: interface_config.password || `\${{ ${matches[1]}.password }}`,
+          protocol: interface_config.protocol || `\${{ ${matches[1]}.protocol }}`,
+          url: interface_config.url || `\${{ ${matches[1]}.url }}`,
         };
       }
     }

@@ -47,7 +47,6 @@ export const transformParameterDefinitionSpec = (key: string, parameter_spec: st
 };
 
 const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
-  // TODO:269:?
   return typeof interface_spec === 'string' ? { url: interface_spec } : interface_spec;
 };
 

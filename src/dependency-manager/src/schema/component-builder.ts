@@ -20,8 +20,7 @@ class MissingConfigFileError extends Error {
 
 export type ParsedYaml = object | string | number | null | undefined;
 
-// TODO:269: remove exports from methods that don't need to be public
-export const specPaths = (input: string) => {
+const specPaths = (input: string) => {
   return [
     input,
     path.join(input, 'architect.yml'),

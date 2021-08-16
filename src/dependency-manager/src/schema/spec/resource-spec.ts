@@ -1,7 +1,8 @@
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-annotations';
+import { Slugs } from '../../utils/slugs';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, StringOrStringArray } from '../json-schema-annotations';
 
 export class DeployModuleSpec {
   @IsString()
@@ -74,35 +75,11 @@ export class ResourceSpec {
   image?: string;
 
   @IsOptional()
-  @JSONSchema({
-    anyOf: [
-      {
-        type: "array",
-        items: {
-          type: 'string',
-        },
-      },
-      {
-        type: 'string',
-      },
-    ],
-  })
+  @JSONSchema(StringOrStringArray())
   command?: string | string[];
 
   @IsOptional()
-  @JSONSchema({
-    anyOf: [
-      {
-        type: "array",
-        items: {
-          type: 'string',
-        },
-      },
-      {
-        type: 'string',
-      },
-    ],
-  })
+  @JSONSchema(StringOrStringArray())
   entrypoint?: string | string[];
 
   @IsOptional()
@@ -141,7 +118,16 @@ export class ResourceSpec {
   @JSONSchema(ArrayOf('string'))
   depends_on?: string[];
 
-  // TODO:269:jsonschema (keys:${Slugs.LabelSlugDescription} && values:${Slugs.LabelSlugDescription}
   @IsOptional()
+  @JSONSchema({
+    type: "object",
+    patternProperties: {
+      [Slugs.LabelKeySlugValidatorString]: {
+        type: "string",
+        pattern: Slugs.LabelValueSlugValidatorString,
+      },
+    },
+    additionalProperties: false,
+  })
   labels?: Map<string, string>;
 }

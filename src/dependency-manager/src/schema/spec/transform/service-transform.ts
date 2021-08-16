@@ -42,7 +42,6 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
   };
 };
 
-// TODO:269: pass tag in with component_ref
 export const transformServiceSpec = (key: string, spec: ServiceSpec, component_ref: string, tag: string): ServiceConfig => {
   const resource_config = transformResourceSpec(key, spec, component_ref, tag);
 

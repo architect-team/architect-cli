@@ -21,9 +21,11 @@ export class Slugs {
   public static LabelMax = 63;
   public static LabelSlugDescription = `must be ${Slugs.LabelMax} characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.`;
   public static LabelValueSlugRegexNoMaxLength = '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?';
-  public static LabelValueSlugValidator = new RegExp(`^(?=.{1,${Slugs.LabelMax}})${Slugs.LabelValueSlugRegexNoMaxLength}$`);
+  public static LabelValueSlugValidatorString = `^(?=.{1,${Slugs.LabelMax}})${Slugs.LabelValueSlugRegexNoMaxLength}$`;
+  public static LabelValueSlugValidator = new RegExp(Slugs.LabelValueSlugValidatorString);
   public static LabelKeySlugRegexNoMaxLength = '(([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?';
-  public static LabelKeySlugValidator = new RegExp(`^(?=(.{1,${Slugs.LabelMax}}/)?.{1,${Slugs.LabelMax}}$)(${Slugs.LabelKeySlugRegexNoMaxLength}/)?${Slugs.LabelValueSlugRegexNoMaxLength}$`);
+  public static LabelKeySlugValidatorString = `^(?=(.{1,${Slugs.LabelMax}}/)?.{1,${Slugs.LabelMax}}$)(${Slugs.LabelKeySlugRegexNoMaxLength}/)?${Slugs.LabelValueSlugRegexNoMaxLength}$`;
+  public static LabelKeySlugValidator = new RegExp(Slugs.LabelKeySlugValidatorString);
 
   public static ComponentTagDescription = 'must contain only lower alphanumeric, with single hyphens or periods in the middle';
   public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;

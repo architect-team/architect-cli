@@ -10,7 +10,7 @@ import { transformComponentSpec } from './spec/transform/component-transform';
 
 export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[], validate = true): { interpolated_config: ComponentConfig; errors: ValidationError[] } => {
   if (validate) {
-    // TODO:269 talk to Dan
+    // TODO:269:? talk to Dan
     // Interpolate component context so other components can ref dependency contexts for interpolation
     const interpolated_context = yaml.load(interpolateString(yaml.dump(config.context), config.context, ignore_keys)) as any;
     config.context = interpolated_context;

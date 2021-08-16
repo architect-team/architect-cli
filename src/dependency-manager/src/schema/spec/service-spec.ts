@@ -1,7 +1,7 @@
 import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
-import { AnyOf, DictionaryOfAny } from '../json-schema-annotations';
+import { AnyOf, DictionaryOfAny, StringOrStringArray } from '../json-schema-annotations';
 import { ResourceSpec } from './resource-spec';
 
 export class ScalingMetricsSpec {
@@ -54,7 +54,6 @@ export class ServiceInterfaceSpec {
   @JSONSchema({ type: 'string' })
   password?: string;
 
-  // TODO:269:? this can't remain required, it's not required in the spec
   @IsOptional()
   @JSONSchema({ type: 'string' })
   url?: string;
@@ -91,21 +90,8 @@ export class LivenessProbeSpec {
   @JSONSchema({ type: 'string' })
   path?: string;
 
-  // TODO:269:refactor: there are few instances of string[] | string, we should consider factoring out
-  @JSONSchema({
-    anyOf: [
-      {
-        type: "array",
-        items: {
-          type: 'string',
-        },
-      },
-      {
-        type: 'string',
-      },
-    ],
-  })
-  command?: string[] | string;
+  @JSONSchema(StringOrStringArray())
+  command?: string | string[];
 
   @Allow()
   @JSONSchema(AnyOf('number', 'string'))

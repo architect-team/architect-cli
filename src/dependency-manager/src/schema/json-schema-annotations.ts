@@ -114,3 +114,22 @@ export const ArrayOfAny = (...args: any): DecoratorSchema => {
 export const ArrayOf = (arg: any): DecoratorSchema => {
   return ArrayOfAny(arg);
 };
+
+/**
+ * Returns a partial JSON Schema that matches the disjunctive type: string[] | string
+ */
+export const StringOrStringArray = (): DecoratorSchema => {
+  return {
+    anyOf: [
+      {
+        type: 'array',
+        items: {
+          type: 'string',
+        },
+      },
+      {
+        type: 'string',
+      },
+    ],
+  };
+};

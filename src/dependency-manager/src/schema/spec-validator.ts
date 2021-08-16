@@ -34,13 +34,11 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     });
   }
 
-  // TODO:269: map errors
-
   return errors;
 };
 
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
-  const ajv = new Ajv(); // TODO:269: upgrade ajv to 8.*
+  const ajv = new Ajv();
   const validate = ajv.compile(ARCHITECT_JSON_SCHEMA);
   const valid = validate(parsed_yml);
   if (!valid) {

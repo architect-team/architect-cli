@@ -17,10 +17,13 @@ export interface ComponentContext {
   dependencies: Dictionary<ComponentContext>;
   parameters: Dictionary<ParameterValue>;
   ingresses: Dictionary<ComponentInterfaceConfig>;
-  interfaces: Dictionary<ServiceInterfaceConfig>;
+  interfaces: Dictionary<ComponentInterfaceConfig>;
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 
-  environment?: any; //TODO:269: we should be able to type this better
-  [name: string]: any; //TODO:269: we should be able to type this better
+  environment?: {
+    ingresses: Dictionary<Dictionary<ComponentInterfaceConfig>>;
+  };
+
+  [name: string]: any;
 }

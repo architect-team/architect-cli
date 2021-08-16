@@ -61,10 +61,7 @@ services:
     depends_on:
       - stateful-api
     labels:
-      label_string: some_label
-      label_number: 12
-      label_boolean: 15
-      label_unset:
+      label-string: some_label
     interfaces:
       postgres:
         port: 5432
@@ -127,10 +124,7 @@ services:
       depends_on:
         - stateful-api
       labels:
-        label_string: some_label
-        label_number: 12
-        label_boolean: 15
-        label_unset:
+        label-string: some_label
       interfaces:
         postgres:
           port: 5432

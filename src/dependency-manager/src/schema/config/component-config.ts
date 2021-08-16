@@ -97,8 +97,6 @@ export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug
   return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, config.tag, config.instance_metadata?.instance_name);
 };
 
-// TODO:269: is there any real use case for buildNodeRef? why is it separate from `getNodeRef`?
-// and what is "resource_ref" if we are building a resource ref?
 export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
