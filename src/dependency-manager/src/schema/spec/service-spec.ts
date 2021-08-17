@@ -23,7 +23,7 @@ export class ScalingSpec {
   @JSONSchema(AnyOf('number', 'string'))
   max_replicas!: number | string;
 
-  // TODO:269:jsonschema (cpu || memory)
+  // TODO:289: (cpu || memory)
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
 }
@@ -37,7 +37,7 @@ export class ServiceInterfaceSpec {
   @JSONSchema(AnyOf('null', 'string'))
   host?: null | string;
 
-  // TODO:269:jsonschema: port XOR url
+  // TODO:289: port XOR url
   @Allow()
   @JSONSchema(AnyOf('number', 'string'))
   port!: number | string;
@@ -84,9 +84,9 @@ export class LivenessProbeSpec {
   @JSONSchema({ type: 'string' })
   initial_delay?: string;
 
-  // TODO:269:jsonschema: (path XOR command)
-  // TODO:269:jsonschema: (!command || (path || port) && command)
-  @Matches(/^\/.*$/, { message: 'Path should start with /. Ex. /health' }) // TODO:269: factor out into constant
+  // TODO:289: (path XOR command)
+  // TODO:289: (!command || (path || port) && command)
+  @Matches(/^\/.*$/, { message: 'Path should start with /. Ex. /health' }) // TODO:289:factor out into constant
   @JSONSchema({ type: 'string' })
   path?: string;
 
@@ -115,10 +115,10 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema(AnyOf('number', 'string'))
   replicas?: number | string;
 
-  //TODO:269: JSONschema for interpolation
+  //TODO:290: JSONschema for interpolation
   // @IsOptional()/
   // @JSONSchema({ type: ['string', 'interpolation_ref'] })
-  // replicas?: string | InterpolationString; // try making this generic on Config
+  // replicas?: string | InterpolationString; // consider making this generic on Config
 
   @IsOptional()
   @ValidateNested()

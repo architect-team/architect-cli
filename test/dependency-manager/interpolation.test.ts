@@ -1104,7 +1104,7 @@ describe('interpolation spec v1', () => {
       ADDR: 'http://test-subdomain.arc.localhost',
       CORS_URLS: '["http://api.arc.localhost"]',
       DNS_ZONE: 'arc.localhost'
-    }); // TODO:269: pass in consumers to hello-world and print out ENVIRONMENT variable
+    });
 
     const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency:latest')) as IngressEdge
     expect(ingress_edge.interfaces_map).to.deep.eq({

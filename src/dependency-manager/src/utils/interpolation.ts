@@ -126,7 +126,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     }
     // TODO:269:? provide line numbers - should be able to derive from raw_value
     errors.push({
-      dataPath: `TODO:269 find path`,
+      dataPath: `TODO:269:? find path`,
       message,
     });
   }

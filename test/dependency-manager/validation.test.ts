@@ -29,7 +29,7 @@ describe('validation spec v1', () => {
     moxios.uninstall();
   });
 
-  // TODO:269: add validation tests back in
+  // TODO:285: add validation tests back in
   // Component Config Validation
   // describe('component config validation', () => {
   //   it('valid service ref brackets', async () => {

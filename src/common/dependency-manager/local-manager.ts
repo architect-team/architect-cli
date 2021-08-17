@@ -70,7 +70,7 @@ export default class LocalDependencyManager extends DependencyManager {
       interface_obj.ingress.enabled = true;
       config.interfaces[interface_to] = interface_obj;
 
-      // TODO:269 find way to avoid modifying source_yml - def non-trivial with interpolation
+      // TODO:269:? find way to avoid modifying source_yml - def non-trivial with interpolation
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       merged_spec.interfaces[interface_to] = interface_obj;
@@ -95,7 +95,7 @@ export default class LocalDependencyManager extends DependencyManager {
         services[sk] = deepmerge(sv, sv.debug || {});
       }
 
-      // TODO:269 add test for task debug block
+      // TODO:285: add test for task debug block
       const tasks: Dictionary<TaskSpec> = {};
       for (const [sk, sv] of Object.entries(merged_spec.tasks || {})) {
         tasks[sk] = deepmerge(sv, sv.debug || {});

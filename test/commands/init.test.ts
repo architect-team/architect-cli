@@ -141,7 +141,7 @@ describe('init', function () {
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
-      // TODO:269 update spec/tests to expect number for port unless its an interpolation ref
+      // TODO:269:? update spec/tests to expect number for port unless its an interpolation ref
       expect(component_config.services['kibana'].interfaces['interface0'].port).eq('5601');
       expect(component_config.services['kibana'].interfaces['interface1'].port).eq('5000');
       expect(component_config.services['kibana'].interfaces['interface1'].protocol).eq('udp');

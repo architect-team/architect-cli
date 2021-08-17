@@ -29,7 +29,7 @@ export class VolumeSpec {
   @JSONSchema({ type: 'string' })
   mount_path?: string;
 
-  // TODO:269:jsonschema (key || hostpath || neither)
+  // TODO:289: (key || hostpath || neither)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   host_path?: string;
@@ -51,7 +51,7 @@ export type EnvironmentSpecValue = boolean | null | number | string;
 export const EnvironmentDictiory = DictionaryOfAny('boolean', 'null', 'number', 'string');
 
 export class BuildSpec {
-  // TODO:269:jsonschema (context || dockerfile)
+  // TODO:289: (context || dockerfile)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   context?: string;

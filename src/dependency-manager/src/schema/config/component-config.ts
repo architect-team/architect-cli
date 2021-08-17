@@ -47,7 +47,7 @@ export interface ComponentVersionMetadata {
   tag: string;
 }
 
-// TODO:269: we should consider wrapping ComponentConfig in a ComponentVersionConfig and a ComponentInstanceConfig:
+// TODO:291: we should consider wrapping ComponentConfig in a ComponentVersionConfig and a ComponentInstanceConfig:
 // this allows us to factor out `tag` from `buildComponentConfig` and only apply it when it is needed
 // the graph then could be a graph of ComponentVersions or ComponentInstances
 //
@@ -67,9 +67,8 @@ export interface ComponentVersionMetadata {
 export interface ComponentConfig {
   name: string;
 
-  // TODO:269: we should consider allowing these to live next to the ComponentConfig instead of attached to it
-  tag: string;
-  instance_metadata?: ComponentInstanceMetadata;
+  tag: string; // TODO:291: we should consider allowing these to live next to the ComponentConfig instead of attached to it. (see ComponentVersionConfig above)
+  instance_metadata?: ComponentInstanceMetadata; // TODO:291: we should consider allowing these to live next to the ComponentConfig instead of attached to it. (see ComponentInstanceConfig above)
 
   description?: string;
   keywords: string[];
@@ -87,9 +86,9 @@ export interface ComponentConfig {
   artifact_image?: string;
 
   source_yml: string;
-  context: ComponentContext;
+  context: ComponentContext; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager interpolation logic
 
-  proxy_port_mapping?: any; // TODO:269:?proxy_port_mapping
+  proxy_port_mapping?: any; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager sidecar logic
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {

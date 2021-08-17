@@ -15,7 +15,7 @@ export class ValidationError {
     [type: string]: any;
   };
 
-  // TODO:269: we should try to condense this info down into a readable message as best we can
+  // TODO:285: we can remove most of these fields from ValidationError, they were experimental on ErrorObject from @atlassian/better-ajv-error
   keyword?: string;
   dataPath?: string;
   schemaPath?: string;
