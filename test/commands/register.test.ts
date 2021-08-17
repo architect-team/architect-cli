@@ -47,6 +47,10 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
@@ -72,6 +76,10 @@ describe('register', function () {
       })
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-world/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
@@ -96,6 +104,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/hello-world/versions/latest`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
@@ -126,6 +138,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -139,6 +152,10 @@ describe('register', function () {
       })
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
@@ -149,7 +166,7 @@ describe('register', function () {
 
       expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
@@ -168,6 +185,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().throws('Some internal docker build exception'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -196,6 +214,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().throws('Some internal docker push exception'))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -224,6 +243,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().throws('Some internal docker inspect exception'))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -237,7 +257,7 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
@@ -250,6 +270,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .persist()
       .get(`/accounts/examples`)
@@ -260,6 +281,10 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/, (body) => body)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/stateless-component/versions/1.0.0`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0'])
@@ -269,7 +294,7 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(buildImage.calledOnce).to.be.true; // there are two components but only one of them needs to build the docker image
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledOnce).to.be.true;
+      expect(pushImage.calledTwice).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
@@ -284,6 +309,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -291,6 +317,10 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/database-seeding/versions/1.0.0`)
+      .reply(200)
     )
     .stdout({ print })
     .stderr({ print })
@@ -307,6 +337,7 @@ describe('register', function () {
     .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
     .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
     .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)
@@ -315,12 +346,16 @@ describe('register', function () {
       .post(/\/accounts\/.*\/components/)
       .reply(200, {})
     )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .reply(200)
+    )
     .stdout({ print })
     .stderr({ print })
     .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev'])
     .it('override build arg specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
-      expect(buildImage.calledTwice).to.be.true;
+      expect(buildImage.callCount).to.eq(2);
       expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
     });
 });

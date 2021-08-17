@@ -26,36 +26,31 @@ export abstract class DeployCommand extends Command {
   static flags = {
     ...Command.flags,
     auto_approve: flags.boolean({
-      exclusive: ['local', 'compose_file'],
+      exclusive: ['local', 'compose-file', 'compose_file'],
+      description: `${Command.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+    }),
+    'auto-approve': flags.boolean({
+      exclusive: ['local', 'compose-file', 'compose_file'],
       description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
     }),
-    recursive: flags.boolean({
-      char: 'r',
-      default: true,
-      allowNo: true,
-      description: '[default: true] Toggle to automatically deploy all dependencies',
-    }),
-    refresh: flags.boolean({
-      default: true,
-      hidden: true,
-      allowNo: true,
-      exclusive: ['local', 'compose_file'],
-    }),
-    browser: flags.boolean({
-      default: true,
-      allowNo: true,
-      description: '[default: true] Automatically open urls in the browser for local deployments',
-    }),
-    build_parallel: flags.boolean({
-      default: false,
-      description: '[default: false] Build docker images in parallel',
-    }),
   };
+
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
 
   async approvePipeline(pipeline: any) {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
-    if (!flags.auto_approve) {
+    if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
       const confirmation = await inquirer.prompt({
         type: 'confirm',
@@ -89,17 +84,22 @@ export default class Deploy extends DeployCommand {
     local: flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
-      exclusive: ['account', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
     }),
     production: flags.boolean({
       description: 'Build and run components without debug blocks',
       dependsOn: ['local'],
     }),
     compose_file: flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    'compose-file': flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
-      exclusive: ['account', 'environment', 'auto_approve', 'refresh'],
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
     }),
     detached: flags.boolean({
       description: 'Run in detached mode',
@@ -128,6 +128,31 @@ export default class Deploy extends DeployCommand {
       description: '[default: true] Toggle for deletion protection on deployments',
       exclusive: ['local'],
     }),
+    recursive: flags.boolean({
+      char: 'r',
+      default: true,
+      allowNo: true,
+      description: '[default: true] Toggle to automatically deploy all dependencies',
+    }),
+    refresh: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose-file', 'compose_file'],
+    }),
+    browser: flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
+    }),
+    build_parallel: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --build-parallel.`,
+      hidden: true,
+    }),
+    'build-parallel': flags.boolean({
+      default: false,
+      description: '[default: false] Build docker images in parallel',
+    }),
   };
 
   static args = [{
@@ -138,11 +163,18 @@ export default class Deploy extends DeployCommand {
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
   parse(options: any, argv = this.argv): any {
     options.args = [];
-    for (const arg of argv) {
+    for (const _ of argv) {
       options.args.push({ name: 'filler' });
     }
     const parsed = super.parse(options, argv);
     parsed.args.configs_or_components = parsed.argv;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    const flags: any = parsed.flags;
+    flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
+    flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
+    parsed.flags = flags;
+
     return parsed;
   }
 
@@ -150,13 +182,13 @@ export default class Deploy extends DeployCommand {
     const { flags } = this.parse(Deploy);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
-    const compose_file = flags.compose_file || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
+    const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
 
     await fs.ensureFile(compose_file);
     await fs.writeFile(compose_file, yaml.dump(compose));
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
-    if (flags.build_parallel) {
+    if (flags['build-parallel']) {
       await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
     } else {
       await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });

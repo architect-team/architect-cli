@@ -22,9 +22,9 @@ describe('environment:destroy', () => {
     name: 'test-account'
   }
 
-  const mock_env = {
-    id: 'test-env-id',
-    name: 'test-env'
+  const mock_platform = {
+    id: 'test-platform-id',
+    name: 'test-platform'
   }
 
   const mock_pipeline = {
@@ -37,18 +37,18 @@ describe('environment:destroy', () => {
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
+      .get(`/accounts/${mock_account.id}/platforms/${mock_platform.name}`)
       .times(2)
-      .reply(200, mock_env))
+      .reply(200, mock_platform))
     .nock(MOCK_API_HOST, api => api
-      .delete(`/environments/${mock_env.id}?force=0`)
+      .delete(`/platforms/${mock_platform.id}`)
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve'])
+    .command(['platforms:destroy', '-a', mock_account.name, mock_platform.name, '--auto-approve'])
     .it('should generate destroy deployment', ctx => {
-      expect(ctx.stdout).to.contain('Environment deregistered\n')
+      expect(ctx.stdout).to.contain('Platform deregistered\n')
     });
 
   mockArchitectAuth
@@ -57,18 +57,18 @@ describe('environment:destroy', () => {
       .get(`/accounts/${mock_account.name}`)
       .reply(200, mock_account))
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/${mock_account.id}/environments/${mock_env.name}`)
+      .get(`/accounts/${mock_account.id}/platforms/${mock_platform.name}`)
       .times(2)
-      .reply(200, mock_env))
+      .reply(200, mock_platform))
     .nock(MOCK_API_HOST, api => api
-      .delete(`/environments/${mock_env.id}?force=1`)
+      .delete(`/platforms/${mock_platform.id}?force=1`)
       .reply(200, mock_pipeline))
     .stdout({ print })
     .stderr({ print })
     .timeout(20000)
-    .command(['environments:destroy', '-a', mock_account.name, mock_env.name, '--auto-approve', '--force'])
+    .command(['platforms:destroy', '-a', mock_account.name, mock_platform.name, '--auto-approve', '--force'])
     .it('should force apply destroy job', ctx => {
-      expect(ctx.stdout).to.contain('Environment deregistered\n')
+      expect(ctx.stdout).to.contain('Platform deregistered\n')
     });
 
 });

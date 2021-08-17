@@ -35,7 +35,7 @@ $ npm install -g @architect-io/cli
 $ architect COMMAND
 running command...
 $ architect (-v|--version|version)
-@architect-io/cli/1.11.1 linux-x64 node-v14.17.3
+@architect-io/cli/1.11.3-rc.6 linux-x64 node-v16.6.2
 $ architect --help [COMMAND]
 USAGE
   $ architect COMMAND
@@ -106,7 +106,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/config/get.ts)_
+_See code: [src/commands/config/get.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/config/get.ts)_
 
 ## `architect config:set OPTION VALUE`
 
@@ -124,7 +124,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/config/set.ts)_
+_See code: [src/commands/config/set.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/config/set.ts)_
 
 ## `architect config:view`
 
@@ -141,7 +141,7 @@ ALIASES
   $ architect config
 ```
 
-_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/config/view.ts)_
+_See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/config/view.ts)_
 
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
@@ -162,24 +162,24 @@ OPTIONS
   -h, --help                       show CLI help
   -i, --interface=interface        [default: ] Component interfaces
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
-  -o, --compose_file=compose_file  Path where the compose file should be written to
+  -o, --compose-file=compose-file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
   -r, --[no-]recursive             [default: true] Toggle to automatically deploy all dependencies
   -v, --values=values              Path of values file
 
-  --auto_approve                   Automatically approve the deployment without a review step. Used for debugging and CI
+  --auto-approve                   Automatically approve the deployment without a review step. Used for debugging and CI
                                    flows.
 
   --[no-]browser                   [default: true] Automatically open urls in the browser for local deployments
 
-  --build_parallel                 [default: false] Build docker images in parallel
+  --build-parallel                 [default: false] Build docker images in parallel
 
   --[no-]deletion-protection       [default: true] Toggle for deletion protection on deployments
 
   --production                     Build and run components without debug blocks
 ```
 
-_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/deploy.ts)_
+_See code: [src/commands/deploy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/deploy.ts)_
 
 ## `architect destroy`
 
@@ -194,17 +194,12 @@ OPTIONS
   -c, --components=components    Component(s) to destroy
   -e, --environment=environment  Architect environment
   -h, --help                     show CLI help
-  -r, --[no-]recursive           [default: true] Toggle to automatically deploy all dependencies
 
-  --auto_approve                 Automatically approve the deployment without a review step. Used for debugging and CI
+  --auto-approve                 Automatically approve the deployment without a review step. Used for debugging and CI
                                  flows.
-
-  --[no-]browser                 [default: true] Automatically open urls in the browser for local deployments
-
-  --build_parallel               [default: false] Build docker images in parallel
 ```
 
-_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/destroy.ts)_
+_See code: [src/commands/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/destroy.ts)_
 
 ## `architect environments [QUERY]`
 
@@ -229,7 +224,7 @@ ALIASES
   $ architect env:search
 ```
 
-_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/environments/index.ts)_
+_See code: [src/commands/environments/index.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/environments/index.ts)_
 
 ## `architect environments:create [ENVIRONMENT]`
 
@@ -247,6 +242,7 @@ OPTIONS
   -h, --help                 show CLI help
   --description=description  Environment Description
   --platform=platform        Architect platform
+  --ttl=ttl                  The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m
 
 ALIASES
   $ architect environment:create
@@ -254,7 +250,7 @@ ALIASES
   $ architect env:create
 ```
 
-_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/environments/create.ts)_
+_See code: [src/commands/environments/create.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/environments/create.ts)_
 
 ## `architect environments:destroy [ENVIRONMENT]`
 
@@ -271,7 +267,7 @@ OPTIONS
   -a, --account=account  Architect account
   -f, --force            Force the deletion even if the environment is not empty
   -h, --help             show CLI help
-  --auto_approve         Automatically apply the changes
+  --auto-approve         Automatically apply the changes
 
 ALIASES
   $ architect environment:destroy
@@ -281,7 +277,7 @@ ALIASES
   $ architect environment:deregister
 ```
 
-_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/environments/destroy.ts)_
+_See code: [src/commands/environments/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/environments/destroy.ts)_
 
 ## `architect help [COMMAND]`
 
@@ -312,11 +308,11 @@ OPTIONS
   -a, --account=account
   -h, --help                           show CLI help
   -n, --name=name
-  -o, --component_file=component_file  [default: architect.yml] Path where the component file should be written to
-  --from_compose=from_compose          [default: /home/runner/work/architect-cli/architect-cli]
+  -o, --component-file=component-file  [default: architect.yml] Path where the component file should be written to
+  --from-compose=from-compose          [default: /home/runner/work/architect-cli/architect-cli]
 ```
 
-_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/init.ts)_
 
 ## `architect link [COMPONENTPATH]`
 
@@ -330,7 +326,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/link.ts)_
+_See code: [src/commands/link.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/link.ts)_
 
 ## `architect login`
 
@@ -346,7 +342,7 @@ OPTIONS
   -p, --password=password  Password
 ```
 
-_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/login.ts)_
+_See code: [src/commands/login.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/login.ts)_
 
 ## `architect logout`
 
@@ -360,7 +356,7 @@ OPTIONS
   -h, --help  show CLI help
 ```
 
-_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/logout.ts)_
+_See code: [src/commands/logout.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/logout.ts)_
 
 ## `architect platforms [QUERY]`
 
@@ -383,7 +379,7 @@ ALIASES
   $ architect platforms:search
 ```
 
-_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/platforms/index.ts)_
+_See code: [src/commands/platforms/index.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/platforms/index.ts)_
 
 ## `architect platforms:create [PLATFORM]`
 
@@ -402,13 +398,11 @@ OPTIONS
   -h, --host=host
   -k, --kubeconfig=kubeconfig               [default: ~/.kube/config]
   -t, --type=KUBERNETES|kubernetes|ECS|ecs
-  --auto_approve
-  --aws_key=aws_key
-  --aws_region=aws_region
-  --aws_secret=aws_secret
-  --cluster_ca_cert=cluster_ca_cert         File path of cluster_ca_cert
+  --auto-approve
+  --aws-key=aws-key
+  --aws-region=aws-region
+  --aws-secret=aws-secret
   --flag=flag                               [default: ]
-  --service_token=service_token             Service token
 
 ALIASES
   $ architect platforms:register
@@ -416,7 +410,7 @@ ALIASES
   $ architect platforms:create
 ```
 
-_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/platforms/create.ts)_
+_See code: [src/commands/platforms/create.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/platforms/create.ts)_
 
 ## `architect platforms:destroy [PLATFORM]`
 
@@ -431,8 +425,9 @@ ARGUMENTS
 
 OPTIONS
   -a, --account=account  Architect account
+  -f, --force            Force the deletion even if the platform is not empty
   -h, --help             show CLI help
-  --auto_approve         Automatically apply the changes
+  --auto-approve         Automatically apply the changes
 
 ALIASES
   $ architect platforms:deregister
@@ -440,7 +435,7 @@ ALIASES
   $ architect platforms:destroy
 ```
 
-_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/platforms/destroy.ts)_
+_See code: [src/commands/platforms/destroy.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/platforms/destroy.ts)_
 
 ## `architect register [COMPONENT]`
 
@@ -465,7 +460,7 @@ ALIASES
   $ architect comp:register
 ```
 
-_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/register.ts)_
+_See code: [src/commands/register.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/register.ts)_
 
 ## `architect task COMPONENT TASK`
 
@@ -484,13 +479,13 @@ OPTIONS
   -e, --environment=environment    Architect environment
   -h, --help                       show CLI help
   -l, --local                      Deploy the stack locally instead of via Architect Cloud
-  -o, --compose_file=compose_file  Path where the compose file should be written to
+  -o, --compose-file=compose-file  Path where the compose file should be written to
 
 ALIASES
   $ architect task:exec
 ```
 
-_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/task.ts)_
+_See code: [src/commands/task.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/task.ts)_
 
 ## `architect unlink [COMPONENTPATHORNAME]`
 
@@ -505,7 +500,7 @@ OPTIONS
   --all       Unlink all components registered locally
 ```
 
-_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/unlink.ts)_
+_See code: [src/commands/unlink.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/unlink.ts)_
 
 ## `architect whoami`
 
@@ -522,5 +517,5 @@ ALIASES
   $ architect whoami
 ```
 
-_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.11.1/src/commands/whoami.ts)_
+_See code: [src/commands/whoami.ts](https://github.com/architect-team/architect-cli/blob/v1.11.3-rc.6/src/commands/whoami.ts)_
 <!-- commandsstop -->

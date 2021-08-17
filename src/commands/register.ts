@@ -1,7 +1,9 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
+import * as Diff from 'diff';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -10,7 +12,7 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { Refs, ResourceConfig } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, Refs, ResourceConfig, Slugs } from '../dependency-manager/src';
 import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -65,6 +67,10 @@ export default class ComponentRegister extends Command {
       throw new MissingContextError();
     }
 
+    if (!Slugs.ComponentTagValidator.test(flags.tag)) {
+      throw new ArchitectError(Slugs.ComponentTagDescription);
+    }
+
     for (const config_path of config_paths) {
       await this.registerComponent(config_path, flags.tag);
     }
@@ -111,6 +117,30 @@ export default class ComponentRegister extends Command {
       config: component_config,
     };
 
+    let previous_config_data;
+    try {
+      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(component_config.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+      /* eslint-disable-next-line no-empty */
+    } catch { }
+
+    this.log(chalk.blue(`Begin component config diff`));
+    const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(component_dto.config.source_yml));
+    for (const diff_section of component_config_diff) {
+      const line_parts = diff_section.value.split('\n');
+      line_parts.pop(); // last element will be a newline that we don't want
+      for (const line_part of line_parts) {
+        if (diff_section.added) {
+          process.stdout.write(chalk.green(`+ ${line_part}`));
+        } else if (diff_section.removed) {
+          process.stdout.write(chalk.red(`- ${line_part}`));
+        } else {
+          process.stdout.write(chalk.grey(`  ${line_part}`));
+        }
+        process.stdout.write('\n');
+      }
+    }
+    this.log(chalk.blue(`End component config diff`));
+
     cli.action.start(chalk.blue(`Registering component ${component_config.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop();
@@ -123,9 +153,17 @@ export default class ComponentRegister extends Command {
       return resource_config.image;
     }
 
-    // otherwise we build and push the image to our repository
+    this.log('Attempting to pull a previously built image for use with docker --cache-from...');
+    try {
+      await Docker.pullImage(Docker.toCacheImage(image_tag));
+    } catch {
+      this.log('No previously cached image found. The docker build will proceed without using a cached image');
+    }
+
+    // build and push the image to our repository
     const image = await this.buildImage(config_path, resource_name, resource_config, image_tag);
     await this.pushImage(image);
+    await this.pushImage(Docker.toCacheImage(image_tag));
     const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key

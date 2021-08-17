@@ -14,7 +14,16 @@ export default class PlatformDestroy extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     auto_approve: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --auto-approve.`,
+      hidden: true,
+    }),
+    ['auto-approve']: flags.boolean({
       description: 'Automatically apply the changes',
+      default: false,
+    }),
+    force: flags.boolean({
+      description: 'Force the deletion even if the platform is not empty',
+      char: 'f',
       default: false,
     }),
   };
@@ -24,6 +33,17 @@ export default class PlatformDestroy extends Command {
     description: 'Name of the platform to deregister',
     parse: (value: string) => value.toLowerCase(),
   }];
+
+  parse(options: any, argv = this.argv): any {
+    const parsed = super.parse(options, argv);
+    const flags: any = parsed.flags;
+
+    // Merge any values set via deprecated flags into their supported counterparts
+    flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
+    parsed.flags = flags;
+
+    return parsed;
+  }
 
   async run() {
     const { args, flags } = this.parse(PlatformDestroy);
@@ -41,14 +61,18 @@ export default class PlatformDestroy extends Command {
         }
         return `Name must match: ${chalk.blue(platform.name)}`;
       },
-      when: !flags.auto_approve,
+      when: !flags['auto-approve'],
     }]);
 
     answers = { ...args, ...flags, ...answers };
     const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
 
     cli.action.start(chalk.blue('Deregistering platform'));
-    await this.app.api.delete(`/platforms/${account_platform.id}`);
+    const params: any = {};
+    if (answers.force) {
+      params.force = 1;
+    }
+    await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
     cli.action.stop();
     this.log(chalk.green('Platform deregistered'));
   }

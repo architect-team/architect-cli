@@ -1,0 +1,26 @@
+name: examples/subscriber
+
+parameters:
+  gcp_project_id:
+    description: Name of the GCP project to connect to
+    required: true
+  subscribe_topic:
+    description: Topic name the service will publish events to
+    default: topic
+  subscription_key:
+    description: Key used to define this subscriber
+    default: subscriber
+
+dependencies:
+  architect/gcp-pubsub: latest
+  examples/publisher: latest
+
+services:
+  api:
+    build:
+      context: ./
+    environment:
+      PUBSUB_ENDPOINT: ${{ dependencies['architect/gcp-pubsub'].interfaces.pubsub.url }}
+      GCP_PROJECT_ID: ${{ parameters.gcp_project_id }}
+      PUBSUB_TOPIC: ${{ parameters.subscribe_topic }}
+      PUBSUB_SUBSCRIPTION: ${{ parameters.subscription_key }}

@@ -12,7 +12,7 @@ What this means is that not only can developers run the stack privately, but the
 
 ### Create preview environment
 
-The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `ARCHITECT_EMAIL` and `ARCHITECT_PASSWORD`. Replace `<account-name>`, `<platform-name>`, and `<component-name>` with the appropriate values.
+The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `ARCHITECT_EMAIL` and `ARCHITECT_PASSWORD`. Replace `<account-name>`, `<platform-name>`, and `<component-name>` with the appropriate values. With the `--ttl` flag set to `3d`, the environment will be destroyed automatically in three days from creation.
 
 ```yaml
 name: Architect Create Preview
@@ -37,14 +37,14 @@ jobs:
       - name: Register component w/ Architect
         run: architect register ./architect.yml -t preview-${{ github.event.number }}
       - name: Create env if not exists
-        run: architect environment:create preview-${{ github.event.number }} -a <account-name> --platform <platform-name> || exit 0
+        run: architect environment:create preview-${{ github.event.number }} -a <account-name> --platform <platform-name> --ttl 3d || exit 0
       - name: Deploy component
-        run: architect deploy --auto_approve -a <account-name> -e preview-${{ github.event.number }} <component-name>:preview-${{ github.event.number }}
+        run: architect deploy --auto-approve -a <account-name> -e preview-${{ github.event.number }} <component-name>:preview-${{ github.event.number }}
 ```
 
 ### Cleanup preview environment
 
-You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close:
+You certainly don't want your auto-generated preview environments to remain live forever eating up valuable cluster resources. Paste the snippet below into another Github workflow file in your repository to cleanup preview environments triggered on pull requests whenever the PRs close. Alternatively, set the `--ttl` flag on environment creation similar to the example above for this to happen automatically in a specified period of time.
 
 ```yaml
 name: Architect Destroy Preview
@@ -68,9 +68,9 @@ jobs:
       - name: Login to Architect Cloud
         run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
       - name: Clear the environment
-        run: architect destroy --auto_approve -a <account-name> -e preview-${{ github.event.number }}
+        run: architect destroy --auto-approve -a <account-name> -e preview-${{ github.event.number }}
       - name: Cleanup the environment
-        run: architect env:destroy --auto_approve -a <account-name> preview-${{ github.event.number }}
+        run: architect env:destroy --auto-approve -a <account-name> preview-${{ github.event.number }}
 ```
 
 ## Gitlab CI
@@ -103,7 +103,7 @@ deploy_preview:
   script: |
     architect register architect.yml --tag $ARCHITECT_ENVIRONMENT
     architect environment:create $ARCHITECT_ENVIRONMENT || true
-    architect deploy --auto_approve --account $ARCHITECT_ACCOUNT --environment $ARCHITECT_ENVIRONMENT $ARCHITECT_COMPONENT_NAME
+    architect deploy --auto-approve --account $ARCHITECT_ACCOUNT --environment $ARCHITECT_ENVIRONMENT $ARCHITECT_COMPONENT_NAME
   environment:
     name: architect/preview-$CI_MERGE_REQUEST_ID
     url: https://cloud.architect.io/$ARCHITECT_ACCOUNT/environments/preview-$CI_MERGE_REQUEST_ID/
@@ -117,8 +117,8 @@ destroy_preview:
     ARCHITECT_ENVIRONMENT: preview-$CI_MERGE_REQUEST_ID
     ARCHITECT_COMPONENT_NAME: <your/component:here>
   script: |
-    architect destroy --auto_approve --environment $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
-    architect env:destroy --auto_approve $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
+    architect destroy --auto-approve --environment $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
+    architect env:destroy --auto-approve $ARCHITECT_ENVIRONMENT --account $ARCHITECT_ACCOUNT
   environment:
     name: architect/preview-$CI_MERGE_REQUEST_ID
     action: stop

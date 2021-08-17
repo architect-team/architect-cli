@@ -43,7 +43,7 @@ describe('validation spec v1', () => {
   //       frontend: \${{ services['stateless-app'].interfaces.main.url }}
   //     `
   //     mock_fs({ '/architect.yml': component_config });
-  //     buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //     await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //   });
 
   //   it('invalid nested debug', async () => {
@@ -65,7 +65,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -93,7 +93,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -124,7 +124,7 @@ describe('validation spec v1', () => {
   //       frontend: \${{ services['stateful-app'].interfaces.main.url }}
   //     `
   //     mock_fs({ '/architect.yml': component_config });
-  //     buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //     await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //   });
 
   //   it('valid task depends_on', async () => {
@@ -147,7 +147,7 @@ describe('validation spec v1', () => {
   //       frontend: \${{ services['stateful-app'].interfaces.main.url }}
   //     `
   //     mock_fs({ '/architect.yml': component_config });
-  //     buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //     await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //   });
 
   //   it('invalid task depends_on', async () => {
@@ -169,7 +169,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -199,7 +199,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -229,7 +229,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -264,7 +264,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -304,7 +304,7 @@ describe('validation spec v1', () => {
   //     mock_fs({ '/architect.yml': component_config });
   //     let validation_err;
   //     try {
-  //       buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
+  //       await ComponentConfigBuilder.buildFromPath('/architect.yml')
   //     } catch (err) {
   //       validation_err = err;
   //     }
@@ -461,8 +461,11 @@ describe('validation spec v1', () => {
   //       'test/component': '/component.yml',
   //     });
   //     const component_config = await manager.loadComponentConfig('test/component');
+  //     component_config.setExtends('latest');
 
-  //     expect(validateConfig(component_config)).to.have.lengthOf(0);
+  //     expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(0);
+  //     component_config.setParameter('environment', '@error');
+  //     expect(await component_config.validate({ groups: ['developer', 'register'] })).to.have.lengthOf(1);
   //   });
 
   //   it('invalid labels', async () => {
@@ -497,7 +500,7 @@ describe('validation spec v1', () => {
   //       "services.app.labels": {
   //         "column": 17,
   //         "line": 7,
-  //         "matchesvalues": "each value must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
+  //         "matchesvalues": "each value max length 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
   //         "value": "{\"environment\":\"dev\",\"environment2\":\"dev$%^%^%$&\",\"architect.io/Environment\":\"dev\"}"
   //       }
   //     })
@@ -533,7 +536,7 @@ describe('validation spec v1', () => {
   //       "services.app.labels": {
   //         "column": 17,
   //         "line": 7,
-  //         "matcheskeys": "prefix must be lowercase and is optional, each <prefix>/<key> must be 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
+  //         "matcheskeys": "prefix must be lowercase and is optional, each <prefix>/<key> max length 63 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.",
   //         "value": "{\"architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io\":\"architect.io\"}"
   //       }
   //     })

@@ -4,7 +4,11 @@ import AppService from './app-config/service';
 import LoginRequiredError from './common/errors/login-required';
 import { ArchitectError } from './dependency-manager/src/utils/errors';
 
+const DEPRECATED_LABEL = '[deprecated]';
+
 export default abstract class extends Command {
+  static readonly DEPRECATED: string = DEPRECATED_LABEL;
+
   app!: AppService;
   accounts?: any;
 
@@ -16,7 +20,21 @@ export default abstract class extends Command {
     help: flags.help({ char: 'h' }),
   };
 
+  checkFlagDeprecations(flags: any, flag_definitions: any) {
+    Object.keys(flags).forEach((flagName: string) => {
+      const flag_config = flag_definitions[flagName] || {};
+      const description = flag_config.description || '';
+      if (description?.startsWith(DEPRECATED_LABEL)) {
+        this.warn(`Flag --${flagName} is deprecated.${description.split(DEPRECATED_LABEL)[1]}`);
+      }
+    });
+  }
+
   async init() {
+    const { flags } = this.parse(this.constructor as any);
+    const flag_definitions = (this.constructor as any).flags;
+    this.checkFlagDeprecations(flags, flag_definitions);
+
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
       if (this.auth_required()) {
@@ -36,6 +54,33 @@ export default abstract class extends Command {
         }
       }
     }
+  }
+
+  // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
+  parse(options: any, argv = this.argv): any {
+    const flag_definitions = (this.constructor as any).flags;
+
+    const args = [];
+    const flags = [];
+    let flag_option = false;
+    for (const arg of argv) {
+      const is_flag = arg.startsWith('-');
+
+      if (is_flag || flag_option) {
+        flags.push(arg);
+      } else {
+        args.push(arg);
+      }
+
+      if (is_flag) {
+        const flag = arg.startsWith('--') ? flag_definitions[arg.replace('--', '')] : Object.values(flag_definitions).find((f: any) => f.char === arg.replace('-', ''));
+        flag_option = flag?.type === 'option';
+      } else {
+        flag_option = false;
+      }
+    }
+
+    return super.parse(options, [...args, ...flags]);
   }
 
   async catch(err: any) {
