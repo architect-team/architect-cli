@@ -18,6 +18,7 @@ class MissingConfigFileError extends Error {
   }
 }
 
+// a typing for the raw result of js-yaml.load();
 export type ParsedYaml = object | string | number | null | undefined;
 
 const specPaths = (input: string) => {
@@ -38,7 +39,10 @@ export const loadSpecFromPathOrReject = (config_path: string): { file_path: stri
 };
 
 export const parseSourceYml = (source_yml: string): ParsedYaml => {
-  return yaml.load(source_yml, { schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }) });
+  const yaml_schema = {
+    schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }),
+  };
+  return yaml.load(source_yml, yaml_schema);
 };
 
 export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
