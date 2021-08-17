@@ -42,11 +42,12 @@ export class DockerComposeUtils {
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
     const gateway_port = gateway_node?.interfaces._default.port || 80;
 
-    const gateway_links: string[] = [];
+    const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const interface_from of Object.keys(edge.interfaces_map)) {
-          gateway_links.push(`${gateway_node.ref}:${interface_from}.arc.localhost`);
+          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
 
@@ -98,8 +99,8 @@ export class DockerComposeUtils {
         service.ports = ports;
       }
 
-      if (gateway_links.length) {
-        service.external_links = gateway_links;
+      if (gateway_links.size) {
+        service.external_links = [...gateway_links];
       }
 
       if (node.config.getImage()) service.image = node.config.getImage();
@@ -230,7 +231,7 @@ export class DockerComposeUtils {
       const node_from = graph.getNodeByRef(edge.from);
       if (node_from instanceof InterfacesNode) continue;
 
-      for (const interface_name of Object.keys(edge.interfaces_map)) {
+      for (let interface_name of Object.keys(edge.interfaces_map)) {
         const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
         const node_to_ref = node_to.ref;
 
@@ -258,7 +259,15 @@ export class DockerComposeUtils {
           if (!service_to.labels.includes(`traefik.port=${gateway_port}`)) {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
-          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${interface_name}.arc.localhost\`)`);
+
+          const host = interface_name === '@' ? 'arc.localhost' : `${interface_name}.arc.localhost`;
+
+          if (interface_name === '@') {
+            // @ is an invalid service name for traefik
+            interface_name = '__at__';
+          }
+
+          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);

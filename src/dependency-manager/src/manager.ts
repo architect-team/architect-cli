@@ -27,7 +27,6 @@ interface ComponentConfigNode {
 
 export default abstract class DependencyManager {
   use_sidecar = true;
-  subdomainTransformer?: (external_host: string, subdomain: string) => string;
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
@@ -142,10 +141,6 @@ export default abstract class DependencyManager {
       for (const [dep_component, interface_name] of ingresses) {
         if (!dep_component) { continue; }
         let subdomain = dep_component.getInterfaces()[interface_name].ingress?.subdomain || interface_name;
-        // Transform for potential namespacing of subdomains
-        if (this.subdomainTransformer) {
-          subdomain = this.subdomainTransformer(external_addr.split(':')[0], subdomain);
-        }
         subdomain = interpolateString(subdomain, dep_component.getContext());
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === dep_component.getInterfacesRef()) as IngressEdge;
@@ -328,8 +323,9 @@ export default abstract class DependencyManager {
       };
     } else {
       const [external_host, external_port] = external_address.split(':');
+      const host = interface_from === '@' ? external_host : `${interface_from}.${external_host}`;
       external_interface = {
-        host: `${interface_from}.${external_host}`,
+        host: host,
         port: external_port,
         protocol: external_host === 'arc.localhost' ? 'http' : 'https',
         username: '',
