@@ -70,7 +70,8 @@ export default class LocalDependencyManager extends DependencyManager {
       interface_obj.ingress.enabled = true;
       config.interfaces[interface_to] = interface_obj;
 
-      // TODO:269:? find way to avoid modifying source_yml - def non-trivial with interpolation
+      // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
+      // potentially create a "deployConfig": a merged source_yml prior to interpolation
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       merged_spec.interfaces[interface_to] = interface_obj;

@@ -18,7 +18,7 @@ import { validateOrRejectSpec } from './schema/spec-validator';
 import { transformComponentContext, transformComponentSpec } from './schema/spec/transform/component-transform';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError } from './utils/errors';
-import { interpolateString, replaceBracketsOld } from './utils/interpolation';
+import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 interface ComponentConfigNode {
@@ -61,7 +61,7 @@ export default abstract class DependencyManager {
   interpolateInterfaces(initial_component: ComponentConfig) {
     // Interpolate component to fully resolve edges between dependencies/ingress/services
     // Important for host overrides where values might comes from parameters
-    initial_component.source_yml = replaceBracketsOld(initial_component.source_yml);
+    initial_component.source_yml = replaceInterpolationBrackets(initial_component.source_yml);
     const context: ComponentContext = JSON.parse(JSON.stringify(initial_component.context));
 
     const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
@@ -232,7 +232,7 @@ export default abstract class DependencyManager {
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = services_regex.exec(replaceBracketsOld(component_interface.url!));
+      const matches = services_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
@@ -245,7 +245,7 @@ export default abstract class DependencyManager {
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const matches = dependencies_regex.exec(replaceBracketsOld(component_interface.url!));
+      const matches = dependencies_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
 
       const [_, dep_name, interface_name] = matches;
@@ -358,7 +358,7 @@ export default abstract class DependencyManager {
   }
 
   async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
-    const component_string = replaceBracketsOld(initial_component.source_yml);
+    const component_string = replaceInterpolationBrackets(initial_component.source_yml);
 
     let proxy_port = 12345;
     const proxy_port_mapping: Dictionary<string> = {};

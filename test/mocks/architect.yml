@@ -1,3 +1,4 @@
+
 name: examples/superset
 description: A spec with every field
 keywords:
@@ -41,7 +42,13 @@ services:
       POSTGRES_PASSWORD: ${{ parameters.param_required }}
       POSTGRES_DB: ${{ parameters.param_optional }}
       ENVIRONMENT_UNSET:
-    volumes: # TODO:269:? allowed outside of debug block now?
+    volumes:
+      volume_string: ./some-volume
+      volume_object:
+        mount_path: ./mount-path
+        key: volume-key
+        description: Volume description
+        readonly: false
     build:
       context: .
       args:
@@ -191,4 +198,4 @@ interfaces:
     description: Exposes the sign in webapp to upstreams
     url: ${{ services.frontend.interfaces.web.url }}
 
-artifact_image: some-image ## TODO:269:? should we remove from spec?
+artifact_image: some-image

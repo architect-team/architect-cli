@@ -15,7 +15,7 @@ export interface ScalingConfig {
 export interface ServiceInterfaceConfig {
   description?: string;
   host?: null | string;
-  port?: number | string;
+  port?: number | string; // // TODO:290: expect number post-interpolation
   protocol?: string;
   username?: string;
   password?: string;
