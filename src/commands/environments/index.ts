@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import { Account, AccountUtils } from '../../common/utils/account';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Environments extends Command {
@@ -8,6 +9,7 @@ export default class Environments extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
   };
 
   static args = [{
@@ -16,9 +18,25 @@ export default class Environments extends Command {
   }];
 
   async run() {
-    const { args } = this.parse(Environments);
+    const { args, flags } = this.parse(Environments);
 
-    const { data: { rows: environments } } = await this.app.api.get(`/environments?q=${args.query || ''}`);
+    let account: Account | undefined = undefined;
+    if (flags.account) {
+      account = await AccountUtils.getAccount(this.app.api, flags.account);
+    }
+
+    // Prepare the query params to be reduced to a string
+    const query_params: any = {
+      q: args.query || '',
+    };
+    if (account) {
+      query_params['account_id'] = account.id;
+    }
+
+    // Reduces an object into a string of query parameters
+    const query_string = Object.entries(query_params).map(key_val => key_val.join('=')).join('&');
+
+    const { data: { rows: environments } } = await this.app.api.get(`/environments?${query_string}`);
 
     if (!environments.length) {
       this.log('You have not configured any environments yet.');
