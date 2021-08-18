@@ -13,18 +13,47 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     return [];
   }
 
-  const ajv_error_map: Dictionary<string[]> = {};
+  const ajv_error_map: Dictionary<Ajv.ErrorObject> = {};
   for (const ajv_error of ajv_errors) {
     if (!ajv_error_map[ajv_error.dataPath]) {
-      ajv_error_map[ajv_error.dataPath] = [];
+      // TODO:269 add test for additionalProperties
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      const additional_property: string | undefined = ajv_error.params?.additionalProperty;
+      if (additional_property) {
+        ajv_error.dataPath += `.${additional_property}`;
+        // TODO:269 provide recommendations via leven?
+        ajv_error.message = `${additional_property} is not a valid key - possible typo - check documentation`;
+      }
+
+      ajv_error_map[ajv_error.dataPath] = ajv_error;
+    } else {
+      ajv_error_map[ajv_error.dataPath].message += ` or ${ajv_error.message}`;
     }
-    ajv_error_map[ajv_error.dataPath].push(ajv_error.message || 'unknown');
+  }
+
+  // Filter error list to remove less specific errors
+  const sorted_data_path_keys = Object.keys(ajv_error_map).sort(function (a, b) {
+    return b.length - a.length;
+  });
+  const ignore_data_paths = new Set<string>();
+  for (const data_path of sorted_data_path_keys) {
+    const segments_list = data_path.split('.');
+    const segments = segments_list.slice(1, segments_list.length - 1);
+    let path = '';
+    for (const segment of segments) {
+      path += `.${segment}`;
+      ignore_data_paths.add(path);
+    }
   }
 
   const context_map = buildContextMap(parsed_yml, true);
 
   const errors: ValidationError[] = [];
-  for (const [data_path, messages] of Object.entries(ajv_error_map)) {
+  for (const [data_path, error] of Object.entries(ajv_error_map)) {
+    if (ignore_data_paths.has(data_path)) {
+      continue;
+    }
     const normalized_path = replaceBrackets(data_path);
     let value = context_map[normalized_path?.startsWith('.') ? normalized_path.substr(1) : normalized_path];
 
@@ -33,8 +62,8 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     }
 
     errors.push({
-      dataPath: data_path,
-      message: messages.join(' or '),
+      dataPath: error.dataPath,
+      message: error.message,
       value: value === undefined ? '<unknown>' : value,
     });
   }

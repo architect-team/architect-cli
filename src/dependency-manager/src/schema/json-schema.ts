@@ -9,6 +9,19 @@ const definitions = validationMetadatasToSchemas({
   refPointerPrefix: REF_PREFIX,
 });
 
+// Default to denying all additional properties for all definitions/properties
+for (const definition of Object.values(definitions)) {
+  if (!definition.additionalProperties) {
+    definition.additionalProperties = false;
+    // TODO:269 check if ObjectSchema instead of any[]
+    for (const property of Object.values(definition.properties || {}) as any[]) {
+      if (!property.$ref && !property.additionalProperties) {
+        property.additionalProperties = false;
+      }
+    }
+  }
+}
+
 // class-validator-jsonschema doesn't have an option to select the root reference, so we do it manually
 const root_schema = definitions['ComponentSpec'];
 

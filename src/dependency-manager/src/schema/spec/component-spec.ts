@@ -8,6 +8,10 @@ import { TaskSpec } from './task-spec';
 
 export class IngressSpec {
   @IsOptional()
+  @JSONSchema({ type: 'boolean' })
+  enabled?: boolean;
+
+  @IsOptional()
   @JSONSchema({ type: 'string' })
   subdomain?: string;
 }

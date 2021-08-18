@@ -127,7 +127,6 @@ export class ResourceSpec {
         pattern: Slugs.LabelValueSlugValidatorString,
       },
     },
-    additionalProperties: false,
   })
   labels?: Map<string, string>;
 }

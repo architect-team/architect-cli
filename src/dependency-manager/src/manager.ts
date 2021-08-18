@@ -12,9 +12,8 @@ import { parseSourceYml } from './schema/component-builder';
 import { interpolateConfigOrReject } from './schema/component-interpolation';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './schema/config/component-config';
 import { ComponentContext } from './schema/config/component-context';
-import { validateOrRejectConfig } from './schema/config/component-validator';
 import { ServiceInterfaceConfig } from './schema/config/service-config';
-import { validateOrRejectSpec } from './schema/spec-validator';
+import { ComponentSpec } from './schema/spec/component-spec';
 import { transformComponentContext, transformComponentSpec } from './schema/spec/transform/component-transform';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError } from './utils/errors';
@@ -92,9 +91,7 @@ export default abstract class DependencyManager {
 
     const interpolated_component_string = interpolateString(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
     const parsed_yml = parseSourceYml(interpolated_component_string);
-    const spec = validateOrRejectSpec(parsed_yml);
-    const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, initial_component.tag, initial_component.instance_metadata);
-    validateOrRejectConfig(interpolated_component_config);
+    const interpolated_component_config = transformComponentSpec(parsed_yml as ComponentSpec, interpolated_component_string, initial_component.tag, initial_component.instance_metadata);
     return interpolated_component_config;
   }
 

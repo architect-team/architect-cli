@@ -49,6 +49,8 @@ describe('config spec v1', () => {
     expect(component_config.interfaces.frontend.url).to.eq("${{ services['stateless-app'].interfaces.main.url }}")
   });
 
+  /*
+  TODO:269 decide if we support .key properties
   it('configs with yaml refs', async () => {
     const component_yml = `
       .frontend_interface: &frontend_interface_ref
@@ -67,4 +69,5 @@ describe('config spec v1', () => {
     const { component_config } = buildConfigFromPath('/architect.yml', Slugs.DEFAULT_TAG);
     expect(component_config.interfaces.frontend.url).to.eq("${{ services['stateless-app'].interfaces.main.url }}")
   });
+  */
 });
