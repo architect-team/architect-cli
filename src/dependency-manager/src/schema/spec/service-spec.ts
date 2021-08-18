@@ -1,9 +1,10 @@
 import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
-import { AnyOf, DictionaryOfAny, StringOrStringArray } from '../json-schema-annotations';
+import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from '../json-schema-annotations';
 import { ResourceSpec } from './resource-spec';
 
+@JSONSchema(ExclusiveOr('cpu', 'memory'))
 export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
@@ -23,11 +24,11 @@ export class ScalingSpec {
   @JSONSchema(AnyOf('number', 'string'))
   max_replicas!: number | string;
 
-  // TODO:289: (cpu || memory)
   @ValidateNested()
   metrics!: ScalingMetricsSpec;
 }
 
+@JSONSchema(ExclusiveOr('port', 'url'))
 export class ServiceInterfaceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -37,10 +38,9 @@ export class ServiceInterfaceSpec {
   @JSONSchema(AnyOf('null', 'string'))
   host?: null | string;
 
-  // TODO:289: port XOR url
-  @Allow()
+  @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
-  port!: number | string;
+  port?: number | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -63,6 +63,7 @@ export class ServiceInterfaceSpec {
   sticky?: boolean | string;
 }
 
+@JSONSchema(ExclusiveOr("command", "path"))
 export class LivenessProbeSpec {
   @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
@@ -84,12 +85,12 @@ export class LivenessProbeSpec {
   @JSONSchema({ type: 'string' })
   initial_delay?: string;
 
-  // TODO:289: (path XOR command)
-  // TODO:289: (!command || (path || port) && command)
-  @Matches(/^\/.*$/, { message: 'Path should start with /. Ex. /health' }) // TODO:289:factor out into constant
+  @IsOptional()
+  @Matches(/^\/.*$/, { message: 'Path should start with /. Ex. /health' })
   @JSONSchema({ type: 'string' })
   path?: string;
 
+  @IsOptional()
   @JSONSchema(StringOrStringArray())
   command?: string | string[];
 

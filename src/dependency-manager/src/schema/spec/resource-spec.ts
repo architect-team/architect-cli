@@ -2,7 +2,7 @@ import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator'
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../../utils/dictionary';
 import { Slugs } from '../../utils/slugs';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, StringOrStringArray } from '../json-schema-annotations';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, OneOf, StringOrStringArray } from '../json-schema-annotations';
 
 export class DeployModuleSpec {
   @IsString()
@@ -24,12 +24,12 @@ export class DeploySpec {
   modules!: Dictionary<DeployModuleSpec>;
 }
 
+@JSONSchema(ExclusiveOrNeither("host_path", "key"))
 export class VolumeSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   mount_path?: string;
 
-  // TODO:289: (key || hostpath || neither)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   host_path?: string;
@@ -50,8 +50,8 @@ export class VolumeSpec {
 export type EnvironmentSpecValue = boolean | null | number | string;
 export const EnvironmentDictiory = DictionaryOfAny('boolean', 'null', 'number', 'string');
 
+@JSONSchema(OneOf("context", "dockerfile"))
 export class BuildSpec {
-  // TODO:289: (context || dockerfile)
   @IsOptional()
   @JSONSchema({ type: 'string' })
   context?: string;

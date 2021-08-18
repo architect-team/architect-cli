@@ -51,10 +51,10 @@ services:
         readonly: false
     build:
       context: .
+      dockerfile: Dockerfile
       args:
         build_arg_string: arg_value
         build_arg_unset:
-      dockerfile: ./Dockerfile
     cpu: 2
     memory: 4GB
     deploy:
@@ -80,16 +80,12 @@ services:
       interval: '20s'
       initial_delay: '30s'
       path: /liveness
-      command:
-        - 'check'
-        - 'liveness'
       port: 5432
     replicas: 2
     scaling:
       min_replicas: 1
       max_replicas: 3
       metrics:
-        cpu: 8
         memory: 2GB
     debug:
       description: api-db service debug
@@ -108,16 +104,19 @@ services:
         volume_string: ./some-volume
         volume_object:
           mount_path: ./mount-path
-          host_path: ./host-path
           key: volume-key
           description: Volume description
           readonly: false
+        another_volume_object:
+          mount_path: ./mount-path
+          host_path: ./test
+          description: Volume description
+          readonly: false
       build:
-        context: .
+        dockerfile: ./Dockerfile
         args:
           build_arg_string: arg_value
           build_arg_unset:
-        dockerfile: ./Dockerfile
       cpu: 2
       memory: 4GB
       deploy:
@@ -142,7 +141,6 @@ services:
         timeout: '12s'
         interval: '20s'
         initial_delay: '30s'
-        path: /liveness
         command:
           - 'check'
           - 'liveness'
@@ -153,7 +151,6 @@ services:
         max_replicas: 3
         metrics:
           cpu: 80
-          memory: 2GB
 
   stateful-api:
     build:

@@ -25,7 +25,6 @@ export class ComponentInterfaceSpec {
   @JSONSchema({ type: 'string' })
   host?: string;
 
-  // TODO:289: port XOR url
   @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
   port?: number | string;

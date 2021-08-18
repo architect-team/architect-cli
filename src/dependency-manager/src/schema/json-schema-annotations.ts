@@ -116,6 +116,65 @@ export const ArrayOf = (arg: any): DecoratorSchema => {
 };
 
 /**
+ * Should be used in a class-level @JSONSchema() annotation
+ *
+ * Returns a partial JSON Schema to define an exclusive OR between property names
+ *
+ * @param args must be an array of property names. each property should already exist on the class where this is used.
+ * @returns
+ */
+export const ExclusiveOr = (...properties: string[]): DecoratorSchema => {
+  const oneOf = properties.map(p => {
+    return {
+      type: "object",
+      required: [p],
+    };
+  });
+
+  return {
+    oneOf,
+  } as DecoratorSchema;
+};
+
+/**
+ * Should be used in a class-level @JSONSchema() annotation
+ *
+ * Returns a partial JSON Schema to define an exclusive OR between property names or allow none of the listed properties
+ *
+ * @param args must be an array of property names. each property should already exist on the class where this is used.
+ * @returns
+ */
+export const ExclusiveOrNeither = (...properties: string[]): DecoratorSchema => {
+  return {
+    not: {
+      type: "object",
+      required: [...properties],
+    },
+  } as DecoratorSchema;
+};
+
+/**
+ * Should be used in a class-level @JSONSchema() annotation
+ *
+ * Returns a partial JSON Schema that requires that at least one of the named properties is
+ *
+ * @param args must be an array of property names. each property should already exist on the class where this is used.
+ * @returns
+ */
+export const OneOf = (...properties: string[]): DecoratorSchema => {
+  const anyOf = properties.map(p => {
+    return {
+      type: "object",
+      required: [p],
+    };
+  });
+
+  return {
+    anyOf, // though it might feel weird to use AnyOf here, it is correct
+  } as DecoratorSchema;
+};
+
+/**
  * Returns a partial JSON Schema that matches the disjunctive type: string[] | string
  */
 export const StringOrStringArray = (): DecoratorSchema => {
