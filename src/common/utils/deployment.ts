@@ -11,5 +11,5 @@ export interface Deployment {
   };
   pipeline: {
     id: string;
-  }
+  };
 }

@@ -406,7 +406,7 @@ export default class Deploy extends DeployCommand {
 
     const deployment_dtos = [];
     for (const component of components) {
-      ComponentVersionSlugUtils.Validator.test(component)
+      ComponentVersionSlugUtils.Validator.test(component);
 
       const deploy_dto = {
         component: component,
@@ -440,15 +440,13 @@ export default class Deploy extends DeployCommand {
       return;
     }
 
-    // TODO: recreate k8s-do cluster with a new platform name and see if brahm's bug comes back up
-
     let component_deployments: Deployment[] = [];
     for (const approved_pipeline of approved_pipelines) {
       const { data: pipeline_deployments } = await this.app.api.get(`/pipelines/${approved_pipeline.pipeline.id}/deployments`);
       component_deployments = component_deployments.concat(pipeline_deployments.filter((d: Deployment) => d.type === 'component'));
     }
 
-    let environment_graph = (await this.app.api.get(`/environments/${environment.id}/graph`)).data;
+    const environment_graph = (await this.app.api.get(`/environments/${environment.id}/graph`)).data;
     const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
     const deployment_tasks: { [s: string]: ListrTask<any>[] } = {};
     for (const service_node of service_nodes) {
@@ -461,10 +459,7 @@ export default class Deploy extends DeployCommand {
         }
         deployment_tasks[component_version_name] = [{
           title: `Pipeline ${component_deployment.pipeline.id}`,
-          task: () => new Promise(async (resolve, reject) => {
-            await PipelineUtils.pollPipeline(this.app.api, component_deployment.pipeline.id);
-            return resolve(true);
-          })
+          task: () => PipelineUtils.pollPipeline(this.app.api, component_deployment.pipeline.id),
         }];
       }
       deployment_tasks[component_version_name].push({
@@ -494,7 +489,7 @@ export default class Deploy extends DeployCommand {
             }
             service_health_poll_count += 1;
           }, PipelineUtils.POLL_INTERVAL);
-        })
+        }),
       });
     }
 
@@ -502,13 +497,15 @@ export default class Deploy extends DeployCommand {
     for (const [component_name, component_tasks] of Object.entries(deployment_tasks || {})) {
       all_tasks.push({
         title: `Component ${component_name}`,
-        task: () => { return new Listr(component_tasks, { concurrent: true }); }
+        task: () => { return new Listr(component_tasks, { concurrent: true }); },
       });
     }
     const tasks = new Listr(all_tasks, { concurrent: true });
-    tasks.run().catch(err => {
+    await tasks.run().catch(err => {
       this.error(err);
     });
+
+    this.log(chalk.green('Deployment successful'));
   }
 
   async run() {

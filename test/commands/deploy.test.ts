@@ -3,7 +3,6 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
-import Command from '../../src/base-command';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
@@ -793,20 +792,27 @@ describe('remote deploy environment', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/test-pipeline-id/deployments`)
+      .reply(200, []))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/environments/test-env-id/graph`)
+      .reply(200, { nodes: [] }))
     .stdout({ print })
     .stderr({ print })
 
   remoteDeploy
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-      expect(ctx.stdout).to.contain('Deployed');
+      console.debug(ctx.stdout)
+      expect(ctx.stdout).to.contain('Deployment successful');
     })
 
   describe('instance deploys', function () {
     remoteDeploy
       .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest@tenant-1'])
       .it('Creates a remote deployment when env exists with env and account flags', ctx => {
-        expect(ctx.stdout).to.contain('Deployed')
+        expect(ctx.stdout).to.contain('Deployment successful')
       })
   });
 });
@@ -827,6 +833,12 @@ describe('auto-approve flag with underscore style still works', function () {
     .nock(MOCK_API_HOST, api => api
       .post(`/pipelines/${mock_pipeline.id}/approve`)
       .reply(200, {}))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/test-pipeline-id/deployments`)
+      .reply(200, []))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/environments/test-env-id/graph`)
+      .reply(200, { nodes: [] }))
     .stdout({ print })
     .stderr({ print })
 
@@ -834,6 +846,6 @@ describe('auto-approve flag with underscore style still works', function () {
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
     .it('works but also emits a deprication warning', ctx => {
       expect(ctx.stderr).to.contain('Flag --auto_approve is deprecated.');
-      expect(ctx.stdout).to.contain('Deployed');
+      expect(ctx.stdout).to.contain('Deployment successful');
     });
 });
