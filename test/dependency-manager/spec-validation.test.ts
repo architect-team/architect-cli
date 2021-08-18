@@ -60,8 +60,6 @@ describe('superset spec validation', function () {
       const parsed_yml = parseSourceYml(interpolated_component_string);
       const spec = validateOrRejectSpec(parsed_yml);
       const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, component_config.tag, component_config.instance_metadata);
-
-      expect(interpolated_component_config.services['api-db'].debug.environment['POSTGRES_USER']).to.not.be.undefined;
     });
 
   });

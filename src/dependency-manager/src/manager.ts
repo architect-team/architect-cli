@@ -90,8 +90,12 @@ export default abstract class DependencyManager {
 
     const ignore_keys = ['']; // Ignore all errors
 
+    console.log('parameter (in context):');
+    console.log(initial_component.context.parameters['google_application_credentials_json']);
     const interpolated_component_string = interpolateString(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
     const parsed_yml = parseSourceYml(interpolated_component_string);
+    console.log('interpolated parsed:');
+    console.log((parsed_yml as any).services.api.environment.google_application_credentials_json);
     const spec = validateOrRejectSpec(parsed_yml);
     const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, initial_component.tag, initial_component.instance_metadata);
     validateOrRejectConfig(interpolated_component_config);
