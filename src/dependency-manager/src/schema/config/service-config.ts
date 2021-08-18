@@ -17,8 +17,8 @@ export interface ServiceInterfaceConfig {
   host?: null | string;
   port?: number | string; // // TODO:290: expect number post-interpolation
   protocol?: string;
-  username?: string;
-  password?: string;
+  username?: null | string;
+  password?: null | string;
   url?: string;
   sticky?: boolean | string;
 }

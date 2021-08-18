@@ -95,7 +95,11 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
         }
       }
 
-      res = res.replace(match[0], value === undefined ? '' : value);
+      if (typeof value === 'string' && value.includes('\n')) {
+        res = res.replace(match[0], value === undefined ? '' : JSON.stringify(value.trimEnd()));
+      } else {
+        res = res.replace(match[0], value === undefined ? '' : value);
+      }
       has_matches = true;
     }
   }

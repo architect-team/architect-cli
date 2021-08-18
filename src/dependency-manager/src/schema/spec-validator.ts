@@ -26,7 +26,12 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   const errors: ValidationError[] = [];
   for (const [data_path, messages] of Object.entries(ajv_error_map)) {
     const normalized_path = replaceBrackets(data_path);
-    const value = context_map[normalized_path?.startsWith('.') ? normalized_path.substr(1) : normalized_path];
+    let value = context_map[normalized_path?.startsWith('.') ? normalized_path.substr(1) : normalized_path];
+
+    if (value instanceof Object && JSON.stringify(value).length > 1000) {
+      value = '<truncated-object>';
+    }
+
     errors.push({
       dataPath: data_path,
       message: messages.join(' or '),

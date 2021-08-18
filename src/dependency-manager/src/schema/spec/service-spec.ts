@@ -47,12 +47,12 @@ export class ServiceInterfaceSpec {
   protocol?: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  username?: string;
+  @JSONSchema(AnyOf('null', 'string'))
+  username?: null | string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
-  password?: string;
+  @JSONSchema(AnyOf('null', 'string'))
+  password?: null | string;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })

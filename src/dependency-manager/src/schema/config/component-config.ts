@@ -15,8 +15,8 @@ export interface ComponentInterfaceConfig {
   host?: null | string;
   port?: number | string;
   protocol?: string;
-  username?: string;
-  password?: string;
+  username?: null | string;
+  password?: null | string;
   url: string;
   sticky?: boolean | string;
 
