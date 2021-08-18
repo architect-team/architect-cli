@@ -168,6 +168,10 @@ services:
       web: 8081
     environment:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
+    debug:
+      build:
+        args:
+          NODE_ENV: development
   stateless-api:
     image: heroku/nodejs-hello-world
     interfaces:
