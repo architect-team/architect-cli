@@ -1112,4 +1112,32 @@ describe('interpolation spec v1', () => {
     })
     expect(ingress_edge.consumers_map).keys('test-subdomain')
   });
+
+  it('interpolate parameter for replicas', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      replicas:
+    services:
+      api:
+        replicas: \${{ parameters.replicas }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')), {
+      // TODO:269 allow for number types in values.yml?
+      // @ts-ignore
+      '*': { replicas: 1 },
+    });
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.replicas).to.eq(1);
+  });
 });
