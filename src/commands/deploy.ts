@@ -7,16 +7,18 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
+import Listr, { ListrTask } from 'listr';
 import opener from 'opener';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
+import { Deployment } from '../common/utils/deployment';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -404,10 +406,7 @@ export default class Deploy extends DeployCommand {
 
     const deployment_dtos = [];
     for (const component of components) {
-      if (ComponentVersionSlugUtils.Validator.test(component)) {
-        const parsed_component_version = ComponentVersionSlugUtils.parse(component);
-        const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-      }
+      ComponentVersionSlugUtils.Validator.test(component)
 
       const deploy_dto = {
         component: component,
@@ -441,14 +440,75 @@ export default class Deploy extends DeployCommand {
       return;
     }
 
-    cli.action.start(chalk.blue('Deploying'));
-    await Promise.all(
-      approved_pipelines.map(async (pipeline) => {
-        await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
-        this.log(chalk.green(`${pipeline.component_name} Deployed`));
-      })
-    );
-    cli.action.stop();
+    // TODO: recreate k8s-do cluster with a new platform name and see if brahm's bug comes back up
+
+    let component_deployments: Deployment[] = [];
+    for (const approved_pipeline of approved_pipelines) {
+      const { data: pipeline_deployments } = await this.app.api.get(`/pipelines/${approved_pipeline.pipeline.id}/deployments`);
+      component_deployments = component_deployments.concat(pipeline_deployments.filter((d: Deployment) => d.type === 'component'));
+    }
+
+    let environment_graph = (await this.app.api.get(`/environments/${environment.id}/graph`)).data;
+    const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
+    const deployment_tasks: { [s: string]: ListrTask<any>[] } = {};
+    for (const service_node of service_nodes) {
+      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.name);
+      const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
+      if (!deployment_tasks[component_version_name]) {
+        const component_deployment = component_deployments.find(d => d.id === service_node.deployment_id);
+        if (!component_deployment) {
+          throw new Error(`Couldn't find component deployment`);
+        }
+        deployment_tasks[component_version_name] = [{
+          title: `Pipeline ${component_deployment.pipeline.id}`,
+          task: () => new Promise(async (resolve, reject) => {
+            await PipelineUtils.pollPipeline(this.app.api, component_deployment.pipeline.id);
+            return resolve(true);
+          })
+        }];
+      }
+      deployment_tasks[component_version_name].push({
+        title: `Service ${service_name}`,
+        task: () => new Promise((resolve, reject) => {
+          let service_health_poll_count = 0;
+          const service_health_poll = setInterval(async () => {
+            if (service_health_poll_count > 180) {
+              clearInterval(service_health_poll);
+              return reject(new Error('Deployment timeout'));
+            }
+            const environment_health: { [s: string]: { [s: string]: { [s: string]: any } } } = (await this.app.api.get(`/environments/${environment.id}/health`)).data; // TODO: type
+            if (environment_health[service_node.ref]) {
+              const service_interface_count = Object.keys(environment_health[service_node.ref]).length;
+              let healthy_count = 0;
+              for (const interface_data of Object.values(environment_health[service_node.ref])) {
+                for (const consul_interface_data of Object.values(interface_data)) {
+                  if (consul_interface_data.healthy) {
+                    healthy_count++;
+                  }
+                }
+              }
+              if (healthy_count === service_interface_count) {
+                clearInterval(service_health_poll);
+                return resolve(true);
+              }
+            }
+            service_health_poll_count += 1;
+          }, PipelineUtils.POLL_INTERVAL);
+        })
+      });
+    }
+
+    const all_tasks: ListrTask[] = [];
+    for (const [component_name, component_tasks] of Object.entries(deployment_tasks || {})) {
+      all_tasks.push({
+        title: `Component ${component_name}`,
+        task: () => { return new Listr(component_tasks, { concurrent: true }); }
+      });
+    }
+    const tasks = new Listr(all_tasks, { concurrent: true });
+    tasks.run().catch(err => {
+      this.error(err);
+    });
   }
 
   async run() {

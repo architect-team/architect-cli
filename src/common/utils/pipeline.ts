@@ -21,5 +21,4 @@ export class PipelineUtils {
       }, PipelineUtils.POLL_INTERVAL);
     });
   }
-
 }

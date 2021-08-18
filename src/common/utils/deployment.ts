@@ -9,4 +9,7 @@ export interface Deployment {
       name: string;
     };
   };
+  pipeline: {
+    id: string;
+  }
 }
