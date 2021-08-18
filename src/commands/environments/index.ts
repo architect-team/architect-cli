@@ -25,18 +25,12 @@ export default class Environments extends Command {
       account = await AccountUtils.getAccount(this.app.api, flags.account);
     }
 
-    // Prepare the query params to be reduced to a string
-    const query_params: any = {
+    const params = {
       q: args.query || '',
+      account_id: account?.id,
     };
-    if (account) {
-      query_params['account_id'] = account.id;
-    }
 
-    // Reduces an object into a string of query parameters
-    const query_string = Object.entries(query_params).map(key_val => key_val.join('=')).join('&');
-
-    const { data: { rows: environments } } = await this.app.api.get(`/environments?${query_string}`);
+    const { data: { rows: environments } } = await this.app.api.get(`/environments`, { params });
 
     if (!environments.length) {
       this.log('You have not configured any environments yet.');
