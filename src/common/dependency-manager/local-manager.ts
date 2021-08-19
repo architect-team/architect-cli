@@ -3,10 +3,9 @@ import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec } from '../../dependency-manager/src';
-import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml, loadSourceYmlFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
+import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 import PortUtil from '../utils/port';
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -129,16 +128,6 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     return component_configs;
-  }
-
-  async validateComponent(component: ComponentConfig): Promise<[ComponentConfig, ValidationError[]]> {
-    const [validated_component, errors] = await super.validateComponent(component);
-    if (component.instance_metadata?.local_path?.startsWith('file:') && errors.length) {
-      const component_path = component.instance_metadata.local_path.substr('file:'.length);
-      const { source_path: file_path, source_yml: file_contents } = loadSourceYmlFromPathOrReject(component_path);
-      throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
-    }
-    return [validated_component, errors];
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true) {

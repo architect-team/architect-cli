@@ -1,6 +1,6 @@
 import Ajv, { ErrorObject } from "ajv";
 import { Dictionary } from '../utils/dictionary';
-import { ValidationError } from '../utils/errors';
+import { ValidationError, ValidationErrors } from '../utils/errors';
 import { buildContextMap, replaceBrackets } from '../utils/interpolation';
 import { ParsedYaml } from './component-builder';
 import { ARCHITECT_JSON_SCHEMA } from './json-schema';
@@ -61,11 +61,11 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
       value = '<truncated-object>';
     }
 
-    errors.push({
-      dataPath: error.dataPath,
-      message: error.message,
+    errors.push(new ValidationError({
+      path: error.dataPath.replace('.', ''), // Replace leading .
+      message: error.message || 'Unknown error',
       value: value === undefined ? '<unknown>' : value,
-    });
+    }));
   }
 
   return errors;
@@ -84,7 +84,7 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
   if (errors && errors.length) {
-    throw new Error(JSON.stringify(errors, null, 2));
+    throw new ValidationErrors(errors);
   }
 
   return parsed_yml as ComponentSpec;

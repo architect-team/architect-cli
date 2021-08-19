@@ -1,5 +1,6 @@
 import leven from 'leven';
 import { Dictionary } from './dictionary';
+import { ValidationErrors } from './errors';
 
 const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
 
@@ -135,7 +136,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
   }
 
   if (errors.length) {
-    throw new Error(JSON.stringify(errors, null, 2));
+    throw new ValidationErrors(errors);
   }
 
   return res;

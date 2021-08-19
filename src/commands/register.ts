@@ -78,7 +78,7 @@ export default class ComponentRegister extends Command {
   private async registerComponent(config_path: string, tag: string) {
 
     buildConfigFromPath(config_path, tag); // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
-    const { component_spec, source_path } = buildSpecFromPath(config_path, tag);
+    const { component_spec, source_path } = buildSpecFromPath(config_path);
     const component_path = path.dirname(source_path);
     const new_spec = component_spec;
 

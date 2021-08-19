@@ -65,7 +65,7 @@ export class BuildSpec {
   dockerfile?: string;
 }
 
-export class ResourceSpec {
+export abstract class ResourceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
   description?: string;

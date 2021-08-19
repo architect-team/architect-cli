@@ -1,4 +1,4 @@
-import { ValidationError } from '../../utils/errors';
+import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { ComponentConfig } from './component-config';
 
 export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): ValidationError[] => {
@@ -10,14 +10,11 @@ export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): Va
   const duplicates = service_keys.filter(s => task_keys.includes(s));
 
   if (duplicates.length) {
-    const error = new ValidationError();
-    error.property = 'services';
-    error.target = componentConfig;
-    error.value = duplicates;
-    error.constraints = {
-      'Collision': `services and tasks must not share the same keys`,
-    };
-    error.children = [];
+    const error = new ValidationError({
+      path: 'services',
+      message: 'services and tasks must not share the same keys',
+      value: duplicates,
+    });
     errors.push(error);
   }
 
@@ -67,41 +64,29 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
     for (const dependency of dependencies) {
 
       if (task_map[dependency]) {
-        const error = new ValidationError();
-        error.property = 'depends_on';
-        error.target = component;
-        error.value = name;
-        error.constraints = {
-          'no-task-dependency': `${name}.depends_on[${dependency}] must refer to a service, not a task`,
-        };
-        error.children = [];
-
+        const error = new ValidationError({
+          path: 'depends_on',
+          message: `${name}.depends_on[${dependency}] must refer to a service, not a task`,
+          value: name,
+        });
         errors.push(error);
       }
 
       if (!depends_on_map[dependency]) {
-        const error = new ValidationError();
-        error.property = 'depends_on';
-        error.target = component;
-        error.value = name;
-        error.constraints = {
-          'invalid-reference': `${name}.depends_on[${dependency}] must refer to a valid service`,
-        };
-        error.children = [];
-
+        const error = new ValidationError({
+          path: 'depends_on',
+          message: `${name}.depends_on[${dependency}] must refer to a valid service`,
+          value: name,
+        });
         errors.push(error);
       }
     }
     if (isPartOfCircularReference(name, depends_on_map)) {
-      const error = new ValidationError();
-      error.property = 'depends_on';
-      error.target = component;
-      error.value = name;
-      error.constraints = {
-        'circular-reference': `${name}.depends_on must not contain a circular reference`,
-      };
-      error.children = [];
-
+      const error = new ValidationError({
+        path: 'depends_on',
+        message: `${name}.depends_on must not contain a circular reference`,
+        value: name,
+      });
       errors.push(error);
     }
   }
@@ -122,6 +107,6 @@ export const validateOrRejectConfig = (component: ComponentConfig): void => {
   const errors = validateConfig(component);
 
   if (errors.length) {
-    throw new Error(JSON.stringify(errors));
+    throw new ValidationErrors(errors);
   }
 };

@@ -3,7 +3,6 @@
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
-import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
 import { tryReadFromPaths } from '../utils/files';
 import NULL_TYPE from '../utils/yaml/null';
 import { ComponentConfig } from './config/component-config';
@@ -60,17 +59,13 @@ export const buildSpecFromYml = (source_yml: string): ComponentSpec => {
   return validateOrRejectSpec(parsed_yml);
 };
 
-export const buildSpecFromPath = (spec_path: string, tag: string): { component_spec: ComponentSpec; source_path: string } => {
+export const buildSpecFromPath = (spec_path: string): { component_spec: ComponentSpec; source_path: string } => {
   const { source_path, source_yml } = loadSourceYmlFromPathOrReject(spec_path);
 
-  try {
-    return {
-      component_spec: buildSpecFromYml(source_yml),
-      source_path,
-    };
-  } catch (err) {
-    throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
-  }
+  return {
+    component_spec: buildSpecFromYml(source_yml),
+    source_path,
+  };
 };
 
 export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
@@ -85,17 +80,13 @@ export const buildConfigFromObject = (config: Record<string, any>, tag: string):
   return buildConfigFromYml(source_yaml, tag);
 };
 
-export const buildConfigFromPath = (spec_path: string, tag: string): { component_config: ComponentConfig; source_path: string } => {
+export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { component_config: ComponentConfig; source_path: string } => {
   const { source_path, source_yml } = loadSourceYmlFromPathOrReject(spec_path);
 
-  try {
-    return {
-      component_config: buildConfigFromYml(source_yml, tag),
-      source_path,
-    };
-  } catch (err) {
-    throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
-  }
+  return {
+    component_config: buildConfigFromYml(source_yml, tag),
+    source_path,
+  };
 };
 
 export const deepMergeSpecIntoComponent = (src: Partial<ComponentSpec>, target: ComponentConfig): ComponentConfig => {

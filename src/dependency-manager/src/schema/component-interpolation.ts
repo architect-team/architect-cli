@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { ValidationError } from '../utils/errors';
+import { ValidationError, ValidationErrors } from '../utils/errors';
 import { interpolateString } from '../utils/interpolation';
 import { parseSourceYml } from './component-builder';
 import { ComponentConfig } from './config/component-config';
@@ -34,7 +34,7 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
 export const interpolateConfigOrReject = (config: ComponentConfig, ignore_keys: string[], validate = true): ComponentConfig => {
   const { interpolated_config, errors } = interpolateConfig(config, ignore_keys, validate);
   if (errors?.length) {
-    throw new Error(JSON.stringify(errors, null, 2));
+    throw new ValidationErrors(errors);
   }
   return interpolated_config;
 };

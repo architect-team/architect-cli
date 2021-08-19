@@ -573,12 +573,11 @@ export default abstract class DependencyManager {
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.parameters)) {
       if (pv.required !== `false` && (pv.default === undefined)) {
-        const validation_error = new ValidationError();
-        validation_error.property = `components.${component.name}.parameters.${pk}`;
-        validation_error.target = pv;
-        validation_error.value = pv.default;
-        validation_error.constraints = { Required: `${pk} is required` };
-        validation_error.children = [];
+        const validation_error = new ValidationError({
+          path: `components.${component.name}.parameters.${pk}`,
+          message: `${pk} is a required parameter`,
+          value: pv.default,
+        });
         validation_errors.push(validation_error);
       }
     }
