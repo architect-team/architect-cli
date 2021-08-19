@@ -16,7 +16,9 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../dependency-manager/src';
+import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
+import { ComponentConfig } from '../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -359,9 +361,9 @@ export default class Deploy extends DeployCommand {
 
       let component_version = config_or_component;
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
-        const component_config = await ComponentConfigBuilder.buildFromPath(config_or_component);
-        linked_components[component_config.getName()] = config_or_component;
-        component_version = component_config.getName();
+        const res = buildConfigFromPath(config_or_component, Slugs.DEFAULT_TAG);
+        linked_components[res.component_config.name] = config_or_component;
+        component_version = res.component_config.name;
       }
       component_versions.push(component_version);
     }

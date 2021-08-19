@@ -17,12 +17,16 @@
   "homepage": "https://github.com/architect-team/architect-cli",
   "license": "GPL-3.0",
   "dependencies": {
+    "ajv": "^6.12.6",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
+    "class-validator-jsonschema": "^3.1.0",
+    "deepmerge": "^4.2.2",
     "fs-extra": "^8.1.0",
     "js-yaml": "^4.1.0",
+    "leven": "^3.1.0",
     "matcher": "^4.0.0",
-    "mustache": "^4.1.0",
+    "openapi3-ts": "^2.0.1",
     "reflect-metadata": "0.1.13",
     "shell-quote": "^1.7.2",
     "tslib": "2.1.0",
@@ -31,15 +35,13 @@
   "devDependencies": {
     "@types/fs-extra": "^8.0.1",
     "@types/js-yaml": "^4.0.1",
-    "@types/mustache": "^4.1.1",
     "@types/shell-quote": "^1.7.0",
-    "typescript": "^3.9.7",
-    "typescript-json-schema": "^0.49.0"
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b",
-    "generate:schema:v1": "typescript-json-schema ./src/spec/v1-component-spec.ts ComponentSpecV1 > ./v1-component-schema.json"
+    "generate:schema": "ts-node --project ./tsconfig.json ./src/schema/generate-json-schema.ts"
   },
   "main": "lib/index.js",
   "files": [

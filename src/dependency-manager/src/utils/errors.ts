@@ -1,8 +1,42 @@
-import { ValidationError } from 'class-validator';
 import { Dictionary } from './dictionary';
-import { replaceBrackets } from './interpolation';
+import { replaceInterpolationBrackets } from './interpolation';
 
 export class ArchitectError extends Error { }
+
+export class ValidationError {
+  target?: object;
+  property?: string;
+  value?: any;
+  constraints?: {
+    [type: string]: string;
+  };
+  children?: ValidationError[];
+  contexts?: {
+    [type: string]: any;
+  };
+
+  // TODO:285: we can remove most of these fields from ValidationError, they were experimental on ErrorObject from @atlassian/better-ajv-error
+  keyword?: string;
+  dataPath?: string;
+  schemaPath?: string;
+  // params?: ErrorParameters;
+  // Added to validation errors of propertyNames keyword schema
+  propertyName?: string;
+  // Excluded if messages set to false.
+  message?: string;
+  // These are added with the `verbose` option.
+  schema?: any;
+  parentSchema?: object;
+  data?: any;
+
+  error?: string;
+  path?: string;
+  suggestion?: string;
+
+  start?: { line: number; column: number; offset: number };
+  end?: { line: number; column: number; offset: number };
+
+}
 
 export class ValidationErrors extends ArchitectError {
   errors: Dictionary<Dictionary<string | number>>;
@@ -57,7 +91,7 @@ export const flattenValidationErrors = (errors: ValidationError[], property_pref
 };
 
 export const flattenValidationErrorsWithLineNumbers = (errors: ValidationError[], file_contents: string): Dictionary<Dictionary<string | number>> => {
-  file_contents = replaceBrackets(file_contents);
+  file_contents = replaceInterpolationBrackets(file_contents);
 
   const res = flattenValidationErrors(errors);
   for (const [error_key, error_obj] of Object.entries(res)) {

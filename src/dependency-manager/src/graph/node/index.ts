@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { InterfaceSpec } from '../../spec/common/interface-spec';
+import { ServiceInterfaceConfig } from '../../schema/config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 
@@ -14,7 +14,7 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   abstract ref: string;
 
-  abstract get interfaces(): Dictionary<InterfaceSpec>;
+  abstract get interfaces(): Dictionary<ServiceInterfaceConfig>;
 
   instance_id = '';
 

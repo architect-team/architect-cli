@@ -1,5 +1,4 @@
-import { ValidationError } from 'class-validator';
-import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../../utils/errors';
+import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from '../../utils/errors';
 
 export class ValuesConfig {
   static validate(values_dict: any) {
