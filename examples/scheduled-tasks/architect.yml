@@ -10,27 +10,16 @@ tasks:
     command:
       - sh
       - -c
-      - sleep 30s && curl $SERVER_URL
+      - curl $SERVER_URL
 
     environment:
       SERVER_URL: ${{ services.api.interfaces.main.url }}
 
 services:
-  worker:
-    image: heroku/nodejs-hello-world
-    environment:
-      SERVER_URL: ${{ services.api.interfaces.main.url }}
-      TEST: 13
   api:
     image: heroku/nodejs-hello-world
     interfaces:
       main: 3000
-      main2: 3000
-    labels:
-      architect.io/environment: dev
-      hmm: dev
-      architect.io/Blah: haha2
 
 interfaces:
   api: ${{ services.api.interfaces.main.url }}
-  api2: ${{ services.api.interfaces.main2.url }}
