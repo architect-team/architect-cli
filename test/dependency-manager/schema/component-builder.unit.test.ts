@@ -1,6 +1,7 @@
 import { expect } from '@oclif/test';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
+import path from 'path';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
@@ -43,7 +44,7 @@ describe('component builder unit test', function () {
   it(`loadSpecFromPathOrReject loads valid directory`, async () => {
     const { file_path, file_contents } = loadSpecFromPathOrReject(`test/mocks`);
 
-    expect(file_path).to.equal(`test/mocks/architect.yml`);
+    expect(file_path).to.equal(`test${path.sep}mocks${path.sep}architect.yml`);
     expect(file_contents).to.contain('name: examples/superset');
   });
 
