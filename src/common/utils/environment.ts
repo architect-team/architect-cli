@@ -2,6 +2,7 @@ import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { Account } from './account';
 
 export interface Environment {
@@ -10,6 +11,12 @@ export interface Environment {
   platform: {
     type: string;
   };
+}
+
+export type EnvironmentHealth = Dictionary<Dictionary<Dictionary<ServiceInterfaceHealth>>>;
+interface ServiceInterfaceHealth {
+  outputs: [];
+  healthy: boolean;
 }
 
 export class EnvironmentUtils {

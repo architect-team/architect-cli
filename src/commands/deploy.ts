@@ -16,7 +16,7 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Deployment } from '../common/utils/deployment';
 import * as Docker from '../common/utils/docker';
-import { EnvironmentUtils } from '../common/utils/environment';
+import { EnvironmentHealth, EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
 import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceVersionSlugUtils } from '../dependency-manager/src';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -452,10 +452,11 @@ export default class Deploy extends DeployCommand {
     for (const service_node of service_nodes) {
       const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.name);
       const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
+
       if (!deployment_tasks[component_version_name]) {
         const component_deployment = component_deployments.find(d => d.id === service_node.deployment_id);
         if (!component_deployment) {
-          throw new Error(`Couldn't find component deployment`);
+          continue; // skip, service already exists in environment and isn't currently being deployed
         }
         deployment_tasks[component_version_name] = [{
           title: `Pipeline ${component_deployment.pipeline.id}`,
@@ -469,9 +470,10 @@ export default class Deploy extends DeployCommand {
           const service_health_poll = setInterval(async () => {
             if (service_health_poll_count > 180) {
               clearInterval(service_health_poll);
-              return reject(new Error('Deployment timeout'));
+              return reject(new Error(`Service ${service_name} deployment timed out`));
             }
-            const environment_health: { [s: string]: { [s: string]: { [s: string]: any } } } = (await this.app.api.get(`/environments/${environment.id}/health`)).data; // TODO: type
+
+            const environment_health: EnvironmentHealth = (await this.app.api.get(`/environments/${environment.id}/health`)).data;
             if (environment_health[service_node.ref]) {
               const service_interface_count = Object.keys(environment_health[service_node.ref]).length;
               let healthy_count = 0;
