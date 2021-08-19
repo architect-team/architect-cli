@@ -210,8 +210,11 @@ export default class Deploy extends DeployCommand {
             const host = new RegExp(/Host\(`(.*?)`\)/g);
             const host_match = host.exec(host_rule);
             if (host_match) {
-              this.log(`${chalk.blue(`http://${host_match[1]}:${gateway_port}/`)} => ${service_name}`);
-              exposed_interfaces.push(`http://${host_match[1]}:${gateway_port}/`);
+              const gateway_url = `http://${host_match[1]}:${gateway_port}/`;
+              if (!exposed_interfaces.includes(gateway_url)) {
+                this.log(`${chalk.blue(gateway_url)} => ${service_name}`);
+                exposed_interfaces.push(gateway_url);
+              }
             }
           }
         }
