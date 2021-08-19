@@ -112,7 +112,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
 export const validateConfig = (component: ComponentConfig): ValidationError[] => {
   const errors: ValidationError[] = [];
 
-  errors.push(...validateServiceAndTaskKeys(component)); //TODO:289: make new ticket to explore moving this to JSONSchema
+  errors.push(...validateServiceAndTaskKeys(component));
   errors.push(...validateDependsOn(component));
 
   return errors;

@@ -2,10 +2,11 @@ import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { ResourceSpec } from './resource-spec';
 
+@JSONSchema({ additionalProperties: false })
 export class TaskSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
-  debug?: TaskSpec;
+  debug?: Partial<TaskSpec>;
 
   @IsOptional()
   @JSONSchema({ type: 'string' })
