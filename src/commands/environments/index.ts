@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import { Account, AccountUtils } from '../../common/utils/account';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Environments extends Command {
@@ -8,6 +9,7 @@ export default class Environments extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
   };
 
   static args = [{
@@ -16,9 +18,19 @@ export default class Environments extends Command {
   }];
 
   async run() {
-    const { args } = this.parse(Environments);
+    const { args, flags } = this.parse(Environments);
 
-    const { data: { rows: environments } } = await this.app.api.get(`/environments?q=${args.query || ''}`);
+    let account: Account | undefined = undefined;
+    if (flags.account) {
+      account = await AccountUtils.getAccount(this.app.api, flags.account);
+    }
+
+    const params = {
+      q: args.query || '',
+      account_id: account?.id,
+    };
+
+    const { data: { rows: environments } } = await this.app.api.get(`/environments`, { params });
 
     if (!environments.length) {
       this.log('You have not configured any environments yet.');
