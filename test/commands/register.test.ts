@@ -70,8 +70,8 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/hello-world')
-        expect(body.config.services.api.image).to.eq('heroku/nodejs-hello-world')
+        expect(body.spec.name).to.eq('examples/hello-world')
+        expect(body.spec.services.api.image).to.eq('heroku/nodejs-hello-world')
         return body;
       })
       .reply(200, {})
@@ -146,8 +146,8 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/database-seeding')
-        expect(body.config.services.app.image).to.eq('repostory/account/some-image@some-digest')
+        expect(body.spec.name).to.eq('examples/database-seeding')
+        expect(body.spec.services.app.image).to.eq('repostory/account/some-image@some-digest')
         return body;
       })
       .reply(200, {})

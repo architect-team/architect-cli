@@ -5,7 +5,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
-import { buildConfigFromYml, loadSpecFromPathOrReject, parseSourceYml, Slugs } from '../../../src/dependency-manager/src';
+import { buildConfigFromYml, loadSourceYmlFromPathOrReject, parseSourceYml, Slugs } from '../../../src/dependency-manager/src';
 
 describe('component builder unit test', function () {
   beforeEach(async () => {
@@ -34,37 +34,37 @@ describe('component builder unit test', function () {
     moxios.uninstall();
   });
 
-  it(`loadSpecFromPathOrReject loads valid file`, async () => {
-    const { file_path, file_contents } = loadSpecFromPathOrReject(`test/mocks/architect.yml`);
+  it(`loadSourceYmlFromPathOrReject loads valid file`, async () => {
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
 
-    expect(file_path).to.equal(`test/mocks/architect.yml`);
-    expect(file_contents).to.contain('name: examples/superset');
+    expect(source_path).to.equal(`test/mocks/architect.yml`);
+    expect(source_yml).to.contain('name: examples/superset');
   });
 
-  it(`loadSpecFromPathOrReject loads valid directory`, async () => {
-    const { file_path, file_contents } = loadSpecFromPathOrReject(`test/mocks`);
+  it(`loadSourceYmlFromPathOrReject loads valid directory`, async () => {
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks`);
 
-    expect(file_path).to.equal(`test${path.sep}mocks${path.sep}architect.yml`);
-    expect(file_contents).to.contain('name: examples/superset');
+    expect(source_path).to.equal(`test${path.sep}mocks${path.sep}architect.yml`);
+    expect(source_yml).to.contain('name: examples/superset');
   });
 
-  it(`loadSpecFromPathOrReject throws if given invalid directory`, async () => {
-    expect(() => loadSpecFromPathOrReject(`/non-existant/directory`)).to.throw('No component config file found at /non-existant/directory');
+  it(`loadSourceYmlFromPathOrReject throws if given invalid directory`, async () => {
+    expect(() => loadSourceYmlFromPathOrReject(`/non-existant/directory`)).to.throw('No component config file found at /non-existant/directory');
   });
 
   it(`parseSourceYml parses yaml into object with blank fields set to null`, async () => {
-    const { file_path, file_contents } = loadSpecFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
 
-    const parsed_yml = parseSourceYml(file_contents);
+    const parsed_yml = parseSourceYml(source_yml);
 
     expect((parsed_yml as any).name).to.equal('examples/superset');
     expect((parsed_yml as any).parameters.param_unset).to.be.null; // checks and makes sure we're properly parsing empty keys to 'null'
   });
 
   it(`buildConfigFromYml parses yaml and builds into config`, async () => {
-    const { file_path, file_contents } = loadSpecFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
 
-    const config = buildConfigFromYml(file_contents, Slugs.DEFAULT_TAG);
+    const config = buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
 
     expect(config.name).to.equal('examples/superset');
     expect(config.tag).to.equal(Slugs.DEFAULT_TAG);
