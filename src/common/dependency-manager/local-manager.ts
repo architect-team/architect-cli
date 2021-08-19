@@ -2,8 +2,8 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec, validateOrRejectSpec } from '../../dependency-manager/src';
-import { buildConfigFromPath, buildConfigFromYml, loadSpecFromPathOrReject, parseSourceYml } from '../../dependency-manager/src/schema/component-builder';
+import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec } from '../../dependency-manager/src';
+import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml, loadSourceYmlFromPathOrReject } from '../../dependency-manager/src/schema/component-builder';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import { flattenValidationErrorsWithLineNumbers, ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
@@ -55,8 +55,7 @@ export default class LocalDependencyManager extends DependencyManager {
     config.instance_metadata = instance_metadata;
 
     // Set debug values
-    const parsed_yml = parseSourceYml(config.source_yml);
-    const merged_spec = validateOrRejectSpec(parsed_yml);
+    const merged_spec = buildSpecFromYml(config.source_yml);
 
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.interfaces[interface_to];
@@ -136,7 +135,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const [validated_component, errors] = await super.validateComponent(component);
     if (component.instance_metadata?.local_path?.startsWith('file:') && errors.length) {
       const component_path = component.instance_metadata.local_path.substr('file:'.length);
-      const { file_path, file_contents } = loadSpecFromPathOrReject(component_path);
+      const { source_path: file_path, source_yml: file_contents } = loadSourceYmlFromPathOrReject(component_path);
       throw new ValidationErrors(file_path, flattenValidationErrorsWithLineNumbers(errors, file_contents.toString()));
     }
     return [validated_component, errors];

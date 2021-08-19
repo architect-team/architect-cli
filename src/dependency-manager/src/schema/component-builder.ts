@@ -1,5 +1,6 @@
 
 /* eslint-disable no-empty */
+import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
 import { flattenValidationErrorsWithLineNumbers, ValidationErrors } from '../utils/errors';
@@ -8,6 +9,7 @@ import NULL_TYPE from '../utils/yaml/null';
 import { ComponentConfig } from './config/component-config';
 import { validateOrRejectConfig } from './config/component-validator';
 import { validateOrRejectSpec } from './spec-validator';
+import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec } from './spec/transform/component-transform';
 
 class MissingConfigFileError extends Error {
@@ -29,12 +31,16 @@ const specPaths = (input: string) => {
   ];
 };
 
-export const loadSpecFromPathOrReject = (config_path: string): { file_path: string; file_contents: string } => {
+export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path: string; source_yml: string } => {
   try {
-    const try_files = specPaths(config_path);
-    return tryReadFromPaths(try_files);
+    const try_files = specPaths(spec_path);
+    const res = tryReadFromPaths(try_files);
+    return {
+      source_path: res.file_path,
+      source_yml: res.file_contents,
+    };
   } catch (err) {
-    throw new MissingConfigFileError(config_path);
+    throw new MissingConfigFileError(spec_path);
   }
 };
 
@@ -45,22 +51,42 @@ export const parseSourceYml = (source_yml: string): ParsedYaml => {
   return yaml.load(source_yml, yaml_schema);
 };
 
-export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
-  const parsed_yml = parseSourceYml(source_yml);
+export const dumpSpecToSourceYml = (spec: ComponentSpec): string => {
+  return yaml.dump(spec);
+};
 
-  const spec = validateOrRejectSpec(parsed_yml);
+export const buildSpecFromYml = (source_yml: string): ComponentSpec => {
+  const parsed_yml = parseSourceYml(source_yml);
+  return validateOrRejectSpec(parsed_yml);
+};
+
+export const buildSpecFromPath = (spec_path: string, tag: string): { component_spec: ComponentSpec; source_path: string } => {
+  const { source_path, source_yml } = loadSourceYmlFromPathOrReject(spec_path);
+
+  try {
+    return {
+      component_spec: buildSpecFromYml(source_yml),
+      source_path,
+    };
+  } catch (err) {
+    throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
+  }
+};
+
+export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
+  const spec = buildSpecFromYml(source_yml);
   const config = transformComponentSpec(spec, source_yml, tag);
   validateOrRejectConfig(config);
   return config;
 };
 
-export const buildConfigFromJson = (config: Record<string, any>, tag: string): ComponentConfig => {
+export const buildConfigFromObject = (config: Record<string, any>, tag: string): ComponentConfig => {
   const source_yaml = yaml.dump(config);
   return buildConfigFromYml(source_yaml, tag);
 };
 
 export const buildConfigFromPath = (spec_path: string, tag: string): { component_config: ComponentConfig; source_path: string } => {
-  const { file_path: source_path, file_contents: source_yml } = loadSpecFromPathOrReject(spec_path);
+  const { source_path, source_yml } = loadSourceYmlFromPathOrReject(spec_path);
 
   try {
     return {
@@ -70,4 +96,13 @@ export const buildConfigFromPath = (spec_path: string, tag: string): { component
   } catch (err) {
     throw new ValidationErrors(source_path, flattenValidationErrorsWithLineNumbers(err, source_yml));
   }
+};
+
+export const deepMergeSpecIntoComponent = (src: Partial<ComponentSpec>, target: ComponentConfig): ComponentConfig => {
+  const spec = buildSpecFromYml(target.source_yml);
+  const merged_yml = deepmerge(src, spec);
+  const new_spec = validateOrRejectSpec(merged_yml);
+  const merged_string = dumpSpecToSourceYml(merged_yml);
+
+  return transformComponentSpec(new_spec, merged_string, target.tag);
 };

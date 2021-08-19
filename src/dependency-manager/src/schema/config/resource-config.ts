@@ -29,15 +29,15 @@ export interface ResourceConfig {
   ref: string;
   tag: string;
   description?: string;
-  image?: string;
+  image?: string; // TODO:290: not optional
   command?: string[];
   entrypoint?: string[];
   language?: string;
   debug?: ResourceConfig;
-  environment: Dictionary<string | null>;
+  environment: Dictionary<string | null>; // TODO:290:Dictionary<string>
   volumes: Dictionary<VolumeConfig>;
   build: BuildConfig;
-  cpu?: number | string;
+  cpu?: number | string; // TODO:290:number
   memory?: string;
   deploy?: DeployConfig;
   depends_on: string[];
