@@ -115,7 +115,7 @@ export default class ComponentRegister extends Command {
 
     const component_dto = {
       tag: tag,
-      spec: new_spec,
+      config: new_spec,
     };
 
     let previous_config_data;
