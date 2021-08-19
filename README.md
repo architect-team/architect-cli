@@ -213,6 +213,7 @@ ARGUMENTS
   QUERY  Search term used to filter the results
 
 OPTIONS
+  -a, --account=account  Architect account
   -h, --help  show CLI help
 
 ALIASES
@@ -370,6 +371,7 @@ ARGUMENTS
   QUERY  Search query used to filter results
 
 OPTIONS
+  -a, --account=account  Architect account
   -h, --help  show CLI help
 
 ALIASES
