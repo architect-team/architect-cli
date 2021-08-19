@@ -4,10 +4,7 @@ import { Dictionary } from '../../utils/dictionary';
 import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from '../json-schema-annotations';
 import { ResourceSpec } from './resource-spec';
 
-@JSONSchema({
-  ...ExclusiveOr('cpu', 'memory'),
-  additionalProperties: false,
-})
+@JSONSchema(ExclusiveOr('cpu', 'memory'))
 export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
@@ -18,7 +15,6 @@ export class ScalingMetricsSpec {
   memory?: string;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ScalingSpec {
   @Allow()
   @JSONSchema(AnyOf('number', 'string'))
@@ -32,10 +28,7 @@ export class ScalingSpec {
   metrics!: ScalingMetricsSpec;
 }
 
-@JSONSchema({
-  ...ExclusiveOr('port', 'url'),
-  additionalProperties: false,
-})
+@JSONSchema(ExclusiveOr('port', 'url'))
 export class ServiceInterfaceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -70,10 +63,7 @@ export class ServiceInterfaceSpec {
   sticky?: boolean | string;
 }
 
-@JSONSchema({
-  ...ExclusiveOr("command", "path"),
-  additionalProperties: false,
-})
+@JSONSchema(ExclusiveOr("command", "path"))
 export class LivenessProbeSpec {
   @IsOptional()
   @JSONSchema(AnyOf('number', 'string'))
@@ -109,7 +99,6 @@ export class LivenessProbeSpec {
   port!: number | string;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()

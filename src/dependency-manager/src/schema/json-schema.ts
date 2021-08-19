@@ -100,6 +100,17 @@ const generateSpec = (): SchemaObject => {
     refPointerPrefix: REF_PREFIX,
   });
 
+  for (const definition of Object.values(raw_definitions)) {
+    if (!definition.additionalProperties) {
+      definition.additionalProperties = false;
+      for (const property of Object.values(definition.properties || {}) as any[]) {
+        if (!property.$ref && !property.additionalProperties && property.type === 'object') {
+          property.additionalProperties = false;
+        }
+      }
+    }
+  }
+
   // we need to do a little bit of manual manipulation to add the debug spec
   const definitions = mergeDebugSpec(raw_definitions);
 

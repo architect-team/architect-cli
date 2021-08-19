@@ -54,6 +54,11 @@ export const buildConfigFromYml = (source_yml: string, tag: string): ComponentCo
   return config;
 };
 
+export const buildConfigFromJson = (config: Record<string, any>, tag: string): ComponentConfig => {
+  const source_yaml = yaml.dump(config);
+  return buildConfigFromYml(source_yaml, tag);
+};
+
 export const buildConfigFromPath = (spec_path: string, tag: string): { component_config: ComponentConfig; source_path: string } => {
   const { file_path: source_path, file_contents: source_yml } = loadSpecFromPathOrReject(spec_path);
 

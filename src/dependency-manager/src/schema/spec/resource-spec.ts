@@ -4,7 +4,6 @@ import { Dictionary } from '../../utils/dictionary';
 import { Slugs } from '../../utils/slugs';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, OneOf, StringOrStringArray } from '../json-schema-annotations';
 
-@JSONSchema({ additionalProperties: false })
 export class DeployModuleSpec {
   @IsString()
   @JSONSchema({ type: 'string' })
@@ -15,7 +14,6 @@ export class DeployModuleSpec {
   inputs!: Dictionary<string | null>;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class DeploySpec {
   @IsString()
   @JSONSchema({ type: 'string' })
@@ -26,10 +24,7 @@ export class DeploySpec {
   modules!: Dictionary<DeployModuleSpec>;
 }
 
-@JSONSchema({
-  ...ExclusiveOrNeither("host_path", "key"),
-  additionalProperties: false,
-})
+@JSONSchema(ExclusiveOrNeither("host_path", "key"))
 export class VolumeSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -55,10 +50,7 @@ export class VolumeSpec {
 export type EnvironmentSpecValue = boolean | null | number | string;
 export const EnvironmentDictiory = DictionaryOfAny('boolean', 'null', 'number', 'string');
 
-@JSONSchema({
-  ...OneOf("context", "dockerfile"),
-  additionalProperties: false,
-})
+@JSONSchema(OneOf("context", "dockerfile"))
 export class BuildSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })
@@ -73,7 +65,6 @@ export class BuildSpec {
   dockerfile?: string;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ResourceSpec {
   @IsOptional()
   @JSONSchema({ type: 'string' })

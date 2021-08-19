@@ -6,7 +6,6 @@ import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../json-schema-an
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 
-@JSONSchema({ additionalProperties: false })
 export class IngressSpec {
   @IsOptional()
   @JSONSchema({ type: 'boolean' })
@@ -17,7 +16,6 @@ export class IngressSpec {
   subdomain?: string;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ComponentInterfaceSpec {
   @IsOptional()
   @ValidateNested()
@@ -56,7 +54,6 @@ export class ComponentInterfaceSpec {
   sticky?: boolean | string;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ParameterDefinitionSpec {
   @IsOptional()
   @JSONSchema({ type: 'boolean' })
@@ -71,11 +68,9 @@ export class ParameterDefinitionSpec {
   default?: boolean | number | string | null;
 }
 
-@JSONSchema({ additionalProperties: false })
 export class ComponentSpec {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
     message: 'Names must only include letters, numbers, and dashes. Names must be prefixed with an account name (e.g. architect/component-name).',
-    groups: ['developer'],
   })
   @JSONSchema({ type: 'string' })
   name!: string;
