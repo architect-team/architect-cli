@@ -285,52 +285,6 @@ describe('local deploy environment', function () {
 
   const seed_app_ref = ComponentConfig.getNodeRef('examples/database-seeding/app:latest')
   const seed_db_ref = ComponentConfig.getNodeRef('examples/database-seeding/my-demo-db:latest')
-  const echo_ref = ComponentConfig.getNodeRef('examples/echo/api:latest')
-
-  const environment_expected_compose: DockerComposeTemplate = {
-    "version": "3",
-    "services": {
-      [seed_app_ref]: {
-        "ports": [
-          "50000:3000"
-        ],
-        "depends_on": [
-          seed_db_ref
-        ],
-        "environment": {
-          "DATABASE_HOST": seed_db_ref,
-          "DATABASE_PORT": "5432",
-          "DATABASE_USER": "postgres",
-          "DATABASE_PASSWORD": "architect",
-          "DATABASE_SCHEMA": "seeding_demo",
-          "AUTO_DDL": "none"
-        },
-        "build": {
-          "context": path.resolve('./examples/database-seeding'),
-          "dockerfile": "Dockerfile"
-        }
-      },
-      [seed_db_ref]: {
-        "ports": [
-          "50001:5432"
-        ],
-        "environment": {
-          "POSTGRES_DB": "seeding_demo",
-          "POSTGRES_USER": "postgres",
-          "POSTGRES_PASSWORD": "architect"
-        },
-        "image": "postgres:11"
-      },
-      [echo_ref]: {
-        "ports": [
-          "50002:3000",
-        ],
-        "environment": {},
-        "image": "heroku/nodejs-hello-world",
-      }
-    },
-    "volumes": {}
-  }
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -355,6 +309,11 @@ describe('local deploy environment', function () {
           "traefik.port=80",
           "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
           "traefik.http.routers.app.service=app-service",
+          "traefik.http.routers.app.entrypoints=web",
+          "traefik.http.routers.app-https.rule=Host(`app.arc.localhost`)",
+          "traefik.http.routers.app-https.service=app-service",
+          "traefik.http.routers.app-https.entrypoints=websecure",
+          "traefik.http.routers.app-https.tls=true",
           "traefik.http.services.app-service.loadbalancer.server.port=3000",
           "traefik.http.services.app-service.loadbalancer.server.scheme=http"
         ],
@@ -388,12 +347,14 @@ describe('local deploy environment', function () {
           "--accesslog=true",
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
+          "--entryPoints.websecure.address=:443",
           "--providers.docker=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)"
         ],
         "ports": [
           "80:80",
+          "443:443",
           "8080:8080"
         ],
         "volumes": [
@@ -418,6 +379,11 @@ describe('local deploy environment', function () {
           "traefik.port=80",
           "traefik.http.routers.hello.rule=Host(`hello.arc.localhost`)",
           "traefik.http.routers.hello.service=hello-service",
+          "traefik.http.routers.hello.entrypoints=web",
+          "traefik.http.routers.hello-https.rule=Host(`hello.arc.localhost`)",
+          "traefik.http.routers.hello-https.service=hello-service",
+          "traefik.http.routers.hello-https.entrypoints=websecure",
+          "traefik.http.routers.hello-https.tls=true",
           "traefik.http.services.hello-service.loadbalancer.server.port=3000",
           "traefik.http.services.hello-service.loadbalancer.server.scheme=http"
         ],
@@ -434,12 +400,14 @@ describe('local deploy environment', function () {
           "--accesslog=true",
           "--accesslog.filters.statusCodes=400-599",
           "--entryPoints.web.address=:80",
+          "--entryPoints.websecure.address=:443",
           "--providers.docker=true",
           "--providers.docker.exposedByDefault=false",
           "--providers.docker.constraints=Label(`traefik.port`,`80`)"
         ],
         "ports": [
           "80:80",
+          "443:443",
           "8080:8080"
         ],
         "volumes": [

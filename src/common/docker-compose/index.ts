@@ -41,6 +41,7 @@ export class DockerComposeUtils {
 
     const gateway_node = graph.nodes.find((node) => node instanceof GatewayNode);
     const gateway_port = gateway_node?.interfaces._default.port || 80;
+    const gateway_https_port = 443;
 
     const gateway_links = new Set<string>();
     if (gateway_node) {
@@ -59,6 +60,7 @@ export class DockerComposeUtils {
           '--accesslog=true',
           '--accesslog.filters.statusCodes=400-599',
           `--entryPoints.web.address=:${gateway_port}`,
+          `--entryPoints.websecure.address=:${gateway_https_port}`,
           '--providers.docker=true',
           '--providers.docker.exposedByDefault=false',
           `--providers.docker.constraints=Label(\`traefik.port\`,\`${gateway_port}\`)`,
@@ -66,6 +68,8 @@ export class DockerComposeUtils {
         ports: [
           // The HTTP port
           `${gateway_port}:${gateway_port}`,
+          // The HTTPS port
+          `${gateway_https_port}:${gateway_https_port}`,
           // The Web UI(enabled by--api.insecure = true)
           `${await PortUtil.getAvailablePort(8080)}:8080`,
         ],
@@ -269,6 +273,13 @@ export class DockerComposeUtils {
 
           service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}.entrypoints=web`);
+
+          service_to.labels.push(`traefik.http.routers.${interface_name}-https.rule=Host(\`${host}\`)`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}-https.service=${interface_name}-service`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}-https.entrypoints=websecure`);
+          service_to.labels.push(`traefik.http.routers.${interface_name}-https.tls=true`);
+
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
           if (node_to_interface.sticky) {

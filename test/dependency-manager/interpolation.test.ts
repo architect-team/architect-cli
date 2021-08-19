@@ -215,6 +215,11 @@ describe('interpolation spec v1', () => {
         "traefik.port=81",
         "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
         "traefik.http.routers.public.service=public-service",
+        "traefik.http.routers.public.entrypoints=web",
+        "traefik.http.routers.public-https.rule=Host(`public.arc.localhost`)",
+        "traefik.http.routers.public-https.service=public-service",
+        "traefik.http.routers.public-https.entrypoints=websecure",
+        "traefik.http.routers.public-https.tls=true",
         "traefik.http.services.public-service.loadbalancer.server.port=8080",
         "traefik.http.services.public-service.loadbalancer.server.scheme=http"
       ],
@@ -301,6 +306,11 @@ describe('interpolation spec v1', () => {
       "traefik.port=80",
       `traefik.http.routers.${backend_interface_ref}.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
+      `traefik.http.routers.${backend_interface_ref}.entrypoints=web`,
+      `traefik.http.routers.${backend_interface_ref}-https.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
+      `traefik.http.routers.${backend_interface_ref}-https.service=${backend_interface_ref}-service`,
+      `traefik.http.routers.${backend_interface_ref}-https.entrypoints=websecure`,
+      `traefik.http.routers.${backend_interface_ref}-https.tls=true`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
     ])
