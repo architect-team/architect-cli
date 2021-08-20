@@ -125,8 +125,8 @@ export const transformComponentContext = (
 
 export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
-  const services = transformDictionary(transformServiceSpec, spec.services, spec.name, tag);
-  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, tag);
+  const services = transformDictionary(transformServiceSpec, spec.services, spec.name, tag, instance_metadata);
+  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, tag, instance_metadata);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 

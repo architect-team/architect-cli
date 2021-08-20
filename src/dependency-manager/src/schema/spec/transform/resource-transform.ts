@@ -1,6 +1,7 @@
 import { parse as shell_parse } from 'shell-quote';
 import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../../../utils/slugs';
+import { ComponentInstanceMetadata } from '../../config/component-config';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec, VolumeSpec } from '../resource-spec';
 
@@ -99,12 +100,12 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
   }
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string): ResourceConfig => {
+export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
   const { component_account_name, component_name } = ComponentSlugUtils.parse(component_ref);
   return {
     name: key,
-    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, tag),
+    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, tag, instance_metadata?.instance_name),
     tag,
     description: spec.description,
     image: spec.image,
