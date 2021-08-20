@@ -4,7 +4,7 @@ import moxios from 'moxios';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
-import { buildConfigFromPath, Slugs } from '../../../src/dependency-manager/src';
+import { buildConfigFromPath, interpolateConfig, Slugs } from '../../../src/dependency-manager/src';
 
 describe('component interpolation test', function () {
   beforeEach(async () => {
@@ -35,12 +35,21 @@ describe('component interpolation test', function () {
 
   describe('component interpolation', function () {
 
-    it(`test/mocks/architect.yml passes ajv json schema validation`, async () => {
-      const { component_config, source_path } = buildConfigFromPath(`test/mocks/architect.yml`, Slugs.DEFAULT_TAG);
+    it(`interpolates cors array as string`, async () => {
+      const { component_config, source_path } = buildConfigFromPath(`test/mocks/cors/architect.yml`, Slugs.DEFAULT_TAG);
+      expect(source_path).to.equal(`test/mocks/cors/architect.yml`);
 
-      expect(source_path).to.equal(`test/mocks/architect.yml`);
-      expect(component_config).to.not.be.undefined;
+      component_config.context = {
+        ...component_config.context,
+        ingresses: {
+          main: {
+            url: '',
+            consumers: '[]'
+          }
+        }
+      }
+      const interpolated_config = interpolateConfig(component_config, []);
+      expect(interpolated_config.errors).to.be.empty;
     });
-
   });
 });

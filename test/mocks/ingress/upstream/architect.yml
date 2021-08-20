@@ -1,0 +1,16 @@
+name: tests/ingress-upstream
+
+dependencies:
+  tests/ingress-downstream: latest
+
+services:
+  upstream-service:
+    image: ellerbrock/alpine-bash-curl-ssl
+    environment:
+      SUB_ADDR: ${{ dependencies.tests/ingress-downstream.interfaces.downstream.url }}
+      EXT_SUB_ADDR: ${{ dependencies.tests/ingress-downstream.ingresses.downstream.url }}
+    interfaces:
+      main: 8080
+
+interfaces:
+  upstream: ${{ services.upstream-service.interfaces.main.url }}
