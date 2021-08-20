@@ -95,5 +95,5 @@ export const deepMergeSpecIntoComponent = (src: Partial<ComponentSpec>, target: 
   const new_spec = validateOrRejectSpec(merged_yml);
   const merged_string = dumpSpecToSourceYml(merged_yml);
 
-  return transformComponentSpec(new_spec, merged_string, target.tag);
+  return transformComponentSpec(new_spec, merged_string, target.tag, target.instance_metadata);
 };

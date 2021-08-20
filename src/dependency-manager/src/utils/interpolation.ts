@@ -70,6 +70,33 @@ export const buildContextMap = (context: any, include_objects = false) => {
   return context_map;
 };
 
+/**
+ * Check if a value needs to be stringified or not.
+ *
+ * It does if it JSON.parses to an object or if it is a multiline string
+ */
+export const requires_stringify = (value: any): boolean => {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  let needs_stringify = false;
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed === 'object') {
+      needs_stringify = true;
+    }
+    // eslint-disable-next-line no-empty
+  } catch (e) {
+  }
+
+  if (value.includes('\n')) {
+    needs_stringify = true;
+  }
+
+  return needs_stringify;
+};
+
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
@@ -96,7 +123,9 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
         }
       }
 
-      if (typeof value === 'string' && value.includes('\n')) {
+      const stringify = requires_stringify(value);
+
+      if (stringify) {
         res = res.replace(match[0], value === undefined ? '' : JSON.stringify(value.trimEnd()));
       } else {
         res = res.replace(match[0], value === undefined ? '' : value);
