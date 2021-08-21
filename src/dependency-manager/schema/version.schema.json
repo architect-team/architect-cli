@@ -1,7 +1,7 @@
 {
   "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/version.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "All Versions for Architect Schema",
+  "title": "All Versions of Architect.Yml Schema",
   "type": "object",
   "oneOf": [
     {

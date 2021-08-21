@@ -1,12 +1,14 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { SchemaObject } from 'openapi3-ts';
-import { REF_PREFIX } from './json-schema-annotations';
-import { ComponentSpec } from './spec/component-spec';
-import { ResourceSpec } from './spec/resource-spec';
-import { ServiceSpec } from './spec/service-spec';
-import { TaskSpec } from './spec/task-spec';
+import { REF_PREFIX } from '../utils/json-schema-annotations';
+import { ComponentSpec } from './component-spec';
+import { ResourceSpec } from './resource-spec';
+import { ServiceSpec } from './service-spec';
+import { TaskSpec } from './task-spec';
 
 const DEBUG_PREFIX = '_Debug';
+const SCHEMA_TITLE = 'Architect.Yml Schema';
+const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';
 
 /**
  * Recursively searches an object for all keys named `$ref` and splices in `_Debug` to each definition ref.
@@ -118,8 +120,8 @@ const generateSpec = (): SchemaObject => {
   const root_schema = definitions['ComponentSpec'];
 
   return {
-    title: "JSON Schema for Architect.io configuration",
-    $schema: "http://json-schema.org/draft-07/schema",
+    title: SCHEMA_TITLE,
+    $schema: JSONSCHEMA_VERSION,
     ...root_schema,
     definitions,
   };

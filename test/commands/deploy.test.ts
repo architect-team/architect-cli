@@ -3,15 +3,14 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
-import Command from '../../src/base-command';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
-import * as ComponentBuilder from '../../src/dependency-manager/src/schema/component-builder';
-import { buildConfigFromYml } from '../../src/dependency-manager/src/schema/component-builder';
+import * as ComponentBuilder from '../../src/dependency-manager/src/spec/utils/component-builder';
+import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr

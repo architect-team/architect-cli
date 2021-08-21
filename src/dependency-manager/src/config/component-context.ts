@@ -1,4 +1,4 @@
-import { Dictionary } from '../../utils/dictionary';
+import { Dictionary } from '../utils/dictionary';
 import { ComponentInterfaceConfig } from './component-config';
 import { ServiceInterfaceConfig } from './service-config';
 

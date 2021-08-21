@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import { ARCHITECT_JSON_SCHEMA } from './schema/json-schema';
+import { ARCHITECT_JSON_SCHEMA } from './spec/json-schema';
 import { simpleDocs } from './utils/docs';
 
 const markdown = simpleDocs(ARCHITECT_JSON_SCHEMA);

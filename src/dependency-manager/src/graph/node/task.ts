@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { TaskConfig } from '../../schema/config/task-config';
+import { TaskConfig } from '../../config/task-config';
 
 export interface TaskNodeOptions {
   ref: string;

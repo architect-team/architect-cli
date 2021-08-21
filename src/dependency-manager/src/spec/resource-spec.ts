@@ -1,8 +1,8 @@
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { Dictionary } from '../../utils/dictionary';
-import { Slugs } from '../../utils/slugs';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, OneOf, StringOrStringArray } from '../json-schema-annotations';
+import { Dictionary } from '../utils/dictionary';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, OneOf, StringOrStringArray } from '../utils/json-schema-annotations';
+import { Slugs } from '../utils/slugs';
 
 export class DeployModuleSpec {
   @IsString()

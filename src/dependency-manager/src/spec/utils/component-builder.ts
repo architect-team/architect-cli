@@ -3,13 +3,13 @@
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
-import { replaceFileReference, tryReadFromPaths } from '../utils/files';
-import NULL_TYPE from '../utils/yaml/null';
-import { ComponentConfig } from './config/component-config';
-import { validateOrRejectConfig } from './config/component-validator';
+import { ComponentConfig } from '../../config/component-config';
+import { validateOrRejectConfig } from '../../config/component-validator';
+import { replaceFileReference, tryReadFromPaths } from '../../utils/files';
+import NULL_TYPE from '../../utils/yaml/null';
+import { ComponentSpec } from '../component-spec';
+import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
-import { ComponentSpec } from './spec/component-spec';
-import { transformComponentSpec } from './spec/transform/component-transform';
 
 class MissingConfigFileError extends Error {
   constructor(filepath: string) {

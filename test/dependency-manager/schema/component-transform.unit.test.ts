@@ -34,16 +34,16 @@ describe('component transform unit test', function () {
   });
 
   it(`transformComponentSpec successfully transforms spec without instance_metadata`, async () => {
-    const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     const spec = buildSpecFromYml(source_yml);
     const config = transformComponentSpec(spec, source_yml, Slugs.DEFAULT_TAG);
 
-    expect(config.services['api-db'].ref).to.equal('examples/superset/api-db:latest');
+    expect(config.services['api-db'].ref).to.equal('tests/superset/api-db:latest');
   });
 
   it(`transformComponentSpec successfully transforms spec with instance_metadata`, async () => {
-    const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     const instance_metadata = {
       instance_name: 'instance-1',
@@ -53,6 +53,6 @@ describe('component transform unit test', function () {
     const spec = buildSpecFromYml(source_yml);
     const config = transformComponentSpec(spec, source_yml, Slugs.DEFAULT_TAG, instance_metadata);
 
-    expect(config.services['api-db'].ref).to.equal('examples/superset/api-db:latest@instance-1');
+    expect(config.services['api-db'].ref).to.equal('tests/superset/api-db:latest@instance-1');
   });
 });

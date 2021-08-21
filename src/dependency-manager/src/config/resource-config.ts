@@ -1,4 +1,4 @@
-import { Dictionary } from '../../utils/dictionary';
+import { Dictionary } from '../utils/dictionary';
 
 export interface DeployModuleConfig {
   path: string;

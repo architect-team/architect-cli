@@ -1,7 +1,7 @@
 import { parse as shell_parse } from 'shell-quote';
-import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../../config/component-config';
 import { LivenessProbeConfig, ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
+import { Dictionary, transformDictionary } from '../../utils/dictionary';
 import { LivenessProbeSpec, ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
