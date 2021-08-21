@@ -3,7 +3,7 @@
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
-import { tryReadFromPaths } from '../utils/files';
+import { replaceFileReference, tryReadFromPaths } from '../utils/files';
 import NULL_TYPE from '../utils/yaml/null';
 import { ComponentConfig } from './config/component-config';
 import { validateOrRejectConfig } from './config/component-validator';
@@ -30,24 +30,26 @@ const specPaths = (input: string) => {
   ];
 };
 
-export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path: string; source_yml: string } => {
-  try {
-    const try_files = specPaths(spec_path);
-    const res = tryReadFromPaths(try_files);
-    return {
-      source_path: res.file_path,
-      source_yml: res.file_contents,
-    };
-  } catch (err) {
-    throw new MissingConfigFileError(spec_path);
-  }
-};
-
 export const parseSourceYml = (source_yml: string): ParsedYaml => {
   const yaml_schema = {
     schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }),
   };
   return yaml.load(source_yml, yaml_schema);
+};
+
+export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path: string; source_yml: string } => {
+  try {
+    const try_files = specPaths(spec_path);
+    const res = tryReadFromPaths(try_files);
+    const parsed_yml = parseSourceYml(res.file_contents);
+    const source_yml = replaceFileReference(parsed_yml, res.file_path);
+    return {
+      source_yml,
+      source_path: res.file_path,
+    };
+  } catch (err) {
+    throw new MissingConfigFileError(spec_path);
+  }
 };
 
 export const dumpSpecToSourceYml = (spec: ComponentSpec): string => {
