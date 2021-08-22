@@ -94,7 +94,7 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
 const generateSpec = (): SchemaObject => {
 
   // importing this class into this file is required for the class-validator-jsonschema to pick this up. doesn't work by just referencing the tsconfig.json
-  const component_spec = new ComponentSpec();
+  const _ = new ComponentSpec();
 
   const raw_definitions = validationMetadatasToSchemas({
     refPointerPrefix: REF_PREFIX,
@@ -118,6 +118,7 @@ const generateSpec = (): SchemaObject => {
   const root_schema = definitions['ComponentSpec'];
 
   return {
+    $id: 'https://architect.io/.schemas/component.schema.json',
     title: "JSON Schema for Architect.io configuration",
     $schema: "http://json-schema.org/draft-07/schema",
     ...root_schema,

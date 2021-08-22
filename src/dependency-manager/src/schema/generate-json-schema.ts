@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
+import path from 'path';
 import { ARCHITECT_JSON_SCHEMA } from './json-schema';
 
-fs.copyFileSync('./architect-schema.json', './0-previous-architect-schema.json');
-fs.writeFileSync('./architect-schema.json', JSON.stringify(ARCHITECT_JSON_SCHEMA, null, 2));
+const output_path = path.join(__dirname, '../../component-schema.json');
+fs.writeJSONSync(output_path, ARCHITECT_JSON_SCHEMA, { spaces: 2 });
