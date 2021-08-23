@@ -69,10 +69,11 @@ export class ParameterDefinitionSpec {
 }
 
 export class ComponentSpec {
-  @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`), {
-    message: 'Names must only include letters, numbers, and dashes. Names must be prefixed with an account name (e.g. architect/component-name).',
+  @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
+  @JSONSchema({
+    type: 'string',
+    description: 'Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name).',
   })
-  @JSONSchema({ type: 'string' })
   name!: string;
 
   @IsOptional()

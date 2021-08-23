@@ -1,10 +1,12 @@
 {
-  "title": "JSON Schema for Architect.io configuration",
+  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
+  "title": "Architect.Yml Schema",
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
     "name": {
       "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
-      "type": "string"
+      "type": "string",
+      "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
     },
     "description": {
       "type": "string"
@@ -215,119 +217,6 @@
           ]
         }
       ],
-      "additionalProperties": false
-    },
-    "ResourceSpec": {
-      "properties": {
-        "description": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string"
-        },
-        "command": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "entrypoint": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "language": {
-          "type": "string"
-        },
-        "debug": {
-          "$ref": "#/definitions/_DebugResourceSpec"
-        },
-        "environment": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "volumes": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/VolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "build": {
-          "$ref": "#/definitions/BuildSpec"
-        },
-        "cpu": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "memory": {
-          "type": "string"
-        },
-        "deploy": {
-          "$ref": "#/definitions/DeploySpec"
-        },
-        "depends_on": {
-          "type": "array",
-          "items": {
-            "anyOf": [
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "labels": {
-          "type": "object",
-          "patternProperties": {
-            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
       "additionalProperties": false
     },
     "ScalingMetricsSpec": {
@@ -909,7 +798,8 @@
       "properties": {
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
-          "type": "string"
+          "type": "string",
+          "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
         },
         "description": {
           "type": "string"
@@ -1095,116 +985,6 @@
         },
         "dockerfile": {
           "type": "string"
-        }
-      },
-      "type": "object",
-      "additionalProperties": false
-    },
-    "_DebugResourceSpec": {
-      "properties": {
-        "description": {
-          "type": "string"
-        },
-        "image": {
-          "type": "string"
-        },
-        "command": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "entrypoint": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "language": {
-          "type": "string"
-        },
-        "environment": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "volumes": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugVolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "build": {
-          "$ref": "#/definitions/_DebugBuildSpec"
-        },
-        "cpu": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "memory": {
-          "type": "string"
-        },
-        "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
-        },
-        "depends_on": {
-          "type": "array",
-          "items": {
-            "anyOf": [
-              {
-                "type": "string"
-              }
-            ]
-          }
-        },
-        "labels": {
-          "type": "object",
-          "patternProperties": {
-            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
-            }
-          },
-          "additionalProperties": false
         }
       },
       "type": "object",
@@ -1730,7 +1510,8 @@
       "properties": {
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
-          "type": "string"
+          "type": "string",
+          "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
         },
         "description": {
           "type": "string"

@@ -6,8 +6,9 @@ import { ResourceSpec } from './resource-spec';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 
-const DEBUG_PREFIX = '_Debug';
+export const DEBUG_PREFIX = '_Debug';
 const SCHEMA_TITLE = 'Architect.Yml Schema';
+const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
 const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';
 
 /**
@@ -40,7 +41,6 @@ const recursivelyReplaceDebugRefs = (obj: SchemaObject) => {
  */
 const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
 
-  const resource_spec_name = ResourceSpec.name;
   const service_spec_name = ServiceSpec.name;
   const task_spec_name = TaskSpec.name;
   const debug_field = 'debug';
@@ -55,16 +55,9 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
     delete definition.allOf;
     debug_definitions[`${DEBUG_PREFIX}${key}`] = definition;
 
-    if (definition?.properties?.debug && (key === resource_spec_name || key === task_spec_name || key === service_spec_name)) {
+    if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name)) {
       delete definition.properties.debug; // delete the debug property if it exists, a debug block is not valid inside a debug block
     }
-  }
-
-  if (definitions[resource_spec_name]?.properties) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    definitions[resource_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${resource_spec_name}`;
-  } else {
-    throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${resource_spec_name}!`);
   }
 
   if (definitions[service_spec_name]?.properties) {
@@ -90,20 +83,47 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
 };
 
 /**
- * Generates JSON Schema spec for the architect.yml
+ * we don't need the ResourceSpec in our definition.
+ *
+ * It used for a convenience inheritence pattern in Typescript,
+ * but properties are all copied to ServiceSpec and TaskSpec in JSONSchema
+ * so we don't need it in the final spec.
+ */
+const removeResourceSpec = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
+  delete definitions[ResourceSpec.name];
+  delete definitions[`${DEBUG_PREFIX}}${ResourceSpec.name}`];
+  return {
+    ...definitions,
+  };
+};
+
+/**
+ * Strips all debug definitions out of the schema.
+ */
+export const stripDebugDefinitions = (schema: SchemaObject): SchemaObject => {
+  const no_debug_definitions: { [key: string]: SchemaObject } = {};
+
+  for (const [name, def] of Object.entries(schema.definitions)) {
+    if (!name.includes(DEBUG_PREFIX)) {
+      no_debug_definitions[name] = def as SchemaObject;
+    }
+  }
+
+  return {
+    ...schema,
+    definitions: no_debug_definitions,
+  };
+};
+
+/**
+ * Adds `additionalProperties: false` to all objects which effectively bans all keys except those explictly referenced in the spec
+ *
+ * @param definitions
  * @returns
  */
-const generateSpec = (): SchemaObject => {
-
-  // importing this class into this file is required for the class-validator-jsonschema to pick this up. doesn't work by just referencing the tsconfig.json
-  const component_spec = new ComponentSpec();
-
-  const raw_definitions = validationMetadatasToSchemas({
-    refPointerPrefix: REF_PREFIX,
-  });
-
-  for (const definition of Object.values(raw_definitions)) {
-    if (!definition.additionalProperties) {
+const restrictAdditionalProperties = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
+  for (const definition of Object.values(definitions)) {
+    if (!definition.additionalProperties) { // don't touch if definition already has set additionalProperties for its own purposes
       definition.additionalProperties = false;
       for (const property of Object.values(definition.properties || {}) as any[]) {
         if (!property.$ref && !property.additionalProperties && property.type === 'object') {
@@ -112,14 +132,43 @@ const generateSpec = (): SchemaObject => {
       }
     }
   }
+  return {
+    ...definitions,
+  };
+};
 
-  // we need to do a little bit of manual manipulation to add the debug spec
-  const definitions = mergeDebugSpec(raw_definitions);
+/**
+ * Perform a little post-processing on the definitions
+ */
+const transformDefinitions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
+  let transformed_definitions = restrictAdditionalProperties(definitions);
+  transformed_definitions = removeResourceSpec(transformed_definitions);
+  transformed_definitions = mergeDebugSpec(transformed_definitions);
+  return {
+    ...transformed_definitions,
+  };
+};
+
+/**
+ * Generates JSON Schema spec for the architect.yml
+ * @returns
+ */
+const generateSpec = (): SchemaObject => {
+
+  // importing this class into this file is required for the class-validator-jsonschema to pick this up. doesn't work by just referencing the tsconfig.json
+  const _ = new ComponentSpec();
+
+  const raw_definitions = validationMetadatasToSchemas({
+    refPointerPrefix: REF_PREFIX,
+  });
+
+  const definitions = transformDefinitions(raw_definitions);
 
   // class-validator-jsonschema doesn't have an option to select the root reference, so we do it manually
-  const root_schema = definitions['ComponentSpec'];
+  const root_schema = definitions[ComponentSpec.name];
 
   return {
+    $id: SCHEMA_ID,
     title: SCHEMA_TITLE,
     $schema: JSONSCHEMA_VERSION,
     ...root_schema,
