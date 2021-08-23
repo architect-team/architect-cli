@@ -1,5 +1,5 @@
 {
-  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/version.schema.json",
+  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/286-schemastore/src/dependency-manager/schema/version.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "All Versions of Architect.Yml Schema",
   "type": "object",
@@ -14,7 +14,7 @@
           }
         },
         {
-          "$ref": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json"
+          "$ref": "https://raw.githubusercontent.com/architect-team/architect-cli/286-schemastore/src/dependency-manager/schema/architect.schema.json"
         }
       ]
     }
