@@ -6,10 +6,19 @@ import { ResourceSpec } from './resource-spec';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 
-export const DEBUG_PREFIX = '_Debug';
-const SCHEMA_TITLE = 'Architect.Yml Schema';
+const SCHEMA_TITLE = 'Schema for architect.yml';
 const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
 const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';
+const DOCS_URL = 'https://www.architect.io/docs/reference/architect-yml';
+
+export const DEBUG_PREFIX = '_Debug';
+
+/**
+ * Given a spec, returns the path to the docs where the spec is defined
+ */
+export const getDocsPath = (spec_name: string): string => {
+  return `#${spec_name.toLowerCase()}`;
+};
 
 /**
  * Recursively searches an object for all keys named `$ref` and splices in `_Debug` to each definition ref.
@@ -138,11 +147,29 @@ const restrictAdditionalProperties = (definitions: Record<string, SchemaObject>)
 };
 
 /**
+ * Adds links to our remote docs
+ */
+const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
+  for (const [name, definition] of Object.entries(definitions)) {
+    if (!definition.externalDocs) { // don't touch if definition already has set externalDocs for its own purposes
+      definition.externalDocs = {
+        url: `${DOCS_URL}${getDocsPath(name)}`,
+      };
+    }
+  }
+  return {
+    ...definitions,
+  };
+};
+
+/**
  * Perform a little post-processing on the definitions
  */
 const transformDefinitions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
   let transformed_definitions = restrictAdditionalProperties(definitions);
+  transformed_definitions = restrictAdditionalProperties(transformed_definitions);
   transformed_definitions = removeResourceSpec(transformed_definitions);
+  transformed_definitions = addDocsLinks(transformed_definitions);
   transformed_definitions = mergeDebugSpec(transformed_definitions);
   return {
     ...transformed_definitions,

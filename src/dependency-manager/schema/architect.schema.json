@@ -1,6 +1,6 @@
 {
   "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
-  "title": "Architect.Yml Schema",
+  "title": "Schema for architect.yml",
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
     "name": {
@@ -9,7 +9,8 @@
       "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
     },
     "keywords": {
       "type": "array",
@@ -19,13 +20,16 @@
             "type": "string"
           }
         ]
-      }
+      },
+      "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
     },
     "author": {
-      "type": "string"
+      "type": "string",
+      "description": "The name or handle of the author of the component as a developer contact."
     },
     "homepage": {
-      "type": "string"
+      "type": "string",
+      "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
     },
     "parameters": {
       "additionalProperties": {
@@ -46,7 +50,8 @@
             "type": "null"
           }
         ]
-      }
+      },
+      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
     },
     "services": {
       "additionalProperties": {
@@ -55,7 +60,8 @@
             "$ref": "#/definitions/ServiceSpec"
           }
         ]
-      }
+      },
+      "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
     },
     "tasks": {
       "additionalProperties": {
@@ -64,7 +70,8 @@
             "$ref": "#/definitions/TaskSpec"
           }
         ]
-      }
+      },
+      "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
     },
     "dependencies": {
       "additionalProperties": {
@@ -73,7 +80,8 @@
             "type": "string"
           }
         ]
-      }
+      },
+      "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
     },
     "interfaces": {
       "additionalProperties": {
@@ -85,17 +93,23 @@
             "$ref": "#/definitions/ComponentInterfaceSpec"
           }
         ]
-      }
+      },
+      "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
     },
     "artifact_image": {
-      "type": "string"
+      "type": "string",
+      "deprecated": true
     }
   },
   "type": "object",
   "required": [
     "name"
   ],
+  "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
   "additionalProperties": false,
+  "externalDocs": {
+    "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+  },
   "definitions": {
     "DeployModuleSpec": {
       "properties": {
@@ -121,7 +135,10 @@
         "path",
         "inputs"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      }
     },
     "DeploySpec": {
       "properties": {
@@ -144,7 +161,10 @@
         "strategy",
         "modules"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      }
     },
     "VolumeSpec": {
       "properties": {
@@ -179,7 +199,10 @@
           "key"
         ]
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      }
     },
     "BuildSpec": {
       "properties": {
@@ -217,7 +240,10 @@
           ]
         }
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
+      }
     },
     "ScalingMetricsSpec": {
       "properties": {
@@ -250,7 +276,10 @@
           ]
         }
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
+      }
     },
     "ScalingSpec": {
       "properties": {
@@ -284,7 +313,10 @@
         "max_replicas",
         "metrics"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
+      }
     },
     "ServiceInterfaceSpec": {
       "properties": {
@@ -363,7 +395,10 @@
           ]
         }
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
+      }
     },
     "LivenessProbeSpec": {
       "properties": {
@@ -442,7 +477,10 @@
           ]
         }
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
     },
     "ServiceSpec": {
       "properties": {
@@ -586,7 +624,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
+      }
     },
     "TaskSpec": {
       "properties": {
@@ -702,7 +743,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
+      }
     },
     "IngressSpec": {
       "properties": {
@@ -714,7 +758,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
+      }
     },
     "ComponentInterfaceSpec": {
       "properties": {
@@ -764,7 +811,10 @@
       "required": [
         "url"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
+      }
     },
     "ParameterDefinitionSpec": {
       "properties": {
@@ -792,7 +842,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+      }
     },
     "ComponentSpec": {
       "properties": {
@@ -802,7 +855,8 @@
           "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
         },
         "keywords": {
           "type": "array",
@@ -812,13 +866,16 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
         },
         "author": {
-          "type": "string"
+          "type": "string",
+          "description": "The name or handle of the author of the component as a developer contact."
         },
         "homepage": {
-          "type": "string"
+          "type": "string",
+          "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
         "parameters": {
           "additionalProperties": {
@@ -839,7 +896,8 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
         },
         "services": {
           "additionalProperties": {
@@ -848,7 +906,8 @@
                 "$ref": "#/definitions/ServiceSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {
@@ -857,7 +916,8 @@
                 "$ref": "#/definitions/TaskSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
         },
         "dependencies": {
           "additionalProperties": {
@@ -866,7 +926,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
           "additionalProperties": {
@@ -878,17 +939,23 @@
                 "$ref": "#/definitions/ComponentInterfaceSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
         },
         "artifact_image": {
-          "type": "string"
+          "type": "string",
+          "deprecated": true
         }
       },
       "type": "object",
       "required": [
         "name"
       ],
-      "additionalProperties": false
+      "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+      }
     },
     "_DebugDeployModuleSpec": {
       "properties": {
@@ -910,7 +977,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      }
     },
     "_DebugDeploySpec": {
       "properties": {
@@ -929,7 +999,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      }
     },
     "_DebugVolumeSpec": {
       "properties": {
@@ -964,7 +1037,10 @@
           "key"
         ]
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      }
     },
     "_DebugBuildSpec": {
       "properties": {
@@ -988,7 +1064,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
+      }
     },
     "_DebugScalingMetricsSpec": {
       "properties": {
@@ -1007,7 +1086,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
+      }
     },
     "_DebugScalingSpec": {
       "properties": {
@@ -1036,7 +1118,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
+      }
     },
     "_DebugServiceInterfaceSpec": {
       "properties": {
@@ -1101,7 +1186,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
+      }
     },
     "_DebugLivenessProbeSpec": {
       "properties": {
@@ -1163,7 +1251,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
     },
     "_DebugServiceSpec": {
       "properties": {
@@ -1304,7 +1395,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
+      }
     },
     "_DebugTaskSpec": {
       "properties": {
@@ -1417,7 +1511,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
+      }
     },
     "_DebugIngressSpec": {
       "properties": {
@@ -1429,7 +1526,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
+      }
     },
     "_DebugComponentInterfaceSpec": {
       "properties": {
@@ -1476,7 +1576,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
+      }
     },
     "_DebugParameterDefinitionSpec": {
       "properties": {
@@ -1504,7 +1607,10 @@
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+      }
     },
     "_DebugComponentSpec": {
       "properties": {
@@ -1514,7 +1620,8 @@
           "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
         },
         "keywords": {
           "type": "array",
@@ -1524,13 +1631,16 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
         },
         "author": {
-          "type": "string"
+          "type": "string",
+          "description": "The name or handle of the author of the component as a developer contact."
         },
         "homepage": {
-          "type": "string"
+          "type": "string",
+          "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
         "parameters": {
           "additionalProperties": {
@@ -1551,7 +1661,8 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
         },
         "services": {
           "additionalProperties": {
@@ -1560,7 +1671,8 @@
                 "$ref": "#/definitions/_DebugServiceSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {
@@ -1569,7 +1681,8 @@
                 "$ref": "#/definitions/_DebugTaskSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
         },
         "dependencies": {
           "additionalProperties": {
@@ -1578,7 +1691,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
           "additionalProperties": {
@@ -1590,14 +1704,20 @@
                 "$ref": "#/definitions/_DebugComponentInterfaceSpec"
               }
             ]
-          }
+          },
+          "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
         },
         "artifact_image": {
-          "type": "string"
+          "type": "string",
+          "deprecated": true
         }
       },
       "type": "object",
-      "additionalProperties": false
+      "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+      }
     }
   }
 }

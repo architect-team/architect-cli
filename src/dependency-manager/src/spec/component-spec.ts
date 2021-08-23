@@ -68,6 +68,9 @@ export class ParameterDefinitionSpec {
   default?: boolean | number | string | null;
 }
 
+@JSONSchema({
+  description: 'The top level object of the architect.yml; defines a deployable Architect Component.',
+})
 export class ComponentSpec {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
   @JSONSchema({
@@ -77,42 +80,72 @@ export class ComponentSpec {
   name!: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
+  @JSONSchema({
+    type: 'string',
+    description: 'A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for.',
+  })
   description?: string;
 
   @IsOptional()
-  @JSONSchema(ArrayOf('string'))
+  @JSONSchema({
+    ...ArrayOf('string'),
+    description: 'Additional search terms to be used when the component is indexed so that others can find it more easily.',
+  })
   keywords?: string[];
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
+  @JSONSchema({
+    type: 'string',
+    description: 'The name or handle of the author of the component as a developer contact.',
+  })
   author?: string;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
+  @JSONSchema({
+    type: 'string',
+    description: 'The url that serves as the informational homepage of the component (i.e. a github repo).',
+  })
   homepage?: string;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'))
+  @JSONSchema({
+    ...DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+    description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters.',
+  })
   parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(ServiceSpec))
+  @JSONSchema({
+    ...DictionaryOf(ServiceSpec),
+    description: 'A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image.',
+  })
   services?: Dictionary<ServiceSpec>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf(TaskSpec))
+  @JSONSchema({
+    ...DictionaryOf(TaskSpec),
+    description: 'A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image.',
+  })
   tasks?: Dictionary<TaskSpec>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOf('string'))
+  @JSONSchema({
+    ...DictionaryOf('string'),
+    description: 'A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
+  })
   dependencies?: Dictionary<string>;
 
   @IsOptional()
-  @JSONSchema(DictionaryOfAny('string', ComponentInterfaceSpec))
+  @JSONSchema({
+    ...DictionaryOfAny('string', ComponentInterfaceSpec),
+    description: 'A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
+  })
   interfaces?: Dictionary<string | ComponentInterfaceSpec>;
 
   @IsOptional()
-  @JSONSchema({ type: 'string' })
+  @JSONSchema({
+    type: 'string',
+    deprecated: true,
+  })
   artifact_image?: string;
 }
