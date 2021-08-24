@@ -4,7 +4,6 @@ import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import path from 'path';
 import { replaceFileReference, tryReadFromPaths } from '../utils/files';
-import NULL_TYPE from '../utils/yaml/null';
 import { ComponentConfig } from './config/component-config';
 import { validateOrRejectConfig } from './config/component-validator';
 import { validateOrRejectSpec } from './spec-validator';
@@ -31,10 +30,7 @@ const specPaths = (input: string) => {
 };
 
 export const parseSourceYml = (source_yml: string): ParsedYaml => {
-  const yaml_schema = {
-    schema: yaml.JSON_SCHEMA.extend({ implicit: [NULL_TYPE] }),
-  };
-  return yaml.load(source_yml, yaml_schema);
+  return yaml.load(source_yml);
 };
 
 export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path: string; source_yml: string } => {
