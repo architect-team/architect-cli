@@ -44,7 +44,7 @@ describe('component interpolation test', function () {
         ingresses: {
           main: {
             url: '',
-            consumers: '[]'
+            consumers: []
           }
         }
       }

@@ -47,7 +47,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     }
   }
 
-  const context_map = buildContextMap(parsed_yml, true);
+  const context_map = buildContextMap(parsed_yml);
 
   const errors: ValidationError[] = [];
   for (const [data_path, error] of Object.entries(ajv_error_map)) {

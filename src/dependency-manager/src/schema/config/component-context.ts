@@ -2,7 +2,7 @@ import { Dictionary } from '../../utils/dictionary';
 import { ComponentInterfaceConfig } from './component-config';
 import { ServiceInterfaceConfig } from './service-config';
 
-export type ParameterValue = string | number | boolean | null | undefined;
+export type ParameterValue = string | number | boolean | null | object | undefined;
 
 export interface ServiceContext {
   environment: Dictionary<string | null>;
