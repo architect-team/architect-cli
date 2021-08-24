@@ -31,9 +31,6 @@ export class IngressSpec {
 export class ComponentInterfaceSpec {
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'Configuration for exposing the interface as a public ingress.',
-  })
   ingress?: IngressSpec;
 
   @IsOptional()
@@ -168,7 +165,7 @@ export class ComponentSpec {
   @IsOptional()
   @JSONSchema({
     ...DictionaryOf(ServiceSpec),
-    description: 'A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
+    description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
   services?: Dictionary<ServiceSpec>;
 

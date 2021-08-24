@@ -5,39 +5,39 @@ import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, OneO
 import { Slugs } from '../utils/slugs';
 
 @JSONSchema({
-  description: 'TODO:289',
+  description: 'The DeploySpec represents deploy-time configuration for a service or a task.',
 })
 export class DeployModuleSpec {
   @IsString()
   @JSONSchema({
     type: 'string',
-    description: 'TODO:289',
+    description: 'The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time.',
   })
   path!: string;
 
   @IsObject()
   @JSONSchema({
     ...DictionaryOfAny('string', 'null'),
-    description: 'TODO:289',
+    description: 'A set of key-value pairs that represent Terraform inputs and their values.',
   })
   inputs!: Dictionary<string | null>;
 }
 
 @JSONSchema({
-  description: 'TODO:289',
+  description: 'The DeploySpec represents deploy-time configuration for a service or a task.',
 })
 export class DeploySpec {
   @IsString()
   @JSONSchema({
     type: 'string',
-    description: 'TODO:289',
+    description: 'Selects the preferred deploy strategy for the service.',
   })
   strategy!: string;
 
   @IsObject()
   @JSONSchema({
     ...DictionaryOf(DeployModuleSpec),
-    description: 'TODO:289',
+    description: 'A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.',
   })
   modules!: Dictionary<DeployModuleSpec>;
 }
@@ -156,9 +156,6 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block.',
-  })
   debug?: Partial<ResourceSpec>;
 
   @IsOptional()
@@ -178,9 +175,6 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set).',
-  })
   build?: BuildSpec;
 
   @IsOptional()
@@ -201,10 +195,6 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    type: 'string',
-    description: 'Deploy-time configuration of a service or a task.',
-  })
   deploy?: DeploySpec;
 
   @IsOptional()

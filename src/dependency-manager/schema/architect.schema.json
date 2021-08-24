@@ -61,7 +61,7 @@
           }
         ]
       },
-      "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+      "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
     },
     "tasks": {
       "additionalProperties": {
@@ -323,8 +323,7 @@
           "description": "The target maximum number of service replicas."
         },
         "metrics": {
-          "$ref": "#/definitions/ScalingMetricsSpec",
-          "description": "Resource requirements that trigger scaling events."
+          "$ref": "#/definitions/ScalingMetricsSpec"
         }
       },
       "type": "object",
@@ -459,7 +458,7 @@
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-          "default": 1
+          "default": 3
         },
         "timeout": {
           "type": "string",
@@ -534,8 +533,7 @@
     "ServiceSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/_DebugServiceSpec",
-          "description": "A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a \"local override\" block."
+          "$ref": "#/definitions/_DebugServiceSpec"
         },
         "interfaces": {
           "additionalProperties": {
@@ -554,8 +552,7 @@
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
         },
         "liveness_probe": {
-          "$ref": "#/definitions/LivenessProbeSpec",
-          "description": "Configuration for service health checks."
+          "$ref": "#/definitions/LivenessProbeSpec"
         },
         "replicas": {
           "anyOf": [
@@ -569,8 +566,7 @@
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
         },
         "scaling": {
-          "$ref": "#/definitions/ScalingSpec",
-          "description": "Configuration that dictates the scaling behavior of a service."
+          "$ref": "#/definitions/ScalingSpec"
         },
         "description": {
           "type": "string",
@@ -648,8 +644,7 @@
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/BuildSpec",
-          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
+          "$ref": "#/definitions/BuildSpec"
         },
         "cpu": {
           "anyOf": [
@@ -673,9 +668,7 @@
           }
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpec",
-          "type": "string",
-          "description": "Deploy-time configuration of a service or a task."
+          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -704,7 +697,7 @@
         }
       },
       "type": "object",
-      "description": "A service ",
+      "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
@@ -713,8 +706,7 @@
     "TaskSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/_DebugTaskSpec",
-          "description": "A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a \"local override\" block."
+          "$ref": "#/definitions/_DebugTaskSpec"
         },
         "schedule": {
           "type": "string",
@@ -796,8 +788,7 @@
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/BuildSpec",
-          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
+          "$ref": "#/definitions/BuildSpec"
         },
         "cpu": {
           "anyOf": [
@@ -821,9 +812,7 @@
           }
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpec",
-          "type": "string",
-          "description": "Deploy-time configuration of a service or a task."
+          "$ref": "#/definitions/DeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -879,8 +868,7 @@
     "ComponentInterfaceSpec": {
       "properties": {
         "ingress": {
-          "$ref": "#/definitions/IngressSpec",
-          "description": "Configuration for exposing the interface as a public ingress."
+          "$ref": "#/definitions/IngressSpec"
         },
         "description": {
           "type": "string",
@@ -1034,7 +1022,7 @@
               }
             ]
           },
-          "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {
@@ -1274,8 +1262,7 @@
           "description": "The target maximum number of service replicas."
         },
         "metrics": {
-          "$ref": "#/definitions/_DebugScalingMetricsSpec",
-          "description": "Resource requirements that trigger scaling events."
+          "$ref": "#/definitions/_DebugScalingMetricsSpec"
         }
       },
       "type": "object",
@@ -1388,7 +1375,7 @@
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-          "default": 1
+          "default": 3
         },
         "timeout": {
           "type": "string",
@@ -1462,8 +1449,7 @@
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
         },
         "liveness_probe": {
-          "$ref": "#/definitions/_DebugLivenessProbeSpec",
-          "description": "Configuration for service health checks."
+          "$ref": "#/definitions/_DebugLivenessProbeSpec"
         },
         "replicas": {
           "anyOf": [
@@ -1477,8 +1463,7 @@
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
         },
         "scaling": {
-          "$ref": "#/definitions/_DebugScalingSpec",
-          "description": "Configuration that dictates the scaling behavior of a service."
+          "$ref": "#/definitions/_DebugScalingSpec"
         },
         "description": {
           "type": "string",
@@ -1556,8 +1541,7 @@
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/_DebugBuildSpec",
-          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
+          "$ref": "#/definitions/_DebugBuildSpec"
         },
         "cpu": {
           "anyOf": [
@@ -1581,9 +1565,7 @@
           }
         },
         "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec",
-          "type": "string",
-          "description": "Deploy-time configuration of a service or a task."
+          "$ref": "#/definitions/_DebugDeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -1612,7 +1594,7 @@
         }
       },
       "type": "object",
-      "description": "A service ",
+      "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
@@ -1700,8 +1682,7 @@
           "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/_DebugBuildSpec",
-          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
+          "$ref": "#/definitions/_DebugBuildSpec"
         },
         "cpu": {
           "anyOf": [
@@ -1725,9 +1706,7 @@
           }
         },
         "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec",
-          "type": "string",
-          "description": "Deploy-time configuration of a service or a task."
+          "$ref": "#/definitions/_DebugDeploySpec"
         },
         "depends_on": {
           "type": "array",
@@ -1783,8 +1762,7 @@
     "_DebugComponentInterfaceSpec": {
       "properties": {
         "ingress": {
-          "$ref": "#/definitions/_DebugIngressSpec",
-          "description": "Configuration for exposing the interface as a public ingress."
+          "$ref": "#/definitions/_DebugIngressSpec"
         },
         "description": {
           "type": "string",
@@ -1935,7 +1913,7 @@
               }
             ]
           },
-          "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {

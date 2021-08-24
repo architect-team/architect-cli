@@ -8,9 +8,6 @@ import { ResourceSpec } from './resource-spec';
 export class TaskSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block.',
-  })
   debug?: Partial<TaskSpec>;
 
   @IsOptional()

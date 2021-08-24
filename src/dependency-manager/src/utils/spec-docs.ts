@@ -19,6 +19,10 @@ const h1 = (value: string) => {
   return `# ${value}`;
 };
 
+const strikethrough = (value: string): string => {
+  return `~~${value}~~`;
+};
+
 const propertyRefToMarkdown = (property: ReferenceObject): string => {
   const type = property.$ref.replace(REF_PREFIX, '').replace(DEBUG_PREFIX, '');
   const path = getDocsPath(type);
@@ -106,12 +110,13 @@ const propertyTypeToMarkdown = (prop_body: SchemaObject | ReferenceObject): stri
   return markdown;
 };
 
-const patternPropertyToMarkdown = (): string => {
-  return `Dict${OPEN}string${CLOSE}`;
+// describes the debug field in the docs, this is required because we manipulate the _DebugSpec manually and JSONSchema disallows setting a description next to a $ref property.
+export const debug_description = () => {
+  return `A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block.`;
 };
 
-const strikethrough = (value: string): string => {
-  return `~~${value}~~`;
+const patternPropertyToMarkdown = (): string => {
+  return `Dict${OPEN}string${CLOSE}`;
 };
 
 const propertyToType = (prop_body: SchemaObject | ReferenceObject): string => {
@@ -127,8 +132,10 @@ const propertyToType = (prop_body: SchemaObject | ReferenceObject): string => {
 const propertyToDescription = (prop_body: SchemaObject | ReferenceObject): string => {
   if ((prop_body as SchemaObject).description) {
     return `${(prop_body as SchemaObject).description}`;
+  } else if (prop_body.$ref && prop_body.$ref.includes(DEBUG_PREFIX)) {
+    return debug_description();
   } else {
-    throw new Error(`Spec fields should all be annotated with a description for the docs but ${JSON.stringify(prop_body)} has none.`);
+    return ``;
   }
 };
 
@@ -156,15 +163,29 @@ const propertyToRegex = (prop_body: SchemaObject | ReferenceObject): string => {
 
 const propertyToMisc = (prop_body: SchemaObject | ReferenceObject): string => {
   let markdown = propertyToRegex(prop_body);
+  let delimiter = '';
+
+  if ((prop_body as SchemaObject)?.default) {
+    markdown += delimiter;
+    markdown += `default: \`${(prop_body as SchemaObject)?.default}\``;
+    delimiter = ',';
+  }
+
 
   if ((prop_body as SchemaObject)?.deprecated) {
+    markdown += delimiter;
     markdown += `Deprecated`;
+    delimiter = ',';
   }
+
 
   if ((prop_body as SchemaObject)?.externalDocs) {
     const externalDocs = (prop_body as SchemaObject).externalDocs?.url;
+    markdown += delimiter;
     markdown += `[More](${externalDocs})`;
+    delimiter = ',';
   }
+
   return markdown;
 };
 

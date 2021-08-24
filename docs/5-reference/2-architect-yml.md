@@ -24,7 +24,7 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
  | `homepage` | string | The url that serves as the informational homepage of the component (i.e. a github repo). |  |
  | `parameters` | Dict&lt;string \| number \| boolean \| [ParameterDefinitionSpec](#parameterdefinitionspec) \| null&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec |  |
- | `services` | Dict&lt;[ServiceSpec](#servicespec)&gt; | A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. |  |
+ | `services` | Dict&lt;[ServiceSpec](#servicespec)&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. |  |
  | `tasks` | Dict&lt;[TaskSpec](#taskspec)&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. |  |
  | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`) |  |
  | `interfaces` | Dict&lt;string \| [ComponentInterfaceSpec](#componentinterfacespec)&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. |  |
@@ -33,15 +33,15 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
 
 ## ServiceSpec
 
-A service 
+A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `debug` | Partial&lt;[ServiceSpec](#servicespec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `interfaces` | Dict&lt;[ServiceInterfaceSpec](#serviceinterfacespec) \| string \| number&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. |  |
- | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) | Configuration for service health checks. |  |
+ | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `replicas` | number \| string | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
- | `scaling` | [ScalingSpec](#scalingspec) | Configuration that dictates the scaling behavior of a service. |  |
+ | `scaling` | [ScalingSpec](#scalingspec) |  |  |
  | `description` | string | Human readable description |  |
  | `image` | string | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
@@ -49,10 +49,10 @@ A service
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;boolean \| null \| number \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
- | `build` | [BuildSpec](#buildspec) | An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set). |  |
+ | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
- | `deploy` | [DeploySpec](#deployspec) | Deploy-time configuration of a service or a task. |  |
+ | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C63%7D)((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
@@ -74,7 +74,7 @@ Component Interfaces are the primary means by which components advertise their r
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `ingress` | [IngressSpec](#ingressspec) | Configuration for exposing the interface as a public ingress. |  |
+ | `ingress` | [IngressSpec](#ingressspec) |  |  |
  | `description` | string | A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for. |  |
  | `host` | string | The host that the component interface should forward to. |  |
  | `port` | number \| string | The port that the component interface should forward to. |  |
@@ -100,10 +100,10 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;boolean \| null \| number \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
- | `build` | [BuildSpec](#buildspec) | An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set). |  |
+ | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
- | `deploy` | [DeploySpec](#deployspec) | Deploy-time configuration of a service or a task. |  |
+ | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C63%7D)((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
@@ -149,7 +149,7 @@ An object containing the details necessary for Architect to build the service vi
 | -------------------- | ---------- | -------------- | -------------- |
  | `context` | string | The path to the directory containing the source code relative to the `architect.yml` file. |  |
  | `args` | Dict&lt;string \| null&gt; | Build args to be passed into `docker build`. |  |
- | `dockerfile` | string | The path to the Dockerfile relative to the `build.context` |  |
+ | `dockerfile` | string | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
 
 
 ## ScalingMetricsSpec
@@ -170,7 +170,7 @@ Configuration that dictates the scaling behavior of a service.
 | -------------------- | ---------- | -------------- | -------------- |
  | `min_replicas`* | number \| string | The target minimum number of service replicas. |  |
  | `max_replicas`* | number \| string | The target maximum number of service replicas. |  |
- | `metrics`* | [ScalingMetricsSpec](#scalingmetricsspec) | Resource requirements that trigger scaling events. |  |
+ | `metrics`* | [ScalingMetricsSpec](#scalingmetricsspec) |  |  |
 
 
 ## ServiceInterfaceSpec
@@ -182,7 +182,7 @@ A service interface exposes service functionality over the network to other serv
  | `description` | string | A human-readable description of the interface. |  |
  | `host` | null \| string | The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host. |  |
  | `port`* | number \| string | Port on which the service is listening for traffic. |  |
- | `protocol` | string | Protocol that the interface responds to |  |
+ | `protocol` | string | Protocol that the interface responds to | default: `http` |
  | `username` | null \| string | A Basic Auth username required to access the interface |  |
  | `password` | null \| string | A Basic Auth password required to access the interface |  |
  | `url` | string | TODO:289 |  |
@@ -195,11 +195,11 @@ Configuration for service health checks. Architect uses health checks are used f
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `success_threshold` | number \| string | The number of times to retry a health check before the container is considered healthy. |  |
- | `failure_threshold` | number \| string | The number of times to retry a failed health check before the container is considered unhealthy. |  |
- | `timeout` | string | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s |  |
- | `interval` | string | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s |  |
- | `initial_delay` | string | Delays the check from running for the specified amount of time |  |
+ | `success_threshold` | number \| string | The number of times to retry a health check before the container is considered healthy. | default: `1` |
+ | `failure_threshold` | number \| string | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
+ | `timeout` | string | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
+ | `interval` | string | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
+ | `initial_delay` | string | Delays the check from running for the specified amount of time | default: `0s` |
  | `path` | string | Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set). | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E%5C%2F.*%24">Regex</a> |
  | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set). |  |
  | `port`* | number \| string | Port that the http check will run against |  |

@@ -45,9 +45,6 @@ export class ScalingSpec {
   max_replicas!: number | string;
 
   @ValidateNested()
-  @JSONSchema({
-    description: 'Resource requirements that trigger scaling events.',
-  })
   metrics!: ScalingMetricsSpec;
 }
 
@@ -102,7 +99,7 @@ export class ServiceInterfaceSpec {
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    description: 'TODO:289',
+    description: 'The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url.',
   })
   url?: string;
 
@@ -124,42 +121,46 @@ export class LivenessProbeSpec {
   @JSONSchema({
     ...AnyOf('number', 'string'),
     description: 'The number of times to retry a health check before the container is considered healthy.',
-    default: 1, // TODO:289: add default to docs, use default in code?
+    default: LivenessProbeSpec.default_success_threshold,
   })
   success_threshold?: number | string;
+  public static default_success_threshold = 1;
 
   @IsOptional()
   @JSONSchema({
     ...AnyOf('number', 'string'),
     description: 'The number of times to retry a failed health check before the container is considered unhealthy.',
-    default: 1,
-    // maximum: 10, TODO:289: see if maximum is what we want here
+    default: LivenessProbeSpec.default_failure_threshold,
   })
   failure_threshold?: number | string;
+  public static default_failure_threshold = 3;
 
   @IsOptional()
   @JSONSchema({
     type: 'string',
     description: 'The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s',
-    default: '5s',
+    default: LivenessProbeSpec.default_timeout,
   })
   timeout?: string;
+  public static default_timeout = '5s';
 
   @IsOptional()
   @JSONSchema({
     type: 'string',
     description: 'The time period in seconds between each health check execution. You may specify any value between: 5s and 300s',
-    default: '30s',
+    default: LivenessProbeSpec.default_interval,
   })
   interval?: string;
+  public static default_interval = '30s';
 
   @IsOptional()
   @JSONSchema({
     type: 'string',
     description: 'Delays the check from running for the specified amount of time',
-    default: '0s',
+    default: LivenessProbeSpec.default_initial_delay,
   })
   initial_delay?: string;
+  public static default_initial_delay = '0s';
 
   @IsOptional()
   @Matches(/^\/.*$/)
@@ -185,14 +186,11 @@ export class LivenessProbeSpec {
 }
 
 @JSONSchema({
-  description: 'A service ',
+  description: 'A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
 })
 export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block.',
-  })
   debug?: Partial<ServiceSpec>;
 
   @IsOptional()
@@ -204,9 +202,6 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'Configuration for service health checks.',
-  })
   liveness_probe?: LivenessProbeSpec;
 
   @IsOptional()
@@ -223,8 +218,5 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @ValidateNested()
-  @JSONSchema({
-    description: 'Configuration that dictates the scaling behavior of a service.',
-  })
   scaling?: ScalingSpec;
 }
