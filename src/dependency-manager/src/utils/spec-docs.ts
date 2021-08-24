@@ -1,10 +1,23 @@
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
+import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../spec/component-spec';
 import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from '../spec/json-schema';
+import { ServiceSpec } from '../spec/service-spec';
+import { TaskSpec } from '../spec/task-spec';
 import { REF_PREFIX } from './json-schema-annotations';
 
 const OPEN = '&lt;';
 const CLOSE = '&gt;';
+const MD_NEWLINE = '\n\n';
 const OR = ' \\| ';
+const MD_SEPERATOR = ' | ';
+
+const header = (value: string) => {
+  return `---\ntitle: ${value}\n---`;
+};
+
+const h1 = (value: string) => {
+  return `# ${value}`;
+};
 
 const propertyRefToMarkdown = (property: ReferenceObject): string => {
   const type = property.$ref.replace(REF_PREFIX, '').replace(DEBUG_PREFIX, '');
@@ -101,46 +114,86 @@ const strikethrough = (value: string): string => {
   return `~~${value}~~`;
 };
 
-const propertyToMarkdown = (prop_name: string, prop_body: SchemaObject | ReferenceObject, required: boolean): string => {
-  let markdown = `|`;
+const propertyToType = (prop_body: SchemaObject | ReferenceObject): string => {
+  if (prop_body.$ref) {
+    return propertyRefToMarkdown(prop_body as ReferenceObject);
+  } else if ((prop_body as SchemaObject)?.patternProperties && (prop_body as SchemaObject)?.type === 'object') {
+    return patternPropertyToMarkdown();
+  } else {
+    return propertyTypeToMarkdown(prop_body);
+  }
+};
 
+const propertyToDescription = (prop_body: SchemaObject | ReferenceObject): string => {
+  if ((prop_body as SchemaObject).description) {
+    return `${(prop_body as SchemaObject).description}`;
+  } else {
+    throw new Error(`Spec fields should all be annotated with a description for the docs but ${JSON.stringify(prop_body)} has none.`);
+  }
+};
+
+const propertyToFieldName = (prop_name: string, prop_body: SchemaObject | ReferenceObject, required: boolean): string => {
   const property = `\`${prop_name}\`${required ? '*' : ''}`;
   const deprecated = (prop_body as SchemaObject)?.deprecated;
 
-  markdown += `${deprecated ? strikethrough(property) : property}`;
-  markdown += ` | `;
+  return deprecated ? strikethrough(property) : property;
+};
 
-  if (prop_body.$ref) {
-    markdown += `${propertyRefToMarkdown(prop_body as ReferenceObject)}`;
-  } else if ((prop_body as SchemaObject)?.patternProperties && (prop_body as SchemaObject)?.type === 'object') {
-    markdown += `${patternPropertyToMarkdown()}`;
-  } else {
-    markdown += `${propertyTypeToMarkdown(prop_body)}`;
-  }
-
-  markdown += ` | `;
-
-  if ((prop_body as SchemaObject).description) {
-    markdown += `${(prop_body as SchemaObject).description}`;
-  }
-  // else {
-  //   throw new Error('Spec fields should all be annotated with a `description` for the docs.');
-  // }
-  markdown += ` | `;
-
+const propertyToRegex = (prop_body: SchemaObject | ReferenceObject): string => {
   if ((prop_body as SchemaObject)?.pattern) {
     const pattern = (prop_body as SchemaObject).pattern as string;
-    markdown += `Must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(pattern)}">Regex</a>`;
+    return `Must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(pattern)}">Regex</a>`;
   } else if ((prop_body as SchemaObject)?.patternProperties) {
-    for (const [key, value] of Object.entries((prop_body as SchemaObject)?.patternProperties)) {
-      markdown += `Key must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(key)}">Regex</a>`;
-      markdown += `Value must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent((value as any).pattern)}">Regex</a>`;
+    if (Object.entries((prop_body as SchemaObject)?.patternProperties).length > 1) {
+      throw new Error('The spec-docs generator was not written with multiple patternProperties in mind, please update it.');
     }
-  } else if ((prop_body as SchemaObject)?.deprecated) {
-    markdown += ' Deprecated ';
+    for (const [key, value] of Object.entries((prop_body as SchemaObject)?.patternProperties)) {
+      return `<a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(key)}">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent((value as any).pattern)}">ValueRegex</a>, `;
+    }
+  }
+  return ``;
+};
+
+const propertyToMisc = (prop_body: SchemaObject | ReferenceObject): string => {
+  let markdown = propertyToRegex(prop_body);
+
+  if ((prop_body as SchemaObject)?.deprecated) {
+    markdown += `Deprecated`;
   }
 
-  markdown += ` | `;
+  if ((prop_body as SchemaObject)?.externalDocs) {
+    const externalDocs = (prop_body as SchemaObject).externalDocs?.url;
+    markdown += `[More](${externalDocs})`;
+  }
+  return markdown;
+};
+
+const definitionToMarkdown = (spec_name: string, definition: SchemaObject): string => {
+  if (!definition.description) {
+    throw new Error(`Spec classes should all be annotated with a description for the docs but ${spec_name} has none.`);
+  }
+
+  if (!definition.properties) {
+    throw new Error(`Spec classes should all have at least one property on them, otherwise docs generation probably needs to be changed. ${spec_name} has no properties set.`);
+  }
+
+  let markdown = `## ${spec_name}`;
+  markdown += `\n\n`;
+  markdown += `${definition.description}`;
+  markdown += `\n\n`;
+  markdown += `| Field  (*=required)  | Type       | Description    | Misc           |\n`;
+  markdown += `| -------------------- | ---------- | -------------- | -------------- |\n`;
+
+  for (const [prop_name, prop_body] of Object.entries(definition.properties)) {
+    const required = !!definition.required && definition.required.includes(prop_name);
+    markdown += ` | ${propertyToFieldName(prop_name, prop_body, required)}`;
+    markdown += ` | ${propertyToType(prop_body)}`;
+    markdown += ` | ${propertyToDescription(prop_body)}`;
+    markdown += ` | ${propertyToMisc(prop_body)}`;
+    markdown += ` |\n`;
+  }
+
+  markdown += `\n\n`;
 
   return markdown;
 };
@@ -152,38 +205,29 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
 
   // re-order the keys in the map to provide more natural ordering in the docs
   const ordered_definitions: { [key: string]: SchemaObject } = {
-    ComponentSpec: no_debug_schema.definitions['ComponentSpec'],
-    ServiceSpec: no_debug_schema.definitions['ServiceSpec'],
-    TaskSpec: no_debug_schema.definitions['TaskSpec'],
-    ComponentInterfaceSpec: no_debug_schema.definitions['ComponentInterfaceSpec'],
-    ParameterDefinitionSpec: no_debug_schema.definitions['ParameterDefinitionSpec'],
+    ComponentSpec: no_debug_schema.definitions[ComponentSpec.name],
+    ServiceSpec: no_debug_schema.definitions[ServiceSpec.name],
+    ParameterDefinitionSpec: no_debug_schema.definitions[ParameterDefinitionSpec.name],
+    ComponentInterfaceSpec: no_debug_schema.definitions[ComponentInterfaceSpec.name],
+    TaskSpec: no_debug_schema.definitions[TaskSpec.name],
     ...no_debug_schema.definitions,
   };
 
   for (const [spec_name, definition] of Object.entries(ordered_definitions)) {
-    markdown += `## ${spec_name}\n\n`;
-
-    if (definition.description) {
-      markdown += `${definition.description}\n\n`;
-    }
-    // else {
-    //   throw new Error('Spec classes should all be annotated with a `description` for the docs.');
-    // }
-
-    markdown += `| Field  (*=required)  | Type       | Description    | Misc           |\n`;
-    markdown += `| -------------------- | ---------- | -------------- | -------------- |\n`;
-
-    if (definition?.properties) {
-      for (const [prop_name, prop_body] of Object.entries(definition.properties)) {
-        const required = !!definition.required && definition.required.includes(prop_name);
-        markdown += `${propertyToMarkdown(prop_name, prop_body, required)}\n`;
-      }
-    }
-
-    markdown += `\n\n`;
+    markdown += definitionToMarkdown(spec_name, definition);
   }
 
   return markdown;
+};
+
+const docs_description = () => {
+  return `This document describes the full specification of the [architect.yml](/docs/configuration/architect-yml) configuration file. The top level of your \`architect.yml\` should be a [ComponentSpec](#componentspec).
+
+We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json).
+
+If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named \`architect.yml\`.
+
+**Note**: all references to the \`Dict<T>\` type below refer to a key-value map where the keys are strings and the values are of type T.`;
 };
 
 /**
@@ -196,20 +240,13 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
  * @returns
  */
 export const simpleDocs = (schema: SchemaObject): string => {
-  return `---
-title: architect.yml
----
-# architect.yml
-
-This document describes the full specification of the [architect.yml](/docs/configuration/architect-yml) configuration file. The top level of your \`architect.yml\` should be a [ComponentSpec](#componentspec).
-
-We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json).
-
-If you're using VS Code (or any other IDE with intellisense backed by [SchemaStore](https://www.schemastore.org/json/)), then you should already see syntax highlighting when editing any file named \`architect.yml\`.
-
-Note that each reference to a \`Dict<T>\` type refers to a key-value object where the keys are strings and the values are of type T.
-
-${schemaToMarkdown(schema)}
-`;
+  let markdown = header(`architect.yml`);
+  markdown += `\n\n`;
+  markdown += h1(`architect.yml`);
+  markdown += `\n\n`;
+  markdown += docs_description();
+  markdown += `\n\n`;
+  markdown += schemaToMarkdown(schema);
+  return markdown;
 };
 

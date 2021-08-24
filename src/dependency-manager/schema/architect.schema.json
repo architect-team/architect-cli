@@ -1,12 +1,12 @@
 {
   "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
-  "title": "Schema for architect.yml",
+  "title": "Schema for architect.yml. See: https://www.architect.io/docs/reference/architect-yml",
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
     "name": {
       "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
       "type": "string",
-      "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
+      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
     },
     "description": {
       "type": "string",
@@ -51,7 +51,7 @@
           }
         ]
       },
-      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
+      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
     },
     "services": {
       "additionalProperties": {
@@ -61,7 +61,7 @@
           }
         ]
       },
-      "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
+      "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
     },
     "tasks": {
       "additionalProperties": {
@@ -71,7 +71,7 @@
           }
         ]
       },
-      "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
+      "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
     },
     "dependencies": {
       "additionalProperties": {
@@ -81,7 +81,7 @@
           }
         ]
       },
-      "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
     },
     "interfaces": {
       "additionalProperties": {
@@ -94,18 +94,19 @@
           }
         ]
       },
-      "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+      "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
     },
     "artifact_image": {
       "type": "string",
-      "deprecated": true
+      "deprecated": true,
+      "description": "-"
     }
   },
   "type": "object",
   "required": [
     "name"
   ],
-  "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
+  "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
   "additionalProperties": false,
   "externalDocs": {
     "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
@@ -114,7 +115,8 @@
     "DeployModuleSpec": {
       "properties": {
         "path": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "inputs": {
           "type": "object",
@@ -127,7 +129,8 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "TODO:289"
         }
       },
       "type": "object",
@@ -135,6 +138,7 @@
         "path",
         "inputs"
       ],
+      "description": "TODO:289",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
@@ -143,7 +147,8 @@
     "DeploySpec": {
       "properties": {
         "strategy": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "modules": {
           "type": "object",
@@ -153,7 +158,8 @@
                 "$ref": "#/definitions/DeployModuleSpec"
               }
             ]
-          }
+          },
+          "description": "TODO:289"
         }
       },
       "type": "object",
@@ -161,6 +167,7 @@
         "strategy",
         "modules"
       ],
+      "description": "TODO:289",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
@@ -169,16 +176,23 @@
     "VolumeSpec": {
       "properties": {
         "mount_path": {
-          "type": "string"
+          "type": "string",
+          "description": "Directory at which the volume will be mounted inside the container."
         },
         "host_path": {
-          "type": "string"
+          "type": "string",
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
         },
         "key": {
-          "type": "string"
+          "type": "string",
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable description of volume"
         },
         "readonly": {
           "anyOf": [
@@ -188,7 +202,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
         }
       },
       "type": "object",
@@ -199,6 +215,7 @@
           "key"
         ]
       },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
@@ -207,7 +224,8 @@
     "BuildSpec": {
       "properties": {
         "context": {
-          "type": "string"
+          "type": "string",
+          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
           "additionalProperties": {
@@ -219,27 +237,17 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "Build args to be passed into `docker build`."
         },
         "dockerfile": {
-          "type": "string"
+          "type": "string",
+          "description": "The path to the Dockerfile relative to the `build.context`",
+          "default": "Dockerfile"
         }
       },
       "type": "object",
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "context"
-          ]
-        },
-        {
-          "type": "object",
-          "required": [
-            "dockerfile"
-          ]
-        }
-      ],
+      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
@@ -255,10 +263,18 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         }
       },
       "type": "object",
@@ -276,6 +292,7 @@
           ]
         }
       ],
+      "description": "Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
@@ -291,7 +308,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The target minimum number of service replicas."
         },
         "max_replicas": {
           "anyOf": [
@@ -301,10 +319,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The target maximum number of service replicas."
         },
         "metrics": {
-          "$ref": "#/definitions/ScalingMetricsSpec"
+          "$ref": "#/definitions/ScalingMetricsSpec",
+          "description": "Resource requirements that trigger scaling events."
         }
       },
       "type": "object",
@@ -313,6 +333,7 @@
         "max_replicas",
         "metrics"
       ],
+      "description": "Configuration that dictates the scaling behavior of a service.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
@@ -321,7 +342,8 @@
     "ServiceInterfaceSpec": {
       "properties": {
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the interface."
         },
         "host": {
           "anyOf": [
@@ -331,7 +353,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
         },
         "port": {
           "anyOf": [
@@ -341,10 +364,13 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Port on which the service is listening for traffic."
         },
         "protocol": {
-          "type": "string"
+          "type": "string",
+          "description": "Protocol that the interface responds to",
+          "default": "http"
         },
         "username": {
           "anyOf": [
@@ -354,7 +380,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A Basic Auth username required to access the interface"
         },
         "password": {
           "anyOf": [
@@ -364,10 +391,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A Basic Auth password required to access the interface"
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "sticky": {
           "anyOf": [
@@ -377,10 +406,15 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
+          "default": false
         }
       },
       "type": "object",
+      "required": [
+        "port"
+      ],
       "oneOf": [
         {
           "type": "object",
@@ -395,6 +429,7 @@
           ]
         }
       ],
+      "description": "A service interface exposes service functionality over the network to other services within the same component. If you would like to expose services on the network to external components, see the ComponentInterfaceSpec",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
@@ -410,7 +445,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
         },
         "failure_threshold": {
           "anyOf": [
@@ -420,20 +457,29 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 1
         },
         "timeout": {
-          "type": "string"
+          "type": "string",
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
         },
         "interval": {
-          "type": "string"
+          "type": "string",
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
         },
         "initial_delay": {
-          "type": "string"
+          "type": "string",
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
         },
         "path": {
           "pattern": "^\\/.*$",
-          "type": "string"
+          "type": "string",
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -446,7 +492,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set)."
         },
         "port": {
           "anyOf": [
@@ -456,7 +503,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Port that the http check will run against"
         }
       },
       "type": "object",
@@ -477,6 +525,7 @@
           ]
         }
       ],
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
@@ -485,7 +534,8 @@
     "ServiceSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/_DebugServiceSpec"
+          "$ref": "#/definitions/_DebugServiceSpec",
+          "description": "A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a \"local override\" block."
         },
         "interfaces": {
           "additionalProperties": {
@@ -500,10 +550,12 @@
                 "type": "number"
               }
             ]
-          }
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
         },
         "liveness_probe": {
-          "$ref": "#/definitions/LivenessProbeSpec"
+          "$ref": "#/definitions/LivenessProbeSpec",
+          "description": "Configuration for service health checks."
         },
         "replicas": {
           "anyOf": [
@@ -513,16 +565,20 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
         },
         "scaling": {
-          "$ref": "#/definitions/ScalingSpec"
+          "$ref": "#/definitions/ScalingSpec",
+          "description": "Configuration that dictates the scaling behavior of a service."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human readable description"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
@@ -535,7 +591,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
         },
         "entrypoint": {
           "anyOf": [
@@ -548,10 +605,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
           "additionalProperties": {
@@ -569,6 +628,10 @@
                 "type": "string"
               }
             ]
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
           }
         },
         "volumes": {
@@ -581,10 +644,12 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/BuildSpec"
+          "$ref": "#/definitions/BuildSpec",
+          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
         },
         "cpu": {
           "anyOf": [
@@ -594,13 +659,23 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpec"
+          "$ref": "#/definitions/DeploySpec",
+          "type": "string",
+          "description": "Deploy-time configuration of a service or a task."
         },
         "depends_on": {
           "type": "array",
@@ -610,7 +685,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
         },
         "labels": {
           "type": "object",
@@ -620,10 +696,15 @@
               "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
             }
           },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
           "additionalProperties": false
         }
       },
       "type": "object",
+      "description": "A service ",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
@@ -632,16 +713,20 @@
     "TaskSpec": {
       "properties": {
         "debug": {
-          "$ref": "#/definitions/_DebugTaskSpec"
+          "$ref": "#/definitions/_DebugTaskSpec",
+          "description": "A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a \"local override\" block."
         },
         "schedule": {
-          "type": "string"
+          "type": "string",
+          "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human readable description"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
@@ -654,7 +739,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
         },
         "entrypoint": {
           "anyOf": [
@@ -667,10 +753,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
           "additionalProperties": {
@@ -688,6 +776,10 @@
                 "type": "string"
               }
             ]
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
           }
         },
         "volumes": {
@@ -700,10 +792,12 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/BuildSpec"
+          "$ref": "#/definitions/BuildSpec",
+          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
         },
         "cpu": {
           "anyOf": [
@@ -713,13 +807,23 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "deploy": {
-          "$ref": "#/definitions/DeploySpec"
+          "$ref": "#/definitions/DeploySpec",
+          "type": "string",
+          "description": "Deploy-time configuration of a service or a task."
         },
         "depends_on": {
           "type": "array",
@@ -729,7 +833,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
         },
         "labels": {
           "type": "object",
@@ -739,10 +844,15 @@
               "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
             }
           },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
           "additionalProperties": false
         }
       },
       "type": "object",
+      "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
@@ -751,13 +861,16 @@
     "IngressSpec": {
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
         },
         "subdomain": {
-          "type": "string"
+          "type": "string",
+          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
         }
       },
       "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
@@ -766,13 +879,16 @@
     "ComponentInterfaceSpec": {
       "properties": {
         "ingress": {
-          "$ref": "#/definitions/IngressSpec"
+          "$ref": "#/definitions/IngressSpec",
+          "description": "Configuration for exposing the interface as a public ingress."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for."
         },
         "host": {
-          "type": "string"
+          "type": "string",
+          "description": "The host that the component interface should forward to."
         },
         "port": {
           "anyOf": [
@@ -782,19 +898,24 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string"
+          "type": "string",
+          "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string"
+          "type": "string",
+          "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string"
+          "type": "string",
+          "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "The url that the component interface should forward to."
         },
         "sticky": {
           "anyOf": [
@@ -804,13 +925,15 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
         }
       },
       "type": "object",
       "required": [
         "url"
       ],
+      "description": "Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
@@ -819,10 +942,12 @@
     "ParameterDefinitionSpec": {
       "properties": {
         "required": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Denotes whether the parameter is required."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-friendly description of the parameter."
         },
         "default": {
           "anyOf": [
@@ -838,10 +963,12 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Sets a default value for the parameter if one is not provided"
         }
       },
       "type": "object",
+      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
@@ -852,7 +979,7 @@
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -897,7 +1024,7 @@
               }
             ]
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
         },
         "services": {
           "additionalProperties": {
@@ -907,7 +1034,7 @@
               }
             ]
           },
-          "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
+          "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {
@@ -917,7 +1044,7 @@
               }
             ]
           },
-          "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
         },
         "dependencies": {
           "additionalProperties": {
@@ -927,7 +1054,7 @@
               }
             ]
           },
-          "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
           "additionalProperties": {
@@ -940,18 +1067,19 @@
               }
             ]
           },
-          "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
         },
         "artifact_image": {
           "type": "string",
-          "deprecated": true
+          "deprecated": true,
+          "description": "-"
         }
       },
       "type": "object",
       "required": [
         "name"
       ],
-      "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
+      "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
@@ -960,7 +1088,8 @@
     "_DebugDeployModuleSpec": {
       "properties": {
         "path": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "inputs": {
           "type": "object",
@@ -973,10 +1102,12 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "TODO:289"
         }
       },
       "type": "object",
+      "description": "TODO:289",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
@@ -985,7 +1116,8 @@
     "_DebugDeploySpec": {
       "properties": {
         "strategy": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "modules": {
           "type": "object",
@@ -995,10 +1127,12 @@
                 "$ref": "#/definitions/_DebugDeployModuleSpec"
               }
             ]
-          }
+          },
+          "description": "TODO:289"
         }
       },
       "type": "object",
+      "description": "TODO:289",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
@@ -1007,16 +1141,23 @@
     "_DebugVolumeSpec": {
       "properties": {
         "mount_path": {
-          "type": "string"
+          "type": "string",
+          "description": "Directory at which the volume will be mounted inside the container."
         },
         "host_path": {
-          "type": "string"
+          "type": "string",
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
         },
         "key": {
-          "type": "string"
+          "type": "string",
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable description of volume"
         },
         "readonly": {
           "anyOf": [
@@ -1026,7 +1167,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
         }
       },
       "type": "object",
@@ -1037,6 +1180,7 @@
           "key"
         ]
       },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
@@ -1045,7 +1189,8 @@
     "_DebugBuildSpec": {
       "properties": {
         "context": {
-          "type": "string"
+          "type": "string",
+          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
           "additionalProperties": {
@@ -1057,13 +1202,17 @@
                 "type": "null"
               }
             ]
-          }
+          },
+          "description": "Build args to be passed into `docker build`."
         },
         "dockerfile": {
-          "type": "string"
+          "type": "string",
+          "description": "The path to the Dockerfile relative to the `build.context`",
+          "default": "Dockerfile"
         }
       },
       "type": "object",
+      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
@@ -1079,13 +1228,22 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         }
       },
       "type": "object",
+      "description": "Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
@@ -1101,7 +1259,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The target minimum number of service replicas."
         },
         "max_replicas": {
           "anyOf": [
@@ -1111,13 +1270,16 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The target maximum number of service replicas."
         },
         "metrics": {
-          "$ref": "#/definitions/_DebugScalingMetricsSpec"
+          "$ref": "#/definitions/_DebugScalingMetricsSpec",
+          "description": "Resource requirements that trigger scaling events."
         }
       },
       "type": "object",
+      "description": "Configuration that dictates the scaling behavior of a service.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
@@ -1126,7 +1288,8 @@
     "_DebugServiceInterfaceSpec": {
       "properties": {
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the interface."
         },
         "host": {
           "anyOf": [
@@ -1136,7 +1299,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
         },
         "port": {
           "anyOf": [
@@ -1146,10 +1310,13 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Port on which the service is listening for traffic."
         },
         "protocol": {
-          "type": "string"
+          "type": "string",
+          "description": "Protocol that the interface responds to",
+          "default": "http"
         },
         "username": {
           "anyOf": [
@@ -1159,7 +1326,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A Basic Auth username required to access the interface"
         },
         "password": {
           "anyOf": [
@@ -1169,10 +1337,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A Basic Auth password required to access the interface"
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "TODO:289"
         },
         "sticky": {
           "anyOf": [
@@ -1182,10 +1352,13 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
+          "default": false
         }
       },
       "type": "object",
+      "description": "A service interface exposes service functionality over the network to other services within the same component. If you would like to expose services on the network to external components, see the ComponentInterfaceSpec",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
@@ -1201,7 +1374,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
         },
         "failure_threshold": {
           "anyOf": [
@@ -1211,20 +1386,29 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 1
         },
         "timeout": {
-          "type": "string"
+          "type": "string",
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
         },
         "interval": {
-          "type": "string"
+          "type": "string",
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
         },
         "initial_delay": {
-          "type": "string"
+          "type": "string",
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
         },
         "path": {
           "pattern": "^\\/.*$",
-          "type": "string"
+          "type": "string",
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -1237,7 +1421,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set)."
         },
         "port": {
           "anyOf": [
@@ -1247,10 +1432,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "Port that the http check will run against"
         }
       },
       "type": "object",
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
@@ -1271,10 +1458,12 @@
                 "type": "number"
               }
             ]
-          }
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
         },
         "liveness_probe": {
-          "$ref": "#/definitions/_DebugLivenessProbeSpec"
+          "$ref": "#/definitions/_DebugLivenessProbeSpec",
+          "description": "Configuration for service health checks."
         },
         "replicas": {
           "anyOf": [
@@ -1284,16 +1473,20 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
         },
         "scaling": {
-          "$ref": "#/definitions/_DebugScalingSpec"
+          "$ref": "#/definitions/_DebugScalingSpec",
+          "description": "Configuration that dictates the scaling behavior of a service."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human readable description"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
@@ -1306,7 +1499,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
         },
         "entrypoint": {
           "anyOf": [
@@ -1319,10 +1513,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
           "additionalProperties": {
@@ -1340,6 +1536,10 @@
                 "type": "string"
               }
             ]
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
           }
         },
         "volumes": {
@@ -1352,10 +1552,12 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/_DebugBuildSpec"
+          "$ref": "#/definitions/_DebugBuildSpec",
+          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
         },
         "cpu": {
           "anyOf": [
@@ -1365,13 +1567,23 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
+          "$ref": "#/definitions/_DebugDeploySpec",
+          "type": "string",
+          "description": "Deploy-time configuration of a service or a task."
         },
         "depends_on": {
           "type": "array",
@@ -1381,7 +1593,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
         },
         "labels": {
           "type": "object",
@@ -1391,10 +1604,15 @@
               "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
             }
           },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
           "additionalProperties": false
         }
       },
       "type": "object",
+      "description": "A service ",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
@@ -1403,13 +1621,16 @@
     "_DebugTaskSpec": {
       "properties": {
         "schedule": {
-          "type": "string"
+          "type": "string",
+          "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Human readable description"
         },
         "image": {
-          "type": "string"
+          "type": "string",
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
@@ -1422,7 +1643,8 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
         },
         "entrypoint": {
           "anyOf": [
@@ -1435,10 +1657,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
           "additionalProperties": {
@@ -1456,6 +1680,10 @@
                 "type": "string"
               }
             ]
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
           }
         },
         "volumes": {
@@ -1468,10 +1696,12 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
         },
         "build": {
-          "$ref": "#/definitions/_DebugBuildSpec"
+          "$ref": "#/definitions/_DebugBuildSpec",
+          "description": "An object to configure build-time details used during component registration. This field is disjunctive with `image` (only one of `build` or `image` can be set)."
         },
         "cpu": {
           "anyOf": [
@@ -1481,13 +1711,23 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
         },
         "deploy": {
-          "$ref": "#/definitions/_DebugDeploySpec"
+          "$ref": "#/definitions/_DebugDeploySpec",
+          "type": "string",
+          "description": "Deploy-time configuration of a service or a task."
         },
         "depends_on": {
           "type": "array",
@@ -1497,7 +1737,8 @@
                 "type": "string"
               }
             ]
-          }
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
         },
         "labels": {
           "type": "object",
@@ -1507,10 +1748,15 @@
               "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
             }
           },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
           "additionalProperties": false
         }
       },
       "type": "object",
+      "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
@@ -1519,13 +1765,16 @@
     "_DebugIngressSpec": {
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
         },
         "subdomain": {
-          "type": "string"
+          "type": "string",
+          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
         }
       },
       "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
@@ -1534,13 +1783,16 @@
     "_DebugComponentInterfaceSpec": {
       "properties": {
         "ingress": {
-          "$ref": "#/definitions/_DebugIngressSpec"
+          "$ref": "#/definitions/_DebugIngressSpec",
+          "description": "Configuration for exposing the interface as a public ingress."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for."
         },
         "host": {
-          "type": "string"
+          "type": "string",
+          "description": "The host that the component interface should forward to."
         },
         "port": {
           "anyOf": [
@@ -1550,19 +1802,24 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string"
+          "type": "string",
+          "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string"
+          "type": "string",
+          "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string"
+          "type": "string",
+          "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string"
+          "type": "string",
+          "description": "The url that the component interface should forward to."
         },
         "sticky": {
           "anyOf": [
@@ -1572,10 +1829,12 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
         }
       },
       "type": "object",
+      "description": "Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
@@ -1584,10 +1843,12 @@
     "_DebugParameterDefinitionSpec": {
       "properties": {
         "required": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Denotes whether the parameter is required."
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "A human-friendly description of the parameter."
         },
         "default": {
           "anyOf": [
@@ -1603,10 +1864,12 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Sets a default value for the parameter if one is not provided"
         }
       },
       "type": "object",
+      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
@@ -1617,7 +1880,7 @@
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must only include letters, numbers, and dashes. Must be prefixed with a valid account name (e.g. architect/component-name)."
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -1662,7 +1925,7 @@
               }
             ]
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters."
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
         },
         "services": {
           "additionalProperties": {
@@ -1672,7 +1935,7 @@
               }
             ]
           },
-          "description": "A map of named runtimes (e.g. daemons, servers, etc.) included with the component. Each service is independently deployable and scalable. Services are generally 1:1 with a docker image."
+          "description": "A set of named runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
           "additionalProperties": {
@@ -1682,7 +1945,7 @@
               }
             ]
           },
-          "description": "A map of named recurring runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are generally 1:1 with a docker image."
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
         },
         "dependencies": {
           "additionalProperties": {
@@ -1692,7 +1955,7 @@
               }
             ]
           },
-          "description": "A key-value store of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
           "additionalProperties": {
@@ -1705,15 +1968,16 @@
               }
             ]
           },
-          "description": "A map of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
         },
         "artifact_image": {
           "type": "string",
-          "deprecated": true
+          "deprecated": true,
+          "description": "-"
         }
       },
       "type": "object",
-      "description": "The top level object of the architect.yml; defines a deployable Architect Component.",
+      "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
