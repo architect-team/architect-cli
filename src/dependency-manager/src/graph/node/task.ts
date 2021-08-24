@@ -1,7 +1,5 @@
-import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { TaskConfig } from '../../spec/task/task-config';
-import { TaskConfigV1 } from '../../spec/task/task-v1';
+import { TaskConfig } from '../../schema/config/task-config';
 
 export interface TaskNodeOptions {
   ref: string;
@@ -12,7 +10,6 @@ export interface TaskNodeOptions {
 export class TaskNode extends DependencyNode implements TaskNodeOptions {
   __type = 'task';
 
-  @Type(() => TaskConfigV1)
   config!: TaskConfig;
 
   ref!: string;

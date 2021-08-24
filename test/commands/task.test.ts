@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -203,9 +203,9 @@ describe('task:exec', async function () {
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
   const mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG);
-  const mock_ref = ComponentConfig.getNodeRef(mock_slug);
+  const mock_ref = resourceRefToNodeRef(mock_slug);
   const instanced_mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_id);
-  const instanced_mock_ref = ComponentConfig.getNodeRef(instanced_mock_slug);
+  const instanced_mock_ref = resourceRefToNodeRef(instanced_mock_slug);
   mock_docker_compose_service[mock_ref] = {};
   mock_docker_compose_service[instanced_mock_ref] = {};
   const mock_docker_compose = {

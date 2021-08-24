@@ -1,0 +1,10 @@
+name: tests/ingress-downstream
+
+services:
+  downstream-service:
+    image: ellerbrock/alpine-bash-curl-ssl
+    interfaces:
+      main: 8080
+
+interfaces:
+  downstream: ${{ services.downstream-service.interfaces.main.url }}

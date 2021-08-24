@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -71,9 +71,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.environment).to.deep.eq({
       NODE_ENV: 'development'
     });
   });
@@ -107,9 +107,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/hello-world'),
     ]);
-    const api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(node.config.environment).to.deep.eq({
       NODE_ENV: 'production'
     });
   });

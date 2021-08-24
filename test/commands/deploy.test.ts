@@ -3,13 +3,14 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
-import Command from '../../src/base-command';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { PipelineUtils } from '../../src/common/utils/pipeline';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ComponentConfigBuilder } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
+import * as ComponentBuilder from '../../src/dependency-manager/src/schema/component-builder';
+import { buildConfigFromYml } from '../../src/dependency-manager/src/schema/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
@@ -41,75 +42,57 @@ describe('local deploy environment', function () {
   });
 
   function getHelloComponentConfig(): any {
-    return {
-      "name": "examples/hello-world",
+    return `
+    name: examples/hello-world
 
-      "parameters": {
-        "hello_ingress": "hello"
-      },
+    parameters:
+      hello_ingress: hello
 
-      "services": {
-        "api": {
-          "image": "heroku/nodejs-hello-world",
-          "environment": {},
-          "interfaces": {
-            "main": {
-              "port": "3000"
-            }
-          }
-        },
-      },
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main:
+            port: 3000
+        environment: {}
 
-      "interfaces": {
-        "hello": {
-          "ingress": {
-            "subdomain": "${{ parameters.hello_ingress }}"
-          },
-          "url": "${{ services.api.interfaces.main.url }}"
-        }
-      }
-    }
+    interfaces:
+      hello:
+        ingress:
+          subdomain: \${{ parameters.hello_ingress }}
+        url: \${{ services.api.interfaces.main.url }}
+    `
   }
 
-  const local_component_config_with_parameters = {
-    "name": "examples/hello-world",
+  const local_component_config_with_parameters = `
+    name: examples/hello-world
 
-    "services": {
-      "api": {
-        "image": "heroku/nodejs-hello-world",
-        "interfaces": {
-          "main": "3000"
-        },
-        "environment": {
-          "a_required_key": "${{ parameters.a_required_key }}",
-          "another_required_key": "${{ parameters.another_required_key }}",
-          "one_more_required_param": "${{ parameters.one_more_required_param }}",
-          "compose_escaped_variable": "${{ parameters.compose_escaped_variable }}"
-        }
-      }
-    },
+    parameters:
+      a_required_key:
+        required: true
+      another_required_key:
+        required: true
+      one_more_required_param:
+        required: true
+      compose_escaped_variable:
+        required: false
 
-    "interfaces": {
-      "hello": {
-        "url": "${{ services.api.interfaces.main.url }}"
-      }
-    },
+    services:
+      api:
+        image: heroku/nodejs-hello-world
+        interfaces:
+          main: 3000
+        environment:
+          a_required_key: \${{ parameters.a_required_key }}
+          another_required_key: \${{ parameters.another_required_key }}
+          one_more_required_param: \${{ parameters.one_more_required_param }}
+          compose_escaped_variable: \${{ parameters.compose_escaped_variable }}
 
-    "parameters": {
-      'a_required_key': {
-        'required': 'true'
-      },
-      'another_required_key': {
-        'required': 'true'
-      },
-      'one_more_required_param': {
-        'required': 'true'
-      },
-      'compose_escaped_variable': {
-        'required': 'false'
-      }
-    }
-  }
+    interfaces:
+      hello:
+        url: \${{ services.api.interfaces.main.url }}
+    `;
+
   const basic_parameter_values = {
     'examples/hello-world:latest': {
       'a_required_key': 'some_value',
@@ -166,13 +149,13 @@ describe('local deploy environment', function () {
 
     "parameters": {
       'a_required_key': {
-        'required': 'true'
+        'required': true
       },
       'another_required_key': {
-        'required': 'true'
+        'required': true
       },
       'one_more_required_param': {
-        'required': 'true'
+        'required': true
       }
     },
 
@@ -283,8 +266,8 @@ describe('local deploy environment', function () {
     }
   };
 
-  const seed_app_ref = ComponentConfig.getNodeRef('examples/database-seeding/app:latest')
-  const seed_db_ref = ComponentConfig.getNodeRef('examples/database-seeding/my-demo-db:latest')
+  const seed_app_ref = resourceRefToNodeRef('examples/database-seeding/app:latest');
+  const seed_db_ref = resourceRefToNodeRef('examples/database-seeding/my-demo-db:latest');
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -340,7 +323,7 @@ describe('local deploy environment', function () {
         ]
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -365,7 +348,7 @@ describe('local deploy environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest')
+  const hello_api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -393,7 +376,7 @@ describe('local deploy environment', function () {
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -420,8 +403,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -436,10 +422,14 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      const component_config = getHelloComponentConfig();
-      (component_config.services.api.interfaces.main as any).sticky = 'true';
-      return ComponentConfigBuilder.buildFromJSON(component_config);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      const hello_json = yaml.load(getHelloComponentConfig()) as any;
+      hello_json.services.api.interfaces.main.sticky = 'true';
+      const component_config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
+      return {
+        component_config,
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -454,8 +444,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_database_seeding_component_config);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_database_seeding_component_config), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -470,8 +463,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return basic_parameter_values;
@@ -493,8 +489,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return wildcard_parameter_values;
@@ -514,8 +513,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -535,8 +537,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -559,8 +564,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_dependency);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(yaml.dump(local_component_config_with_dependency), Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'readValuesFile', () => {
@@ -576,7 +584,7 @@ describe('local deploy environment', function () {
     .it('Create a local recursive deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = ComponentConfig.getNodeRef('examples/react-app/app:latest');
+      const react_app_ref = resourceRefToNodeRef('examples/react-app/app:latest');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
@@ -586,8 +594,11 @@ describe('local deploy environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-      return ComponentConfigBuilder.buildFromJSON(local_component_config_with_parameters);
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
     })
     .stub(Deploy.prototype, 'readValuesFile', () => {
       return basic_parameter_values;
@@ -607,8 +618,11 @@ describe('local deploy environment', function () {
   describe('linked deploy', function () {
     test
       .timeout(20000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
+      .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+        return {
+          component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -624,13 +638,16 @@ describe('local deploy environment', function () {
   });
 
   describe('instance deploys', function () {
-    const hello_api_instance_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
+    const hello_api_instance_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_deploy = test
       .timeout(20000)
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        return ComponentConfigBuilder.buildFromJSON(getHelloComponentConfig());
+      .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+        return {
+          component_config: buildConfigFromYml(getHelloComponentConfig(), Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
@@ -649,7 +666,7 @@ describe('local deploy environment', function () {
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
       .command(['deploy', '-l', 'examples/hello-world:latest@tenant-1', '-i', 'hello'])
-      .it('Create a local deploy with instance id and tag', ctx => {
+      .it('Create a local deploy with instance name and tag', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         expect(runCompose.firstCall.args[0]).to.deep.equal(expected_instance_compose)
@@ -657,10 +674,14 @@ describe('local deploy environment', function () {
 
     local_deploy
       .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stub(ComponentConfigBuilder, 'buildFromPath', () => {
-        const config = getHelloComponentConfig();
-        config.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
-        return ComponentConfigBuilder.buildFromJSON(config);
+      .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+        const hello_json = yaml.load(getHelloComponentConfig()) as any;
+        hello_json.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
+        const config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
+        return {
+          component_config: config,
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Deploy.prototype, 'readValuesFile', () => {
         return {
@@ -675,12 +696,13 @@ describe('local deploy environment', function () {
       .command(['deploy', '-l', '-v', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
       .it('Create a local deploy with multiple instances of the same component', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-        expect(runCompose.calledOnce).to.be.true
+        expect(runCompose.calledOnce).to.be.true;
 
-        const tenant_1_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-1')
-        const tenant_2_ref = ComponentConfig.getNodeRef('examples/hello-world/api:latest@tenant-2')
+        const tenant_1_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
+        const tenant_2_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
+        expect(Object.keys(compose.services)).includes(tenant_1_ref, tenant_2_ref)
         expect(compose.services[tenant_1_ref].labels || []).includes(`traefik.http.routers.hello-1.rule=Host(\`hello-1.arc.localhost\`)`)
         expect(compose.services[tenant_2_ref].labels || []).includes(`traefik.http.routers.hello-2.rule=Host(\`hello-2.arc.localhost\`)`)
       })
@@ -690,7 +712,7 @@ describe('local deploy environment', function () {
     test
       .timeout(20000)
       // @ts-ignore
-      .stub(ComponentConfigBuilder, 'buildFromPath', (path: string) => {
+      .stub(ComponentBuilder, 'buildConfigFromPath', (path: string) => {
         let config: string;
         if (path === './examples/react-app/architect.yml') {
           config = `
@@ -722,7 +744,10 @@ describe('local deploy environment', function () {
             app: \${{ services.app.interfaces.main.url }}
           `
         }
-        return ComponentConfigBuilder.buildFromJSON(yaml.load(config));
+        return {
+          component_config: buildConfigFromYml(config, Slugs.DEFAULT_TAG),
+          source_path: './examples/hello-world/architect.yml',
+        }
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({
@@ -737,9 +762,9 @@ describe('local deploy environment', function () {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];
-        const app_ref = ComponentConfig.getNodeRef('examples/app/app:latest');
+        const app_ref = resourceRefToNodeRef('examples/app/app:latest');
         expect(compose.services[app_ref].labels).includes('traefik.enable=true');
-        const auth_ref = ComponentConfig.getNodeRef('examples/auth/auth:latest');
+        const auth_ref = resourceRefToNodeRef('examples/auth/auth:latest');
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });
