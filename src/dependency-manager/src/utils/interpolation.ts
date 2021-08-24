@@ -49,7 +49,7 @@ export const escapeJSON = (value: any) => {
   return value;
 };
 
-export const buildContextMap = (context: any, include_objects = false) => {
+export const buildContextMap = (context: any) => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
   while (queue.length) {
@@ -57,7 +57,7 @@ export const buildContextMap = (context: any, include_objects = false) => {
     const [prefix, c] = queue.shift()!;
 
     if (c instanceof Object) {
-      if (prefix && include_objects) {
+      if (prefix) {
         context_map[prefix] = c;
       }
       for (const [key, value] of Object.entries(c)) {
@@ -75,26 +75,17 @@ export const buildContextMap = (context: any, include_objects = false) => {
  *
  * It does if it JSON.parses to an object or if it is a multiline string
  */
-export const requires_stringify = (value: any): boolean => {
-  if (typeof value !== 'string') {
-    return false;
+export const normalizeValueForInterpolation = (value: any): string => {
+  if (value === undefined) {
+    return '';
   }
-
-  let needs_stringify = false;
-  try {
-    const parsed = JSON.parse(value);
-    if (typeof parsed === 'object') {
-      needs_stringify = true;
-    }
-    // eslint-disable-next-line no-empty
-  } catch (e) {
+  if (value instanceof Object) {
+    return JSON.stringify(value);
+  } else if (typeof value === 'string' && value.includes('\n')) {
+    return JSON.stringify(value.trimEnd());
+  } else {
+    return value;
   }
-
-  if (value.includes('\n')) {
-    needs_stringify = true;
-  }
-
-  return needs_stringify;
 };
 
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
@@ -123,13 +114,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
         }
       }
 
-      const stringify = requires_stringify(value);
-
-      if (stringify) {
-        res = res.replace(match[0], value === undefined ? '' : JSON.stringify(value.trimEnd()));
-      } else {
-        res = res.replace(match[0], value === undefined ? '' : value);
-      }
+      res = res.replace(match[0], normalizeValueForInterpolation(value));
       has_matches = true;
     }
   }

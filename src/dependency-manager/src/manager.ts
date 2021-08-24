@@ -324,7 +324,7 @@ export default abstract class DependencyManager {
       partial_external_interface = {
         ...(dependency ? dependency.interfaces[interface_to] : {}),
         ...dependency_interface,
-        consumers: '[]',
+        consumers: [],
         subdomain: subdomain,
         dns_zone: dependency_interface.host.split('.').slice(1).join('.'),
       };
@@ -432,7 +432,7 @@ export default abstract class DependencyManager {
 
           if (buildComponentRef(dependency) === buildComponentRef(initial_component)) {
             context.ingresses[interface_to] = external_interface;
-            context.ingresses[interface_to].consumers = '[]';
+            context.ingresses[interface_to].consumers = [];
 
             if (ingress_edge.consumers_map[interface_from]) {
               const interfaces_refs = graph.edges.filter(edge => ingress_edge.consumers_map[interface_from].has(edge.to) && graph.getNodeByRef(edge.from) instanceof InterfacesNode).map(edge => edge.from);
@@ -446,7 +446,7 @@ export default abstract class DependencyManager {
                   }
                 }
               }
-              context.ingresses[interface_to].consumers = `'${JSON.stringify(consumers.sort())}'`;
+              context.ingresses[interface_to].consumers = consumers.sort();
             }
           } else {
             context.dependencies[dependency.name].ingresses[interface_to] = external_interface;

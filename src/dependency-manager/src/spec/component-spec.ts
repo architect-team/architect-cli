@@ -110,10 +110,10 @@ export class ParameterDefinitionSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('boolean', 'number', 'string', 'null'),
+    ...AnyOf('array', 'boolean', 'number', 'object', 'string', 'null'),
     description: 'Sets a default value for the parameter if one is not provided',
   })
-  default?: boolean | number | string | null;
+  default?: boolean | number | object | string | null;
 }
 
 @JSONSchema({

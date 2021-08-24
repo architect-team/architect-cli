@@ -85,8 +85,8 @@ export class VolumeSpec {
   readonly?: boolean | string;
 }
 
-export type EnvironmentSpecValue = boolean | null | number | string;
-export const EnvironmentSpecSchema = DictionaryOfAny('boolean', 'null', 'number', 'string');
+export type EnvironmentSpecValue = boolean | null | number | object | string;
+export const EnvironmentSpecSchema = DictionaryOfAny('array', 'boolean', 'null', 'number', 'object', 'string');
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',

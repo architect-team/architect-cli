@@ -364,7 +364,7 @@ describe('local deploy environment', function () {
         ]
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -410,7 +410,7 @@ describe('local deploy environment', function () {
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",

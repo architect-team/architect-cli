@@ -48,7 +48,12 @@ export const transformResourceSpecEnvironment = (environment: Dictionary<Environ
     if (v === undefined || v === null) {
       continue;
     }
-    output[k] = `${v}`;
+
+    if (v instanceof Object) {
+      output[k] = JSON.stringify(v);
+    } else {
+      output[k] = `${v}`;
+    }
   }
   return output;
 };

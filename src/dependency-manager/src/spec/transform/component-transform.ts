@@ -85,7 +85,7 @@ export const transformComponentContext = (
     };
     ingress_context[ik] = {
       ...interface_filler,
-      consumers: '[]',
+      consumers: [],
       dns_zone: '',
       subdomain: '',
     };
