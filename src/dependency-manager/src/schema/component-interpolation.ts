@@ -9,6 +9,8 @@ import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec } from './spec/transform/component-transform';
 
 export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[], validate = true): { interpolated_config: ComponentConfig; errors: ValidationError[] } => {
+  const interpolated_component_string = interpolateString(config.source_yml, config.context, ignore_keys);
+
   if (validate) {
     // TODO:288:
     // Interpolate component context so other components can ref dependency contexts for interpolation
@@ -18,7 +20,7 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
     const interpolated_context = yaml.load(interpolateString(yaml.dump(config.context), config.context, ignore_keys)) as any;
     config.context = interpolated_context;
   }
-  const interpolated_component_string = interpolateString(config.source_yml, config.context, ignore_keys);
+
   const parsed_yml = parseSourceYml(interpolated_component_string);
   const spec_errors = validate ? validateSpec(parsed_yml) : [];
   if (spec_errors?.length) {

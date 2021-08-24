@@ -140,15 +140,19 @@ export default abstract class DependencyManager {
       }
 
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
-        if (interface_obj.ingress?.subdomain && interface_obj.ingress?.enabled) {
+        if (interface_obj?.ingress?.subdomain && interface_obj.ingress?.enabled) {
           ingresses.push([component, interface_name]);
         }
       }
 
       for (const [dep_component, interface_name] of ingresses) {
         if (!dep_component) { continue; }
+        if (!dep_component.interfaces[interface_name]) { continue; }
         let subdomain = dep_component.interfaces[interface_name].ingress?.subdomain || interface_name;
-        subdomain = interpolateString(subdomain, dep_component.context);
+        try {
+          subdomain = interpolateString(subdomain, dep_component.context);
+          // eslint-disable-next-line no-empty
+        } catch { }
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -221,6 +225,7 @@ export default abstract class DependencyManager {
     // Add edges between services and the component's interfaces node
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces)) {
+      if (!component_interface) { continue; }
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -234,6 +239,7 @@ export default abstract class DependencyManager {
     }
 
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces)) {
+      if (!component_interface) { continue; }
       const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -398,6 +404,7 @@ export default abstract class DependencyManager {
 
     for (const dependency of dependencies) {
       context.dependencies[dependency.name].interfaces = dependency.context.interfaces;
+      context.dependencies[dependency.name].ingresses = dependency.context.ingresses;
       // Set dependency interfaces
       for (const [interface_name, interface_config] of Object.entries(dependency.context.interfaces)) {
         if (this.use_sidecar && interface_config.host === '127.0.0.1') {
