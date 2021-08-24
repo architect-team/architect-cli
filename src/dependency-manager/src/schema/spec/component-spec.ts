@@ -64,7 +64,7 @@ export class ParameterDefinitionSpec {
   description?: string;
 
   @IsOptional()
-  @JSONSchema(AnyOf('boolean', 'number', 'string', 'null'))
+  @JSONSchema(AnyOf('boolean', 'number', 'object', 'string', 'null'))
   default?: boolean | number | string | null;
 }
 

@@ -22,7 +22,7 @@ export interface ComponentInterfaceConfig {
 
   ingress?: IngressConfig;
 
-  consumers?: string;
+  consumers?: string[];
   dns_zone?: string;
   subdomain?: string;
 }

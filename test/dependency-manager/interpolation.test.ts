@@ -1133,4 +1133,31 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(1);
   });
+
+  it('interpolate object parameter for replicas', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      api_config:
+        default:
+          min_replicas: 3
+          max_replicas: 5
+    services:
+      api:
+        replicas: \${{ parameters.api_config.min_replicas }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.replicas).to.eq(3);
+  });
 });

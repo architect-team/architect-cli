@@ -47,8 +47,8 @@ export class VolumeSpec {
   readonly?: boolean | string;
 }
 
-export type EnvironmentSpecValue = boolean | null | number | string;
-export const EnvironmentDictiory = DictionaryOfAny('boolean', 'null', 'number', 'string');
+export type EnvironmentSpecValue = boolean | null | number | object | string;
+export const EnvironmentDictionary = DictionaryOfAny('array', 'boolean', 'null', 'number', 'object', 'string');
 
 @JSONSchema(OneOf("context", "dockerfile"))
 export class BuildSpec {
@@ -91,7 +91,7 @@ export abstract class ResourceSpec {
   debug?: Partial<ResourceSpec>;
 
   @IsOptional()
-  @JSONSchema(EnvironmentDictiory)
+  @JSONSchema(EnvironmentDictionary)
   environment?: Dictionary<EnvironmentSpecValue>;
 
   @IsOptional()
