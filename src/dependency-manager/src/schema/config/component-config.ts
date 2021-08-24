@@ -32,7 +32,7 @@ export interface ParameterDefinitionConfig {
 
   description?: string;
 
-  default?: boolean | number | string | null;
+  default?: boolean | number | object | string | null;
 }
 
 export interface ComponentInstanceMetadata {
