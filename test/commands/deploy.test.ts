@@ -3,7 +3,6 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
-import Command from '../../src/base-command';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
@@ -365,7 +364,7 @@ describe('local deploy environment', function () {
         ]
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",
@@ -411,7 +410,7 @@ describe('local deploy environment', function () {
         "image": "heroku/nodejs-hello-world",
       },
       "gateway": {
-        "image": "traefik:v2.4",
+        "image": "traefik:v2.4.14",
         "command": [
           "--api.insecure=true",
           "--pilot.dashboard=false",

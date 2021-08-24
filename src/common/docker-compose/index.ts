@@ -52,7 +52,7 @@ export class DockerComposeUtils {
       }
 
       compose.services[gateway_node.ref] = {
-        image: 'traefik:v2.4',
+        image: 'traefik:v2.4.14',
         command: [
           '--api.insecure=true',
           '--pilot.dashboard=false',
