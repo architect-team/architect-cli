@@ -60,7 +60,7 @@ export abstract class SlugUtils {
 
 export class ComponentSlugUtils extends SlugUtils {
 
-  public static Description = 'must be of the form <account-name>/<component-name>';
+  public static Description = 'Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.';
 
   static RegexNoMaxLength = `${Slugs.ArchitectSlugRegexNoMaxLength}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexNoMaxLength}`; // does not contain character count lookaheads
   static RegexBase = `${Slugs.ArchitectSlugRegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`;

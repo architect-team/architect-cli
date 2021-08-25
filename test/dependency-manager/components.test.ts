@@ -50,7 +50,6 @@ describe('components spec v1', function () {
           api:
             interfaces:
               main: 8080
-        interfaces:
       `
 
       mock_fs({

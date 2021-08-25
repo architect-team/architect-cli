@@ -5,5 +5,3 @@ services:
     image: postgres:12
     environment:
       CORS_URLS: ${{ ingresses.main.consumers }}
-
-interfaces:

@@ -123,7 +123,8 @@ export class ComponentSpec {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
   @JSONSchema({
     type: 'string',
-    description: 'Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.',
+    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
+    errorMessage: ComponentSlugUtils.Description,
   })
   name!: string;
 
