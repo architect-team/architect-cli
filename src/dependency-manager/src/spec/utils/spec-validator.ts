@@ -5,11 +5,11 @@ import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
 import { ParsedYaml } from './component-builder';
-import { ARCHITECT_JSON_SCHEMA } from './json-schema';
+import { ARCHITECT_JSON_SCHEMA, findDefinition } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
-export const findBestMatch = (value: string, options: string[], max_distance = 15): string | undefined => {
+export const findPotentialMatch = (value: string, options: string[], max_distance = 15): string | undefined => {
   let potential_match;
   let shortest_distance = Infinity;
   const value_length = value.length;
@@ -37,14 +37,25 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   const ajv_error_map: Dictionary<Ajv.ErrorObject> = {};
   for (const ajv_error of ajv_errors) {
     if (!ajv_error_map[ajv_error.dataPath]) {
-      // TODO:269 add test for additionalProperties
       // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
       // @ts-ignore
       const additional_property: string | undefined = ajv_error.params?.additionalProperty;
       if (additional_property) {
+        ajv_error.message = `Invalid key: ${additional_property}`;
+
+        const path = ajv_error.dataPath.replace('.', '');
+        const definition = findDefinition(replaceBrackets(path), ARCHITECT_JSON_SCHEMA);
+        if (definition) {
+          const keys = Object.keys(definition.properties || {}).map((key) => path ? `${path}.${key}` : key);
+
+          const potential_match = findPotentialMatch(`${path}.${additional_property}`, keys);
+
+          if (potential_match) {
+            ajv_error.message += ` - Did you mean ${potential_match}?`;
+          }
+        }
+
         ajv_error.dataPath += `.${additional_property}`;
-        // TODO:269 provide recommendations via leven?
-        ajv_error.message = `${additional_property} is not a valid key - possible typo - check documentation`;
       }
 
       ajv_error_map[ajv_error.dataPath] = ajv_error;

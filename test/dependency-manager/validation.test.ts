@@ -76,6 +76,7 @@ describe('validation spec v1', () => {
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services['stateless-app'].debug.debug`);
+      expect(errors[0].message).includes(`services['stateless-app'].debug.deploy`);
     });
 
     it('invalid service ref', async () => {
