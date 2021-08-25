@@ -2,8 +2,8 @@ import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, P
 import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary, transformDictionary } from '../../utils/dictionary';
-import { ComponentSlug, ComponentSlugUtils, Slugs } from '../../utils/slugs';
 import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
+import { ComponentSlug, ComponentSlugUtils, Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
 

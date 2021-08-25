@@ -15,10 +15,10 @@ import { ComponentSpec } from './spec/component-spec';
 import { transformComponentContext, transformComponentSpec } from './spec/transform/component-transform';
 import { parseSourceYml } from './spec/utils/component-builder';
 import { interpolateConfigOrReject } from './spec/utils/component-interpolation';
+import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError } from './utils/errors';
 import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
-import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 interface ComponentConfigNode {
   config: ComponentConfig;

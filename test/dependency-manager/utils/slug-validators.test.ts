@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../../src/dependency-manager/src/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils, Slugs } from '../../../src/dependency-manager/src/spec/utils/slugs';
 
 describe('slugs validators', () => {
 

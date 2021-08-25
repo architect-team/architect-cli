@@ -1,6 +1,6 @@
+import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
-import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../utils/slugs';
 import { ComponentContext } from './component-context';
 import { ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';

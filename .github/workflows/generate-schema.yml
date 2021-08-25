@@ -1,0 +1,35 @@
+name: Generate ComponentSpec JSONSchema and Docs
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "src/dependency-manager/src/**/*"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./src/dependency-manager
+      - name: Generate Schema and Docs
+        run: npm run generate:schema-docs
+        working-directory: ./src/dependency-manager
+      - name: Commit Schema and Docs back to master
+        run: |
+          if [[ -z `git status --porcelain` ]]; then exit 0; fi
+          git config --global user.name "Github Actions"
+          git config --global user.email "bot@architect.io"
+          git add src/dependency-manager/schema/architect.schema.json
+          git add docs/5-reference/2-architect-yml.md
+          git commit -m "Generated new Spec/Docs: ${{ github.sha }}"
+          git pull
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"

@@ -36,12 +36,13 @@
     "@types/fs-extra": "^8.0.1",
     "@types/js-yaml": "^4.0.1",
     "@types/shell-quote": "^1.7.0",
+    "ts-node": "9.1.1",
     "typescript": "^3.9.7"
   },
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b",
-    "generate:schema": "ts-node --project ./tsconfig.json ./src/generate.ts"
+    "generate:schema-docs": "./node_modules/.bin/ts-node --project ./tsconfig.json ./src/generate.ts"
   },
   "main": "lib/index.js",
   "files": [

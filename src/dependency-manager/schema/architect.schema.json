@@ -116,7 +116,7 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
         },
         "inputs": {
           "type": "object",
@@ -130,7 +130,7 @@
               }
             ]
           },
-          "description": "TODO:289"
+          "description": "A set of key-value pairs that represent Terraform inputs and their values."
         }
       },
       "type": "object",
@@ -138,7 +138,7 @@
         "path",
         "inputs"
       ],
-      "description": "TODO:289",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
@@ -148,7 +148,7 @@
       "properties": {
         "strategy": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "Selects the preferred deploy strategy for the service."
         },
         "modules": {
           "type": "object",
@@ -159,7 +159,7 @@
               }
             ]
           },
-          "description": "TODO:289"
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time."
         }
       },
       "type": "object",
@@ -167,7 +167,7 @@
         "strategy",
         "modules"
       ],
-      "description": "TODO:289",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
@@ -395,7 +395,7 @@
         },
         "url": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
         },
         "sticky": {
           "anyOf": [
@@ -612,6 +612,9 @@
           "additionalProperties": {
             "anyOf": [
               {
+                "type": "array"
+              },
+              {
                 "type": "boolean"
               },
               {
@@ -619,6 +622,9 @@
               },
               {
                 "type": "number"
+              },
+              {
+                "type": "object"
               },
               {
                 "type": "string"
@@ -756,6 +762,9 @@
           "additionalProperties": {
             "anyOf": [
               {
+                "type": "array"
+              },
+              {
                 "type": "boolean"
               },
               {
@@ -763,6 +772,9 @@
               },
               {
                 "type": "number"
+              },
+              {
+                "type": "object"
               },
               {
                 "type": "string"
@@ -940,10 +952,16 @@
         "default": {
           "anyOf": [
             {
+              "type": "array"
+            },
+            {
               "type": "boolean"
             },
             {
               "type": "number"
+            },
+            {
+              "type": "object"
             },
             {
               "type": "string"
@@ -1077,7 +1095,7 @@
       "properties": {
         "path": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
         },
         "inputs": {
           "type": "object",
@@ -1091,11 +1109,11 @@
               }
             ]
           },
-          "description": "TODO:289"
+          "description": "A set of key-value pairs that represent Terraform inputs and their values."
         }
       },
       "type": "object",
-      "description": "TODO:289",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
@@ -1105,7 +1123,7 @@
       "properties": {
         "strategy": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "Selects the preferred deploy strategy for the service."
         },
         "modules": {
           "type": "object",
@@ -1116,11 +1134,11 @@
               }
             ]
           },
-          "description": "TODO:289"
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time."
         }
       },
       "type": "object",
-      "description": "TODO:289",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
@@ -1329,7 +1347,7 @@
         },
         "url": {
           "type": "string",
-          "description": "TODO:289"
+          "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
         },
         "sticky": {
           "anyOf": [
@@ -1509,6 +1527,9 @@
           "additionalProperties": {
             "anyOf": [
               {
+                "type": "array"
+              },
+              {
                 "type": "boolean"
               },
               {
@@ -1516,6 +1537,9 @@
               },
               {
                 "type": "number"
+              },
+              {
+                "type": "object"
               },
               {
                 "type": "string"
@@ -1650,6 +1674,9 @@
           "additionalProperties": {
             "anyOf": [
               {
+                "type": "array"
+              },
+              {
                 "type": "boolean"
               },
               {
@@ -1657,6 +1684,9 @@
               },
               {
                 "type": "number"
+              },
+              {
+                "type": "object"
               },
               {
                 "type": "string"
@@ -1831,10 +1861,16 @@
         "default": {
           "anyOf": [
             {
+              "type": "array"
+            },
+            {
               "type": "boolean"
             },
             {
               "type": "number"
+            },
+            {
+              "type": "object"
             },
             {
               "type": "string"

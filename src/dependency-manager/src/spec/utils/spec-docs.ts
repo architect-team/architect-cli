@@ -1,8 +1,8 @@
 import { ReferenceObject, SchemaObject } from 'openapi3-ts';
-import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../spec/component-spec';
-import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from '../spec/json-schema';
-import { ServiceSpec } from '../spec/service-spec';
-import { TaskSpec } from '../spec/task-spec';
+import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
+import { ServiceSpec } from '../service-spec';
+import { TaskSpec } from '../task-spec';
+import { DEBUG_PREFIX, getDocsPath, stripDebugDefinitions } from './json-schema';
 import { REF_PREFIX } from './json-schema-annotations';
 
 const OPEN = '&lt;';

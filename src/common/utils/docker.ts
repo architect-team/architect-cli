@@ -1,5 +1,5 @@
 import execa, { Options } from 'execa';
-import { Slugs } from '../../dependency-manager/src/utils/slugs';
+import { Slugs } from '../../dependency-manager/src/spec/utils/slugs';
 
 const CACHE_TAG = 'architect-cache';
 
