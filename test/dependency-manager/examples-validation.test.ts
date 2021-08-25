@@ -46,7 +46,21 @@ describe('example component validation', function () {
           expect(source_path).to.equal(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
           expect(component_config).to.not.be.undefined;
         });
+      } else {
+        // if there's no architect.yml in the top-level examples dir, check one level deeper
+        var second_level_dirs = fs.readdirSync(`${EXAMPLES_DIR}/${example_dir}`);
 
+        for (const second_level_dir of second_level_dirs) {
+          if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/${second_level_dir}/architect.yml`)) {
+
+            it(`${EXAMPLES_DIR}/${example_dir}/${second_level_dir}/architect.yml passes ajv json schema validation`, async () => {
+              const { component_config, source_path } = await buildConfigFromPath(`${EXAMPLES_DIR}/${example_dir}/${second_level_dir}/architect.yml`, Slugs.DEFAULT_TAG);
+
+              expect(source_path).to.equal(`${EXAMPLES_DIR}/${example_dir}/${second_level_dir}/architect.yml`);
+              expect(component_config).to.not.be.undefined;
+            });
+          }
+        }
       }
     }
   });
