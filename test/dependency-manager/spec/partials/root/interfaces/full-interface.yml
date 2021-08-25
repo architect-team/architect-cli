@@ -1,0 +1,4 @@
+interfaces:
+  api:
+    url: ${{ services.api.interfaces.main.url }}
+    description: Some friendly description
