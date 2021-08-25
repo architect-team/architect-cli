@@ -2,8 +2,8 @@ import { parse as shell_parse } from 'shell-quote';
 import { ComponentInstanceMetadata } from '../../config/component-config';
 import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
 import { Dictionary, transformDictionary } from '../../utils/dictionary';
-import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../../utils/slugs';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec, VolumeSpec } from '../resource-spec';
+import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
 
 export const transformResourceSpecName = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');

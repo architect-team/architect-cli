@@ -4,8 +4,8 @@ import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
-import { ARCHITECT_JSON_SCHEMA } from '../json-schema';
 import { ParsedYaml } from './component-builder';
+import { ARCHITECT_JSON_SCHEMA } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
 

@@ -1,10 +1,10 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { SchemaObject } from 'openapi3-ts';
-import { REF_PREFIX } from '../utils/json-schema-annotations';
-import { ComponentSpec } from './component-spec';
-import { ResourceSpec } from './resource-spec';
-import { ServiceSpec } from './service-spec';
-import { TaskSpec } from './task-spec';
+import { ComponentSpec } from '../component-spec';
+import { ResourceSpec } from '../resource-spec';
+import { ServiceSpec } from '../service-spec';
+import { TaskSpec } from '../task-spec';
+import { REF_PREFIX } from './json-schema-annotations';
 
 const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
 const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';

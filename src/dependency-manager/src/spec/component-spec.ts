@@ -1,10 +1,10 @@
 import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from '../utils/json-schema-annotations';
-import { ComponentSlugUtils } from '../utils/slugs';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from './utils/json-schema-annotations';
+import { ComponentSlugUtils } from './utils/slugs';
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',

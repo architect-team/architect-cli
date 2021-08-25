@@ -1,8 +1,8 @@
 import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from '../utils/json-schema-annotations';
 import { ResourceSpec } from './resource-spec';
+import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from './utils/json-schema-annotations';
 
 @JSONSchema({
   ...ExclusiveOr('cpu', 'memory'),
