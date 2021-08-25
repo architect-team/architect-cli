@@ -1,4 +1,4 @@
-import { ValidationError, ValidationErrors } from '../../utils/errors';
+import { ValidationError, ValidationErrors } from '../utils/errors';
 
 export class ValuesConfig {
   static validate(values_dict: any) {

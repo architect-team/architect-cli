@@ -35,17 +35,17 @@ describe('component builder unit test', function () {
   });
 
   it(`loadSourceYmlFromPathOrReject loads valid file`, async () => {
-    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
-    expect(source_path).to.equal(`test/mocks/architect.yml`);
-    expect(source_yml).to.contain('name: examples/superset');
+    expect(source_path).to.equal(`test/mocks/superset/architect.yml`);
+    expect(source_yml).to.contain('name: tests/superset');
   });
 
   it(`loadSourceYmlFromPathOrReject loads valid directory`, async () => {
-    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset`);
 
-    expect(source_path).to.equal(`test${path.sep}mocks${path.sep}architect.yml`);
-    expect(source_yml).to.contain('name: examples/superset');
+    expect(source_path).to.equal(`test${path.sep}mocks${path.sep}superset${path.sep}architect.yml`);
+    expect(source_yml).to.contain('name: tests/superset');
   });
 
   it(`loadSourceYmlFromPathOrReject throws if given invalid directory`, async () => {
@@ -53,20 +53,20 @@ describe('component builder unit test', function () {
   });
 
   it(`parseSourceYml parses yaml into object with blank fields set to null`, async () => {
-    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     const parsed_yml = parseSourceYml(source_yml);
 
-    expect((parsed_yml as any).name).to.equal('examples/superset');
+    expect((parsed_yml as any).name).to.equal('tests/superset');
     expect((parsed_yml as any).parameters.param_unset).to.be.null; // checks and makes sure we're properly parsing empty keys to 'null'
   });
 
   it(`buildConfigFromYml parses yaml and builds into config`, async () => {
-    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/architect.yml`);
+    const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     const config = buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
 
-    expect(config.name).to.equal('examples/superset');
+    expect(config.name).to.equal('tests/superset');
     expect(config.tag).to.equal(Slugs.DEFAULT_TAG);
   });
 

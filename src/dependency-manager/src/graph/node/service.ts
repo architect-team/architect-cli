@@ -1,5 +1,5 @@
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceInterfaceConfig, ServiceConfig } from '../../schema/config/service-config';
+import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 
 export interface ServiceNodeOptions {
   ref: string;

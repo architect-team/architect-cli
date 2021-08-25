@@ -3,8 +3,8 @@ import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec } from '../../dependency-manager/src';
-import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../../dependency-manager/src/schema/component-builder';
-import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/schema/config/component-config';
+import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/config/component-config';
+import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 

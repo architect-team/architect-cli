@@ -3,7 +3,7 @@ import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
 import { Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
+import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 
 declare const process: NodeJS.Process;
 

@@ -1,7 +1,7 @@
 import { parse as shell_parse } from 'shell-quote';
-import { Dictionary, transformDictionary } from '../../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../../config/component-config';
 import { LivenessProbeConfig, ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
+import { Dictionary, transformDictionary } from '../../utils/dictionary';
 import { LivenessProbeSpec, ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformResourceSpec } from './resource-transform';
 
@@ -32,11 +32,11 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
   if (!liveness_probe || !Object.keys(liveness_probe).length) { return undefined; }
 
   return {
-    success_threshold: liveness_probe.success_threshold || 1,
-    failure_threshold: liveness_probe.failure_threshold || 3,
-    timeout: liveness_probe.timeout || '5s',
-    interval: liveness_probe.interval || '30s',
-    initial_delay: liveness_probe.initial_delay || '0s',
+    success_threshold: liveness_probe.success_threshold || LivenessProbeSpec.default_success_threshold,
+    failure_threshold: liveness_probe.failure_threshold || LivenessProbeSpec.default_failure_threshold,
+    timeout: liveness_probe.timeout || LivenessProbeSpec.default_timeout,
+    interval: liveness_probe.interval || LivenessProbeSpec.default_interval,
+    initial_delay: liveness_probe.initial_delay || LivenessProbeSpec.default_initial_delay,
     path: liveness_probe.path,
     command: transformLivenessProbeSpecCommand(liveness_probe.command, environment),
     port: liveness_probe.port,

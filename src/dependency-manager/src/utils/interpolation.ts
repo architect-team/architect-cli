@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { findBestMatch } from '../schema/spec-validator';
+import { findBestMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationErrors } from './errors';
 

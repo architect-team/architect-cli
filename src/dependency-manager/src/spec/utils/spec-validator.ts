@@ -1,11 +1,11 @@
 import Ajv, { ErrorObject } from "ajv";
 import leven from 'leven';
-import { Dictionary } from '../utils/dictionary';
-import { ValidationError, ValidationErrors } from '../utils/errors';
-import { buildContextMap, replaceBrackets } from '../utils/interpolation';
+import { Dictionary } from '../../utils/dictionary';
+import { ValidationError, ValidationErrors } from '../../utils/errors';
+import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
+import { ComponentSpec } from '../component-spec';
+import { ARCHITECT_JSON_SCHEMA } from '../json-schema';
 import { ParsedYaml } from './component-builder';
-import { ARCHITECT_JSON_SCHEMA } from './json-schema';
-import { ComponentSpec } from './spec/component-spec';
 
 export type AjvError = ErrorObject[] | null | undefined;
 

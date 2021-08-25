@@ -10,9 +10,9 @@ import untildify from 'untildify';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
-import { ComponentSpec } from '../dependency-manager/src/schema/spec/component-spec';
-import { VolumeSpec } from '../dependency-manager/src/schema/spec/resource-spec';
-import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/schema/spec/service-spec';
+import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
+import { VolumeSpec } from '../dependency-manager/src/spec/resource-spec';
+import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {
   auth_required() {

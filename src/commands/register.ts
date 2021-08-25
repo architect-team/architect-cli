@@ -12,7 +12,7 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath, buildSpecFromPath, dumpSpecToSourceYml } from '../dependency-manager/src/schema/component-builder';
+import { buildConfigFromPath, buildSpecFromPath, dumpSpecToSourceYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();

@@ -17,8 +17,8 @@ import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
-import { ComponentConfig } from '../dependency-manager/src/schema/config/component-config';
+import { ComponentConfig } from '../dependency-manager/src/config/component-config';
+import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
