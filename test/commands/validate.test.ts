@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import path from 'path';
 import { mockArchitectAuth } from '../utils/mocks';
 
 describe('architect validate component', function () {
@@ -11,8 +12,8 @@ describe('architect validate component', function () {
     .stderr({ print })
     .command(['validate', 'examples/database-seeding/architect.yml'])
     .it('correctly validates an architect.yml file and prints name and source_file', ctx => {
-      expect(ctx.stdout).to.contain('examples/database-seeding');
-      expect(ctx.stdout).to.contain('examples/database-seeding/architect.yml');
+      expect(ctx.stdout).to.contain(`examples/database-seeding`);
+      expect(ctx.stdout).to.contain(path.resolve(`examples/database-seeding/architect.yml`));
     });
 
   mockArchitectAuth
@@ -21,7 +22,7 @@ describe('architect validate component', function () {
     .command(['validate', 'examples/database-seeding/'])
     .it('correctly validates an architect.yml file given a directory and prints name and source_file', ctx => {
       expect(ctx.stdout).to.contain('examples/database-seeding');
-      expect(ctx.stdout).to.contain('examples/database-seeding/architect.yml');
+      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
     });
 
   mockArchitectAuth
@@ -30,9 +31,9 @@ describe('architect validate component', function () {
     .command(['validate', 'examples/hello-world/architect.yml', 'examples/database-seeding/architect.yml'])
     .it('correctly validates an multiple files and prints name and source_file for each', ctx => {
       expect(ctx.stdout).to.contain('examples/database-seeding');
-      expect(ctx.stdout).to.contain('examples/database-seeding/architect.yml');
+      expect(ctx.stdout).to.contain(path.resolve('examples/database-seeding/architect.yml'));
       expect(ctx.stdout).to.contain('examples/hello-world');
-      expect(ctx.stdout).to.contain('examples/hello-world/architect.yml');
+      expect(ctx.stdout).to.contain(path.resolve('examples/hello-world/architect.yml'));
     });
 
   mockArchitectAuth
@@ -40,7 +41,8 @@ describe('architect validate component', function () {
     .stderr({ print })
     .command(['validate', 'non-existent/directory/architect.yml'])
     .it('correctly fails on a non-existent directory and prints an error message', ctx => {
-      expect(ctx.stdout).to.contain('non-existent/directory/architect.yml failed validation');
+      expect(ctx.stdout).to.contain(path.resolve('non-existent/directory/architect.yml'));
+      expect(ctx.stdout).to.contain('failed validation');
       expect(ctx.stdout).to.contain('No component config file found');
     });
 });
