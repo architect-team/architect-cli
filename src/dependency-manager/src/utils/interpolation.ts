@@ -1,4 +1,5 @@
-import leven from 'leven';
+import yaml from 'js-yaml';
+import { findBestMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationErrors } from './errors';
 
@@ -121,30 +122,31 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
 
   const errors = [];
 
-  const max_distance = 10;
-  for (const miss of misses) {
-    const miss_length = miss.length;
-    const shortest_distance = Infinity;
-    let potential_match = '';
-    for (const key of context_keys) {
-      // https://github.com/sindresorhus/leven/issues/14
-      if (Math.abs(miss_length - key.length) >= max_distance) {
-        continue;
+  const reverse_context_map: Dictionary<string> = {};
+  if (misses.size) {
+    try {
+      const value = yaml.load(raw_value);
+      const context_map = buildContextMap(value);
+      for (const [k, v] of Object.entries(context_map)) {
+        if (typeof v === 'string') {
+          for (const match of matches(v, interpolation_regex)) {
+            reverse_context_map[match[1]] = k;
+          }
+        }
       }
+      // eslint-disable-next-line no-empty
+    } catch { }
+  }
 
-      const distance = leven(miss, key);
-      if (distance < shortest_distance && distance < max_distance) {
-        potential_match = key;
-      }
-    }
+  for (const miss of misses) {
+    const potential_match = findBestMatch(miss, context_keys);
 
     let message = `Invalid interpolation ref: \${{ ${miss} }}`;
     if (potential_match) {
       message += ` - Did you mean \${{ ${potential_match} }}?`;
     }
-    // TODO:288: provide line numbers - should be able to derive from raw_value
     errors.push({
-      // dataPath: `TODO:288`, // we need to find the path where the interpolation string is referenced and set that here.
+      path: reverse_context_map[miss] || '<unknown>',
       message,
     });
   }

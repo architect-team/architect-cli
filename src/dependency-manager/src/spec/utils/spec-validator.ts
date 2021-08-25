@@ -1,4 +1,5 @@
 import Ajv, { ErrorObject } from "ajv";
+import leven from 'leven';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
@@ -7,6 +8,26 @@ import { ARCHITECT_JSON_SCHEMA } from '../json-schema';
 import { ParsedYaml } from './component-builder';
 
 export type AjvError = ErrorObject[] | null | undefined;
+
+export const findBestMatch = (value: string, options: string[], max_distance = 15): string | undefined => {
+  let potential_match;
+  let shortest_distance = Infinity;
+  const value_length = value.length;
+  for (const option of [...options].sort()) {
+    const option_length = option.length;
+    // https://github.com/sindresorhus/leven/issues/14
+    if (Math.abs(value_length - option_length) >= max_distance) {
+      continue;
+    }
+
+    const distance = leven(value, option);
+    if (distance < max_distance && distance <= shortest_distance) {
+      potential_match = option;
+      shortest_distance = distance;
+    }
+  }
+  return potential_match;
+};
 
 export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): ValidationError[] => {
   if (!ajv_errors?.length) {
