@@ -1,4 +1,4 @@
-import { Dictionary } from '../../utils/dictionary';
+import { Dictionary } from '../utils/dictionary';
 import { ResourceConfig } from './resource-config';
 
 export interface ScalingMetricsConfig {

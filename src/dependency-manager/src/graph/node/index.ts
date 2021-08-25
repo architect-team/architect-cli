@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { ServiceInterfaceConfig } from '../../schema/config/service-config';
+import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 

@@ -5,7 +5,7 @@
     "name": "Architect.io",
     "url": "https://architect.io"
   },
-  "version": "1.11.3-rc.20",
+  "version": "1.11.3-rc.22",
   "repository": {
     "type": "git",
     "directory": "src/dependency-graph",
@@ -41,7 +41,7 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b",
-    "generate:schema": "ts-node --project ./tsconfig.json ./src/schema/generate-json-schema.ts"
+    "generate:schema": "ts-node --project ./tsconfig.json ./src/generate.ts"
   },
   "main": "lib/index.js",
   "files": [

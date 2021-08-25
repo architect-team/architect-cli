@@ -1,4 +1,4 @@
-import { ValidationError, ValidationErrors } from '../../utils/errors';
+import { ValidationError, ValidationErrors } from '../utils/errors';
 import { ComponentConfig } from './component-config';
 
 export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): ValidationError[] => {

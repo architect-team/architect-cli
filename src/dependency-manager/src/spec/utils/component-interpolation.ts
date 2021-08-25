@@ -1,12 +1,12 @@
 import yaml from 'js-yaml';
-import { ValidationError, ValidationErrors } from '../utils/errors';
-import { interpolateString } from '../utils/interpolation';
+import { ComponentConfig } from '../../config/component-config';
+import { validateConfig } from '../../config/component-validator';
+import { ValidationError, ValidationErrors } from '../../utils/errors';
+import { interpolateString } from '../../utils/interpolation';
+import { ComponentSpec } from '../component-spec';
+import { transformComponentSpec } from '../transform/component-transform';
+import { validateSpec } from '../utils/spec-validator';
 import { parseSourceYml } from './component-builder';
-import { ComponentConfig } from './config/component-config';
-import { validateConfig } from './config/component-validator';
-import { validateSpec } from './spec-validator';
-import { ComponentSpec } from './spec/component-spec';
-import { transformComponentSpec } from './spec/transform/component-transform';
 
 export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[], validate = true): { interpolated_config: ComponentConfig; errors: ValidationError[] } => {
   const interpolated_component_string = interpolateString(config.source_yml, config.context, ignore_keys);
