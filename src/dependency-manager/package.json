@@ -42,7 +42,7 @@
   "scripts": {
     "lint": "eslint --ext .ts,.js .",
     "build": "rm -rf lib && tsc -b",
-    "generate:schema-docs": "./node_modules/.bin/ts-node --project ./tsconfig.json ./src/generate.ts"
+    "generate:schema-docs": "ts-node --project ./tsconfig.json ./src/generate.ts"
   },
   "main": "lib/index.js",
   "files": [

@@ -1,9 +1,10 @@
 import yaml from 'js-yaml';
+import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationErrors } from './errors';
 
-const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
+const interpolation_regex = EXPRESSION_REGEX;
 
 export const replaceBrackets = (value: string) => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -28,7 +29,7 @@ ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cl
 */
 export const replaceInterpolationBrackets = (value: string) => {
   let res = value;
-  for (const match of matches(value, interpolation_regex)) {
+  for (const match of matches(value, EXPRESSION_REGEX)) {
     res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
   }
   return res;
@@ -104,7 +105,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     if (depth >= max_depth) {
       throw new Error('Max interpolation depth exceeded');
     }
-    for (const match of matches(res, interpolation_regex)) {
+    for (const match of matches(res, EXPRESSION_REGEX)) {
       const sanitized_value = replaceBrackets(match[1]);
       const value = context_map[sanitized_value];
 
@@ -129,7 +130,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       const context_map = buildContextMap(value);
       for (const [k, v] of Object.entries(context_map)) {
         if (typeof v === 'string') {
-          for (const match of matches(v, interpolation_regex)) {
+          for (const match of matches(v, EXPRESSION_REGEX)) {
             reverse_context_map[match[1]] = k;
           }
         }

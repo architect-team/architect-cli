@@ -1,4 +1,6 @@
 import { DecoratorSchema } from 'class-validator-jsonschema/build/decorators';
+import { SchemaObject } from 'openapi3-ts';
+import { EXPRESSION_REGEX } from './interpolation';
 
 export const REF_PREFIX = '#/definitions/';
 const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'object', 'null', 'array'];
@@ -191,4 +193,30 @@ export const StringOrStringArray = (): DecoratorSchema => {
       },
     ],
   };
+};
+
+/**
+ * Wraps the given schema object in a `oneOf` expression next to an ExpressionRegex
+ *
+ * Effectively allows the field to match either the given schema OR an interpolation expression
+ */
+export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
+  return {
+    oneOf: [
+      schema,
+      {
+        type: 'string',
+        pattern: EXPRESSION_REGEX.toString(),
+      },
+    ],
+  };
+};
+
+/**
+ * Wraps the given schema object in a `oneOf` expression next to an ExpressionRegex
+ *
+ * Effectively allows the field to match either the given schema OR an interpolation expression
+ */
+export const ExpressionOrString = (): DecoratorSchema => {
+  return ExpressionOr({ type: 'string' });
 };

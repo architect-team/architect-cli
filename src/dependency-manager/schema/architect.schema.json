@@ -891,30 +891,63 @@
           "description": "The host that the component interface should forward to."
         },
         "port": {
-          "anyOf": [
+          "oneOf": [
             {
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The url that the component interface should forward to."
         },
         "sticky": {
@@ -950,24 +983,32 @@
           "description": "A human-friendly description of the parameter."
         },
         "default": {
-          "anyOf": [
+          "oneOf": [
             {
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             {
-              "type": "boolean"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"
@@ -1803,30 +1844,63 @@
           "description": "The host that the component interface should forward to."
         },
         "port": {
-          "anyOf": [
+          "oneOf": [
             {
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+            }
+          ],
           "description": "The url that the component interface should forward to."
         },
         "sticky": {
@@ -1859,24 +1933,32 @@
           "description": "A human-friendly description of the parameter."
         },
         "default": {
-          "anyOf": [
+          "oneOf": [
             {
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             {
-              "type": "boolean"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
+              "type": "string",
+              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"

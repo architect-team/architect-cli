@@ -3,7 +3,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils } from './utils/slugs';
 
 @JSONSchema({
@@ -49,35 +49,35 @@ export class ComponentInterfaceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The port that the component interface should forward to.',
   })
   port?: number | string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The protocol by which the component interface can be connected to.',
   })
   protocol?: string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The Basic Auth username by which a component interface can be connected to.',
   })
   username?: string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The Basic Auth password by which a component interface can be connected to.',
   })
   password?: string;
 
   @Allow()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The url that the component interface should forward to.',
   })
   url!: string;
@@ -110,7 +110,7 @@ export class ParameterDefinitionSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('array', 'boolean', 'number', 'object', 'string', 'null'),
+    ...ExpressionOr(AnyOf('array', 'boolean', 'number', 'object', 'string', 'null')),
     description: 'Sets a default value for the parameter if one is not provided',
   })
   default?: boolean | number | object | string | null;
