@@ -85,6 +85,7 @@ export class VolumeSpec {
   readonly?: boolean | string;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type EnvironmentSpecValue = boolean | null | number | object | string;
 export const EnvironmentSpecSchema = DictionaryOfAny('array', 'boolean', 'null', 'number', 'object', 'string');
 

@@ -46,7 +46,7 @@ export class ValidationClient {
   }
 
   public static build_failure_message(failure: ValidationResult) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const color_fnc = ValidationClient.resolve_color_function(failure.severity);
     let failure_message = color_fnc(ValidationSeverity[failure.severity] + ': ' + failure.rule) + '\n';

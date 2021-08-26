@@ -2,6 +2,7 @@ import { AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
+import { User } from '../common/utils/user';
 import CallbackServer from './callback_server';
 import AppConfig from './config';
 import CredentialManager from './credentials';
@@ -22,11 +23,11 @@ export default class AuthClient {
   credentials: CredentialManager;
   _auth_result?: AuthResult;
   callback_server: CallbackServer;
-  checkLogin: Function;
+  checkLogin: () => User;
 
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, checkLogin: Function) {
+  constructor(config: AppConfig, checkLogin: () => User) {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.callback_server = new CallbackServer();
@@ -97,7 +98,7 @@ export default class AuthClient {
     }
 
     return new AuthorizationCode({
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore Cannot set client.secret https://www.ory.sh/hydra/docs/v1.4/advanced/#mobile--browser-spa-authorization
       client: {
         id: this.config.oauth_client_id,
@@ -109,7 +110,7 @@ export default class AuthClient {
         authorizePath: is_auth0 ? '/authorize' : '/oauth2/auth',
       },
       options: {
-        authorizationMethod: 'body' as 'body',
+        authorizationMethod: 'body' as const,
       },
     });
   }
@@ -153,7 +154,7 @@ export default class AuthClient {
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
     try {
       await docker(['logout', this.config.registry_host], { stdout: false });
-    } catch{
+    } catch {
       // docker is required, but not truly necessary here
     }
   }

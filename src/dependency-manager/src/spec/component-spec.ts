@@ -113,6 +113,7 @@ export class ParameterDefinitionSpec {
     ...AnyOf('array', 'boolean', 'number', 'object', 'string', 'null'),
     description: 'Sets a default value for the parameter if one is not provided',
   })
+  // eslint-disable-next-line @typescript-eslint/ban-types
   default?: boolean | number | object | string | null;
 }
 

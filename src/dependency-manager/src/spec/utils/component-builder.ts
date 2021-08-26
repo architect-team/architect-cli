@@ -19,6 +19,7 @@ class MissingConfigFileError extends Error {
 }
 
 // a typing for the raw result of js-yaml.load();
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type ParsedYaml = object | string | number | null | undefined;
 
 const specPaths = (input: string) => {

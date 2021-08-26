@@ -2,6 +2,7 @@ import { Dictionary } from '../utils/dictionary';
 import { ComponentInterfaceConfig } from './component-config';
 import { ServiceInterfaceConfig } from './service-config';
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type ParameterValue = string | number | boolean | null | object | undefined;
 
 export interface ServiceContext {

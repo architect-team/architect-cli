@@ -39,7 +39,7 @@ export default class Environments extends Command {
 
     const table = new Table({ head: ['Name', 'Account', 'Namespace', 'Created', 'Updated'] });
     for (const env of environments) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       table.push([
         env.name,

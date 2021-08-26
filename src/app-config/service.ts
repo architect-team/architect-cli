@@ -4,6 +4,7 @@ import https from 'https';
 import path from 'path';
 import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
+import { User } from '../common/utils/user';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../paths';
 import AuthClient from './auth';
@@ -106,8 +107,9 @@ export default class AppService {
     this.config.save();
   }
 
-  async checkLogin() {
-    return this.api.get('/users/me');
+  async checkLogin(): Promise<User> {
+    const { data } = await this.api.get('/users/me');
+    return data;
   }
 
   get api(): AxiosInstance {

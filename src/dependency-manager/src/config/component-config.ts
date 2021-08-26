@@ -32,6 +32,7 @@ export interface ParameterDefinitionConfig {
 
   description?: string;
 
+  // eslint-disable-next-line @typescript-eslint/ban-types
   default?: boolean | number | object | string | null;
 }
 

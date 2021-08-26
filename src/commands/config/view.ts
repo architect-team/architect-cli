@@ -17,7 +17,7 @@ export default class ConfigView extends Command {
     const table = new Table({ head: ['Name', 'Value'] });
 
     for (const entry of Object.entries(this.app.config.toJSON())) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       table.push(entry);
     }

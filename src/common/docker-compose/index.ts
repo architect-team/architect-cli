@@ -172,7 +172,7 @@ export class DockerComposeUtils {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
           }
-        } else if (!node.config.image && !node.config.build) {
+        } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");
         }
 

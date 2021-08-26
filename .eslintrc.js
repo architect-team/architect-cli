@@ -9,6 +9,7 @@ module.exports = {
     project: './tsconfig.json',
     sourceType: 'module',
   },
+  ignorePatterns: ['.eslintrc.js'],
   rules: {
     camelcase: [0],
     'no-extra-semi': [2],

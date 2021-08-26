@@ -39,7 +39,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   for (const ajv_error of ajv_errors) {
     ajv_error.instancePath = ajv_error.instancePath.replace(/\//g, '.').replace('.', '');
     if (!ajv_error_map[ajv_error.instancePath]) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const additional_property: string | undefined = ajv_error.params?.additionalProperty;
       if (additional_property) {

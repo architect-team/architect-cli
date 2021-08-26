@@ -55,7 +55,7 @@ export interface ParsedComponentSlug extends ParsedSlug {
 export abstract class SlugUtils {
   public static Description: string;
   public static Validator: RegExp;
-  public static parse: Function;
+  public static parse: (slug: string) => ParsedSlug;
 }
 
 export class ComponentSlugUtils extends SlugUtils {
