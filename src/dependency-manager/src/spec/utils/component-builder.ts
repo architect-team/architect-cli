@@ -49,7 +49,7 @@ export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path:
   }
 };
 
-export const dumpToYml = (spec: object): string => {
+export const dumpToYml = (spec: any): string => {
   return yaml.dump(spec);
 };
 
