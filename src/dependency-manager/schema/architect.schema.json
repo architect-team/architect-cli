@@ -891,61 +891,61 @@
           "description": "The host that the component interface should forward to."
         },
         "port": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "number"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The url that the component interface should forward to."
@@ -983,7 +983,7 @@
           "description": "A human-friendly description of the parameter."
         },
         "default": {
-          "oneOf": [
+          "anyOf": [
             {
               "anyOf": [
                 {
@@ -1008,7 +1008,7 @@
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"
@@ -1844,61 +1844,61 @@
           "description": "The host that the component interface should forward to."
         },
         "port": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "number"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "oneOf": [
+          "anyOf": [
             {
               "type": "string"
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The url that the component interface should forward to."
@@ -1933,7 +1933,7 @@
           "description": "A human-friendly description of the parameter."
         },
         "default": {
-          "oneOf": [
+          "anyOf": [
             {
               "anyOf": [
                 {
@@ -1958,7 +1958,7 @@
             },
             {
               "type": "string",
-              "pattern": "/\\${{\\s*(.*?)\\s*}}/g"
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"

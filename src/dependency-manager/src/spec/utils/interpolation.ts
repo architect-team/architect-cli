@@ -1,2 +1,2 @@
 
-export const EXPRESSION_REGEX = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
+export const EXPRESSION_REGEX_STRING = `\\\${{\\s*(.*?)\\s*}}`;

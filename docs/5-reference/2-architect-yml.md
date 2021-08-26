@@ -65,7 +65,7 @@ Components can define configurable parameters that can be used to enrich the con
 | -------------------- | ---------- | -------------- | -------------- |
  | `required` | boolean | Denotes whether the parameter is required. |  |
  | `description` | string | A human-friendly description of the parameter. |  |
- | `default` |  | Sets a default value for the parameter if one is not provided |  |
+ | `default` | string | Sets a default value for the parameter if one is not provided |  |
 
 
 ## ComponentInterfaceSpec
@@ -77,11 +77,11 @@ Component Interfaces are the primary means by which components advertise their r
  | `ingress` | [IngressSpec](#ingressspec) |  |  |
  | `description` | string | A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for. |  |
  | `host` | string | The host that the component interface should forward to. |  |
- | `port` |  | The port that the component interface should forward to. |  |
- | `protocol` |  | The protocol by which the component interface can be connected to. |  |
- | `username` |  | The Basic Auth username by which a component interface can be connected to. |  |
- | `password` |  | The Basic Auth password by which a component interface can be connected to. |  |
- | `url`* |  | The url that the component interface should forward to. |  |
+ | `port` | number \| string | The port that the component interface should forward to. |  |
+ | `protocol` | string \| string | The protocol by which the component interface can be connected to. |  |
+ | `username` | string \| string | The Basic Auth username by which a component interface can be connected to. |  |
+ | `password` | string \| string | The Basic Auth password by which a component interface can be connected to. |  |
+ | `url`* | string \| string | The url that the component interface should forward to. |  |
  | `sticky` | boolean \| string | If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running. |  |
 
 
