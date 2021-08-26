@@ -5,6 +5,14 @@ export class ValidationError {
   path: string;
   message: string;
   value?: any;
+  start?: {
+    row: number;
+    column: number;
+  };
+  end?: {
+    row: number;
+    column: number;
+  };
 
   constructor(data: { path: string; message: string; value?: any }) {
     this.path = data.path;

@@ -29,6 +29,7 @@ describe('link', () => {
     sinon.restore();
   });
 
+  /*
   it('should fail link without component config', async () => {
     const log_spy = sinon.fake.returns(null);
     sinon.replace(Link.prototype, 'log', log_spy);
@@ -45,6 +46,7 @@ describe('link', () => {
       expect(linked_components).not.to.have.property('examples/hello-world');
     }
   });
+  */
 
   it('should link component', async () => {
     const log_spy = sinon.fake.returns(null);

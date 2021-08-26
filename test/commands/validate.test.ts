@@ -43,6 +43,6 @@ describe('architect validate component', function () {
     .it('correctly fails on a non-existent directory and prints an error message', ctx => {
       expect(ctx.stdout).to.contain(path.resolve('non-existent/directory/architect.yml'));
       expect(ctx.stdout).to.contain('failed validation');
-      expect(ctx.stdout).to.contain('No component config file found');
+      expect(ctx.stdout).to.contain('Could not find architect.yml');
     });
 });

@@ -30,6 +30,30 @@ export const findPotentialMatch = (value: string, options: string[], max_distanc
   return potential_match;
 };
 
+export const addLineNumbers = (value: string, errors: ValidationError[]): void => {
+  const rows = value.split('\n');
+  const total_rows = rows.length;
+  for (const error of errors) {
+    const keys = error.path.split('.');
+    const exp = new RegExp('(.*)?' + keys.map((key) => `${key}:`).join('(.*)?'), 's');
+    const matches = exp.exec(value);
+    if (matches) {
+      const match = matches[0];
+      const remaining_rows = value.replace(match, '').split('\n');
+      const target_row = total_rows - remaining_rows.length;
+      const end_row = rows[target_row];
+      error.start = {
+        row: target_row + 1,
+        column: (end_row.length - end_row.trimLeft().length) + 1,
+      };
+      error.end = {
+        row: target_row + 1,
+        column: end_row.length - (remaining_rows[0]?.length || 0),
+      };
+    }
+  }
+};
+
 export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): ValidationError[] => {
   if (!ajv_errors?.length) {
     return [];
