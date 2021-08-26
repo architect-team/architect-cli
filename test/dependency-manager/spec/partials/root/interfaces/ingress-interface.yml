@@ -1,7 +1,6 @@
-interfaces:
-  api:
-    url: ${{ services.api.interfaces.main.url }}
-    description: Some friendly description
-    ingress:
-      enabled: true
-      subdomain: api-subdomain
+api:
+  url: ${{ services.api.interfaces.main.url }}
+  description: Some friendly description
+  ingress:
+    enabled: true
+    subdomain: api-subdomain

@@ -5,7 +5,8 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
-import { buildConfigFromYml, loadSourceYmlFromPathOrReject, parseSourceYml, Slugs } from '../../../src/dependency-manager/src';
+import { buildConfigFromYml, loadSourceYmlFromPathOrReject, parseSourceYml } from '../../../src/dependency-manager/src';
+import { Slugs } from '../../../src/dependency-manager/src/utils/slugs';
 
 describe('component builder unit test', function () {
   beforeEach(async () => {

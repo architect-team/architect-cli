@@ -1,2 +1,3 @@
 main:
   host: ${{ parameters.main_host }}
+  port: ${{ parameters.main_port }}

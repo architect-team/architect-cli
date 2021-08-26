@@ -6,7 +6,8 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
-import { parseSourceYml } from '../../../src/dependency-manager/src';
+import { buildConfigFromYml, dumpToYml, parseSourceYml } from '../../../src/dependency-manager/src';
+import { Slugs } from '../../../src/dependency-manager/src/utils/slugs';
 
 const lsDirectories = (dir: string) => {
   return fs.readdirSync(path.resolve(dir), { withFileTypes: true })
@@ -47,7 +48,7 @@ const recursiveMergeTree = (tree: RecursivePartialsTree): object[] => {
           if (child_key.startsWith('_')) {
             let accum = current_partial;
             for (const current_key of Object.keys(accum)) {
-              accum = deepmerge(accum[current_key], { [child_key.replace('_', '')]: child_partial });
+              accum[current_key] = deepmerge(accum[current_key], { [child_key.replace('_', '')]: child_partial });
             }
             return accum;
           } else {
@@ -101,13 +102,13 @@ describe('component spec unit test', function () {
     const tree = recursiveBuildTree(root_partials_dir);
 
     const all_components = recursiveMergeTree(tree);
-    console.log(`validating ${all_components.length} components...`);
 
     it(`loadSourceYmlFromPathOrReject loads valid file`, async () => {
-
-      // const config = buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
-      console.log(JSON.stringify(tree, null, 2));
-      console.log(JSON.stringify(all_components, null, 2));
+      const errors = [];
+      for (const component of all_components) {
+        const source_yml = dumpToYml(component);
+        buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
+      }
     });
 
   });

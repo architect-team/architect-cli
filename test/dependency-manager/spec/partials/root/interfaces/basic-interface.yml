@@ -1,2 +1,1 @@
-interfaces:
-  api: ${{ services.api.interfaces.main.url }}
+api: ${{ services.api.interfaces.main.url }}
