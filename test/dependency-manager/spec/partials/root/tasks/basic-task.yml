@@ -1,0 +1,2 @@
+curler:
+  image: ellerbrock/alpine-bash-curl-ssl
