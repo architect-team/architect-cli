@@ -18,11 +18,11 @@ export default class DependencyEdge {
 
   instance_id = '';
 
-  toString() {
+  toString(): string {
     return `${this.from} [${Object.keys(this.interfaces_map).join(', ')}] -> ${this.to} [${Object.values(this.interfaces_map).join(', ')}]`;
   }
 
-  get ref() {
+  get ref(): string {
     return `${this.from}.${this.to}`;
   }
 }

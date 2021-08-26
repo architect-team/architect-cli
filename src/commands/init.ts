@@ -15,7 +15,7 @@ import { VolumeSpec } from '../dependency-manager/src/spec/resource-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -59,7 +59,7 @@ export abstract class InitCommand extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = this.parse(InitCommand);
 
     const from_path = path.resolve(untildify(flags['from-compose']));

@@ -8,7 +8,7 @@ import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/compon
 declare const process: NodeJS.Process;
 
 export default class Link extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -24,7 +24,7 @@ export default class Link extends Command {
     default: path.basename(process.cwd()),
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args } = this.parse(Link);
 
     const component_path = path.resolve(untildify(args.componentPath));

@@ -1,4 +1,4 @@
-import { ClassConstructor, plainToClass, Transform } from 'class-transformer';
+import { ClassConstructor, plainToClass } from 'class-transformer';
 import { Dictionary } from './dictionary';
 
 /**
@@ -24,9 +24,3 @@ export const Dict = <T>(typeFunction: () => ClassConstructor<T>, options?: { key
     }
     return res;
   };
-
-/**
- * Decorator used alongside class transformation to assign default values to fields
- */
-export const Default = (defaultValue: any) =>
-  Transform((target: any) => target || defaultValue);

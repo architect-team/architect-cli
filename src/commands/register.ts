@@ -45,7 +45,7 @@ export default class ComponentRegister extends Command {
     description: 'Path to a component to register',
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { flags, args } = this.parse(ComponentRegister);
     await Docker.verify();
 

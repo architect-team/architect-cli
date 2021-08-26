@@ -12,7 +12,7 @@ export default abstract class extends Command {
   app!: AppService;
   accounts?: any;
 
-  auth_required() {
+  auth_required(): boolean {
     return true;
   }
 
@@ -20,7 +20,7 @@ export default abstract class extends Command {
     help: flags.help({ char: 'h' }),
   };
 
-  checkFlagDeprecations(flags: any, flag_definitions: any) {
+  checkFlagDeprecations(flags: any, flag_definitions: any): void {
     Object.keys(flags).forEach((flagName: string) => {
       const flag_config = flag_definitions[flagName] || {};
       const description = flag_config.description || '';
@@ -30,7 +30,7 @@ export default abstract class extends Command {
     });
   }
 
-  async init() {
+  async init(): Promise<void> {
     const { flags } = this.parse(this.constructor as any);
     const flag_definitions = (this.constructor as any).flags;
     this.checkFlagDeprecations(flags, flag_definitions);
@@ -83,7 +83,7 @@ export default abstract class extends Command {
     return super.parse(options, [...args, ...flags]);
   }
 
-  async catch(err: any) {
+  async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
 
     let message = '';

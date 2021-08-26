@@ -4,6 +4,7 @@ import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { ComponentSlugUtils, ComponentVersionSlugUtils, ServiceSpec, TaskSpec } from '../../dependency-manager/src';
 import { buildComponentRef, ComponentConfig, ComponentInstanceMetadata } from '../../dependency-manager/src/config/component-config';
+import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
@@ -70,7 +71,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
       // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
       // potentially create a "deployConfig": a merged source_yml prior to interpolation
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       merged_spec.interfaces[interface_to] = interface_obj;
     }
@@ -108,7 +109,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return config;
   }
 
-  async loadComponentConfigs(initial_component: ComponentConfig) {
+  async loadComponentConfigs(initial_component: ComponentConfig): Promise<ComponentConfig[]> {
     const component_configs = [];
     const component_configs_queue = [initial_component];
     const loaded_components = new Set();
@@ -130,7 +131,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return component_configs;
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true) {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true): Promise<DependencyGraph> {
     const gateway_port = await PortUtil.getAvailablePort(80);
     const external_addr = `arc.localhost:${gateway_port}`;
     return super.getGraph(component_configs, values, interpolate, external_addr);

@@ -5,7 +5,7 @@ import { ValidationErrors } from './errors';
 
 const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
 
-export const replaceBrackets = (value: string) => {
+export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
 };
 
@@ -26,7 +26,7 @@ const matches = (text: string, pattern: RegExp) => ({
 ${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}
 ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cloud.services }}
 */
-export const replaceInterpolationBrackets = (value: string) => {
+export const replaceInterpolationBrackets = (value: string): string => {
   let res = value;
   for (const match of matches(value, interpolation_regex)) {
     res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
@@ -34,7 +34,7 @@ export const replaceInterpolationBrackets = (value: string) => {
   return res;
 };
 
-export const escapeJSON = (value: any) => {
+export const escapeJSON = (value: any): any => {
   if (value instanceof Object) {
     value = JSON.stringify(value);
   }
@@ -50,7 +50,7 @@ export const escapeJSON = (value: any) => {
   return value;
 };
 
-export const buildContextMap = (context: any) => {
+export const buildContextMap = (context: any): any => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
   while (queue.length) {

@@ -49,14 +49,14 @@ export default class DependencyGraph {
     return node;
   }
 
-  removeNodeByRef(ref: string) {
+  removeNodeByRef(ref: string): void {
     this.nodes = this.nodes.filter(node => node.ref !== ref);
     this.__nodes_map = undefined;
     this.edges = this.edges.filter(edge => edge.from !== ref && edge.to !== ref);
     this.__edges_map = undefined;
   }
 
-  removeEdgeByRef(edge_ref: string) {
+  removeEdgeByRef(edge_ref: string): void {
     this.edges = this.edges.filter(edge => edge.ref !== edge_ref);
     this.__edges_map = undefined;
   }
@@ -113,7 +113,7 @@ export default class DependencyGraph {
     return Array.from(nodes.values());
   }
 
-  removeNode(node_ref: string, cleanup_dangling: boolean) {
+  removeNode(node_ref: string, cleanup_dangling: boolean): void {
     const queue = [node_ref];
     while (queue.length > 0) {
       const ref = queue.shift();
@@ -136,7 +136,7 @@ export default class DependencyGraph {
     }
   }
 
-  getUpstreamNodes(node: DependencyNode) {
+  getUpstreamNodes(node: DependencyNode): DependencyNode[] {
     const nodes = new Map();
 
     for (const edge of this.edges) {

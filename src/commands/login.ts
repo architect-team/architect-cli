@@ -10,7 +10,7 @@ import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
 
 export default class Login extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -30,7 +30,7 @@ export default class Login extends Command {
     }),
   };
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = this.parse(Login);
     await Docker.verify(); // docker is required for login because we run `docker login`
 

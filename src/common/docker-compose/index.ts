@@ -172,7 +172,7 @@ export class DockerComposeUtils {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
           }
-        } else if (!node.config.image && !node.config.build) {
+        } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");
         }
 
@@ -274,7 +274,7 @@ export class DockerComposeUtils {
     return compose;
   }
 
-  public static getConfigPaths(input: string) {
+  public static getConfigPaths(input: string): string[] {
     return [
       input,
       path.join(input, 'docker-compose.json'),
@@ -347,7 +347,7 @@ export class DockerComposeUtils {
     }
   }
 
-  public static async run(service_name: string, project_name: string, compose_file?: string) {
+  public static async run(service_name: string, project_name: string, compose_file?: string): Promise<void> {
     const compose_file_args = compose_file ? ['-f', compose_file] : [];
 
     await DockerComposeUtils.dockerCompose([
@@ -360,7 +360,7 @@ export class DockerComposeUtils {
     ]);
   }
 
-  public static buildComposeFilepath(config_dir: string, project_name: string) {
+  public static buildComposeFilepath(config_dir: string, project_name: string): string {
     return path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH, `${project_name}.yml`);
   }
 }

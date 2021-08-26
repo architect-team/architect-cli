@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../paths';
 
 export default class AppConfig {
@@ -35,16 +36,16 @@ export default class AppConfig {
     }
   }
 
-  getConfigDir() {
+  getConfigDir(): string {
     return this.config_dir;
   }
 
-  save() {
+  save(): void {
     const config_file = path.join(this.config_dir, LocalPaths.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(config_file, this, { spaces: 2 });
   }
 
-  toJSON() {
+  toJSON(): Dictionary<string> {
     return {
       log_level: this.log_level,
       registry_host: this.registry_host,

@@ -111,7 +111,7 @@ const propertyTypeToMarkdown = (prop_body: SchemaObject | ReferenceObject): stri
 };
 
 // describes the debug field in the docs, this is required because we manipulate the _DebugSpec manually and JSONSchema disallows setting a description next to a $ref property.
-export const debug_description = () => {
+export const debug_description = (): string => {
   return `A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block.`;
 };
 

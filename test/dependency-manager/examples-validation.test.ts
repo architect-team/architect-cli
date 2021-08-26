@@ -41,7 +41,7 @@ describe('example component validation', function () {
       if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/architect.yml`)) {
 
         it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes ajv json schema validation`, async () => {
-          const { component_config, source_path } = await buildConfigFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`, Slugs.DEFAULT_TAG);
+          const { component_config, source_path } = buildConfigFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`, Slugs.DEFAULT_TAG);
 
           expect(source_path).to.equal(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
           expect(component_config).to.not.be.undefined;

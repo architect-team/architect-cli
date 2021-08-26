@@ -43,11 +43,9 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -67,13 +65,11 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           debug:
             volumes:
               data:
                 mount_path: /data
                 host_path: ./data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -93,12 +89,10 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
               key: /user/app/data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -118,7 +112,6 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
@@ -130,7 +123,6 @@ describe('volumes spec v1', () => {
                 mount_path: /data3
                 host_path: ./data3
         app:
-          interfaces:
           volumes:
             data:
               mount_path: /data
@@ -141,8 +133,6 @@ describe('volumes spec v1', () => {
               data3:
                 mount_path: /data3
                 host_path: ./data3
-
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
