@@ -1,0 +1,6 @@
+root_db_user:
+  description: Root user to assign to the generated database
+  default: root
+db_user:
+  description: Application user to assign to the generated database
+  default: ${{ parameters.root_db_user }}
