@@ -5,8 +5,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
-import { Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath } from '../dependency-manager/src/schema/component-builder';
+import { buildConfigFromPath, Slugs } from '../dependency-manager/src';
 
 tmp.setGracefulCleanup();
 

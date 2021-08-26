@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -120,21 +121,20 @@ describe('interpolation spec v1', () => {
             REGULAR: '${{ parameters.regular }}',
             SINGLE_QUOTE: '${{ parameters.single_quote }}',
             DOUBLE_QUOTE: '${{ parameters.double_quote }}',
-          },
-          interfaces: {}
+          }
         }
       },
       interfaces: {}
     };
 
     mock_fs({
-      '/stack/web.json': JSON.stringify(web_component_config),
-      '/stack/worker.json': JSON.stringify(worker_component_config),
+      '/stack/web.yml': yaml.dump(web_component_config),
+      '/stack/worker.yml': yaml.dump(worker_component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'concourse/web': '/stack/web.json',
-      'concourse/worker': '/stack/worker.json'
+      'concourse/web': '/stack/web.yml',
+      'concourse/worker': '/stack/worker.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('concourse/web'),
@@ -154,6 +154,15 @@ describe('interpolation spec v1', () => {
       `${web_interfaces_ref} [main] -> ${web_ref} [main]`,
       `${worker_ref} [service->main] -> ${web_interfaces_ref} [main]`
     ])
+
+    const web_node = graph.getNodeByRef(web_ref);
+    expect(web_node.interfaces).to.deep.equal({
+      main: {
+        port: 8080
+      }
+    });
+    const worker_node = graph.getNodeByRef(worker_ref);
+    expect(worker_node.interfaces).to.deep.equal({});
 
     const template = await DockerComposeUtils.generate(graph);
     const expected_compose: DockerComposeTemplate = {

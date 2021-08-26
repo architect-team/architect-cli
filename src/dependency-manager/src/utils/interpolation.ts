@@ -1,5 +1,5 @@
 import yaml from 'js-yaml';
-import { findBestMatch } from '../spec/utils/spec-validator';
+import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationErrors } from './errors';
 
@@ -139,7 +139,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
   }
 
   for (const miss of misses) {
-    const potential_match = findBestMatch(miss, context_keys);
+    const potential_match = findPotentialMatch(miss, context_keys);
 
     let message = `Invalid interpolation ref: \${{ ${miss} }}`;
     if (potential_match) {

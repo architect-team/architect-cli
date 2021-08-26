@@ -47,7 +47,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `command` | Array&lt;string&gt; \| string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;boolean \| null \| number \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
+ | `environment` | Dict&lt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
@@ -65,7 +65,7 @@ Components can define configurable parameters that can be used to enrich the con
 | -------------------- | ---------- | -------------- | -------------- |
  | `required` | boolean | Denotes whether the parameter is required. |  |
  | `description` | string | A human-friendly description of the parameter. |  |
- | `default` | boolean \| number \| string \| null | Sets a default value for the parameter if one is not provided |  |
+ | `default` |  \| boolean \| number \| object \| string \| null | Sets a default value for the parameter if one is not provided |  |
 
 
 ## ComponentInterfaceSpec
@@ -98,7 +98,7 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `command` | Array&lt;string&gt; \| string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;boolean \| null \| number \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
+ | `environment` | Dict&lt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
@@ -110,22 +110,22 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
 
 ## DeployModuleSpec
 
-TODO:289
+The DeploySpec represents deploy-time configuration for a service or a task.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `path`* | string | TODO:289 |  |
- | `inputs`* | Dict&lt;string \| null&gt; | TODO:289 |  |
+ | `path`* | string | The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time. |  |
+ | `inputs`* | Dict&lt;string \| null&gt; | A set of key-value pairs that represent Terraform inputs and their values. |  |
 
 
 ## DeploySpec
 
-TODO:289
+The DeploySpec represents deploy-time configuration for a service or a task.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `strategy`* | string | TODO:289 |  |
- | `modules`* | Dict&lt;[DeployModuleSpec](#deploymodulespec)&gt; | TODO:289 |  |
+ | `strategy`* | string | Selects the preferred deploy strategy for the service. |  |
+ | `modules`* | Dict&lt;[DeployModuleSpec](#deploymodulespec)&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. |  |
 
 
 ## VolumeSpec
@@ -185,7 +185,7 @@ A service interface exposes service functionality over the network to other serv
  | `protocol` | string | Protocol that the interface responds to | default: `http` |
  | `username` | null \| string | A Basic Auth username required to access the interface |  |
  | `password` | null \| string | A Basic Auth password required to access the interface |  |
- | `url` | string | TODO:289 |  |
+ | `url` | string | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
  | `sticky` | boolean \| string | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
 
 

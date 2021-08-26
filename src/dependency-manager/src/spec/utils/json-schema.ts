@@ -1,10 +1,11 @@
 import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
 import { SchemaObject } from 'openapi3-ts';
-import { REF_PREFIX } from '../utils/json-schema-annotations';
-import { ComponentSpec } from './component-spec';
-import { ResourceSpec } from './resource-spec';
-import { ServiceSpec } from './service-spec';
-import { TaskSpec } from './task-spec';
+import { Dictionary } from '../../utils/dictionary';
+import { ComponentSpec } from '../component-spec';
+import { ResourceSpec } from '../resource-spec';
+import { ServiceSpec } from '../service-spec';
+import { TaskSpec } from '../task-spec';
+import { REF_PREFIX } from './json-schema-annotations';
 
 const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
 const JSONSCHEMA_VERSION = 'http://json-schema.org/draft-07/schema';
@@ -18,6 +19,43 @@ export const DEBUG_PREFIX = '_Debug';
  */
 export const getDocsPath = (spec_name: string): string => {
   return `#${spec_name.toLowerCase()}`;
+};
+
+// Find a schema definition given a pointer ex. services.api.interfaces -> ServiceInterfaceSpec
+export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObject | undefined => {
+  if (pointer === '') {
+    return schema;
+  }
+  const keys = pointer.split('.');
+
+  let definition: Dictionary<SchemaObject> = schema;
+  let skip_key = false;
+  for (const key of keys) {
+    if (skip_key) {
+      skip_key = false;
+      continue;
+    }
+    const property = definition.properties[key];
+
+    if (!property) {
+      return;
+    }
+
+    const additional_properties = (property as SchemaObject).additionalProperties as SchemaObject;
+    if (property.$ref) {
+      definition = schema.definitions[property.$ref.replace(REF_PREFIX, '')];
+    } else if (additional_properties?.anyOf) {
+      for (const x of additional_properties?.anyOf) {
+        if (x.$ref) {
+          definition = schema.definitions[x.$ref.replace(REF_PREFIX, '')];
+          skip_key = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return definition;
 };
 
 /**
