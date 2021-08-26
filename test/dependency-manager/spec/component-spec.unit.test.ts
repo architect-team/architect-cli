@@ -6,8 +6,7 @@ import path from 'path';
 import sinon from 'sinon';
 import Register from '../../../src/commands/register';
 import PortUtil from '../../../src/common/utils/port';
-import { buildConfigFromYml, dumpToYml, parseSourceYml } from '../../../src/dependency-manager/src';
-import { Slugs } from '../../../src/dependency-manager/src/utils/slugs';
+import { buildConfigFromYml, dumpToYml, parseSourceYml, Slugs } from '../../../src/dependency-manager/src';
 
 const lsDirectories = (dir: string) => {
   return fs.readdirSync(path.resolve(dir), { withFileTypes: true })
