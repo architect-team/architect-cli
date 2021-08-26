@@ -65,27 +65,27 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
 
       if (task_map[dependency]) {
         const error = new ValidationError({
-          path: 'depends_on',
-          message: `${name}.depends_on[${dependency}] must refer to a service, not a task`,
-          value: name,
+          path: `services.${name}.depends_on`,
+          message: `services.${name}.depends_on.${dependency} must refer to a service, not a task`,
+          value: dependency,
         });
         errors.push(error);
       }
 
       if (!depends_on_map[dependency]) {
         const error = new ValidationError({
-          path: 'depends_on',
-          message: `${name}.depends_on[${dependency}] must refer to a valid service`,
-          value: name,
+          path: `services.${name}.depends_on`,
+          message: `services.${name}.depends_on.${dependency} must refer to a valid service`,
+          value: dependency,
         });
         errors.push(error);
       }
     }
     if (isPartOfCircularReference(name, depends_on_map)) {
       const error = new ValidationError({
-        path: 'depends_on',
-        message: `${name}.depends_on must not contain a circular reference`,
-        value: name,
+        path: `services.${name}.depends_on`,
+        message: `services.${name}.depends_on must not contain a circular reference`,
+        value: depends_on_map[name],
       });
       errors.push(error);
     }

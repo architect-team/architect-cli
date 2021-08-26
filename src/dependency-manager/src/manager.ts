@@ -17,7 +17,7 @@ import { parseSourceYml } from './spec/utils/component-builder';
 import { interpolateConfigOrReject } from './spec/utils/component-interpolation';
 import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
-import { ArchitectError, ValidationError } from './utils/errors';
+import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
 
 interface ComponentConfigNode {
@@ -575,11 +575,11 @@ export default abstract class DependencyManager {
     return dependency_components;
   }
 
-  async validateComponent(component: ComponentConfig): Promise<[ComponentConfig, ValidationError[]]> {
+  validateComponent(component: ComponentConfig): void {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.parameters)) {
-      if (pv.required !== `false` && (pv.default === undefined)) {
+      if (pv.required !== false && (pv.default === undefined)) {
         const validation_error = new ValidationError({
           path: `components.${component.name}.parameters.${pk}`,
           message: `${pk} is a required parameter`,
@@ -589,9 +589,7 @@ export default abstract class DependencyManager {
       }
     }
     if (validation_errors.length) {
-      return [component, validation_errors];
-    } else {
-      return [component, []];
+      throw new ValidationErrors(validation_errors);
     }
   }
 
@@ -723,6 +721,10 @@ export default abstract class DependencyManager {
     for (const tree_node of tree_nodes) {
       this.setValuesForComponent(tree_node.config, values);
       tree_node.config.context = transformComponentContext(tree_node.config);
+
+      if (interpolate) {
+        this.validateComponent(tree_node.config);
+      }
     }
 
     const graph = await this._getGraph(tree_nodes, external_addr);
