@@ -2,7 +2,7 @@ import Command from '../../base-command';
 import Table from '../../base-table';
 
 export default class ConfigView extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -13,7 +13,7 @@ export default class ConfigView extends Command {
     ...Command.flags,
   };
 
-  async run() {
+  async run(): Promise<void> {
     const table = new Table({ head: ['Name', 'Value'] });
 
     for (const entry of Object.entries(this.app.config.toJSON())) {

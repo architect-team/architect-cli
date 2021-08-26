@@ -21,7 +21,7 @@ export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): Va
   return errors;
 };
 
-export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []) => {
+export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []): boolean => {
   const next_name = current_name || search_name;
   const dependencies = depends_on_map[next_name];
 

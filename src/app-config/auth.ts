@@ -1,4 +1,4 @@
-import { AuthorizationCode } from 'simple-oauth2';
+import { AccessToken, AuthorizationCode } from 'simple-oauth2';
 import { URL } from 'url';
 import LoginRequiredError from '../common/errors/login-required';
 import { docker } from '../common/utils/docker';
@@ -23,18 +23,18 @@ export default class AuthClient {
   credentials: CredentialManager;
   _auth_result?: AuthResult;
   callback_server: CallbackServer;
-  checkLogin: () => User;
+  checkLogin: () => Promise<User>;
 
   public static SCOPE = 'openid profile email offline_access';
 
-  constructor(config: AppConfig, checkLogin: () => User) {
+  constructor(config: AppConfig, checkLogin: () => Promise<User>) {
     this.config = config;
     this.credentials = new CredentialManager(config);
     this.callback_server = new CallbackServer();
     this.checkLogin = checkLogin;
   }
 
-  async init() {
+  async init(): Promise<void> {
     const token = await this.getPersistedTokenJSON();
     if (token) {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -56,7 +56,7 @@ export default class AuthClient {
     }
   }
 
-  async loginFromCli(email: string, token: string) {
+  async loginFromCli(email: string, token: string): Promise<void> {
     await this.logout();
 
     await this.setToken(email, {
@@ -66,10 +66,7 @@ export default class AuthClient {
 
     await this.checkLogin();
 
-    const new_token = await this.dockerLogin(email);
-    if (!new_token) {
-      throw new Error('Login failed');
-    }
+    await this.dockerLogin(email);
   }
 
   private decodeIdToken(token: string) {
@@ -87,7 +84,7 @@ export default class AuthClient {
     return claims;
   }
 
-  public getAuthClient() {
+  public getAuthClient(): AuthorizationCode<"client_id"> {
     const is_auth0 = this.config.oauth_host === 'https://auth.architect.io';
 
     let oauth_token_host = this.config.oauth_host;
@@ -115,7 +112,7 @@ export default class AuthClient {
     });
   }
 
-  public async loginFromBrowser(port: number, authorization_code: AuthorizationCode) {
+  public async loginFromBrowser(port: number, authorization_code: AuthorizationCode): Promise<void> {
     await this.logout();
 
     const oauth_code = await this.callback_server.listenForCallback(port);
@@ -150,7 +147,7 @@ export default class AuthClient {
     await this.dockerLogin(email);
   }
 
-  async logout() {
+  async logout(): Promise<void> {
     await this.credentials.delete(`${CREDENTIAL_PREFIX}/token`);
     try {
       await docker(['logout', this.config.registry_host], { stdout: false });
@@ -176,7 +173,7 @@ export default class AuthClient {
     return this._auth_result;
   }
 
-  async refreshToken() {
+  async refreshToken(): Promise<AccessToken | undefined> {
     const token_json = await this.getPersistedTokenJSON();
     if (!token_json) {
       await this.logout();
@@ -204,8 +201,8 @@ export default class AuthClient {
     return access_token;
   }
 
-  async dockerLogin(username: string) {
-    return await docker([
+  async dockerLogin(username: string): Promise<void> {
+    await docker([
       'login', this.config.registry_host,
       '-u', username,
       '--password-stdin',

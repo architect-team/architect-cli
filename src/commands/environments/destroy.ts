@@ -31,7 +31,7 @@ export default class EnvironmentDestroy extends Command {
   static args = [{
     name: 'environment',
     description: 'Name of the environment to deregister',
-    parse: (value: string) => value.toLowerCase(),
+    parse: (value: string): string => value.toLowerCase(),
   }];
 
   parse(options: any, argv = this.argv): any {
@@ -45,7 +45,7 @@ export default class EnvironmentDestroy extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);

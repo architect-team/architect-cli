@@ -43,7 +43,7 @@ export default class ComponentValidate extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(ComponentValidate);
 
     const config_paths: Set<string> = new Set();
@@ -76,7 +76,6 @@ export default class ComponentValidate extends Command {
           this.log(err);
         }
       }
-
     }
   }
 }

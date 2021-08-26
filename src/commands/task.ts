@@ -12,7 +12,7 @@ export default class TaskExec extends Command {
   static aliases = ['task:exec'];
   static description = 'Execute a task in the given environment';
 
-  auth_required() {
+  auth_required(): boolean {
     const { flags } = this.parse(TaskExec);
     return !flags.local;
   }
@@ -65,7 +65,7 @@ export default class TaskExec extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = this.parse(TaskExec);
 
     if (flags.local) {
@@ -75,7 +75,7 @@ export default class TaskExec extends Command {
     }
   }
 
-  async runLocal() {
+  async runLocal(): Promise<void> {
     const { flags, args } = this.parse(TaskExec);
     await Docker.verify();
 
@@ -111,7 +111,7 @@ export default class TaskExec extends Command {
     this.log(chalk.green(`Successfully ran task.`));
   }
 
-  async runRemote() {
+  async runRemote(): Promise<void> {
     const { flags, args } = this.parse(TaskExec);
 
     const selected_account = await AccountUtils.getAccount(this.app.api, flags.account);

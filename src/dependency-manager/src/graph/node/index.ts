@@ -18,11 +18,11 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   instance_id = '';
 
-  get is_external() {
+  get is_external(): boolean {
     return false;
   }
 
-  get is_local() {
+  get is_local(): boolean {
     return false;
   }
 }

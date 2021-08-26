@@ -29,5 +29,8 @@ module.exports = {
     '@typescript-eslint/no-var-requires': [0],
     '@typescript-eslint/no-namespace': [1],
     '@typescript-eslint/semi': ['warn', 'always'],
+    '@typescript-eslint/explicit-module-boundary-types': ['warn', {
+      allowArgumentsExplicitlyTypedAsAny: true,
+    }]
   }
 }

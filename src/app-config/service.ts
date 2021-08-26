@@ -71,7 +71,7 @@ export default class AppService {
     fs.writeJSONSync(linkedComponentsFile, this.linkedComponents, { spaces: 2 });
   }
 
-  linkComponentPath(componentName: string, componentPath: string) {
+  linkComponentPath(componentName: string, componentPath: string): void {
     this.linkedComponents[componentName] = componentPath;
     this.saveLinkedComponents();
   }
@@ -98,12 +98,12 @@ export default class AppService {
     return res;
   }
 
-  unlinkAllComponents() {
+  unlinkAllComponents(): void {
     this.linkedComponents = {};
     this.saveLinkedComponents();
   }
 
-  saveConfig() {
+  saveConfig(): void {
     this.config.save();
   }
 

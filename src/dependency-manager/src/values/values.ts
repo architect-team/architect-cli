@@ -1,9 +1,9 @@
 import { ValidationError, ValidationErrors } from '../utils/errors';
 
 export class ValuesConfig {
-  static validate(values_dict: any) {
+  static validate(values_dict: any): void {
     if (!values_dict) {
-      return [];
+      return;
     }
 
     const validation_errors = [];

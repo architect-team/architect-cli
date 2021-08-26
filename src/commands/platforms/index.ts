@@ -18,7 +18,7 @@ export default class Platforms extends Command {
     required: false,
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Platforms);
 
     let account: Account | undefined = undefined;

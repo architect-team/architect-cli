@@ -32,11 +32,11 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
     return [];
   }
 
-  get is_external() {
+  get is_external(): boolean {
     return false;
   }
 
-  get is_local() {
+  get is_local(): boolean {
     return this.local_path !== '';
   }
 }

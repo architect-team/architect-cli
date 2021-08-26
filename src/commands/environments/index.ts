@@ -17,7 +17,7 @@ export default class Environments extends Command {
     description: 'Search term used to filter the results',
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Environments);
 
     let account: Account | undefined = undefined;
