@@ -1,8 +1,8 @@
 ---
-title: Local development
+title: Local environments
 ---
 
-# Local development
+# Local environments
 
 The first thing any developer wants to do when they're creating an app or service is run it locally. Architects open-source CLI was designed specifically to allow developers to write `architect.yml` files and provision the corresponding services on their own machine. Once you've [created an architect.yml file](/docs/configuration/architect-yml), you can use the CLI to register the component locally and then deploy with ease.
 
