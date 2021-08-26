@@ -43,18 +43,18 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `replicas` | number \| string | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
  | `description` | string | Human readable description |  |
- | `image` | string | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
- | `entrypoint` | Array&lt;string&gt; \| string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
+ | `image` | string \| string | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
+ | `command` | string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `entrypoint` | string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
- | `memory` | string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
  | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
- | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C63%7D)((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">ValueRegex</a>, [More](/docs/configuration/services#labels) |
+ | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
 
 ## ParameterDefinitionSpec
@@ -92,20 +92,20 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `debug` | Partial&lt;[TaskSpec](#taskspec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
- | `schedule` | string | A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI. |  |
+ | `schedule` | string \| string | A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI. |  |
  | `description` | string | Human readable description |  |
- | `image` | string | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
- | `command` | Array&lt;string&gt; \| string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
- | `entrypoint` | Array&lt;string&gt; \| string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
+ | `image` | string \| string | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
+ | `command` | string | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `entrypoint` | string | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| string | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
- | `memory` | string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| string | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
  | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
- | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C63%7D)((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">ValueRegex</a>, [More](/docs/configuration/services#labels) |
+ | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
 
 ## DeployModuleSpec
@@ -114,7 +114,7 @@ The DeploySpec represents deploy-time configuration for a service or a task.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `path`* | string | The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time. |  |
+ | `path`* | string \| string | The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time. |  |
  | `inputs`* | Dict&lt;string \| null&gt; | A set of key-value pairs that represent Terraform inputs and their values. |  |
 
 
@@ -124,7 +124,7 @@ The DeploySpec represents deploy-time configuration for a service or a task.
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `strategy`* | string | Selects the preferred deploy strategy for the service. |  |
+ | `strategy`* | string \| string | Selects the preferred deploy strategy for the service. |  |
  | `modules`* | Dict&lt;[DeployModuleSpec](#deploymodulespec)&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. |  |
 
 
@@ -134,9 +134,9 @@ Architect can mount volumes onto your services and tasks to store data that shou
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `mount_path` | string | Directory at which the volume will be mounted inside the container. |  |
- | `host_path` | string | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
+ | `mount_path` | string \| string | Directory at which the volume will be mounted inside the container. |  |
+ | `host_path` | string \| string | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
+ | `key` | string \| string | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
  | `description` | string | Human-readable description of volume |  |
  | `readonly` | boolean \| string | Marks the volume as readonly. |  |
 
@@ -147,9 +147,9 @@ An object containing the details necessary for Architect to build the service vi
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `context` | string | The path to the directory containing the source code relative to the `architect.yml` file. |  |
+ | `context` | string \| string | The path to the directory containing the source code relative to the `architect.yml` file. |  |
  | `args` | Dict&lt;string \| null&gt; | Build args to be passed into `docker build`. |  |
- | `dockerfile` | string | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
+ | `dockerfile` | string \| string | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
 
 
 ## ScalingMetricsSpec
@@ -159,7 +159,7 @@ Scaling metrics define the upper bound of resource consumption before spinning u
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `cpu` | number \| string | The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set). | [More](/docs/configuration/services#cpu--memory) |
- | `memory` | string | The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set). | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| string | The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set). | [More](/docs/configuration/services#cpu--memory) |
 
 
 ## ScalingSpec
@@ -179,14 +179,14 @@ A service interface exposes service functionality over the network to other serv
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `description` | string | A human-readable description of the interface. |  |
- | `host` | null \| string | The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host. |  |
+ | `description` | string \| string | A human-readable description of the interface. |  |
+ | `host` | string | The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host. |  |
  | `port`* | number \| string | Port on which the service is listening for traffic. |  |
- | `protocol` | string | Protocol that the interface responds to | default: `http` |
- | `username` | null \| string | A Basic Auth username required to access the interface |  |
- | `password` | null \| string | A Basic Auth password required to access the interface |  |
- | `url` | string | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
- | `sticky` | boolean \| string | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
+ | `protocol` | string \| string | Protocol that the interface responds to | default: `http` |
+ | `username` | string | A Basic Auth username required to access the interface |  |
+ | `password` | string | A Basic Auth password required to access the interface |  |
+ | `url` | string \| string | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
+ | `sticky` | string | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
 
 
 ## LivenessProbeSpec
@@ -197,10 +197,10 @@ Configuration for service health checks. Architect uses health checks are used f
 | -------------------- | ---------- | -------------- | -------------- |
  | `success_threshold` | number \| string | The number of times to retry a health check before the container is considered healthy. | default: `1` |
  | `failure_threshold` | number \| string | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
- | `timeout` | string | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
- | `interval` | string | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
- | `initial_delay` | string | Delays the check from running for the specified amount of time | default: `0s` |
- | `path` | string | Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set). | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E%5C%2F.*%24">Regex</a> |
+ | `timeout` | string \| string | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
+ | `interval` | string \| string | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
+ | `initial_delay` | string \| string | Delays the check from running for the specified amount of time | default: `0s` |
+ | `path` | string \| string | Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set). | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E%5C%2F.*%24">Regex</a> |
  | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set). |  |
  | `port`* | number \| string | Port that the http check will run against |  |
 

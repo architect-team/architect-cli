@@ -84,7 +84,7 @@ export class ComponentInterfaceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('boolean', 'string'),
+    ...ExpressionOr({ type: 'boolean' }),
     description: 'If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running.',
   })
   sticky?: boolean | string;

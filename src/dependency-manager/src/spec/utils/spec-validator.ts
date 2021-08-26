@@ -106,7 +106,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
 
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   // TODO:288 enable strict mode?
-  const ajv = new Ajv({ allErrors: true });
+  const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
   ajv.addKeyword('externalDocs');
   // https://github.com/ajv-validator/ajv-errors
   ajv_errors(ajv);
