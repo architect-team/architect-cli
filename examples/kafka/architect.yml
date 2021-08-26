@@ -32,7 +32,6 @@ services:
   publisher:
     build:
       context: ./publisher/
-    interfaces:
     environment:
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
       TOPIC: architect
@@ -44,7 +43,6 @@ services:
   subscriber:
     build:
       context: ./subscriber/
-    interfaces:
     environment:
       EXTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.external.host }}:${{ services.kafka.interfaces.external.port }}
       TOPIC: architect
@@ -53,5 +51,3 @@ services:
       environment:
         INTERNAL_KAFKA_ADDR: ${{ services.kafka.interfaces.internal.host }}:${{ services.kafka.interfaces.internal.port }}
         ENVIRONMENT: local
-
-interfaces:

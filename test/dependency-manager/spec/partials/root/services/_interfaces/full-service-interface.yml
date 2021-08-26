@@ -1,0 +1,4 @@
+main:
+  port: 8080
+  protocol: http
+  description: This interface connects to the hello-world API

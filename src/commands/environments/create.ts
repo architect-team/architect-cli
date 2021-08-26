@@ -33,10 +33,10 @@ export default class EnvironmentCreate extends Command {
   static args = [{
     name: 'environment',
     description: 'Name to give the environment',
-    parse: (value: string) => value.toLowerCase(),
+    parse: (value: string): string => value.toLowerCase(),
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(EnvironmentCreate);
 
     const answers: any = await inquirer.prompt([

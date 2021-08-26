@@ -47,7 +47,7 @@ export abstract class DeployCommand extends Command {
     return parsed;
   }
 
-  async approvePipeline(pipeline: any) {
+  async approvePipeline(pipeline: any): Promise<boolean> {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
     if (!flags['auto-approve']) {
@@ -69,7 +69,7 @@ export abstract class DeployCommand extends Command {
 }
 
 export default class Deploy extends DeployCommand {
-  auth_required() {
+  auth_required(): boolean {
     const { flags } = this.parse(Deploy);
     return !flags.local;
   }
@@ -178,7 +178,7 @@ export default class Deploy extends DeployCommand {
     return parsed;
   }
 
-  async runCompose(compose: DockerComposeTemplate) {
+  async runCompose(compose: DockerComposeTemplate): Promise<void> {
     const { flags } = this.parse(Deploy);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -297,7 +297,7 @@ export default class Deploy extends DeployCommand {
     return component_values;
   }
 
-  getExtraEnvironmentVariables(parameters: string[]) {
+  getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | undefined> {
     const extra_env_vars: { [s: string]: string | undefined } = {};
 
     for (const [param_name, param_value] of Object.entries(process.env || {})) {
@@ -393,7 +393,7 @@ export default class Deploy extends DeployCommand {
     await this.runCompose(compose);
   }
 
-  protected async runRemote() {
+  protected async runRemote(): Promise<void> {
     const { args, flags } = this.parse(Deploy);
 
     const components = args.configs_or_components;
@@ -453,7 +453,7 @@ export default class Deploy extends DeployCommand {
     cli.action.stop();
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {

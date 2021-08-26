@@ -1,4 +1,5 @@
 import Ajv, { ErrorObject } from "ajv";
+import ajv_errors from "ajv-errors";
 import leven from 'leven';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -34,33 +35,33 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     return [];
   }
 
-  const ajv_error_map: Dictionary<Ajv.ErrorObject> = {};
+  const ajv_error_map: Dictionary<ErrorObject> = {};
   for (const ajv_error of ajv_errors) {
-    if (!ajv_error_map[ajv_error.dataPath]) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+    ajv_error.instancePath = ajv_error.instancePath.replace(/\//g, '.').replace('.', '');
+    if (!ajv_error_map[ajv_error.instancePath]) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const additional_property: string | undefined = ajv_error.params?.additionalProperty;
       if (additional_property) {
         ajv_error.message = `Invalid key: ${additional_property}`;
 
-        const path = ajv_error.dataPath.replace('.', '');
-        const definition = findDefinition(replaceBrackets(path), ARCHITECT_JSON_SCHEMA);
+        const definition = findDefinition(replaceBrackets(ajv_error.instancePath), ARCHITECT_JSON_SCHEMA);
         if (definition) {
-          const keys = Object.keys(definition.properties || {}).map((key) => path ? `${path}.${key}` : key);
+          const keys = Object.keys(definition.properties || {}).map((key) => ajv_error.instancePath ? `${ajv_error.instancePath}.${key}` : key);
 
-          const potential_match = findPotentialMatch(`${path}.${additional_property}`, keys);
+          const potential_match = findPotentialMatch(`${ajv_error.instancePath}.${additional_property}`, keys);
 
           if (potential_match) {
             ajv_error.message += ` - Did you mean ${potential_match}?`;
           }
         }
 
-        ajv_error.dataPath += `.${additional_property}`;
+        ajv_error.instancePath += `.${additional_property}`;
       }
 
-      ajv_error_map[ajv_error.dataPath] = ajv_error;
+      ajv_error_map[ajv_error.instancePath] = ajv_error;
     } else {
-      ajv_error_map[ajv_error.dataPath].message += ` or ${ajv_error.message}`;
+      ajv_error_map[ajv_error.instancePath].message += ` or ${ajv_error.message}`;
     }
   }
 
@@ -71,10 +72,10 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   const ignore_data_paths = new Set<string>();
   for (const data_path of sorted_data_path_keys) {
     const segments_list = data_path.split('.');
-    const segments = segments_list.slice(1, segments_list.length - 1);
+    const segments = segments_list.slice(0, segments_list.length - 1);
     let path = '';
     for (const segment of segments) {
-      path += `.${segment}`;
+      path += path ? `.${segment}` : segment;
       ignore_data_paths.add(path);
     }
   }
@@ -94,7 +95,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     }
 
     errors.push(new ValidationError({
-      path: error.dataPath.replace('.', ''), // Replace leading .
+      path: error.instancePath,
       message: error.message || 'Unknown error',
       value: value === undefined ? '<unknown>' : value,
     }));
@@ -104,7 +105,11 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
 };
 
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
-  const ajv = new Ajv();
+  // TODO:288 enable strict mode?
+  const ajv = new Ajv({ allErrors: true });
+  ajv.addKeyword('externalDocs');
+  // https://github.com/ajv-validator/ajv-errors
+  ajv_errors(ajv);
   const validate = ajv.compile(ARCHITECT_JSON_SCHEMA);
   const valid = validate(parsed_yml);
   if (!valid) {

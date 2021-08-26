@@ -9,7 +9,7 @@ import { PipelineUtils } from '../common/utils/pipeline';
 import { DeployCommand } from './deploy';
 
 export default class Destroy extends DeployCommand {
-  auth_required() {
+  auth_required(): boolean {
     return true;
   }
 
@@ -27,7 +27,7 @@ export default class Destroy extends DeployCommand {
     }),
   };
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = this.parse(Destroy);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);

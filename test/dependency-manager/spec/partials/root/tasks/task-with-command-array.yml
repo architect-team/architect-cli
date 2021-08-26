@@ -1,0 +1,6 @@
+curler:
+  image: ellerbrock/alpine-bash-curl-ssl
+  command:
+    - sh
+    - -c
+    - curl https://www.google.com

@@ -27,12 +27,12 @@ export default class CredentialManager {
     return this.credentials[service];
   }
 
-  async set(service: string, account: string, password: string) {
+  async set(service: string, account: string, password: string): Promise<void> {
     this.credentials[service] = { account, password };
     await this.save();
   }
 
-  async delete(service: string) {
+  async delete(service: string): Promise<void> {
     delete this.credentials[service];
     await this.save();
   }

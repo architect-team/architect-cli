@@ -30,6 +30,7 @@ export const DictionaryOfAny = (...args: any): DecoratorSchema => {
   }
 
   return {
+    type: 'object',
     additionalProperties: {
       anyOf,
     },

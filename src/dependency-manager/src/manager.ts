@@ -56,7 +56,7 @@ export default abstract class DependencyManager {
     return nodes;
   }
 
-  interpolateInterfaces(initial_component: ComponentConfig) {
+  interpolateInterfaces(initial_component: ComponentConfig): ComponentConfig {
     // Interpolate component to fully resolve edges between dependencies/ingress/services
     // Important for host overrides where values might comes from parameters
     initial_component.source_yml = replaceInterpolationBrackets(initial_component.source_yml);
@@ -265,7 +265,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string | null>>) {
+  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string | null>>): void {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
     const sorted_values_dict: Dictionary<Dictionary<string | null>> = {};
@@ -289,14 +289,14 @@ export default abstract class DependencyManager {
     }
   }
 
-  generateAddress(host: string, port: string) {
+  generateAddress(host: string, port: string): string {
     if (port !== '80' && port !== '443') {
       host = `${host}:${port}`;
     }
     return host;
   }
 
-  generateUrl(interface_config: ServiceInterfaceConfig, host?: string | null, port?: string) {
+  generateUrl(interface_config: ServiceInterfaceConfig, host?: string | null, port?: string): string {
     host = host || interface_config.host || undefined;
     port = port || `${interface_config.port}`;
     const protocol = interface_config.protocol || 'http';
@@ -357,7 +357,7 @@ export default abstract class DependencyManager {
     return external_interface;
   }
 
-  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]) {
+  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]): Promise<ComponentConfig> {
     const component_string = replaceInterpolationBrackets(initial_component.source_yml);
 
     let proxy_port = 12345;
@@ -545,7 +545,7 @@ export default abstract class DependencyManager {
     return res;
   }
 
-  getDependencyComponents(component_config: ComponentConfig, component_configs: ComponentConfig[]) {
+  getDependencyComponents(component_config: ComponentConfig, component_configs: ComponentConfig[]): ComponentConfig[] {
     const component_map: Dictionary<ComponentConfig[]> = {};
     for (const component_config of component_configs) {
       const ref = buildComponentRef(component_config);
@@ -595,7 +595,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  protected async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string) {
+  protected async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
 
     if (tree_nodes.length === 0) {
@@ -643,7 +643,7 @@ export default abstract class DependencyManager {
     return graph;
   }
 
-  createComponentTree(component_configs: ComponentConfig[]) {
+  createComponentTree(component_configs: ComponentConfig[]): ComponentConfigNode[] {
     const nodes: Dictionary<ComponentConfigNode> = {};
     // Initialize nodes
     for (const component_config of component_configs) {
@@ -696,7 +696,7 @@ export default abstract class DependencyManager {
     return sorted_nodes;
   }
 
-  validateGraph(graph: DependencyGraph) {
+  validateGraph(graph: DependencyGraph): void {
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
@@ -716,7 +716,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string) {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string): Promise<DependencyGraph> {
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets
@@ -746,7 +746,7 @@ export default abstract class DependencyManager {
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.services), ...Object.entries(tree_node.interpolated_config.tasks)]) {
         const service_ref = buildNodeRef(tree_node.interpolated_config, service_name);
         const node = graph.getNodeByRef(service_ref) as ServiceNode | TaskNode;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         node.proxy_port_mapping = tree_node.interpolated_config.proxy_port_mapping;
         node.config = service_config;

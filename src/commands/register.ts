@@ -12,7 +12,7 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath, buildSpecFromPath, dumpSpecToSourceYml } from '../dependency-manager/src/spec/utils/component-builder';
+import { buildConfigFromPath, buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -45,7 +45,7 @@ export default class ComponentRegister extends Command {
     description: 'Path to a component to register',
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { flags, args } = this.parse(ComponentRegister);
     await Docker.verify();
 
@@ -125,8 +125,8 @@ export default class ComponentRegister extends Command {
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));
-    const previous_source_yml = dumpSpecToSourceYml(previous_config_data);
-    const new_source_yml = dumpSpecToSourceYml(new_spec);
+    const previous_source_yml = dumpToYml(previous_config_data);
+    const new_source_yml = dumpToYml(new_spec);
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');

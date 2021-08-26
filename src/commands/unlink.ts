@@ -4,7 +4,7 @@ import path from 'path';
 import Command from '../base-command';
 
 export default class Unlink extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -21,11 +21,11 @@ export default class Unlink extends Command {
     name: 'componentPathOrName',
     char: 'p',
     default: path.basename(process.cwd()),
-    parse: (value: string) => value.toLowerCase(),
+    parse: (value: string): string => value.toLowerCase(),
     required: false,
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Unlink);
 
     if (flags.all) {

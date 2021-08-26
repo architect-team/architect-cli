@@ -6,7 +6,8 @@
     "name": {
       "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
       "type": "string",
-      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+      "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
     },
     "description": {
       "type": "string",
@@ -32,6 +33,7 @@
       "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
     },
     "parameters": {
+      "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
@@ -54,6 +56,7 @@
       "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
     },
     "services": {
+      "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
@@ -64,6 +67,7 @@
       "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
     },
     "tasks": {
+      "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
@@ -74,6 +78,7 @@
       "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
     },
     "dependencies": {
+      "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
@@ -84,6 +89,7 @@
       "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
     },
     "interfaces": {
+      "type": "object",
       "additionalProperties": {
         "anyOf": [
           {
@@ -228,6 +234,7 @@
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -536,6 +543,7 @@
           "$ref": "#/definitions/_DebugServiceSpec"
         },
         "interfaces": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -609,6 +617,7 @@
           "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -637,6 +646,7 @@
           }
         },
         "volumes": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -759,6 +769,7 @@
           "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -787,6 +798,7 @@
           }
         },
         "volumes": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1026,7 +1038,8 @@
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -1052,6 +1065,7 @@
           "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
         "parameters": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1074,6 +1088,7 @@
           "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
         },
         "services": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1084,6 +1099,7 @@
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1094,6 +1110,7 @@
           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
         },
         "dependencies": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1104,6 +1121,7 @@
           "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1240,6 +1258,7 @@
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1492,6 +1511,7 @@
     "_DebugServiceSpec": {
       "properties": {
         "interfaces": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1565,6 +1585,7 @@
           "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1593,6 +1614,7 @@
           }
         },
         "volumes": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1712,6 +1734,7 @@
           "description": "The dominant programming language used; this is for informational purposes only."
         },
         "environment": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1740,6 +1763,7 @@
           }
         },
         "volumes": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -1976,7 +2000,8 @@
         "name": {
           "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -2002,6 +2027,7 @@
           "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
         },
         "parameters": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -2024,6 +2050,7 @@
           "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
         },
         "services": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -2034,6 +2061,7 @@
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
         },
         "tasks": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -2044,6 +2072,7 @@
           "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
         },
         "dependencies": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {
@@ -2054,6 +2083,7 @@
           "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
         },
         "interfaces": {
+          "type": "object",
           "additionalProperties": {
             "anyOf": [
               {

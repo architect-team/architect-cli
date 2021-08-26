@@ -36,11 +36,11 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return [...new Set(ports)];
   }
 
-  get is_external() {
+  get is_external(): boolean {
     return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
   }
 
-  get is_local() {
+  get is_local(): boolean {
     return this.local_path !== '';
   }
 }

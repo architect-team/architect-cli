@@ -176,7 +176,7 @@ export class KubernetesPlatformUtils {
     };
   }
 
-  public static async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string) {
+  public static async createKubernetesServiceAccount(kubeconfig_path: string, sa_name: string): Promise<void> {
     const set_kubeconfig = ['--kubeconfig', kubeconfig_path, '--namespace', 'default'];
 
     // Create the service account

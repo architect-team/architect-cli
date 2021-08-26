@@ -19,6 +19,7 @@ class MissingConfigFileError extends Error {
 }
 
 // a typing for the raw result of js-yaml.load();
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type ParsedYaml = object | string | number | null | undefined;
 
 const specPaths = (input: string) => {
@@ -48,7 +49,7 @@ export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path:
   }
 };
 
-export const dumpSpecToSourceYml = (spec: ComponentSpec): string => {
+export const dumpToYml = (spec: any): string => {
   return yaml.dump(spec);
 };
 
@@ -91,7 +92,7 @@ export const deepMergeSpecIntoComponent = (src: Partial<ComponentSpec>, target: 
   const spec = buildSpecFromYml(target.source_yml);
   const merged_yml = deepmerge(src, spec);
   const new_spec = validateOrRejectSpec(merged_yml);
-  const merged_string = dumpSpecToSourceYml(merged_yml);
+  const merged_string = dumpToYml(merged_yml);
 
   return transformComponentSpec(new_spec, merged_string, target.tag, target.instance_metadata);
 };

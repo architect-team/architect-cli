@@ -113,6 +113,7 @@ export class ParameterDefinitionSpec {
     ...ExpressionOr(AnyOf('array', 'boolean', 'number', 'object', 'string', 'null')),
     description: 'Sets a default value for the parameter if one is not provided',
   })
+  // eslint-disable-next-line @typescript-eslint/ban-types
   default?: boolean | number | object | string | null;
 }
 
@@ -123,7 +124,8 @@ export class ComponentSpec {
   @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
   @JSONSchema({
     type: 'string',
-    description: 'Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.',
+    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
+    errorMessage: ComponentSlugUtils.Description,
   })
   name!: string;
 
