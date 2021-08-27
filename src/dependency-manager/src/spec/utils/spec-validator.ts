@@ -76,7 +76,8 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
           const potential_match = findPotentialMatch(`${ajv_error.instancePath}.${additional_property}`, keys);
 
           if (potential_match) {
-            ajv_error.message += ` - Did you mean ${potential_match}?`;
+            const match_keys = potential_match.split('.');
+            ajv_error.message += ` - Did you mean ${match_keys[match_keys.length - 1]}?`;
           }
         }
 
