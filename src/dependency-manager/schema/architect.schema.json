@@ -155,7 +155,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
@@ -202,7 +205,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Selects the preferred deploy strategy for the service."
@@ -245,7 +251,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Directory at which the volume will be mounted inside the container."
@@ -257,7 +266,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
@@ -269,7 +281,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
@@ -288,7 +303,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Marks the volume as readonly.",
@@ -318,7 +336,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
@@ -350,7 +371,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to the Dockerfile relative to the `build.context`",
@@ -373,7 +397,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
@@ -388,7 +415,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
@@ -427,7 +457,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The target minimum number of service replicas."
@@ -439,7 +472,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The target maximum number of service replicas."
@@ -469,7 +505,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A human-readable description of the interface."
@@ -488,7 +527,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
@@ -500,7 +542,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Port on which the service is listening for traffic."
@@ -512,7 +557,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Protocol that the interface responds to",
@@ -532,7 +580,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A Basic Auth username required to access the interface"
@@ -551,7 +602,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A Basic Auth password required to access the interface"
@@ -563,7 +617,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
@@ -579,7 +636,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
@@ -619,7 +679,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The number of times to retry a health check before the container is considered healthy.",
@@ -632,7 +695,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
@@ -645,7 +711,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
@@ -658,7 +727,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
@@ -671,7 +743,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Delays the check from running for the specified amount of time",
@@ -685,7 +760,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
@@ -711,7 +789,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Port that the http check will run against"
@@ -779,7 +860,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
@@ -798,7 +882,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
@@ -820,7 +907,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -842,7 +932,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -916,7 +1009,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -931,7 +1027,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory required to run a service or a task.",
@@ -964,7 +1063,10 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
@@ -995,7 +1097,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
@@ -1011,7 +1116,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
@@ -1033,7 +1141,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -1055,7 +1166,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -1129,7 +1243,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -1144,7 +1261,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory required to run a service or a task.",
@@ -1177,7 +1297,10 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
@@ -1234,7 +1357,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The port that the component interface should forward to."
@@ -1246,7 +1372,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The protocol by which the component interface can be connected to."
@@ -1258,7 +1387,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The Basic Auth username by which a component interface can be connected to."
@@ -1270,7 +1402,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The Basic Auth password by which a component interface can be connected to."
@@ -1282,7 +1417,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The url that the component interface should forward to."
@@ -1294,7 +1432,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
@@ -1346,7 +1487,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"
@@ -1513,7 +1657,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
@@ -1556,7 +1703,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Selects the preferred deploy strategy for the service."
@@ -1595,7 +1745,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Directory at which the volume will be mounted inside the container."
@@ -1607,7 +1760,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
@@ -1619,7 +1775,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
@@ -1638,7 +1797,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Marks the volume as readonly.",
@@ -1668,7 +1830,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
@@ -1700,7 +1865,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The path to the Dockerfile relative to the `build.context`",
@@ -1723,7 +1891,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
@@ -1738,7 +1909,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
@@ -1763,7 +1937,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The target minimum number of service replicas."
@@ -1775,7 +1952,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The target maximum number of service replicas."
@@ -1800,7 +1980,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A human-readable description of the interface."
@@ -1819,7 +2002,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
@@ -1831,7 +2017,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Port on which the service is listening for traffic."
@@ -1843,7 +2032,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Protocol that the interface responds to",
@@ -1863,7 +2055,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A Basic Auth username required to access the interface"
@@ -1882,7 +2077,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A Basic Auth password required to access the interface"
@@ -1894,7 +2092,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
@@ -1910,7 +2111,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
@@ -1933,7 +2137,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The number of times to retry a health check before the container is considered healthy.",
@@ -1946,7 +2153,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
@@ -1959,7 +2169,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
@@ -1972,7 +2185,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
@@ -1985,7 +2201,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Delays the check from running for the specified amount of time",
@@ -1999,7 +2218,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
@@ -2025,7 +2247,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Port that the http check will run against"
@@ -2073,7 +2298,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
@@ -2092,7 +2320,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
@@ -2114,7 +2345,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -2136,7 +2370,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -2210,7 +2447,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -2225,7 +2465,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory required to run a service or a task.",
@@ -2258,7 +2501,10 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
@@ -2286,7 +2532,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
@@ -2302,7 +2551,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
@@ -2324,7 +2576,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -2346,7 +2601,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -2420,7 +2678,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -2435,7 +2696,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The memory required to run a service or a task.",
@@ -2468,7 +2732,10 @@
                 },
                 {
                   "type": "string",
-                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
@@ -2525,7 +2792,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The port that the component interface should forward to."
@@ -2537,7 +2807,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The protocol by which the component interface can be connected to."
@@ -2549,7 +2822,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The Basic Auth username by which a component interface can be connected to."
@@ -2561,7 +2837,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The Basic Auth password by which a component interface can be connected to."
@@ -2573,7 +2852,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "The url that the component interface should forward to."
@@ -2585,7 +2867,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
@@ -2634,7 +2919,10 @@
             },
             {
               "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}"
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"
