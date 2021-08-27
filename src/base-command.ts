@@ -103,7 +103,6 @@ export default abstract class extends Command {
     } else {
       message += err.message || 'Unknown error';
     }
-
-    this.error(message);
+    this.error(err.name + '\n' + message);
   }
 }

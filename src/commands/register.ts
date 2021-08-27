@@ -12,7 +12,7 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath, buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
+import { buildConfigFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -76,9 +76,9 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
+    // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
+    const { source_path, component_spec } = buildConfigFromPath(config_path, tag);
 
-    buildConfigFromPath(config_path, tag); // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
-    const { component_spec, source_path } = buildSpecFromPath(config_path);
     const component_path = path.dirname(source_path);
     const new_spec = component_spec;
 

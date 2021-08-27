@@ -76,6 +76,10 @@ describe('validation spec v1', () => {
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.debug.debug`);
       expect(errors[0].message).includes(`services.stateless-app.debug.deploy`);
+      expect(errors[0].start?.row).eq(10);
+      expect(errors[0].start?.column).eq(13);
+      expect(errors[0].end?.row).eq(10);
+      expect(errors[0].end?.column).eq(18);
     });
 
     it('invalid service ref', async () => {

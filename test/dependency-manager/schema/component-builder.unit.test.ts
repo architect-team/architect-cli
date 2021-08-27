@@ -49,7 +49,7 @@ describe('component builder unit test', function () {
   });
 
   it(`loadSourceYmlFromPathOrReject throws if given invalid directory`, async () => {
-    expect(() => loadSourceYmlFromPathOrReject(`/non-existant/directory`)).to.throw('No component config file found at /non-existant/directory');
+    expect(() => loadSourceYmlFromPathOrReject(`/non-existant/directory`)).to.throw('Could not find architect.yml at /non-existant/directory');
   });
 
   it(`parseSourceYml parses yaml into object with blank fields set to null`, async () => {
