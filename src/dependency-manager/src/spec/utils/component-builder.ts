@@ -97,7 +97,6 @@ export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { compon
       const errors = JSON.parse(err.message) as ValidationError[];
 
       addLineNumbers(file_contents, errors);
-      // prettyValidationErrors(file_contents, errors);
 
       const error = new ValidationErrors(errors);
       error.name = err.name;
