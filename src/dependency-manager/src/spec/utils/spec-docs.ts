@@ -44,8 +44,11 @@ const arrayTypeToMarkdown = (property: SchemaObject): string => {
   } else if ((property?.items as SchemaObject)?.type) {
     const type = (property?.items as SchemaObject)?.type;
     return `Array${OPEN}${type}${CLOSE}`;
+  } else if (property.type === 'array') {
+    const type = (property?.items as SchemaObject)?.type;
+    return `Array${OPEN}any${CLOSE}`;
   } else {
-    return '';
+    throw new Error('Docs generator is missing a case');
   }
 };
 
@@ -78,9 +81,14 @@ const anyOfPropertyTypeToMarkdown = (property: SchemaObject): string => {
         types.push(propertyRefToMarkdown(prop as ReferenceObject));
       } else if ((prop as SchemaObject)?.type === 'array') {
         types.push(arrayTypeToMarkdown(prop));
-      } else if ((prop as SchemaObject)?.type) {
+      } else if ((prop as SchemaObject)?.type && (prop as SchemaObject)?.pattern === '\\${{\\s*(.*?)\\s*}}') {
+        types.push(`[Expression](/docs/reference/contexts)`);
+      } else if ((prop as SchemaObject)?.type && !(prop as SchemaObject)?.pattern) {
         const primitive = (prop as SchemaObject).type as string;
         types.push(primitive);
+      } else if ((prop as SchemaObject)?.anyOf) {
+        const anyof_types = anyOfPropertyTypeToMarkdown((prop as SchemaObject)).split(OR);
+        types.push(...anyof_types);
       }
     }
 
