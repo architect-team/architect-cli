@@ -10,12 +10,13 @@ export class Slugs {
   public static INSTANCE_DELIMITER = '@';
   public static SLUG_CHAR_LIMIT = 32;
 
-  public static ArchitectSlugDescription = `must contain only lower alphanumeric and single hyphens in the middle; max length ${Slugs.SLUG_CHAR_LIMIT}`;
+  public static ArchitectSlugDescriptionNoMaxLength = `must contain only lower alphanumeric and single hyphens or underscores in the middle`;
+  public static ArchitectSlugRegexNoMaxLength = `[a-z0-9]+(?:[-_][a-z0-9]+)*`; // does not contain character count lookaheads
+  public static ArchitectSlugNoMaxLengthValidator = new RegExp(`^${Slugs.ArchitectSlugRegexNoMaxLength}$`);
+
+  public static ArchitectSlugDescription = `${Slugs.ArchitectSlugDescriptionNoMaxLength}; max length ${Slugs.SLUG_CHAR_LIMIT}`;
   static CharacterCountLookahead = `(?=.{1,${Slugs.SLUG_CHAR_LIMIT}}(\\${Slugs.NAMESPACE_DELIMITER}|${Slugs.TAG_DELIMITER}|$))`;
-
-  public static ArchitectSlugRegexNoMaxLength = `[a-z0-9]+(?:-[a-z0-9]+)*`; // does not contain character count lookaheads
   public static ArchitectSlugRegexBase = `${Slugs.CharacterCountLookahead}${Slugs.ArchitectSlugRegexNoMaxLength}`;
-
   public static ArchitectSlugValidator = new RegExp(`^${Slugs.ArchitectSlugRegexBase}$`);
 
   public static LabelMax = 63;

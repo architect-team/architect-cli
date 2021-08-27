@@ -35,13 +35,13 @@ export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObj
       skip_key = false;
       continue;
     }
-    const property = definition.properties[key];
+    const property = definition.properties[key] as SchemaObject;
 
     if (!property) {
       return;
     }
 
-    const additional_properties = (property as SchemaObject).additionalProperties as SchemaObject;
+    const additional_properties = property.additionalProperties as SchemaObject;
     if (property.$ref) {
       definition = schema.definitions[property.$ref.replace(REF_PREFIX, '')];
     } else if (additional_properties?.anyOf) {
@@ -50,6 +50,18 @@ export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObj
           definition = schema.definitions[x.$ref.replace(REF_PREFIX, '')];
           skip_key = true;
           break;
+        }
+      }
+    } else if (property.patternProperties) {
+      for (const pattern_property of Object.values(property.patternProperties)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const anyOf = (pattern_property as SchemaObject)!.anyOf || [];
+        for (const x of anyOf) {
+          if (x.$ref) {
+            definition = schema.definitions[x.$ref.replace(REF_PREFIX, '')];
+            skip_key = true;
+            break;
+          }
         }
       }
     }

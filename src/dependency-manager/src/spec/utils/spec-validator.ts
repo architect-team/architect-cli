@@ -85,7 +85,7 @@ export const prettyValidationErrors = (source_yml: string, errors: ValidationErr
 };
 
 function escapeRegex(string: string) {
-  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 export const addLineNumbers = (value: string, errors: ValidationError[]): void => {

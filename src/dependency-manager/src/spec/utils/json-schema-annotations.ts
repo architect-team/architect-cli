@@ -40,31 +40,6 @@ export const AnyOf = (...args: any): DecoratorSchema => {
  * @param args must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
  * @returns
  */
-export const DictionaryOfAny = (...args: any): DecoratorSchema => {
-  return {
-    type: 'object',
-    additionalProperties: {
-      ...AnyOf(...args),
-    },
-  } as DecoratorSchema;
-};
-
-/**
- * Returns a partial JSON Schema to define a Dictionary
- *
- * @param arg must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
- * @returns
- */
-export const DictionaryOf = (arg: any): DecoratorSchema => {
-  return DictionaryOfAny(arg);
-};
-
-/**
- * Returns a partial JSON Schema to define a Dictionary of disjunctive types
- *
- * @param args must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
- * @returns
- */
 export const ArrayOfAny = (...args: any): DecoratorSchema => {
   const anyOf = [];
 

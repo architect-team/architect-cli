@@ -4,7 +4,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 @JSONSchema({
@@ -174,28 +174,55 @@ export class ComponentSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf(ServiceSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(ServiceSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
   services?: Dictionary<ServiceSpec>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf(TaskSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(TaskSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.',
   })
   tasks?: Dictionary<TaskSpec>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf('string'),
+    type: 'object',
+    patternProperties: {
+      [ComponentSlugUtils.Validator.source]: {
+        type: 'string',
+        pattern: Slugs.ComponentTagValidator.source,
+      },
+    },
+    errorMessage: {
+      additionalProperties: ComponentSlugUtils.Description,
+    },
     description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
   })
   dependencies?: Dictionary<string>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny('string', ComponentInterfaceSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf('string', ComponentInterfaceSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
   })
   interfaces?: Dictionary<string | ComponentInterfaceSpec>;
