@@ -1,7 +1,7 @@
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { ArrayOf, DictionaryOf, DictionaryOfAny, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 @JSONSchema({
@@ -17,7 +17,13 @@ export class DeployModuleSpec {
 
   @IsObject()
   @JSONSchema({
-    ...DictionaryOfAny('string', 'null'),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf('string', 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of key-value pairs that represent Terraform inputs and their values.',
   })
   inputs!: Dictionary<string | null>;
@@ -36,7 +42,13 @@ export class DeploySpec {
 
   @IsObject()
   @JSONSchema({
-    ...DictionaryOf(DeployModuleSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(DeployModuleSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.',
   })
   modules!: Dictionary<DeployModuleSpec>;
@@ -87,7 +99,6 @@ export class VolumeSpec {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type EnvironmentSpecValue = boolean | null | number | object | string;
-export const EnvironmentSpecSchema = DictionaryOfAny('array', 'boolean', 'null', 'number', 'object', 'string');
 
 @JSONSchema({
   description: 'An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.',
@@ -102,7 +113,13 @@ export class BuildSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny('string', 'null'),
+    type: 'object',
+    patternProperties: {
+      '^[a-zA-Z0-9_]+$': AnyOf('string', 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'Build args to be passed into `docker build`.',
   })
   args?: Dictionary<string | null>;
@@ -161,7 +178,13 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...EnvironmentSpecSchema,
+    type: 'object',
+    patternProperties: {
+      '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'object', 'string'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.',
     externalDocs: { url: '/docs/configuration/services#local-configuration' },
   })
@@ -169,7 +192,13 @@ export abstract class ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny(VolumeSpec, 'string'),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(VolumeSpec, 'string'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
   })
   volumes?: Dictionary<VolumeSpec | string>;

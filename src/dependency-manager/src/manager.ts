@@ -19,6 +19,7 @@ import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
+import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
   config: ComponentConfig;
@@ -581,7 +582,7 @@ export default abstract class DependencyManager {
     for (const [pk, pv] of Object.entries(component.parameters)) {
       if (pv.required !== false && (pv.default === undefined)) {
         const validation_error = new ValidationError({
-          path: `components.${component.name}.parameters.${pk}`,
+          path: `${component.name}.parameters.${pk}`,
           message: `${pk} is a required parameter`,
           value: pv.default,
         });
@@ -715,6 +716,8 @@ export default abstract class DependencyManager {
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string): Promise<DependencyGraph> {
+    ValuesConfig.validate(values);
+
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets

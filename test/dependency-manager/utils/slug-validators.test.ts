@@ -60,7 +60,6 @@ describe('slugs validators', () => {
     'trailingdashes-',
     'something-33-characters-loooooong',
     'other.punctuation',
-    'other_punctuation',
     ...globally_invalid_punctuation
   ];
 

@@ -2,7 +2,8 @@ import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ResourceSpec } from './resource-spec';
-import { AnyOf, DictionaryOfAny, ExclusiveOr, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
+import { Slugs } from './utils/slugs';
 
 @JSONSchema({
   ...ExclusiveOr('cpu', 'memory'),
@@ -194,7 +195,13 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny(ServiceInterfaceSpec, 'string', 'number'),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(ServiceInterfaceSpec, 'string', 'number'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.',
   })
   interfaces?: Dictionary<ServiceInterfaceSpec | string | number>;

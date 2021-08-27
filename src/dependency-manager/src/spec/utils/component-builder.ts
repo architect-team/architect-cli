@@ -6,7 +6,7 @@ import path from 'path';
 import { ValidationErrors } from '../..';
 import { ComponentConfig } from '../../config/component-config';
 import { validateOrRejectConfig } from '../../config/component-validator';
-import { ArchitectError } from '../../utils/errors';
+import { ArchitectError, ValidationError } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ComponentSpec } from '../component-spec';
 import { transformComponentSpec } from '../transform/component-transform';
@@ -94,8 +94,10 @@ export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { compon
       err.name += `\ncomponent: ${(yaml.load(source_yml) as any).name}`;
     } catch { }
     if (err instanceof ValidationErrors) {
-      const errors = JSON.parse(err.message);
+      const errors = JSON.parse(err.message) as ValidationError[];
+
       addLineNumbers(file_contents, errors);
+
       const error = new ValidationErrors(errors);
       error.name = err.name;
       throw error;
