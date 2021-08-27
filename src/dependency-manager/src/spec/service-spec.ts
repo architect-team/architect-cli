@@ -1,4 +1,4 @@
-import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ResourceSpec } from './resource-spec';
@@ -163,9 +163,8 @@ export class LivenessProbeSpec {
   public static default_initial_delay = '0s';
 
   @IsOptional()
-  @Matches(/^\/.*$/)
   @JSONSchema({
-    ...ExpressionOrString(),
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
     description: 'Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set).',
   })
   path?: string;

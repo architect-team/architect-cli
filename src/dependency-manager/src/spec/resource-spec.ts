@@ -209,10 +209,10 @@ export abstract class ResourceSpec {
   @JSONSchema({
     type: "object",
     patternProperties: {
-      [Slugs.LabelKeySlugValidatorString]: {
+      [Slugs.LabelKeySlugValidatorString]: ExpressionOr({
         type: "string",
         pattern: Slugs.LabelValueSlugValidatorString,
-      },
+      }),
     },
     description: 'A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.',
     externalDocs: { url: '/docs/configuration/services#labels' },

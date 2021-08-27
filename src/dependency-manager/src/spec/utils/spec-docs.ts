@@ -83,6 +83,9 @@ const anyOfPropertyTypeToMarkdown = (property: SchemaObject): string => {
         types.push(arrayTypeToMarkdown(prop));
       } else if ((prop as SchemaObject)?.type && (prop as SchemaObject)?.pattern === '\\${{\\s*(.*?)\\s*}}') {
         types.push(`[Expression](/docs/reference/contexts)`);
+      } else if ((prop as SchemaObject)?.type && (prop as SchemaObject)?.pattern) {
+        const primitive = (prop as SchemaObject).type as string;
+        types.push(primitive);
       } else if ((prop as SchemaObject)?.type && !(prop as SchemaObject)?.pattern) {
         const primitive = (prop as SchemaObject).type as string;
         types.push(primitive);

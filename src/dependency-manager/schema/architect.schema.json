@@ -633,11 +633,10 @@
           "default": "0s"
         },
         "path": {
-          "pattern": "^\\/.*$",
-          "type": "string",
           "anyOf": [
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\/.*$"
             },
             {
               "type": "string",
@@ -1873,11 +1872,10 @@
           "default": "0s"
         },
         "path": {
-          "pattern": "^\\/.*$",
-          "type": "string",
           "anyOf": [
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "^\\/.*$"
             },
             {
               "type": "string",
