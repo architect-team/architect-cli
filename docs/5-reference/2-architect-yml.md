@@ -18,16 +18,16 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `name`* | string | Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A-%5Ba-z0-9%5D%2B)*%5C%2F(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A-%5Ba-z0-9%5D%2B)*(%3F%3A%40%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D)%3F%24">Regex</a> |
+ | `name`* | string | Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes. | Must match: <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%5C%2F(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*(%3F%3A%40%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D)%3F%24">Regex</a> |
  | `description` | string | A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for. |  |
  | `keywords` | Array&lt;string&gt; | Additional search terms to be used when the component is indexed so that others can find it more easily. |  |
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
  | `homepage` | string | The url that serves as the informational homepage of the component (i.e. a github repo). |  |
- | `parameters` | Dict&lt;string \| number \| boolean \| [ParameterDefinitionSpec](#parameterdefinitionspec) \| null&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec |  |
- | `services` | Dict&lt;[ServiceSpec](#servicespec)&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. |  |
- | `tasks` | Dict&lt;[TaskSpec](#taskspec)&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. |  |
- | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`) |  |
- | `interfaces` | Dict&lt;string \| [ComponentInterfaceSpec](#componentinterfacespec)&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. |  |
+ | `parameters` | Dict&lt;string&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `services` | Dict&lt;string&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `tasks` | Dict&lt;string&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`) | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%5C%2F(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*(%3F%3A%40%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">ValueRegex</a>,  |
+ | `interfaces` | Dict&lt;string&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | ~~`artifact_image`~~ | string | - | Deprecated |
 
 
@@ -38,7 +38,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `debug` | Partial&lt;[ServiceSpec](#servicespec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
- | `interfaces` | Dict&lt;[ServiceInterfaceSpec](#serviceinterfacespec) \| string \| number&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. |  |
+ | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `replicas` | number \| [Expression](/docs/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
@@ -47,8 +47,8 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;Array&lt;any&gt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
- | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
+ | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
@@ -98,8 +98,8 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;Array&lt;any&gt; \| boolean \| null \| number \| object \| string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | [More](/docs/configuration/services#local-configuration) |
- | `volumes` | Dict&lt;[VolumeSpec](#volumespec) \| string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. |  |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
+ | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
@@ -115,7 +115,7 @@ The DeploySpec represents deploy-time configuration for a service or a task.
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `path`* | string \| [Expression](/docs/reference/contexts) | The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time. |  |
- | `inputs`* | Dict&lt;string \| null&gt; | A set of key-value pairs that represent Terraform inputs and their values. |  |
+ | `inputs`* | Dict&lt;string&gt; | A set of key-value pairs that represent Terraform inputs and their values. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
 
 
 ## DeploySpec
@@ -125,7 +125,7 @@ The DeploySpec represents deploy-time configuration for a service or a task.
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `strategy`* | string \| [Expression](/docs/reference/contexts) | Selects the preferred deploy strategy for the service. |  |
- | `modules`* | Dict&lt;[DeployModuleSpec](#deploymodulespec)&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. |  |
+ | `modules`* | Dict&lt;string&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
 
 
 ## VolumeSpec
@@ -148,7 +148,7 @@ An object containing the details necessary for Architect to build the service vi
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
  | `context` | string \| [Expression](/docs/reference/contexts) | The path to the directory containing the source code relative to the `architect.yml` file. |  |
- | `args` | Dict&lt;string \| null&gt; | Build args to be passed into `docker build`. |  |
+ | `args` | Dict&lt;string&gt; | Build args to be passed into `docker build`. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dockerfile` | string \| [Expression](/docs/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
 
 
