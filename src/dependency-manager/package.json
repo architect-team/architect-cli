@@ -5,7 +5,7 @@
     "name": "Architect.io",
     "url": "https://architect.io"
   },
-  "version": "1.11.3-rc.33",
+  "version": "1.11.3-rc.34",
   "repository": {
     "type": "git",
     "directory": "src/dependency-graph",
