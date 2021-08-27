@@ -66,14 +66,21 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   // Expand ajv-errors errorMessage
   for (const ajv_error of ajv_errors.filter(e => e.keyword === 'errorMessage')) {
     for (const error of ajv_error.params.errors) {
-      error.message = ajv_error.message;
-      error.params.has_message = true;
-      ajv_errors.push(error);
+      if (error.keyword === 'additionalProperties') {
+        error.message = ajv_error.message;
+        error.params.has_message = true;
+        ajv_errors.push(error);
+      }
     }
   }
 
   const ajv_error_map: Dictionary<ErrorObject> = {};
   for (const ajv_error of ajv_errors) {
+    // Ignore noisy and redundant anyOf errors
+    if (ajv_error.keyword === 'anyOf') {
+      continue;
+    }
+
     ajv_error.instancePath = ajv_error.instancePath.replace(/\//g, '.').replace('.', '');
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -137,7 +144,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
 
     errors.push(new ValidationError({
       path: error.instancePath,
-      message: error.message || 'Unknown error',
+      message: error.message?.replace(/__arc__/g, '') || 'Unknown error',
       value: value === undefined ? '<unknown>' : value,
     }));
   }

@@ -166,6 +166,10 @@ export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
       {
         type: 'string',
         pattern: EXPRESSION_REGEX_STRING,
+        errorMessage: {
+          // __arc__ is replaced later to avoid json pointer issues with ajv
+          pattern: 'must be an interpolation ref ex. $__arc__{{ parameters.example }}',
+        },
       },
     ],
   };

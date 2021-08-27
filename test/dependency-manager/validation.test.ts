@@ -75,11 +75,34 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.debug.debug`);
-      expect(errors[0].message).includes(`deploy`);
+      expect(errors[0].message).includes(`Did you mean deploy?`);
       expect(errors[0].start?.row).eq(10);
       expect(errors[0].start?.column).eq(7);
       expect(errors[0].end?.row).eq(10);
       expect(errors[0].end?.column).eq(12);
+    });
+
+    it('invalid replicas value', async () => {
+      const component_config = `
+      name: test/component
+      services:
+        stateless-app:
+          replicas: '1'
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let err;
+      try {
+        const { component_config } = buildConfigFromPath('/architect.yml')
+        interpolateConfigOrReject(component_config, [])
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message);
+      expect(errors).lengthOf(1);
+      expect(errors[0].path).eq(`services.stateless-app.replicas`);
+      expect(errors[0].message).includes(`must be number or must be an interpolation`);
     });
 
     it('invalid service ref', async () => {
