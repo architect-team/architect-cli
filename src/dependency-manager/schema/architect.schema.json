@@ -4,10 +4,10 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "properties": {
     "name": {
-      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
       "type": "string",
-      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
-      "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
     },
     "description": {
       "type": "string",
@@ -34,73 +34,100 @@
     },
     "parameters": {
       "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "$ref": "#/definitions/ParameterDefinitionSpec"
-          },
-          {
-            "type": "null"
-          }
-        ]
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/ParameterDefinitionSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
-      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
+      "errorMessage": {
+        "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+      },
+      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+      "additionalProperties": false
     },
     "services": {
       "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/ServiceSpec"
-          }
-        ]
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ServiceSpec"
+            }
+          ]
+        }
       },
-      "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "additionalProperties": false
     },
     "tasks": {
       "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/TaskSpec"
-          }
-        ]
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TaskSpec"
+            }
+          ]
+        }
       },
-      "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "additionalProperties": false
     },
     "dependencies": {
       "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string"
-          }
-        ]
+      "patternProperties": {
+        "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+          "type": "string",
+          "pattern": "^[\\w][\\w\\.-]{0,127}$"
+        }
       },
-      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+      "errorMessage": {
+        "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+      },
+      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+      "additionalProperties": false
     },
     "interfaces": {
       "type": "object",
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "$ref": "#/definitions/ComponentInterfaceSpec"
-          }
-        ]
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/ComponentInterfaceSpec"
+            }
+          ]
+        }
       },
-      "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+      "additionalProperties": false
     },
     "artifact_image": {
       "type": "string",
@@ -135,17 +162,23 @@
         },
         "inputs": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
         }
       },
       "type": "object",
@@ -176,14 +209,20 @@
         },
         "modules": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/DeployModuleSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DeployModuleSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
         }
       },
       "type": "object",
@@ -286,17 +325,23 @@
         },
         "args": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "Build args to be passed into `docker build`."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "Build args to be passed into `docker build`.",
+          "additionalProperties": false
         },
         "dockerfile": {
           "anyOf": [
@@ -703,20 +748,26 @@
         },
         "interfaces": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/ServiceInterfaceSpec"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ServiceInterfaceSpec"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
           },
-          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
         },
         "liveness_probe": {
           "$ref": "#/definitions/LivenessProbeSpec"
@@ -802,46 +853,58 @@
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
-          }
+          },
+          "additionalProperties": false
         },
         "volumes": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/VolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
           },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
         },
         "build": {
           "$ref": "#/definitions/BuildSpec"
@@ -1003,46 +1066,58 @@
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
-          }
+          },
+          "additionalProperties": false
         },
         "volumes": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/VolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
           },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
         },
         "build": {
           "$ref": "#/definitions/BuildSpec"
@@ -1287,10 +1362,10 @@
     "ComponentSpec": {
       "properties": {
         "name": {
-          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
-          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -1317,73 +1392,100 @@
         },
         "parameters": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/definitions/ParameterDefinitionSpec"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/ParameterDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
         },
         "services": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/ServiceSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ServiceSpec"
+                }
+              ]
+            }
           },
-          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+          "additionalProperties": false
         },
         "tasks": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/TaskSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/TaskSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+          "additionalProperties": false
         },
         "dependencies": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+            }
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+          "errorMessage": {
+            "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          },
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+          "additionalProperties": false
         },
         "interfaces": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/ComponentInterfaceSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/ComponentInterfaceSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "additionalProperties": false
         },
         "artifact_image": {
           "type": "string",
@@ -1418,17 +1520,23 @@
         },
         "inputs": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
         }
       },
       "type": "object",
@@ -1455,14 +1563,20 @@
         },
         "modules": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugDeployModuleSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugDeployModuleSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
         }
       },
       "type": "object",
@@ -1561,17 +1675,23 @@
         },
         "args": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "Build args to be passed into `docker build`."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "Build args to be passed into `docker build`.",
+          "additionalProperties": false
         },
         "dockerfile": {
           "anyOf": [
@@ -1922,20 +2042,26 @@
       "properties": {
         "interfaces": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugServiceInterfaceSpec"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugServiceInterfaceSpec"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
           },
-          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
         },
         "liveness_probe": {
           "$ref": "#/definitions/_DebugLivenessProbeSpec"
@@ -2021,46 +2147,58 @@
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
-          }
+          },
+          "additionalProperties": false
         },
         "volumes": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugVolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
           },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
         },
         "build": {
           "$ref": "#/definitions/_DebugBuildSpec"
@@ -2219,46 +2357,58 @@
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
-          }
+          },
+          "additionalProperties": false
         },
         "volumes": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugVolumeSpec"
-              },
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
           },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
         },
         "build": {
           "$ref": "#/definitions/_DebugBuildSpec"
@@ -2500,10 +2650,10 @@
     "_DebugComponentSpec": {
       "properties": {
         "name": {
-          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:-[a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
           "type": "string",
-          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
-          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
         },
         "description": {
           "type": "string",
@@ -2530,73 +2680,100 @@
         },
         "parameters": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "$ref": "#/definitions/_DebugParameterDefinitionSpec"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/_DebugParameterDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
-          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec"
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
         },
         "services": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugServiceSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugServiceSpec"
+                }
+              ]
+            }
           },
-          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+          "additionalProperties": false
         },
         "tasks": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/_DebugTaskSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugTaskSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+          "additionalProperties": false
         },
         "dependencies": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              }
-            ]
+          "patternProperties": {
+            "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+            }
           },
-          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)"
+          "errorMessage": {
+            "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          },
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+          "additionalProperties": false
         },
         "interfaces": {
           "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/_DebugComponentInterfaceSpec"
-              }
-            ]
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/_DebugComponentInterfaceSpec"
+                }
+              ]
+            }
           },
-          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers."
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "additionalProperties": false
         },
         "artifact_image": {
           "type": "string",
