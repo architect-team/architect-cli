@@ -1,8 +1,8 @@
-import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
+import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ResourceSpec } from './resource-spec';
-import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, DictionaryOfAny, ExclusiveOr, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 
 @JSONSchema({
   ...ExclusiveOr('cpu', 'memory'),
@@ -11,7 +11,7 @@ import { AnyOf, DictionaryOfAny, ExclusiveOr, StringOrStringArray } from './util
 export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).',
     externalDocs: { url: '/docs/configuration/services#cpu--memory' },
   })
@@ -19,7 +19,7 @@ export class ScalingMetricsSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).',
     externalDocs: { url: '/docs/configuration/services#cpu--memory' },
   })
@@ -32,14 +32,14 @@ export class ScalingMetricsSpec {
 export class ScalingSpec {
   @Allow()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The target minimum number of service replicas.',
   })
   min_replicas!: number | string;
 
   @Allow()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The target maximum number of service replicas.',
   })
   max_replicas!: number | string;
@@ -55,28 +55,28 @@ export class ScalingSpec {
 export class ServiceInterfaceSpec {
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'A human-readable description of the interface.',
   })
   description?: string;
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('null', 'string'),
+    ...ExpressionOr(AnyOf('null', 'string')),
     description: 'The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host.',
   })
   host?: null | string;
 
   @Allow()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'Port on which the service is listening for traffic.',
   })
   port!: number | string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'Protocol that the interface responds to',
     default: 'http',
   })
@@ -84,28 +84,28 @@ export class ServiceInterfaceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('null', 'string'),
+    ...ExpressionOr(AnyOf('null', 'string')),
     description: 'A Basic Auth username required to access the interface',
   })
   username?: null | string;
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('null', 'string'),
+    ...ExpressionOr(AnyOf('null', 'string')),
     description: 'A Basic Auth password required to access the interface',
   })
   password?: null | string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url.',
   })
   url?: string;
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('boolean', 'string'),
+    ...ExpressionOr(AnyOf('boolean')),
     description: 'Denotes that if this interface is made external, the gateway should use sticky sessions',
     default: false,
   })
@@ -119,7 +119,7 @@ export class ServiceInterfaceSpec {
 export class LivenessProbeSpec {
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The number of times to retry a health check before the container is considered healthy.',
     default: LivenessProbeSpec.default_success_threshold,
   })
@@ -128,7 +128,7 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The number of times to retry a failed health check before the container is considered unhealthy.',
     default: LivenessProbeSpec.default_failure_threshold,
   })
@@ -137,7 +137,7 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s',
     default: LivenessProbeSpec.default_timeout,
   })
@@ -146,7 +146,7 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The time period in seconds between each health check execution. You may specify any value between: 5s and 300s',
     default: LivenessProbeSpec.default_interval,
   })
@@ -155,7 +155,7 @@ export class LivenessProbeSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'Delays the check from running for the specified amount of time',
     default: LivenessProbeSpec.default_initial_delay,
   })
@@ -163,9 +163,8 @@ export class LivenessProbeSpec {
   public static default_initial_delay = '0s';
 
   @IsOptional()
-  @Matches(/^\/.*$/)
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
     description: 'Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set).',
   })
   path?: string;
@@ -179,7 +178,7 @@ export class LivenessProbeSpec {
 
   @Allow()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'Port that the http check will run against',
   })
   port!: number | string;
@@ -206,7 +205,7 @@ export class ServiceSpec extends ResourceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field.',
   })
   replicas?: number | string;

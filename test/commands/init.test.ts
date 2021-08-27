@@ -142,21 +142,21 @@ describe('init', function () {
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
       // TODO:290: these tests should expect the port to be a number instead of a string
-      expect(component_config.services['kibana'].interfaces['interface0'].port).eq('5601');
-      expect(component_config.services['kibana'].interfaces['interface1'].port).eq('5000');
+      expect(component_config.services['kibana'].interfaces['interface0'].port).eq(5601);
+      expect(component_config.services['kibana'].interfaces['interface1'].port).eq(5000);
       expect(component_config.services['kibana'].interfaces['interface1'].protocol).eq('udp');
-      expect(component_config.services['kibana'].interfaces['interface2'].port).eq('8001');
+      expect(component_config.services['kibana'].interfaces['interface2'].port).eq(8001);
       expect(component_config.services['kibana'].interfaces['interface3'].port).eq(3000);
-      expect(component_config.services['kibana'].interfaces['interface4'].port).eq('4000');
-      expect(component_config.services['kibana'].interfaces['interface9'].port).eq('4005');
-      expect(component_config.services['kibana'].interfaces['interface10'].port).eq('1240');
-      expect(component_config.services['kibana'].interfaces['interface11'].port).eq('8080');
-      expect(component_config.services['kibana'].interfaces['interface12'].port).eq('8081');
-      expect(component_config.services['kibana'].interfaces['interface13'].port).eq('5000');
-      expect(component_config.services['kibana'].interfaces['interface23'].port).eq('5010');
-      expect(component_config.services['kibana'].interfaces['interface24'].port).eq('4444');
+      expect(component_config.services['kibana'].interfaces['interface4'].port).eq(4000);
+      expect(component_config.services['kibana'].interfaces['interface9'].port).eq(4005);
+      expect(component_config.services['kibana'].interfaces['interface10'].port).eq(1240);
+      expect(component_config.services['kibana'].interfaces['interface11'].port).eq(8080);
+      expect(component_config.services['kibana'].interfaces['interface12'].port).eq(8081);
+      expect(component_config.services['kibana'].interfaces['interface13'].port).eq(5000);
+      expect(component_config.services['kibana'].interfaces['interface23'].port).eq(5010);
+      expect(component_config.services['kibana'].interfaces['interface24'].port).eq(4444);
       expect(component_config.services['kibana'].interfaces['interface24'].protocol).eq('tcp');
-      expect(component_config.services['kibana'].interfaces['interface25'].port).eq('4445');
+      expect(component_config.services['kibana'].interfaces['interface25'].port).eq(4445);
       expect(component_config.services['kibana'].interfaces['interface25'].protocol).eq('udp');
     });
 
@@ -167,8 +167,8 @@ describe('init', function () {
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
-      expect(component_config.services['elasticsearch'].interfaces['interface0'].port).eq('9200');
-      expect(component_config.services['elasticsearch'].interfaces['interface1'].port).eq('9300');
+      expect(component_config.services['elasticsearch'].interfaces['interface0'].port).eq(9200);
+      expect(component_config.services['elasticsearch'].interfaces['interface1'].port).eq(9300);
     });
 
   mockInit()
@@ -178,11 +178,11 @@ describe('init', function () {
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
-      expect(component_config.services['logstash'].interfaces['interface0'].port).eq('5000');
+      expect(component_config.services['logstash'].interfaces['interface0'].port).eq(5000);
       expect(component_config.services['logstash'].interfaces['interface0'].protocol).eq('tcp');
-      expect(component_config.services['logstash'].interfaces['interface1'].port).eq('5000');
+      expect(component_config.services['logstash'].interfaces['interface1'].port).eq(5000);
       expect(component_config.services['logstash'].interfaces['interface1'].protocol).eq('udp');
-      expect(component_config.services['logstash'].interfaces['interface2'].port).eq('9600');
+      expect(component_config.services['logstash'].interfaces['interface2'].port).eq(9600);
     });
 
   mockInit()
@@ -195,7 +195,7 @@ describe('init', function () {
       expect(component_config.services['elasticsearch'].volumes['volume1'].mount_path).eq('/usr/share/elasticsearch/data');
       expect(component_config.services['elasticsearch'].debug!.volumes['volume0'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
       expect(component_config.services['elasticsearch'].debug!.volumes['volume0'].host_path).eq('./elasticsearch/config/elasticsearch.yml');
-      expect(component_config.services['elasticsearch'].debug!.volumes['volume0'].readonly).eq('true');
+      expect(component_config.services['elasticsearch'].debug!.volumes['volume0'].readonly).eq(true);
     });
 
   mockInit()
@@ -207,10 +207,10 @@ describe('init', function () {
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
       expect(component_config.services['logstash'].debug!.volumes['volume0'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_config.services['logstash'].debug!.volumes['volume0'].host_path).eq('./logstash/config/logstash.yml');
-      expect(component_config.services['logstash'].debug!.volumes['volume0'].readonly).eq('true');
+      expect(component_config.services['logstash'].debug!.volumes['volume0'].readonly).eq(true);
       expect(component_config.services['logstash'].debug!.volumes['volume1'].mount_path).eq('/usr/share/logstash/pipeline');
       expect(component_config.services['logstash'].debug!.volumes['volume1'].host_path).eq('./logstash/pipeline');
-      expect(component_config.services['logstash'].debug!.volumes['volume1'].readonly).eq('true');
+      expect(component_config.services['logstash'].debug!.volumes['volume1'].readonly).eq(true);
     });
 
   mockInit()
@@ -222,7 +222,7 @@ describe('init', function () {
       const component_config = buildConfigFromYml(writeFileSync.args[0][1], Slugs.DEFAULT_TAG);
       expect(component_config.services['kibana'].debug!.volumes['volume0'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_config.services['kibana'].debug!.volumes['volume0'].host_path).eq('./kibana/config/kibana.yml');
-      expect(component_config.services['kibana'].debug!.volumes['volume0'].readonly).eq('true');
+      expect(component_config.services['kibana'].debug!.volumes['volume0'].readonly).eq(true);
       expect(component_config.services['kibana'].volumes['volume1'].mount_path).eq('/var/lib/mysql');
       expect(component_config.services['kibana'].volumes['volume1'].host_path).is.undefined;
       expect(component_config.services['kibana'].debug!.volumes['volume2'].mount_path).eq('/var/lib/mysql');
@@ -231,7 +231,7 @@ describe('init', function () {
       expect(component_config.services['kibana'].debug!.volumes['volume3'].host_path).eq('./cache');
       expect(component_config.services['kibana'].debug!.volumes['volume4'].mount_path).eq('/etc/configs/');
       expect(component_config.services['kibana'].debug!.volumes['volume4'].host_path).eq('~/configs');
-      expect(component_config.services['kibana'].debug!.volumes['volume4'].readonly).eq('true');
+      expect(component_config.services['kibana'].debug!.volumes['volume4'].readonly).eq(true);
 
     });
 });
