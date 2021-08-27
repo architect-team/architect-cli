@@ -19,6 +19,7 @@ import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
+import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
   config: ComponentConfig;
@@ -715,6 +716,8 @@ export default abstract class DependencyManager {
   }
 
   async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string): Promise<DependencyGraph> {
+    ValuesConfig.validate(values);
+
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets

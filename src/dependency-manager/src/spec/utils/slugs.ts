@@ -30,7 +30,9 @@ export class Slugs {
   public static ComponentTagDescription = 'max length 127 characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), dots (.), and alphanumerics between.';
   public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;
   public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
+
   public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
+  public static ComponentParameterValidator = new RegExp(`^${Slugs.ComponentParameterRegexBase}$`);
 }
 
 export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'gateway' | 'interfaces';

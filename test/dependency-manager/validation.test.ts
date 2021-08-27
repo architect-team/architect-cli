@@ -769,7 +769,7 @@ services:
   it('invalid value keys in values files fail validation', () => {
     const values_dict = {
       "architect/cloud:latest": {
-        "TE-ST": "string"
+        "TE@ST": "string"
       }
     };
 
@@ -782,7 +782,7 @@ services:
     expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
-    expect(errors[0].path).eq(`architect/cloud:latest.TE-ST`);
+    expect(errors[0].path).eq(`architect/cloud:latest.TE@ST`);
   });
 
   it('component values are defined in an object', () => {
