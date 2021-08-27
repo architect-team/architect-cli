@@ -1,41 +1,9 @@
+import { SchemaObject } from 'ajv';
 import { DecoratorSchema } from 'class-validator-jsonschema/build/decorators';
-import { SchemaObject } from 'openapi3-ts';
 import { EXPRESSION_REGEX_STRING } from './interpolation';
 
 export const REF_PREFIX = '#/definitions/';
 const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'object', 'null', 'array'];
-
-/**
- * Returns a partial JSON Schema to define a Dictionary of disjunctive types
- *
- * @param args must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
- * @returns
- */
-export const DictionaryOfAny = (...args: any): DecoratorSchema => {
-  const anyOf = [];
-
-  for (const arg of args) {
-    if (typeof arg === 'string' && PRIMITIVES.includes(arg)) {
-      anyOf.push({
-        type: arg,
-      });
-    } else if (typeof arg === 'function') {
-      anyOf.push({
-        $ref: `${REF_PREFIX}${arg.name}`,
-      });
-    } else {
-      console.error(arg);
-      throw new Error('Illegal arg for JsonSchema in DictionaryOfAny. You must specify either a primitive string or a Type.');
-    }
-  }
-
-  return {
-    type: 'object',
-    additionalProperties: {
-      anyOf,
-    },
-  } as DecoratorSchema;
-};
 
 /**
  * Returns a partial JSON Schema to define a disjunctive type
@@ -63,6 +31,21 @@ export const AnyOf = (...args: any): DecoratorSchema => {
 
   return {
     anyOf,
+  } as DecoratorSchema;
+};
+
+/**
+ * Returns a partial JSON Schema to define a Dictionary of disjunctive types
+ *
+ * @param args must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
+ * @returns
+ */
+export const DictionaryOfAny = (...args: any): DecoratorSchema => {
+  return {
+    type: 'object',
+    additionalProperties: {
+      ...AnyOf(...args),
+    },
   } as DecoratorSchema;
 };
 

@@ -1,5 +1,6 @@
 import Ajv, { ErrorObject } from "ajv";
 import ajv_errors from "ajv-errors";
+import chalk from 'chalk';
 import leven from 'leven';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
@@ -30,12 +31,69 @@ export const findPotentialMatch = (value: string, options: string[], max_distanc
   return potential_match;
 };
 
+export const prettyValidationErrors = (source_yml: string, errors: ValidationError[]): void => {
+  const errors_row_map: Dictionary<ValidationError> = {};
+  let min_row = Infinity;
+  let max_row = -Infinity;
+  for (const error of errors) {
+    if (error.start && error.end) {
+      // TODO handle multiple errors on one row?
+      errors_row_map[error.start.row] = error;
+      if (error.start.row < min_row) {
+        min_row = error.start.row;
+      }
+      if (error.start.row > max_row) {
+        max_row = error.start.row;
+      }
+    }
+  }
+  // TODO don't show pretty errors if some errors dont have line #s?
+
+  // TODO highlight invalid patterns not key - ex. 'invalid component name' test
+
+  min_row = Math.max(min_row - 4, 0);
+  max_row = max_row + 3;
+
+  const res = [];
+  let line_number = min_row + 1;
+  const lines = source_yml.split('\n').slice(min_row, max_row);
+  const lines_length = lines.length;
+  const max_number_length = `${min_row + lines_length}`.length;
+  for (const line of lines) {
+    const error = errors_row_map[line_number];
+
+    const line_number_space = (max_number_length - `${line_number}`.length);
+
+    let number_line = error ? chalk.red('›') + ' ' : '  ';
+    number_line += chalk.gray(`${' '.repeat(line_number_space)}${line_number} | `);
+    number_line += chalk.cyan(line);
+    res.push(number_line);
+
+    if (error?.start && error?.end) {
+      let error_line = chalk.gray(`${' '.repeat(max_number_length + 2)} | `);
+      error_line += ' '.repeat(error.start.column - 1);
+      error_line += chalk.red('﹋'.repeat(((error.end.column - error.start.column) + 1) / 2));
+      error_line += ' ';
+      error_line += chalk.red(error.message);
+      res.push(error_line);
+    }
+
+    line_number += 1;
+  }
+
+  console.log(res.join('\n'));
+};
+
+function escapeRegex(string: string) {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 export const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   const rows = value.split('\n');
   const total_rows = rows.length;
   for (const error of errors) {
     const keys = error.path.split('.');
-    const exp = new RegExp('(.*)?' + keys.map((key) => `${key}:`).join('(.*)?'), 's');
+    const exp = new RegExp('(.*)?' + keys.map((key) => `${escapeRegex(key)}:`).join('(.*)?'), 's');
     const matches = exp.exec(value);
     if (matches) {
       const match = matches[0];
@@ -59,14 +117,24 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     return [];
   }
 
+  // Expand ajv-errors errorMessage
+  for (const ajv_error of ajv_errors.filter(e => e.keyword === 'errorMessage')) {
+    for (const error of ajv_error.params.errors) {
+      error.message = ajv_error.message;
+      error.params.has_message = true;
+      ajv_errors.push(error);
+    }
+  }
+
   const ajv_error_map: Dictionary<ErrorObject> = {};
   for (const ajv_error of ajv_errors) {
     ajv_error.instancePath = ajv_error.instancePath.replace(/\//g, '.').replace('.', '');
-    if (!ajv_error_map[ajv_error.instancePath]) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const additional_property: string | undefined = ajv_error.params?.additionalProperty;
-      if (additional_property) {
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const additional_property: string | undefined = ajv_error.params?.additionalProperty;
+    if (additional_property) {
+      if (!ajv_error.params.has_message) {
         ajv_error.message = `Invalid key: ${additional_property}`;
 
         const definition = findDefinition(replaceBrackets(ajv_error.instancePath), ARCHITECT_JSON_SCHEMA);
@@ -80,10 +148,12 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
             ajv_error.message += ` - Did you mean ${match_keys[match_keys.length - 1]}?`;
           }
         }
-
-        ajv_error.instancePath += `.${additional_property}`;
       }
 
+      ajv_error.instancePath += ajv_error.instancePath ? `.${additional_property}` : additional_property;
+    }
+
+    if (!ajv_error_map[ajv_error.instancePath]) {
       ajv_error_map[ajv_error.instancePath] = ajv_error;
     } else {
       ajv_error_map[ajv_error.instancePath].message += ` or ${ajv_error.message}`;

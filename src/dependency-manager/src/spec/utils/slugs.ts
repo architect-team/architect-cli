@@ -31,6 +31,7 @@ export class Slugs {
   public static ComponentTagRegexBase = `[\\w][\\w\\.-]{0,127}`;
   public static ComponentTagValidator = new RegExp(`^${Slugs.ComponentTagRegexBase}$`);
 
+  public static ComponentParameterDescription = 'must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between.';
   public static ComponentParameterRegexBase = `[a-zA-Z0-9_-]+`;
   public static ComponentParameterValidator = new RegExp(`^${Slugs.ComponentParameterRegexBase}$`);
 }

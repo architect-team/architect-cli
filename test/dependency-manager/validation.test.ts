@@ -7,7 +7,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import PortUtil from '../../src/common/utils/port';
-import { buildConfigFromPath, interpolateConfigOrReject, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
+import { buildConfigFromPath, interpolateConfigOrReject, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
 describe('validate spec', () => {
@@ -337,6 +337,43 @@ services:
       expect(errors[0].message).includes('architect/component-name');
     });
 
+    it('invalid component parameter keys', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        test:
+        test2: test
+        test3: test
+        test%%%%: test
+        test***test:
+          default: test
+      `
+
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(2);
+      expect(errors.map(e => e.path)).members([
+        'parameters.test%%%%',
+        'parameters.test***test'
+      ])
+      expect(errors[0].message).includes(Slugs.ComponentParameterDescription);
+    });
+
     it('invalid component interfaces ref', async () => {
       const component_config = `
       name: test/component
@@ -626,6 +663,7 @@ services:
           required: true
         not-required:
           required: false
+        not-required2: false
       services:
         api:
           interfaces:
@@ -653,8 +691,8 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'components.test/component.parameters.required',
-        'components.test/component.parameters.required-explicit',
+        'test/component.parameters.required',
+        'test/component.parameters.required-explicit',
       ])
     });
 
@@ -720,7 +758,7 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        'components.examples/hello-world2.parameters.aws_secret',
+        'examples/hello-world2.parameters.aws_secret',
       ])
     });
   });
@@ -820,9 +858,8 @@ services:
     expect(err).to.be.undefined;
   });
 
-  describe('AtLeastOne and scaling validation', () => {
-    it('required component parameters', async () => {
-      const component_config = `
+  it('AtLeastOne and scaling validation', async () => {
+    const component_config = `
       name: test/component
       services:
         api:
@@ -833,26 +870,25 @@ services:
             max_replicas: 1
             metrics:
       `
-      mock_fs({
-        '/component.yml': component_config,
-      });
-      const manager = new LocalDependencyManager(axios.create(), {
-        'test/component': '/component.yml',
-      });
-      let err;
-      try {
-        await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
-        ]);
-      } catch (e) {
-        err = e;
-      }
-      expect(err).instanceOf(ValidationErrors)
-      const errors = JSON.parse(err.message) as ValidationError[];
-      expect(errors).lengthOf(1);
-      expect(errors.map(e => e.path)).members([
-        'services.api.scaling.metrics',
-      ])
-    })
-  });
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'services.api.scaling.metrics',
+    ])
+  })
 });

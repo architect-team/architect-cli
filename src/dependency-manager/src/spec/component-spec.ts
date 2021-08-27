@@ -1,10 +1,11 @@
-import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
+
+import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
-import { ComponentSlugUtils } from './utils/slugs';
+import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
@@ -121,11 +122,12 @@ export class ParameterDefinitionSpec {
   description: 'The top level object of the `architect.yml`; defines a deployable Architect Component.',
 })
 export class ComponentSpec {
-  @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
+  @IsString()
   @JSONSchema({
     type: 'string',
-    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
+    pattern: ComponentSlugUtils.Validator.source,
     errorMessage: ComponentSlugUtils.Description,
+    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
   })
   name!: string;
 
@@ -159,7 +161,13 @@ export class ComponentSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ComponentParameterDescription,
+    },
     description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec',
   })
   parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;

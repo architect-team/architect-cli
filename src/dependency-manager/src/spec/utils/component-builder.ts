@@ -1,13 +1,11 @@
 
 /* eslint-disable no-empty */
-import chalk from 'chalk';
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { ValidationErrors } from '../..';
 import { ComponentConfig } from '../../config/component-config';
 import { validateOrRejectConfig } from '../../config/component-validator';
-import { Dictionary } from '../../utils/dictionary';
 import { ArchitectError, ValidationError } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ComponentSpec } from '../component-spec';
@@ -81,57 +79,6 @@ export const buildConfigFromObject = (config: Record<string, any>, tag: string):
   return buildConfigFromYml(source_yaml, tag);
 };
 
-const prettyValidationErrors = (source_yml: string, errors: ValidationError[]) => {
-  const errors_row_map: Dictionary<ValidationError> = {};
-  let min_row = Infinity;
-  let max_row = -Infinity;
-  for (const error of errors) {
-    if (error.start && error.end) {
-      // TODO handle multiple errors on one row?
-      errors_row_map[error.start.row] = error;
-      if (error.start.row < min_row) {
-        min_row = error.start.row;
-      }
-      if (error.start.row > max_row) {
-        max_row = error.start.row;
-      }
-    }
-  }
-  // TODO don't show pretty errors if some errors dont have line #s?
-
-  min_row = Math.max(min_row - 4, 0);
-  max_row = max_row + 3;
-
-  const res = [];
-  let line_number = min_row + 1;
-  const lines = source_yml.split('\n').slice(min_row, max_row);
-  const lines_length = lines.length;
-  const max_number_length = `${min_row + lines_length}`.length;
-  for (const line of lines) {
-    const error = errors_row_map[line_number];
-
-    const line_number_space = (max_number_length - `${line_number}`.length);
-
-    let number_line = error ? chalk.red('›') + ' ' : '  ';
-    number_line += chalk.gray(`${' '.repeat(line_number_space)}${line_number} | `);
-    number_line += chalk.cyan(line);
-    res.push(number_line);
-
-    if (error?.start && error?.end) {
-      let error_line = chalk.gray(`${' '.repeat(max_number_length + 2)} | `);
-      error_line += ' '.repeat(error.start.column - 1);
-      error_line += chalk.red('﹋'.repeat(((error.end.column - error.start.column) + 1) / 2));
-      error_line += ' ';
-      error_line += chalk.red(error.message);
-      res.push(error_line);
-    }
-
-    line_number += 1;
-  }
-
-  console.log(res.join('\n'));
-};
-
 export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { component_config: ComponentConfig; component_spec: ComponentSpec; source_path: string } => {
   const { source_path, source_yml, file_contents } = loadSourceYmlFromPathOrReject(spec_path);
   try {
@@ -150,7 +97,7 @@ export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { compon
       const errors = JSON.parse(err.message) as ValidationError[];
 
       addLineNumbers(file_contents, errors);
-      prettyValidationErrors(file_contents, errors);
+      // prettyValidationErrors(file_contents, errors);
 
       const error = new ValidationErrors(errors);
       error.name = err.name;
