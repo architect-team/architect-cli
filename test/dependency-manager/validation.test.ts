@@ -10,7 +10,7 @@ import PortUtil from '../../src/common/utils/port';
 import { buildConfigFromPath, interpolateConfigOrReject, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
-describe('validation spec v1', () => {
+describe('validate spec', () => {
   beforeEach(async () => {
     // Stub the logger
     sinon.replace(Register.prototype, 'log', sinon.stub());
@@ -425,7 +425,6 @@ services:
       ])
     });
 
-    /* TODO:288
     it('deploy time validation', async () => {
       const component_config = `
       name: test/component
@@ -457,13 +456,12 @@ services:
       }
       expect(err).instanceOf(ValidationErrors)
       const errors = JSON.parse(err.message) as ValidationError[];
-      console.log(errors)
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        "services.app.liveness_probe.path",
+        "services.api.liveness_probe.path",
       ])
     });
-    */
+
 
     it('valid labels', async () => {
       const component_config = `
@@ -491,14 +489,14 @@ services:
         err = e;
       }
 
-      // TODO:288 expect(err).to.be.undefined;
+      expect(err).to.be.undefined;
     });
 
     it('invalid labels', async () => {
       const component_config = `
       name: test/component
       parameters:
-        environment: dev$%^%^%$&
+        environment: dev$%^%^%$T
       services:
         app:
           labels:
@@ -524,15 +522,15 @@ services:
       expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.app.labels.environment2`);
-      // TODO:288 expect(errors[0].message).eq('');
+      expect(err.message).includes(`services.app.labels.environment2`);
+      expect(err.message).includes('must match pattern');
     });
 
-    it('invalid labels length v2', async () => {
+    it('invalid labels length', async () => {
       const component_config = `
       name: test/component
       parameters:
-        environment: dev$%^%^%$&
+        environment: dev$%^%^%$&T
       services:
         app:
           labels:
@@ -555,8 +553,7 @@ services:
       expect(err).instanceOf(ValidationErrors);
       const errors = JSON.parse(err.message);
       expect(errors).lengthOf(1);
-      expect(errors[0].path).eq(`services.app.labels.architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io`);
-      // TODO:288 expect(errors[0].message).eq('');
+      expect(errors[0].message).eq('Invalid key: architect.io.architect.io.architect.io.architect.io.architect.io.architect.io/architect.io');
     });
   });
 

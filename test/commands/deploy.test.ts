@@ -456,7 +456,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       const hello_json = yaml.load(getHelloComponentConfig()) as any;
-      hello_json.services.api.interfaces.main.sticky = 'true';
+      hello_json.services.api.interfaces.main.sticky = true;
       const component_config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
       return {
         component_config,

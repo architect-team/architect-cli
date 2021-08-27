@@ -122,6 +122,15 @@
       "properties": {
         "path": {
           "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
         },
         "inputs": {
@@ -154,6 +163,15 @@
       "properties": {
         "strategy": {
           "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Selects the preferred deploy strategy for the service."
         },
         "modules": {
@@ -182,15 +200,39 @@
     "VolumeSpec": {
       "properties": {
         "mount_path": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Directory at which the volume will be mounted inside the container."
         },
         "host_path": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
         },
         "key": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
           "externalDocs": {
             "url": "/docs/configuration/services#volumes"
@@ -206,7 +248,8 @@
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Marks the volume as readonly.",
@@ -230,7 +273,15 @@
     "BuildSpec": {
       "properties": {
         "context": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
@@ -248,7 +299,15 @@
           "description": "Build args to be passed into `docker build`."
         },
         "dockerfile": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to the Dockerfile relative to the `build.context`",
           "default": "Dockerfile"
         }
@@ -268,7 +327,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
@@ -277,7 +337,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -313,7 +381,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The target minimum number of service replicas."
@@ -324,7 +393,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The target maximum number of service replicas."
@@ -348,16 +418,32 @@
     "ServiceInterfaceSpec": {
       "properties": {
         "description": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A human-readable description of the interface."
         },
         "host": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
@@ -368,23 +454,40 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Port on which the service is listening for traffic."
         },
         "protocol": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Protocol that the interface responds to",
           "default": "http"
         },
         "username": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A Basic Auth username required to access the interface"
@@ -392,25 +495,46 @@
         "password": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A Basic Auth password required to access the interface"
         },
         "url": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
         },
         "sticky": {
           "anyOf": [
             {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
@@ -449,7 +573,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The number of times to retry a health check before the container is considered healthy.",
@@ -461,30 +586,63 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
           "default": 3
         },
         "timeout": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
           "default": "5s"
         },
         "interval": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
           "default": "30s"
         },
         "initial_delay": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Delays the check from running for the specified amount of time",
           "default": "0s"
         },
         "path": {
-          "pattern": "^\\/.*$",
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
         },
         "command": {
@@ -507,7 +665,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Port that the http check will run against"
@@ -568,7 +727,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
@@ -581,19 +741,35 @@
           "description": "Human readable description"
         },
         "image": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -601,13 +777,21 @@
         "entrypoint": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -668,7 +852,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -677,7 +862,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory required to run a service or a task.",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -701,8 +894,16 @@
           "type": "object",
           "patternProperties": {
             "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                }
+              ]
             }
           },
           "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
@@ -725,7 +926,15 @@
           "$ref": "#/definitions/_DebugTaskSpec"
         },
         "schedule": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
         },
         "description": {
@@ -733,19 +942,35 @@
           "description": "Human readable description"
         },
         "image": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -753,13 +978,21 @@
         "entrypoint": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -820,7 +1053,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -829,7 +1063,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory required to run a service or a task.",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -853,8 +1095,16 @@
           "type": "object",
           "patternProperties": {
             "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                }
+              ]
             }
           },
           "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
@@ -908,25 +1158,58 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The url that the component interface should forward to."
         },
         "sticky": {
@@ -935,7 +1218,8 @@
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
@@ -964,22 +1248,30 @@
         "default": {
           "anyOf": [
             {
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             {
-              "type": "boolean"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"
@@ -1113,6 +1405,15 @@
       "properties": {
         "path": {
           "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
         },
         "inputs": {
@@ -1141,6 +1442,15 @@
       "properties": {
         "strategy": {
           "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Selects the preferred deploy strategy for the service."
         },
         "modules": {
@@ -1165,15 +1475,39 @@
     "_DebugVolumeSpec": {
       "properties": {
         "mount_path": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Directory at which the volume will be mounted inside the container."
         },
         "host_path": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
         },
         "key": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
           "externalDocs": {
             "url": "/docs/configuration/services#volumes"
@@ -1189,7 +1523,8 @@
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Marks the volume as readonly.",
@@ -1213,7 +1548,15 @@
     "_DebugBuildSpec": {
       "properties": {
         "context": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to the directory containing the source code relative to the `architect.yml` file."
         },
         "args": {
@@ -1231,7 +1574,15 @@
           "description": "Build args to be passed into `docker build`."
         },
         "dockerfile": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The path to the Dockerfile relative to the `build.context`",
           "default": "Dockerfile"
         }
@@ -1251,7 +1602,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
@@ -1260,7 +1612,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -1282,7 +1642,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The target minimum number of service replicas."
@@ -1293,7 +1654,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The target maximum number of service replicas."
@@ -1312,16 +1674,32 @@
     "_DebugServiceInterfaceSpec": {
       "properties": {
         "description": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A human-readable description of the interface."
         },
         "host": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
@@ -1332,23 +1710,40 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Port on which the service is listening for traffic."
         },
         "protocol": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Protocol that the interface responds to",
           "default": "http"
         },
         "username": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A Basic Auth username required to access the interface"
@@ -1356,25 +1751,46 @@
         "password": {
           "anyOf": [
             {
-              "type": "null"
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A Basic Auth password required to access the interface"
         },
         "url": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
         },
         "sticky": {
           "anyOf": [
             {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
@@ -1396,7 +1812,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The number of times to retry a health check before the container is considered healthy.",
@@ -1408,30 +1825,63 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
           "default": 3
         },
         "timeout": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
           "default": "5s"
         },
         "interval": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
           "default": "30s"
         },
         "initial_delay": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Delays the check from running for the specified amount of time",
           "default": "0s"
         },
         "path": {
-          "pattern": "^\\/.*$",
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
         },
         "command": {
@@ -1454,7 +1904,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Port that the http check will run against"
@@ -1495,7 +1946,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
@@ -1508,19 +1960,35 @@
           "description": "Human readable description"
         },
         "image": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -1528,13 +1996,21 @@
         "entrypoint": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -1595,7 +2071,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -1604,7 +2081,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory required to run a service or a task.",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -1628,8 +2113,16 @@
           "type": "object",
           "patternProperties": {
             "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                }
+              ]
             }
           },
           "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
@@ -1649,7 +2142,15 @@
     "_DebugTaskSpec": {
       "properties": {
         "schedule": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
         },
         "description": {
@@ -1657,19 +2158,35 @@
           "description": "Human readable description"
         },
         "image": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
         },
         "command": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
@@ -1677,13 +2194,21 @@
         "entrypoint": {
           "anyOf": [
             {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
@@ -1744,7 +2269,8 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The cpu required to run a service or a task",
@@ -1753,7 +2279,15 @@
           }
         },
         "memory": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The memory required to run a service or a task.",
           "externalDocs": {
             "url": "/docs/configuration/services#cpu--memory"
@@ -1777,8 +2311,16 @@
           "type": "object",
           "patternProperties": {
             "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
-              "type": "string",
-              "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}"
+                }
+              ]
             }
           },
           "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
@@ -1832,25 +2374,58 @@
               "type": "number"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "The port that the component interface should forward to."
         },
         "protocol": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The protocol by which the component interface can be connected to."
         },
         "username": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The Basic Auth username by which a component interface can be connected to."
         },
         "password": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The Basic Auth password by which a component interface can be connected to."
         },
         "url": {
-          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
+            }
+          ],
           "description": "The url that the component interface should forward to."
         },
         "sticky": {
@@ -1859,7 +2434,8 @@
               "type": "boolean"
             },
             {
-              "type": "string"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
@@ -1885,22 +2461,30 @@
         "default": {
           "anyOf": [
             {
-              "type": "array"
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             {
-              "type": "boolean"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}"
             }
           ],
           "description": "Sets a default value for the parameter if one is not provided"

@@ -1,9 +1,10 @@
 import yaml from 'js-yaml';
+import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationErrors } from './errors';
 
-const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
+const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
