@@ -197,7 +197,7 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(ServiceInterfaceSpec, 'string', 'number'),
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: ExpressionOr(AnyOf(ServiceInterfaceSpec, 'number')),
     },
     errorMessage: {
       additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
