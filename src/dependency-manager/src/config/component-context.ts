@@ -15,6 +15,7 @@ export interface TaskContext {
 }
 
 export interface ComponentContext {
+  name: string;
   dependencies: Dictionary<ComponentContext>;
   parameters: Dictionary<ParameterValue>;
   ingresses: Dictionary<ComponentInterfaceConfig>;

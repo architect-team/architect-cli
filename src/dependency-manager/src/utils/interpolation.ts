@@ -146,6 +146,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       message += ` - Did you mean \${{ ${potential_match} }}?`;
     }
     errors.push(new ValidationError({
+      component: context.name,
       path: reverse_context_map[miss] || '<unknown>',
       message,
       value: miss,

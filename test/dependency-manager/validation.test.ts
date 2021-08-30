@@ -362,6 +362,7 @@ services:
         'name',
       ])
       expect(errors[0].message).includes('architect/component-name');
+      expect(errors[0].component).eq('testcomponent');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
       expect(errors[0].end?.row).eq(2);
@@ -439,6 +440,7 @@ services:
         'services.api.environment.TEST',
       ])
       expect(errors[0].message).includes('parameters.test');
+      expect(errors[0].component).eq('test/component');
       expect(errors[0].start?.row).eq(8);
       expect(errors[0].start?.column).eq(23);
       expect(errors[0].end?.row).eq(8);
@@ -762,8 +764,11 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'test/component.parameters.required',
-        'test/component.parameters.required-explicit',
+        'parameters.required',
+        'parameters.required-explicit',
+      ])
+      expect([...new Set(errors.map(e => e.component))]).members([
+        'test/component',
       ])
     });
 
@@ -829,7 +834,10 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(1);
       expect(errors.map(e => e.path)).members([
-        'examples/hello-world2.parameters.aws_secret',
+        'parameters.aws_secret',
+      ])
+      expect([...new Set(errors.map(e => e.component))]).members([
+        'examples/hello-world2',
       ])
     });
   });

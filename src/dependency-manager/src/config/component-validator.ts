@@ -1,16 +1,17 @@
 import { ValidationError, ValidationErrors } from '../utils/errors';
 import { ComponentConfig } from './component-config';
 
-export const validateServiceAndTaskKeys = (componentConfig: ComponentConfig): ValidationError[] => {
+export const validateServiceAndTaskKeys = (component: ComponentConfig): ValidationError[] => {
   const errors = [];
 
   // checks for duplicate keys across the two dictionaries
-  const service_keys = Object.keys(componentConfig.services);
-  const task_keys = Object.keys(componentConfig.tasks);
+  const service_keys = Object.keys(component.services);
+  const task_keys = Object.keys(component.tasks);
   const duplicates = service_keys.filter(s => task_keys.includes(s));
 
   if (duplicates.length) {
     const error = new ValidationError({
+      component: component.name,
       path: 'services',
       message: 'services and tasks must not share the same keys',
       value: duplicates,
@@ -65,6 +66,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
 
       if (task_map[dependency]) {
         const error = new ValidationError({
+          component: component.name,
           path: `services.${name}.depends_on`,
           message: `services.${name}.depends_on.${dependency} must refer to a service, not a task`,
           value: dependency,
@@ -74,6 +76,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
 
       if (!depends_on_map[dependency]) {
         const error = new ValidationError({
+          component: component.name,
           path: `services.${name}.depends_on`,
           message: `services.${name}.depends_on.${dependency} must refer to a valid service`,
           value: dependency,
@@ -83,6 +86,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
     }
     if (isPartOfCircularReference(name, depends_on_map)) {
       const error = new ValidationError({
+        component: component.name,
         path: `services.${name}.depends_on`,
         message: `services.${name}.depends_on must not contain a circular reference`,
         value: depends_on_map[name],

@@ -114,6 +114,7 @@ export const transformComponentContext = (
   }
 
   return {
+    name: config.name,
     dependencies: dependency_context,
     parameters: parameter_context,
     ingresses: ingress_context,

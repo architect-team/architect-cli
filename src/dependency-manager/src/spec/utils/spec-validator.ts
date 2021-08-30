@@ -164,6 +164,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
     }
 
     errors.push(new ValidationError({
+      component: parsed_yml instanceof Object ? (parsed_yml as any).name : '<unknown>',
       path: error.instancePath,
       message: error.message?.replace(/__arc__/g, '') || 'Unknown error',
       value: value === undefined ? '<unknown>' : value,

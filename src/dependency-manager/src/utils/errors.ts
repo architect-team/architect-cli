@@ -4,6 +4,7 @@ import { addLineNumbers } from '../spec/utils/spec-validator';
 export class ArchitectError extends Error { }
 
 export class ValidationError {
+  component: string;
   path: string;
   message: string;
   value?: any;
@@ -17,7 +18,8 @@ export class ValidationError {
   };
   invalid_key: boolean;
 
-  constructor(data: { path: string; message: string; value?: any, invalid_key?: boolean }) {
+  constructor(data: { component: string, path: string; message: string; value?: any, invalid_key?: boolean }) {
+    this.component = data.component;
     this.path = data.path;
     this.message = data.message;
     this.value = data.value;
