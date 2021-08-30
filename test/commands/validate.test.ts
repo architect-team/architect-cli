@@ -40,9 +40,8 @@ describe('architect validate component', function () {
     .stdout({ print })
     .stderr({ print })
     .command(['validate', 'non-existent/directory/architect.yml'])
-    .it('correctly fails on a non-existent directory and prints an error message', ctx => {
-      expect(ctx.stdout).to.contain(path.resolve('non-existent/directory/architect.yml'));
-      expect(ctx.stdout).to.contain('failed validation');
-      expect(ctx.stdout).to.contain('Could not find architect.yml');
-    });
+    .catch(err => {
+      expect(err.message).to.contain(path.resolve('non-existent/directory/architect.yml'));
+    })
+    .it('correctly fails on a non-existent directory and prints an error message');
 });

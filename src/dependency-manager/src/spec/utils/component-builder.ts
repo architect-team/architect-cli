@@ -10,7 +10,7 @@ import { ArchitectError, ValidationError } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ComponentSpec } from '../component-spec';
 import { transformComponentSpec } from '../transform/component-transform';
-import { addLineNumbers, validateOrRejectSpec } from './spec-validator';
+import { validateOrRejectSpec } from './spec-validator';
 
 // a typing for the raw result of js-yaml.load();
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -81,26 +81,24 @@ export const buildConfigFromObject = (config: Record<string, any>, tag: string):
 
 export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { component_config: ComponentConfig; component_spec: ComponentSpec; source_path: string } => {
   const { source_path, source_yml, file_contents } = loadSourceYmlFromPathOrReject(spec_path);
+
+  const file = {
+    path: source_path,
+    contents: file_contents,
+  };
+
   try {
     const { component_config, component_spec } = _buildConfigFromYml(source_yml, tag);
+    component_config.file = file;
     return {
       component_spec,
       component_config,
       source_path,
     };
   } catch (err) {
-    err.name = `${err.name || 'Error'}\nfile: ${source_path}`;
-    try {
-      err.name += `\ncomponent: ${(yaml.load(source_yml) as any).name}`;
-    } catch { }
     if (err instanceof ValidationErrors) {
       const errors = JSON.parse(err.message) as ValidationError[];
-
-      addLineNumbers(file_contents, errors);
-
-      const error = new ValidationErrors(errors);
-      error.name = err.name;
-      throw error;
+      throw new ValidationErrors(errors, file);
     }
     throw err;
   }

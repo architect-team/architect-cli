@@ -103,6 +103,10 @@ services:
       expect(errors).lengthOf(1);
       expect(errors[0].path).eq(`services.stateless-app.replicas`);
       expect(errors[0].message).includes(`must be number or must be an interpolation`);
+      expect(errors[0].start?.row).eq(5);
+      expect(errors[0].start?.column).eq(22);
+      expect(errors[0].end?.row).eq(5);
+      expect(errors[0].end?.column).eq(22);
     });
 
     it('invalid service ref', async () => {
@@ -358,6 +362,10 @@ services:
         'name',
       ])
       expect(errors[0].message).includes('architect/component-name');
+      expect(errors[0].start?.row).eq(2);
+      expect(errors[0].start?.column).eq(12);
+      expect(errors[0].end?.row).eq(2);
+      expect(errors[0].end?.column).eq(25);
     });
 
     it('invalid component parameter keys', async () => {
@@ -395,6 +403,46 @@ services:
         'parameters.test***test'
       ])
       expect(errors[0].message).includes(Slugs.ComponentParameterDescription);
+    });
+
+    it('invalid parameter ref', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        test: test2
+      services:
+        api:
+          environment:
+            TEST: \${{ parameter.test }}
+      `
+
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+
+      expect(errors.map(e => e.path)).members([
+        'services.api.environment.TEST',
+      ])
+      expect(errors[0].message).includes('parameters.test');
+      expect(errors[0].start?.row).eq(8);
+      expect(errors[0].start?.column).eq(23);
+      expect(errors[0].end?.row).eq(8);
+      expect(errors[0].end?.column).eq(36);
     });
 
     it('invalid component interfaces ref', async () => {

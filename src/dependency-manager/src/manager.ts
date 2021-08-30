@@ -18,7 +18,7 @@ import { interpolateConfigOrReject } from './spec/utils/component-interpolation'
 import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
-import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
+import { interpolateStringOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
@@ -89,7 +89,7 @@ export default abstract class DependencyManager {
 
     const ignore_keys = ['']; // Ignore all errors
 
-    const interpolated_component_string = interpolateString(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
+    const interpolated_component_string = interpolateStringOrReject(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
     const parsed_yml = parseSourceYml(interpolated_component_string);
     const interpolated_component_config = transformComponentSpec(parsed_yml as ComponentSpec, interpolated_component_string, initial_component.tag, initial_component.instance_metadata);
     return interpolated_component_config;
@@ -151,7 +151,7 @@ export default abstract class DependencyManager {
         if (!dep_component.interfaces[interface_name]) { continue; }
         let subdomain = dep_component.interfaces[interface_name].ingress?.subdomain || interface_name;
         try {
-          subdomain = interpolateString(subdomain, dep_component.context);
+          subdomain = interpolateStringOrReject(subdomain, dep_component.context);
           // eslint-disable-next-line no-empty
         } catch { }
 
@@ -590,7 +590,7 @@ export default abstract class DependencyManager {
       }
     }
     if (validation_errors.length) {
-      throw new ValidationErrors(validation_errors);
+      throw new ValidationErrors(validation_errors, component.file);
     }
   }
 

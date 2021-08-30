@@ -1,11 +1,19 @@
 import chalk from 'chalk';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import { ValidationError } from '../../dependency-manager/src/utils/errors';
+import { ValidationError, ValidationErrors } from '../../dependency-manager/src/utils/errors';
 
-export const prettyValidationErrors = (source_yml: string, errors: ValidationError[]): void => {
+export const prettyValidationErrors = (error: ValidationErrors): void => {
+  if (!error.file) {
+    console.error(chalk.red(error.name));
+    console.error(chalk.red(error.message));
+    return;
+  }
+  const errors = JSON.parse(error.message) as ValidationError[];
+
   const errors_row_map: Dictionary<ValidationError> = {};
   let min_row = Infinity;
   let max_row = -Infinity;
+  let missing_line_numbers = false;
   for (const error of errors) {
     if (error.start && error.end) {
       // TODO handle multiple errors on one row?
@@ -16,18 +24,23 @@ export const prettyValidationErrors = (source_yml: string, errors: ValidationErr
       if (error.start.row > max_row) {
         max_row = error.start.row;
       }
+    } else {
+      missing_line_numbers = true;
     }
   }
-  // TODO don't show pretty errors if some errors dont have line #s?
 
-  // TODO highlight invalid patterns not key - ex. 'invalid component name' test
+  if (missing_line_numbers) {
+    console.error(chalk.red(error.name));
+    console.error(chalk.red(error.message));
+    return;
+  }
 
   min_row = Math.max(min_row - 4, 0);
   max_row = max_row + 3;
 
   const res = [];
   let line_number = min_row + 1;
-  const lines = source_yml.split('\n').slice(min_row, max_row);
+  const lines = error.file.contents.split('\n').slice(min_row, max_row);
   const lines_length = lines.length;
   const max_number_length = `${min_row + lines_length}`.length;
   for (const line of lines) {
@@ -43,7 +56,7 @@ export const prettyValidationErrors = (source_yml: string, errors: ValidationErr
     if (error?.start && error?.end) {
       let error_line = chalk.gray(`${' '.repeat(max_number_length + 2)} | `);
       error_line += ' '.repeat(error.start.column - 1);
-      error_line += chalk.red('﹋'.repeat(((error.end.column - error.start.column) + 1) / 2));
+      error_line += chalk.red('﹋'.repeat(Math.max(((error.end.column - error.start.column) + 1) / 2, 1)));
       error_line += ' ';
       error_line += chalk.red(error.message);
       res.push(error_line);
@@ -52,5 +65,6 @@ export const prettyValidationErrors = (source_yml: string, errors: ValidationErr
     line_number += 1;
   }
 
-  console.log(res.join('\n'));
+  console.error(chalk.red(error.name));
+  console.error(res.join('\n'));
 };

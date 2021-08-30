@@ -1,8 +1,9 @@
 import Command, { flags } from '@oclif/command';
 import 'reflect-metadata';
 import AppService from './app-config/service';
+import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
-import { ArchitectError } from './dependency-manager/src/utils/errors';
+import { ArchitectError, ValidationErrors } from './dependency-manager/src/utils/errors';
 
 const DEPRECATED_LABEL = '[deprecated]';
 
@@ -85,6 +86,10 @@ export default abstract class extends Command {
 
   async catch(err: any): Promise<void> {
     if (err.oclif && err.oclif.exit === 0) return;
+
+    if (err instanceof ValidationErrors) {
+      return prettyValidationErrors(err);
+    }
 
     let message = '';
     if (err.config) {
