@@ -728,5 +728,28 @@ describe('components spec v1', function () {
         c_ref
       ])
     });
+
+    it('validation does not run if validate is set to false', async () => {
+      const component_config_yml = `
+        name: architect/cloud
+        services:
+          app:
+            interfaces:
+              main: 8080
+            replicas: 1
+      `
+
+      mock_fs({
+        '/stack/architect.yml': component_config_yml,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'architect/cloud': '/stack'
+      });
+      const config = await manager.loadComponentConfig('architect/cloud:latest');
+      config.services['app'].replicas = '<redacted>';
+
+      await manager.getGraph([config], {}, true, false);
+    });
   });
 });
