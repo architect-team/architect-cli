@@ -10,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { dumpToYml, parseSourceYml, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
@@ -732,11 +732,14 @@ describe('components spec v1', function () {
     it('validation does not run if validate is set to false', async () => {
       const component_config_yml = `
         name: architect/cloud
+        parameters:
+          app_replicas:
+            default: 1
         services:
           app:
             interfaces:
               main: 8080
-            replicas: 1
+            replicas: \${{ parameters.app_replicas }}
       `
 
       mock_fs({
@@ -747,13 +750,8 @@ describe('components spec v1', function () {
         'architect/cloud': '/stack'
       });
       const config = await manager.loadComponentConfig('architect/cloud:latest');
-      config.services['app'].replicas = '<redacted>';
 
-      const source_obj = parseSourceYml(component_config_yml);
-      (source_obj as any).services['app'].replicas = '<redacted>';
-      config.source_yml = dumpToYml(source_obj);
-
-      await manager.getGraph([config], {}, true, false);
+      await manager.getGraph([config], { '*': { app_replicas: '<redacted>' } }, true, false);
     });
   });
 });
