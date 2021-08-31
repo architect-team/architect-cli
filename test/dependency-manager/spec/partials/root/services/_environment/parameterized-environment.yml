@@ -1,0 +1,3 @@
+API_HOST: ${{ services.api.interfaces.main.host }}
+API_PORT: ${{ services.api.interfaces.main.host }}
+LOG_LEVEL: ${{ parameters.log_level }}

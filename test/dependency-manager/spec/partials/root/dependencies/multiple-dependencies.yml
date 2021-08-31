@@ -1,0 +1,2 @@
+tests/one-dependency: latest
+tests/two-dependency: 1.0.0

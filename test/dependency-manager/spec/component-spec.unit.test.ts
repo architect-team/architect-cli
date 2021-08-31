@@ -39,6 +39,7 @@ describe('component spec unit test', function () {
 
     it(`loadSourceYmlFromPathOrReject loads valid file`, async () => {
       const errors = [];
+      console.debug(`recursively testing ${all_spec_combinations.length} combined components...`);
       for (const component of all_spec_combinations) {
         const source_yml = dumpToYml(component);
         buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
