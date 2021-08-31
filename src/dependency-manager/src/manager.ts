@@ -358,7 +358,7 @@ export default abstract class DependencyManager {
     return external_interface;
   }
 
-  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]): Promise<ComponentConfig> {
+  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[], validate = true): Promise<ComponentConfig> {
     const component_string = replaceInterpolationBrackets(initial_component.source_yml);
 
     let proxy_port = 12345;
@@ -518,7 +518,7 @@ export default abstract class DependencyManager {
     }
 
     const ignore_keys: string[] = [];
-    const interpolated_config = interpolateConfigOrReject(initial_component, ignore_keys);
+    const interpolated_config = interpolateConfigOrReject(initial_component, ignore_keys, validate);
 
     interpolated_config.proxy_port_mapping = proxy_port_mapping;
     return interpolated_config;
@@ -716,7 +716,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string): Promise<DependencyGraph> {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
     ValuesConfig.validate(values);
 
     const tree_nodes = this.createComponentTree(component_configs);
@@ -726,7 +726,7 @@ export default abstract class DependencyManager {
       this.setValuesForComponent(tree_node.config, values);
       tree_node.config.context = transformComponentContext(tree_node.config);
 
-      if (interpolate) {
+      if (interpolate && validate) {
         this.validateComponent(tree_node.config);
       }
     }
@@ -744,7 +744,7 @@ export default abstract class DependencyManager {
       }
 
       if (interpolate) {
-        tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
+        tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies, validate);
       } else {
         tree_node.interpolated_config = tree_node.config;
       }
