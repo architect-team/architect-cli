@@ -833,13 +833,21 @@
             "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/ServiceInterfaceSpec"
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/ServiceInterfaceSpec"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
                 },
                 {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
@@ -2271,13 +2279,21 @@
             "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
               "anyOf": [
                 {
-                  "$ref": "#/definitions/_DebugServiceInterfaceSpec"
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/_DebugServiceInterfaceSpec"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
                 },
                 {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
                 }
               ]
             }
