@@ -1181,4 +1181,31 @@ services:
     expect(err.message).includes(`interfaces`);
     expect(err.message).includes('must be object');
   });
+
+  it('valid command', async () => {
+    const component_config = `
+      name: test/component
+      parameters:
+        SPRING_PROFILE: test
+      services:
+        app:
+          command: catalina.sh run -Pprofile=\${{ parameters.SPRING_PROFILE }}
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).to.be.undefined;
+  });
 });
