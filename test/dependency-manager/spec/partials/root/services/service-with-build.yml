@@ -1,8 +1,0 @@
-hello:
-  build:
-    context: ./
-    dockerfile: Dockerfile.debug
-    args:
-      NODE_ENV: development
-      UNSET_ARG: null
-  command: bin/web
