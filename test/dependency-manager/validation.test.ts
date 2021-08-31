@@ -970,4 +970,215 @@ services:
       'services.api.scaling.metrics',
     ])
   })
+
+  it('valid interface number', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        app:
+          interfaces:
+            main: 3000
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).to.be.undefined;
+  });
+
+  it('invalid interface string', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        app:
+          interfaces:
+            main: "3000"
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors);
+    const errors = JSON.parse(err.message);
+    expect(errors).lengthOf(1);
+    expect(err.message).includes(`services.app.interfaces`);
+    expect(err.message).includes('or must be an interpolation ref ex. ${{ parameters.example }}');
+    expect(err.message).includes('or must be number');
+    expect(err.message).includes('or must be object');
+  });
+
+  it('valid interface interpolation reference', async () => {
+    const component_config = `
+      name: test/component
+      parameters:
+        app_port: 3000
+      services:
+        app:
+          interfaces:
+            main: \${{ parameters.app_port }}
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).to.be.undefined;
+  });
+
+  it('invalid interface string', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        app:
+          interfaces:
+            main: "3000"
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors);
+    const errors = JSON.parse(err.message);
+    expect(errors).lengthOf(1);
+    expect(err.message).includes(`services.app.interfaces`);
+    expect(err.message).includes('or must be an interpolation ref ex. ${{ parameters.example }}');
+    expect(err.message).includes('or must be number');
+    expect(err.message).includes('or must be object');
+  });
+
+  it('valid component interface string', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: \${{ services.app.interfaces.main.url }}
+      services:
+        app:
+          interfaces:
+            main: 3000
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).to.be.undefined;
+  });
+
+  it('invalid component interface number', async () => {
+    const component_config = `
+      name: test/component
+      interfaces:
+        main: 3000
+      services:
+        app:
+          interfaces:
+            main: 3000
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors);
+    const errors = JSON.parse(err.message);
+    expect(errors).lengthOf(1);
+    expect(err.message).includes(`interfaces.main`);
+    expect(err.message).includes('must be object');
+    expect(err.message).includes('must be string');
+  });
+
+  it('invalid component interface number', async () => {
+    const component_config = `
+      name: test/component
+      interfaces: main
+      services:
+        app:
+          interfaces:
+            main: 3000
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors);
+    const errors = JSON.parse(err.message);
+    expect(errors).lengthOf(1);
+    expect(err.message).includes(`interfaces`);
+    expect(err.message).includes('must be object');
+  });
 });

@@ -1,1 +1,7 @@
 name: tests/component-spec
+description: Mock, partial component spec
+keywords:
+  - test-component
+  - mock-component
+author: Dan B
+homepage: https://architect.io
