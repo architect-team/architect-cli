@@ -1208,4 +1208,205 @@ services:
     }
     expect(err).to.be.undefined;
   });
+
+  it('liveness_probe rejects command with path', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            command:
+              - /bin/bash
+              - health.sh
+            path: /test
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'services.api.liveness_probe',
+    ])
+  })
+
+  it('liveness_probe rejects command with port', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            command:
+              - /bin/bash
+              - health.sh
+            port: 3000
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'services.api.liveness_probe',
+    ]);
+  })
+
+  it('liveness_probe accepts command', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            command:
+              - /bin/bash
+              - health.sh
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).to.be.undefined;
+  })
+
+  it('liveness_probe accepts port and path', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            port: 8080
+            path: /health
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).to.be.undefined;
+  })
+
+  it('liveness_probe rejects port without path', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            port: 3000
+      `;
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'services.api.liveness_probe',
+    ]);
+    expect(errors.map(e => e.message)).members([
+      `must have required property 'command' or must have required property 'path' or must match exactly one schema in oneOf`,
+    ]);
+  })
+
+  it('liveness_probe rejects path without port', async () => {
+    const component_config = `
+      name: test/component
+      services:
+        api:
+          interfaces:
+            main: 8080
+          liveness_probe:
+            path: /health
+      `
+    mock_fs({
+      '/component.yml': component_config,
+    });
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/component.yml',
+    });
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentConfig('test/component'),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'services.api.liveness_probe',
+    ]);
+    expect(errors.map(e => e.message)).members([
+      `must have required property 'command' or must have required property 'port' or must match exactly one schema in oneOf`,
+    ]);
+  })
 });
