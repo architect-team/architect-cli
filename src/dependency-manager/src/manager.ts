@@ -595,7 +595,7 @@ export default abstract class DependencyManager {
     }
   }
 
-  protected async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string, validate = true): Promise<DependencyGraph> {
+  protected async _getGraph(tree_nodes: ComponentConfigNode[], external_addr: string): Promise<DependencyGraph> {
     const graph = new DependencyGraph();
 
     if (tree_nodes.length === 0) {
@@ -726,7 +726,7 @@ export default abstract class DependencyManager {
       this.setValuesForComponent(tree_node.config, values);
       tree_node.config.context = transformComponentContext(tree_node.config);
 
-      if (interpolate && !validate) {
+      if (interpolate && validate) {
         this.validateComponent(tree_node.config);
       }
     }

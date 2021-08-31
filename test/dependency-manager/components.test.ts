@@ -10,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { dumpToYml, parseSourceYml, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
@@ -748,6 +748,10 @@ describe('components spec v1', function () {
       });
       const config = await manager.loadComponentConfig('architect/cloud:latest');
       config.services['app'].replicas = '<redacted>';
+
+      const source_obj = parseSourceYml(component_config_yml);
+      (source_obj as any).services['app'].replicas = '<redacted>';
+      config.source_yml = dumpToYml(source_obj);
 
       await manager.getGraph([config], {}, true, false);
     });
