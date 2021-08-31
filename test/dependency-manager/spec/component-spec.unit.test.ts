@@ -10,6 +10,6 @@ describe('component spec unit test', () => {
       const source_yml = dumpToYml(component);
       buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
     }
-  }).timeout(10000);
+  }).timeout(20000);
 
 });
