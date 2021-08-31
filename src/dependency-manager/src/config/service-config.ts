@@ -31,7 +31,7 @@ export interface LivenessProbeConfig {
   initial_delay: string;
   path?: string;
   command?: string[];
-  port: number | string; // TODO:290:number
+  port?: number | string; // TODO:290:number
 }
 
 export interface ServiceConfig extends ResourceConfig {

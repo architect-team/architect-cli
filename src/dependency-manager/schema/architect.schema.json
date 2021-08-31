@@ -766,7 +766,7 @@
               }
             }
           ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -780,7 +780,7 @@
               "type": "string"
             }
           ],
-          "description": "Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set)."
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
         },
         "port": {
           "anyOf": [
@@ -795,25 +795,45 @@
               }
             }
           ],
-          "description": "Port that the http check will run against"
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
         }
       },
       "type": "object",
-      "required": [
-        "port"
-      ],
-      "oneOf": [
+      "allOf": [
         {
-          "type": "object",
-          "required": [
-            "command"
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "command"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "path",
+                "port"
+              ]
+            }
           ]
         },
         {
-          "type": "object",
-          "required": [
-            "path"
-          ]
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "port"
+            ]
+          }
+        },
+        {
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "path"
+            ]
+          }
         }
       ],
       "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
@@ -2232,7 +2252,7 @@
               }
             }
           ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set)."
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
         },
         "command": {
           "anyOf": [
@@ -2246,7 +2266,7 @@
               "type": "string"
             }
           ],
-          "description": "Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set)."
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
         },
         "port": {
           "anyOf": [
@@ -2261,7 +2281,7 @@
               }
             }
           ],
-          "description": "Port that the http check will run against"
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
         }
       },
       "type": "object",

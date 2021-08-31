@@ -114,7 +114,42 @@ export class ServiceInterfaceSpec {
 }
 
 @JSONSchema({
-  ...ExclusiveOr("command", "path"),
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "command",
+          ],
+        },
+        {
+          "type": "object",
+          "required": [
+            "path", "port",
+          ],
+        },
+      ],
+    },
+    {
+      "not":
+      {
+        "type": "object",
+        "required": [
+          "command", "port",
+        ],
+      },
+    },
+    {
+      "not":
+      {
+        "type": "object",
+        "required": [
+          "command", "path",
+        ],
+      },
+    },
+  ],
   description: 'Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.',
 })
 export class LivenessProbeSpec {
@@ -166,23 +201,23 @@ export class LivenessProbeSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
-    description: 'Path for the http check executable. Path should be absolute (e.g. /health). This field is disjunctive with `command` (only `path` or `command` can be set).',
+    description: 'Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set).',
   })
   path?: string;
 
   @IsOptional()
   @JSONSchema({
     ...StringOrStringArray(),
-    description: 'Command that runs the http check. This field is disjunctive with `path` (only `command` or `path` can be set).',
+    description: 'Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set).',
   })
   command?: string | string[];
 
-  @Allow()
+  @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
-    description: 'Port that the http check will run against',
+    description: 'Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set).',
   })
-  port!: number | string;
+  port?: number | string;
 }
 
 @JSONSchema({
