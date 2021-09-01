@@ -1,5 +1,6 @@
 import Command from '../../base-command';
 import Table from '../../base-table';
+import { Account, AccountUtils } from '../../common/utils/account';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Platforms extends Command {
@@ -8,6 +9,7 @@ export default class Platforms extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
   };
 
   static args = [{
@@ -16,10 +18,20 @@ export default class Platforms extends Command {
     required: false,
   }];
 
-  async run() {
-    const { args } = this.parse(Platforms);
+  async run(): Promise<void> {
+    const { args, flags } = this.parse(Platforms);
 
-    const { data: { rows: platforms } } = await this.app.api.get(`/platforms?q=${args.query || ''}`);
+    let account: Account | undefined = undefined;
+    if (flags.account) {
+      account = await AccountUtils.getAccount(this.app.api, flags.account);
+    }
+
+    const params = {
+      q: args.query || '',
+      account_id: account?.id,
+    };
+
+    const { data: { rows: platforms } } = await this.app.api.get(`/platforms`, { params });
 
     if (!platforms.length) {
       this.log('You have not configured any platforms yet. Use `architect platform:create` to set up your first one.');
@@ -28,7 +40,7 @@ export default class Platforms extends Command {
 
     const table = new Table({ head: ['Name', 'Account', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
     for (const row of platforms) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       table.push([
         row.name,

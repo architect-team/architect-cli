@@ -1,0 +1,3116 @@
+{
+  "$id": "https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json",
+  "title": "Schema for architect.yml. See: https://www.architect.io/docs/reference/architect-yml",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+      "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+      "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+    },
+    "description": {
+      "type": "string",
+      "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
+    },
+    "author": {
+      "type": "string",
+      "description": "The name or handle of the author of the component as a developer contact."
+    },
+    "homepage": {
+      "type": "string",
+      "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
+    },
+    "parameters": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/definitions/ParameterDefinitionSpec"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+      },
+      "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+      "additionalProperties": false
+    },
+    "services": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ServiceSpec"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "additionalProperties": false
+    },
+    "tasks": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TaskSpec"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "object",
+      "patternProperties": {
+        "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+          "type": "string",
+          "pattern": "^[\\w][\\w\\.-]{0,127}$"
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+      },
+      "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+      "additionalProperties": false
+    },
+    "interfaces": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/ComponentInterfaceSpec"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+      "additionalProperties": false
+    },
+    "artifact_image": {
+      "type": "string",
+      "deprecated": true,
+      "description": "-"
+    }
+  },
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
+  "additionalProperties": false,
+  "externalDocs": {
+    "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+  },
+  "definitions": {
+    "DeployModuleSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+        },
+        "inputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "inputs"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      }
+    },
+    "DeploySpec": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Selects the preferred deploy strategy for the service."
+        },
+        "modules": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DeployModuleSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "strategy",
+        "modules"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      }
+    },
+    "VolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Directory at which the volume will be mounted inside the container."
+        },
+        "host_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of volume"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
+        }
+      },
+      "type": "object",
+      "not": {
+        "type": "object",
+        "required": [
+          "host_path",
+          "key"
+        ]
+      },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      }
+    },
+    "BuildSpec": {
+      "properties": {
+        "context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+        },
+        "args": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "Build args to be passed into `docker build`.",
+          "additionalProperties": false
+        },
+        "dockerfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the Dockerfile relative to the `build.context`",
+          "default": "Dockerfile"
+        }
+      },
+      "type": "object",
+      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
+      }
+    },
+    "ScalingMetricsSpec": {
+      "properties": {
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        }
+      },
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "cpu"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "memory"
+          ]
+        }
+      ],
+      "description": "Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
+      }
+    },
+    "ScalingSpec": {
+      "properties": {
+        "min_replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The target minimum number of service replicas."
+        },
+        "max_replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The target maximum number of service replicas."
+        },
+        "metrics": {
+          "$ref": "#/definitions/ScalingMetricsSpec"
+        }
+      },
+      "type": "object",
+      "required": [
+        "min_replicas",
+        "max_replicas",
+        "metrics"
+      ],
+      "description": "Configuration that dictates the scaling behavior of a service.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
+      }
+    },
+    "ServiceInterfaceSpec": {
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A human-readable description of the interface."
+        },
+        "host": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port on which the service is listening for traffic."
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Protocol that the interface responds to",
+          "default": "http"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A Basic Auth username required to access the interface"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A Basic Auth password required to access the interface"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
+          "default": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "port"
+      ],
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "port"
+          ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "url"
+          ]
+        }
+      ],
+      "description": "A service interface exposes service functionality over the network to other services within the same component. If you would like to expose services on the network to external components, see the ComponentInterfaceSpec",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
+      }
+    },
+    "LivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
+        },
+        "failure_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 3
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
+        },
+        "initial_delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+        }
+      },
+      "type": "object",
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "command"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "path",
+                "port"
+              ]
+            }
+          ]
+        },
+        {
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "port"
+            ]
+          }
+        },
+        {
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "path"
+            ]
+          }
+        }
+      ],
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
+    },
+    "ServiceSpec": {
+      "properties": {
+        "debug": {
+          "$ref": "#/definitions/_DebugServiceSpec"
+        },
+        "interfaces": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/ServiceInterfaceSpec"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/LivenessProbeSpec"
+        },
+        "replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
+        },
+        "scaling": {
+          "$ref": "#/definitions/ScalingSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
+      }
+    },
+    "TaskSpec": {
+      "properties": {
+        "debug": {
+          "$ref": "#/definitions/_DebugTaskSpec"
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
+      }
+    },
+    "IngressSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
+        },
+        "subdomain": {
+          "type": "string",
+          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
+        }
+      },
+      "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
+      }
+    },
+    "ComponentInterfaceSpec": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/IngressSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for."
+        },
+        "host": {
+          "type": "string",
+          "description": "The host that the component interface should forward to."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The port that the component interface should forward to."
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The protocol by which the component interface can be connected to."
+        },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The Basic Auth username by which a component interface can be connected to."
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The Basic Auth password by which a component interface can be connected to."
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The url that the component interface should forward to."
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
+        }
+      },
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "description": "Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
+      }
+    },
+    "ParameterDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the parameter is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the parameter."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the parameter if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+      }
+    },
+    "ComponentSpec": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
+        },
+        "author": {
+          "type": "string",
+          "description": "The name or handle of the author of the component as a developer contact."
+        },
+        "homepage": {
+          "type": "string",
+          "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
+        },
+        "parameters": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/ParameterDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
+        },
+        "services": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ServiceSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+          "additionalProperties": false
+        },
+        "tasks": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/TaskSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+          "additionalProperties": false
+        },
+        "dependencies": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          },
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+          "additionalProperties": false
+        },
+        "interfaces": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/ComponentInterfaceSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "additionalProperties": false
+        },
+        "artifact_image": {
+          "type": "string",
+          "deprecated": true,
+          "description": "-"
+        }
+      },
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+      }
+    },
+    "_DebugDeployModuleSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+        },
+        "inputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      }
+    },
+    "_DebugDeploySpec": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Selects the preferred deploy strategy for the service."
+        },
+        "modules": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugDeployModuleSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      }
+    },
+    "_DebugVolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Directory at which the volume will be mounted inside the container."
+        },
+        "host_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of volume"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
+        }
+      },
+      "type": "object",
+      "not": {
+        "type": "object",
+        "required": [
+          "host_path",
+          "key"
+        ]
+      },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      }
+    },
+    "_DebugBuildSpec": {
+      "properties": {
+        "context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+        },
+        "args": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "Build args to be passed into `docker build`.",
+          "additionalProperties": false
+        },
+        "dockerfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the Dockerfile relative to the `build.context`",
+          "default": "Dockerfile"
+        }
+      },
+      "type": "object",
+      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
+      }
+    },
+    "_DebugScalingMetricsSpec": {
+      "properties": {
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        }
+      },
+      "type": "object",
+      "description": "Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingmetricsspec"
+      }
+    },
+    "_DebugScalingSpec": {
+      "properties": {
+        "min_replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The target minimum number of service replicas."
+        },
+        "max_replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The target maximum number of service replicas."
+        },
+        "metrics": {
+          "$ref": "#/definitions/_DebugScalingMetricsSpec"
+        }
+      },
+      "type": "object",
+      "description": "Configuration that dictates the scaling behavior of a service.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#scalingspec"
+      }
+    },
+    "_DebugServiceInterfaceSpec": {
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A human-readable description of the interface."
+        },
+        "host": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The host address of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given host."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port on which the service is listening for traffic."
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Protocol that the interface responds to",
+          "default": "http"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A Basic Auth username required to access the interface"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A Basic Auth password required to access the interface"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url."
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Denotes that if this interface is made external, the gateway should use sticky sessions",
+          "default": false
+        }
+      },
+      "type": "object",
+      "description": "A service interface exposes service functionality over the network to other services within the same component. If you would like to expose services on the network to external components, see the ComponentInterfaceSpec",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
+      }
+    },
+    "_DebugLivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
+        },
+        "failure_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 3
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
+        },
+        "initial_delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+        }
+      },
+      "type": "object",
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
+    },
+    "_DebugServiceSpec": {
+      "properties": {
+        "interfaces": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/_DebugServiceInterfaceSpec"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/_DebugLivenessProbeSpec"
+        },
+        "replicas": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field."
+        },
+        "scaling": {
+          "$ref": "#/definitions/_DebugScalingSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/_DebugBuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A runtimes (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#servicespec"
+      }
+    },
+    "_DebugTaskSpec": {
+      "properties": {
+        "schedule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/_DebugBuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, triggered jobs). Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#taskspec"
+      }
+    },
+    "_DebugIngressSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Marks the interface as an ingress."
+        },
+        "subdomain": {
+          "type": "string",
+          "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
+        }
+      },
+      "type": "object",
+      "description": "An ingress exposes an interface to external network traffic through an architect-deployed gateway.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#ingressspec"
+      }
+    },
+    "_DebugComponentInterfaceSpec": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/definitions/_DebugIngressSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the interface so that they know what it should be used for."
+        },
+        "host": {
+          "type": "string",
+          "description": "The host that the component interface should forward to."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The port that the component interface should forward to."
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The protocol by which the component interface can be connected to."
+        },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The Basic Auth username by which a component interface can be connected to."
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The Basic Auth password by which a component interface can be connected to."
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The url that the component interface should forward to."
+        },
+        "sticky": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running."
+        }
+      },
+      "type": "object",
+      "description": "Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentinterfacespec"
+      }
+    },
+    "_DebugParameterDefinitionSpec": {
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Denotes whether the parameter is required."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the parameter."
+        },
+        "default": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Sets a default value for the parameter if one is not provided"
+        }
+      },
+      "type": "object",
+      "description": "Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
+      }
+    },
+    "_DebugComponentSpec": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$",
+          "errorMessage": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.",
+          "description": "Globally unique friendly reference to the component. Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+        },
+        "description": {
+          "type": "string",
+          "description": "A human-readable description of the component. This will be rendered when potential consumers view the component so that they know what it should be used for."
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "Additional search terms to be used when the component is indexed so that others can find it more easily."
+        },
+        "author": {
+          "type": "string",
+          "description": "The name or handle of the author of the component as a developer contact."
+        },
+        "homepage": {
+          "type": "string",
+          "description": "The url that serves as the informational homepage of the component (i.e. a github repo)."
+        },
+        "parameters": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "$ref": "#/definitions/_DebugParameterDefinitionSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
+        },
+        "services": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugServiceSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+          "additionalProperties": false
+        },
+        "tasks": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugTaskSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.",
+          "additionalProperties": false
+        },
+        "dependencies": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*\\/(?=.{1,32}(\\/|:|$))[a-z0-9]+(?:[-_][a-z0-9]+)*(?:@[\\w][\\w\\.-]{0,127})?$": {
+              "type": "string",
+              "pattern": "^[\\w][\\w\\.-]{0,127}$"
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes."
+          },
+          "description": "A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)",
+          "additionalProperties": false
+        },
+        "interfaces": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/definitions/_DebugComponentInterfaceSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.",
+          "additionalProperties": false
+        },
+        "artifact_image": {
+          "type": "string",
+          "deprecated": true,
+          "description": "-"
+        }
+      },
+      "type": "object",
+      "description": "The top level object of the `architect.yml`; defines a deployable Architect Component.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#componentspec"
+      }
+    }
+  }
+}

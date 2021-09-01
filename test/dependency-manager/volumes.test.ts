@@ -8,7 +8,7 @@ import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef } from '../../src/dependency-manager/src';
 
 describe('volumes spec v1', () => {
   beforeEach(async () => {
@@ -35,19 +35,17 @@ describe('volumes spec v1', () => {
     moxios.uninstall();
   });
 
-  const test_component_api_safe_ref = ComponentConfig.getNodeRef('test/component/api:latest');
-  const test_component_app_safe_ref = ComponentConfig.getNodeRef('test/component/app:latest');
+  const test_component_api_safe_ref = resourceRefToNodeRef('test/component/api:latest');
+  const test_component_app_safe_ref = resourceRefToNodeRef('test/component/app:latest');
 
   it('simple volume', async () => {
     const component_config = `
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -67,13 +65,11 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           debug:
             volumes:
               data:
                 mount_path: /data
                 host_path: ./data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -83,7 +79,7 @@ describe('volumes spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('test/component')
-    ])
+    ]);
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
   });
@@ -93,12 +89,10 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
               key: /user/app/data
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,
@@ -118,7 +112,6 @@ describe('volumes spec v1', () => {
       name: test/component
       services:
         api:
-          interfaces:
           volumes:
             data:
               mount_path: /data
@@ -130,7 +123,6 @@ describe('volumes spec v1', () => {
                 mount_path: /data3
                 host_path: ./data3
         app:
-          interfaces:
           volumes:
             data:
               mount_path: /data
@@ -141,8 +133,6 @@ describe('volumes spec v1', () => {
               data3:
                 mount_path: /data3
                 host_path: ./data3
-
-      interfaces:
       `
     mock_fs({
       '/component/component.yml': component_config,

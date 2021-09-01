@@ -1,7 +1,5 @@
-import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { TaskConfig } from '../../spec/task/task-config';
-import { TaskConfigV1 } from '../../spec/task/task-v1';
+import { TaskConfig } from '../../config/task-config';
 
 export interface TaskNodeOptions {
   ref: string;
@@ -12,7 +10,6 @@ export interface TaskNodeOptions {
 export class TaskNode extends DependencyNode implements TaskNodeOptions {
   __type = 'task';
 
-  @Type(() => TaskConfigV1)
   config!: TaskConfig;
 
   ref!: string;
@@ -35,11 +32,11 @@ export class TaskNode extends DependencyNode implements TaskNodeOptions {
     return [];
   }
 
-  get is_external() {
+  get is_external(): boolean {
     return false;
   }
 
-  get is_local() {
+  get is_local(): boolean {
     return this.local_path !== '';
   }
 }

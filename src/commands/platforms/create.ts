@@ -18,7 +18,7 @@ export default class PlatformCreate extends Command {
   static args = [{
     name: 'platform',
     description: 'Name to give the platform',
-    parse: (value: string) => value.toLowerCase(),
+    parse: (value: string): string => value.toLowerCase(),
   }];
 
   static flags = {
@@ -77,7 +77,7 @@ export default class PlatformCreate extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     await this.createPlatform();
   }
 
@@ -140,7 +140,7 @@ export default class PlatformCreate extends Command {
     return created_platform;
   }
 
-  async createArchitectPlatform(flags: any) {
+  async createArchitectPlatform(flags: any): Promise<CreatePlatformInput> {
     const platform_type_answers: any = await inquirer.prompt([
       {
         when: !flags.type,

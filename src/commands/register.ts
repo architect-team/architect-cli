@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -12,16 +11,11 @@ import MissingContextError from '../common/errors/missing-build-context';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { ArchitectError, ComponentSlugUtils, Refs, Slugs } from '../dependency-manager/src';
-import { ComponentConfigBuilder, RawComponentConfig, RawServiceConfig } from '../dependency-manager/src/spec/component/component-builder';
+import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
+import { buildConfigFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
-
-export interface PutComponentVersionDto {
-  tag: string;
-  config: RawComponentConfig;
-}
 
 export default class ComponentRegister extends Command {
   static aliases = ['component:register', 'components:register', 'c:register', 'comp:register'];
@@ -51,7 +45,7 @@ export default class ComponentRegister extends Command {
     description: 'Path to a component to register',
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { flags, args } = this.parse(ComponentRegister);
     await Docker.verify();
 
@@ -82,20 +76,23 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
-    const { raw_config, file_path } = await ComponentConfigBuilder.rawFromPath(config_path);
-    const component_path = path.dirname(file_path);
+    // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
+    const { source_path, component_spec } = buildConfigFromPath(config_path, tag);
 
-    if (!raw_config.name) {
+    const component_path = path.dirname(source_path);
+    const new_spec = component_spec;
+
+    if (!new_spec.name) {
       throw new Error('Component Config must have a name');
     }
 
-    const account_name = raw_config.name.split('/')[0];
+    const account_name = new_spec.name.split('/')[0];
     const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
 
-    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${raw_config.name}:${tag}`), unsafeCleanup: true });
+    const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
-    for (const [service_name, service_config] of Object.entries(raw_config.services || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${service_name}:${tag}`;
+    for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
 
@@ -105,30 +102,32 @@ export default class ComponentRegister extends Command {
       }
     }
     if (set_artifact_image) {
-      raw_config.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${raw_config.name}:${tag}`, tmpobj.name);
+      new_spec.artifact_image = await this.pushArtifact(`${this.app.config.registry_host}/${new_spec.name}:${tag}`, tmpobj.name);
     }
 
     tmpobj.removeCallback();
 
-    for (const [task_name, task_config] of Object.entries(raw_config.tasks || {})) {
-      const image_tag = `${this.app.config.registry_host}/${raw_config.name}-${task_name}:${tag}`;
+    for (const [task_name, task_config] of Object.entries(new_spec.tasks || {})) {
+      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${task_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
     }
 
     const component_dto = {
       tag: tag,
-      config: raw_config,
+      config: new_spec,
     };
 
     let previous_config_data;
     try {
-      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(raw_config.name).component_name}/versions/${tag || 'latest'}`)).data.config;
-    /* eslint-disable-next-line no-empty */
-    } catch {}
+      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(new_spec.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+      /* eslint-disable-next-line no-empty */
+    } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));
-    const component_config_diff = Diff.diffLines(yaml.dump(previous_config_data), yaml.dump(component_dto.config));
+    const previous_source_yml = dumpToYml(previous_config_data);
+    const new_source_yml = dumpToYml(new_spec);
+    const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
       line_parts.pop(); // last element will be a newline that we don't want
@@ -145,16 +144,16 @@ export default class ComponentRegister extends Command {
     }
     this.log(chalk.blue(`End component config diff`));
 
-    cli.action.start(chalk.blue(`Registering component ${raw_config.name}:${tag} with Architect Cloud...`));
+    cli.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
     cli.action.stop();
     this.log(chalk.green(`Successfully registered component`));
   }
 
-  private async pushImageIfNecessary(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async pushImageIfNecessary(config_path: string, resource_name: string, resource_spec: ResourceSpec, image_tag: string) {
     // if the image field is set, we just take their image as is
-    if (service_config.image) {
-      return service_config.image;
+    if (resource_spec.image) {
+      return resource_spec.image;
     }
 
     this.log('Attempting to pull a previously built image for use with docker --cache-from...');
@@ -165,7 +164,7 @@ export default class ComponentRegister extends Command {
     }
 
     // build and push the image to our repository
-    const image = await this.buildImage(config_path, service_name, service_config, image_tag);
+    const image = await this.buildImage(config_path, resource_name, resource_spec, image_tag);
     await this.pushImage(image);
     await this.pushImage(Docker.toCacheImage(image_tag));
     const digest = await this.getDigest(image);
@@ -175,23 +174,23 @@ export default class ComponentRegister extends Command {
     return `${image_without_tag}@${digest}`;
   }
 
-  private async buildImage(config_path: string, service_name: string, service_config: RawServiceConfig, image_tag: string) {
+  private async buildImage(config_path: string, resource_name: string, resource_spec: ResourceSpec, image_tag: string) {
     const { flags } = this.parse(ComponentRegister);
 
-    const build_context = service_config?.build?.context;
+    const build_context = resource_spec?.build?.context;
     if (!build_context) {
-      throw new Error(`Service ${service_name} does not specify an image or a build.context. It must contain one or the other.`);
+      throw new Error(`Service ${resource_name} does not specify an image or a build.context. It must contain one or the other.`);
     }
     try {
       const component_path = fs.lstatSync(config_path).isFile() ? path.dirname(config_path) : config_path;
       const build_path = path.resolve(component_path, untildify(build_context));
       let dockerfile;
-      if (service_config.build?.dockerfile) {
-        dockerfile = path.join(build_path, service_config.build.dockerfile);
+      if (resource_spec.build?.dockerfile) {
+        dockerfile = path.join(build_path, resource_spec.build.dockerfile);
       }
       let build_args: string[] = [];
-      if (service_config.build?.args) {
-        const build_args_map: Dictionary<string> = service_config.build?.args || {};
+      if (resource_spec.build?.args) {
+        const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
         for (const arg of flags.arg || []) {
           const [key, value] = arg.split('=');
           if (!value) {

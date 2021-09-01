@@ -6,13 +6,13 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
-import { ComponentConfig, ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];
   static description = 'Execute a task in the given environment';
 
-  auth_required() {
+  auth_required(): boolean {
     const { flags } = this.parse(TaskExec);
     return !flags.local;
   }
@@ -65,7 +65,7 @@ export default class TaskExec extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { flags } = this.parse(TaskExec);
 
     if (flags.local) {
@@ -75,7 +75,7 @@ export default class TaskExec extends Command {
     }
   }
 
-  async runLocal() {
+  async runLocal(): Promise<void> {
     const { flags, args } = this.parse(TaskExec);
     await Docker.verify();
 
@@ -97,7 +97,7 @@ export default class TaskExec extends Command {
     }
 
     const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag, parsed_slug.instance_name);
-    const ref = ComponentConfig.getNodeRef(slug);
+    const ref = resourceRefToNodeRef(slug);
     const service_name = Object.keys(compose.services).find(name => name === ref);
     if (!service_name) {
       throw new Error(`Could not find ${slug} running in your local ${project_name} environment. See ${compose_file} for available tasks and services.`);
@@ -111,7 +111,7 @@ export default class TaskExec extends Command {
     this.log(chalk.green(`Successfully ran task.`));
   }
 
-  async runRemote() {
+  async runRemote(): Promise<void> {
     const { flags, args } = this.parse(TaskExec);
 
     const selected_account = await AccountUtils.getAccount(this.app.api, flags.account);

@@ -2,12 +2,13 @@ import chalk from 'chalk';
 import path from 'path';
 import untildify from 'untildify';
 import Command from '../base-command';
-import { ComponentConfigBuilder } from '../dependency-manager/src/spec/component/component-builder';
+import { Slugs } from '../dependency-manager/src';
+import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 
 declare const process: NodeJS.Process;
 
 export default class Link extends Command {
-  auth_required() {
+  auth_required(): boolean {
     return false;
   }
 
@@ -23,16 +24,16 @@ export default class Link extends Command {
     default: path.basename(process.cwd()),
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args } = this.parse(Link);
 
-    const componentPath = path.resolve(untildify(args.componentPath));
+    const component_path = path.resolve(untildify(args.componentPath));
 
     // Try to load the component from the path to ensure it exists and is valid
     try {
-      const component_config = await ComponentConfigBuilder.buildFromPath(componentPath);
-      this.app.linkComponentPath(component_config.getName(), componentPath);
-      this.log(`Successfully linked ${chalk.green(component_config.getName())} to local system at ${chalk.green(componentPath)}.`);
+      const { component_config } = buildConfigFromPath(component_path, Slugs.DEFAULT_TAG);
+      this.app.linkComponentPath(component_config.name, component_path);
+      this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
     } catch (err) {
       if (err.name === 'missing_config_file') {
         this.log(chalk.red(err.message));

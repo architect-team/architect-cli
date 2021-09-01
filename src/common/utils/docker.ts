@@ -1,5 +1,5 @@
 import execa, { Options } from 'execa';
-import { Slugs } from '../../dependency-manager/src/utils/slugs';
+import { Slugs } from '../../dependency-manager/src/spec/utils/slugs';
 
 const CACHE_TAG = 'architect-cache';
 
@@ -31,11 +31,11 @@ export const verify = async (): Promise<void> => {
   }
 };
 
-export const toCacheImage = (image_ref: string) => {
+export const toCacheImage = (image_ref: string): string => {
   return image_ref.replace(new RegExp(`:${Slugs.ComponentTagRegexBase}$`), `:${CACHE_TAG}`);
 };
 
-export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []) => {
+export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []): Promise<string> => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   for (const build_arg of build_args) {
     dockerfile_args.push('--build-arg');
@@ -56,11 +56,11 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
   return image_tag;
 };
 
-export const pushImage = async (image_ref: string) => {
+export const pushImage = async (image_ref: string): Promise<void> => {
   await docker(['push', image_ref]);
 };
 
-export const pullImage = async (image_ref: string) => {
+export const pullImage = async (image_ref: string): Promise<void> => {
   await docker(['pull', '-q', image_ref], { stdout: false });
 };
 
@@ -70,12 +70,12 @@ export const getDigest = async (image_ref: string): Promise<string> => {
   return digest.stdout.split('@')[1].replace('\'', '');
 };
 
-export const imageExists = async (image_ref: string) => {
+export const imageExists = async (image_ref: string): Promise<any> => {
   const { stdout } = await docker(['images', '-q', image_ref]);
   return !!stdout;
 };
 
-export const parseImageLabel = async (image_ref: string, label_name: string) => {
+export const parseImageLabel = async (image_ref: string, label_name: string): Promise<any> => {
   const doesImageExist = await imageExists(image_ref);
   if (!doesImageExist) {
     await docker(['pull', image_ref]);

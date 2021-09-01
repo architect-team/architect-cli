@@ -1,37 +1,41 @@
-import { ValidationError } from 'class-validator';
-import Mustache, { Context, Writer } from 'mustache';
+import yaml from 'js-yaml';
+import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
+import { findPotentialMatch } from '../spec/utils/spec-validator';
+import { Dictionary } from './dictionary';
+import { ValidationError, ValidationErrors } from './errors';
 
-// https://github.com/janl/mustache.js/issues/599
-export const ARC_NULL_TOKEN = '__arc__null__arc__';
-const null_quoted_regex = new RegExp(`"${ARC_NULL_TOKEN}"`, 'g');
-const null_regex = new RegExp(`${ARC_NULL_TOKEN}`, 'g');
+const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
 
-// TODO:320 test
-export const normalizeInterpolation = (value: string) => {
-  return value.replace(/\./g, '__arc__');
+export const replaceBrackets = (value: string): string => {
+  return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
 };
 
-export const denormalizeInterpolation = (value: string) => {
-  return value.replace(/__arc__/g, '.');
-};
+const matches = (text: string, pattern: RegExp) => ({
+  [Symbol.iterator]: function* () {
+    const clone = new RegExp(pattern.source, pattern.flags);
+    let match = null;
+    do {
+      match = clone.exec(text);
+      if (match) {
+        yield match;
+      }
+    } while (match);
+  },
+});
 
 /*
-Mustache doesn't respect bracket key lookups. This method transforms the following:
 ${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}
 ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cloud.services }}
 */
-export const replaceBrackets = (value: string) => {
-  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
-  let matches;
+export const replaceInterpolationBrackets = (value: string): string => {
   let res = value;
-  while ((matches = mustache_regex.exec(value)) != null) {
-    const sanitized_value = matches[0].replace(/\['/g, '.').replace(/'\]/g, '').replace(/\[\\"/g, '.').replace(/\\"\]/g, '').replace(/\["/g, '.').replace(/"\]/g, '');
-    res = res.replace(matches[0], sanitized_value);
+  for (const match of matches(value, interpolation_regex)) {
+    res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
   }
   return res;
 };
 
-export const escapeJSON = (value: any) => {
+export const escapeJSON = (value: any): any => {
   if (value instanceof Object) {
     value = JSON.stringify(value);
   }
@@ -47,80 +51,115 @@ export const escapeJSON = (value: any) => {
   return value;
 };
 
-Mustache.escape = function (text) {
-  return escapeJSON(text);
-}; // turns off HTML escaping
-Mustache.tags = ['${{', '}}']; // sets custom delimiters
-Mustache.templateCache = undefined;
+export const buildContextMap = (context: any): any => {
+  const context_map: Dictionary<any> = {};
+  const queue = [['', context]];
+  while (queue.length) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const [prefix, c] = queue.shift()!;
 
-export const interpolateString = (param_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
-  const writer = new Writer();
-  const errors: Set<string> = new Set();
-
-  const render = writer.render;
-  writer.render = function (template, view, partials) {
-
-    view = new Context(view, undefined);
-    const lookup = view.lookup;
-    view.lookup = function (name: string) {
-      const value = lookup.bind(this)(name);
-      if (value === undefined) {
-        const ignored = ignore_keys.some((k) => name.startsWith(k));
-        if (!ignored) {
-          errors.add(name);
-        }
+    if (c instanceof Object) {
+      if (prefix) {
+        context_map[prefix] = c;
       }
-      return value;
-    };
-
-    const result = render.bind(this)(template, view, partials);
-    if (errors.size > 0) {
-      const interpolation_errors: Set<string> = new Set();
-      for (const error of errors) {
-        // Dedupe host/port/protocol/username/password into url
-        if (error.endsWith('.host') || error.endsWith('.port') || error.endsWith('.protocol') || error.endsWith('.username') || error.endsWith('.password')) {
-          const keys = error.split('.');
-          const key = keys.slice(0, keys.length - 1).join('.');
-          if (errors.has(`${key}.host`) && errors.has(`${key}.port`) && errors.has(`${key}.protocol`)) {
-            interpolation_errors.add(`${key}.url`);
-          } else {
-            interpolation_errors.add(error);
-          }
-        } else {
-          interpolation_errors.add(error);
-        }
+      for (const [key, value] of Object.entries(c)) {
+        queue.push([prefix ? `${prefix}.${key}` : key, value]);
       }
-
-      const validation_error = new ValidationError();
-      validation_error.property = 'interpolation';
-      validation_error.children = [];
-      for (let e of interpolation_errors) {
-        e = denormalizeInterpolation(e);
-        const interpolation_error = new ValidationError();
-        interpolation_error.property = e;
-        interpolation_error.value = e;
-        interpolation_error.children = [];
-        interpolation_error.constraints = {
-          'interpolation': `\${{ ${e} }} is invalid`,
-        };
-        validation_error.children.push(interpolation_error);
-      }
-      throw validation_error;
+    } else if (prefix) {
+      context_map[prefix] = c;
     }
-
-    return result.replace(null_quoted_regex, 'null').replace(null_regex, 'null');
-  };
-
-  const mustache_regex = new RegExp(`\\\${{(.*?)}}`, 'g');
-  let depth = 0;
-  while (depth < max_depth) {
-    param_value = replaceBrackets(param_value);
-    param_value = writer.render(param_value, context);
-    if (!mustache_regex.test(param_value)) break;
-    depth += 1;
   }
-
-  return param_value;
+  return context_map;
 };
 
+/**
+ * Check if a value needs to be stringified or not.
+ *
+ * It does if it JSON.parses to an object or if it is a multiline string
+ */
+export const normalizeValueForInterpolation = (value: any): string => {
+  if (value === undefined) {
+    return '';
+  }
+  if (value instanceof Object) {
+    return JSON.stringify(value);
+  } else if (typeof value === 'string' && value.includes('\n')) {
+    return JSON.stringify(value.trimEnd());
+  } else {
+    return value;
+  }
+};
 
+export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): { errors: ValidationError[]; interpolated_string: string } => {
+  const context_map = buildContextMap(context);
+  const context_keys = Object.keys(context_map);
+
+  let res = raw_value;
+
+  let has_matches = true;
+  let depth = 0;
+  const misses = new Set<string>();
+  while (has_matches) {
+    has_matches = false;
+    depth += 1;
+    if (depth >= max_depth) {
+      throw new Error('Max interpolation depth exceeded');
+    }
+    for (const match of matches(res, interpolation_regex)) {
+      const sanitized_value = replaceBrackets(match[1]);
+      const value = context_map[sanitized_value];
+
+      if (value === undefined) {
+        const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
+        if (!ignored) {
+          misses.add(match[1]);
+        }
+      }
+
+      res = res.replace(match[0], normalizeValueForInterpolation(value));
+      has_matches = true;
+    }
+  }
+
+  const reverse_context_map: Dictionary<string> = {};
+  if (misses.size) {
+    try {
+      const value = yaml.load(raw_value);
+      const context_map = buildContextMap(value);
+      for (const [k, v] of Object.entries(context_map)) {
+        if (typeof v === 'string') {
+          for (const match of matches(v, interpolation_regex)) {
+            reverse_context_map[match[1]] = k;
+          }
+        }
+      }
+      // eslint-disable-next-line no-empty
+    } catch { }
+  }
+
+  const errors: ValidationError[] = [];
+  for (const miss of misses) {
+    const potential_match = findPotentialMatch(miss, context_keys);
+
+    let message = `Invalid interpolation ref: \${{ ${miss} }}`;
+    if (potential_match) {
+      message += ` - Did you mean \${{ ${potential_match} }}?`;
+    }
+    errors.push(new ValidationError({
+      component: context.name,
+      path: reverse_context_map[miss] || '<unknown>',
+      message,
+      value: miss,
+    }));
+  }
+
+  return { errors, interpolated_string: res };
+};
+
+export const interpolateStringOrReject = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
+  const { interpolated_string, errors } = interpolateString(raw_value, context, ignore_keys, max_depth);
+  if (errors.length) {
+    throw new ValidationErrors(errors);
+  }
+  return interpolated_string;
+};

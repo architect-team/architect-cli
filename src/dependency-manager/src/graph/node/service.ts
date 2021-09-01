@@ -1,7 +1,5 @@
-import { Type } from 'class-transformer';
 import { DependencyNode, DependencyNodeOptions } from '.';
-import { ServiceConfig } from '../../spec/service/service-config';
-import { ServiceConfigV1 } from '../../spec/service/service-v1';
+import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 
 export interface ServiceNodeOptions {
   ref: string;
@@ -13,7 +11,6 @@ export interface ServiceNodeOptions {
 export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
   __type = 'service';
 
-  @Type(() => ServiceConfigV1)
   config!: ServiceConfig;
 
   ref!: string;
@@ -30,8 +27,8 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     }
   }
 
-  get interfaces(): { [key: string]: any } {
-    return this.config.getInterfaces();
+  get interfaces(): { [key: string]: ServiceInterfaceConfig } {
+    return this.config.interfaces;
   }
 
   get ports(): string[] {
@@ -39,11 +36,11 @@ export class ServiceNode extends DependencyNode implements ServiceNodeOptions {
     return [...new Set(ports)];
   }
 
-  get is_external() {
+  get is_external(): boolean {
     return Object.keys(this.interfaces).length > 0 && Object.values(this.interfaces).every((i) => i.host);
   }
 
-  get is_local() {
+  get is_local(): boolean {
     return this.local_path !== '';
   }
 }

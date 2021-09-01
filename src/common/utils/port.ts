@@ -27,7 +27,7 @@ export default class PortUtil {
     }
   }
 
-  static async getAvailablePort(starting_port = 50000) {
+  static async getAvailablePort(starting_port = 50000): Promise<number> {
     let port = 0;
 
     for (const pr of PORT_RANGE) {
@@ -45,7 +45,7 @@ export default class PortUtil {
     return port;
   }
 
-  static reset() {
+  static reset(): void {
     PortUtil.tested_ports = new Set();
   }
 }

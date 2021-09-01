@@ -31,7 +31,7 @@ export default class PlatformDestroy extends Command {
   static args = [{
     name: 'platform',
     description: 'Name of the platform to deregister',
-    parse: (value: string) => value.toLowerCase(),
+    parse: (value: string): string => value.toLowerCase(),
   }];
 
   parse(options: any, argv = this.argv): any {
@@ -45,7 +45,7 @@ export default class PlatformDestroy extends Command {
     return parsed;
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(PlatformDestroy);
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);

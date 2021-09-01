@@ -31,6 +31,44 @@ describe('register', function () {
 
   mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_architect_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/, (body) => {
+        expect(body.tag).to.eq('1.0.0')
+        expect(body.config.name).to.eq('examples/fusionauth')
+        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
+        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.admin_user_password }}')
+        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
+
+        const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
+        expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
+        return body;
+      })
+      .reply(200, {})
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
+    .it('test file: replacement', ctx => {
+      const buildImage = Docker.buildImage as sinon.SinonStub;
+      const pushImage = Docker.pushImage as sinon.SinonStub;
+      const getDigest = Docker.getDigest as sinon.SinonStub;
+      expect(buildImage.notCalled).to.be.true;
+      expect(pushImage.notCalled).to.be.true;
+      expect(getDigest.notCalled).to.be.true;
+
+      expect(ctx.stderr).to.contain('Registering component examples/fusionauth:1.0.0 with Architect Cloud');
+      expect(ctx.stdout).to.contain('Successfully registered component');
+    });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stdout({ print })
     .stderr({ print })
     .command(['register', '--help'])
@@ -178,44 +216,6 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Image verified');
 
       expect(ctx.stderr).to.contain('Registering component examples/database-seeding:1.0.0 with Architect Cloud');
-      expect(ctx.stdout).to.contain('Successfully registered component');
-    });
-
-  mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
-    .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
-    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples`)
-      .reply(200, mock_architect_account_response)
-    )
-    .nock(MOCK_API_HOST, api => api
-      .post(/\/accounts\/.*\/components/, (body) => {
-        expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/fusionauth')
-        expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
-        expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.admin_user_password }}')
-        expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
-
-        const config = fs.readFileSync('examples/fusionauth/config/kickstart.json');
-        expect(body.config.services.fusionauth.environment.KICKSTART_CONTENTS).to.eq(config.toString().trim());
-        return body;
-      })
-      .reply(200, {})
-    )
-    .stdout({ print })
-    .stderr({ print })
-    .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
-    .it('test file: replacement', ctx => {
-      const buildImage = Docker.buildImage as sinon.SinonStub;
-      const pushImage = Docker.pushImage as sinon.SinonStub;
-      const getDigest = Docker.getDigest as sinon.SinonStub;
-      expect(buildImage.notCalled).to.be.true;
-      expect(pushImage.notCalled).to.be.true;
-      expect(getDigest.notCalled).to.be.true;
-
-      expect(ctx.stderr).to.contain('Registering component examples/fusionauth:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 

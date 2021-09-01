@@ -1,0 +1,3 @@
+LOG_LEVEL: info
+API_USERNAME: architect
+API_PORT: 3000

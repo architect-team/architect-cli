@@ -39,7 +39,6 @@ services:
     build:
       context: ./rabbit-consumer
       dockerfile: Dockerfile
-    interfaces:
     environment:
       AMQP_HOST: ${{ services.message-broker.interfaces.amqp.host }}
       QUEUE_NAME: ${{ parameters.queue_name }}
