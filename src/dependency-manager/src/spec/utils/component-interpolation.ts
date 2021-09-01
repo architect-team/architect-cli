@@ -1,5 +1,6 @@
 import yaml from 'js-yaml';
 import { ComponentConfig } from '../../config/component-config';
+import { ComponentContext } from '../../config/component-context';
 import { validateConfig } from '../../config/component-validator';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { interpolateString } from '../../utils/interpolation';
@@ -9,7 +10,11 @@ import { validateSpec } from '../utils/spec-validator';
 import { parseSourceYml } from './component-builder';
 
 export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[], validate = true): { interpolated_config: ComponentConfig; errors: ValidationError[] } => {
-  const interpolated_component_string = interpolateString(config.source_yml, config.context, ignore_keys);
+  const { errors, interpolated_string } = interpolateString(config.source_yml, config.context, ignore_keys);
+
+  if (validate && errors.length) {
+    return { interpolated_config: config, errors };
+  }
 
   if (validate) {
     // TODO:288:
@@ -17,11 +22,14 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
     // if we error here, we won't provide correct line numbers
     // we can potentially map it back to original source_yml
     // goal: get the path from the context interpolation error
-    const interpolated_context = yaml.load(interpolateString(yaml.dump(config.context), config.context, ignore_keys)) as any;
-    config.context = interpolated_context;
+    const { interpolated_string: interpolated_context, errors } = interpolateString(yaml.dump(config.context), config.context, ignore_keys);
+    if (errors.length) {
+      return { interpolated_config: config, errors };
+    }
+    config.context = yaml.load(interpolated_context) as ComponentContext;
   }
 
-  const parsed_yml = parseSourceYml(interpolated_component_string);
+  const parsed_yml = parseSourceYml(interpolated_string);
   const spec_errors = validate ? validateSpec(parsed_yml) : [];
   if (spec_errors?.length) {
     return { interpolated_config: config, errors: spec_errors };
@@ -36,7 +44,7 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
 export const interpolateConfigOrReject = (config: ComponentConfig, ignore_keys: string[], validate = true): ComponentConfig => {
   const { interpolated_config, errors } = interpolateConfig(config, ignore_keys, validate);
   if (errors?.length) {
-    throw new ValidationErrors(errors);
+    throw new ValidationErrors(errors, config.file);
   }
   return interpolated_config;
 };

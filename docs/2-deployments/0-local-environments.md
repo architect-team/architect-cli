@@ -59,3 +59,7 @@ $ architect deploy --local examples/react-app:latest -i app:app
 ```
 
 _In order to streamline local development, we recommend creating a single `.env` file checked into source control that includes a set of configuration options for developers to use when developing locally. They can easily mount the included parameters by running `source .env` before deploying._
+
+### HSTS issues
+
+Architect starts a load balancer for each local deployment to route traffic to your services over HTTP. Occasionally browsers such as Chrome will block requests to certain websites unless traffic is sent over HTTPS. If you attempt to navigate to a route exposed by your local deployment and see a message such as `You cannot visit app.arc.localhost right now because the website uses HSTS`, you will need to turn off HSTS for `localhost` on your browser. In Chrome, for example, that can be done by navigating to `chrome://net-internals/#hsts` and deleting the security policy for `localhost` and its subdomains.

@@ -1,39 +1,9 @@
+import { SchemaObject } from 'ajv';
 import { DecoratorSchema } from 'class-validator-jsonschema/build/decorators';
+import { EXPRESSION_REGEX_STRING } from './interpolation';
 
 export const REF_PREFIX = '#/definitions/';
 const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'object', 'null', 'array'];
-
-/**
- * Returns a partial JSON Schema to define a Dictionary of disjunctive types
- *
- * @param args must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
- * @returns
- */
-export const DictionaryOfAny = (...args: any): DecoratorSchema => {
-  const anyOf = [];
-
-  for (const arg of args) {
-    if (typeof arg === 'string' && PRIMITIVES.includes(arg)) {
-      anyOf.push({
-        type: arg,
-      });
-    } else if (typeof arg === 'function') {
-      anyOf.push({
-        $ref: `${REF_PREFIX}${arg.name}`,
-      });
-    } else {
-      console.error(arg);
-      throw new Error('Illegal arg for JsonSchema in DictionaryOfAny. You must specify either a primitive string or a Type.');
-    }
-  }
-
-  return {
-    type: 'object',
-    additionalProperties: {
-      anyOf,
-    },
-  } as DecoratorSchema;
-};
 
 /**
  * Returns a partial JSON Schema to define a disjunctive type
@@ -62,16 +32,6 @@ export const AnyOf = (...args: any): DecoratorSchema => {
   return {
     anyOf,
   } as DecoratorSchema;
-};
-
-/**
- * Returns a partial JSON Schema to define a Dictionary
- *
- * @param arg must be a primitive string (see PRIMITIVES) or a class name that is already defined somewhere else in the JSON Schema
- * @returns
- */
-export const DictionaryOf = (arg: any): DecoratorSchema => {
-  return DictionaryOfAny(arg);
 };
 
 /**
@@ -192,4 +152,34 @@ export const StringOrStringArray = (): DecoratorSchema => {
       },
     ],
   };
+};
+
+/**
+ * Wraps the given schema object in a `oneOf` expression next to an ExpressionRegex
+ *
+ * Effectively allows the field to match either the given schema OR an interpolation expression
+ */
+export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
+  return {
+    anyOf: [
+      schema,
+      {
+        type: 'string',
+        pattern: EXPRESSION_REGEX_STRING,
+        errorMessage: {
+          // __arc__ is replaced later to avoid json pointer issues with ajv
+          pattern: 'must be an interpolation ref ex. $__arc__{{ parameters.example }}',
+        },
+      },
+    ],
+  };
+};
+
+/**
+ * Wraps the given schema object in a `oneOf` expression next to an ExpressionRegex
+ *
+ * Effectively allows the field to match either the given schema OR an interpolation expression
+ */
+export const ExpressionOrString = (): DecoratorSchema => {
+  return ExpressionOr({ type: 'string' });
 };

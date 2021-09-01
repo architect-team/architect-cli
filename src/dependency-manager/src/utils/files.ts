@@ -17,30 +17,6 @@ const escape = (str: string): string => {
     .replace(/[\t]/g, '\\t');
 };
 
-export const tryReadFromPaths = (try_files: string[]): { file_path: string; file_contents: string } => {
-  // Make sure the file exists
-  let file_path;
-  let file_contents;
-  for (const file of try_files) {
-    try {
-      const data = fs.lstatSync(file);
-      if (data.isFile()) {
-        file_contents = fs.readFileSync(file, 'utf-8');
-        file_path = file;
-        break;
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  if (!file_contents || !file_path) {
-    throw new Error('File not found');
-  }
-
-  return { file_path, file_contents };
-};
-
 const escapeEnvironmentInterpolation = (str: string): string => {
   return str.replace(/\${([^{].*})/g, '$$$$$${$1');
 };

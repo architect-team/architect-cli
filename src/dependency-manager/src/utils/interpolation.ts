@@ -1,9 +1,10 @@
 import yaml from 'js-yaml';
+import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
-import { ValidationErrors } from './errors';
+import { ValidationError, ValidationErrors } from './errors';
 
-const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
+const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -89,7 +90,7 @@ export const normalizeValueForInterpolation = (value: any): string => {
   }
 };
 
-export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
+export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): { errors: ValidationError[]; interpolated_string: string } => {
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
 
@@ -120,8 +121,6 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     }
   }
 
-  const errors = [];
-
   const reverse_context_map: Dictionary<string> = {};
   if (misses.size) {
     try {
@@ -138,6 +137,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     } catch { }
   }
 
+  const errors: ValidationError[] = [];
   for (const miss of misses) {
     const potential_match = findPotentialMatch(miss, context_keys);
 
@@ -145,15 +145,21 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     if (potential_match) {
       message += ` - Did you mean \${{ ${potential_match} }}?`;
     }
-    errors.push({
+    errors.push(new ValidationError({
+      component: context.name,
       path: reverse_context_map[miss] || '<unknown>',
       message,
-    });
+      value: miss,
+    }));
   }
 
+  return { errors, interpolated_string: res };
+};
+
+export const interpolateStringOrReject = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
+  const { interpolated_string, errors } = interpolateString(raw_value, context, ignore_keys, max_depth);
   if (errors.length) {
     throw new ValidationErrors(errors);
   }
-
-  return res;
+  return interpolated_string;
 };

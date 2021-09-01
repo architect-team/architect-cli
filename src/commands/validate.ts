@@ -1,4 +1,3 @@
-import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import path from 'path';
 import tmp from 'tmp';
@@ -15,11 +14,6 @@ export default class ComponentValidate extends Command {
 
   static flags = {
     ...Command.flags,
-    verbose: flags.boolean({
-      char: 'v',
-      description: 'Verbose',
-      default: false,
-    }),
   };
 
   static args = [{
@@ -63,19 +57,8 @@ export default class ComponentValidate extends Command {
     }
 
     for (const config_path of config_paths) {
-      if (flags.verbose) {
-        this.log(`Validating: ${config_path}`);
-      }
-      try {
-        const { component_config, source_path } = buildConfigFromPath(config_path, Slugs.DEFAULT_TAG);
-        this.log(chalk.green(`✅ ${component_config.name}: ${source_path}`));
-      } catch (err) {
-        this.log(chalk.red(`❌ ${config_path} failed validation`));
-        this.log(chalk.red(err));
-        if (flags.verbose) {
-          this.log(err);
-        }
-      }
+      const { component_config, source_path } = buildConfigFromPath(config_path, Slugs.DEFAULT_TAG);
+      this.log(chalk.green(`✅ ${component_config.name}: ${source_path}`));
     }
   }
 }

@@ -13,16 +13,12 @@ export const transformInterfaceSpec = function (key: string, interface_spec: Ser
   }
 };
 
-export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined, environment: Dictionary<string | null>): string[] | undefined {
+export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined): string[] | undefined {
   if (!command) {
     return undefined;
   }
   if (typeof command === 'string') {
-    const env: Dictionary<string> = {};
-    for (const key of Object.keys(environment)) {
-      env[key] = `$${key}`;
-    }
-    return shell_parse(command, env).map(e => `${e}`);
+    return shell_parse(command.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
   } else {
     return command;
   }
@@ -38,7 +34,7 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
     interval: liveness_probe.interval || LivenessProbeSpec.default_interval,
     initial_delay: liveness_probe.initial_delay || LivenessProbeSpec.default_initial_delay,
     path: liveness_probe.path,
-    command: transformLivenessProbeSpecCommand(liveness_probe.command, environment),
+    command: transformLivenessProbeSpecCommand(liveness_probe.command),
     port: liveness_probe.port,
   };
 };

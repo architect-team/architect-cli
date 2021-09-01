@@ -15,31 +15,20 @@ export const transformResourceSpecTag = (name: string | undefined): string => {
   return split.tag;
 };
 
-export const transformResourceSpecCommand = (command: string | string[] | undefined, environment: Dictionary<string | null>): string[] => {
+export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
   if (!command) return [];
-
   if (command instanceof Array) {
     return command;
   }
-
-  const env: Dictionary<string> = {};
-  for (const key of Object.keys(environment)) {
-    env[key] = `$${key}`;
-  }
-
-  return shell_parse(command, env).map(e => `${e}`);
+  return shell_parse(command.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
 };
 
-export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined, environment: Dictionary<string | null>): string[] => {
+export const transformResourceSpecEntryPoint = (entrypoint: string | string[] | undefined): string[] => {
   if (!entrypoint) return [];
   if (entrypoint instanceof Array) {
     return entrypoint;
   }
-  const env: Dictionary<string> = {};
-  for (const key of Object.keys(environment)) {
-    env[key] = `$${key}`;
-  }
-  return shell_parse(entrypoint, env).map(e => `${e}`);
+  return shell_parse(entrypoint.replace(/\$/g, '__arc__')).map(e => `${e}`.replace(/__arc__/g, '$'));
 };
 
 export const transformResourceSpecEnvironment = (environment: Dictionary<EnvironmentSpecValue> | undefined): Dictionary<string | null> => {
@@ -114,8 +103,8 @@ export const transformResourceSpec = (key: string, spec: ResourceSpec, component
     tag,
     description: spec.description,
     image: spec.image,
-    command: transformResourceSpecCommand(spec.command, environment),
-    entrypoint: transformResourceSpecEntryPoint(spec.entrypoint, environment),
+    command: transformResourceSpecCommand(spec.command),
+    entrypoint: transformResourceSpecEntryPoint(spec.entrypoint),
     language: spec.language,
     debug: spec.debug ? transformResourceSpec(key, spec.debug, component_ref, tag) : undefined,
     environment,

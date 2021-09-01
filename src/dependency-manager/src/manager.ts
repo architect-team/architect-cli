@@ -18,7 +18,8 @@ import { interpolateConfigOrReject } from './spec/utils/component-interpolation'
 import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
-import { interpolateString, replaceInterpolationBrackets } from './utils/interpolation';
+import { interpolateStringOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
   config: ComponentConfig;
@@ -88,7 +89,7 @@ export default abstract class DependencyManager {
 
     const ignore_keys = ['']; // Ignore all errors
 
-    const interpolated_component_string = interpolateString(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
+    const interpolated_component_string = interpolateStringOrReject(initial_component.source_yml, context, ignore_keys).replace(/__arc__{{/g, '${{');
     const parsed_yml = parseSourceYml(interpolated_component_string);
     const interpolated_component_config = transformComponentSpec(parsed_yml as ComponentSpec, interpolated_component_string, initial_component.tag, initial_component.instance_metadata);
     return interpolated_component_config;
@@ -150,7 +151,7 @@ export default abstract class DependencyManager {
         if (!dep_component.interfaces[interface_name]) { continue; }
         let subdomain = dep_component.interfaces[interface_name].ingress?.subdomain || interface_name;
         try {
-          subdomain = interpolateString(subdomain, dep_component.context);
+          subdomain = interpolateStringOrReject(subdomain, dep_component.context);
           // eslint-disable-next-line no-empty
         } catch { }
 
@@ -357,7 +358,7 @@ export default abstract class DependencyManager {
     return external_interface;
   }
 
-  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[]): Promise<ComponentConfig> {
+  async interpolateComponent(graph: DependencyGraph, initial_component: ComponentConfig, external_address: string, dependencies: ComponentConfig[], validate = true): Promise<ComponentConfig> {
     const component_string = replaceInterpolationBrackets(initial_component.source_yml);
 
     let proxy_port = 12345;
@@ -517,7 +518,7 @@ export default abstract class DependencyManager {
     }
 
     const ignore_keys: string[] = [];
-    const interpolated_config = interpolateConfigOrReject(initial_component, ignore_keys);
+    const interpolated_config = interpolateConfigOrReject(initial_component, ignore_keys, validate);
 
     interpolated_config.proxy_port_mapping = proxy_port_mapping;
     return interpolated_config;
@@ -581,7 +582,8 @@ export default abstract class DependencyManager {
     for (const [pk, pv] of Object.entries(component.parameters)) {
       if (pv.required !== false && (pv.default === undefined)) {
         const validation_error = new ValidationError({
-          path: `components.${component.name}.parameters.${pk}`,
+          component: component.name,
+          path: `parameters.${pk}`,
           message: `${pk} is a required parameter`,
           value: pv.default,
         });
@@ -589,7 +591,7 @@ export default abstract class DependencyManager {
       }
     }
     if (validation_errors.length) {
-      throw new ValidationErrors(validation_errors);
+      throw new ValidationErrors(validation_errors, component.file);
     }
   }
 
@@ -714,7 +716,9 @@ export default abstract class DependencyManager {
     }
   }
 
-  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, external_addr: string): Promise<DependencyGraph> {
+  async getGraph(component_configs: ComponentConfig[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
+    ValuesConfig.validate(values);
+
     const tree_nodes = this.createComponentTree(component_configs);
 
     // Set parameters from secrets
@@ -722,7 +726,7 @@ export default abstract class DependencyManager {
       this.setValuesForComponent(tree_node.config, values);
       tree_node.config.context = transformComponentContext(tree_node.config);
 
-      if (interpolate) {
+      if (interpolate && validate) {
         this.validateComponent(tree_node.config);
       }
     }
@@ -740,7 +744,7 @@ export default abstract class DependencyManager {
       }
 
       if (interpolate) {
-        tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies);
+        tree_node.interpolated_config = await this.interpolateComponent(graph, tree_node.config, external_addr, dependencies, validate);
       } else {
         tree_node.interpolated_config = tree_node.config;
       }

@@ -5,7 +5,7 @@ import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
 import { buildConfigFromPath, parseSourceYml, Slugs, transformComponentSpec, validateOrRejectSpec } from '../../src/dependency-manager/src';
-import { interpolateString } from '../../src/dependency-manager/src/utils/interpolation';
+import { interpolateStringOrReject } from '../../src/dependency-manager/src/utils/interpolation';
 
 describe('superset spec validation', function () {
   beforeEach(async () => {
@@ -59,7 +59,7 @@ describe('superset spec validation', function () {
       component_config.context.services['stateless-api'].interfaces.main.url = 'test'
       component_config.context.services['frontend'].interfaces.web.url = 'test'
 
-      const interpolated_component_string = interpolateString(component_config.source_yml, component_config.context, []).replace(/__arc__{{/g, '${{');
+      const interpolated_component_string = interpolateStringOrReject(component_config.source_yml, component_config.context, []).replace(/__arc__{{/g, '${{');
       const parsed_yml = parseSourceYml(interpolated_component_string);
       const spec = validateOrRejectSpec(parsed_yml);
       const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, component_config.tag, component_config.instance_metadata);
@@ -86,7 +86,7 @@ describe('superset spec validation', function () {
       component_config.context.services['stateless-api'].interfaces.main.url = 'test'
       component_config.context.services['frontend'].interfaces.web.url = 'test'
 
-      const interpolated_component_string = interpolateString(component_config.source_yml, component_config.context, []).replace(/__arc__{{/g, '${{');
+      const interpolated_component_string = interpolateStringOrReject(component_config.source_yml, component_config.context, []).replace(/__arc__{{/g, '${{');
       const parsed_yml = parseSourceYml(interpolated_component_string);
       const spec = validateOrRejectSpec(parsed_yml);
       const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, component_config.tag, component_config.instance_metadata);

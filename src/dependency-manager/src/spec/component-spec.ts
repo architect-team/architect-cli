@@ -1,10 +1,11 @@
-import { Allow, IsOptional, Matches, ValidateNested } from 'class-validator';
+
+import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
-import { AnyOf, ArrayOf, DictionaryOf, DictionaryOfAny } from './utils/json-schema-annotations';
-import { ComponentSlugUtils } from './utils/slugs';
+import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
+import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',
@@ -49,42 +50,42 @@ export class ComponentInterfaceSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('number', 'string'),
+    ...ExpressionOr({ type: 'number' }),
     description: 'The port that the component interface should forward to.',
   })
   port?: number | string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The protocol by which the component interface can be connected to.',
   })
   protocol?: string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The Basic Auth username by which a component interface can be connected to.',
   })
   username?: string;
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The Basic Auth password by which a component interface can be connected to.',
   })
   password?: string;
 
   @Allow()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOrString(),
     description: 'The url that the component interface should forward to.',
   })
   url!: string;
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('boolean', 'string'),
+    ...ExpressionOr({ type: 'boolean' }),
     description: 'If this interface is made into an external ingress, sticky=true will denote the gateway should use sticky sessions if more than one replica is running.',
   })
   sticky?: boolean | string;
@@ -110,7 +111,7 @@ export class ParameterDefinitionSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...AnyOf('array', 'boolean', 'number', 'object', 'string', 'null'),
+    ...ExpressionOr(AnyOf('array', 'boolean', 'number', 'object', 'string', 'null')),
     description: 'Sets a default value for the parameter if one is not provided',
   })
   // eslint-disable-next-line @typescript-eslint/ban-types
@@ -121,11 +122,12 @@ export class ParameterDefinitionSpec {
   description: 'The top level object of the `architect.yml`; defines a deployable Architect Component.',
 })
 export class ComponentSpec {
-  @Matches(new RegExp(`^${ComponentSlugUtils.RegexBase}$`))
+  @IsString()
   @JSONSchema({
     type: 'string',
-    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
+    pattern: ComponentSlugUtils.Validator.source,
     errorMessage: ComponentSlugUtils.Description,
+    description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
   })
   name!: string;
 
@@ -159,35 +161,68 @@ export class ComponentSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', ParameterDefinitionSpec, 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ComponentParameterDescription,
+    },
     description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec',
   })
   parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf(ServiceSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(ServiceSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
   services?: Dictionary<ServiceSpec>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf(TaskSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(TaskSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.',
   })
   tasks?: Dictionary<TaskSpec>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOf('string'),
+    type: 'object',
+    patternProperties: {
+      [ComponentSlugUtils.Validator.source]: {
+        type: 'string',
+        pattern: Slugs.ComponentTagValidator.source,
+      },
+    },
+    errorMessage: {
+      additionalProperties: ComponentSlugUtils.Description,
+    },
     description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
   })
   dependencies?: Dictionary<string>;
 
   @IsOptional()
   @JSONSchema({
-    ...DictionaryOfAny('string', ComponentInterfaceSpec),
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf('string', ComponentInterfaceSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
   })
   interfaces?: Dictionary<string | ComponentInterfaceSpec>;

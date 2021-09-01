@@ -131,7 +131,7 @@ describe('local deploy environment', function () {
       "api": {
         "image": "heroku/nodejs-hello-world",
         "interfaces": {
-          "main": "3000"
+          "main": 3000
         },
         "environment": {
           "a_required_key": "${{ parameters.a_required_key }}",
@@ -180,7 +180,7 @@ describe('local deploy environment', function () {
             'context': './frontend'
           },
           'interfaces': {
-            'main': '8080'
+            'main': 8080
           },
           'environment': {
             'PORT': '\${{ services.app.interfaces.main.port }}',
@@ -233,7 +233,7 @@ describe('local deploy environment', function () {
           "dockerfile": "Dockerfile"
         },
         "interfaces": {
-          "main": "3000"
+          "main": 3000,
         },
         "depends_on": ["my-demo-db"],
         "environment": {
@@ -249,7 +249,7 @@ describe('local deploy environment', function () {
       "my-demo-db": {
         "image": "postgres:11",
         "interfaces": {
-          "postgres": "5432"
+          "postgres": 5432,
         },
         "environment": {
           "POSTGRES_DB": "${{ parameters.DB_NAME }}",
@@ -456,7 +456,7 @@ describe('local deploy environment', function () {
     .timeout(20000)
     .stub(ComponentBuilder, 'buildConfigFromPath', () => {
       const hello_json = yaml.load(getHelloComponentConfig()) as any;
-      hello_json.services.api.interfaces.main.sticky = 'true';
+      hello_json.services.api.interfaces.main.sticky = true;
       const component_config = buildConfigFromYml(yaml.dump(hello_json), Slugs.DEFAULT_TAG);
       return {
         component_config,

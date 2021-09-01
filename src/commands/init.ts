@@ -137,7 +137,7 @@ export abstract class InitCommand extends Command {
               interface_spec.protocol = matches[2];
             }
             if (matches && matches.length >= 2) {
-              interface_spec.port = matches[1].split(':')[1];
+              interface_spec.port = parseInt(matches[1].split(':')[1]);
             }
             (architect_service.interfaces[`interface${port_index}`] as Partial<ServiceInterfaceSpec>) = interface_spec;
             port_index++;
@@ -146,7 +146,7 @@ export abstract class InitCommand extends Command {
             if (matches && matches.length >= 2) {
               const [start, end] = matches[1].split('-');
               for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-                architect_service.interfaces[`interface${port_index}`] = i.toString();
+                architect_service.interfaces[`interface${port_index}`] = i;
                 port_index++;
               }
             }
@@ -155,7 +155,7 @@ export abstract class InitCommand extends Command {
           }
         } else {
           const interface_spec: Partial<ServiceInterfaceSpec> = {};
-          interface_spec.port = port.target.toString();
+          interface_spec.port = typeof port.target === 'string' ? parseInt(port.target) : port.target;
           if (port.protocol) {
             interface_spec.protocol = port.protocol;
           }
@@ -184,7 +184,7 @@ export abstract class InitCommand extends Command {
             }
             service_volume.mount_path = volume_parts[1];
             if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
-              service_volume.readonly = 'true';
+              service_volume.readonly = true;
             }
             (debug_config.volumes[volume_key] as Partial<VolumeSpec>) = service_volume;
           } else {
@@ -196,7 +196,7 @@ export abstract class InitCommand extends Command {
             service_volume.host_path = volume.source;
             service_volume.mount_path = volume.target;
             if (volume.read_only) {
-              service_volume.readonly = volume.read_only.toString();
+              service_volume.readonly = volume.read_only;
             }
 
             if (volume.type === 'volume' || compose_volumes.includes(volume.source)) {
@@ -209,7 +209,7 @@ export abstract class InitCommand extends Command {
             const service_volume: Partial<VolumeSpec> = {};
             service_volume.mount_path = volume.target;
             if (volume.read_only) {
-              service_volume.readonly = volume.read_only.toString();
+              service_volume.readonly = volume.read_only;
             }
             architect_service.volumes[volume_key] = service_volume;
           }
