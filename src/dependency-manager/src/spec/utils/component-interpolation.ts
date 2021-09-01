@@ -12,7 +12,7 @@ import { parseSourceYml } from './component-builder';
 export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[], validate = true): { interpolated_config: ComponentConfig; errors: ValidationError[] } => {
   const { errors, interpolated_string } = interpolateString(config.source_yml, config.context, ignore_keys);
 
-  if (errors.length) {
+  if (validate && errors.length) {
     return { interpolated_config: config, errors };
   }
 
