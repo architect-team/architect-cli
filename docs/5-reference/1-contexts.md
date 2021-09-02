@@ -27,6 +27,8 @@ The `dependencies` context contains dynamic information about the dependencies o
 | `dependencies.<dependency>`                         | `object`   | Information about the specified dependency      |
 | `dependencies.<dependency>.interfaces`              | `object`   | Information about the dependency's interfaces   |
 | `dependencies.<dependency>.interfaces.<interface>`  | `object`   | Information about the specified interface of the dependency. [See the interface values](#interface-values) for more details. |
+| `dependencies.<dependency>.ingresses`               | `object`   | Information about the ingress rules associated with a dependency    |
+| `dependencies.<dependency>.ingresses.<interface>`   | `object`   | Information about the specified ingress rule of the dependency. [See the interface values](#interface-values) for more details. |
 
 ### `ingresses` context
 
