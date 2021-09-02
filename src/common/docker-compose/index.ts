@@ -223,10 +223,6 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
 
-      if (node_from instanceof InterfacesNode) {
-        console.log(node_from.component_interfaces)
-      }
-
       if (node_from instanceof InterfacesNode) continue;
 
       for (let interface_name of Object.keys(edge.interfaces_map)) {

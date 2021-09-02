@@ -28,7 +28,7 @@ export class IngressSpec {
   @IsOptional()
   @JSONSchema({
     type: 'string',
-    description: 'TODO'
+    description: 'The path of the interface used for path based routing',
   })
   path?: string;
 }
