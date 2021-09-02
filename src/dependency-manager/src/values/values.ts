@@ -11,7 +11,13 @@ export class ValuesConfig {
     for (const [component_key, component_values] of Object.entries(values_dict)) {
       let key = component_key.endsWith('*') ? component_key.substring(0, component_key.length - 1) : component_key;
       key = key.endsWith(':') ? key.substring(0, key.length - 1) : key;
-      if (!ComponentVersionSlugUtils.Validator.test(key) && !ComponentSlugUtils.Validator.test(key) && component_key !== '*') {
+      key = key.endsWith('/') ? key.substring(0, key.length - 1) : key;
+      if (
+        !ComponentVersionSlugUtils.Validator.test(key) &&
+        !ComponentSlugUtils.Validator.test(key) &&
+        !Slugs.ArchitectSlugValidator.test(key) &&
+        component_key !== '*'
+      ) {
         const validation_error = new ValidationError({
           component: component_key,
           path: component_key,

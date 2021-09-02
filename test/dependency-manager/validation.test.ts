@@ -925,6 +925,9 @@ services:
       },
       "architect/cloud:*": {
         'ANOTHER_test': 'another value'
+      },
+      "architect/*": {
+        'ANOTHER_test': 'another value'
       }
     };
 
