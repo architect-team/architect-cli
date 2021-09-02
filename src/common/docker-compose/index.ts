@@ -266,13 +266,11 @@ export class DockerComposeUtils {
           }
 
           const interfaces_node = graph.getUpstreamNodes(node_to).find(n => n instanceof InterfacesNode);
-          if (interfaces_node) {
-            const component_interface = (interfaces_node as InterfacesNode).component_interfaces[interface_name];
-            if (component_interface.ingress?.path) { // if ingress path specified, use path for traefik config
-              service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`) && Path(\`${component_interface.ingress.path}.*\`)`);
-            } else {
-              service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
-            }
+          const component_interface = (interfaces_node as InterfacesNode).component_interfaces[interface_name];
+          if (interfaces_node && component_interface?.ingress?.path) {
+            service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`) && Path(\`${component_interface.ingress.path}.*\`)`);
+          } else {
+            service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
           }
 
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
