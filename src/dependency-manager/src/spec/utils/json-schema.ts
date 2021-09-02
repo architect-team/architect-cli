@@ -231,7 +231,6 @@ const transformDefinitions = (definitions: Record<string, SchemaObject>): Record
  * @returns
  */
 const generateSpec = (): SchemaObject => {
-
   // importing this class into this file is required for the class-validator-jsonschema to pick this up. doesn't work by just referencing the tsconfig.json
   const _ = new ComponentSpec();
 
@@ -253,5 +252,10 @@ const generateSpec = (): SchemaObject => {
   };
 };
 
-// statically generate spec and expose as a constant
-export const ARCHITECT_JSON_SCHEMA = generateSpec();
+let _cached_schema: SchemaObject;
+export const getArchitectJSONSchema = (): SchemaObject => {
+  if (!_cached_schema) {
+    _cached_schema = generateSpec();
+  }
+  return _cached_schema;
+};

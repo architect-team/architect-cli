@@ -1,4 +1,4 @@
-import Ajv, { ErrorObject } from "ajv";
+import Ajv, { ErrorObject, ValidateFunction } from "ajv";
 import ajv_errors from "ajv-errors";
 import leven from 'leven';
 import { Dictionary } from '../../utils/dictionary';
@@ -6,7 +6,7 @@ import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
 import { ParsedYaml } from './component-builder';
-import { ARCHITECT_JSON_SCHEMA, findDefinition } from './json-schema';
+import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -111,7 +111,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
       if (!ajv_error.params.has_message) {
         ajv_error.message = `Invalid key: ${additional_property}`;
 
-        const definition = findDefinition(replaceBrackets(ajv_error.instancePath), ARCHITECT_JSON_SCHEMA);
+        const definition = findDefinition(replaceBrackets(ajv_error.instancePath), getArchitectJSONSchema());
         if (definition) {
           const keys = Object.keys(definition.properties || {}).map((key) => ajv_error.instancePath ? `${ajv_error.instancePath}.${key}` : key);
 
@@ -175,17 +175,20 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   return errors;
 };
 
-// TODO:288 enable strict mode?
-const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
-ajv.addKeyword('externalDocs');
-// https://github.com/ajv-validator/ajv-errors
-ajv_errors(ajv);
-const validate = ajv.compile(ARCHITECT_JSON_SCHEMA);
-
+let _cached_validate: ValidateFunction;
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
-  const valid = validate(parsed_yml);
+  if (!_cached_validate) {
+    // TODO:288 enable strict mode?
+    const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
+    ajv.addKeyword('externalDocs');
+    // https://github.com/ajv-validator/ajv-errors
+    ajv_errors(ajv);
+    _cached_validate = ajv.compile(getArchitectJSONSchema());
+  }
+
+  const valid = _cached_validate(parsed_yml);
   if (!valid) {
-    return mapAjvErrors(parsed_yml, validate.errors);
+    return mapAjvErrors(parsed_yml, _cached_validate.errors);
   }
   return [];
 };
