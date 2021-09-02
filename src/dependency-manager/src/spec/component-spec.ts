@@ -24,6 +24,13 @@ export class IngressSpec {
     description: 'The subdomain that will be used if the interface is exposed externally (defaults to the interface name)',
   })
   subdomain?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    description: 'TODO'
+  })
+  path?: string;
 }
 
 @JSONSchema({

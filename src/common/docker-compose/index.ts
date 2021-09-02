@@ -222,6 +222,11 @@ export class DockerComposeUtils {
     // Enrich service relationships
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
+
+      if (node_from instanceof InterfacesNode) {
+        console.log(node_from.component_interfaces)
+      }
+
       if (node_from instanceof InterfacesNode) continue;
 
       for (let interface_name of Object.keys(edge.interfaces_map)) {
@@ -260,7 +265,16 @@ export class DockerComposeUtils {
             interface_name = '__at__';
           }
 
-          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
+          const interfaces_node = graph.getUpstreamNodes(node_to).find(n => n instanceof InterfacesNode);
+          if (interfaces_node) {
+            const component_interface = (interfaces_node as InterfacesNode).component_interfaces[interface_name];
+            if (component_interface.ingress?.path) { // if ingress path specified, use path for traefik config
+              service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`) && Path(\`${component_interface.ingress.path}.*\`)`);
+            } else {
+              service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
+            }
+          }
+
           service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
           service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
