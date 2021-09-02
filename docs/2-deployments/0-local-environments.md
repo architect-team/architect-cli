@@ -51,7 +51,7 @@ Interface mapping serves the added function of telling the environment which int
 
 Finally, the `-p` flag in the deploy command allows you to specify values for parameters defined by the component.
 
-Additionally, you any environment parameters found on the local machine prefixed with `ARC_` will be used to populate parameter values whenever a component is deployed. For example, if we wanted to set the `world_text` parameter via environment parmeters, all we have to do is define a parameter named `ARC_world_text`:
+Additionally, environment variables found on the local machine prefixed with `ARC_` will be used to populate the parameter values of any components being deployed. For example, if we wanted to set the `world_text` parameter via environment parmeters, all we have to do is define a parameter named `ARC_world_text`:
 
 ```sh
 $ ARC_world_text="dude"
