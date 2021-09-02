@@ -8,16 +8,20 @@ export default class InterfacesNode extends DependencyNode {
 
   ref!: string;
   slug!: string;
-  component_interfaces!: Dictionary<ComponentInterfaceConfig>;
+  component_interface_configs!: Dictionary<ComponentInterfaceConfig>;
 
-  constructor(ref: string, slug: string, component_interfaces: Dictionary<ComponentInterfaceConfig>) {
+  constructor(ref: string, slug: string, component_interface_configs: Dictionary<ComponentInterfaceConfig>) {
     super();
     this.ref = ref;
     this.slug = slug;
-    this.component_interfaces = component_interfaces;
+    this.component_interface_configs = component_interface_configs;
   }
 
-  get interfaces(): { [key: string]: ServiceInterfaceConfig } {
+  get interfaces(): Dictionary<ServiceInterfaceConfig> {
     return {};
+  }
+
+  get component_interfaces(): Dictionary<ComponentInterfaceConfig> {
+    return this.component_interface_configs;
   }
 }

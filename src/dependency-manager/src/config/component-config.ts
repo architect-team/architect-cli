@@ -92,6 +92,11 @@ export interface ComponentConfig {
   context: ComponentContext; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager interpolation logic
 
   proxy_port_mapping?: any; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager sidecar logic
+
+  file?: {
+    path: string;
+    contents: string;
+  }
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {
