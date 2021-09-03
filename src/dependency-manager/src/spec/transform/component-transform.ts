@@ -35,7 +35,7 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
 export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec | null): ParameterDefinitionConfig => {
   if (parameter_spec && typeof parameter_spec === 'object') {
     return {
-      required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : false,
+      required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : true,
       description: parameter_spec.description,
       default: (!parameter_spec.default && parameter_spec.required === false) ? null : parameter_spec.default,
     };
