@@ -335,7 +335,7 @@ export default class Deploy extends DeployCommand {
     const interfaces_map: Dictionary<string> = {};
     for (const i of flags.interface) {
       const [key, value] = i.split(':');
-      interfaces_map[key] = value || key;
+      interfaces_map[`${key}->${value}`] = value || key;
     }
     return interfaces_map;
   }
@@ -385,7 +385,7 @@ export default class Deploy extends DeployCommand {
         component_configs.push(component_config);
       }
     }
-
+// component_configs is now correct
     const graph = await dependency_manager.getGraph(component_configs, component_values);
     dependency_manager.validateGraph(graph);
 

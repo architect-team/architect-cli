@@ -139,9 +139,10 @@ export default abstract class DependencyManager {
         const [_, interface_name] = matches;
         ingresses.push([component, interface_name]);
       }
-
+      // console.log(component.interfaces) // one interface isn't "enabled" - why?
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
         if (interface_obj?.ingress?.subdomain && interface_obj.ingress?.enabled) {
+          // console.log('adding')
           ingresses.push([component, interface_name]);
         }
       }
