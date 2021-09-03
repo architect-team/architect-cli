@@ -36,6 +36,11 @@ export interface ParameterDefinitionConfig {
   default?: boolean | number | object | string | null;
 }
 
+export interface OutputDefinitionConfig {
+  description?: string;
+  value: boolean | number | string | null;
+}
+
 export interface ComponentInstanceMetadata {
   instance_name: string;
   instance_id: string;
@@ -77,6 +82,7 @@ export interface ComponentConfig {
   homepage?: string;
 
   parameters: Dictionary<ParameterDefinitionConfig>;
+  outputs: Dictionary<OutputDefinitionConfig>;
 
   services: Dictionary<ServiceConfig>;
   tasks: Dictionary<TaskConfig>;
