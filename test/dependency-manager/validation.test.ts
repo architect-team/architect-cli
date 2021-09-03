@@ -734,6 +734,8 @@ services:
         required:
         required-explicit:
           required: true
+        required-implicit:
+          description: Implicit require
         not-required:
           required: false
         not-required2: false
@@ -743,6 +745,7 @@ services:
             main: 8080
           environment:
             REQUIRED: \${{ parameters.required }}
+            REQUIRED_IMPLICIT: \${{ parameters.required-implicit }}
             REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
             NOT_REQUIRED: \${{ parameters.not-required }}
       `
@@ -762,9 +765,10 @@ services:
       }
       expect(err).instanceOf(ValidationErrors)
       const errors = JSON.parse(err.message) as ValidationError[];
-      expect(errors).lengthOf(2);
+      expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
         'parameters.required',
+        'parameters.required-implicit',
         'parameters.required-explicit',
       ])
       expect([...new Set(errors.map(e => e.component))]).members([
