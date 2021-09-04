@@ -3,6 +3,19 @@ import { addLineNumbers } from '../spec/utils/spec-validator';
 
 export class ArchitectError extends Error { }
 
+export const isValidationErrorString = (error_string: string): boolean => {
+  try {
+    const validation_errors = JSON.parse(error_string);
+    if (Array.isArray(validation_errors) && validation_errors?.length) {
+      if ('component' in validation_errors[0] && 'path' in validation_errors[0] && 'invalid_key' in validation_errors[0] && 'message' in validation_errors[0]) {
+        return true;
+      }
+    }
+    // eslint-disable-next-line no-empty
+  } catch { }
+  return false;
+};
+
 export class ValidationError {
   component: string;
   path: string;
