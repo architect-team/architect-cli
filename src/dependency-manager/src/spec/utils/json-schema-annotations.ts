@@ -180,6 +180,6 @@ export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
  *
  * Effectively allows the field to match either the given schema OR an interpolation expression
  */
-export const ExpressionOrString = (): DecoratorSchema => {
-  return ExpressionOr({ type: 'string' });
+export const ExpressionOrString = (options = {}): DecoratorSchema => {
+  return ExpressionOr({ type: 'string', ...options });
 };
