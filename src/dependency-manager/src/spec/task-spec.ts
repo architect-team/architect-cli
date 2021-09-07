@@ -14,7 +14,7 @@ export class TaskSpec extends ResourceSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString({
-      pattern: "^$|(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|((\\d+|\\*)\\/\\d+)|\\d+|\\*|\\?) ?){5,7}",
+      pattern: "^$|^(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|((\\d+|\\*)\\/\\d+)|\\d+|\\*|\\?) ?){5,7}$",
       errorMessage: {
         pattern: "must be a valid cron expression",
       },
