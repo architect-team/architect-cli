@@ -67,7 +67,19 @@
         "^[a-zA-Z0-9_-]+$": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
               "$ref": "#/definitions/OutputDefinitionSpec"
+            },
+            {
+              "type": "null"
             }
           ]
         }
@@ -1638,7 +1650,19 @@
             "^[a-zA-Z0-9_-]+$": {
               "anyOf": [
                 {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
                   "$ref": "#/definitions/OutputDefinitionSpec"
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
@@ -3116,7 +3140,19 @@
             "^[a-zA-Z0-9_-]+$": {
               "anyOf": [
                 {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
                   "$ref": "#/definitions/_DebugOutputDefinitionSpec"
+                },
+                {
+                  "type": "null"
                 }
               ]
             }
