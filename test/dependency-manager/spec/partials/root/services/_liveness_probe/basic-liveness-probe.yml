@@ -1,0 +1,6 @@
+success_threshold: 1
+failure_threshold: 3
+timeout: 5s
+interval: 0s
+path: /bin/health
+port: 8080

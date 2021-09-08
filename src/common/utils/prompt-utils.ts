@@ -11,7 +11,7 @@ export default class PromptUtils {
    * There is an open issue in inquirer to handle this behavior, eventually we can replace this when it's properly released:
    * https://github.com/SBoudrias/Inquirer.js/pull/891
    */
-  public static disable_prompts() {
+  public static disable_prompts(): void {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const inquirer = require('inquirer');
     process.stdout.isTTY = false;

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
 
 describe('slug validators', () => {
 
@@ -37,7 +37,7 @@ describe('slug validators', () => {
   });
 
   it(`ComponentSlugUtils.parse throws exception on ${invalid_component_slug}`, async () => {
-    expect(() => ComponentSlugUtils.parse(invalid_component_slug)).to.throw(`must be of the form <account-name>/<component-name>`);
+    expect(() => ComponentSlugUtils.parse(invalid_component_slug)).to.throw(ComponentSlugUtils.Description);
   });
 
   it(`ComponentVersionSlugUtils.parse accurately splits ${component_version_slug}`, async () => {

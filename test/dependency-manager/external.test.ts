@@ -1,5 +1,6 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
+import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import path from 'path';
@@ -9,7 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfig, ServiceNode } from '../../src/dependency-manager/src';
+import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('external spec v1', () => {
   beforeEach(() => {
@@ -55,24 +56,24 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.true;
-    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.environment).to.deep.equal({
       HOST: 'cloud.architect.io',
       ADDR: 'http://cloud.architect.io:8080'
     })
@@ -110,24 +111,24 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.false;
-    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.environment).to.deep.equal({
       HOST: app_ref,
       ADDR: `http://${app_ref}:8080`
     })
@@ -158,24 +159,24 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
     ], { '*': { optional_host: 'cloud.architect.io', optional_port: '8081' } });
 
-    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([])
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.is_external).to.be.true;
-    expect(app_node.config.getEnvironmentVariables()).to.deep.equal({
+    expect(app_node.config.environment).to.deep.equal({
       HOST: 'cloud.architect.io',
       ADDR: 'http://cloud.architect.io:8081'
     })
@@ -215,17 +216,17 @@ describe('external spec v1', () => {
     };
 
     mock_fs({
-      '/stack/architect.json': JSON.stringify(component_config),
+      '/stack/architect.yml': yaml.dump(component_config),
     });
 
     const manager = new LocalDependencyManager(axios.create(), {
-      'architect/cloud': '/stack/architect.json'
+      'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
     ]);
-    const app_ref = ComponentConfig.getNodeRef('architect/cloud/app:latest')
-    const api_ref = ComponentConfig.getNodeRef('architect/cloud/api:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
@@ -316,18 +317,18 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/dependency:latest')
     ]);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/component/app:latest')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.environment).to.deep.eq({
       DEP_ADDR: `https://external.localhost`,
       CI_ADDR: `https://ci.architect.io:8501`,
       DEP_EXTERNAL_ADDR: `https://external.localhost`,
       CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`
     });
 
-    const dep_ref = ComponentConfig.getNodeRef('architect/dependency/app:latest')
+    const dep_ref = resourceRefToNodeRef('architect/dependency/app:latest')
     const dep_node = graph.getNodeByRef(dep_ref) as ServiceNode;
-    expect(dep_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(dep_node.config.environment).to.deep.eq({
       DEP_EXTERNAL_ADDR: `https://external.localhost`,
       CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`,
       CI_SUBDOMAIN: 'ci',
@@ -361,9 +362,9 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/component:latest')
     ]);
 
-    const app_ref = ComponentConfig.getNodeRef('architect/component/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/component/app:latest')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.environment).to.deep.eq({
       SELF_ADDR: `http://app.arc.localhost`,
       SELF_ADDR2: `http://app.arc.localhost`,
     });
@@ -404,14 +405,14 @@ describe('external spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const core_ref = ComponentConfig.getNodeRef('architect/component/core:latest')
+    const core_ref = resourceRefToNodeRef('architect/component/core:latest')
 
     // No host override
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/component:latest')
     ], { '*': { MYSQL_DATABASE: 'test' } });
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
-    expect(test_node.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node.config.environment).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
       MYSQL_DB_URL2: `jdbc:mysql://127.0.0.1:12345/test?serverTimezone=UTC`,
     });
@@ -421,7 +422,7 @@ describe('external spec v1', () => {
       await manager.loadComponentConfig('architect/component:latest')
     ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' } });
     const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
-    expect(test_node2.config.getEnvironmentVariables()).to.deep.eq({
+    expect(test_node2.config.environment).to.deep.eq({
       MYSQL_DB_URL: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
       MYSQL_DB_URL2: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
     });

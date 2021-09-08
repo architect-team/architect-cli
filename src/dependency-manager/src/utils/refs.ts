@@ -27,7 +27,7 @@ export class Refs {
     return `${truncated_ref}-${hash}`;
   }
 
-  public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '', suffix = '') {
+  public static trimSafeRef(ref: string, max_length = Refs.DEFAULT_MAX_LENGTH, prefix = '', suffix = ''): string {
     const split = ref.split('-');
     const hash = split.pop();
     if (!hash || hash.length !== Refs.HASH_LENGTH) { throw new Error(`Not a valid ref: ${ref}`); }

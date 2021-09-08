@@ -1,12 +1,14 @@
 name: examples/publisher
 
 parameters:
-  gcp_project_id:
-    description: Name of the GCP project to connect to
-    required: true
   publish_topic:
     description: Topic name the service will publish events to
     default: topic
+
+outputs:
+  publish_topic:
+    description: Topic name events will be published to
+    value: ${{ parameters.publish_topic }}
 
 dependencies:
   architect/gcp-pubsub: latest
@@ -16,6 +18,6 @@ services:
     build:
       context: ./
     environment:
-      GCP_PROJECT_ID: ${{ parameters.gcp_project_id }}
+      GCP_PROJECT_ID: ${{ dependencies['architect/gcp-pubsub'].outputs.gcp_project_id }}
       PUBSUB_ENDPOINT: ${{ dependencies['architect/gcp-pubsub'].interfaces.pubsub.url }}
       PUBSUB_TOPIC: ${{ parameters.publish_topic }}

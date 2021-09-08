@@ -18,7 +18,7 @@ export default class Platforms extends Command {
     required: false,
   }];
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Platforms);
 
     let account: Account | undefined = undefined;
@@ -40,7 +40,7 @@ export default class Platforms extends Command {
 
     const table = new Table({ head: ['Name', 'Account', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
     for (const row of platforms) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       table.push([
         row.name,

@@ -1,10 +1,11 @@
+import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import mock_fs from 'mock-fs';
 import moxios from 'moxios';
 import sinon from 'sinon';
 import Register from '../../src/commands/register';
 import PortUtil from '../../src/common/utils/port';
-import { ComponentConfigBuilder } from '../../src/dependency-manager/src';
+import { buildConfigFromPath, Slugs } from '../../src/dependency-manager/src';
 
 // This test validates the architect.yml file for each of our example components to ensure that none go out of date
 describe('example component validation', function () {
@@ -39,15 +40,11 @@ describe('example component validation', function () {
     for (const example_dir of example_architect_dirs) {
       if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/architect.yml`)) {
 
-        it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes validOrReject for the developer group`, async () => {
-          const component_config = await ComponentConfigBuilder.buildFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+        it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes ajv json schema validation`, async () => {
+          const { component_config, source_path } = buildConfigFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`, Slugs.DEFAULT_TAG);
 
-          try {
-            await component_config.validateOrReject({ groups: ['developer'] });
-          } catch (err) {
-            console.log('An example architect file is failing the #validateOrReject() method', err);
-            throw err;
-          }
+          expect(source_path).to.equal(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+          expect(component_config).to.not.be.undefined;
         });
 
       }

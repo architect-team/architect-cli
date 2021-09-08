@@ -4,7 +4,7 @@ export class PipelineUtils {
 
   static POLL_INTERVAL = 10000;
 
-  static async pollPipeline(api: AxiosInstance, pipeline_id: string) {
+  static async pollPipeline(api: AxiosInstance, pipeline_id: string): Promise<any> {
     return new Promise((resolve, reject) => {
       let poll_count = 0;
       const poll = setInterval(async () => {

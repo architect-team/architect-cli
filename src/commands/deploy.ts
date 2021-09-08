@@ -18,7 +18,8 @@ import { Deployment } from '../common/utils/deployment';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentHealth, EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentConfig, ComponentConfigBuilder, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceVersionSlugUtils, Slugs } from '../dependency-manager/src';
+import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -47,7 +48,7 @@ export abstract class DeployCommand extends Command {
     return parsed;
   }
 
-  async approvePipeline(pipeline: any) {
+  async approvePipeline(pipeline: any): Promise<boolean> {
     const { flags } = this.parse(this.constructor as typeof DeployCommand);
 
     if (!flags['auto-approve']) {
@@ -69,7 +70,7 @@ export abstract class DeployCommand extends Command {
 }
 
 export default class Deploy extends DeployCommand {
-  auth_required() {
+  auth_required(): boolean {
     const { flags } = this.parse(Deploy);
     return !flags.local;
   }
@@ -178,7 +179,7 @@ export default class Deploy extends DeployCommand {
     return parsed;
   }
 
-  async runCompose(compose: DockerComposeTemplate) {
+  async runCompose(compose: DockerComposeTemplate): Promise<void> {
     const { flags } = this.parse(Deploy);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -297,7 +298,7 @@ export default class Deploy extends DeployCommand {
     return component_values;
   }
 
-  getExtraEnvironmentVariables(parameters: string[]) {
+  getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | undefined> {
     const extra_env_vars: { [s: string]: string | undefined } = {};
 
     for (const [param_name, param_value] of Object.entries(process.env || {})) {
@@ -361,9 +362,9 @@ export default class Deploy extends DeployCommand {
 
       let component_version = config_or_component;
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
-        const component_config = await ComponentConfigBuilder.buildFromPath(config_or_component);
-        linked_components[component_config.getName()] = config_or_component;
-        component_version = component_config.getName();
+        const res = buildConfigFromPath(config_or_component, Slugs.DEFAULT_TAG);
+        linked_components[res.component_config.name] = config_or_component;
+        component_version = res.component_config.name;
       }
       component_versions.push(component_version);
     }
@@ -393,7 +394,7 @@ export default class Deploy extends DeployCommand {
     await this.runCompose(compose);
   }
 
-  protected async runRemote() {
+  protected async runRemote(): Promise<void> {
     const { args, flags } = this.parse(Deploy);
 
     const components = args.configs_or_components;
@@ -450,7 +451,7 @@ export default class Deploy extends DeployCommand {
     const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
     const deployment_tasks: { [s: string]: ListrTask<any>[] } = {};
     for (const service_node of service_nodes) {
-      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.name);
+      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.ref);
       const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
 
       if (!deployment_tasks[component_version_name]) {
@@ -510,7 +511,7 @@ export default class Deploy extends DeployCommand {
     this.log(chalk.green('Deployment successful'));
   }
 
-  async run() {
+  async run(): Promise<void> {
     const { args, flags } = this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
