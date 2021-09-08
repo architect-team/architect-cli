@@ -1169,4 +1169,52 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(3);
   });
+
+  it('interpolate outputs', async () => {
+    const publisher_config = `
+    name: examples/publisher
+    parameters:
+      topic_name: test
+    outputs:
+      topic1: test
+      topic2: \${{ parameters.topic_name }}
+      topic3:
+        value: test
+      topic4:
+        value: \${{ parameters.topic_name }}
+    `
+
+    const consumer_config = `
+    name: examples/consumer
+    dependencies:
+      examples/publisher: latest
+    services:
+      api:
+        environment:
+          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+          TOPIC2: \${{ dependencies.examples/publisher.outputs.topic2 }}
+          TOPIC3: \${{ dependencies.examples/publisher.outputs.topic3 }}
+          TOPIC4: \${{ dependencies.examples/publisher.outputs.topic4 }}
+    `
+
+    mock_fs({
+      '/stack/publisher/architect.yml': publisher_config,
+      '/stack/consumer/architect.yml': consumer_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/publisher': '/stack/publisher/architect.yml',
+      'examples/consumer': '/stack/consumer/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer')));
+    const api_ref = resourceRefToNodeRef('examples/consumer/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      TOPIC1: 'test',
+      TOPIC2: 'test',
+      TOPIC3: 'test',
+      TOPIC4: 'test'
+    });
+  });
 });

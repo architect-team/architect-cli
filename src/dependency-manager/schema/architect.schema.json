@@ -61,6 +61,23 @@
       "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
       "additionalProperties": false
     },
+    "outputs": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OutputDefinitionSpec"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+      },
+      "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
+      "additionalProperties": false
+    },
     "services": {
       "type": "object",
       "patternProperties": {
@@ -1535,6 +1552,26 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
       }
     },
+    "OutputDefinitionSpec": {
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the output field."
+        },
+        "value": {
+          "description": "Value of the output to be passed to upstream consumers"
+        }
+      },
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "description": "Components can define output fields that can be used to share configuration with consuming components.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#outputdefinitionspec"
+      }
+    },
     "ComponentSpec": {
       "properties": {
         "name": {
@@ -1593,6 +1630,23 @@
             "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
           },
           "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
+        },
+        "outputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/OutputDefinitionSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
           "additionalProperties": false
         },
         "services": {
@@ -2979,6 +3033,23 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#parameterdefinitionspec"
       }
     },
+    "_DebugOutputDefinitionSpec": {
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A human-friendly description of the output field."
+        },
+        "value": {
+          "description": "Value of the output to be passed to upstream consumers"
+        }
+      },
+      "type": "object",
+      "description": "Components can define output fields that can be used to share configuration with consuming components.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#outputdefinitionspec"
+      }
+    },
     "_DebugComponentSpec": {
       "properties": {
         "name": {
@@ -3037,6 +3108,23 @@
             "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
           },
           "description": "A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec",
+          "additionalProperties": false
+        },
+        "outputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugOutputDefinitionSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), and alphanumerics between."
+          },
+          "description": "A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.",
           "additionalProperties": false
         },
         "services": {

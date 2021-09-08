@@ -19,6 +19,11 @@ parameters:
     description: If you want to connect to the remote pub/sub service, use the value '443'. Otherwise, the local emulator will be used.
     default: 8085
 
+outputs:
+  gcp_project_id:
+    description: Project ID the pubsub is configured in
+    value: ${{ parameters.gcp_project_id }}
+
 services:
   pubsub:
     image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
