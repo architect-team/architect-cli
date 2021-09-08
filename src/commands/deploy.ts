@@ -18,7 +18,7 @@ import { Deployment } from '../common/utils/deployment';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentHealth, EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceVersionSlugUtils, Slugs } from '../dependency-manager/src';
+import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceInterfaceConfig, ServiceVersionSlugUtils, Slugs } from '../dependency-manager/src';
 import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -467,6 +467,10 @@ export default class Deploy extends DeployCommand {
       deployment_tasks[component_version_name].push({
         title: `Service ${service_name}`,
         task: () => new Promise((resolve, reject) => {
+          if ((Object.values(service_node.config.interfaces || {}) as ServiceInterfaceConfig[]).find(i => !!i.host)) {
+            return resolve(true);
+          }
+
           let service_health_poll_count = 0;
           const service_health_poll = setInterval(async () => {
             if (service_health_poll_count > 180) {
