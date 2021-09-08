@@ -7,7 +7,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
-import Listr, { ListrTask } from 'listr';
+import { Listr } from 'listr2';
 import opener from 'opener';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -449,7 +449,7 @@ export default class Deploy extends DeployCommand {
 
     const environment_graph = (await this.app.api.get(`/environments/${environment.id}/graph`)).data;
     const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
-    const deployment_tasks: { [s: string]: ListrTask<any>[] } = {};
+    const deployment_tasks: { [s: string]: any[] } = {};
     for (const service_node of service_nodes) {
       const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.ref);
       const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
@@ -496,7 +496,7 @@ export default class Deploy extends DeployCommand {
       });
     }
 
-    const all_tasks: ListrTask[] = [];
+    const all_tasks = [];
     for (const [component_name, component_tasks] of Object.entries(deployment_tasks || {})) {
       all_tasks.push({
         title: `Component ${component_name}`,
