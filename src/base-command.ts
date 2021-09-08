@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
-import { ArchitectError, ValidationErrors } from './dependency-manager/src/utils/errors';
+import { ArchitectError, isValidationErrorString, ValidationErrors } from './dependency-manager/src/utils/errors';
 
 const DEPRECATED_LABEL = '[deprecated]';
 
@@ -89,6 +89,11 @@ export default abstract class extends Command {
 
     if (err instanceof ValidationErrors) {
       return prettyValidationErrors(err);
+    }
+
+    if (err.response?.data?.message && isValidationErrorString(err.response?.data?.message)) {
+      const validation_errors = JSON.parse(err.response?.data?.message);
+      return prettyValidationErrors(new ValidationErrors(validation_errors));
     }
 
     let message = '';
