@@ -46,7 +46,7 @@ export const transformParameterDefinitionSpec = (key: string, parameter_spec: st
   }
 };
 
-export const transformOutputDefinitionSpec = (key: string, output_spec: string | OutputDefinitionSpec): OutputDefinitionConfig => {
+export const transformOutputDefinitionSpec = (key: string, output_spec: string | number | boolean | OutputDefinitionSpec | null): OutputDefinitionConfig => {
   if (output_spec && typeof output_spec === 'object') {
     return {
       description: output_spec.description,

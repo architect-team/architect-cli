@@ -194,14 +194,14 @@ export class ComponentSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ComponentParameterValidator.source]: AnyOf(OutputDefinitionSpec),
+      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', OutputDefinitionSpec, 'null'),
     },
     errorMessage: {
       additionalProperties: Slugs.ComponentParameterDescription,
     },
     description: 'A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.',
   })
-  outputs?: Dictionary<OutputDefinitionSpec>;
+  outputs?: Dictionary<string | number | boolean | OutputDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema({
