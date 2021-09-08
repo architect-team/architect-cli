@@ -451,7 +451,7 @@ export default class Deploy extends DeployCommand {
     const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
     const deployment_tasks: { [s: string]: ListrTask<any>[] } = {};
     for (const service_node of service_nodes) {
-      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.ref);
+      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.ref);
       const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
 
       if (!deployment_tasks[component_version_name]) {
