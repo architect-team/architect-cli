@@ -194,8 +194,6 @@ export default class Deploy extends DeployCommand {
       await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
     }
 
-    console.clear();
-
     this.log('Building containers...', chalk.green('done'));
     this.log('');
 
