@@ -128,7 +128,7 @@ export default class TaskExec extends Command {
     const res = await this.app.api.post(`/environments/${environment.id}/exec`, {
       component_account_name: parsed_slug.component_account_name,
       component_name: parsed_slug.component_name,
-      instance_id: parsed_slug.instance_name,
+      instance_name: parsed_slug.instance_name,
       task_name: args.task,
       tag: parsed_slug.tag,
     });
