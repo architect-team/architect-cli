@@ -155,6 +155,7 @@ export default abstract class DependencyManager {
           subdomain = interpolateStringOrReject(subdomain, dep_component.context);
           // eslint-disable-next-line no-empty
         } catch { }
+        subdomain = `${subdomain}->${interface_name}`;
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -168,7 +169,7 @@ export default abstract class DependencyManager {
           graph.addEdge(ingress_edge);
         }
 
-        ingress_edge.interfaces_map[subdomain] = interface_name;
+        ingress_edge.interfaces_map[subdomain] = interface_name; // was being duplicated and overwritten, fixed with ->
 
         if (buildComponentRef(dep_component) !== buildComponentRef(component)) {
           if (!ingress_edge.consumers_map[subdomain]) {
@@ -333,7 +334,7 @@ export default abstract class DependencyManager {
         ...(dependency ? dependency.interfaces[interface_to] : {}),
         ...dependency_interface,
         consumers: [],
-        subdomain: subdomain,
+        subdomain,
         dns_zone: dependency_interface.host.split('.').slice(1).join('.'),
       };
     } else {
@@ -341,7 +342,7 @@ export default abstract class DependencyManager {
 
       const host = interface_from === '@' ? external_host : `${interface_from}.${external_host}`;
       partial_external_interface = {
-        host: host,
+        host,
         port: external_port,
         protocol: external_host === 'arc.localhost' ? 'http' : 'https',
         username: '',
@@ -349,6 +350,14 @@ export default abstract class DependencyManager {
         subdomain: interface_from,
         dns_zone: external_host,
       };
+
+      if (partial_external_interface.host?.includes('->')) {
+        const domain_parts = partial_external_interface.host.split('.');
+        const interface_subdomain = domain_parts[0].split('->')[0];
+        domain_parts.shift();
+        partial_external_interface.host = [interface_subdomain, ...domain_parts].join('.');
+        partial_external_interface.subdomain = interface_subdomain;
+      }
     }
     const external_interface = {
       ...partial_external_interface,
