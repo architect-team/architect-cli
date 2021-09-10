@@ -48,14 +48,14 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services#local-configuration) |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
- | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/components/services#cpu--memory) |
- | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services#cpu--memory) |
+ | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
  | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
- | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services#labels) |
+ | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
 
 ## ParameterDefinitionSpec
@@ -99,14 +99,14 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
- | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services#local-configuration) |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
  | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
- | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/components/services#cpu--memory) |
- | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/components/services#cpu--memory) |
+ | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
  | `deploy` | [DeploySpec](#deployspec) |  |  |
  | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
- | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/components/services#labels) |
+ | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
 
 ## DeployModuleSpec
@@ -137,7 +137,7 @@ Architect can mount volumes onto your services and tasks to store data that shou
 | -------------------- | ---------- | -------------- | -------------- |
  | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
  | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/components/services#volumes) |
+ | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
  | `description` | string | Human-readable description of volume |  |
  | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
 
@@ -159,8 +159,8 @@ Scaling metrics define the upper bound of resource consumption before spinning u
 
 | Field  (*=required)  | Type       | Description    | Misc           |
 | -------------------- | ---------- | -------------- | -------------- |
- | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set). | [More](/docs/components/services#cpu--memory) |
- | `memory` | string \| [Expression](/docs/reference/contexts) | The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set). | [More](/docs/components/services#cpu--memory) |
+ | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set). | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| [Expression](/docs/reference/contexts) | The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set). | [More](/docs/configuration/services#cpu--memory) |
 
 
 ## ScalingSpec
