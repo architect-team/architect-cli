@@ -154,6 +154,28 @@ services:
       buildConfigFromPath('/architect.yml')
     });
 
+    it('invalid task schedule', async () => {
+      const component_config = `
+      name: test/component
+      tasks:
+        some-task:
+          schedule: "*/5 * * * ? * * * * *"
+          image: ellerbrock/alpine-bash-curl-ssl
+      `
+      mock_fs({ '/architect.yml': component_config });
+      let err;
+      try {
+        const { component_config } = buildConfigFromPath('/architect.yml')
+        interpolateConfigOrReject(component_config, [])
+      } catch (e) {
+        err = e;
+      }
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message);
+      expect(errors).lengthOf(1);
+      expect(errors[0].path).eq(`tasks.some-task.schedule`);
+    });
+
     it('valid task depends_on', async () => {
       const component_config = `
       name: test/component
@@ -734,6 +756,8 @@ services:
         required:
         required-explicit:
           required: true
+        required-implicit:
+          description: Implicit require
         not-required:
           required: false
         not-required2: false
@@ -743,6 +767,7 @@ services:
             main: 8080
           environment:
             REQUIRED: \${{ parameters.required }}
+            REQUIRED_IMPLICIT: \${{ parameters.required-implicit }}
             REQUIRED_EXPLICIT: \${{ parameters.required-explicit }}
             NOT_REQUIRED: \${{ parameters.not-required }}
       `
@@ -762,9 +787,10 @@ services:
       }
       expect(err).instanceOf(ValidationErrors)
       const errors = JSON.parse(err.message) as ValidationError[];
-      expect(errors).lengthOf(2);
+      expect(errors).lengthOf(3);
       expect(errors.map(e => e.path)).members([
         'parameters.required',
+        'parameters.required-implicit',
         'parameters.required-explicit',
       ])
       expect([...new Set(errors.map(e => e.component))]).members([

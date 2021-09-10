@@ -9,6 +9,10 @@ import { buildConfigFromPath, Slugs } from '../dependency-manager/src';
 tmp.setGracefulCleanup();
 
 export default class ComponentValidate extends Command {
+  auth_required(): boolean {
+    return false;
+  }
+
   static aliases = ['component:validate', 'components:validate', 'c:validate', 'comp:validate', 'validate'];
   static description = 'Validate that an architect.yml is syntactically correct.';
 

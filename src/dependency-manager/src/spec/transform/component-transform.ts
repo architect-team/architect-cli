@@ -1,8 +1,8 @@
-import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, ParameterDefinitionConfig } from '../../config/component-config';
-import { ComponentContext, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
+import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
+import { ComponentContext, OutputValue, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary, transformDictionary } from '../../utils/dictionary';
-import { ComponentInterfaceSpec, ComponentSpec, ParameterDefinitionSpec } from '../component-spec';
+import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, ParameterDefinitionSpec } from '../component-spec';
 import { ComponentSlug, ComponentSlugUtils, Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
@@ -35,13 +35,26 @@ export const transformBooleanString = (boolean_string: string | boolean): boolea
 export const transformParameterDefinitionSpec = (key: string, parameter_spec: string | number | boolean | ParameterDefinitionSpec | null): ParameterDefinitionConfig => {
   if (parameter_spec && typeof parameter_spec === 'object') {
     return {
-      required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : false,
+      required: parameter_spec.required ? transformBooleanString(parameter_spec.required) : true,
       description: parameter_spec.description,
       default: (!parameter_spec.default && parameter_spec.required === false) ? null : parameter_spec.default,
     };
   } else {
     return {
       default: parameter_spec === null ? undefined : parameter_spec,
+    };
+  }
+};
+
+export const transformOutputDefinitionSpec = (key: string, output_spec: string | number | boolean | OutputDefinitionSpec | null): OutputDefinitionConfig => {
+  if (output_spec && typeof output_spec === 'object') {
+    return {
+      description: output_spec.description,
+      value: output_spec.value,
+    };
+  } else {
+    return {
+      value: output_spec,
     };
   }
 };
@@ -65,6 +78,11 @@ export const transformComponentContext = (
     } else {
       parameter_context[pk] = pv.default === undefined ? '' : pv.default;
     }
+  }
+
+  const output_context: Dictionary<OutputValue> = {};
+  for (const [pk, pv] of Object.entries(config.outputs)) {
+    output_context[pk] = pv.value;
   }
 
   const interface_filler = {
@@ -118,6 +136,7 @@ export const transformComponentContext = (
     name: config.name,
     dependencies: dependency_context,
     parameters: parameter_context,
+    outputs: output_context,
     ingresses: ingress_context,
     interfaces: interface_context,
     services: service_context,
@@ -127,6 +146,7 @@ export const transformComponentContext = (
 
 export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
+  const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
   const services = transformDictionary(transformServiceSpec, spec.services, spec.name, tag, instance_metadata);
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, tag, instance_metadata);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
@@ -146,6 +166,7 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
     homepage: spec.homepage,
 
     parameters,
+    outputs,
 
     services,
     tasks,
@@ -162,6 +183,7 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
       {
         dependencies,
         parameters,
+        outputs,
         interfaces,
         services,
         tasks,

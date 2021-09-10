@@ -405,6 +405,7 @@ export default abstract class DependencyManager {
     }
 
     for (const dependency of dependencies) {
+      context.dependencies[dependency.name].outputs = dependency.context.outputs;
       context.dependencies[dependency.name].interfaces = dependency.context.interfaces;
       context.dependencies[dependency.name].ingresses = dependency.context.ingresses;
       // Set dependency interfaces

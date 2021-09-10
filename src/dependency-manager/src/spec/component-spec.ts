@@ -126,6 +126,24 @@ export class ParameterDefinitionSpec {
 }
 
 @JSONSchema({
+  description: 'Components can define output fields that can be used to share configuration with consuming components.',
+})
+export class OutputDefinitionSpec {
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    description: 'A human-friendly description of the output field.',
+  })
+  description?: string;
+
+  @Allow()
+  @JSONSchema({
+    description: 'Value of the output to be passed to upstream consumers',
+  })
+  value!: boolean | number | string | null;
+}
+
+@JSONSchema({
   description: 'The top level object of the `architect.yml`; defines a deployable Architect Component.',
 })
 export class ComponentSpec {
@@ -178,6 +196,19 @@ export class ComponentSpec {
     description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec',
   })
   parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ComponentParameterValidator.source]: AnyOf('string', 'number', 'boolean', OutputDefinitionSpec, 'null'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ComponentParameterDescription,
+    },
+    description: 'A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.',
+  })
+  outputs?: Dictionary<string | number | boolean | OutputDefinitionSpec | null>;
 
   @IsOptional()
   @JSONSchema({

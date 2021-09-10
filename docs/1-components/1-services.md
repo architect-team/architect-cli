@@ -30,6 +30,8 @@ services:
       port: 8080
       path: /health
     replicas: 2
+    cpu: 1
+    memory: 512mb
     debug:
       command: npm run dev
       volumes:

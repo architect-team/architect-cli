@@ -24,6 +24,7 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `author` | string | The name or handle of the author of the component as a developer contact. |  |
  | `homepage` | string | The url that serves as the informational homepage of the component (i.e. a github repo). |  |
  | `parameters` | Dict&lt;string&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `outputs` | Dict&lt;string&gt; | A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `services` | Dict&lt;string&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `tasks` | Dict&lt;string&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`) | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%5C%2F(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*(%3F%3A%40%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">ValueRegex</a>,  |
@@ -213,5 +214,15 @@ An ingress exposes an interface to external network traffic through an architect
 | -------------------- | ---------- | -------------- | -------------- |
  | `enabled` | boolean | Marks the interface as an ingress. |  |
  | `subdomain` | string | The subdomain that will be used if the interface is exposed externally (defaults to the interface name) |  |
+
+
+## OutputDefinitionSpec
+
+Components can define output fields that can be used to share configuration with consuming components.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `description` | string | A human-friendly description of the output field. |  |
+ | `value`* |  | Value of the output to be passed to upstream consumers |  |
 
 
