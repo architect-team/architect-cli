@@ -407,8 +407,6 @@ export default class Deploy extends DeployCommand {
 
     const deployment_dtos = [];
     for (const component of components) {
-      ComponentVersionSlugUtils.Validator.test(component);
-
       const deploy_dto = {
         component: component,
         interfaces: interfaces_map,
