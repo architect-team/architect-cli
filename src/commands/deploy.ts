@@ -380,7 +380,7 @@ export default class Deploy extends DeployCommand {
     // so that we can disable automatic interface mapping since we can't map a single interface to
     // multiple components at this time
     const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
-    const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique)
+    const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
     const component_options = { map_all_interfaces: !flags.production && !duplicates };

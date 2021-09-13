@@ -15,8 +15,8 @@ interface ComponentConfigOpts {
 }
 
 const defaultConfigOptions = {
-  map_all_interfaces: false
-}
+  map_all_interfaces: false,
+};
 
 const interfaceObjBuilder = (config: any, component_ref: any) => (interface_from: string, interface_to: string): any => {
   const interface_obj = config.interfaces[interface_to];
