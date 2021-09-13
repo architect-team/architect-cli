@@ -92,6 +92,9 @@ export default class ComponentRegister extends Command {
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      if (!service_config.build && !service_config.image) {
+        service_config.build = { context: '.', dockerfile: 'Dockerfile' };
+      }
       const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
@@ -108,6 +111,9 @@ export default class ComponentRegister extends Command {
     tmpobj.removeCallback();
 
     for (const [task_name, task_config] of Object.entries(new_spec.tasks || {})) {
+      if (!task_config.build && !task_config.image) {
+        task_config.build = { context: '.', dockerfile: 'Dockerfile' };
+      }
       const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${task_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
