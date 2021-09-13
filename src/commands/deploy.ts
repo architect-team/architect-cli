@@ -375,8 +375,18 @@ export default class Deploy extends DeployCommand {
     );
 
     const component_configs: ComponentConfig[] = [];
+
+    // Check if multiple instances of the same component are being deployed. This check is needed
+    // so that we can disable automatic interface mapping since we can't map a single interface to
+    // multiple components at this time
+    const onlyUnique = <T>(value: T, index: number, self: T[]) => self.indexOf(value) === index;
+    const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique)
+    const duplicates = uniqe_names.length !== component_versions.length;
+
+    const component_options = { map_all_interfaces: !flags.production && !duplicates };
+
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map);
+      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map, component_options);
 
       if (flags.recursive) {
         const dependency_configs = await dependency_manager.loadComponentConfigs(component_config);
