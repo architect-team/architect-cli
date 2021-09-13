@@ -126,6 +126,11 @@ export default class ComponentRegister extends Command {
 
     this.log(chalk.blue(`Begin component config diff`));
     const previous_source_yml = dumpToYml(previous_config_data);
+    if (new_spec.services) {
+      for (const service_name of Object.keys(new_spec.services)) {
+        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
+      }
+    }
     const new_source_yml = dumpToYml(new_spec);
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
