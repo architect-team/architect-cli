@@ -272,10 +272,13 @@ export class DockerComposeUtils {
           } else {
             service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`)`);
           }
-
-          service_to.labels.push(`traefik.http.routers.${interface_subdomain}.service=${interface_subdomain}-service`);
+          if (!service_to.labels.includes(`traefik.http.routers.${interface_subdomain}.service=${interface_subdomain}-service`)) {
+            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.service=${interface_subdomain}-service`);
+          }
           service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.port=${node_to_interface.port}`);
-          service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.scheme=${protocol}`);
+          if (!service_to.labels.includes(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.scheme=${protocol}`)) {
+            service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.scheme=${protocol}`);
+          }
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadBalancer.sticky.cookie=true`);
           }
