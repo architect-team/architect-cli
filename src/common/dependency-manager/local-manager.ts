@@ -1,3 +1,4 @@
+import { boolean } from '@oclif/parser/lib/flags';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
@@ -8,6 +9,33 @@ import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
+
+interface ComponentConfigOpts {
+  map_all_interfaces: boolean;
+}
+
+const defaultConfigOptions = {
+  map_all_interfaces: false,
+};
+
+const interfaceObjBuilder = (config: any, component_ref: any) => (interface_to: string, interface_from?: string): any => {
+  const interface_obj = config.interfaces[interface_to];
+  if (!interface_obj) {
+    throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
+  }
+  if (!interface_obj.ingress) {
+    interface_obj.ingress = {};
+  }
+  if (interface_from) {
+    // Set the subdomain to the user provided value
+    interface_obj.ingress.subdomain = interface_from;
+  } else if (!interface_obj.ingress.subdomain) {
+    // Subdomain wasn't set in the component config, so we set it to the interface name
+    interface_obj.ingress.subdomain = interface_to;
+  }
+  interface_obj.ingress.enabled = true;
+  return interface_obj;
+};
 
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
@@ -22,7 +50,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.production = production;
   }
 
-  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
+  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentConfig> {
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_slug = ComponentSlugUtils.build(component_account_name, component_name);
     const component_ref = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
@@ -57,24 +85,31 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set debug values
     const merged_spec = buildSpecFromYml(config.source_yml);
 
-    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      const interface_obj = config.interfaces[interface_to];
-      if (!interface_obj) {
-        throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
-      }
-      if (!interface_obj.ingress) {
-        interface_obj.ingress = {};
-      }
-      interface_obj.ingress.subdomain = interface_from;
-      interface_obj.ingress.enabled = true;
-      config.interfaces[interface_to] = interface_obj;
+    const toInterfaceObj = interfaceObjBuilder(config, component_ref);
+    const inverted_interfaces: Dictionary<string> = Object
+      .entries(interfaces || {})
+      .reduce((acc, [from, to]) => ({ ...acc, [to]: from }), {});
+    Object.keys(config.interfaces).forEach(interface_to => {
+      const interface_from = inverted_interfaces[interface_to];
 
+      // If the interface hasn't been explictely mapped and we aren't configured
+      // to implicitely map all interfaces, then just skip this interface
+      if (!interface_from && !(options || defaultConfigOptions).map_all_interfaces) return;
+
+      // If interface_from has a value, then it was manually mapped by the user, and we
+      // should set that value while building the interface object. If interface_from
+      // is undefined, we should build the interface object using the config defaults
+      const interface_obj = interface_from
+        ? toInterfaceObj(interface_to, interface_from)
+        : toInterfaceObj(interface_to);
+
+      config.interfaces[interface_to] = interface_obj;
       // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
       // potentially create a "deployConfig": a merged source_yml prior to interpolation
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       merged_spec.interfaces[interface_to] = interface_obj;
-    }
+    });
 
     if (config.instance_metadata?.local_path && !this.production) {
       for (const [sk, sv] of Object.entries(config.services)) {
