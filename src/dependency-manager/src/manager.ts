@@ -261,6 +261,7 @@ export default abstract class DependencyManager {
     }
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+      if (!graph.nodes_map.has(to)) continue;
       const edge = new ServiceEdge(buildInterfacesRef(component), to, interfaces_map);
       graph.addEdge(edge);
     }

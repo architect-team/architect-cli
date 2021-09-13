@@ -557,6 +557,40 @@ services:
       ])
     });
 
+    it('invalid services ref', async () => {
+      const component_config = `
+      name: test/component
+      interfaces:
+        other-api: \${{ services.app.interfaces.main.url }}
+      services:
+        api:
+          interfaces:
+            main: 8080
+      `
+
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
+      } catch (e) {
+        err = e;
+      }
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        'interfaces.other-api',
+      ])
+      expect(errors[0].message).includes('services.api.interfaces.main.url')
+    });
+
     it('deploy time validation', async () => {
       const component_config = `
       name: test/component
