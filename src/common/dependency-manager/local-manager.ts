@@ -18,7 +18,7 @@ const defaultConfigOptions = {
   map_all_interfaces: false,
 };
 
-const interfaceObjBuilder = (config: any, component_ref: any) => (interface_from: string, interface_to: string): any => {
+const interfaceObjBuilder = (config: any, component_ref: any) => (interface_to: string, interface_from?: string): any => {
   const interface_obj = config.interfaces[interface_to];
   if (!interface_obj) {
     throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
@@ -26,7 +26,13 @@ const interfaceObjBuilder = (config: any, component_ref: any) => (interface_from
   if (!interface_obj.ingress) {
     interface_obj.ingress = {};
   }
-  interface_obj.ingress.subdomain = interface_from;
+  if (interface_from) {
+    // Set the subdomain to the user provided value
+    interface_obj.ingress.subdomain = interface_from;
+  } else if (!interface_obj.ingress.subdomain) {
+    // Subdomain wasn't set in the component config, so we set it to the interface name
+    interface_obj.ingress.subdomain = interface_to;
+  }
   interface_obj.ingress.enabled = true;
   return interface_obj;
 };
@@ -90,9 +96,12 @@ export default class LocalDependencyManager extends DependencyManager {
       // to implicitely map all interfaces, then just skip this interface
       if (!interface_from && !(options || defaultConfigOptions).map_all_interfaces) return;
 
+      // If interface_from has a value, then it was manually mapped by the user, and we
+      // should set that value while building the interface object. If interface_from
+      // is undefined, we should build the interface object using the config defaults
       const interface_obj = interface_from
-        ? toInterfaceObj(interface_from, interface_to)
-        : toInterfaceObj(interface_to, interface_to);
+        ? toInterfaceObj(interface_to, interface_from)
+        : toInterfaceObj(interface_to);
 
       config.interfaces[interface_to] = interface_obj;
       // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
