@@ -268,7 +268,7 @@ export class DockerComposeUtils {
           const interfaces_node = graph.getUpstreamNodes(node_to).find(n => n instanceof InterfacesNode);
           const component_interface = (interfaces_node as InterfacesNode).component_interfaces[component_interface_name];
           if (interfaces_node && component_interface?.ingress?.path) {
-            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`) && Path(\`${component_interface.ingress.path}.*\`)`);
+            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`) && Path(${component_interface.ingress.path})`);
           } else {
             service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`)`);
           }
