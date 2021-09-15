@@ -46,8 +46,7 @@ export class DockerComposeUtils {
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
         for (const interface_from of Object.keys(edge.interfaces_map)) {
-          const interface_subdomain = interface_from.split('->')[0]; // remove extra part of subdomain used for deduping here
-          const host = interface_subdomain === '@' ? 'arc.localhost' : `${interface_subdomain}.arc.localhost`;
+          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
       }
@@ -226,8 +225,8 @@ export class DockerComposeUtils {
 
       if (node_from instanceof InterfacesNode) continue;
 
-      for (const interface_name of Object.keys(edge.interfaces_map)) {
-        const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
+      for (const [interface_from, interface_to] of Object.entries(edge.interfaces_map)) {
+        const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
         const node_to_ref = node_to.ref;
 
         if (!(node_to instanceof ServiceNode)) continue;
@@ -255,32 +254,34 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          // eslint-disable-next-line prefer-const
-          let [interface_subdomain, component_interface_name] = interface_name.split('->'); // remove extra part of subdomain used for deduping here
 
-          const host = interface_subdomain === '@' ? 'arc.localhost' : `${interface_subdomain}.arc.localhost`;
-
-          if (interface_subdomain === '@') {
+          /*
+          if (interface_name === '@') {
             // @ is an invalid service name for traefik
-            interface_subdomain = '__at__';
+            interface_name = '__at__';
           }
+          */
 
-          const interfaces_node = graph.getUpstreamNodes(node_to).find(n => n instanceof InterfacesNode);
-          const component_interface = (interfaces_node as InterfacesNode).component_interfaces[component_interface_name];
+          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+
+          const traefik_service = interface_from;
+
+          const interfaces_node = graph.getNodeByRef(edge.to) as InterfacesNode;
+          const component_interface = interfaces_node.config[interface_to];
           if (interfaces_node && component_interface?.ingress?.path) {
-            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`) && Path(${component_interface.ingress.path})`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && Path(${component_interface.ingress.path})`);
           } else {
-            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.rule=Host(\`${host}\`)`);
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`)`);
           }
-          if (!service_to.labels.includes(`traefik.http.routers.${interface_subdomain}.service=${interface_subdomain}-service`)) {
-            service_to.labels.push(`traefik.http.routers.${interface_subdomain}.service=${interface_subdomain}-service`);
+          if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`)) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`);
           }
-          service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.port=${node_to_interface.port}`);
-          if (!service_to.labels.includes(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.scheme=${protocol}`)) {
-            service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadbalancer.server.scheme=${protocol}`);
+          service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
+          if (!service_to.labels.includes(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`)) {
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`);
           }
           if (node_to_interface.sticky) {
-            service_to.labels.push(`traefik.http.services.${interface_subdomain}-service.loadBalancer.sticky.cookie=true`);
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
         }
       }

@@ -20,8 +20,4 @@ export default class InterfacesNode extends DependencyNode {
   get interfaces(): Dictionary<ServiceInterfaceConfig> {
     return {};
   }
-
-  get component_interfaces(): Dictionary<ComponentInterfaceConfig> {
-    return this.config;
-  }
 }

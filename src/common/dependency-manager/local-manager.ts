@@ -57,7 +57,7 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set debug values
     const merged_spec = buildSpecFromYml(config.source_yml);
 
-    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) { // "interfaces" is incorrect - is only { www: 'second' }
+    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
       const interface_obj = config.interfaces[interface_to];
       if (!interface_obj) {
         throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
@@ -65,7 +65,7 @@ export default class LocalDependencyManager extends DependencyManager {
       if (!interface_obj.ingress) {
         interface_obj.ingress = {};
       }
-      interface_obj.ingress.subdomain = interface_from.split('->')[0];
+      interface_obj.ingress.subdomain = interface_from;
       interface_obj.ingress.enabled = true;
       config.interfaces[interface_to] = interface_obj;
 
@@ -75,8 +75,6 @@ export default class LocalDependencyManager extends DependencyManager {
       // @ts-ignore
       merged_spec.interfaces[interface_to] = interface_obj;
     }
-    // merged_spec is now correct
-    // config.interfaces is now correct
 
     if (config.instance_metadata?.local_path && !this.production) {
       for (const [sk, sv] of Object.entries(config.services)) {
@@ -108,7 +106,7 @@ export default class LocalDependencyManager extends DependencyManager {
     }
     config.source_yml = yaml.dump(merged_spec);
 
-    return config; // config is now correct
+    return config;
   }
 
   async loadComponentConfigs(initial_component: ComponentConfig): Promise<ComponentConfig[]> {

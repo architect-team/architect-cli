@@ -139,10 +139,8 @@ export default abstract class DependencyManager {
         const [_, interface_name] = matches;
         ingresses.push([component, interface_name]);
       }
-      // console.log(component.interfaces) // one interface isn't "enabled" - why?
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
         if (interface_obj?.ingress?.subdomain && interface_obj.ingress?.enabled) {
-          // console.log('adding')
           ingresses.push([component, interface_name]);
         }
       }
@@ -155,7 +153,6 @@ export default abstract class DependencyManager {
           subdomain = interpolateStringOrReject(subdomain, dep_component.context);
           // eslint-disable-next-line no-empty
         } catch { }
-        subdomain = `${subdomain}->${interface_name}`;
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -169,7 +166,7 @@ export default abstract class DependencyManager {
           graph.addEdge(ingress_edge);
         }
 
-        ingress_edge.interfaces_map[subdomain] = interface_name; // was being duplicated and overwritten, fixed with ->
+        ingress_edge.interfaces_map[subdomain] = interface_name;
 
         if (buildComponentRef(dep_component) !== buildComponentRef(component)) {
           if (!ingress_edge.consumers_map[subdomain]) {
@@ -350,14 +347,6 @@ export default abstract class DependencyManager {
         subdomain: interface_from,
         dns_zone: external_host,
       };
-
-      if (partial_external_interface.host?.includes('->')) {
-        const domain_parts = partial_external_interface.host.split('.');
-        const interface_subdomain = domain_parts[0].split('->')[0];
-        domain_parts.shift();
-        partial_external_interface.host = [interface_subdomain, ...domain_parts].join('.');
-        partial_external_interface.subdomain = interface_subdomain;
-      }
     }
     const external_interface = {
       ...partial_external_interface,
