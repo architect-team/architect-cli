@@ -617,7 +617,7 @@ export default abstract class DependencyManager {
 
       if (Object.keys(component_config.interfaces).length) {
         const ref = buildComponentRef(component_config);
-        const node = new InterfacesNode(buildInterfacesRef(component_config), ref);
+        const node = new InterfacesNode(buildInterfacesRef(component_config), ref, component_config.interfaces);
         nodes.push(node);
       }
 
