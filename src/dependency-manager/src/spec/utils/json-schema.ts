@@ -4,6 +4,7 @@ import { Dictionary } from '../../utils/dictionary';
 import { ComponentSpec } from '../component-spec';
 import { ResourceSpec } from '../resource-spec';
 import { ServiceSpec } from '../service-spec';
+import { SidecarSpec } from '../sidecar-spec';
 import { TaskSpec } from '../task-spec';
 import { REF_PREFIX } from './json-schema-annotations';
 
@@ -101,6 +102,7 @@ const recursivelyReplaceDebugRefs = (obj: SchemaObject) => {
 const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
 
   const service_spec_name = ServiceSpec.name;
+  const sidecar_spec_name = SidecarSpec.name;
   const task_spec_name = TaskSpec.name;
   const debug_field = 'debug';
 
@@ -114,7 +116,7 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
     delete definition.allOf;
     debug_definitions[`${DEBUG_PREFIX}${key}`] = definition;
 
-    if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name)) {
+    if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name || key === sidecar_spec_name)) {
       delete definition.properties.debug; // delete the debug property if it exists, a debug block is not valid inside a debug block
     }
   }
@@ -124,6 +126,13 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
     definitions[service_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${service_spec_name}`;
   } else {
     throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${service_spec_name}!`);
+  }
+
+  if (definitions[sidecar_spec_name]?.properties) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    definitions[sidecar_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${sidecar_spec_name}`;
+  } else {
+    throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${sidecar_spec_name}!`);
   }
 
   if (definitions[task_spec_name]?.properties) {

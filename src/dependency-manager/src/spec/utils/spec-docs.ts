@@ -239,6 +239,7 @@ const schemaToMarkdown = (schema: SchemaObject): string => {
   const ordered_definitions: { [key: string]: SchemaObject } = {
     ComponentSpec: no_debug_schema.definitions[ComponentSpec.name],
     ServiceSpec: no_debug_schema.definitions[ServiceSpec.name],
+    SidecarSpec: no_debug_schema.definitions[ServiceSpec.name],
     ParameterDefinitionSpec: no_debug_schema.definitions[ParameterDefinitionSpec.name],
     ComponentInterfaceSpec: no_debug_schema.definitions[ComponentInterfaceSpec.name],
     TaskSpec: no_debug_schema.definitions[TaskSpec.name],

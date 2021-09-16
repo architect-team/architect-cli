@@ -3,6 +3,7 @@ import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
+import { SidecarSpec } from './sidecar-spec';
 import { TaskSpec } from './task-spec';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
@@ -227,6 +228,19 @@ export class ComponentSpec {
     description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
   services?: Dictionary<ServiceSpec>;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(SidecarSpec),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
+    description: 'A set of services to run as a sidecar for this service.',
+  })
+  sidecars?: Dictionary<SidecarSpec>;
 
   @IsOptional()
   @JSONSchema({
