@@ -11,6 +11,10 @@ export interface ServiceContext {
   interfaces: Dictionary<ServiceInterfaceConfig>;
 }
 
+export interface SidecarContext {
+  environment: Dictionary<string | null>;
+}
+
 export interface TaskContext {
   environment: Dictionary<string | null>;
 }
@@ -23,6 +27,7 @@ export interface ComponentContext {
   ingresses: Dictionary<ComponentInterfaceConfig>;
   interfaces: Dictionary<ComponentInterfaceConfig>;
   services: Dictionary<ServiceContext>;
+  sidecars: Dictionary<SidecarContext>;
   tasks: Dictionary<TaskContext>;
 
   environment?: {
