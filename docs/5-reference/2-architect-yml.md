@@ -26,6 +26,7 @@ The top level object of the `architect.yml`; defines a deployable Architect Comp
  | `parameters` | Dict&lt;string&gt; | A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you'll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `outputs` | Dict&lt;string&gt; | A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_-%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `services` | Dict&lt;string&gt; | A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `sidecars` | Dict&lt;string&gt; | A set of services to run as a sidecar for this service. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `tasks` | Dict&lt;string&gt; | A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dependencies` | Dict&lt;string&gt; | A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`) | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%5C%2F(%3F%3D.%7B1%2C32%7D(%5C%2F%7C%3A%7C%24))%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*(%3F%3A%40%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=%5E%5B%5Cw%5D%5B%5Cw%5C.-%5D%7B0%2C127%7D%24">ValueRegex</a>,  |
  | `interfaces` | Dict&lt;string&gt; | A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
@@ -40,9 +41,34 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
 | -------------------- | ---------- | -------------- | -------------- |
  | `debug` | Partial&lt;[ServiceSpec](#servicespec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `sidecars` | Dict&lt;string&gt; | A set of services to run as a sidecar for this service. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
  | `replicas` | number \| [Expression](/docs/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
+ | `description` | string | Human readable description |  |
+ | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
+ | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
+ | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
+ | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
+ | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
+ | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
+ | `build` | [BuildSpec](#buildspec) |  |  |
+ | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
+ | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
+ | `deploy` | [DeploySpec](#deployspec) |  |  |
+ | `depends_on` | Array&lt;string&gt; | An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks. |  |
+ | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
+
+
+## SidecarSpec
+
+A container to run as a sidecar to the related component or service
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `enabled` | boolean | If the sidecar should be started or not. | default: `true` |
+ | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
+ | `debug` | Partial&lt;[SidecarSpec](#sidecarspec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |
@@ -153,6 +179,22 @@ An object containing the details necessary for Architect to build the service vi
  | `dockerfile` | string \| [Expression](/docs/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
 
 
+## LivenessProbeSpec
+
+Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `success_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a health check before the container is considered healthy. | default: `1` |
+ | `failure_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
+ | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
+ | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
+ | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
+ | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
+ | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
+ | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
+
+
 ## ScalingMetricsSpec
 
 Scaling metrics define the upper bound of resource consumption before spinning up an additional replica.
@@ -188,22 +230,6 @@ A service interface exposes service functionality over the network to other serv
  | `password` | null \| string \| [Expression](/docs/reference/contexts) | A Basic Auth password required to access the interface |  |
  | `url` | string \| [Expression](/docs/reference/contexts) | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
  | `sticky` | boolean \| [Expression](/docs/reference/contexts) | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
-
-
-## LivenessProbeSpec
-
-Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `success_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a health check before the container is considered healthy. | default: `1` |
- | `failure_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
- | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
- | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
- | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
- | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
- | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
- | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
 
 
 ## IngressSpec

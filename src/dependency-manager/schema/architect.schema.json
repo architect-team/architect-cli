@@ -107,6 +107,23 @@
       "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
       "additionalProperties": false
     },
+    "sidecars": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SidecarSpec"
+            }
+          ]
+        }
+      },
+      "errorMessage": {
+        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+      },
+      "description": "A set of services to run as a sidecar for this service.",
+      "additionalProperties": false
+    },
     "tasks": {
       "type": "object",
       "patternProperties": {
@@ -417,6 +434,405 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
       }
     },
+    "LivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
+        },
+        "failure_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 3
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
+        },
+        "initial_delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+        }
+      },
+      "type": "object",
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "command"
+              ]
+            },
+            {
+              "type": "object",
+              "required": [
+                "path",
+                "port"
+              ]
+            }
+          ]
+        },
+        {
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "port"
+            ]
+          }
+        },
+        {
+          "not": {
+            "type": "object",
+            "required": [
+              "command",
+              "path"
+            ]
+          }
+        }
+      ],
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
+    },
+    "SidecarSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If the sidecar should be started or not.",
+          "default": true
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/LivenessProbeSpec"
+        },
+        "debug": {
+          "$ref": "#/definitions/_DebugSidecarSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/BuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/DeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A container to run as a sidecar to the related component or service",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#sidecarspec"
+      }
+    },
     "ScalingMetricsSpec": {
       "properties": {
         "cpu": {
@@ -699,178 +1115,6 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
       }
     },
-    "LivenessProbeSpec": {
-      "properties": {
-        "success_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a health check before the container is considered healthy.",
-          "default": 1
-        },
-        "failure_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-          "default": 3
-        },
-        "timeout": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
-          "default": "5s"
-        },
-        "interval": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
-          "default": "30s"
-        },
-        "initial_delay": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Delays the check from running for the specified amount of time",
-          "default": "0s"
-        },
-        "path": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\/.*$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
-        },
-        "command": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
-        },
-        "port": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
-        }
-      },
-      "type": "object",
-      "allOf": [
-        {
-          "oneOf": [
-            {
-              "type": "object",
-              "required": [
-                "command"
-              ]
-            },
-            {
-              "type": "object",
-              "required": [
-                "path",
-                "port"
-              ]
-            }
-          ]
-        },
-        {
-          "not": {
-            "type": "object",
-            "required": [
-              "command",
-              "port"
-            ]
-          }
-        },
-        {
-          "not": {
-            "type": "object",
-            "required": [
-              "command",
-              "path"
-            ]
-          }
-        }
-      ],
-      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
-      }
-    },
     "ServiceSpec": {
       "properties": {
         "debug": {
@@ -905,6 +1149,23 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
+        },
+        "sidecars": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SidecarSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of services to run as a sidecar for this service.",
           "additionalProperties": false
         },
         "liveness_probe": {
@@ -1713,6 +1974,23 @@
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
           "additionalProperties": false
         },
+        "sidecars": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SidecarSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of services to run as a sidecar for this service.",
+          "additionalProperties": false
+        },
         "tasks": {
           "type": "object",
           "patternProperties": {
@@ -2015,6 +2293,365 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
       }
     },
+    "_DebugLivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
+        },
+        "failure_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 3
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
+        },
+        "initial_delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+        }
+      },
+      "type": "object",
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
+    },
+    "_DebugSidecarSpec": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If the sidecar should be started or not.",
+          "default": true
+        },
+        "liveness_probe": {
+          "$ref": "#/definitions/_DebugLivenessProbeSpec"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human readable description"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set)"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command."
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint."
+        },
+        "language": {
+          "type": "string",
+          "description": "The dominant programming language used; this is for informational purposes only."
+        },
+        "environment": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#local-configuration"
+          },
+          "additionalProperties": false
+        },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
+        "build": {
+          "$ref": "#/definitions/_DebugBuildSpec"
+        },
+        "cpu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The cpu required to run a service or a task",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "memory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The memory required to run a service or a task.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#cpu--memory"
+          }
+        },
+        "deploy": {
+          "$ref": "#/definitions/_DebugDeploySpec"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "An array of service names for those services in the component that are pre-requisites to deploy. Used at deploy-time to build a deploy order across services and tasks."
+        },
+        "labels": {
+          "type": "object",
+          "patternProperties": {
+            "^(?=(.{1,63}/)?.{1,63}$)((([a-z0-9][-a-z0-9_.]*)?[a-z0-9])?/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(?=.{1,63})(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "\\${{\\s*(.*?)\\s*}}",
+                  "errorMessage": {
+                    "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                  }
+                }
+              ]
+            }
+          },
+          "description": "A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks.",
+          "externalDocs": {
+            "url": "/docs/configuration/services#labels"
+          },
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "description": "A container to run as a sidecar to the related component or service",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#sidecarspec"
+      }
+    },
     "_DebugScalingMetricsSpec": {
       "properties": {
         "cpu": {
@@ -2261,141 +2898,6 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#serviceinterfacespec"
       }
     },
-    "_DebugLivenessProbeSpec": {
-      "properties": {
-        "success_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a health check before the container is considered healthy.",
-          "default": 1
-        },
-        "failure_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-          "default": 3
-        },
-        "timeout": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
-          "default": "5s"
-        },
-        "interval": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
-          "default": "30s"
-        },
-        "initial_delay": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Delays the check from running for the specified amount of time",
-          "default": "0s"
-        },
-        "path": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\/.*$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
-        },
-        "command": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
-        },
-        "port": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
-        }
-      },
-      "type": "object",
-      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
-      }
-    },
     "_DebugServiceSpec": {
       "properties": {
         "interfaces": {
@@ -2427,6 +2929,23 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.",
+          "additionalProperties": false
+        },
+        "sidecars": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugSidecarSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of services to run as a sidecar for this service.",
           "additionalProperties": false
         },
         "liveness_probe": {
@@ -3224,6 +3743,23 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
+          "additionalProperties": false
+        },
+        "sidecars": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugSidecarSpec"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of services to run as a sidecar for this service.",
           "additionalProperties": false
         },
         "tasks": {
