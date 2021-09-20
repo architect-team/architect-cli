@@ -896,6 +896,36 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
+  it('parameter value starting with bracket does not produce invalid yaml', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      secret:
+
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world'),
+    ], { '*': { secret: '[abc' } });
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: '[abc'
+    });
+  });
+
   it('file: at end of yaml key not interpreted as file ref', async () => {
     const component_config = `
     name: examples/hello-world

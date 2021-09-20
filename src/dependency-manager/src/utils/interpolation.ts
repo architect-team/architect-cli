@@ -72,6 +72,12 @@ export const buildContextMap = (context: any): any => {
   return context_map;
 };
 
+// https://yaml.org/spec/1.2/spec.html#c-indicator
+const c_indicators = ['-', '?', ':', ',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '%', '@', '`', '\'', '"'];
+const startsWithCIndicator = (value: string): boolean => {
+  return c_indicators.some((c) => value.startsWith(c));
+};
+
 /**
  * Check if a value needs to be stringified or not.
  *
@@ -83,7 +89,7 @@ export const normalizeValueForInterpolation = (value: any): string => {
   }
   if (value instanceof Object) {
     return JSON.stringify(value);
-  } else if (typeof value === 'string' && value.includes('\n')) {
+  } else if (typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value))) {
     return JSON.stringify(value.trimEnd());
   } else {
     return value;
