@@ -561,7 +561,8 @@ services:
       const component_config = `
       name: test/component
       interfaces:
-        other-api: \${{ services.app.interfaces.main.url }}
+        api: \${{ services.app.interfaces.main.url }}
+        api2: \${{ service.api.interfaces.main.url }}
       services:
         api:
           interfaces:
@@ -577,16 +578,17 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentConfig('test/component', { api: 'api', api2: 'api2' }),
         ]);
       } catch (e) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
       const errors = JSON.parse(err.message) as ValidationError[];
-      expect(errors).lengthOf(1);
+      expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.other-api',
+        'interfaces.api.url',
+        'interfaces.api2.url'
       ])
       expect(errors[0].message).includes('services.api.interfaces.main.url')
     });
