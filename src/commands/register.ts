@@ -199,18 +199,15 @@ export default class ComponentRegister extends Command {
       if (resource_spec.build?.dockerfile) {
         dockerfile = path.join(build_path, resource_spec.build.dockerfile);
       }
-      let build_args: string[] = [];
-      if (resource_spec.build?.args) {
-        const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
-        for (const arg of flags.arg || []) {
-          const [key, value] = arg.split('=');
-          if (!value) {
-            throw new Error(`--arg must be in the format key=value: ${arg}`);
-          }
-          build_args_map[key] = value;
+      const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
+      for (const arg of flags.arg || []) {
+        const [key, value] = arg.split('=');
+        if (!value) {
+          throw new Error(`--arg must be in the format key=value: ${arg}`);
         }
-        build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
+        build_args_map[key] = value;
       }
+      const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));
