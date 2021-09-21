@@ -1233,6 +1233,48 @@ describe('interpolation spec v1', () => {
     });
   });
 
+  it('interpolate nested parameter', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      db_host:
+        default: ''
+    services:
+      api:
+        environment:
+          DB_ADDR: \${{ parameters.db_host }}:5432
+          DB_ADDR2: \${{ parameters.db_host }}:\${{ parameters.db_host }}
+          DB_ADDR3: \${{ parameters.db_host }}:\${{ parameters.db_host }}:5432
+          DB_ADDR4: \${{ parameters.db_host }}\${{ parameters.db_host }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
+  });
+
   it('interpolate outputs', async () => {
     const publisher_config = `
     name: examples/publisher

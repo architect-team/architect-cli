@@ -18,6 +18,7 @@ const matches = (text: string, pattern: RegExp) => ({
       match = clone.exec(text);
       if (match) {
         yield match;
+        clone.lastIndex = match.index + 1; // Support overlapping match groups
       }
     } while (match);
   },
@@ -83,13 +84,13 @@ const startsWithCIndicator = (value: string): boolean => {
  *
  * It does if it JSON.parses to an object or if it is a multiline string
  */
-export const normalizeValueForInterpolation = (value: any): string => {
+export const normalizeValueForInterpolation = (value: any, nested = false): string => {
   if (value === undefined) {
     return '';
   }
   if (value instanceof Object) {
     return JSON.stringify(value);
-  } else if (typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value) || value === '')) {
+  } else if (!nested && typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value) || value === '')) {
     return JSON.stringify(value.trimEnd());
   } else {
     return value;
@@ -111,18 +112,20 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     if (depth >= max_depth) {
       throw new Error('Max interpolation depth exceeded');
     }
-    for (const match of matches(res, interpolation_regex)) {
-      const sanitized_value = replaceBrackets(match[1]);
+    for (const match of matches(res, new RegExp('(' + interpolation_regex.source + ')' + '(.*)', 'g'))) {
+      const interpolation_ref = match[2];
+      const sanitized_value = replaceBrackets(interpolation_ref);
+      const nested_interpolation_ref = !!match[3].trim();
       const value = context_map[sanitized_value];
 
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
         if (!ignored) {
-          misses.add(match[1]);
+          misses.add(interpolation_ref);
         }
       }
 
-      res = res.replace(match[0], normalizeValueForInterpolation(value));
+      res = res.replace(match[1], normalizeValueForInterpolation(value, nested_interpolation_ref));
       has_matches = true;
     }
   }
