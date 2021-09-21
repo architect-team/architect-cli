@@ -1226,6 +1226,11 @@ describe('interpolation spec v1', () => {
     expect(node.config.environment).to.deep.eq({
       SECRET: ''
     });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      SECRET: ''
+    });
   });
 
   it('interpolate outputs', async () => {
