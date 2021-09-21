@@ -1200,6 +1200,34 @@ describe('interpolation spec v1', () => {
     expect(node.config.replicas).to.eq(3);
   });
 
+  it('interpolate parameter to env with empty string', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      secret:
+        default: ''
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: ''
+    });
+  });
+
   it('interpolate outputs', async () => {
     const publisher_config = `
     name: examples/publisher

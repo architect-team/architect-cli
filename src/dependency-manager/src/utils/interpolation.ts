@@ -89,7 +89,7 @@ export const normalizeValueForInterpolation = (value: any): string => {
   }
   if (value instanceof Object) {
     return JSON.stringify(value);
-  } else if (typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value))) {
+  } else if (typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value) || value === '')) {
     return JSON.stringify(value.trimEnd());
   } else {
     return value;
