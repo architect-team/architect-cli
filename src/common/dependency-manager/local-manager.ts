@@ -91,7 +91,7 @@ export default class LocalDependencyManager extends DependencyManager {
       // is undefined, we should build the interface object using the config defaults
       if (interface_from) {
         interface_obj.ingress.subdomain = interface_from;
-      } else {
+      } else if (!interface_obj.ingress.subdomain) {
         interface_obj.ingress.subdomain = interface_to;
       }
       // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
