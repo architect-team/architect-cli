@@ -18,6 +18,8 @@ export abstract class DependencyNode implements DependencyNodeOptions {
 
   instance_id = '';
 
+  deployment_id?: string;
+
   get is_external(): boolean {
     return false;
   }

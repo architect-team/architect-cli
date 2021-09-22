@@ -1,13 +1,14 @@
 import { flags } from '@oclif/command';
 import axios, { AxiosResponse } from 'axios';
 import chalk from 'chalk';
+import { plainToClass } from 'class-transformer';
 import cli from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
-import { Listr } from 'listr2';
+import { Listr, ListrTask } from 'listr2';
 import opener from 'opener';
 import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
@@ -16,9 +17,10 @@ import DockerComposeTemplate from '../common/docker-compose/template';
 import { AccountUtils } from '../common/utils/account';
 import { Deployment } from '../common/utils/deployment';
 import * as Docker from '../common/utils/docker';
-import { EnvironmentHealth, EnvironmentUtils } from '../common/utils/environment';
-import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, DependencyNode, ServiceInterfaceConfig, ServiceVersionSlugUtils, Slugs } from '../dependency-manager/src';
+import { Environment, EnvironmentHealth, EnvironmentUtils } from '../common/utils/environment';
+import { Pipeline, PipelineUtils } from '../common/utils/pipeline';
+import { ComponentConfig, ComponentSlugUtils, ComponentVersionSlugUtils, ServiceNode, ServiceVersionSlugUtils, Slugs } from '../dependency-manager/src';
+import DependencyGraph from '../dependency-manager/src/graph';
 import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
@@ -418,17 +420,17 @@ export default class Deploy extends DeployCommand {
     }
 
     cli.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
-    const pipelines = await Promise.all(
+    const pipelines: Pipeline[] = await Promise.all(
       deployment_dtos.map(async (deployment_dto) => {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
-        return { component_name: deployment_dto.component, pipeline };
+        return pipeline;
       })
     );
     cli.action.stop();
 
     const approved_pipelines = [];
     for (const pipeline of pipelines) {
-      const approved = await this.approvePipeline(pipeline.pipeline);
+      const approved = await this.approvePipeline(pipeline);
       if (approved) {
         approved_pipelines.push(pipeline);
       }
@@ -439,70 +441,13 @@ export default class Deploy extends DeployCommand {
       return;
     }
 
-    let component_deployments: Deployment[] = [];
-    for (const approved_pipeline of approved_pipelines) {
-      const { data: pipeline_deployments } = await this.app.api.get(`/pipelines/${approved_pipeline.pipeline.id}/deployments`);
-      component_deployments = component_deployments.concat(pipeline_deployments.filter((d: Deployment) => d.type === 'component'));
-    }
-
-    const environment_graph = (await this.app.api.get(`/environments/${environment.id}/graph`)).data;
-    const service_nodes = environment_graph.nodes.filter((n: DependencyNode) => n.__type === 'service');
-    const deployment_tasks: { [s: string]: any[] } = {};
-    for (const service_node of service_nodes) {
-      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.ref);
-      const component_version_name = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
-
-      if (!deployment_tasks[component_version_name]) {
-        const component_deployment = component_deployments.find(d => d.id === service_node.deployment_id);
-        if (!component_deployment) {
-          continue; // skip, service already exists in environment and isn't currently being deployed
-        }
-        deployment_tasks[component_version_name] = [{
-          title: `Pipeline ${component_deployment.pipeline.id}`,
-          task: () => PipelineUtils.pollPipeline(this.app.api, component_deployment.pipeline.id),
-        }];
-      }
-      deployment_tasks[component_version_name].push({
-        title: `Service ${service_name}`,
-        task: () => new Promise((resolve, reject) => {
-          if ((Object.values(service_node.config.interfaces || {}) as ServiceInterfaceConfig[]).find(i => !!i.host)) {
-            return resolve(true);
-          }
-
-          let service_health_poll_count = 0;
-          const service_health_poll = setInterval(async () => {
-            if (service_health_poll_count > 180) {
-              clearInterval(service_health_poll);
-              return reject(new Error(`Service ${service_name} deployment timed out`));
-            }
-
-            const environment_health: EnvironmentHealth = (await this.app.api.get(`/environments/${environment.id}/health`)).data;
-            if (environment_health[service_node.ref]) {
-              const service_interface_count = Object.keys(environment_health[service_node.ref]).length;
-              let healthy_count = 0;
-              for (const interface_data of Object.values(environment_health[service_node.ref])) {
-                for (const consul_interface_data of Object.values(interface_data)) {
-                  if (consul_interface_data.healthy) {
-                    healthy_count++;
-                  }
-                }
-              }
-              if (healthy_count === service_interface_count) {
-                clearInterval(service_health_poll);
-                return resolve(true);
-              }
-            }
-            service_health_poll_count += 1;
-          }, PipelineUtils.POLL_INTERVAL);
-        }),
-      });
-    }
+    const component_tasks = await this.getComponentTasks(environment, approved_pipelines);
 
     const all_tasks = [];
-    for (const [component_name, component_tasks] of Object.entries(deployment_tasks || {})) {
+    for (const [component_name, deployment_tasks] of Object.entries(component_tasks || {})) {
       all_tasks.push({
         title: `Component ${component_name}`,
-        task: () => { return new Listr(component_tasks, { concurrent: true }); },
+        task: () => { return new Listr(deployment_tasks, { concurrent: true }); },
       });
     }
     const tasks = new Listr(all_tasks, { concurrent: true });
@@ -527,5 +472,93 @@ export default class Deploy extends DeployCommand {
     } else {
       await this.runRemote();
     }
+  }
+
+  async getComponentTasks(environment: Environment, pipelines: Pipeline[]): Promise<Dictionary<ListrTask[]>> {
+    let component_deployments: Deployment[] = [];
+    for (const approved_pipeline of pipelines) {
+      const { data: pipeline_deployments } = await this.app.api.get(`/pipelines/${approved_pipeline.id}/deployments`);
+      component_deployments = component_deployments.concat(pipeline_deployments.filter((d: Deployment) => d.type === 'component'));
+    }
+    const component_deployment_ids = new Set(component_deployments.map(d => d.id));
+
+    const { data: raw_graph } = await this.app.api.get(`/environments/${environment.id}/graph`);
+    const graph = plainToClass(DependencyGraph, raw_graph);
+
+    const service_nodes = graph.nodes.filter(node => node instanceof ServiceNode && !node.is_external) as ServiceNode[];
+    const filtered_service_nodes = service_nodes.filter(node => component_deployment_ids.has(node.deployment_id || ''));
+
+    const component_tasks: Dictionary<ListrTask[]> = {};
+    const service_promises: Promise<boolean>[] = [];
+    const service_resolves: Dictionary<(value: boolean) => void> = {};
+    const service_rejects: Dictionary<(reason: any) => void> = {};
+    for (const service_node of filtered_service_nodes) {
+      const { component_account_name, component_name, service_name, tag } = ServiceVersionSlugUtils.parse(service_node.config.ref);
+      const component_version_slug = ComponentVersionSlugUtils.build(component_account_name, component_name, tag);
+
+      if (!component_tasks[component_version_slug]) {
+        component_tasks[component_version_slug] = [];
+
+        const pipeline = component_deployments.find(d => d.id === service_node.deployment_id)?.pipeline;
+
+        if (!pipeline || !pipeline.environment) {
+          continue;
+        }
+
+        component_tasks[component_version_slug] = [{
+          title: `Pipeline: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`,
+          task: () => PipelineUtils.pollPipeline(this.app.api, pipeline.id),
+        }];
+      }
+
+      // TODO:265 handle tasks
+      // TODO:265 handle workers
+
+      const service_promise = new Promise<boolean>((resolve, reject) => {
+        service_resolves[service_node.ref] = resolve;
+        service_rejects[service_node.ref] = reject;
+      });
+      service_promises.push(service_promise);
+
+      component_tasks[component_version_slug].push({
+        title: `Service ${service_name}`,
+        task: () => service_promise,
+      });
+    }
+
+    let service_health_poll_count = 0;
+    const service_health_poll = setInterval(async () => {
+      if (service_health_poll_count > 180) {
+        for (const [service_ref, service_reject] of Object.entries(service_rejects)) {
+          service_reject(new Error(`Service ${(graph.getNodeByRef(service_ref) as ServiceNode).config.name}: Timed out waiting for service to be healthy`));
+        }
+        return;
+      }
+      const { data: environment_health }: { data: EnvironmentHealth } = await this.app.api.get(`/environments/${environment.id}/health`);
+
+      for (const [service_ref, service_resolve] of Object.entries(service_resolves)) {
+        if (environment_health[service_ref]) {
+          const service_interface_count = Object.keys(environment_health[service_ref]).length;
+          let healthy_count = 0;
+          for (const interface_data of Object.values(environment_health[service_ref])) {
+            for (const consul_interface_data of Object.values(interface_data)) {
+              if (consul_interface_data.healthy) {
+                healthy_count++;
+              }
+            }
+          }
+          if (healthy_count === service_interface_count) {
+            service_resolve(true);
+          }
+        }
+      }
+      service_health_poll_count += 1;
+    }, PipelineUtils.POLL_INTERVAL);
+
+    Promise.all(service_promises).finally(() => {
+      clearInterval(service_health_poll);
+    });
+
+    return component_tasks;
   }
 }

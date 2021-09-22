@@ -11,6 +11,7 @@ export interface Environment {
   platform: {
     type: string;
   };
+  account: Account;
 }
 
 export type EnvironmentHealth = Dictionary<Dictionary<Dictionary<ServiceInterfaceHealth>>>;
