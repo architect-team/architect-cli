@@ -1357,13 +1357,13 @@ describe('interpolation spec v1', () => {
       api: {
         url: `http://${api_ref}:8080`,
         ingress: {
-          whitelist: ['127.0.0.1']
+          ip_whitelist: ['127.0.0.1']
         }
       },
       api2: {
         url: `http://${api_ref}:8080`,
         ingress: {
-          whitelist: ['127.0.0.1/32']
+          ip_whitelist: ['127.0.0.1/32']
         }
       }
     });

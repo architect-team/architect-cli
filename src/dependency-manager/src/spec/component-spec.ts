@@ -35,7 +35,7 @@ export class IngressSpec {
     }),
     description: 'IP addresses that are allowed to access the interface',
   })
-  whitelist?: string[];
+  ip_whitelist?: string[];
 }
 
 @JSONSchema({
