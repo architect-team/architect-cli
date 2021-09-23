@@ -1326,11 +1326,11 @@ describe('interpolation spec v1', () => {
       api:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          whitelist: \${{ parameters.ip_whitelist }}
+          ip_whitelist: \${{ parameters.ip_whitelist }}
       api2:
         url: \${{ services.api.interfaces.main.url }}
         ingress:
-          whitelist: \${{ parameters.required_ip_whitelist }}
+          ip_whitelist: \${{ parameters.required_ip_whitelist }}
     services:
       api:
         interfaces:
