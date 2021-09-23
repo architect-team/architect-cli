@@ -759,11 +759,14 @@ export default abstract class DependencyManager {
         tree_node.interpolated_config = tree_node.config;
       }
 
+      if (Object.keys(tree_node.interpolated_config.interfaces).length) {
+        const interfaces_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as InterfacesNode;
+        interfaces_node.config = tree_node.interpolated_config.interfaces;
+      }
+
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.services), ...Object.entries(tree_node.interpolated_config.tasks)]) {
         const service_ref = buildNodeRef(tree_node.interpolated_config, service_name);
         const node = graph.getNodeByRef(service_ref) as ServiceNode | TaskNode;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         node.proxy_port_mapping = tree_node.interpolated_config.proxy_port_mapping;
         node.config = service_config;
       }
