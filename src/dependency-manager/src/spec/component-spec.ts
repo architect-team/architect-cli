@@ -27,7 +27,12 @@ export class IngressSpec {
 
   @IsOptional()
   @JSONSchema({
-    ...ArrayOf('string'),
+    ...ExpressionOr({
+      type: "array",
+      items: {
+        anyOf: [{ type: 'string', format: 'cidrv4' }],
+      },
+    }),
     description: 'IP addresses that are allowed to access the interface',
   })
   whitelist?: string[];
