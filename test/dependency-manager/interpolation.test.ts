@@ -10,8 +10,9 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
+import InterfacesNode from '../../src/dependency-manager/src/graph/node/interfaces';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -1272,6 +1273,45 @@ describe('interpolation spec v1', () => {
       DB_ADDR2: ':""',
       DB_ADDR3: '::5432',
       DB_ADDR4: '',
+    });
+  });
+
+  it('interpolate interfaces node', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      subdomain: test
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          subdomain: \${{ parameters.subdomain }}
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('examples/hello-world');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config));
+    const interfaces_ref = buildInterfacesRef(config);
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
+    expect(node.config).to.deep.eq({
+      api: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          subdomain: 'test'
+        }
+      }
     });
   });
 
