@@ -1389,6 +1389,29 @@
         "subdomain": {
           "type": "string",
           "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
+        },
+        "ip_whitelist": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "cidrv4"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "IP addresses that are allowed to access the interface"
         }
       },
       "type": "object",
@@ -2885,6 +2908,29 @@
         "subdomain": {
           "type": "string",
           "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
+        },
+        "ip_whitelist": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "cidrv4"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "IP addresses that are allowed to access the interface"
         }
       },
       "type": "object",
