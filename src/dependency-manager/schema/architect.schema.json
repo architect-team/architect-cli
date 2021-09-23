@@ -107,23 +107,6 @@
       "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
       "additionalProperties": false
     },
-    "sidecars": {
-      "type": "object",
-      "patternProperties": {
-        "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SidecarSpec"
-            }
-          ]
-        }
-      },
-      "errorMessage": {
-        "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-      },
-      "description": "A set of services to run as a sidecar for this service.",
-      "additionalProperties": false
-    },
     "tasks": {
       "type": "object",
       "patternProperties": {
@@ -1974,23 +1957,6 @@
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
           "additionalProperties": false
         },
-        "sidecars": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/SidecarSpec"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of services to run as a sidecar for this service.",
-          "additionalProperties": false
-        },
         "tasks": {
           "type": "object",
           "patternProperties": {
@@ -3743,23 +3709,6 @@
             "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
           },
           "description": "A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.",
-          "additionalProperties": false
-        },
-        "sidecars": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/_DebugSidecarSpec"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of services to run as a sidecar for this service.",
           "additionalProperties": false
         },
         "tasks": {

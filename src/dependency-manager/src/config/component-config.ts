@@ -3,7 +3,6 @@ import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ComponentContext } from './component-context';
 import { ServiceConfig } from './service-config';
-import { SidecarConfig } from './sidecar-config';
 import { TaskConfig } from './task-config';
 
 export interface IngressConfig {
@@ -87,7 +86,6 @@ export interface ComponentConfig {
   outputs: Dictionary<OutputDefinitionConfig>;
 
   services: Dictionary<ServiceConfig>;
-  sidecars: Dictionary<SidecarConfig>;
   tasks: Dictionary<TaskConfig>;
   dependencies: Dictionary<string>;
 
