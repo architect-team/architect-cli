@@ -8,6 +8,7 @@ import { TaskConfig } from './task-config';
 export interface IngressConfig {
   enabled?: boolean;
   subdomain?: string;
+  whitelist?: string[];
 }
 
 export interface ComponentInterfaceConfig {

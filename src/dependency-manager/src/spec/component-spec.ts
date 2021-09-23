@@ -24,6 +24,13 @@ export class IngressSpec {
     description: 'The subdomain that will be used if the interface is exposed externally (defaults to the interface name)',
   })
   subdomain?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ArrayOf('string'),
+    description: 'IP addresses that are allowed to access the interface',
+  })
+  whitelist?: string[];
 }
 
 @JSONSchema({
