@@ -214,6 +214,7 @@ An ingress exposes an interface to external network traffic through an architect
 | -------------------- | ---------- | -------------- | -------------- |
  | `enabled` | boolean | Marks the interface as an ingress. |  |
  | `subdomain` | string | The subdomain that will be used if the interface is exposed externally (defaults to the interface name) |  |
+ | `ip_whitelist` | Array&lt;string&gt; \| [Expression](/docs/reference/contexts) | IP addresses that are allowed to access the interface |  |
 
 
 ## OutputDefinitionSpec
