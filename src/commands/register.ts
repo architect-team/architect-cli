@@ -92,6 +92,9 @@ export default class ComponentRegister extends Command {
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      if (!service_config.build && !service_config.image) {
+        service_config.build = { context: '.', dockerfile: 'Dockerfile' };
+      }
       const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
@@ -108,6 +111,9 @@ export default class ComponentRegister extends Command {
     tmpobj.removeCallback();
 
     for (const [task_name, task_config] of Object.entries(new_spec.tasks || {})) {
+      if (!task_config.build && !task_config.image) {
+        task_config.build = { context: '.', dockerfile: 'Dockerfile' };
+      }
       const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${task_name}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
@@ -126,6 +132,11 @@ export default class ComponentRegister extends Command {
 
     this.log(chalk.blue(`Begin component config diff`));
     const previous_source_yml = dumpToYml(previous_config_data);
+    if (new_spec.services) {
+      for (const service_name of Object.keys(new_spec.services)) {
+        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
+      }
+    }
     const new_source_yml = dumpToYml(new_spec);
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
@@ -188,18 +199,15 @@ export default class ComponentRegister extends Command {
       if (resource_spec.build?.dockerfile) {
         dockerfile = path.join(build_path, resource_spec.build.dockerfile);
       }
-      let build_args: string[] = [];
-      if (resource_spec.build?.args) {
-        const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
-        for (const arg of flags.arg || []) {
-          const [key, value] = arg.split('=');
-          if (!value) {
-            throw new Error(`--arg must be in the format key=value: ${arg}`);
-          }
-          build_args_map[key] = value;
+      const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
+      for (const arg of flags.arg || []) {
+        const [key, value] = arg.split('=');
+        if (!value) {
+          throw new Error(`--arg must be in the format key=value: ${arg}`);
         }
-        build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
+        build_args_map[key] = value;
       }
+      const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
     } catch (err) {
       cli.action.stop(chalk.red(`Build failed`));

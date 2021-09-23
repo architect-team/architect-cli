@@ -4,7 +4,7 @@ title: architect.yml
 
 # architect.yml
 
-This document describes the full specification of the [architect.yml](/docs/configuration/architect-yml) configuration file. The top level of your `architect.yml` should be a [ComponentSpec](#componentspec).
+This document describes the full specification of the [architect.yml](/docs/components/architect-yml) configuration file. The top level of your `architect.yml` should be a [ComponentSpec](#componentspec).
 
 We've published a formal definition of this specification here: [Architect JSONSchema](https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json).
 

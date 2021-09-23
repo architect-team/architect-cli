@@ -436,6 +436,77 @@ describe('interfaces spec v1', () => {
     expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
   });
 
+  it('automatically maps interfaces when map_all_interfaces = true', async () => {
+    const component_config = {
+      name: 'architect/cloud',
+      services: {
+        api: {
+          interfaces: {
+            main: 8080,
+            admin: 8081
+          }
+        },
+      },
+      interfaces: {
+        app: '${{ services.api.interfaces.main.url }}',
+        admin: '${{ services.api.interfaces.admin.url }}'
+      }
+    };
+
+    mock_fs({
+      '/stack/architect.yml': yaml.dump(component_config),
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud', undefined, { map_all_interfaces: true }),
+    ]);
+
+    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
+      cloud_interfaces_ref,
+      api_ref,
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      `${cloud_interfaces_ref} [app, admin] -> ${api_ref} [main, admin]`,
+      `gateway [app, admin] -> ${cloud_interfaces_ref} [app, admin]`
+    ])
+
+    const template = await DockerComposeUtils.generate(graph);
+    const expected_compose: DockerService = {
+      "environment": {},
+      "labels": [
+        "traefik.enable=true",
+        "traefik.port=80",
+        "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
+        "traefik.http.routers.app.service=app-service",
+        "traefik.http.services.app-service.loadbalancer.server.port=8080",
+        "traefik.http.services.app-service.loadbalancer.server.scheme=http",
+        "traefik.http.routers.admin.rule=Host(`admin.arc.localhost`)",
+        "traefik.http.routers.admin.service=admin-service",
+        "traefik.http.services.admin-service.loadbalancer.server.port=8081",
+        "traefik.http.services.admin-service.loadbalancer.server.scheme=http"
+      ],
+      "external_links": [
+        "gateway:app.arc.localhost",
+        "gateway:admin.arc.localhost"
+      ],
+      "ports": [
+        "50000:8080",
+        "50001:8081"
+      ],
+      "build": {
+        "context": path.resolve("/stack")
+      },
+    };
+    expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
+  });
+
   it('using multiple ports from a dependency', async () => {
     const admin_ui_config = `
       name: voic/admin-ui

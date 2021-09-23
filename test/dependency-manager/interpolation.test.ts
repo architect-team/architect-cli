@@ -896,6 +896,36 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
+  it('parameter value starting with bracket does not produce invalid yaml', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      secret:
+
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world'),
+    ], { '*': { secret: '[abc' } });
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: '[abc'
+    });
+  });
+
   it('file: at end of yaml key not interpreted as file ref', async () => {
     const component_config = `
     name: examples/hello-world
@@ -1168,6 +1198,81 @@ describe('interpolation spec v1', () => {
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(3);
+  });
+
+  it('interpolate parameter to env with empty string', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      secret:
+        default: ''
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: ''
+    });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      SECRET: ''
+    });
+  });
+
+  it('interpolate nested parameter', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      db_host:
+        default: ''
+    services:
+      api:
+        environment:
+          DB_ADDR: \${{ parameters.db_host }}:5432
+          DB_ADDR2: \${{ parameters.db_host }}:\${{ parameters.db_host }}
+          DB_ADDR3: \${{ parameters.db_host }}:\${{ parameters.db_host }}:5432
+          DB_ADDR4: \${{ parameters.db_host }}\${{ parameters.db_host }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
   });
 
   it('interpolate outputs', async () => {

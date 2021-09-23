@@ -260,6 +260,7 @@ export default abstract class DependencyManager {
     }
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
+      if (!graph.nodes_map.has(to)) continue;
       const edge = new ServiceEdge(buildInterfacesRef(component), to, interfaces_map);
       graph.addEdge(edge);
     }
@@ -310,7 +311,7 @@ export default abstract class DependencyManager {
     return url;
   }
 
-  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): ComponentInterfaceConfig {
+  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): ComponentInterfaceConfig | undefined {
     const interface_to = edge.interfaces_map[interface_from];
 
     let partial_external_interface: Partial<ComponentInterfaceConfig>;
@@ -318,6 +319,11 @@ export default abstract class DependencyManager {
     const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
 
     const dependency_interface = node_to.interfaces[node_to_interface_name];
+
+    if (!dependency_interface) {
+      return;
+    }
+
     // Special case for external nodes
     if (dependency_interface.host && dependency_interface.host !== '127.0.0.1') {
       let subdomain = dependency_interface.host.split('.')[0];
@@ -433,6 +439,10 @@ export default abstract class DependencyManager {
         for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
           const external_interface = this.getIngressesContext(graph, ingress_edge, interface_from, external_address, dependency);
 
+          if (!external_interface) {
+            continue;
+          }
+
           if (!context.environment.ingresses[dependency.name]) {
             context.environment.ingresses[dependency.name] = {};
           }
@@ -449,7 +459,7 @@ export default abstract class DependencyManager {
               for (const consumer_ingress_edge of consumer_ingress_edges) {
                 for (const consumer_interface_from of Object.keys(consumer_ingress_edge.interfaces_map)) {
                   const consumer_interface = this.getIngressesContext(graph, consumer_ingress_edge, consumer_interface_from, external_address);
-                  if (consumer_interface.url) {
+                  if (consumer_interface?.url) {
                     consumers.push(consumer_interface.url);
                   }
                 }

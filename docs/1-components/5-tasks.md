@@ -6,7 +6,7 @@ title: Tasks
 
 There are some scripts and processes that support applications that don't serve traffic and aren't intended to be run as persistent services. Sometimes developers might need to execute these tasks manually at their discression, and sometimes they might want them to be run on a schedule.
 
-By defining task definitions inside Architect components, developers can make use of all the same service discovery and security benefits afforded to persistent services – making it much easier and safer to execute tasks.
+By defining task definitions inside Architect components, developers can make use of all the same service discovery and security benefits afforded to persistent services – making it much easier and safer to execute tasks. This coupling of tasks and components means the component must be redeployed to an environment before the new version of the task can be run.
 
 ```yaml
 name: account/component

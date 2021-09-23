@@ -9,6 +9,10 @@ import { buildConfigFromPath, buildConfigFromYml, buildSpecFromYml } from '../..
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 
+interface ComponentConfigOpts {
+  map_all_interfaces: boolean;
+}
+
 export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
@@ -22,7 +26,13 @@ export default class LocalDependencyManager extends DependencyManager {
     this.production = production;
   }
 
-  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>): Promise<ComponentConfig> {
+  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentConfig> {
+    const merged_options = {
+      ...{
+        map_all_interfaces: false,
+      }, ...options,
+    };
+
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
     const component_slug = ComponentSlugUtils.build(component_account_name, component_name);
     const component_ref = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
@@ -57,18 +67,33 @@ export default class LocalDependencyManager extends DependencyManager {
     // Set debug values
     const merged_spec = buildSpecFromYml(config.source_yml);
 
+    const inverted_interfaces: Dictionary<string> = {};
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      const interface_obj = config.interfaces[interface_to];
-      if (!interface_obj) {
-        throw new Error(`${component_ref} does not have an interface named ${interface_to}`);
+      inverted_interfaces[interface_to] = interface_from;
+    }
+
+    for (const [interface_to, interface_obj] of Object.entries(config.interfaces)) {
+      const interface_from = inverted_interfaces[interface_to];
+
+      // If the interface hasn't been explictely mapped and we aren't configured
+      // to implicitely map all interfaces, then just skip this interface
+      if (!interface_from && !merged_options.map_all_interfaces) {
+        continue;
       }
+
       if (!interface_obj.ingress) {
         interface_obj.ingress = {};
       }
-      interface_obj.ingress.subdomain = interface_from;
       interface_obj.ingress.enabled = true;
-      config.interfaces[interface_to] = interface_obj;
 
+      // If interface_from has a value, then it was manually mapped by the user, and we
+      // should set that value while building the interface object. If interface_from
+      // is undefined, we should build the interface object using the config defaults
+      if (interface_from) {
+        interface_obj.ingress.subdomain = interface_from;
+      } else if (!interface_obj.ingress.subdomain) {
+        interface_obj.ingress.subdomain = interface_to;
+      }
       // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
       // potentially create a "deployConfig": a merged source_yml prior to interpolation
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment

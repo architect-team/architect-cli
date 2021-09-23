@@ -397,4 +397,31 @@ describe('register', function () {
       expect(buildImage.callCount).to.eq(2);
       expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
     });
+
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/examples/components/stateful-component/versions/latest`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .it('set build arg not specified in architect.yml', ctx => {
+      const buildImage = Docker.buildImage as sinon.SinonStub;
+      expect(buildImage.callCount).to.eq(2);
+      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
+    });
 });
