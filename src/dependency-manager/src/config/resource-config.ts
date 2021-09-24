@@ -33,7 +33,6 @@ export interface ResourceConfig {
   command?: string[];
   entrypoint?: string[];
   language?: string;
-  debug?: ResourceConfig;
   environment: Dictionary<string | null>; // TODO:290:Dictionary<string>
   volumes: Dictionary<VolumeConfig>;
   build: BuildConfig;

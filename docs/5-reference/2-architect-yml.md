@@ -178,7 +178,6 @@ A container to run as a sidecar to the related component or service
 | -------------------- | ---------- | -------------- | -------------- |
  | `enabled` | boolean | If the sidecar should be started or not. | default: `true` |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
- | `debug` | Partial&lt;[SidecarSpec](#sidecarspec)&gt; | A partial object that is deep-merged into the spec on local deployments. Useful to mount developer volumes or set other local-development configuration. Think of this as a "local override" block. |  |
  | `description` | string | Human readable description |  |
  | `image` | string \| [Expression](/docs/reference/contexts) | The docker image that serves as the unit of runtime. This field is disjunctive with `build` (only one of `image` or `build` can be set) |  |
  | `command` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker startup command. Use this if you need to override or parameterize or parameterize the docker image command. |  |

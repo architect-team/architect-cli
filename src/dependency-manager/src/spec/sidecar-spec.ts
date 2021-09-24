@@ -19,8 +19,4 @@ export class SidecarSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
   liveness_probe?: LivenessProbeSpec;
-
-  @IsOptional()
-  @ValidateNested()
-  debug?: Partial<ResourceSpec>;
 }

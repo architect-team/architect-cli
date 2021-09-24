@@ -109,6 +109,11 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
   const definitions_copy = JSON.parse(JSON.stringify(definitions)) as Record<string, SchemaObject>;
   const debug_definitions: Record<string, SchemaObject> = {};
   for (const [key, definition] of Object.entries(definitions_copy)) {
+    // Don't create or reference a debug version of a sidecar property
+    if (key === sidecar_spec_name) {
+      continue;
+    }
+
     delete definition.required;
     delete definition.oneOf;
     delete definition.anyOf;
@@ -116,8 +121,9 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
     delete definition.allOf;
     debug_definitions[`${DEBUG_PREFIX}${key}`] = definition;
 
-    if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name || key === sidecar_spec_name)) {
+    if (definition?.properties?.debug && (key === task_spec_name || key === service_spec_name)) {
       delete definition.properties.debug; // delete the debug property if it exists, a debug block is not valid inside a debug block
+      delete definition.properties.sidecars; // delete the sidecars property if it exists (wont for tasks)
     }
   }
 
@@ -126,13 +132,6 @@ const mergeDebugSpec = (definitions: Record<string, SchemaObject>): Record<strin
     definitions[service_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${service_spec_name}`;
   } else {
     throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${service_spec_name}!`);
-  }
-
-  if (definitions[sidecar_spec_name]?.properties) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    definitions[sidecar_spec_name].properties![debug_field].$ref = `${REF_PREFIX}${DEBUG_PREFIX}${sidecar_spec_name}`;
-  } else {
-    throw new Error(`The Spec has been modified in a way such that the debug block is no longer being added to ${sidecar_spec_name}!`);
   }
 
   if (definitions[task_spec_name]?.properties) {

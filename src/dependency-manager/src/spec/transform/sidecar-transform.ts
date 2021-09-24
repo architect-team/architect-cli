@@ -11,6 +11,5 @@ export const transformSidecarSpec = (key: string, spec: SidecarSpec, component_r
     ...resource_config,
     enabled: spec.enabled || SidecarSpec.default_enabled,
     liveness_probe: transformLivenessProbeSpec(spec.liveness_probe, resource_config.environment),
-    debug: spec.debug ? transformSidecarSpec(key, spec.debug, component_ref, tag, instance_metadata) : undefined,
   };
 };
