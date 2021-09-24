@@ -199,7 +199,7 @@ export default class ComponentRegister extends Command {
       if (resource_spec.build?.dockerfile) {
         dockerfile = path.join(build_path, resource_spec.build.dockerfile);
       }
-      const build_args_map: Dictionary<string | null> = resource_spec.build?.args || {};
+      const build_args_map: Dictionary<string | null> = { ...resource_spec.build?.args };
       for (const arg of flags.arg || []) {
         const [key, value] = arg.split('=');
         if (!value) {
