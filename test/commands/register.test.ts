@@ -418,10 +418,10 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==test.architect.io"'])
     .it('set build arg not specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       expect(buildImage.callCount).to.eq(2);
-      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
+      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev', 'SSH_PUB_KEY="abc==test.architect.io"'])
     });
 });
