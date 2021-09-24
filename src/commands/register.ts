@@ -201,7 +201,7 @@ export default class ComponentRegister extends Command {
       }
       const build_args_map: Dictionary<string | null> = { ...resource_spec.build?.args };
       for (const arg of flags.arg || []) {
-        const [key, value] = arg.split(/=(.+)/);
+        const [key, value] = arg.split(/=([^]+)/);
         if (!value) {
           throw new Error(`--arg must be in the format key=value: ${arg}`);
         }
