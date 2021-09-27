@@ -173,10 +173,6 @@ export abstract class ResourceSpec {
   language?: string;
 
   @IsOptional()
-  @ValidateNested()
-  debug?: Partial<ResourceSpec>;
-
-  @IsOptional()
   @JSONSchema({
     type: 'object',
     patternProperties: {

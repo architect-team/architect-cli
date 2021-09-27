@@ -106,7 +106,6 @@ export const transformResourceSpec = (key: string, spec: ResourceSpec, component
     command: transformResourceSpecCommand(spec.command),
     entrypoint: transformResourceSpecEntryPoint(spec.entrypoint),
     language: spec.language,
-    debug: spec.debug ? transformResourceSpec(key, spec.debug, component_ref, tag) : undefined,
     environment,
     volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     build: transformBuildSpec(spec.build, spec.image),
