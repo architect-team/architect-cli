@@ -20,7 +20,7 @@ services:
   frontend:
     interfaces:
       app: 8080
-      
+
 interfaces:
   app:
     url: ${{ services.frontend.interfaces.app.url }}
@@ -34,3 +34,25 @@ The above component declares a configurable ingress rule to listen on a subdomai
 # The following command will expose the interface at https://app.dev.example.arc.domains
 $ architect deploy example/component:latest -a example -e dev
 ```
+
+### Whitelisting IP Addresses
+
+Ingresses of Architect components can be whitelisted by IP addresses on an individual basis. An example of a component where only users at the IP address 100.100.100.100 can access the `app` endpoint is shown below.
+
+```yaml
+name: example/component
+
+services:
+  frontend:
+    interfaces:
+      app: 8080
+
+interfaces:
+  app:
+    url: ${{ services.frontend.interfaces.app.url }}
+    ingress:
+      ip_whitelist:
+        - 100.100.100.100
+```
+
+Note that if you wish to use this feature on an EKS platform, manual changes must be made. Once platform apps are installed to the corresponding Architect platform, find the target groups that were created in your VPC that begin with the prefix `k8s-arcmanag-traefik`. Under the `Attributes` tab, make sure that `Proxy protocol v2` and `Preserve client IP addresses` are set to `Enabled`.
