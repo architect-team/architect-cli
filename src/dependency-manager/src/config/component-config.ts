@@ -9,6 +9,7 @@ export interface IngressConfig {
   enabled?: boolean;
   subdomain?: string;
   path?: string;
+  ip_whitelist?: string[];
 }
 
 export interface ComponentInterfaceConfig {
