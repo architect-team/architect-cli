@@ -1631,6 +1631,22 @@
           "type": "string",
           "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
         },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface used for path based routing"
+        },
         "ip_whitelist": {
           "anyOf": [
             {
@@ -3149,6 +3165,22 @@
         "subdomain": {
           "type": "string",
           "description": "The subdomain that will be used if the interface is exposed externally (defaults to the interface name)"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface used for path based routing"
         },
         "ip_whitelist": {
           "anyOf": [
