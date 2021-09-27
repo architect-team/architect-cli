@@ -45,7 +45,7 @@ export class DockerComposeUtils {
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-        for (const interface_from of Object.keys(edge.interfaces_map)) {
+        for (const { interface_from } of edge.interface_mappings) {
           const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
@@ -225,15 +225,12 @@ export class DockerComposeUtils {
 
       if (node_from instanceof InterfacesNode) continue;
 
-      for (const [interface_from, interface_to] of Object.entries(edge.interfaces_map)) {
-        const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
-        const node_to_ref = node_to.ref;
-
+      for (const { interface_from, interface_to, node_to, node_to_interface_name } of graph.followEdge(edge)) {
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
 
         if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to_ref];
+          const service_to = compose.services[node_to.ref];
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 
@@ -254,22 +251,13 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-
-          /*
-          if (interface_name === '@') {
-            // @ is an invalid service name for traefik
-            interface_name = '__at__';
-          }
-          */
-
           const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
-
-          const traefik_service = interface_from;
+          const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const interfaces_node = graph.getNodeByRef(edge.to) as InterfacesNode;
           const component_interface = interfaces_node.config[interface_to];
-          if (interfaces_node && component_interface?.ingress?.path) {
-            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && Path(${component_interface.ingress.path})`);
+          if (component_interface?.ingress?.path) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && Path(\`${component_interface.ingress.path}\`)`);
           } else {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`)`);
           }

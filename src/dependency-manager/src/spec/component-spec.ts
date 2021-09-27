@@ -27,7 +27,7 @@ export class IngressSpec {
 
   @IsOptional()
   @JSONSchema({
-    type: 'string',
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
     description: 'The path of the interface used for path based routing',
   })
   path?: string;
