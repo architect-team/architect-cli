@@ -223,10 +223,10 @@ describe('interpolation spec v1', () => {
       "labels": [
         "traefik.enable=true",
         "traefik.port=81",
-        "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
-        "traefik.http.routers.public.service=public-service",
-        "traefik.http.services.public-service.loadbalancer.server.port=8080",
-        "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+        `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
+        `traefik.http.routers.${web_ref}-main.service=${web_ref}-main-service`,
+        `traefik.http.services.${web_ref}-main-service.loadbalancer.server.port=8080`,
+        `traefik.http.services.${web_ref}-main-service.loadbalancer.server.scheme=http`
       ],
       external_links: [
         'gateway:public.arc.localhost'
@@ -294,8 +294,9 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend')
     ]);
 
-    const backend_interface_ref = 'main';
-    const backend_external_url = `http://${backend_interface_ref}.arc.localhost`
+    const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
+    const backend_interface_ref = `${backend_ref}-main`;
+    const backend_external_url = `http://main.arc.localhost`
     const frontend_ref = resourceRefToNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
@@ -305,11 +306,10 @@ describe('interpolation spec v1', () => {
     expect(template.services[frontend_ref].environment).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
     })
-    const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].labels).to.deep.eq([
       'traefik.enable=true',
       "traefik.port=80",
-      `traefik.http.routers.${backend_interface_ref}.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
+      `traefik.http.routers.${backend_interface_ref}.rule=Host(\`main.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
@@ -443,8 +443,6 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend3')
     ]);
 
-    manager.validateGraph(graph);
-
     const template = await DockerComposeUtils.generate(graph);
     const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].environment).to.deep.eq({
@@ -452,8 +450,8 @@ describe('interpolation spec v1', () => {
       CORS2: JSON.stringify(['http://frontend.arc.localhost'])
     })
     expect(template.services[backend_ref].labels).includes(
-      'traefik.http.routers.main.rule=Host(`main.arc.localhost`)',
-      'traefik.http.routers.main2.rule=Host(`main2.arc.localhost`)'
+      `traefik.http.routers.${backend_ref}-main.rule=Host(\`main.arc.localhost\`)`,
+      `traefik.http.routers.${backend_ref}-main2.rule=Host(\`main2.arc.localhost\`)`
     )
   });
 
@@ -1140,9 +1138,7 @@ describe('interpolation spec v1', () => {
     });
 
     const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency:latest')) as IngressEdge
-    expect(ingress_edge.interfaces_map).to.deep.eq({
-      'test-subdomain': 'app'
-    })
+    expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
     expect(ingress_edge.consumers_map).keys('test-subdomain')
   });
 

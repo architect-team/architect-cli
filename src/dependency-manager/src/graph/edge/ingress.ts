@@ -6,8 +6,8 @@ export default class IngressEdge extends DependencyEdge {
 
   consumers_map: Dictionary<Set<string>>;
 
-  constructor(from: string, to: string, interfaces_map: Dictionary<string>) {
-    super(from, to, interfaces_map);
+  constructor(from: string, to: string, interface_mappings: { interface_from: string, interface_to: string }[]) {
+    super(from, to, interface_mappings);
     this.consumers_map = {};
   }
 }

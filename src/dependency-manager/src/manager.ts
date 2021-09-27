@@ -139,7 +139,6 @@ export default abstract class DependencyManager {
         const [_, interface_name] = matches;
         ingresses.push([component, interface_name]);
       }
-
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
         if (interface_obj?.ingress?.subdomain && interface_obj.ingress?.enabled) {
           ingresses.push([component, interface_name]);
@@ -163,11 +162,13 @@ export default abstract class DependencyManager {
           gateway_node.instance_id = 'gateway';
           graph.addNode(gateway_node);
 
-          ingress_edge = new IngressEdge('gateway', buildInterfacesRef(dep_component), {});
+          ingress_edge = new IngressEdge('gateway', buildInterfacesRef(dep_component), []);
           graph.addEdge(ingress_edge);
         }
 
-        ingress_edge.interfaces_map[subdomain] = interface_name;
+        if (!ingress_edge.interface_mappings.find((i) => i.interface_from === subdomain && i.interface_to === interface_name)) {
+          ingress_edge.interface_mappings.push({ interface_from: subdomain, interface_to: interface_name });
+        }
 
         if (buildComponentRef(dep_component) !== buildComponentRef(component)) {
           if (!ingress_edge.consumers_map[subdomain]) {
@@ -195,7 +196,8 @@ export default abstract class DependencyManager {
         service_edge_map[to][`service->${interface_name}`] = interface_name;
       }
       for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
+        const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
+        const edge = new ServiceEdge(from, to, interface_mappings);
         graph.addEdge(edge);
       }
 
@@ -218,7 +220,8 @@ export default abstract class DependencyManager {
 
 
       for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
-        const edge = new ServiceEdge(from, to, interfaces_map);
+        const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
+        const edge = new ServiceEdge(from, to, interface_mappings);
         graph.addEdge(edge);
       }
     }
@@ -262,7 +265,8 @@ export default abstract class DependencyManager {
 
     for (const [to, interfaces_map] of Object.entries(service_edge_map)) {
       if (!graph.nodes_map.has(to)) continue;
-      const edge = new ServiceEdge(buildInterfacesRef(component), to, interfaces_map);
+      const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
+      const edge = new ServiceEdge(buildInterfacesRef(component), to, interface_mappings);
       graph.addEdge(edge);
     }
   }
@@ -312,12 +316,14 @@ export default abstract class DependencyManager {
     return url;
   }
 
-  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, external_address: string, dependency?: ComponentConfig): ComponentInterfaceConfig | undefined {
-    const interface_to = edge.interfaces_map[interface_from];
-
+  getIngressesContext(graph: DependencyGraph, edge: IngressEdge, interface_from: string, interface_to: string, external_address: string, dependency?: ComponentConfig): ComponentInterfaceConfig | undefined {
     let partial_external_interface: Partial<ComponentInterfaceConfig>;
 
-    const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_from);
+    const interface_mapping = graph.followEdge(edge).find((x) => x.interface_from === interface_from && x.interface_to === interface_to);
+    if (!interface_mapping) {
+      return;
+    }
+    const { node_to, node_to_interface_name } = interface_mapping;
 
     const dependency_interface = node_to.interfaces[node_to_interface_name];
 
@@ -338,7 +344,7 @@ export default abstract class DependencyManager {
         ...(dependency ? dependency.interfaces[interface_to] : {}),
         ...dependency_interface,
         consumers: [],
-        subdomain: subdomain,
+        subdomain,
         dns_zone: dependency_interface.host.split('.').slice(1).join('.'),
       };
     } else {
@@ -346,7 +352,7 @@ export default abstract class DependencyManager {
 
       const host = interface_from === '@' ? external_host : `${interface_from}.${external_host}`;
       partial_external_interface = {
-        host: host,
+        host,
         port: external_port,
         protocol: external_host === 'arc.localhost' ? 'http' : 'https',
         username: '',
@@ -437,8 +443,8 @@ export default abstract class DependencyManager {
       // Set dependency and component ingresses
       const ingress_edges = graph.edges.filter(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dependency)) as IngressEdge[];
       for (const ingress_edge of ingress_edges) {
-        for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
-          const external_interface = this.getIngressesContext(graph, ingress_edge, interface_from, external_address, dependency);
+        for (const { interface_from, interface_to } of ingress_edge.interface_mappings) {
+          const external_interface = this.getIngressesContext(graph, ingress_edge, interface_from, interface_to, external_address, dependency);
 
           if (!external_interface) {
             continue;
@@ -458,8 +464,8 @@ export default abstract class DependencyManager {
               const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
               const consumers: string[] = [];
               for (const consumer_ingress_edge of consumer_ingress_edges) {
-                for (const consumer_interface_from of Object.keys(consumer_ingress_edge.interfaces_map)) {
-                  const consumer_interface = this.getIngressesContext(graph, consumer_ingress_edge, consumer_interface_from, external_address);
+                for (const { interface_from: consumer_interface_from, interface_to: consumer_interface_to } of consumer_ingress_edge.interface_mappings) {
+                  const consumer_interface = this.getIngressesContext(graph, consumer_ingress_edge, consumer_interface_from, consumer_interface_to, external_address);
                   if (consumer_interface?.url) {
                     consumers.push(consumer_interface.url);
                   }
@@ -711,18 +717,20 @@ export default abstract class DependencyManager {
     // Check for duplicate subdomains
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-      for (const [interface_from, interface_to] of Object.entries(ingress_edge.interfaces_map)) {
-        if (!seen_subdomains[interface_from]) {
-          seen_subdomains[interface_from] = [];
+      for (const { interface_from, interface_to } of ingress_edge.interface_mappings) {
+        const interfaces_node = graph.getNodeByRef(ingress_edge.to) as InterfacesNode;
+        const ingress = interfaces_node.config[interface_to].ingress;
+        const key = ingress?.path ? `${interface_from} with path ${ingress.path}` : interface_from;
+        if (!seen_subdomains[key]) {
+          seen_subdomains[key] = [];
         }
-        const node = graph.getNodeByRef(ingress_edge.to) as InterfacesNode;
-        seen_subdomains[interface_from].push(`${node.slug}.${interface_to}`);
+        seen_subdomains[key].push(`${interfaces_node.slug}.${interface_to}`);
       }
     }
 
     for (const [subdomain, values] of Object.entries(seen_subdomains)) {
       if (values.length > 1) {
-        throw new ArchitectError(`The subdomain '${subdomain}' is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> to avoid conflicts.`);
+        throw new ArchitectError(`The subdomain ${subdomain} is claimed by multiple component interfaces:\n[${values.sort().join(', ')}]\nPlease set interfaces.<name>.ingress.subdomain=<subdomain> or interfaces.<name>.ingress.path=<path> to avoid conflicts.`);
       }
     }
   }
@@ -772,6 +780,11 @@ export default abstract class DependencyManager {
         node.config = service_config;
       }
     }
+
+    if (validate) {
+      this.validateGraph(graph);
+    }
+
     return graph;
   }
 }

@@ -106,6 +106,7 @@ export const transformComponentContext = (
       consumers: [],
       dns_zone: '',
       subdomain: '',
+      path: '',
     };
   }
 

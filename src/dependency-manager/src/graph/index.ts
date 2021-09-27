@@ -148,18 +148,33 @@ export default class DependencyGraph {
     return Array.from(nodes.values());
   }
 
-  followEdge(edge: DependencyEdge, interface_name: string): [DependencyNode, string] {
-    const child_interface = edge.interfaces_map[interface_name];
-    const child_edge = this.edges.find((e) => e.from === edge.to && child_interface in e.interfaces_map);
-    const to = child_edge ? child_edge.to : edge.to;
-    const to_interface = child_edge ? child_edge.interfaces_map[child_interface] : child_interface;
-
-    const node_to = this.getNodeByRef(to);
-    if (child_edge && node_to instanceof InterfacesNode) {
-      return this.followEdge(child_edge, child_interface);
-    } else {
-      return [node_to, to_interface];
+  followEdge(root_edge: DependencyEdge): { interface_from: string, interface_to: string, node_to: DependencyNode, node_to_interface_name: string }[] {
+    const queue = [root_edge];
+    const res = [];
+    while (queue.length) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const edge = queue.shift()!;
+      const node_to = this.getNodeByRef(edge.to);
+      if (node_to instanceof InterfacesNode) {
+        const child_edges = this.edges.filter(e => e.from === edge.to);
+        for (const child_edge of child_edges) {
+          queue.push(child_edge);
+        }
+      } else {
+        for (const { interface_from, interface_to } of root_edge.interface_mappings) {
+          const interface_mapping = edge.interface_mappings.find((i) => i.interface_from === interface_to);
+          if (interface_mapping) {
+            res.push({
+              interface_from,
+              interface_to,
+              node_to,
+              node_to_interface_name: interface_mapping?.interface_to,
+            });
+          }
+        }
+      }
     }
+    return res;
   }
 
   getDependsOn(node: ServiceNode | TaskNode): ServiceNode[] {

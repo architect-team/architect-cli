@@ -1,5 +1,6 @@
 import { DependencyNode } from '.';
 import { ComponentInterfaceConfig } from '../../config/component-config';
+import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 
 export default class InterfacesNode extends DependencyNode {
@@ -16,7 +17,7 @@ export default class InterfacesNode extends DependencyNode {
     this.config = config;
   }
 
-  get interfaces(): { [key: string]: any } {
+  get interfaces(): Dictionary<ServiceInterfaceConfig> {
     return {};
   }
 }

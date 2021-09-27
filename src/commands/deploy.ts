@@ -395,10 +395,7 @@ export default class Deploy extends DeployCommand {
         component_configs.push(component_config);
       }
     }
-
     const graph = await dependency_manager.getGraph(component_configs, component_values);
-    dependency_manager.validateGraph(graph);
-
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }
@@ -416,11 +413,6 @@ export default class Deploy extends DeployCommand {
 
     const deployment_dtos = [];
     for (const component of components) {
-      if (ComponentVersionSlugUtils.Validator.test(component)) {
-        const parsed_component_version = ComponentVersionSlugUtils.parse(component);
-        const namespaced_component_name = ComponentSlugUtils.build(parsed_component_version.component_account_name, parsed_component_version.component_name);
-      }
-
       const deploy_dto = {
         component: component,
         interfaces: interfaces_map,
