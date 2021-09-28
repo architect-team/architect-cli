@@ -160,6 +160,15 @@ export default class DependencyGraph {
         for (const child_edge of child_edges) {
           queue.push(child_edge);
         }
+      } else if (root_edge === edge) { // Support following ServiceEdge to another service
+        for (const { interface_from, interface_to } of edge.interface_mappings) {
+          res.push({
+            interface_from,
+            interface_to,
+            node_to,
+            node_to_interface_name: interface_to,
+          });
+        }
       } else {
         for (const { interface_from, interface_to } of root_edge.interface_mappings) {
           const interface_mapping = edge.interface_mappings.find((i) => i.interface_from === interface_to);
