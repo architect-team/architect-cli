@@ -201,7 +201,7 @@ describe('interpolation spec v1', () => {
       'concourse/worker': '/stack/worker.json'
     });
     const public_graph = await public_manager.getGraph([
-      await manager.loadComponentConfig('concourse/web', { public: 'main' }),
+      await manager.loadComponentConfig('concourse/web', { public: ['main'] }),
       await manager.loadComponentConfig('concourse/worker')
     ]);
 
@@ -438,7 +438,7 @@ describe('interpolation spec v1', () => {
 
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('examples/backend'),
-      await manager.loadComponentConfig('examples/frontend', { frontend: 'main' }),
+      await manager.loadComponentConfig('examples/frontend', { frontend: ['main'] }),
       await manager.loadComponentConfig('examples/frontend2'),
       await manager.loadComponentConfig('examples/frontend3')
     ]);
@@ -502,7 +502,7 @@ describe('interpolation spec v1', () => {
       'examples/frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/backend', { backend: 'main', backend2: 'main2' }),
+      await manager.loadComponentConfig('examples/backend', { backend: ['main'], backend2: ['main2'] }),
       await manager.loadComponentConfig('examples/frontend')
     ]);
     const backend_external_url = 'http://backend.arc.localhost'

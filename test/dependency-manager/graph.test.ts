@@ -102,7 +102,7 @@ describe('graph', () => {
 
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/component:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest', { db2: 'db' })
+      await manager.loadComponentConfig('architect/dependency:latest', { db2: ['db'] })
     ], {}, false);
 
     expect(graph.nodes).to.have.length(7);

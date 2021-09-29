@@ -218,9 +218,9 @@ describe('interfaces spec v1', () => {
         'test/other-leaf': '/stack/other-leaf/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf', { public: 'api' }),
+        await manager.loadComponentConfig('test/leaf', { public: ['api'] }),
         await manager.loadComponentConfig('test/branch'),
-        await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentConfig('test/other-leaf', { publicv1: ['api'] })
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
@@ -389,7 +389,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentConfig('architect/cloud', { app: ['app'], admin: ['admin'] }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -553,7 +553,7 @@ describe('interfaces spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('voic/admin-ui'),
-      await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+      await manager.loadComponentConfig('voic/product-catalog', { public2: ['public'], admin2: ['admin'] }),
     ]);
 
     const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest')

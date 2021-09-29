@@ -69,7 +69,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const inverted_interfaces: Dictionary<string> = {};
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      for (const to of interface_to) { // TODO: add test for this update?
+      for (const to of interface_to) {
         inverted_interfaces[to] = interface_from;
       }
     }

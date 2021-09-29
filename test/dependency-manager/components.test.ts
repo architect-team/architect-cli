@@ -662,7 +662,7 @@ describe('components spec v1', function () {
 
       const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.yml' });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('architect/cloud:latest', { api: 'api-interface' })
+        await manager.loadComponentConfig('architect/cloud:latest', { api: ['api-interface'] })
       ]);
 
       const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');

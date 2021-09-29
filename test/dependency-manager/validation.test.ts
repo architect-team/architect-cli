@@ -578,7 +578,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component', { api: 'api', api2: 'api2' }),
+          await manager.loadComponentConfig('test/component', { api: ['api'], api2: ['api2'] }),
         ]);
       } catch (e) {
         err = e;

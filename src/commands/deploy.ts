@@ -241,7 +241,7 @@ export default class Deploy extends DeployCommand {
         }
 
         const promises: Promise<AxiosResponse<any>>[] = [];
-        for (const exposed_interface of exposed_interfaces) { // TODO: open with paths?
+        for (const exposed_interface of exposed_interfaces) {
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
           promises.push(axios.get(`http://localhost:${port}`, {
             headers: {
