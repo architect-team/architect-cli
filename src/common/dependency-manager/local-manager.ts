@@ -102,28 +102,30 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     if (config.instance_metadata?.local_path && !this.production) {
+      const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
+
       for (const [sk, sv] of Object.entries(config.services)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (sv.debug) {
-          config.services[sk] = deepmerge(sv, sv.debug);
+          config.services[sk] = deepmerge(sv, sv.debug, { arrayMerge: overwriteMerge });
         }
       }
       for (const [tk, tv] of Object.entries(config.tasks)) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (tv.debug) {
-          config.tasks[tk] = deepmerge(tv, tv.debug);
+          config.tasks[tk] = deepmerge(tv, tv.debug, { arrayMerge: overwriteMerge });
         }
       }
 
       const services: Dictionary<ServiceSpec> = {};
       for (const [sk, sv] of Object.entries(merged_spec.services || {})) {
-        services[sk] = deepmerge(sv, sv.debug || {});
+        services[sk] = deepmerge(sv, sv.debug || {}, { arrayMerge: overwriteMerge });
       }
 
       // TODO:285: add test for task debug block
       const tasks: Dictionary<TaskSpec> = {};
       for (const [sk, sv] of Object.entries(merged_spec.tasks || {})) {
-        tasks[sk] = deepmerge(sv, sv.debug || {});
+        tasks[sk] = deepmerge(sv, sv.debug || {}, { arrayMerge: overwriteMerge });
       }
 
       merged_spec.services = services;
