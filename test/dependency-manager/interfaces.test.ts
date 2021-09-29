@@ -755,8 +755,8 @@ describe('interfaces spec v1', () => {
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api.rule=Host(\`cloud.arc.localhost\`) && Path(\`/api\`)`);
-    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api2.rule=Host(\`cloud.arc.localhost\`) && Path(\`/api2\`)`);
+    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api\`)`);
+    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api2.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api2\`)`);
   });
 
   it('error on interfaces with same subdomain and same path', async () => {
@@ -796,5 +796,42 @@ describe('interfaces spec v1', () => {
       err = e;
     }
     expect(err).instanceOf(ArchitectError);
+  });
+
+  it('followEdge returns proper results when called with ServiceEdge', async () => {
+    const component_config = `
+    name: architect/dependency
+
+    services:
+      db:
+        image: mysql:5.6.35
+        interfaces:
+          mysql:
+            port: 3306
+
+      core:
+        environment:
+          ADDR: \${{ services.db.interfaces.mysql.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/dependency': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('architect/dependency');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config));
+
+    expect(graph.edges.length).eq(1);
+
+    const followed_edge = graph.followEdge(graph.edges[0]);
+    expect(followed_edge.length).eq(1);
+    expect(followed_edge[0].interface_from).eq('service->mysql');
+    expect(followed_edge[0].interface_to).eq('mysql');
+    expect(followed_edge[0].node_to.ref).eq('dependency-db-zxdyijfg');
+    expect(followed_edge[0].node_to_interface_name).eq('mysql');
   });
 });
