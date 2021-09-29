@@ -241,7 +241,7 @@ export default class Deploy extends DeployCommand {
         }
 
         const promises: Promise<AxiosResponse<any>>[] = [];
-        for (const exposed_interface of exposed_interfaces) {
+        for (const exposed_interface of exposed_interfaces) { // TODO: open with paths?
           const [host_name, port] = exposed_interface.replace('http://', '').split(':');
           promises.push(axios.get(`http://localhost:${port}`, {
             headers: {
@@ -332,10 +332,13 @@ export default class Deploy extends DeployCommand {
 
   private getInterfacesMap() {
     const { flags } = this.parse(Deploy);
-    const interfaces_map: Dictionary<string> = {};
+    const interfaces_map: Dictionary<string[]> = {};
     for (const i of flags.interface) {
       const [key, value] = i.split(':');
-      interfaces_map[key] = value || key;
+      if (!interfaces_map[key]) {
+        interfaces_map[key] = [];
+      }
+      interfaces_map[key].push(value || key);
     }
     return interfaces_map;
   }

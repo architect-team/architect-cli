@@ -26,7 +26,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.production = production;
   }
 
-  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentConfig> {
+  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string[]>, options?: ComponentConfigOpts): Promise<ComponentConfig> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -69,7 +69,9 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const inverted_interfaces: Dictionary<string> = {};
     for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      inverted_interfaces[interface_to] = interface_from;
+      for (const to of interface_to) { // TODO: add test for this update?
+        inverted_interfaces[to] = interface_from;
+      }
     }
 
     for (const [interface_to, interface_obj] of Object.entries(config.interfaces)) {
