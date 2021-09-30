@@ -60,7 +60,7 @@ Note that if you wish to use this feature on an EKS platform, manual changes mus
 
 ### Path-based routing
 
-It may be ideal in certain scenarios to expose multiple service interfaces on the same subdomain. For this reason, external interfaces can be configured with a `path` which will be used for path-based routing. In the case of the example component below, both services are configured to be accessible on the `www` subdomain. Users that access a URL beginning with `/names` will be routed to the `api` service, while other URLs will lead to the `app` service.
+It may be ideal in certain scenarios to expose multiple service interfaces on the same subdomain. For this reason, external interfaces can be configured with a `path` which will be used for path-based routing. In the case of the example component below, both services are configured to be accessible on the `www` subdomain. Users that access a URL beginning with `/api` will be routed to the `api` service, while other URLs will lead to the `app` service.
 
 ```yml
 name: example/component
@@ -76,7 +76,7 @@ interfaces:
     url: ${{ services.api.interfaces.api-main.url }}
     ingress:
       subdomain: www
-      path: /names
+      path: /api
       enabled: true
 
 services:
