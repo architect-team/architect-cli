@@ -56,4 +56,34 @@ interfaces:
         - 10.0.0.0/16
 ```
 
-Note that if you wish to use this feature on an EKS platform, manual changes must be made. Once platform apps are installed to the corresponding Architect platform, find the target groups that were created in your VPC that begin with the prefix `k8s-arcmanag-traefik`. Under the `Attributes` tab, make sure that `Proxy protocol v2` and `Preserve client IP addresses` are set to `Enabled`.
+Note that if you wish to use this feature on an EKS platform, manual changes must be made. Once platform apps are installed to the corresponding Architect platform, find the target groups on the AWS dashboard that were created in your VPC that begin with the prefix `k8s-arcmanag-traefik`. Under the `Attributes` tab, make sure that `Proxy protocol v2` and `Preserve client IP addresses` are set to `Enabled`.
+
+### Path-based routing
+
+It may be ideal in certain scenarios to expose multiple service interfaces on the same subdomain. For this reason, external interfaces can be configured with a `path` which will be used for path-based routing. In the case of the example component below, both services are configured to be accessible on the `www` subdomain. Users that access a URL beginning with `/names` will be routed to the `api` service, while other URLs will lead to the `app` service.
+
+```yml
+name: example/component
+
+interfaces:
+  app:
+    url: ${{ services.app.interfaces.app-main.url }}
+    ingress:
+      subdomain: www
+      path: /
+      enabled: true
+  api:
+    url: ${{ services.api.interfaces.api-main.url }}
+    ingress:
+      subdomain: www
+      path: /names
+      enabled: true
+
+services:
+  api:
+    interfaces:
+      api-main: 8080
+  app:
+    interfaces:
+      app-main: 8080
+```
