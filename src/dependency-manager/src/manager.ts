@@ -303,14 +303,19 @@ export default abstract class DependencyManager {
   }
 
   generateUrl(interface_config: ServiceInterfaceConfig, host?: string | null, port?: string): string {
-    host = host || interface_config.host || undefined;
+    host = host || interface_config.host;
     port = port || `${interface_config.port}`;
     const protocol = interface_config.protocol || 'http';
     let url;
-    if (interface_config.password) {
-      url = `${protocol}://${interface_config.username || ''}:${interface_config.password}@${host}`;
+
+    if (protocol === 'grpc') {
+      url = `${host}`;
     } else {
-      url = `${protocol}://${host}`;
+      if (interface_config.password) {
+        url = `${protocol}://${interface_config.username || ''}:${interface_config.password}@${host}`;
+      } else {
+        url = `${protocol}://${host}`;
+      }
     }
     url = this.generateAddress(url, port);
     return url;
