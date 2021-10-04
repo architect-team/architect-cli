@@ -293,7 +293,6 @@ describe('local deploy environment', function () {
           `traefik.http.routers.${seed_app_ref}-main.rule=Host(\`app.arc.localhost\`)`,
           `traefik.http.routers.${seed_app_ref}-main.service=${seed_app_ref}-main-service`,
           `traefik.http.services.${seed_app_ref}-main-service.loadbalancer.server.port=3000`,
-          `traefik.http.services.${seed_app_ref}-main-service.loadbalancer.server.scheme=http`
         ],
         "build": {
           "context": path.resolve('./examples/database-seeding'),
@@ -356,7 +355,6 @@ describe('local deploy environment', function () {
           `traefik.http.routers.${hello_api_ref}-hello.rule=Host(\`hello.arc.localhost\`)`,
           `traefik.http.routers.${hello_api_ref}-hello.service=${hello_api_ref}-hello-service`,
           `traefik.http.services.${hello_api_ref}-hello-service.loadbalancer.server.port=3000`,
-          `traefik.http.services.${hello_api_ref}-hello-service.loadbalancer.server.scheme=http`
         ],
         "external_links": [
           "gateway:hello.arc.localhost"

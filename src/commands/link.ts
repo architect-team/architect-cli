@@ -21,14 +21,13 @@ export default class Link extends Command {
   static args = [{
     name: 'componentPath',
     char: 'p',
-    default: path.basename(process.cwd()),
+    default: '.',
   }];
 
   async run(): Promise<void> {
     const { args } = this.parse(Link);
 
     const component_path = path.resolve(untildify(args.componentPath));
-
     // Try to load the component from the path to ensure it exists and is valid
     try {
       const { component_config } = buildConfigFromPath(component_path, Slugs.DEFAULT_TAG);

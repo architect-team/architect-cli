@@ -320,7 +320,6 @@ describe('sidecar spec v1', () => {
           `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
           `traefik.http.routers.${leaf_api_ref}-api.service=${leaf_api_ref}-api-service`,
           `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
@@ -356,7 +355,6 @@ describe('sidecar spec v1', () => {
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
           `traefik.http.routers.${other_leaf_api_ref}-api.service=${other_leaf_api_ref}-api-service`,
           `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
-          `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.scheme=http`
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
@@ -420,11 +418,9 @@ describe('sidecar spec v1', () => {
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
         `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
-        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.scheme=http`,
         `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
         `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
-        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.scheme=http`
       ],
       "external_links": [
         "gateway:app.arc.localhost",

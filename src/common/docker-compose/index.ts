@@ -234,12 +234,6 @@ export class DockerComposeUtils {
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
 
-          let protocol = node_to_interface.protocol || 'http';
-          // https://doc.traefik.io/traefik/user-guides/grpc/#with-http-h2c
-          if (protocol === 'grpc') {
-            protocol = 'h2c';
-          }
-
           if (!service_to.labels) {
             service_to.labels = [];
           }
@@ -265,9 +259,6 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`);
           }
           service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
-          if (!service_to.labels.includes(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`)) {
-            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.scheme=${protocol}`);
-          }
           if (node_to_interface.sticky) {
             service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
