@@ -37,12 +37,13 @@ export class Slugs {
   public static ComponentParameterValidator = new RegExp(`^${Slugs.ComponentParameterRegexBase}$`);
 }
 
-export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'environment' | 'gateway' | 'interfaces';
+export type SlugKind = 'component' | 'component_version' | 'service' | 'service_version' | 'service_sidecar_version' | 'environment' | 'gateway' | 'interfaces';
 export interface ParsedSlug {
   kind: SlugKind;
   component_account_name?: string;
   component_name?: string;
   service_name?: string;
+  sidecar_name?: string;
   tag?: string;
   environment_account_name?: string;
   environment_name?: string;
@@ -221,6 +222,54 @@ export class ServiceVersionSlugUtils extends SlugUtils {
       component_account_name,
       component_name,
       service_name,
+      tag,
+      instance_name: instance_name || '',
+    };
+  };
+}
+
+export type ServiceSidecarVersionSlug = string; // "<account-name>/<component-name>/<service-name>/<sidecar-name>:<tag>"
+export interface ParsedServiceSidecarVersionSlug extends ParsedSlug {
+  kind: 'service_version';
+  component_account_name: string;
+  component_name: string;
+  service_name: string;
+  sidecar_name: string;
+  tag: string;
+  instance_name?: string;
+}
+export class ServiceSidecarVersionSlugUtils extends SlugUtils {
+  public static Description = 'must be of the form <account-name>/<component-name>/<service-name>/<sidecar-name>:<tag>';
+  public static RegexBase = `${ServiceSlugUtils.RegexBase}${Slugs.NAMESPACE_DELIMITER}${Slugs.ArchitectSlugRegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`
+  public static Validator = new RegExp(`^${ServiceSidecarVersionSlugUtils.RegexBase}$`);
+
+  public static build = (account_name: string, component_name: string, service_name: string, sidecar_name: string, tag: string, instance_name = ''): ServiceSidecarVersionSlug => {
+    let slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.NAMESPACE_DELIMITER}${sidecar_name}${Slugs.TAG_DELIMITER}${tag}`;
+    if (instance_name) {
+      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
+    }
+    return slug;
+  };
+
+  public static parse = (slug: ServiceSidecarVersionSlug): ParsedServiceSidecarVersionSlug => {
+    if (!ServiceSidecarVersionSlugUtils.Validator.test(slug)) {
+      throw new Error(ServiceSidecarVersionSlugUtils.Description);
+    }
+    const [full_service_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
+    const [service_sidecar_slug, tag] = full_service_slug.split(Slugs.TAG_DELIMITER);
+    const [sidecar_name, ...resource_names] = service_sidecar_slug.split(Slugs.NAMESPACE_DELIMITER).reverse();
+    const service_slug = resource_names.reverse().join(Slugs.NAMESPACE_DELIMITER);
+    if (!Slugs.ComponentTagValidator.test(tag)) {
+      throw new Error(Slugs.ComponentTagDescription);
+    }
+    const { component_account_name, component_name, service_name } = ServiceSlugUtils.parse(service_slug);
+
+    return {
+      kind: 'service_version',
+      component_account_name,
+      component_name,
+      service_name,
+      sidecar_name,
       tag,
       instance_name: instance_name || '',
     };

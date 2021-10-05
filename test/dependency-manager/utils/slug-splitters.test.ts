@@ -1,11 +1,12 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils, ServiceSidecarVersionSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
 
 describe('slug validators', () => {
 
   const component_account_name = 'architect';
   const component_name = 'fusionauth';
   const service_name = 'api-db';
+  const sidecar_name = 'datadog-agent';
   const tag = '1.0.0';
   const environment_account_name = 'community';
   const environment_name = 'staging';
@@ -14,6 +15,7 @@ describe('slug validators', () => {
   const component_version_slug = `${component_account_name}/${component_name}:${tag}`;
   const service_slug = `${component_account_name}/${component_name}/${service_name}`;
   const service_version_slug = `${component_account_name}/${component_name}/${service_name}:${tag}`;
+  const service_sidecar_version_slug = `${component_account_name}/${component_name}/${service_name}/${sidecar_name}:${tag}`;
   const environment_slug = `${environment_account_name}/${environment_name}`;
 
   const invalid_slug = 'double--dashes';
@@ -23,6 +25,7 @@ describe('slug validators', () => {
   const invalid_component_version_slug = `${component_account_name}/${component_name}:${invalid_tag}`;
   const invalid_service_slug = `${component_account_name}/${component_name}/${invalid_slug}`;
   const invalid_service_version_slug = `${component_account_name}/${component_name}/${service_name}:${invalid_tag}`;
+  const invalid_service_sidecar_version_slug = `${component_account_name}/${component_name}/${service_name}/${sidecar_name}:${invalid_tag}`;
   const invalid_environment_slug = `@${invalid_slug}/${environment_name}`;
 
   it(`ComponentSlugUtils.parse accurately splits ${component_slug}`, async () => {
@@ -83,6 +86,22 @@ describe('slug validators', () => {
 
   it(`ServiceVersionSlugUtils.parse throws exception on ${invalid_service_version_slug}`, async () => {
     expect(() => ServiceVersionSlugUtils.parse(invalid_service_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>:<tag>`);
+  });
+
+  it(`ServiceSidecarVersionSlugUtils.parse accurately splits ${service_sidecar_version_slug}`, async () => {
+    const result = ServiceSidecarVersionSlugUtils.parse(service_sidecar_version_slug);
+    expect(result.kind).to.equal('service_version');
+    expect(result.component_account_name).to.equal(component_account_name);
+    expect(result.component_name).to.equal(component_name);
+    expect(result.service_name).to.equal(service_name);
+    expect(result.sidecar_name).to.equal(sidecar_name);
+    expect(result.environment_name).to.be.undefined;
+    expect(result.environment_account_name).to.be.undefined;
+    expect(result.tag).to.equal(tag);
+  });
+
+  it(`ServiceSidecarVersionSlugUtils.parse throws exception on ${invalid_service_sidecar_version_slug}`, async () => {
+    expect(() => ServiceSidecarVersionSlugUtils.parse(invalid_service_sidecar_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<service-name>/<sidecar-name>:<tag>`);
   });
 
   it(`EnvironmentSlugUtils.parse accurately splits ${environment_slug}`, async () => {
