@@ -92,6 +92,7 @@ export default class ComponentRegister extends Command {
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      // Build image for service
       if (!service_config.build && !service_config.image) {
         service_config.build = { context: '.', dockerfile: 'Dockerfile' };
       }
@@ -102,6 +103,16 @@ export default class ComponentRegister extends Command {
       for (const [module_name, module] of Object.entries(service_config.deploy?.modules || {})) {
         set_artifact_image = true;
         fs.copySync(path.resolve(component_path, untildify(module.path)), path.join(tmpobj.name, 'modules', service_name, module_name));
+      }
+
+      // Build images for service sidecars
+      for (const [sidecar_name, sidecar_config] of Object.entries(service_config.sidecars || {})) {
+        if (!sidecar_config.build && !sidecar_config.image) {
+          sidecar_config.build = { context: '.', dockerfile: 'Dockerfile' };
+        }
+        const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}-${sidecar_name}:${tag}`;
+        const image = await this.pushImageIfNecessary(config_path, service_name, sidecar_config, image_tag);
+        sidecar_config.image = image;
       }
     }
     if (set_artifact_image) {
