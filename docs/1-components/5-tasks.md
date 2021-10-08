@@ -77,24 +77,6 @@ environment:
   STRIPE_API_KEY: abc-123
 ```
 
-### volumes
-
-(optional) A dictionary containing a set of named volumes that the service will request and mount to each service instance.
-
-```yaml
-volumes:
-  tmp-imgs:
-    # Directory at which the volume will be mounted inside the container
-    mount_path: /usr/app/images
-
-    # (optional) Human-readable description of volume
-    description: Description of my volume
-
-    # (optional) A directory on the host machine to sync with the mount_path on the docker image.
-    # This is primarily used for local debugging.
-    host_path: ./relative/to/architect.yml
-```
-
 ### debug
 
 (optional) A set of values for the service that will override the others when the service is being run locally. All values that are supported by the top-level service are also supported inside the `debug` object.

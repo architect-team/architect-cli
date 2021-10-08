@@ -78,22 +78,6 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   };
 };
 
-// export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): VolumeConfig => {
-//   if (volume instanceof Object) {
-//     return {
-//       mount_path: volume.mount_path,
-//       host_path: volume.host_path,
-//       key: volume.key,
-//       description: volume.description,
-//       readonly: volume.readonly,
-//     };
-//   } else {
-//     return {
-//       host_path: volume,
-//     };
-//   }
-// };
-
 export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
   const { component_account_name, component_name } = ComponentSlugUtils.parse(component_ref);

@@ -271,91 +271,6 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
       }
     },
-    "VolumeSpec": {
-      "properties": {
-        "mount_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Directory at which the volume will be mounted inside the container."
-        },
-        "host_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
-        },
-        "key": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
-          "externalDocs": {
-            "url": "/docs/configuration/services#volumes"
-          }
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of volume"
-        },
-        "readonly": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Marks the volume as readonly.",
-          "default": false
-        }
-      },
-      "type": "object",
-      "not": {
-        "type": "object",
-        "required": [
-          "host_path",
-          "key"
-        ]
-      },
-      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
-      }
-    },
     "BuildSpec": {
       "properties": {
         "context": {
@@ -589,6 +504,91 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
       }
     },
+    "VolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Directory at which the volume will be mounted inside the container."
+        },
+        "host_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of volume"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
+        }
+      },
+      "type": "object",
+      "not": {
+        "type": "object",
+        "required": [
+          "host_path",
+          "key"
+        ]
+      },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      }
+    },
     "SidecarSpec": {
       "properties": {
         "enabled": {
@@ -705,26 +705,6 @@
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
           },
-          "additionalProperties": false
-        },
-        "volumes": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/VolumeSpec"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
         },
         "build": {
@@ -1151,6 +1131,26 @@
         "liveness_probe": {
           "$ref": "#/definitions/LivenessProbeSpec"
         },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
         "replicas": {
           "anyOf": [
             {
@@ -1275,26 +1275,6 @@
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
           },
-          "additionalProperties": false
-        },
-        "volumes": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/VolumeSpec"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
         },
         "build": {
@@ -1513,26 +1493,6 @@
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
           },
-          "additionalProperties": false
-        },
-        "volumes": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/VolumeSpec"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
         },
         "build": {
@@ -2126,91 +2086,6 @@
         "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
       }
     },
-    "_DebugVolumeSpec": {
-      "properties": {
-        "mount_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Directory at which the volume will be mounted inside the container."
-        },
-        "host_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
-        },
-        "key": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
-          "externalDocs": {
-            "url": "/docs/configuration/services#volumes"
-          }
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of volume"
-        },
-        "readonly": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Marks the volume as readonly.",
-          "default": false
-        }
-      },
-      "type": "object",
-      "not": {
-        "type": "object",
-        "required": [
-          "host_path",
-          "key"
-        ]
-      },
-      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
-      }
-    },
     "_DebugBuildSpec": {
       "properties": {
         "context": {
@@ -2405,6 +2280,91 @@
       "additionalProperties": false,
       "externalDocs": {
         "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      }
+    },
+    "_DebugVolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Directory at which the volume will be mounted inside the container."
+        },
+        "host_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of volume"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
+        }
+      },
+      "type": "object",
+      "not": {
+        "type": "object",
+        "required": [
+          "host_path",
+          "key"
+        ]
+      },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
       }
     },
     "_DebugScalingMetricsSpec": {
@@ -2689,6 +2649,26 @@
         "liveness_probe": {
           "$ref": "#/definitions/_DebugLivenessProbeSpec"
         },
+        "volumes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/_DebugVolumeSpec"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+          "additionalProperties": false
+        },
         "replicas": {
           "anyOf": [
             {
@@ -2813,26 +2793,6 @@
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
           },
-          "additionalProperties": false
-        },
-        "volumes": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/_DebugVolumeSpec"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
         },
         "build": {
@@ -3048,26 +3008,6 @@
           "externalDocs": {
             "url": "/docs/configuration/services#local-configuration"
           },
-          "additionalProperties": false
-        },
-        "volumes": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/_DebugVolumeSpec"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
           "additionalProperties": false
         },
         "build": {
