@@ -11,7 +11,7 @@ import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import { AccountUtils } from '../common/utils/account';
 import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
-import { VolumeSpec } from '../dependency-manager/src/spec/resource-spec';
+import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {

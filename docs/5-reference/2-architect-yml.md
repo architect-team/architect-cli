@@ -42,6 +42,7 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `interfaces` | Dict&lt;string&gt; | A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `sidecars` | Dict&lt;string&gt; | A set of services to run as a sidecar for this service. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `liveness_probe` | [LivenessProbeSpec](#livenessprobespec) |  |  |
+ | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `replicas` | number \| [Expression](/docs/reference/contexts) | A static number of replicas of a service to be deployed. For scaling configuration, see `scaling` field. |  |
  | `scaling` | [ScalingSpec](#scalingspec) |  |  |
  | `description` | string | Human readable description |  |
@@ -50,7 +51,6 @@ A runtimes (e.g. daemons, servers, etc.). Each service is independently deployab
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
- | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
@@ -101,7 +101,6 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
- | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |
@@ -128,19 +127,6 @@ The DeploySpec represents deploy-time configuration for a service or a task.
 | -------------------- | ---------- | -------------- | -------------- |
  | `strategy`* | string \| [Expression](/docs/reference/contexts) | Selects the preferred deploy strategy for the service. |  |
  | `modules`* | Dict&lt;string&gt; | A set of named Terraform modules to override the default Terraform that architect uses at deploy-time. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
-
-
-## VolumeSpec
-
-Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
- | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
- | `description` | string | Human-readable description of volume |  |
- | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
 
 
 ## BuildSpec
@@ -170,6 +156,19 @@ Configuration for service health checks. Architect uses health checks are used f
  | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
 
 
+## VolumeSpec
+
+Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
+ | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
+ | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
+ | `description` | string | Human-readable description of volume |  |
+ | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
+
+
 ## SidecarSpec
 
 A container to run as a sidecar to the related component or service
@@ -184,7 +183,6 @@ A container to run as a sidecar to the related component or service
  | `entrypoint` | Array&lt;string&gt; \| string \| [Expression](/docs/reference/contexts) | The docker entrypoint for the container. Use this if you need to override or parameterize the docker image entrypoint. |  |
  | `language` | string | The dominant programming language used; this is for informational purposes only. |  |
  | `environment` | Dict&lt;string&gt; | A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#local-configuration) |
- | `volumes` | Dict&lt;string&gt; | A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-z0-9%5D%2B(%3F%3A%5B-_%5D%5Ba-z0-9%5D%2B)*%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `build` | [BuildSpec](#buildspec) |  |  |
  | `cpu` | number \| [Expression](/docs/reference/contexts) | The cpu required to run a service or a task | [More](/docs/configuration/services#cpu--memory) |
  | `memory` | string \| [Expression](/docs/reference/contexts) | The memory required to run a service or a task. | [More](/docs/configuration/services#cpu--memory) |

@@ -10,14 +10,6 @@ export interface DeployConfig {
   modules: Dictionary<DeployModuleConfig>;
 }
 
-export interface VolumeConfig {
-  mount_path?: string;
-  host_path?: string;
-  key?: string;
-  description?: string;
-  readonly?: boolean | string;
-}
-
 export interface BuildConfig {
   context?: string;
   args?: Dictionary<string>;
@@ -34,7 +26,6 @@ export interface ResourceConfig {
   entrypoint?: string[];
   language?: string;
   environment: Dictionary<string | null>; // TODO:290:Dictionary<string>
-  volumes: Dictionary<VolumeConfig>;
   build: BuildConfig;
   cpu?: number | string; // TODO:290:number
   memory?: string;
