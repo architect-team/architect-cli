@@ -1,7 +1,7 @@
 import { Dictionary } from '../utils/dictionary';
 import { ResourceConfig } from './resource-config';
 import { SidecarConfig } from './sidecar-config';
-import { LivenessProbeConfig } from './common-config';
+import { LivenessProbeConfig, VolumeConfig } from './common-config';
 
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number
@@ -30,6 +30,7 @@ export interface ServiceConfig extends ResourceConfig {
   interfaces: Dictionary<ServiceInterfaceConfig>;
   sidecars: Dictionary<SidecarConfig>;
   liveness_probe?: LivenessProbeConfig;
+  volumes: Dictionary<VolumeConfig>;
   replicas: number | string; // TODO:290:number
   scaling?: ScalingConfig;
 }

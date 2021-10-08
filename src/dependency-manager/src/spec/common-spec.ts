@@ -1,6 +1,6 @@
 import { IsOptional } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
+import { ExclusiveOrNeither, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 
 @JSONSchema({
   "allOf": [
@@ -107,4 +107,47 @@ export class LivenessProbeSpec {
     description: 'Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set).',
   })
   port?: number | string;
+}
+
+@JSONSchema({
+  ...ExclusiveOrNeither("host_path", "key"),
+  description: 'Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
+})
+export class VolumeSpec {
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'Directory at which the volume will be mounted inside the container.',
+  })
+  mount_path?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set).',
+  })
+  host_path?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).',
+    externalDocs: { url: '/docs/configuration/services#volumes' },
+  })
+  key?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'string',
+    description: 'Human-readable description of volume',
+  })
+  description?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({ type: 'boolean' }),
+    description: 'Marks the volume as readonly.',
+    default: false,
+  })
+  readonly?: boolean | string;
 }

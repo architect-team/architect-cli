@@ -1,7 +1,7 @@
 import { parse as shell_parse } from 'shell-quote';
-import { LivenessProbeConfig } from '../../config/common-config';
+import { LivenessProbeConfig, VolumeConfig } from '../../config/common-config';
 import { Dictionary } from '../../utils/dictionary';
-import { LivenessProbeSpec } from '../common-spec';
+import { LivenessProbeSpec, VolumeSpec } from '../common-spec';
 
 export const transformLivenessProbeSpecCommand = function (command: string[] | string | undefined): string[] | undefined {
   if (!command) {
@@ -27,4 +27,20 @@ export const transformLivenessProbeSpec = function (liveness_probe: LivenessProb
     command: transformLivenessProbeSpecCommand(liveness_probe.command),
     port: liveness_probe.port,
   };
+};
+
+export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): VolumeConfig => {
+  if (volume instanceof Object) {
+    return {
+      mount_path: volume.mount_path,
+      host_path: volume.host_path,
+      key: volume.key,
+      description: volume.description,
+      readonly: volume.readonly,
+    };
+  } else {
+    return {
+      host_path: volume,
+    };
+  }
 };

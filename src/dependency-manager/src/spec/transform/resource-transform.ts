@@ -1,8 +1,8 @@
 import { parse as shell_parse } from 'shell-quote';
 import { ComponentInstanceMetadata } from '../../config/component-config';
-import { BuildConfig, ResourceConfig, VolumeConfig } from '../../config/resource-config';
-import { Dictionary, transformDictionary } from '../../utils/dictionary';
-import { BuildSpec, EnvironmentSpecValue, ResourceSpec, VolumeSpec } from '../resource-spec';
+import { BuildConfig, ResourceConfig } from '../../config/resource-config';
+import { Dictionary } from '../../utils/dictionary';
+import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
 import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
 
 export const transformResourceSpecName = (name: string | undefined): string => {
@@ -78,21 +78,21 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   };
 };
 
-export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): VolumeConfig => {
-  if (volume instanceof Object) {
-    return {
-      mount_path: volume.mount_path,
-      host_path: volume.host_path,
-      key: volume.key,
-      description: volume.description,
-      readonly: volume.readonly,
-    };
-  } else {
-    return {
-      host_path: volume,
-    };
-  }
-};
+// export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): VolumeConfig => {
+//   if (volume instanceof Object) {
+//     return {
+//       mount_path: volume.mount_path,
+//       host_path: volume.host_path,
+//       key: volume.key,
+//       description: volume.description,
+//       readonly: volume.readonly,
+//     };
+//   } else {
+//     return {
+//       host_path: volume,
+//     };
+//   }
+// };
 
 export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
@@ -107,7 +107,6 @@ export const transformResourceSpec = (key: string, spec: ResourceSpec, component
     entrypoint: transformResourceSpecEntryPoint(spec.entrypoint),
     language: spec.language,
     environment,
-    volumes: transformDictionary(transformVolumeSpec, spec.volumes),
     build: transformBuildSpec(spec.build, spec.image),
     cpu: spec.cpu,
     memory: spec.memory,

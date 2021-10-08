@@ -3,7 +3,7 @@ import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
 import { ResourceSpec } from './resource-spec';
 import { SidecarSpec } from './sidecar-spec';
-import { LivenessProbeSpec } from './common-spec';
+import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
@@ -152,6 +152,19 @@ export class ServiceSpec extends ResourceSpec {
   @IsOptional()
   @ValidateNested()
   liveness_probe?: LivenessProbeSpec;
+
+  @IsOptional()
+  @JSONSchema({
+    type: 'object',
+    patternProperties: {
+      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(VolumeSpec, 'string'),
+    },
+    errorMessage: {
+      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+    },
+    description: 'A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
+  })
+  volumes?: Dictionary<VolumeSpec | string>;
 
   @IsOptional()
   @JSONSchema({
