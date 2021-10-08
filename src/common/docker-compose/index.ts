@@ -120,6 +120,7 @@ export class DockerComposeUtils {
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
 
+      // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
@@ -176,27 +177,30 @@ export class DockerComposeUtils {
           throw new Error("Either `image` or `build` must be defined");
         }
 
-        const volumes: string[] = [];
-        for (const [key, spec] of Object.entries(node.config.volumes)) {
-          let service_volume;
-          if (spec.mount_path) {
-            service_volume = spec.mount_path;
-          } else {
-            throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
-          }
+        // Set volumes only for services (not supported by Tasks)
+        if (node instanceof ServiceNode) {
+          const volumes: string[] = [];
+          for (const [key, spec] of Object.entries(node.config.volumes)) {
+            let service_volume;
+            if (spec.mount_path) {
+              service_volume = spec.mount_path;
+            } else {
+              throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
+            }
 
-          let volume;
-          if (spec.host_path) {
-            volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          } else if (spec.key) {
-            compose.volumes[spec.key] = { external: true };
-            volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          } else {
-            volume = service_volume;
+            let volume;
+            if (spec.host_path) {
+              volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+            } else if (spec.key) {
+              compose.volumes[spec.key] = { external: true };
+              volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+            } else {
+              volume = service_volume;
+            }
+            volumes.push(volume);
           }
-          volumes.push(volume);
+          if (volumes.length) service.volumes = volumes;
         }
-        if (volumes.length) service.volumes = volumes;
       }
 
       if (node instanceof TaskNode) {
