@@ -73,6 +73,55 @@ jobs:
         run: architect env:destroy --auto-approve -a <account-name> preview-${{ github.event.number }}
 ```
 
+### Comment on pull request discussion
+
+It could be convenient for reviewers to be able to quickly view either the preview environment or the running appplication created by Architect. The snippet below can be used in GitHub workflows to automatically create a comment in the pull request discussion.
+
+```yml
+...
+- name: PR Comment
+  uses: actions/github-script@v3
+  env:
+    ACCOUNT: ${{ secrets.ARCHITECT_ACCOUNT }}
+    COMPONENT: ${{ secrets.ARCHITECT_COMPONENT }}
+  with:
+    script: |
+      const {data: comments} = await github.issues.listComments({
+        issue_number: ${{ github.event.number }},
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+      })
+      const architectComment = comments.find(comment => comment.body.startsWith('### Architect'));
+      if (architectComment) {
+        return;
+      }
+      github.issues.createComment({
+        issue_number: ${{ github.event.number }},
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: `### Architect
+        Preview environment: [${process.env.ENVIRONMENT}](https://cloud.architect.io/${process.env.ACCOUNT}/environments/${process.env.ENVIRONMENT})
+        Running application: [${process.env.COMPONENT}](https://hello.${process.env.ENVIRONMENT}.${process.env.ACCOUNT}.arc.domains)`
+      })
+...
+```
+
+### Post to Slack
+
+Collaborators on a feature or issue might want to be notified when a feature is ready to be reviewed or tested. The code below can be used in a GitHub workflow to post to a Slack channel on specified events.
+
+```yml
+...
+- name: Send custom JSON data to Slack workflow
+  id: slack
+  uses: slackapi/slack-github-action@v1.14.0
+  with:
+    payload: "{\"preview_env\":\"https://cloud.architect.io/${{ secrets.ARCHITECT_ACCOUNT }}/environments/preview-${{ github.event.number }}\",\"app_endpoint\":\"https://hello.preview-${{ github.event.number }}.${{ secrets.ARCHITECT_ACCOUNT }}.arc.domains\"}"
+  env:
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+...
+```
+
 ## Gitlab CI
 
 This job can be pasted into your `.gitlab-ci.yml` at the root of your repository. You are welcome to change the `stage` to whatever fits your needs to allow you to run tests before the preview is generated, and please be sure to assign correct values for the variables in the job. Additionally, you'll need to assign values for variables in the below config not prefixed with `$CI_` in your repository's CI variables configuration so that the architect commands will run successfully.
