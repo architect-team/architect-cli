@@ -75,7 +75,7 @@ jobs:
 
 ### Comment on pull request discussion
 
-It could be convenient for reviewers to be able to quickly view either the preview environment or the running appplication created by Architect. The snippet below can be used in GitHub workflows to automatically create a comment in the pull request discussion.
+Use the snippet below in GitHub workflows to automatically create a comment in the pull request discussion for reviewers to be able to quickly view either the preview environment or the running appplication created by Architect.
 
 ```yml
 ...
@@ -108,7 +108,7 @@ It could be convenient for reviewers to be able to quickly view either the previ
 
 ### Post to Slack
 
-Collaborators on a feature or issue might want to be notified when a feature is ready to be reviewed or tested. The code below can be used in a GitHub workflow to post to a Slack channel on specified events.
+Use the code below in a GitHub workflow to post to a Slack channel on specified events if collaborators on a feature or issue want to be notified when it is ready to be reviewed or tested.
 
 ```yml
 ...
