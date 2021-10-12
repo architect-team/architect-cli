@@ -79,7 +79,7 @@ Use the snippet below in GitHub workflows to automatically create a comment in t
 
 ```yml
 ...
-- name: PR Comment
+- name: Architect preview information PR comment
   uses: actions/github-script@v3
   env:
     ACCOUNT: ${{ secrets.ARCHITECT_ACCOUNT }}
@@ -112,7 +112,7 @@ Use the code below in a GitHub workflow to post to a Slack channel on specified 
 
 ```yml
 ...
-- name: Send custom JSON data to Slack workflow
+- name: Post Architect preview information to Slack
   id: slack
   uses: slackapi/slack-github-action@v1.14.0
   with:
