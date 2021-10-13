@@ -232,7 +232,7 @@ In order to use the persistent volume above in a service, include a block of the
 ...
 ```
 
-Architect deployments to Kubernetes platforms also support dynamic volume provisioning. If an Architect service contains a volume that does not specify a `key` property, the volume will be created automatically at deploy time. An example of such a volume is below. Be sure that the Kubernetes cluster's default storage class includes both the `ReadWriteOnce` and `ReadOnlyMany` access modes.
+Architect deployments to Kubernetes platforms also support dynamic volume provisioning. If an Architect service contains a volume that does not specify a `key` property, the volume will be created automatically at deploy time. An example of such a volume is below. Be sure that the Kubernetes cluster's default storage class includes both the `ReadWriteOnce` and `ReadOnlyMany` access modes and that the volume binding mode is set to `Immediate`.
 
 ```yml
 ...
