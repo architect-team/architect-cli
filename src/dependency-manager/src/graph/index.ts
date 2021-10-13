@@ -1,6 +1,7 @@
 import { Exclude, Type } from 'class-transformer';
 import DependencyEdge from './edge';
 import IngressEdge from './edge/ingress';
+import OutputEdge from './edge/output';
 import ServiceEdge from './edge/service';
 import { DependencyNode } from './node';
 import GatewayNode from './node/gateway';
@@ -28,6 +29,7 @@ export default class DependencyGraph {
       property: '__type',
       subTypes: [
         { value: ServiceEdge, name: 'service' },
+        { value: OutputEdge, name: 'output' },
         { value: IngressEdge, name: 'ingress' },
       ],
     },
