@@ -1,7 +1,9 @@
 import { Type } from 'class-transformer';
 import { DependencyState } from '../state';
 
-export default class DependencyEdge {
+export default abstract class DependencyEdge {
+  abstract __type: string;
+
   from: string;
   to: string;
   interface_mappings: { interface_from: string, interface_to: string }[];
@@ -22,6 +24,6 @@ export default class DependencyEdge {
   }
 
   get ref(): string {
-    return `${this.from}.${this.to}`;
+    return `${this.from}.${this.to}.${this.__type}`;
   }
 }
