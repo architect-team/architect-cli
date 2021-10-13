@@ -200,18 +200,19 @@ volumes:
 
 #### Kubernetes
 
-Kubernetes persistent volume claims should be created in advance of a deployment requiring volumes. Be sure to create the claim(s) in the same namespace that the services will be created in. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
+Kubernetes persistent volume claims can be created in advance of a deployment requiring volumes. Be sure to create the claim(s) in the same namespace that the services will be created in. An example of a persistent volume configuration that can be applied to a cluster namespace is below:
 
 ```yml
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: my-claim
+  namespace: my-namespace
 spec:
-  storageClass: "" # Set this to a storageClass that supports the accessModes below
+  storageClass: "" # Set this to a storage class that supports the access modes below
   accessModes:
-    - ReadWriteMany # The PVC storageClass must support this accessMode
-    - ReadOnlyMany # The PVC storageClass must support this accessMode
+    - ReadWriteMany # The default PVC storage class must support this access mode
+    - ReadOnlyMany # The default PVC storage class must support this access mode
   resources:
     requests:
       storage: 5Gi
@@ -228,6 +229,17 @@ In order to use the persistent volume above in a service, include a block of the
 
       # Name of the persistent volume claim that has been created in the Kubernetes cluster
       key: my-claim
+...
+```
+
+Architect deployments to Kubernetes platforms also support dynamic volume provisioning. If an Architect service contains a volume that does not specify a `key` property, the volume will be created automatically at deploy time. An example of such a volume is below. Be sure that the Kubernetes cluster's default storage class includes both the `ReadWriteOnce` and `ReadOnlyMany` access modes.
+
+```yml
+...
+  volumes:
+    my-volume:
+      # Directory at which the volume will be mounted inside the container
+      mount_path: /usr/app/images
 ...
 ```
 
