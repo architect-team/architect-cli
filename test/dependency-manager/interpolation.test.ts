@@ -12,7 +12,7 @@ import DockerComposeTemplate, { DockerService } from '../../src/common/docker-co
 import PortUtil from '../../src/common/utils/port';
 import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
-import InterfacesNode from '../../src/dependency-manager/src/graph/node/interfaces';
+import ComponentNode from '../../src/dependency-manager/src/graph/node/interfaces';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -1298,7 +1298,7 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfigs(config));
     const interfaces_ref = buildInterfacesRef(config);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
-    const node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
+    const node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
@@ -1346,7 +1346,7 @@ describe('interpolation spec v1', () => {
     );
     const interfaces_ref = buildInterfacesRef(config);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
-    const node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
+    const node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
     expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
@@ -1413,7 +1413,7 @@ describe('interpolation spec v1', () => {
     // Check the component interface node has the outputs set on its config
     const config = await manager.loadComponentConfig('examples/publisher');
     const interfaces_ref = buildInterfacesRef(config);
-    const interface_node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
+    const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
     expect(interface_node.config.outputs).to.deep.eq({
       topic1: { value: "test" },
       topic2: { value: "test" },

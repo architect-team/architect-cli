@@ -5,7 +5,7 @@ import OutputEdge from './edge/output';
 import ServiceEdge from './edge/service';
 import { DependencyNode } from './node';
 import GatewayNode from './node/gateway';
-import InterfacesNode from './node/interfaces';
+import ComponentNode from './node/interfaces';
 import { ServiceNode } from './node/service';
 import { TaskNode } from './node/task';
 
@@ -16,7 +16,7 @@ export default class DependencyGraph {
       subTypes: [
         { value: ServiceNode, name: 'service' },
         { value: TaskNode, name: 'task' },
-        { value: InterfacesNode, name: 'interfaces' },
+        { value: ComponentNode, name: 'interfaces' },
         { value: GatewayNode, name: 'gateway' },
       ],
     },
@@ -157,7 +157,7 @@ export default class DependencyGraph {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const edge = queue.shift()!;
       const node_to = this.getNodeByRef(edge.to);
-      if (node_to instanceof InterfacesNode) {
+      if (node_to instanceof ComponentNode) {
         const child_edges = this.edges.filter(e => e.from === edge.to);
         for (const child_edge of child_edges) {
           queue.push(child_edge);
@@ -210,7 +210,7 @@ export default class DependencyGraph {
 
   private getDownstreamServices(node: DependencyNode): ServiceNode[] {
     let downstreams = this.getDownstreamNodes(node);
-    const interfaces = downstreams.filter(n => n instanceof InterfacesNode);
+    const interfaces = downstreams.filter(n => n instanceof ComponentNode);
     for (const i of interfaces) {
       const interface_downstreams = interfaces.map(i => this.getDownstreamNodes(i));
       for (const i_downstream of interface_downstreams) {
