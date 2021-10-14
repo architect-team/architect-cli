@@ -1473,12 +1473,12 @@ describe('interpolation spec v1', () => {
     outputs:
       topic1: test
     services:
-      api:
+      publisher-api:
         interfaces:
           main: 8080
     interfaces:
       api:
-        url: \${{ services.api.interfaces.main.url }}
+        url: \${{ services.publisher-api.interfaces.main.url }}
     `
 
     const consumer_config = `
@@ -1486,7 +1486,7 @@ describe('interpolation spec v1', () => {
     dependencies:
       examples/publisher: latest
     services:
-      api:
+      consumer-api:
         environment:
           API_HOST: \${{ dependencies.examples/publisher.interfaces.api.url }}
           TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
@@ -1504,46 +1504,13 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
     );
-    expect(graph.edges).to.deep.eq([
-      // The edge between the publisher service and its interface node
-      {
-        __type: 'service',
-        from: 'publisher-xmyfv1tj',
-        to: 'publisher-api-0iypmumi',
-        instance_id: 'examples/publisher:latest',
-        interface_mappings: [
-          {
-            interface_from: 'api',
-            interface_to: 'main'
-          }
-        ]
-      },
-      // The service edge between the consumer service and the publisher interface node
-      {
-        __type: 'service',
-        from: 'consumer-api-vv6rqyis',
-        to: 'publisher-xmyfv1tj',
-        instance_id: 'examples/consumer:latest',
-        interface_mappings: [
-          {
-            interface_from: 'service->api',
-            interface_to: 'api'
-          }
-        ]
-      },
-      // The output edge between the consumer service and the publisher interface node
-      {
-        __type: 'output',
-        from: 'consumer-api-vv6rqyis',
-        to: 'publisher-xmyfv1tj',
-        instance_id: 'examples/consumer:latest',
-        interface_mappings: [
-          {
-            interface_from: 'output->topic1',
-            interface_to: 'topic1'
-          }
-        ]
-      },
-    ]);
+    const publisher_component_ref = resourceRefToNodeRef('examples/publisher:latest');
+    const publisher_api_ref = resourceRefToNodeRef('examples/publisher/publisher-api:latest');
+    const consumer_api_ref = resourceRefToNodeRef('examples/consumer/consumer-api:latest');
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
+      `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
+      `${consumer_api_ref} [output->topic1] -> ${publisher_component_ref} [topic1]`
+    ])
   });
 });
