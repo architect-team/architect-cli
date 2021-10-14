@@ -218,7 +218,6 @@ export default abstract class DependencyManager {
         if (!dep_service_edge_map[to]) dep_service_edge_map[to] = {};
         dep_service_edge_map[to][`service->${interface_name}`] = interface_name;
       }
-
       for (const [to, interfaces_map] of Object.entries(dep_service_edge_map)) {
         const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
         const edge = new ServiceEdge(from, to, interface_mappings);
@@ -241,7 +240,6 @@ export default abstract class DependencyManager {
         if (!dep_output_edge_map[to]) dep_output_edge_map[to] = {};
         dep_output_edge_map[to][`output->${output_name}`] = output_name;
       }
-
       for (const [to, output_map] of Object.entries(dep_output_edge_map)) {
         const output_mappings = Object.entries(output_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
         const edge = new OutputEdge(from, to, output_mappings);
@@ -658,9 +656,15 @@ export default abstract class DependencyManager {
       const interpolated_config = interpolateConfigOrReject(component_config, [''], false);
       nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
-      if (Object.keys(component_config.interfaces).length) {
+      const has_interfaces = Object.keys(component_config.interfaces).length > 0
+      const has_outputs = Object.keys(component_config.outputs).length > 0
+      if (has_interfaces || has_outputs) {
         const ref = buildComponentRef(component_config);
-        const node = new InterfacesNode(buildInterfacesRef(component_config), ref, interpolated_config.interfaces);
+        const config = {
+          outputs: interpolated_config.outputs,
+          interfaces: interpolated_config.interfaces
+        };
+        const node = new InterfacesNode(buildInterfacesRef(component_config), ref, config);
         nodes.push(node);
       }
 
@@ -747,7 +751,7 @@ export default abstract class DependencyManager {
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
       for (const { interface_from, interface_to } of ingress_edge.interface_mappings) {
         const interfaces_node = graph.getNodeByRef(ingress_edge.to) as InterfacesNode;
-        const ingress = interfaces_node.config[interface_to].ingress;
+        const ingress = interfaces_node.config.interfaces[interface_to].ingress;
         const key = ingress?.path ? `${interface_from} with path ${ingress.path}` : interface_from;
         if (!seen_subdomains[key]) {
           seen_subdomains[key] = [];
@@ -796,9 +800,16 @@ export default abstract class DependencyManager {
         tree_node.interpolated_config = tree_node.config;
       }
 
+      // Add interfaces to InterfacesNode of the tree if there are any interfaces defined
       if (Object.keys(tree_node.interpolated_config.interfaces).length) {
         const interfaces_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as InterfacesNode;
-        interfaces_node.config = tree_node.interpolated_config.interfaces;
+        interfaces_node.config.interfaces = tree_node.interpolated_config.interfaces;
+      }
+
+      // Add outputs to InterfacesNode of the tree if there are any outputs defined
+      if (Object.keys(tree_node.interpolated_config.outputs).length) {
+        const interfaces_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as InterfacesNode;
+        interfaces_node.config.outputs = tree_node.interpolated_config.outputs;
       }
 
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.services), ...Object.entries(tree_node.interpolated_config.tasks)]) {

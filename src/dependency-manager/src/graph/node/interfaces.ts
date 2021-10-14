@@ -1,5 +1,5 @@
 import { DependencyNode } from '.';
-import { ComponentInterfaceConfig } from '../../config/component-config';
+import { ComponentNodeConfig } from '../../config/component-config';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary } from '../../utils/dictionary';
 
@@ -8,9 +8,9 @@ export default class InterfacesNode extends DependencyNode {
 
   ref: string;
   slug: string;
-  config: Dictionary<ComponentInterfaceConfig>;
+  config: ComponentNodeConfig;
 
-  constructor(ref: string, slug: string, config: Dictionary<ComponentInterfaceConfig>) {
+  constructor(ref: string, slug: string, config: ComponentNodeConfig) {
     super();
     this.ref = ref;
     this.slug = slug;

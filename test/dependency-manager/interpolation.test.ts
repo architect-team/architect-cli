@@ -1299,7 +1299,7 @@ describe('interpolation spec v1', () => {
     const interfaces_ref = buildInterfacesRef(config);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
-    expect(node.config).to.deep.eq({
+    expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
         ingress: {
@@ -1347,7 +1347,7 @@ describe('interpolation spec v1', () => {
     const interfaces_ref = buildInterfacesRef(config);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
-    expect(node.config).to.deep.eq({
+    expect(node.config.interfaces).to.deep.eq({
       api: {
         url: `http://${api_ref}:8080`,
         ingress: {
@@ -1363,7 +1363,7 @@ describe('interpolation spec v1', () => {
     });
   });
 
-  it('interpolate outputs', async () => {
+  it('interpolate component outputs', async () => {
     const publisher_config = `
     name: examples/publisher
     parameters:
@@ -1402,12 +1402,148 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer')));
     const api_ref = resourceRefToNodeRef('examples/consumer/api:latest');
-    const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.environment).to.deep.eq({
+    // Check the interpolated values on the service node resolved correctly
+    const service_node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(service_node.config.environment).to.deep.eq({
       TOPIC1: 'test',
       TOPIC2: 'test',
       TOPIC3: 'test',
       TOPIC4: 'test'
     });
+    // Check the component interface node has the outputs set on its config
+    const config = await manager.loadComponentConfig('examples/publisher');
+    const interfaces_ref = buildInterfacesRef(config);
+    const interface_node = graph.getNodeByRef(interfaces_ref) as InterfacesNode;
+    expect(interface_node.config.outputs).to.deep.eq({
+      topic1: { value: "test" },
+      topic2: { value: "test" },
+      topic3: { value: "test", description: undefined, },
+      topic4: { value: "test", description: undefined, },
+    });
+  });
+
+  it('interpolating output dependency creates OutputEdge', async () => {
+    const publisher_config = `
+    name: examples/publisher
+    outputs:
+      topic1: test
+    `
+
+    const consumer_config = `
+    name: examples/consumer
+    dependencies:
+      examples/publisher: latest
+    services:
+      api:
+        environment:
+          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+    `
+
+    mock_fs({
+      '/stack/publisher/architect.yml': publisher_config,
+      '/stack/consumer/architect.yml': consumer_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/publisher': '/stack/publisher/architect.yml',
+      'examples/consumer': '/stack/consumer/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+    );
+    expect(graph.edges).to.deep.eq([
+      {
+        __type: 'output',
+        from: 'consumer-api-vv6rqyis',
+        to: 'publisher-xmyfv1tj',
+        instance_id: 'examples/consumer:latest',
+        interface_mappings: [
+          {
+            interface_from: 'output->topic1',
+            interface_to: 'topic1'
+          }
+        ]
+      }
+    ]);
+  });
+
+  it('interpolating outputs dependency with interfaces creates 2 edges', async () => {
+    const publisher_config = `
+    name: examples/publisher
+    outputs:
+      topic1: test
+    services:
+      api:
+        interfaces:
+          main: 8080
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+    `
+
+    const consumer_config = `
+    name: examples/consumer
+    dependencies:
+      examples/publisher: latest
+    services:
+      api:
+        environment:
+          API_HOST: \${{ dependencies.examples/publisher.interfaces.api.url }}
+          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+    `
+
+    mock_fs({
+      '/stack/publisher/architect.yml': publisher_config,
+      '/stack/consumer/architect.yml': consumer_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/publisher': '/stack/publisher/architect.yml',
+      'examples/consumer': '/stack/consumer/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+    );
+    expect(graph.edges).to.deep.eq([
+      // The edge between the publisher service and its interface node
+      {
+        __type: 'service',
+        from: 'publisher-xmyfv1tj',
+        to: 'publisher-api-0iypmumi',
+        instance_id: 'examples/publisher:latest',
+        interface_mappings: [
+          {
+            interface_from: 'api',
+            interface_to: 'main'
+          }
+        ]
+      },
+      // The service edge between the consumer service and the publisher interface node
+      {
+        __type: 'service',
+        from: 'consumer-api-vv6rqyis',
+        to: 'publisher-xmyfv1tj',
+        instance_id: 'examples/consumer:latest',
+        interface_mappings: [
+          {
+            interface_from: 'service->api',
+            interface_to: 'api'
+          }
+        ]
+      },
+      // The output edge between the consumer service and the publisher interface node
+      {
+        __type: 'output',
+        from: 'consumer-api-vv6rqyis',
+        to: 'publisher-xmyfv1tj',
+        instance_id: 'examples/consumer:latest',
+        interface_mappings: [
+          {
+            interface_from: 'output->topic1',
+            interface_to: 'topic1'
+          }
+        ]
+      },
+    ]);
   });
 });

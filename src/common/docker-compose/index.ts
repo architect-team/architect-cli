@@ -253,7 +253,7 @@ export class DockerComposeUtils {
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
           const interfaces_node = graph.getNodeByRef(edge.to) as InterfacesNode;
-          const component_interface = interfaces_node.config[interface_to];
+          const component_interface = interfaces_node.config.interfaces[interface_to];
           if (component_interface?.ingress?.path) {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && PathPrefix(\`${component_interface.ingress.path}\`)`);
           } else {
