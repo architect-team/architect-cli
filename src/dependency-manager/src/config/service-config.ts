@@ -1,5 +1,7 @@
 import { Dictionary } from '../utils/dictionary';
 import { ResourceConfig } from './resource-config';
+import { SidecarConfig } from './sidecar-config';
+import { LivenessProbeConfig, VolumeConfig } from './common-config';
 
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number
@@ -23,21 +25,12 @@ export interface ServiceInterfaceConfig {
   sticky?: boolean | string;
 }
 
-export interface LivenessProbeConfig {
-  success_threshold: number | string; // TODO:290:number
-  failure_threshold: number | string; // TODO:290:number
-  timeout: string;
-  interval: string;
-  initial_delay: string;
-  path?: string;
-  command?: string[];
-  port?: number | string; // TODO:290:number
-}
-
 export interface ServiceConfig extends ResourceConfig {
   debug?: ServiceConfig;
   interfaces: Dictionary<ServiceInterfaceConfig>;
+  sidecars: Dictionary<SidecarConfig>;
   liveness_probe?: LivenessProbeConfig;
+  volumes: Dictionary<VolumeConfig>;
   replicas: number | string; // TODO:290:number
   scaling?: ScalingConfig;
 }

@@ -13,7 +13,6 @@ import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
 import { buildInterfacesRef, DependencyNode, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import DependencyGraph from '../../src/dependency-manager/src/graph';
-import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 
 describe('sidecar spec v1', () => {
   beforeEach(async () => {
@@ -318,10 +317,9 @@ describe('sidecar spec v1', () => {
         "labels": [
           "traefik.enable=true",
           "traefik.port=80",
-          "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
-          "traefik.http.routers.public.service=public-service",
-          "traefik.http.services.public-service.loadbalancer.server.port=8080",
-          "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+          `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
+          `traefik.http.routers.${leaf_api_ref}-api.service=${leaf_api_ref}-api-service`,
+          `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
@@ -354,10 +352,9 @@ describe('sidecar spec v1', () => {
         "labels": [
           "traefik.enable=true",
           "traefik.port=80",
-          "traefik.http.routers.publicv1.rule=Host(`publicv1.arc.localhost`)",
-          "traefik.http.routers.publicv1.service=publicv1-service",
-          "traefik.http.services.publicv1-service.loadbalancer.server.port=8080",
-          "traefik.http.services.publicv1-service.loadbalancer.server.scheme=http"
+          `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
+          `traefik.http.routers.${other_leaf_api_ref}-api.service=${other_leaf_api_ref}-api-service`,
+          `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
@@ -418,14 +415,12 @@ describe('sidecar spec v1', () => {
       "labels": [
         "traefik.enable=true",
         "traefik.port=80",
-        "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
-        "traefik.http.routers.app.service=app-service",
-        "traefik.http.services.app-service.loadbalancer.server.port=8080",
-        "traefik.http.services.app-service.loadbalancer.server.scheme=http",
-        "traefik.http.routers.admin.rule=Host(`admin.arc.localhost`)",
-        "traefik.http.routers.admin.service=admin-service",
-        "traefik.http.services.admin-service.loadbalancer.server.port=8081",
-        "traefik.http.services.admin-service.loadbalancer.server.scheme=http"
+        `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
+        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
+        `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
+        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
       ],
       "external_links": [
         "gateway:app.arc.localhost",
@@ -522,18 +517,6 @@ describe('sidecar spec v1', () => {
       `${admin_ref} [service->public, service->admin, service->private] -> ${catalog_interface_ref} [public, admin, private]`,
       `gateway [public2, admin2] -> ${catalog_interface_ref} [public, admin]`,
     ])
-
-    const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);
-
-    const ingress_edge = ingress_edges[0];
-    const [node_to, node_to_interface_name] = graph.followEdge(ingress_edge, 'public2');
-    expect(node_to).instanceOf(ServiceNode);
-    expect(node_to_interface_name).to.eq('public');
-
-    const [node_to2, node_to_interface_name2] = graph.followEdge(ingress_edge, 'admin2');
-    expect(node_to2).instanceOf(ServiceNode);
-    expect(node_to_interface_name2).to.eq('admin');
-
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
     expect(dashboard_node.config.environment).to.deep.eq({
       ADMIN_ADDR: `http://127.0.0.1:12346`,

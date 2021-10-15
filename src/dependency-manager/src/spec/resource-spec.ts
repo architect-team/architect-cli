@@ -1,7 +1,7 @@
 import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
-import { AnyOf, ArrayOf, ExclusiveOrNeither, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
+import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString, OneOf, StringOrStringArray } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 @JSONSchema({
@@ -52,49 +52,6 @@ export class DeploySpec {
     description: 'A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.',
   })
   modules!: Dictionary<DeployModuleSpec>;
-}
-
-@JSONSchema({
-  ...ExclusiveOrNeither("host_path", "key"),
-  description: 'Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
-})
-export class VolumeSpec {
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'Directory at which the volume will be mounted inside the container.',
-  })
-  mount_path?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set).',
-  })
-  host_path?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).',
-    externalDocs: { url: '/docs/configuration/services#volumes' },
-  })
-  key?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'string',
-    description: 'Human-readable description of volume',
-  })
-  description?: string;
-
-  @IsOptional()
-  @JSONSchema({
-    ...ExpressionOr({ type: 'boolean' }),
-    description: 'Marks the volume as readonly.',
-    default: false,
-  })
-  readonly?: boolean | string;
 }
 
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -173,10 +130,6 @@ export abstract class ResourceSpec {
   language?: string;
 
   @IsOptional()
-  @ValidateNested()
-  debug?: Partial<ResourceSpec>;
-
-  @IsOptional()
   @JSONSchema({
     type: 'object',
     patternProperties: {
@@ -189,19 +142,6 @@ export abstract class ResourceSpec {
     externalDocs: { url: '/docs/configuration/services#local-configuration' },
   })
   environment?: Dictionary<EnvironmentSpecValue>;
-
-  @IsOptional()
-  @JSONSchema({
-    type: 'object',
-    patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(VolumeSpec, 'string'),
-    },
-    errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
-    },
-    description: 'A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
-  })
-  volumes?: Dictionary<VolumeSpec | string>;
 
   @IsOptional()
   @ValidateNested()

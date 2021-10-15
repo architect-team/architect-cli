@@ -9,7 +9,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
-describe('interpolation spec v1', () => {
+describe('debug spec v1', () => {
   beforeEach(() => {
     // Stub the logger
     sinon.replace(Register.prototype, 'log', sinon.stub());
@@ -50,9 +50,17 @@ describe('interpolation spec v1', () => {
         image: heroku/nodejs-hello-world
         interfaces:
           main: 3000
+        command:
+          - bash
+          - -c
+          - echo "prod"
         environment:
           NODE_ENV: production
         debug:
+          command:
+            - bash
+            - -c
+            - echo "debug"
           environment:
             NODE_ENV: development
 
@@ -73,6 +81,7 @@ describe('interpolation spec v1', () => {
     ]);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.command).to.deep.eq(['bash', '-c', 'echo "debug"'])
     expect(node.config.environment).to.deep.eq({
       NODE_ENV: 'development'
     });

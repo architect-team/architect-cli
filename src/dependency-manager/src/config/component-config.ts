@@ -8,6 +8,13 @@ import { TaskConfig } from './task-config';
 export interface IngressConfig {
   enabled?: boolean;
   subdomain?: string;
+  path?: string;
+  ip_whitelist?: string[];
+}
+
+export interface ComponentNodeConfig {
+  outputs: Dictionary<OutputDefinitionConfig>,
+  interfaces: Dictionary<ComponentInterfaceConfig>
 }
 
 export interface ComponentInterfaceConfig {
@@ -25,6 +32,7 @@ export interface ComponentInterfaceConfig {
   consumers?: string[];
   dns_zone?: string;
   subdomain?: string;
+  path?: string;
 }
 
 export interface ParameterDefinitionConfig {

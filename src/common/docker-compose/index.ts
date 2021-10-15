@@ -9,7 +9,7 @@ import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
+import ComponentNode from '../../dependency-manager/src/graph/node/component';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
@@ -45,7 +45,7 @@ export class DockerComposeUtils {
     const gateway_links = new Set<string>();
     if (gateway_node) {
       for (const edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
-        for (const interface_from of Object.keys(edge.interfaces_map)) {
+        for (const { interface_from } of edge.interface_mappings) {
           const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
           gateway_links.add(`${gateway_node.ref}:${host}`);
         }
@@ -89,7 +89,7 @@ export class DockerComposeUtils {
       }
       const formatted_environment_variables: Dictionary<string | null> = {};
       for (const [var_key, var_value] of Object.entries(node.config.environment)) {
-        formatted_environment_variables[var_key] = var_value ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
+        formatted_environment_variables[var_key] = var_value !== null ? var_value.replace(/\$/g, '$$$') : null; // https://docs.docker.com/compose/compose-file/compose-file-v3/#variable-substitution
       }
       const service = {
         environment: formatted_environment_variables,
@@ -120,6 +120,7 @@ export class DockerComposeUtils {
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
 
+      // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
         if (liveness_probe) {
@@ -176,27 +177,30 @@ export class DockerComposeUtils {
           throw new Error("Either `image` or `build` must be defined");
         }
 
-        const volumes: string[] = [];
-        for (const [key, spec] of Object.entries(node.config.volumes)) {
-          let service_volume;
-          if (spec.mount_path) {
-            service_volume = spec.mount_path;
-          } else {
-            throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
-          }
+        // Set volumes only for services (not supported by Tasks)
+        if (node instanceof ServiceNode) {
+          const volumes: string[] = [];
+          for (const [key, spec] of Object.entries(node.config.volumes)) {
+            let service_volume;
+            if (spec.mount_path) {
+              service_volume = spec.mount_path;
+            } else {
+              throw new Error(`mount_path must be specified for volume ${key} of service ${node.ref}`);
+            }
 
-          let volume;
-          if (spec.host_path) {
-            volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          } else if (spec.key) {
-            compose.volumes[spec.key] = { external: true };
-            volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
-          } else {
-            volume = service_volume;
+            let volume;
+            if (spec.host_path) {
+              volume = `${path.resolve(component_path, spec.host_path)}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+            } else if (spec.key) {
+              compose.volumes[spec.key] = { external: true };
+              volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
+            } else {
+              volume = service_volume;
+            }
+            volumes.push(volume);
           }
-          volumes.push(volume);
+          if (volumes.length) service.volumes = volumes;
         }
-        if (volumes.length) service.volumes = volumes;
       }
 
       if (node instanceof TaskNode) {
@@ -222,25 +226,17 @@ export class DockerComposeUtils {
     // Enrich service relationships
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
-      if (node_from instanceof InterfacesNode) continue;
 
-      for (let interface_name of Object.keys(edge.interfaces_map)) {
-        const [node_to, node_to_interface_name] = graph.followEdge(edge, interface_name);
-        const node_to_ref = node_to.ref;
+      if (node_from instanceof ComponentNode) continue;
 
+      for (const { interface_from, interface_to, node_to, node_to_interface_name } of graph.followEdge(edge)) {
         if (!(node_to instanceof ServiceNode)) continue;
         if (node_to.is_external) continue;
 
         if (edge instanceof IngressEdge) {
-          const service_to = compose.services[node_to_ref];
+          const service_to = compose.services[node_to.ref];
           const node_to_interface = node_to.interfaces[node_to_interface_name];
           service_to.environment = service_to.environment || {};
-
-          let protocol = node_to_interface.protocol || 'http';
-          // https://doc.traefik.io/traefik/user-guides/grpc/#with-http-h2c
-          if (protocol === 'grpc') {
-            protocol = 'h2c';
-          }
 
           if (!service_to.labels) {
             service_to.labels = [];
@@ -253,19 +249,22 @@ export class DockerComposeUtils {
             service_to.labels.push(`traefik.port=${gateway_port}`);
           }
 
-          const host = interface_name === '@' ? 'arc.localhost' : `${interface_name}.arc.localhost`;
+          const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
+          const traefik_service = `${node_to.ref}-${interface_to}`;
 
-          if (interface_name === '@') {
-            // @ is an invalid service name for traefik
-            interface_name = '__at__';
+          const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
+          const component_interface = component_node.config.interfaces[interface_to];
+          if (component_interface?.ingress?.path) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && PathPrefix(\`${component_interface.ingress.path}\`)`);
+          } else {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`)`);
           }
-
-          service_to.labels.push(`traefik.http.routers.${interface_name}.rule=Host(\`${host}\`)`);
-          service_to.labels.push(`traefik.http.routers.${interface_name}.service=${interface_name}-service`);
-          service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.port=${node_to_interface.port}`);
-          service_to.labels.push(`traefik.http.services.${interface_name}-service.loadbalancer.server.scheme=${protocol}`);
+          if (!service_to.labels.includes(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`)) {
+            service_to.labels.push(`traefik.http.routers.${traefik_service}.service=${traefik_service}-service`);
+          }
+          service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadbalancer.server.port=${node_to_interface.port}`);
           if (node_to_interface.sticky) {
-            service_to.labels.push(`traefik.http.services.${interface_name}-service.loadBalancer.sticky.cookie=true`);
+            service_to.labels.push(`traefik.http.services.${traefik_service}-service.loadBalancer.sticky.cookie=true`);
           }
         }
       }

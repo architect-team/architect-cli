@@ -1,28 +1,29 @@
 import { Type } from 'class-transformer';
-import { Dictionary } from '../../utils/dictionary';
 import { DependencyState } from '../state';
 
-export default class DependencyEdge {
+export default abstract class DependencyEdge {
+  abstract __type: string;
+
   from: string;
   to: string;
-  interfaces_map: Dictionary<string>;
+  interface_mappings: { interface_from: string, interface_to: string }[];
 
   @Type(() => DependencyState)
   state?: DependencyState;
 
-  constructor(from: string, to: string, interfaces_map: Dictionary<string>) {
+  constructor(from: string, to: string, interface_mappings: { interface_from: string, interface_to: string }[]) {
     this.from = from;
     this.to = to;
-    this.interfaces_map = interfaces_map;
+    this.interface_mappings = interface_mappings;
   }
 
   instance_id = '';
 
   toString(): string {
-    return `${this.from} [${Object.keys(this.interfaces_map).join(', ')}] -> ${this.to} [${Object.values(this.interfaces_map).join(', ')}]`;
+    return `${this.from} [${this.interface_mappings.map(i => i.interface_from).join(', ')}] -> ${this.to} [${this.interface_mappings.map(i => i.interface_to).join(', ')}]`;
   }
 
   get ref(): string {
-    return `${this.from}.${this.to}`;
+    return `${this.from}.${this.to}.${this.__type}`;
   }
 }

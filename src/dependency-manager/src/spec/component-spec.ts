@@ -24,6 +24,25 @@ export class IngressSpec {
     description: 'The subdomain that will be used if the interface is exposed externally (defaults to the interface name)',
   })
   subdomain?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
+    description: 'The path of the interface used for path based routing',
+  })
+  path?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOr({
+      type: "array",
+      items: {
+        anyOf: [{ type: 'string', format: 'cidrv4' }],
+      },
+    }),
+    description: 'IP addresses that are allowed to access the interface',
+  })
+  ip_whitelist?: string[];
 }
 
 @JSONSchema({

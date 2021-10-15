@@ -49,13 +49,13 @@ describe('task:exec', async function () {
 
   const tag = '1.0.0';
 
-  const instance_id = 'instance-2';
+  const instance_name = 'instance-2';
 
   const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
   const task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG);
   const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
-  const instanced_task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_id);
-  const instanced_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag, instance_id);
+  const instanced_task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
+  const instanced_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag, instance_name);
 
   const mock_remote_task_id = 'remote-task-id';
   const mock_local_env_name = 'local';
@@ -137,7 +137,7 @@ describe('task:exec', async function () {
       .post(`/environments/${mock_env.id}/exec`, (body) => {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
-        expect(body.instance_id).to.eq(instance_id);
+        expect(body.instance_name).to.eq(instance_name);
         expect(body.task_name).to.eq(mock_task.name);
         expect(body.tag).to.eq(tag);
         return body;
@@ -147,7 +147,7 @@ describe('task:exec', async function () {
     .stdout({ print })
     .stderr({ print })
     .command(['task:exec', '-a', mock_account.name, '-e', mock_env.name, instanced_component_name, mock_task.name])
-    .it('it reports to the user that the task was executed successfully if run with an instance_id', ctx => {
+    .it('it reports to the user that the task was executed successfully if run with an instance_name', ctx => {
       expect(ctx.stdout).to.contain(`Successfully kicked off task. kubernetes reference= ${mock_remote_task_id}`);
     });
 
@@ -204,7 +204,7 @@ describe('task:exec', async function () {
   const mock_docker_compose_service: { [key: string]: {} } = {};
   const mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, Slugs.DEFAULT_TAG);
   const mock_ref = resourceRefToNodeRef(mock_slug);
-  const instanced_mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_id);
+  const instanced_mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
   const instanced_mock_ref = resourceRefToNodeRef(instanced_mock_slug);
   mock_docker_compose_service[mock_ref] = {};
   mock_docker_compose_service[instanced_mock_ref] = {};
@@ -268,7 +268,7 @@ describe('task:exec', async function () {
     .stdout({ print })
     .stderr({ print })
     .command(['task:exec', '-l', '-e', mock_local_env_name, instanced_component_name, mock_task.name])
-    .it('it calls docker-compose run when run with the local flag and sets project to given environment flag and works with instance_id', ctx => {
+    .it('it calls docker-compose run when run with the local flag and sets project to given environment flag and works with instance_name', ctx => {
       const run = DockerComposeUtils.run as sinon.SinonStub;
       const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
       expect(run.calledOnce).to.be.true;

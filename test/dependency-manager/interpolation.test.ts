@@ -10,8 +10,9 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
+import ComponentNode from '../../src/dependency-manager/src/graph/node/component';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {
@@ -222,10 +223,9 @@ describe('interpolation spec v1', () => {
       "labels": [
         "traefik.enable=true",
         "traefik.port=81",
-        "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
-        "traefik.http.routers.public.service=public-service",
-        "traefik.http.services.public-service.loadbalancer.server.port=8080",
-        "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+        `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
+        `traefik.http.routers.${web_ref}-main.service=${web_ref}-main-service`,
+        `traefik.http.services.${web_ref}-main-service.loadbalancer.server.port=8080`,
       ],
       external_links: [
         'gateway:public.arc.localhost'
@@ -293,8 +293,9 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend')
     ]);
 
-    const backend_interface_ref = 'main';
-    const backend_external_url = `http://${backend_interface_ref}.arc.localhost`
+    const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
+    const backend_interface_ref = `${backend_ref}-main`;
+    const backend_external_url = `http://main.arc.localhost`
     const frontend_ref = resourceRefToNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
@@ -304,14 +305,12 @@ describe('interpolation spec v1', () => {
     expect(template.services[frontend_ref].environment).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
     })
-    const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].labels).to.deep.eq([
       'traefik.enable=true',
       "traefik.port=80",
-      `traefik.http.routers.${backend_interface_ref}.rule=Host(\`${backend_interface_ref}.arc.localhost\`)`,
+      `traefik.http.routers.${backend_interface_ref}.rule=Host(\`main.arc.localhost\`)`,
       `traefik.http.routers.${backend_interface_ref}.service=${backend_interface_ref}-service`,
       `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.port=8081`,
-      `traefik.http.services.${backend_interface_ref}-service.loadbalancer.server.scheme=http`
     ])
   });
 
@@ -442,8 +441,6 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentConfig('examples/frontend3')
     ]);
 
-    manager.validateGraph(graph);
-
     const template = await DockerComposeUtils.generate(graph);
     const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].environment).to.deep.eq({
@@ -451,8 +448,8 @@ describe('interpolation spec v1', () => {
       CORS2: JSON.stringify(['http://frontend.arc.localhost'])
     })
     expect(template.services[backend_ref].labels).includes(
-      'traefik.http.routers.main.rule=Host(`main.arc.localhost`)',
-      'traefik.http.routers.main2.rule=Host(`main2.arc.localhost`)'
+      `traefik.http.routers.${backend_ref}-main.rule=Host(\`main.arc.localhost\`)`,
+      `traefik.http.routers.${backend_ref}-main2.rule=Host(\`main2.arc.localhost\`)`
     )
   });
 
@@ -896,6 +893,36 @@ describe('interpolation spec v1', () => {
   //   });
   // });
 
+  it('parameter value starting with bracket does not produce invalid yaml', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      secret:
+
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world'),
+    ], { '*': { secret: '[abc' } });
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: '[abc'
+    });
+  });
+
   it('file: at end of yaml key not interpreted as file ref', async () => {
     const component_config = `
     name: examples/hello-world
@@ -1109,9 +1136,7 @@ describe('interpolation spec v1', () => {
     });
 
     const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency:latest')) as IngressEdge
-    expect(ingress_edge.interfaces_map).to.deep.eq({
-      'test-subdomain': 'app'
-    })
+    expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
     expect(ingress_edge.consumers_map).keys('test-subdomain')
   });
 
@@ -1170,7 +1195,175 @@ describe('interpolation spec v1', () => {
     expect(node.config.replicas).to.eq(3);
   });
 
-  it('interpolate outputs', async () => {
+  it('interpolate parameter to env with empty string', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      secret:
+        default: ''
+    services:
+      api:
+        environment:
+          SECRET: \${{ parameters.secret }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      SECRET: ''
+    });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      SECRET: ''
+    });
+  });
+
+  it('interpolate nested parameter', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      db_host:
+        default: ''
+    services:
+      api:
+        environment:
+          DB_ADDR: \${{ parameters.db_host }}:5432
+          DB_ADDR2: \${{ parameters.db_host }}:\${{ parameters.db_host }}
+          DB_ADDR3: \${{ parameters.db_host }}:\${{ parameters.db_host }}:5432
+          DB_ADDR4: \${{ parameters.db_host }}\${{ parameters.db_host }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      DB_ADDR: ':5432',
+      DB_ADDR2: ':""',
+      DB_ADDR3: '::5432',
+      DB_ADDR4: '',
+    });
+  });
+
+  it('interpolate interfaces node', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      subdomain: test
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          subdomain: \${{ parameters.subdomain }}
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('examples/hello-world');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config));
+    const interfaces_ref = buildInterfacesRef(config);
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
+    expect(node.config.interfaces).to.deep.eq({
+      api: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          subdomain: 'test'
+        }
+      }
+    });
+  });
+
+  it('interpolate interfaces ingress whitelist', async () => {
+    const component_config = `
+    name: examples/hello-world
+    parameters:
+      ip_whitelist:
+        default: [127.0.0.1]
+      required_ip_whitelist:
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          ip_whitelist: \${{ parameters.ip_whitelist }}
+      api2:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          ip_whitelist: \${{ parameters.required_ip_whitelist }}
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('examples/hello-world');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config),
+      // @ts-ignore
+      { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
+    );
+    const interfaces_ref = buildInterfacesRef(config);
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
+    expect(node.config.interfaces).to.deep.eq({
+      api: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          ip_whitelist: ['127.0.0.1']
+        }
+      },
+      api2: {
+        url: `http://${api_ref}:8080`,
+        ingress: {
+          ip_whitelist: ['127.0.0.1/32']
+        }
+      }
+    });
+  });
+
+  it('interpolate component outputs', async () => {
     const publisher_config = `
     name: examples/publisher
     parameters:
@@ -1209,12 +1402,115 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer')));
     const api_ref = resourceRefToNodeRef('examples/consumer/api:latest');
-    const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.environment).to.deep.eq({
+    // Check the interpolated values on the service node resolved correctly
+    const service_node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(service_node.config.environment).to.deep.eq({
       TOPIC1: 'test',
       TOPIC2: 'test',
       TOPIC3: 'test',
       TOPIC4: 'test'
     });
+    // Check the component interface node has the outputs set on its config
+    const config = await manager.loadComponentConfig('examples/publisher');
+    const interfaces_ref = buildInterfacesRef(config);
+    const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
+    expect(interface_node.config.outputs).to.deep.eq({
+      topic1: { value: "test" },
+      topic2: { value: "test" },
+      topic3: { value: "test", description: undefined, },
+      topic4: { value: "test", description: undefined, },
+    });
+  });
+
+  it('interpolating output dependency creates OutputEdge', async () => {
+    const publisher_config = `
+    name: examples/publisher
+    outputs:
+      topic1: test
+    `
+
+    const consumer_config = `
+    name: examples/consumer
+    dependencies:
+      examples/publisher: latest
+    services:
+      api:
+        environment:
+          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+    `
+
+    mock_fs({
+      '/stack/publisher/architect.yml': publisher_config,
+      '/stack/consumer/architect.yml': consumer_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/publisher': '/stack/publisher/architect.yml',
+      'examples/consumer': '/stack/consumer/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+    );
+    expect(graph.edges).to.deep.eq([
+      {
+        __type: 'output',
+        from: 'consumer-api-vv6rqyis',
+        to: 'publisher-xmyfv1tj',
+        instance_id: 'examples/consumer:latest',
+        interface_mappings: [
+          {
+            interface_from: 'output->topic1',
+            interface_to: 'topic1'
+          }
+        ]
+      }
+    ]);
+  });
+
+  it('interpolating outputs dependency with interfaces creates 2 edges', async () => {
+    const publisher_config = `
+    name: examples/publisher
+    outputs:
+      topic1: test
+    services:
+      publisher-api:
+        interfaces:
+          main: 8080
+    interfaces:
+      api:
+        url: \${{ services.publisher-api.interfaces.main.url }}
+    `
+
+    const consumer_config = `
+    name: examples/consumer
+    dependencies:
+      examples/publisher: latest
+    services:
+      consumer-api:
+        environment:
+          API_HOST: \${{ dependencies.examples/publisher.interfaces.api.url }}
+          TOPIC1: \${{ dependencies.examples/publisher.outputs.topic1 }}
+    `
+
+    mock_fs({
+      '/stack/publisher/architect.yml': publisher_config,
+      '/stack/consumer/architect.yml': consumer_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/publisher': '/stack/publisher/architect.yml',
+      'examples/consumer': '/stack/consumer/architect.yml',
+    });
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+    );
+    const publisher_component_ref = resourceRefToNodeRef('examples/publisher:latest');
+    const publisher_api_ref = resourceRefToNodeRef('examples/publisher/publisher-api:latest');
+    const consumer_api_ref = resourceRefToNodeRef('examples/consumer/consumer-api:latest');
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
+      `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
+      `${consumer_api_ref} [output->topic1] -> ${publisher_component_ref} [topic1]`
+    ])
   });
 });

@@ -10,8 +10,7 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
 import PortUtil from '../../src/common/utils/port';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
-import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
+import { ArchitectError, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('interfaces spec v1', () => {
   beforeEach(async () => {
@@ -313,10 +312,9 @@ describe('interfaces spec v1', () => {
         "labels": [
           "traefik.enable=true",
           "traefik.port=80",
-          "traefik.http.routers.public.rule=Host(`public.arc.localhost`)",
-          "traefik.http.routers.public.service=public-service",
-          "traefik.http.services.public-service.loadbalancer.server.port=8080",
-          "traefik.http.services.public-service.loadbalancer.server.scheme=http"
+          `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
+          `traefik.http.routers.${leaf_api_ref}-api.service=${leaf_api_ref}-api-service`,
+          `traefik.http.services.${leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
         ],
         image: 'api:latest',
         ports: ['50001:8080'],
@@ -349,10 +347,9 @@ describe('interfaces spec v1', () => {
         "labels": [
           "traefik.enable=true",
           "traefik.port=80",
-          "traefik.http.routers.publicv1.rule=Host(`publicv1.arc.localhost`)",
-          "traefik.http.routers.publicv1.service=publicv1-service",
-          "traefik.http.services.publicv1-service.loadbalancer.server.port=8080",
-          "traefik.http.services.publicv1-service.loadbalancer.server.scheme=http"
+          `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
+          `traefik.http.routers.${other_leaf_api_ref}-api.service=${other_leaf_api_ref}-api-service`,
+          `traefik.http.services.${other_leaf_api_ref}-api-service.loadbalancer.server.port=8080`,
         ],
         image: 'api:latest',
         ports: ['50003:8080'],
@@ -412,14 +409,81 @@ describe('interfaces spec v1', () => {
       "labels": [
         "traefik.enable=true",
         "traefik.port=80",
-        "traefik.http.routers.app.rule=Host(`app.arc.localhost`)",
-        "traefik.http.routers.app.service=app-service",
-        "traefik.http.services.app-service.loadbalancer.server.port=8080",
-        "traefik.http.services.app-service.loadbalancer.server.scheme=http",
-        "traefik.http.routers.admin.rule=Host(`admin.arc.localhost`)",
-        "traefik.http.routers.admin.service=admin-service",
-        "traefik.http.services.admin-service.loadbalancer.server.port=8081",
-        "traefik.http.services.admin-service.loadbalancer.server.scheme=http"
+        `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
+        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
+        `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
+        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
+      ],
+      "external_links": [
+        "gateway:app.arc.localhost",
+        "gateway:admin.arc.localhost"
+      ],
+      "ports": [
+        "50000:8080",
+        "50001:8081"
+      ],
+      "build": {
+        "context": path.resolve("/stack")
+      },
+    };
+    expect(template.services[api_ref]).to.be.deep.equal(expected_compose);
+  });
+
+  it('automatically maps interfaces when map_all_interfaces = true', async () => {
+    const component_config = {
+      name: 'architect/cloud',
+      services: {
+        api: {
+          interfaces: {
+            main: 8080,
+            admin: 8081
+          }
+        },
+      },
+      interfaces: {
+        app: '${{ services.api.interfaces.main.url }}',
+        admin: '${{ services.api.interfaces.admin.url }}'
+      }
+    };
+
+    mock_fs({
+      '/stack/architect.yml': yaml.dump(component_config),
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/cloud': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentConfig('architect/cloud', undefined, { map_all_interfaces: true }),
+    ]);
+
+    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+
+    expect(graph.nodes.map((n) => n.ref)).has.members([
+      'gateway',
+      cloud_interfaces_ref,
+      api_ref,
+    ])
+    expect(graph.edges.map((e) => e.toString())).has.members([
+      `${cloud_interfaces_ref} [app, admin] -> ${api_ref} [main, admin]`,
+      `gateway [app, admin] -> ${cloud_interfaces_ref} [app, admin]`
+    ])
+
+    const template = await DockerComposeUtils.generate(graph);
+    const expected_compose: DockerService = {
+      "environment": {},
+      "labels": [
+        "traefik.enable=true",
+        "traefik.port=80",
+        `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
+        `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
+        `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
+        `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
       ],
       "external_links": [
         "gateway:app.arc.localhost",
@@ -495,17 +559,6 @@ describe('interfaces spec v1', () => {
       `${admin_ref} [service->public, service->admin, service->private] -> ${catalog_interfaces_ref} [public, admin, private]`,
       `gateway [public2, admin2] -> ${catalog_interfaces_ref} [public, admin]`,
     ])
-
-    const ingress_edges = graph.edges.filter((edge) => edge instanceof IngressEdge);
-
-    const ingress_edge = ingress_edges[0];
-    const [node_to, node_to_interface_name] = graph.followEdge(ingress_edge, 'public2');
-    expect(node_to).instanceOf(ServiceNode);
-    expect(node_to_interface_name).to.eq('public');
-
-    const [node_to2, node_to_interface_name2] = graph.followEdge(ingress_edge, 'admin2');
-    expect(node_to2).instanceOf(ServiceNode);
-    expect(node_to_interface_name2).to.eq('admin');
 
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
     expect(dashboard_node.config.environment).to.deep.eq({
@@ -660,19 +713,119 @@ describe('interfaces spec v1', () => {
       SMTP_PASS: 'test-pass',
     });
   });
-});
 
-// TODO:207
-/*
-services:
-  api:
+  it('interfaces with same subdomain and different paths', async () => {
+    const component_config = `
+    name: examples/hello-world
     interfaces:
-      main:
-        username: test
-        password: test
-interfaces:
-  exposed:
-    host: ${{ services.api.interfaces.main.host }}
-    port: ${{ services.api.interfaces.main.port }}
-    protocol: ${{ services.api.interfaces.main.protocol }}
-*/
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          enabled: true
+          subdomain: cloud
+          path: /api
+      api2:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          enabled: true
+          subdomain: cloud
+          path: /api2
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('examples/hello-world');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config));
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+
+    const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api\`)`);
+    expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api2.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api2\`)`);
+  });
+
+  it('error on interfaces with same subdomain and same path', async () => {
+    const component_config = `
+    name: examples/hello-world
+    interfaces:
+      api:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          enabled: true
+          subdomain: cloud
+          path: /api
+      api2:
+        url: \${{ services.api.interfaces.main.url }}
+        ingress:
+          enabled: true
+          subdomain: cloud
+          path: /api
+    services:
+      api:
+        interfaces:
+          main: 8080
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('examples/hello-world');
+    let err;
+    try {
+      await manager.getGraph(await manager.loadComponentConfigs(config));
+    } catch (e) {
+      err = e;
+    }
+    expect(err).instanceOf(ArchitectError);
+  });
+
+  it('followEdge returns proper results when called with ServiceEdge', async () => {
+    const component_config = `
+    name: architect/dependency
+
+    services:
+      db:
+        image: mysql:5.6.35
+        interfaces:
+          mysql:
+            port: 3306
+
+      core:
+        environment:
+          ADDR: \${{ services.db.interfaces.mysql.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/dependency': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentConfig('architect/dependency');
+    const graph = await manager.getGraph(
+      await manager.loadComponentConfigs(config));
+
+    expect(graph.edges.length).eq(1);
+
+    const followed_edge = graph.followEdge(graph.edges[0]);
+    expect(followed_edge.length).eq(1);
+    expect(followed_edge[0].interface_from).eq('service->mysql');
+    expect(followed_edge[0].interface_to).eq('mysql');
+    expect(followed_edge[0].node_to.ref).eq('dependency-db-zxdyijfg');
+    expect(followed_edge[0].node_to_interface_name).eq('mysql');
+  });
+});

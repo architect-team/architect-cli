@@ -125,7 +125,7 @@ describe('platform:create', function () {
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
     const post_to_api_spy = sinon.spy(PlatformCreate.prototype, 'postPlatformToApi');
 
-    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws_region', 'us-east-2', '--aws_secret', 'test-secret', '--aws_key', 'test-key', '--auto_approve']);
+    await PlatformCreate.run(['platform-name', '-a', 'test-account-name', '-t', 'ecs', '--aws-region', 'us-east-2', '--aws-secret', 'test-secret', '--aws-key', 'test-key', '--auto-approve']);
     expect(create_platform_spy.calledOnce).true;
     expect(post_to_api_spy.calledOnce).true;
     expect(create_platform_applications_spy.calledOnce).true;
@@ -134,9 +134,9 @@ describe('platform:create', function () {
   it('Creates an ECS platform without flag input', async () => {
     const inquirerStub = sinon.stub(inquirer, 'prompt');
     inquirerStub.resolves({
-      aws_region: 'us-east-2',
-      aws_secret: 'test-secret',
-      aws_key: 'test-key'
+      'aws-region': 'us-east-2',
+      'aws-secret': 'test-secret',
+      'aws-key': 'test-key'
     });
 
     const test_platform_id = 'test-platform-id';

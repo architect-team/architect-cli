@@ -20,7 +20,7 @@ services:
   frontend:
     interfaces:
       app: 8080
-      
+
 interfaces:
   app:
     url: ${{ services.frontend.interfaces.app.url }}
@@ -33,4 +33,57 @@ The above component declares a configurable ingress rule to listen on a subdomai
 ```sh
 # The following command will expose the interface at https://app.dev.example.arc.domains
 $ architect deploy example/component:latest -a example -e dev
+```
+
+### Whitelisting IP Addresses
+
+Ingresses of Architect components can be individually whitelisted by IP addresses or CIDR blocks. Below is an example of a component where the `app` endpoint is only available if the user's IP address is 100.100.100.100 or the IP address falls in the range 10.0.0.0/16.
+
+```yaml
+name: example/component
+
+services:
+  frontend:
+    interfaces:
+      app: 8080
+
+interfaces:
+  app:
+    url: ${{ services.frontend.interfaces.app.url }}
+    ingress:
+      ip_whitelist:
+        - 100.100.100.100
+        - 10.0.0.0/16
+```
+
+Note that if you wish to use this feature on an EKS platform, manual changes must be made. Once platform apps are installed to the corresponding Architect platform, find the target groups on the AWS dashboard that were created in your VPC that begin with the prefix `k8s-arcmanag-traefik`. Under the `Attributes` tab, make sure that `Proxy protocol v2` and `Preserve client IP addresses` are set to `Enabled`.
+
+### Path-based routing
+
+It may be ideal in certain scenarios to expose multiple service interfaces on the same subdomain. For this reason, external interfaces can be configured with a `path` which will be used for path-based routing. In the case of the example component below, both services are configured to be accessible on the `www` subdomain. Users that access a URL beginning with `/api` will be routed to the `api` service, while other URLs will lead to the `app` service.
+
+```yml
+name: example/component
+
+interfaces:
+  app:
+    url: ${{ services.app.interfaces.app-main.url }}
+    ingress:
+      subdomain: www
+      path: /
+      enabled: true
+  api:
+    url: ${{ services.api.interfaces.api-main.url }}
+    ingress:
+      subdomain: www
+      path: /api
+      enabled: true
+
+services:
+  api:
+    interfaces:
+      api-main: 8080
+  app:
+    interfaces:
+      app-main: 8080
 ```

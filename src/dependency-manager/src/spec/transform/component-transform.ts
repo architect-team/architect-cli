@@ -63,9 +63,7 @@ const transformComponentInterfaceSpec = function (_: string, interface_spec: Com
   return typeof interface_spec === 'string' ? { url: interface_spec } : interface_spec;
 };
 
-export const transformComponentContext = (
-  config: ComponentConfig
-): ComponentContext => {
+export const transformComponentContext = (config: ComponentConfig): ComponentContext => {
   const dependency_context: Dictionary<any> = {};
   for (const dk of Object.keys(config.dependencies)) {
     dependency_context[dk] = { ingresses: {}, interfaces: {} };
@@ -106,6 +104,7 @@ export const transformComponentContext = (
       consumers: [],
       dns_zone: '',
       subdomain: '',
+      path: '',
     };
   }
 

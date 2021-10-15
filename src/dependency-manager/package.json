@@ -5,7 +5,7 @@
     "name": "Architect.io",
     "url": "https://architect.io"
   },
-  "version": "1.12.4-rc.3",
+  "version": "1.12.11-rc.3",
   "repository": {
     "type": "git",
     "directory": "src/dependency-graph",
@@ -17,8 +17,9 @@
   "homepage": "https://github.com/architect-team/architect-cli",
   "license": "GPL-3.0",
   "dependencies": {
-    "ajv": "^8.6.2",
+    "ajv": "^8.6.3",
     "ajv-errors": "^3.0.0",
+    "ajv-formats": "^2.1.1",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "class-validator-jsonschema": "^3.1.0",
