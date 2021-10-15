@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
+import isCi from 'is-ci';
 import path from 'path';
 import tmp from 'tmp';
 import untildify from 'untildify';
@@ -178,17 +179,21 @@ export default class ComponentRegister extends Command {
       return resource_spec.image;
     }
 
-    this.log('Attempting to pull a previously built image for use with docker --cache-from...');
-    try {
-      await Docker.pullImage(Docker.toCacheImage(image_tag));
-    } catch {
-      this.log('No previously cached image found. The docker build will proceed without using a cached image');
+    if (isCi) {
+      this.log('Attempting to pull a previously built image for use with docker --cache-from...');
+      try {
+        await Docker.pullImage(Docker.toCacheImage(image_tag));
+      } catch {
+        this.log('No previously cached image found. The docker build will proceed without using a cached image');
+      }
     }
 
     // build and push the image to our repository
     const image = await this.buildImage(config_path, resource_name, resource_spec, image_tag);
     await this.pushImage(image);
-    await this.pushImage(Docker.toCacheImage(image_tag));
+    if (isCi) {
+      await this.pushImage(Docker.toCacheImage(image_tag));
+    }
     const digest = await this.getDigest(image);
 
     // we don't need the tag on our image because we use the digest as the key
