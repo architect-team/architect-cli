@@ -36,8 +36,6 @@ export default class ComponentVersions extends Command {
 
     const table = new Table({ head: ['Tag', 'Created'] });
     for (const component_version of component_versions.sort((cv1: ComponentVersion, cv2: ComponentVersion) => cv1.tag.localeCompare(cv2.tag))) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       table.push([
         component_version.tag,
         localizedTimestamp(component_version.created_at),

@@ -40,8 +40,6 @@ export default class Platforms extends Command {
 
     const table = new Table({ head: ['Name', 'Account', 'Host', 'Type', 'Credentials', 'Created', 'Updated'] });
     for (const row of platforms) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       table.push([
         row.name,
         row.account.name,

@@ -50,8 +50,6 @@ export default class Components extends Command {
 
     const table = new Table({ head: ['Name', 'Account', 'Versions', 'Created', 'Updated'] });
     for (const component of components.sort((c1: Component, c2: Component) => c1.account.name.localeCompare(c2.account.name)).sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       table.push([
         component.name,
         component.account.name,
