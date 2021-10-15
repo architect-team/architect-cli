@@ -6,7 +6,6 @@ import localizedTimestamp from '../../common/utils/localized-timestamp';
 interface Component {
   created_at: string;
   updated_at: string;
-  deleted_at: string | null;
   name: string;
   metadata: {
     tag_count: number;
