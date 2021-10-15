@@ -9,7 +9,7 @@ import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import InterfacesNode from '../../dependency-manager/src/graph/node/interfaces';
+import ComponentNode from '../../dependency-manager/src/graph/node/component';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
@@ -227,7 +227,7 @@ export class DockerComposeUtils {
     for (const edge of graph.edges) {
       const node_from = graph.getNodeByRef(edge.from);
 
-      if (node_from instanceof InterfacesNode) continue;
+      if (node_from instanceof ComponentNode) continue;
 
       for (const { interface_from, interface_to, node_to, node_to_interface_name } of graph.followEdge(edge)) {
         if (!(node_to instanceof ServiceNode)) continue;
@@ -252,8 +252,8 @@ export class DockerComposeUtils {
           const host = interface_from === '@' ? 'arc.localhost' : `${interface_from}.arc.localhost`;
           const traefik_service = `${node_to.ref}-${interface_to}`;
 
-          const interfaces_node = graph.getNodeByRef(edge.to) as InterfacesNode;
-          const component_interface = interfaces_node.config[interface_to];
+          const component_node = graph.getNodeByRef(edge.to) as ComponentNode;
+          const component_interface = component_node.config.interfaces[interface_to];
           if (component_interface?.ingress?.path) {
             service_to.labels.push(`traefik.http.routers.${traefik_service}.rule=Host(\`${host}\`) && PathPrefix(\`${component_interface.ingress.path}\`)`);
           } else {

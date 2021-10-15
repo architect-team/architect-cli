@@ -12,6 +12,11 @@ export interface IngressConfig {
   ip_whitelist?: string[];
 }
 
+export interface ComponentNodeConfig {
+  outputs: Dictionary<OutputDefinitionConfig>,
+  interfaces: Dictionary<ComponentInterfaceConfig>
+}
+
 export interface ComponentInterfaceConfig {
   description?: string;
   host?: null | string;

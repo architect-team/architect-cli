@@ -5,10 +5,11 @@ import { ComponentContext } from './config/component-context';
 import { ServiceInterfaceConfig } from './config/service-config';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
+import OutputEdge from './graph/edge/output';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import InterfacesNode from './graph/node/interfaces';
+import ComponentNode from './graph/node/component';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
@@ -70,7 +71,7 @@ export default abstract class DependencyManager {
       const [_, match] = matches;
       const names = match.split('.');
 
-      if (!(match.includes('ingresses.') || match.includes('interfaces.'))) {
+      if (!(match.includes('ingresses.') || match.includes('interfaces.') || match.includes('outputs.'))) {
         continue;
       }
 
@@ -201,10 +202,10 @@ export default abstract class DependencyManager {
         graph.addEdge(edge);
       }
 
-      // Add edges between services and dependencies inside the component
-      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
-      const dep_edge_map: Dictionary<Dictionary<string>> = {};
-      while ((matches = dependencies_regex.exec(service_string)) != null) {
+      // Add edges between services and interface dependencies inside the component
+      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const dep_service_edge_map: Dictionary<Dictionary<string>> = {};
+      while ((matches = dep_interface_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.dependencies[dep_name];
 
@@ -214,14 +215,34 @@ export default abstract class DependencyManager {
 
         if (!graph.nodes_map.has(to)) continue;
 
-        if (!dep_edge_map[to]) dep_edge_map[to] = {};
-        dep_edge_map[to][`service->${interface_name}`] = interface_name;
+        if (!dep_service_edge_map[to]) dep_service_edge_map[to] = {};
+        dep_service_edge_map[to][`service->${interface_name}`] = interface_name;
       }
-
-
-      for (const [to, interfaces_map] of Object.entries(dep_edge_map)) {
+      for (const [to, interfaces_map] of Object.entries(dep_service_edge_map)) {
         const interface_mappings = Object.entries(interfaces_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
         const edge = new ServiceEdge(from, to, interface_mappings);
+        graph.addEdge(edge);
+      }
+
+      // Add edges between services and output dependencies inside the component
+      const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.outputs\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?`, 'g');
+      const dep_output_edge_map: Dictionary<Dictionary<string>> = {};
+      while ((matches = dep_output_regex.exec(service_string)) != null) {
+        const [_, dep_name, output_name] = matches;
+        const dep_tag = component.dependencies[dep_name];
+
+        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+        if (!dependency) continue;
+        const to = buildInterfacesRef(dependency);
+
+        if (!graph.nodes_map.has(to)) continue;
+
+        if (!dep_output_edge_map[to]) dep_output_edge_map[to] = {};
+        dep_output_edge_map[to][`output->${output_name}`] = output_name;
+      }
+      for (const [to, output_map] of Object.entries(dep_output_edge_map)) {
+        const output_mappings = Object.entries(output_map).map(([interface_from, interface_to]) => ({ interface_from, interface_to }));
+        const edge = new OutputEdge(from, to, output_mappings);
         graph.addEdge(edge);
       }
     }
@@ -465,7 +486,7 @@ export default abstract class DependencyManager {
             context.ingresses[interface_to].consumers = [];
 
             if (ingress_edge.consumers_map[interface_from]) {
-              const interfaces_refs = graph.edges.filter(edge => ingress_edge.consumers_map[interface_from].has(edge.to) && graph.getNodeByRef(edge.from) instanceof InterfacesNode).map(edge => edge.from);
+              const interfaces_refs = graph.edges.filter(edge => ingress_edge.consumers_map[interface_from].has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from);
               const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
               const consumers: string[] = [];
               for (const consumer_ingress_edge of consumer_ingress_edges) {
@@ -635,9 +656,15 @@ export default abstract class DependencyManager {
       const interpolated_config = interpolateConfigOrReject(component_config, [''], false);
       nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
-      if (Object.keys(component_config.interfaces).length) {
+      const has_interfaces = Object.keys(component_config.interfaces).length > 0;
+      const has_outputs = Object.keys(component_config.outputs).length > 0;
+      if (has_interfaces || has_outputs) {
         const ref = buildComponentRef(component_config);
-        const node = new InterfacesNode(buildInterfacesRef(component_config), ref, interpolated_config.interfaces);
+        const config = {
+          outputs: interpolated_config.outputs,
+          interfaces: interpolated_config.interfaces,
+        };
+        const node = new ComponentNode(buildInterfacesRef(component_config), ref, config);
         nodes.push(node);
       }
 
@@ -723,13 +750,13 @@ export default abstract class DependencyManager {
     const seen_subdomains: Dictionary<string[]> = {};
     for (const ingress_edge of graph.edges.filter((edge) => edge instanceof IngressEdge)) {
       for (const { interface_from, interface_to } of ingress_edge.interface_mappings) {
-        const interfaces_node = graph.getNodeByRef(ingress_edge.to) as InterfacesNode;
-        const ingress = interfaces_node.config[interface_to].ingress;
+        const component_node = graph.getNodeByRef(ingress_edge.to) as ComponentNode;
+        const ingress = component_node.config.interfaces[interface_to].ingress;
         const key = ingress?.path ? `${interface_from} with path ${ingress.path}` : interface_from;
         if (!seen_subdomains[key]) {
           seen_subdomains[key] = [];
         }
-        seen_subdomains[key].push(`${interfaces_node.slug}.${interface_to}`);
+        seen_subdomains[key].push(`${component_node.slug}.${interface_to}`);
       }
     }
 
@@ -773,9 +800,16 @@ export default abstract class DependencyManager {
         tree_node.interpolated_config = tree_node.config;
       }
 
+      // Add interfaces to ComponentNode of the tree if there are any interfaces defined
       if (Object.keys(tree_node.interpolated_config.interfaces).length) {
-        const interfaces_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as InterfacesNode;
-        interfaces_node.config = tree_node.interpolated_config.interfaces;
+        const component_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as ComponentNode;
+        component_node.config.interfaces = tree_node.interpolated_config.interfaces;
+      }
+
+      // Add outputs to ComponentNode of the tree if there are any outputs defined
+      if (Object.keys(tree_node.interpolated_config.outputs).length) {
+        const component_node = graph.getNodeByRef(buildInterfacesRef(tree_node.interpolated_config)) as ComponentNode;
+        component_node.config.outputs = tree_node.interpolated_config.outputs;
       }
 
       for (const [service_name, service_config] of [...Object.entries(tree_node.interpolated_config.services), ...Object.entries(tree_node.interpolated_config.tasks)]) {
