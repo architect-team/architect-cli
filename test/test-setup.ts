@@ -1,3 +1,4 @@
+process.env.CI = 'true'
 import CredentialManager from '../src/app-config/credentials';
 import PromptUtils from '../src/common/utils/prompt-utils';
 
