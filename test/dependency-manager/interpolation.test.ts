@@ -12,7 +12,7 @@ import DockerComposeTemplate, { DockerService } from '../../src/common/docker-co
 import PortUtil from '../../src/common/utils/port';
 import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
-import ComponentNode from '../../src/dependency-manager/src/graph/node/interfaces';
+import ComponentNode from '../../src/dependency-manager/src/graph/node/component';
 
 describe('interpolation spec v1', () => {
   beforeEach(() => {

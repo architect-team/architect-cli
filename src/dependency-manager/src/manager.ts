@@ -9,7 +9,7 @@ import OutputEdge from './graph/edge/output';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
 import GatewayNode from './graph/node/gateway';
-import ComponentNode from './graph/node/interfaces';
+import ComponentNode from './graph/node/component';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';

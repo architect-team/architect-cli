@@ -9,7 +9,7 @@ import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
 import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
-import ComponentNode from '../../dependency-manager/src/graph/node/interfaces';
+import ComponentNode from '../../dependency-manager/src/graph/node/component';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
