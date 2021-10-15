@@ -49,7 +49,7 @@ export default class Components extends Command {
     }
 
     const table = new Table({ head: ['Name', 'Account', 'Versions', 'Created', 'Updated'] });
-    for (const component of components.sort((c1: Component, c2: Component) => c1.account.name.localeCompare(c2.account.name)).sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
+    for (const component of components.sort((c1: Component, c2: Component) => c1.name.localeCompare(c2.name))) {
       table.push([
         component.name,
         component.account.name,
