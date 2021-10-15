@@ -1,3 +1,5 @@
+import { Pipeline } from './pipeline';
+
 export interface Deployment {
   id: string;
   instance_id: string;
@@ -9,7 +11,5 @@ export interface Deployment {
       name: string;
     };
   };
-  pipeline: {
-    id: string;
-  };
+  pipeline: Pipeline
 }

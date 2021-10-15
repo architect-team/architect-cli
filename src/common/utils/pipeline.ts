@@ -1,4 +1,5 @@
 import { AxiosInstance } from 'axios';
+import { Environment } from './environment';
 
 export class PipelineUtils {
 
@@ -21,4 +22,9 @@ export class PipelineUtils {
       }, PipelineUtils.POLL_INTERVAL);
     });
   }
+}
+
+export interface Pipeline {
+  id: string;
+  environment?: Environment
 }
