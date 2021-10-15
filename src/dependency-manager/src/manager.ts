@@ -656,13 +656,13 @@ export default abstract class DependencyManager {
       const interpolated_config = interpolateConfigOrReject(component_config, [''], false);
       nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
-      const has_interfaces = Object.keys(component_config.interfaces).length > 0
-      const has_outputs = Object.keys(component_config.outputs).length > 0
+      const has_interfaces = Object.keys(component_config.interfaces).length > 0;
+      const has_outputs = Object.keys(component_config.outputs).length > 0;
       if (has_interfaces || has_outputs) {
         const ref = buildComponentRef(component_config);
         const config = {
           outputs: interpolated_config.outputs,
-          interfaces: interpolated_config.interfaces
+          interfaces: interpolated_config.interfaces,
         };
         const node = new ComponentNode(buildInterfacesRef(component_config), ref, config);
         nodes.push(node);
