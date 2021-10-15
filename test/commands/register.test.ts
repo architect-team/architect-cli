@@ -205,7 +205,7 @@ describe('register', function () {
 
       expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledTwice).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
@@ -296,7 +296,7 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(buildImage.calledOnce).to.be.true;
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledTwice).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
@@ -333,7 +333,7 @@ describe('register', function () {
       const getDigest = Docker.getDigest as sinon.SinonStub;
       expect(buildImage.calledOnce).to.be.true; // there are two components but only one of them needs to build the docker image
       expect(buildImage.calledBefore(pushImage)).to.be.true;
-      expect(pushImage.calledTwice).to.be.true;
+      expect(pushImage.calledOnce).to.be.true;
       expect(pushImage.calledBefore(getDigest)).to.be.true;
       expect(getDigest.calledOnce).to.be.true;
 
