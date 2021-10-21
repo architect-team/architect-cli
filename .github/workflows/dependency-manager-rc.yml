@@ -46,6 +46,7 @@ jobs:
           npm version prerelease --git-tag-version=false --preid=${PRERELEASE_PREFIX}
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
+          git config --global pull.rebase false
           git add package.json package-lock.json
           git commit -m "New dependency manager RC from commit: ${{ github.sha }}"
           git pull
