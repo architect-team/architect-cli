@@ -60,6 +60,19 @@ This file can then be specified directly in the deploy command to apply values t
 $ architect deploy examples/component --values values.yml
 ```
 
+The keys in the values file are simply patterns for matching components. Some examples are:
+
+```yaml
+myorg/*: # applies to all components of the `myorg` account
+  ...
+myorg/foo-api:*: # applies to all versions of the foo-api component
+  ...
+myorg/foo-api:latest*: # applies only to the latest version of the foo-api component
+  ...
+myorg/foo-api:*@instance2*: # applies to only the foo-api tenant named "instance2"
+  ...
+```
+
 ## From the UI
 
 Storing environment configuration in a file is handy for local development, but not ideal for production-grade credentials. In order to provide comparable, secure support for production secrets and values, Architect Cloud allows "Secrets" to be registered with each environment. Simply navigate to the "Secrets" tab on your environment to fill out the corresponding values:
