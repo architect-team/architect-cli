@@ -1,4 +1,4 @@
-import { serialize } from 'class-transformer';
+import { classToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig, ComponentInterfaceConfig } from './config/component-config';
 import { ComponentContext } from './config/component-context';
@@ -8,8 +8,8 @@ import IngressEdge from './graph/edge/ingress';
 import OutputEdge from './graph/edge/output';
 import ServiceEdge from './graph/edge/service';
 import { DependencyNode } from './graph/node';
-import GatewayNode from './graph/node/gateway';
 import ComponentNode from './graph/node/component';
+import GatewayNode from './graph/node/gateway';
 import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
@@ -653,7 +653,7 @@ export default abstract class DependencyManager {
 
       // Interpolate to determine if there are external nodes
       // ex. host: ${{ parameter.optional_host }}
-      const interpolated_config = interpolateConfigOrReject(component_config, [''], false);
+      const interpolated_config = interpolateConfigOrReject(classToClass(component_config), [''], false);
       nodes = nodes.concat(this.getComponentNodes(interpolated_config));
 
       const has_interfaces = Object.keys(component_config.interfaces).length > 0;
@@ -822,6 +822,7 @@ export default abstract class DependencyManager {
 
     if (validate) {
       this.validateGraph(graph);
+      graph.validated = true;
     }
 
     return graph;

@@ -16,18 +16,16 @@ export const interpolateConfig = (config: ComponentConfig, ignore_keys: string[]
     return { interpolated_config: config, errors };
   }
 
-  if (validate) {
-    // TODO:288:
-    // Interpolate component context so other components can ref dependency contexts for interpolation
-    // if we error here, we won't provide correct line numbers
-    // we can potentially map it back to original source_yml
-    // goal: get the path from the context interpolation error
-    const { interpolated_string: interpolated_context, errors } = interpolateString(yaml.dump(config.context), config.context, ignore_keys);
-    if (errors.length) {
-      return { interpolated_config: config, errors };
-    }
-    config.context = yaml.load(interpolated_context) as ComponentContext;
+  // TODO:288:
+  // Interpolate component context so other components can ref dependency contexts for interpolation
+  // if we error here, we won't provide correct line numbers
+  // we can potentially map it back to original source_yml
+  // goal: get the path from the context interpolation error
+  const { interpolated_string: interpolated_context, errors: interpolate_errors } = interpolateString(yaml.dump(config.context), config.context, ignore_keys);
+  if (validate && errors.length) {
+    return { interpolated_config: config, errors: interpolate_errors };
   }
+  config.context = yaml.load(interpolated_context) as ComponentContext;
 
   const parsed_yml = parseSourceYml(interpolated_string);
   const spec_errors = validate ? validateSpec(parsed_yml) : [];

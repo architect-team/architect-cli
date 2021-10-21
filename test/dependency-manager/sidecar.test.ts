@@ -527,6 +527,77 @@ describe('sidecar spec v1', () => {
     });
   });
 
+  it('sidecar proxy_port_mapping with getGraph.validate=false', async () => {
+    const stateless_config = `
+      name: examples/stateless-component
+
+      dependencies:
+        examples/hello-world: latest
+
+      services:
+        stateless-app:
+          build:
+            context: ./
+          interfaces:
+            http: 8080
+          environment:
+            HELLO_WORLD_ADDR: \${{ dependencies['examples/hello-world'].interfaces.hello.url }}
+
+      interfaces:
+        frontend:
+          description: Exposes the app to upstream traffic
+          url: \${{ services.stateless-app.interfaces.http.url }}
+      `;
+
+    const hello_config = `
+      name: examples/hello-world
+      services:
+        api:
+          image: heroku/nodejs-hello-world
+          interfaces:
+            main: 3000
+
+      interfaces:
+        hello:
+          description: Connects to the hello-world service to return "Hello World!" on-demand
+          url: \${{ services.api.interfaces.main.url }}
+    `;
+
+    mock_fs({
+      '/stack/stateless/architect.yml': stateless_config,
+      '/stack/hello/architect.yml': hello_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/stateless-component': '/stack/stateless/architect.yml',
+      'examples/hello-world': '/stack/hello/architect.yml'
+    });
+    manager.use_sidecar = true;
+
+    const stateless_component = await manager.loadComponentConfig('examples/stateless-component:latest')
+    const hello_component = await manager.loadComponentConfig('examples/hello-world:latest')
+
+    const graph = await manager.getGraph([
+      stateless_component,
+      hello_component
+    ], undefined, true, false);
+
+    const app_ref = resourceRefToNodeRef('examples/stateless-component/stateless-app:latest');
+    const app_node = graph.getNodeByRef(app_ref);
+
+    const ports = [];
+    const edges = graph.edges.filter((edge) => edge.from === app_ref);
+    for (const edge of edges) {
+      const followed_edge_interface_mappings = graph.followEdge(edge);
+      for (const interface_mapping of followed_edge_interface_mappings) {
+        const port = app_node.proxy_port_mapping![`${edge.to}--${interface_mapping.interface_to}`];
+        ports.push(port);
+      }
+    }
+
+    expect(ports).to.deep.equal(['12345'])
+  });
+
   it('sidecar should support HTTP basic auth', async () => {
     const smtp_config = `
       name: architect/smtp
