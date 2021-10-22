@@ -4,11 +4,7 @@ title: Multi-Tenant Deployments
 
 # Multi-Tenant Deployments
 
-Multi-tenant deployments are when
-
-By default, deploying a component will create it as a singleton in the environment, where it is the default instance.
-
-In some cases you may want to deploy multiple instances of a component to an environment. The deployment process creates a global tenant by default, but you can create a named tenant simply by naming the component being deployed. This is called a "multi-tenant deployment".
+Though components support horizontal scaling through the replicas property, there are cases where you may want multiple separate deployments of a component in a single environment. The default deployment process will create an instance of the component as an unnamed global tenant, but you can deploy a separate instance by providing a tenanat name. Having multiple instances of a component deployed in this manner is called a "multi-tenant deployment".
 
 ```
 architect-local deploy examples/react-app@app1
@@ -33,7 +29,7 @@ In the case of the example React App, the following will override the `world_tex
   world_text: San Diego
 ```
 
-This enables minimal dupliation of configuration, as you can specify any necessary values in a generic component scope, but then override specific values on a tenant-by-tenant basis. In the following example, the `planetearth` tenant would have the `foo` parameter as configured in the first scope, but would have the overwritten values for `world_text` set in the second scope.
+This enables minimal duplication of configuration, as you can specify any necessary values in a generic component scope, but then override specific values on a tenant-by-tenant basis. In the following example, the `planetearth` tenant would have the `foo` parameter as configured in the first scope, but would have the overwritten values for `world_text` set in the second scope.
 
 ```yaml
 'examples/react-app':
