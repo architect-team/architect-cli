@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import * as url from 'url';
 
 export default class CallbackServer {
 
@@ -14,16 +13,16 @@ export default class CallbackServer {
 
       server.on('request', async (req, res) => {
         try {
-          const queryObject = url.parse(req.url, true).query;
-          if (queryObject.error) {
+          const queryObject = new URL(req.url, 'http://localhost').searchParams;
+          if (queryObject.has('error')) {
             res.writeHead(400, { 'Content-Type': 'text/html' });
-            const failure_html = failure_file.toString().replace('%%FAILURE_MESSAGE%%', (queryObject.error_description as string));
+            const failure_html = failure_file.toString().replace('%%FAILURE_MESSAGE%%', (queryObject.get('error_description') as string));
             res.end(failure_html);
-            reject('Login failed: ' + queryObject.error_description);
+            reject('Login failed: ' + queryObject.get('error_description'));
           } else {
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(success_file);
-            resolve(queryObject.code as string);
+            resolve(queryObject.get('code') as string);
           }
         } finally {
           server.close();
