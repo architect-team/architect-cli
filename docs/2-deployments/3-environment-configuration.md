@@ -43,10 +43,10 @@ $ architect deploy examples/dependency -p username=my-username -p password=my-pa
 
 ## Using a config file
 
-Using the `--parameter` flag is great for specifying values for individual components, but doesn't allow you to specify values for component dependencies. In order to specify parameter values for your component AND its dependencies, something common when generating on-demand environments, you'll need to create a values file:
+Using the `--parameter` flag is great for specifying values for individual components, but doesn't allow you to specify values for component dependencies. In order to specify parameter values for your component AND its dependencies, something common when generating on-demand environments, you'll need to create a secrets file:
 
 ```yaml
-# values.yml
+# secrets.yml
 examples/component:*:
   secret_key: my-secret-key
 examples/dependency:*:
@@ -57,10 +57,10 @@ examples/dependency:*:
 This file can then be specified directly in the deploy command to apply values to any components matching the keys in the file. The below will deploy examples/component, and since it depends on examples/dependency it will automatically be deployed as well. Each component matches a key in the file above so all the required parameters will be fulfilled.
 
 ```sh
-$ architect deploy examples/component --values values.yml
+$ architect deploy examples/component --secrets secrets.yml
 ```
 
-The keys in the values file are simply patterns for matching components. Some examples are:
+The keys in the secrets file are simply patterns for matching components. Some examples are:
 
 ```yaml
 myorg/*: # applies to all components of the `myorg` account
@@ -86,5 +86,5 @@ Once filled out, each deploy to the corresponding environment will be automatica
 Since there are three different methods by which you can provide parameters, you may be wondering what happens if you used more than one. Architect interprets provided parameter values in the following order:
 
 1. `--parameter` flag (highest priority)
-2. `--values` flag
+2. `--secrets` flag
 3. Environment secrets (lowest priority)

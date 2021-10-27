@@ -211,7 +211,7 @@ OPTIONS
   -o, --compose-file=compose-file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
   -r, --[no-]recursive             [default: true] Toggle to automatically deploy all dependencies
-  -v, --values=values              Path of values file
+  -s, --secrets=secrets            Path of secrets file
 
   --auto-approve                   Automatically approve the deployment without a review step. Used for debugging and CI
                                    flows.
