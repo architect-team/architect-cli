@@ -93,7 +93,7 @@ describe('local deploy environment', function () {
         url: \${{ services.api.interfaces.main.url }}
     `;
 
-  const basic_parameter_values = {
+  const basic_parameter_secrets = {
     'examples/hello-world:latest': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -101,7 +101,7 @@ describe('local deploy environment', function () {
       'compose_escaped_variable': 'variable_split_$_with_dollar$signs',
     },
   }
-  const wildcard_parameter_values = {
+  const wildcard_parameter_secrets = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
     },
@@ -112,7 +112,7 @@ describe('local deploy environment', function () {
       'another_required_key': 'required_value'
     }
   }
-  const stacked_parameter_values = {
+  const stacked_parameter_secrets = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -194,7 +194,7 @@ describe('local deploy environment', function () {
     },
     'tag': 'latest'
   }
-  const component_and_dependency_parameter_values = {
+  const component_and_dependency_parameter_secrets = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
@@ -454,15 +454,42 @@ describe('local deploy environment', function () {
         source_path: './examples/hello-world/architect.yml',
       }
     })
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return basic_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return basic_parameter_secrets;
+    })
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a basic secrets file', ctx => {
+      const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
+      expect(runCompose.calledOnce).to.be.true;
+      const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
+      expect(hello_world_service.external_links).to.contain('gateway:test.arc.localhost');
+      expect(hello_world_service.environment.a_required_key).to.equal('some_value');
+      expect(hello_world_service.environment.another_required_key).to.equal('required_value');
+      expect(hello_world_service.environment.one_more_required_param).to.equal('one_more_value');
+    })
+
+  // This test will be removed when the deprecated 'values' flag is removed
+  test
+    .timeout(20000)
+    .stub(ComponentBuilder, 'buildConfigFromPath', () => {
+      return {
+        component_config: buildConfigFromYml(local_component_config_with_parameters, Slugs.DEFAULT_TAG),
+        source_path: './examples/hello-world/architect.yml',
+      }
+    })
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return basic_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
-    .it('Create a local deploy with a basic component and a basic values file', ctx => {
+    .it('Create a local deploy with a basic component and a basic secrets file using deprecated values flag', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
       const hello_world_service = runCompose.firstCall.args[0].services[hello_api_ref] as any;
@@ -480,15 +507,15 @@ describe('local deploy environment', function () {
         source_path: './examples/hello-world/architect.yml',
       }
     })
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return wildcard_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return wildcard_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
-    .it('Create a local deploy with a basic component and a wildcard values file', ctx => {
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a wildcard secrets file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
@@ -505,14 +532,14 @@ describe('local deploy environment', function () {
       }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return stacked_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return stacked_parameter_secrets;
     })
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
-    .it('Create a local deploy with a basic component and a stacked values file', ctx => {
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .it('Create a local deploy with a basic component and a stacked secrets file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
@@ -529,8 +556,8 @@ describe('local deploy environment', function () {
       }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return component_and_dependency_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples/components/react-app/versions/latest`)
@@ -538,7 +565,7 @@ describe('local deploy environment', function () {
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml'])
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
     .it('Create a local deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -556,8 +583,8 @@ describe('local deploy environment', function () {
       }
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return component_and_dependency_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples/components/react-app/versions/latest`)
@@ -565,7 +592,7 @@ describe('local deploy environment', function () {
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-v', './examples/hello-world/values.yml', '-r'])
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-r'])
     .it('Create a local recursive deploy with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -585,14 +612,14 @@ describe('local deploy environment', function () {
         source_path: './examples/hello-world/architect.yml',
       }
     })
-    .stub(Deploy.prototype, 'readValuesFile', () => {
-      return basic_parameter_values;
+    .stub(Deploy.prototype, 'readSecretsFile', () => {
+      return basic_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-v', './examples/hello-world/values.yml'])
+    .command(['deploy', '-l', './examples/hello-world/architect.yml', '-s', './examples/hello-world/values.yml'])
     .it('Dollar signs are escaped for environment variables in local compose deployments', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
@@ -668,7 +695,7 @@ describe('local deploy environment', function () {
           source_path: './examples/hello-world/architect.yml',
         }
       })
-      .stub(Deploy.prototype, 'readValuesFile', () => {
+      .stub(Deploy.prototype, 'readSecretsFile', () => {
         return {
           'examples/hello-world:latest@tenant-1': {
             'hello_ingress': 'hello-1'
@@ -678,7 +705,7 @@ describe('local deploy environment', function () {
           }
         };
       })
-      .command(['deploy', '-l', '-v', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
+      .command(['deploy', '-l', '-s', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
       .it('Create a local deploy with multiple instances of the same component', ctx => {
         const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
