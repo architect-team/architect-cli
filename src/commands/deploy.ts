@@ -118,9 +118,14 @@ export default class Deploy extends DeployCommand {
       multiple: true,
       default: [],
     }),
+    secrets: flags.string({
+      char: 's',
+      description: 'Path of secrets file',
+    }),
     values: flags.string({
       char: 'v',
-      description: 'Path of values file',
+      hidden: true,
+      description: `${Command.DEPRECATED} Please use --secrets.`,
     }),
     'deletion-protection': flags.boolean({
       default: true,
@@ -173,6 +178,15 @@ export default class Deploy extends DeployCommand {
     const flags: any = parsed.flags;
     flags['build-parallel'] = flags.build_parallel ? flags.build_parallel : flags['build-parallel'];
     flags['compose-file'] = flags.compose_file ? flags.compose_file : flags['compose-file'];
+    flags['secrets'] = flags.values ? flags.values : flags['secrets'];
+
+    // If values were provided and secrets were not provided, override the secrets with the values
+    if (!flags.secrets && fs.existsSync('./values.yml')) {
+      flags.secrets = './values.yml';
+    } else if (!flags.secrets && fs.existsSync('./secrets.yml')) {
+      flags.secrets = './secrets.yml';
+    }
+
     parsed.flags = flags;
 
     return parsed;
@@ -288,13 +302,13 @@ export default class Deploy extends DeployCommand {
     await cmd;
   }
 
-  private readValuesFile(values_file_path: string | undefined) {
-    let component_values: any = {};
-    if (values_file_path && fs.statSync(values_file_path)) {
-      const values_file_data = fs.readFileSync(values_file_path);
-      component_values = yaml.load(values_file_data.toString('utf-8'), { schema: yaml.FAILSAFE_SCHEMA });
+  private readSecretsFile(secrets_file_path: string | undefined) {
+    let component_secrets: any = {};
+    if (secrets_file_path && fs.statSync(secrets_file_path)) {
+      const secrets_file_data = fs.readFileSync(secrets_file_path);
+      component_secrets = yaml.load(secrets_file_data.toString('utf-8'), { schema: yaml.FAILSAFE_SCHEMA });
     }
-    return component_values;
+    return component_secrets;
   }
 
   getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | undefined> {
@@ -317,17 +331,17 @@ export default class Deploy extends DeployCommand {
     return extra_env_vars;
   }
 
-  private getComponentValues() {
+  private getComponentSecrets() {
     const { flags } = this.parse(Deploy);
-    const component_values = this.readValuesFile(flags.values);
+    const component_secrets = this.readSecretsFile(flags.secrets);
     const extra_params = this.getExtraEnvironmentVariables(flags.parameter);
     if (extra_params && Object.keys(extra_params).length) {
-      if (!component_values['*']) {
-        component_values['*'] = {};
+      if (!component_secrets['*']) {
+        component_secrets['*'] = {};
       }
-      component_values['*'] = { ...component_values['*'], ...extra_params };
+      component_secrets['*'] = { ...component_secrets['*'], ...extra_params };
     }
-    return component_values;
+    return component_secrets;
   }
 
   private getInterfacesMap() {
@@ -344,16 +358,12 @@ export default class Deploy extends DeployCommand {
     const { args, flags } = this.parse(Deploy);
     await Docker.verify();
 
-    if (!flags.values && fs.existsSync('./values.yml')) {
-      flags.values = './values.yml';
-    }
-
     if (!args.configs_or_components || !args.configs_or_components.length) {
       args.configs_or_components = ['./architect.yml'];
     }
 
     const interfaces_map = this.getInterfacesMap();
-    const component_values = this.getComponentValues();
+    const component_secrets = this.getComponentSecrets();
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -395,7 +405,7 @@ export default class Deploy extends DeployCommand {
         component_configs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_configs, component_values);
+    const graph = await dependency_manager.getGraph(component_configs, component_secrets);
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }
@@ -406,7 +416,7 @@ export default class Deploy extends DeployCommand {
     const components = args.configs_or_components;
 
     const interfaces_map = this.getInterfacesMap();
-    const component_values = this.getComponentValues();
+    const component_secrets = this.getComponentSecrets();
 
     const account = await AccountUtils.getAccount(this.app.api, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -417,7 +427,7 @@ export default class Deploy extends DeployCommand {
         component: component,
         interfaces: interfaces_map,
         recursive: flags.recursive,
-        values: component_values,
+        values: component_secrets,
         prevent_destroy: flags['deletion-protection'],
       };
       deployment_dtos.push(deploy_dto);
