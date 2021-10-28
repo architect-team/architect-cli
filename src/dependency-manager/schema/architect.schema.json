@@ -1374,7 +1374,7 @@
               "type": "string",
               "format": "cron",
               "errorMessage": {
-                "pattern": "must be a valid cron expression - to generate CronJob schedule expressions, you can also use web tools like crontab.guru"
+                "format": "must be a valid cron expression"
               }
             },
             {
@@ -2889,7 +2889,7 @@
               "type": "string",
               "format": "cron",
               "errorMessage": {
-                "pattern": "must be a valid cron expression - to generate CronJob schedule expressions, you can also use web tools like crontab.guru"
+                "format": "must be a valid cron expression"
               }
             },
             {

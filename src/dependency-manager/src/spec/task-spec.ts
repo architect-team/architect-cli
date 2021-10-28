@@ -16,7 +16,7 @@ export class TaskSpec extends ResourceSpec {
     ...ExpressionOrString({
       format: 'cron',
       errorMessage: {
-        format: "must be a valid cron expression - to generate CronJob schedule expressions, you can also use web tools like crontab.guru",
+        format: "must be a valid cron expression",
       },
     }),
     description: 'A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI.',
