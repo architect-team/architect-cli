@@ -125,6 +125,7 @@ export default class Deploy extends DeployCommand {
     values: flags.string({
       char: 'v',
       hidden: true,
+      description: `${Command.DEPRECATED} Please use --secrets.`,
     }),
     'deletion-protection': flags.boolean({
       default: true,
@@ -181,7 +182,6 @@ export default class Deploy extends DeployCommand {
 
     // If values were provided and secrets were not provided, override the secrets with the values
     if (!flags.secrets && fs.existsSync('./values.yml')) {
-      console.log('DEPRECATION WARNING: values have been renamed to secrets. Please rename values.yml to secrets.yml to avoid breaking changes in the future.');
       flags.secrets = './values.yml';
     } else if (!flags.secrets && fs.existsSync('./secrets.yml')) {
       flags.secrets = './secrets.yml';
