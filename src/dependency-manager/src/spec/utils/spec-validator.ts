@@ -186,11 +186,11 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
     ajv.addFormat('cron', (value: string): boolean => {
       try {
-        parser.parseExpression(value)
+        parser.parseExpression(value) // Support only valid cron expressions
+        return value.split(' ').length === 5; // Do not support cron expressions declaring seconds
       } catch (err) {
         return false;
       }
-      return true
     });
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors
