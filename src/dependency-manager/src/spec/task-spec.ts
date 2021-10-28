@@ -14,9 +14,9 @@ export class TaskSpec extends ResourceSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString({
-      pattern: "^$|^(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|((\\d+|\\*)\\/\\d+)|\\d+|\\*|\\?) ?){5,7}$",
+      format: 'cron',
       errorMessage: {
-        pattern: "must be a valid cron expression",
+        format: "must be a valid cron expression - to generate CronJob schedule expressions, you can also use web tools like crontab.guru",
       },
     }),
     description: 'A cron expression by which this task will be scheduled. Leave blank to deploy a task that never runs unless triggered from the CLI.',

@@ -8,6 +8,7 @@ import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
 import { ParsedYaml } from './component-builder';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
+import parser from 'cron-parser';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -183,6 +184,14 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
     addFormats(ajv);
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
+    ajv.addFormat('cron', (value: string): boolean => {
+      try {
+        parser.parseExpression(value)
+      } catch (err) {
+        return false;
+      }
+      return true
+    });
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors
     ajv_errors(ajv);
