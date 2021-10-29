@@ -1,13 +1,13 @@
 import { expect } from 'chai';
-import StringTemplateBuilder from '../../src/common/utils/template-builder'
+import { StringTemplateBuilder, TemplateValues } from '../../src/common/utils/template-builder'
 
 describe('config spec v1', () => {
   let params: string[];
-  let func: Function;
+  let func: (p: TemplateValues) => string;
 
   beforeEach(() => {
     params = ['foo', 'bar', 'baz'];
-    func = (p: any) => `${p.foo}-${p.bar}.${p.baz}`;
+    func = p => `${p.foo}-${p.bar}.${p.baz}`;
   });
 
   it('builder has expected parms', () => {

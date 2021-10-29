@@ -1,5 +1,5 @@
 import AppService from '../../app-config/service';
-import StringTemplateBuilder from './template-builder';
+import { StringTemplateBuilder, TemplateValues } from './template-builder';
 
 class PipelineAbortedError extends Error {
   constructor(deployment_id: string, deployment_link: string) {
@@ -17,13 +17,13 @@ class DeploymentFailedError extends Error {
       ? `${deployment_links.length} deployments`
       : '1 deployment';
     const listified_link_string = deployment_links.map((s: string) => `- ${s}`).join('\n');
-    this.message = `Pipeline ${pipeline_id} failed because ${deployment_string} failed:\n${listified_link_string}`
+    this.message = `Pipeline ${pipeline_id} failed because ${deployment_string} failed:\n${listified_link_string}`;
   }
 }
 
 const deploymentUrlBuilder = new StringTemplateBuilder(
   ['app_host', 'account', 'environment', 'deployment'],
-  (p: any) => `${p.app_host}/${p.account}/environments/${p.environment}/deployments/${p.deployment}`
+  (p: TemplateValues): string => `${p.app_host}/${p.account}/environments/${p.environment}/deployments/${p.deployment}`
 );
 
 export class PipelineUtils {
