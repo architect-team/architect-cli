@@ -458,7 +458,7 @@ export default class Deploy extends DeployCommand {
     cli.action.start(chalk.blue('Deploying'));
     await Promise.all(
       approved_pipelines.map(async (pipeline) => {
-        await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
+        await PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id);
         this.log(chalk.green(`${pipeline.component_name} Deployed`));
       })
     );
