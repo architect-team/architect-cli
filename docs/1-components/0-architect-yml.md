@@ -92,7 +92,7 @@ Name of the component that can be resolved by others. Component names must be un
 
 ### services
 
-A dictionary of named runtimes for the component. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balanced seamlessly between instances.
+A dictionary of named runtimes for the component. Each service described in an `architect.yml` file will be automatically deployed to your container platform and registered with your service mesh and API gateway as needed.
 
 [Learn more about configuring services](/docs/components/services)
 
