@@ -26,6 +26,11 @@ const deploymentUrlBuilder = new StringTemplateBuilder(
   (p: TemplateValues): string => `${p.app_host}/${p.account}/environments/${p.environment}/deployments/${p.deployment}`
 );
 
+const platformUrlBuilder = new StringTemplateBuilder(
+  ['app_host', 'account', 'platform'],
+  (p: TemplateValues) => `${p.app_host}/${p.account}/platforms/${p.platform}`
+);
+
 export class PipelineUtils {
 
   static POLL_INTERVAL = 10000;
@@ -36,27 +41,37 @@ export class PipelineUtils {
       const poll = setInterval(async () => {
         const { data: pipeline } = await app.api.get(`/pipelines/${pipeline_id}`);
         if (pipeline.failed_at || poll_count > 180) {  // Stop checking after 30min (180 * 10s)
-          const deploymentUrl = deploymentUrlBuilder.with({
-            app_host: app.config.app_host,
-            account: pipeline.environment.account.name,
-            environment: pipeline.environment.name,
-          });
           clearInterval(poll);
-          // Query deployments for pipline to determine cause of failure
-          const { data: deployments } = await app.api.get(`/pipelines/${pipeline.id}/deployments`);
+          if (pipeline.environment) {
+            const deploymentUrl = deploymentUrlBuilder.with({
+              app_host: app.config.app_host,
+              account: pipeline.environment.account.name,
+              environment: pipeline.environment.name,
+            });
 
-          // Check if the deployment failed due to a user aborting the deployment
-          const aborted_deployments = deployments.filter((d: any) => d.aborted_at);
-          if (aborted_deployments.length !== 0) {
-            const deployment_link = deploymentUrl.build({ deployment: aborted_deployments[0].id });
-            reject(new PipelineAbortedError(aborted_deployments[0].id, deployment_link));
+            // Query deployments for pipline to determine cause of failure
+            const { data: deployments } = await app.api.get(`/pipelines/${pipeline.id}/deployments`);
+
+            // Check if the deployment failed due to a user aborting the deployment
+            const aborted_deployments = deployments.filter((d: any) => d.aborted_at);
+            if (aborted_deployments.length !== 0) {
+              const deployment_link = deploymentUrl.build({ deployment: aborted_deployments[0].id });
+              reject(new PipelineAbortedError(aborted_deployments[0].id, deployment_link));
+            }
+
+            // Build a list of links for the failed deployments
+            const failed_deployment_links = deployments
+              .filter((d: any) => d.failed_at)
+              .map((d: any) => deploymentUrl.build({ deployment: d.id }));
+            reject(new DeploymentFailedError(pipeline.id, failed_deployment_links));
+          } else if (pipeline.platform) {
+            const url = platformUrlBuilder.build({
+              app_host: app.config.app_host,
+              account: pipeline.environment.account.name,
+              platform: pipeline.platform.name,
+            });
+            reject(new DeploymentFailedError(pipeline.id, [url]));
           }
-
-          // Build a list of links for the failed deployments
-          const failed_deployment_links = deployments
-            .filter((d: any) => d.failed_at)
-            .map((d: any) => deploymentUrl.build({ deployment: d.id }));
-          reject(new DeploymentFailedError(pipeline.id, failed_deployment_links));
         }
         if (pipeline.applied_at) {
           clearInterval(poll);
