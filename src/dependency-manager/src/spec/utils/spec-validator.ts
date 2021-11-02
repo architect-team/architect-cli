@@ -8,6 +8,7 @@ import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
 import { ParsedYaml } from './component-builder';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
+import cron from 'cron-validate';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -176,6 +177,8 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   return errors;
 };
 
+const cron_options = { preset: 'default', override: { useBlankDay: true }};
+
 let _cached_validate: ValidateFunction;
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   if (!_cached_validate) {
@@ -183,6 +186,7 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     const ajv = new Ajv({ allErrors: true, unicodeRegExp: false });
     addFormats(ajv);
     ajv.addFormat('cidrv4', /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?:\/(?:3[0-2]|[12]?[0-9]))?$/);
+    ajv.addFormat('cron', (value: string): boolean => cron(value, cron_options).isValid());
     ajv.addKeyword('externalDocs');
     // https://github.com/ajv-validator/ajv-errors
     ajv_errors(ajv);
