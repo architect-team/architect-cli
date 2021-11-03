@@ -2,45 +2,11 @@ import axios from 'axios';
 import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
-import moxios from 'moxios';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
+import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('debug spec v1', () => {
-  beforeEach(() => {
-    // Stub the logger
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    moxios.install();
-
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-
-    moxios.stubRequest(`/v1/auth/approle/login`, {
-      status: 200,
-      response: { auth: {} }
-    });
-  });
-
-  afterEach(() => {
-    // Restore stubs
-    sinon.restore();
-    // Restore fs
-    mock_fs.restore();
-    moxios.uninstall();
-  });
-
   it('debug block does apply for local component', async () => {
     const component_config = `
     name: examples/hello-world
@@ -107,10 +73,8 @@ describe('debug spec v1', () => {
         url: \${{ services.api.interfaces.main.url }}
     `
 
-    moxios.stubRequest(`/accounts/examples/components/hello-world/versions/latest`, {
-      status: 200,
-      response: { tag: 'latest', config: yaml.load(component_config), service: { url: 'examples/hello-world:latest' } }
-    });
+    nock('http://localhost').get('/accounts/examples/components/hello-world/versions/latest')
+      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'examples/hello-world:latest' } });
 
     const manager = new LocalDependencyManager(axios.create());
     const graph = await manager.getGraph([

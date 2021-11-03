@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import moxios from 'moxios';
+import nock from 'nock';
 import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
@@ -12,9 +12,6 @@ describe('environments', () => {
   let tmp_dir = os.tmpdir();
 
   beforeEach(function () {
-    sinon.replace(Environments.prototype, 'log', sinon.stub());
-    moxios.install();
-
     const config = new AppConfig('', {});
     const tmp_config_file = path.join(tmp_dir, ARCHITECTPATHS.CLI_CONFIG_FILENAME);
     fs.writeJSONSync(tmp_config_file, config);
@@ -22,27 +19,16 @@ describe('environments', () => {
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
-  afterEach(function () {
-    moxios.uninstall();
-    sinon.restore();
-  });
-
   it('lists all environments', () => {
-    moxios.stubRequest('/environments', {
-      status: 200,
-      response: [],
-    });
+    nock('http://localhost').get('/environments')
+      .reply(200, []);
     Environments.run([]);
   });
 
   it('supports search queries', () => {
     const search_term = 'architect';
-
-    moxios.stubRequest('/environments', {
-      status: 200,
-      response: [],
-    });
-
+    nock('http://localhost').get('/environments')
+      .reply(200, []);
     Environments.run([search_term]);
   });
 })

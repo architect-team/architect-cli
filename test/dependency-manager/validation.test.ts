@@ -2,38 +2,12 @@ import axios from 'axios';
 import { expect } from 'chai';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
-import moxios from 'moxios';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
+import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import PortUtil from '../../src/common/utils/port';
 import { buildConfigFromPath, interpolateConfigOrReject, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
 describe('validate spec', () => {
-  beforeEach(async () => {
-    // Stub the logger
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    moxios.install();
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(function () {
-    // Restore stubs
-    sinon.restore();
-    // Restore fs
-    mock_fs.restore();
-    moxios.uninstall();
-  });
 
   describe('component config validation', () => {
     it('valid service ref brackets', async () => {
@@ -875,10 +849,8 @@ services:
         '/architect.yml': component_config,
       });
 
-      moxios.stubRequest(`/accounts/examples/components/hello-world2/versions/latest`, {
-        status: 200,
-        response: { tag: 'latest', config: yaml.load(component_config2), service: { url: 'examples/hello-world2:latest' } }
-      });
+      nock('http://localhost').get('/accounts/examples/components/hello-world2/versions/latest')
+        .reply(200, { tag: 'latest', config: yaml.load(component_config2), service: { url: 'examples/hello-world2:latest' } });
 
       const manager = new LocalDependencyManager(axios.create(), {
         'examples/hello-world': '/architect.yml',

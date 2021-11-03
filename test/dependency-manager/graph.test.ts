@@ -1,35 +1,10 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import yaml from 'js-yaml';
-import mock_fs from 'mock-fs';
-import moxios from 'moxios';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
+import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import PortUtil from '../../src/common/utils/port';
 
 describe('graph', () => {
-  beforeEach(() => {
-    moxios.install();
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(() => {
-    sinon.restore();
-    mock_fs.restore();
-    moxios.uninstall();
-  });
 
   it('graph without interpolation', async () => {
     const component_config = `
@@ -88,15 +63,11 @@ describe('graph', () => {
             ADDR: \${{ ingresses.db.url }}
     `;
 
-    moxios.stubRequest(`/accounts/architect/components/component/versions/latest`, {
-      status: 200,
-      response: { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } }
-    });
+    nock('http://localhost').get('/accounts/architect/components/component/versions/latest')
+      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } });
 
-    moxios.stubRequest(`/accounts/architect/components/dependency/versions/latest`, {
-      status: 200,
-      response: { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } }
-    });
+    nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
+      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } });
 
     const manager = new LocalDependencyManager(axios.create());
 
@@ -147,15 +118,11 @@ describe('graph', () => {
               host: \${{ parameters.external_host }}
     `;
 
-    moxios.stubRequest(`/accounts/architect/components/component/versions/latest`, {
-      status: 200,
-      response: { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } }
-    });
+    nock('http://localhost').get('/accounts/architect/components/component/versions/latest')
+      .reply(200, { tag: 'latest', config: yaml.load(component_config), service: { url: 'architect/component:latest' } });
 
-    moxios.stubRequest(`/accounts/architect/components/dependency/versions/latest`, {
-      status: 200,
-      response: { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } }
-    });
+    nock('http://localhost').get('/accounts/architect/components/dependency/versions/latest')
+      .reply(200, { tag: 'latest', config: yaml.load(dependency_config), service: { url: 'architect/dependency:latest' } });
 
     const manager = new LocalDependencyManager(axios.create());
 

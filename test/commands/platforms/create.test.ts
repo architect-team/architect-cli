@@ -1,9 +1,7 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
-// import yaml from 'js-yaml';
-// import mock_fs from 'mock-fs';
-import moxios from 'moxios';
+import nock from 'nock';
 import os from 'os';
 import path from 'path';
 import sinon from 'sinon';
@@ -12,7 +10,6 @@ import AppService from '../../../src/app-config/service';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
 import { PipelineUtils } from '../../../src/common/utils/pipeline';
-import PortUtil from '../../../src/common/utils/port';
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('platform:create', function () {
@@ -26,20 +23,8 @@ describe('platform:create', function () {
   beforeEach(() => {
     // Stub the logger
     sinon.replace(PlatformCreate.prototype, 'log', sinon.stub());
-    moxios.install();
-
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
 
     sinon.replace(PipelineUtils, 'pollPipeline', async () => null);
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
 
     // Stub the log_level
     const config = new AppConfig('', {
@@ -51,38 +36,26 @@ describe('platform:create', function () {
     sinon.replace(AppService, 'create', app_config_stub);
   });
 
-  afterEach(() => {
-    moxios.uninstall();
-    sinon.restore();
-    // mock_fs.restore();
-  });
-
   it('Creates an ECS platform with input', async () => {
     const test_platform_id = 'test-platform-id';
     const test_pipeline_id = 'test-pipeline-id';
 
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
 
-    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
         id: test_platform_id,
         account: account
-      }
-    });
+      });
 
-    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
         id: 'test-deployment-id',
         pipeline: {
           id: test_pipeline_id,
         },
-      }
-    });
+      });
 
     const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
@@ -98,28 +71,22 @@ describe('platform:create', function () {
     const test_platform_id = 'test-platform-id';
     const test_pipeline_id = 'test-pipeline-id';
 
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
 
-    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
         id: test_platform_id,
         account: account
-      }
-    });
+      });
 
-    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
         id: 'test-deployment-id',
         pipeline: {
           id: test_pipeline_id,
         },
-      }
-    });
+      });
 
     const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
@@ -142,28 +109,22 @@ describe('platform:create', function () {
     const test_platform_id = 'test-platform-id';
     const test_pipeline_id = 'test-pipeline-id';
 
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
 
-    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
         id: test_platform_id,
         account: account
-      }
-    });
+      });
 
-    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
         id: 'test-deployment-id',
         pipeline: {
           id: test_pipeline_id,
         },
-      }
-    });
+      });
 
     const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
@@ -186,28 +147,22 @@ describe('platform:create', function () {
     const test_platform_id = 'test-platform-id';
     const test_pipeline_id = 'test-pipeline-id';
 
-    moxios.stubRequest(`/accounts/${account.name}`, {
-      status: 200,
-      response: account
-    });
+    nock('https://api.architect.io').get(`/accounts/${account.name}`)
+      .reply(200, account);
 
-    moxios.stubRequest(`/accounts/${account.id}/platforms`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/accounts/${account.id}/platforms`)
+      .reply(200, {
         id: test_platform_id,
         account: account
-      }
-    });
+      });
 
-    moxios.stubRequest(`/platforms/${test_platform_id}/apps`, {
-      status: 200,
-      response: {
+    nock('https://api.architect.io').post(`/platforms/${test_platform_id}/apps`)
+      .reply(200, {
         id: 'test-deployment-id',
         pipeline: {
           id: test_pipeline_id,
         },
-      }
-    });
+      });
 
     const create_platform_applications_spy = sinon.spy(PlatformCreate.prototype, 'createPlatformApplications');
     const create_platform_spy = sinon.spy(PlatformCreate.prototype, 'createArchitectPlatform');
