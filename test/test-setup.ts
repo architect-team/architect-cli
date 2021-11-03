@@ -1,5 +1,4 @@
 process.env.CI = 'true'
-import { } from '@oclif/test';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import sinon from 'sinon';
