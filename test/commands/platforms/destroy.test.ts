@@ -1,18 +1,8 @@
-import sinon from 'sinon';
 import { expect } from 'chai';
 import { PipelineUtils } from '../../../src/common/utils/pipeline';
-import PortUtil from '../../../src/common/utils/port';
 import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environment:destroy', () => {
-  beforeEach(() => {
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(() => {
-    sinon.restore();
-  });
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;

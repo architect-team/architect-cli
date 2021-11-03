@@ -2,38 +2,13 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
-import moxios from 'moxios';
 import path from 'path';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('external spec v1', () => {
-  beforeEach(() => {
-    moxios.install();
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(() => {
-    sinon.restore();
-    mock_fs.restore();
-    moxios.uninstall();
-  });
 
   it('simple external', async () => {
     const component_config = {

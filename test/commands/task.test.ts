@@ -3,20 +3,10 @@ import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
-import PortUtil from '../../src/common/utils/port';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
-
-  beforeEach(() => {
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(function () {
-    sinon.restore();
-  });
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;

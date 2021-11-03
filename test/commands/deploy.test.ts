@@ -7,7 +7,6 @@ import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
 import { PipelineUtils } from '../../src/common/utils/pipeline';
-import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
@@ -31,15 +30,6 @@ const mock_pipeline = {
 }
 
 describe('local deploy environment', function () {
-
-  beforeEach(() => {
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(function () {
-    sinon.restore();
-  });
 
   function getHelloComponentConfig(): any {
     return `

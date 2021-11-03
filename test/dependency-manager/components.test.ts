@@ -2,43 +2,16 @@ import { expect } from '@oclif/test';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
-import moxios from 'moxios';
+import nock from 'nock';
 import path from 'path';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
 describe('components spec v1', function () {
-  beforeEach(async () => {
-    // Stub the logger
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    moxios.install();
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(function () {
-    // Restore stubs
-    sinon.restore();
-    // Restore fs
-    mock_fs.restore();
-    moxios.uninstall();
-  });
-
   describe('standard components', function () {
     it('simple local component', async () => {
       const component_config_yml = `
@@ -117,10 +90,8 @@ describe('components spec v1', function () {
         }
       };
 
-      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } }
-      });
+      nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
+        .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
       const graph = await manager.getGraph([
@@ -154,10 +125,8 @@ describe('components spec v1', function () {
         }
       };
 
-      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } }
-      });
+      nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
+        .reply(200, { tag: 'v1', config: component_config, service: { url: 'architect/cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
       const graph = await manager.getGraph([
@@ -397,10 +366,8 @@ describe('components spec v1', function () {
         '/stack/architect.yml': yaml.dump(component_config),
       });
 
-      moxios.stubRequest(`/accounts/examples/components/hello-circular-world/versions/latest`, {
-        status: 200,
-        response: { tag: 'latest', config: circular_component_config, service: { url: 'examples/hello-circular-world:latest' } }
-      });
+      nock('http://localhost').get(`/accounts/examples/components/hello-circular-world/versions/latest`)
+        .reply(200, { tag: 'latest', config: circular_component_config, service: { url: 'examples/hello-circular-world:latest' } });
 
       let manager_error;
       try {
@@ -466,15 +433,11 @@ describe('components spec v1', function () {
         '/stack/architect.yml': yaml.dump(component_config_a),
       });
 
-      moxios.stubRequest(`/accounts/examples/components/hello-world-b/versions/latest`, {
-        status: 200,
-        response: { tag: 'latest', config: component_config_b, service: { url: 'examples/hello-world-b:latest' } }
-      });
+      nock('http://localhost').get(`/accounts/examples/components/hello-world-b/versions/latest`)
+        .reply(200, { tag: 'latest', config: component_config_b, service: { url: 'examples/hello-world-b:latest' } });
 
-      moxios.stubRequest(`/accounts/examples/components/hello-world-c/versions/latest`, {
-        status: 200,
-        response: { tag: 'latest', config: component_config_c, service: { url: 'examples/hello-world-c:latest' } }
-      });
+      nock('http://localhost').get(`/accounts/examples/components/hello-world-c/versions/latest`)
+        .reply(200, { tag: 'latest', config: component_config_c, service: { url: 'examples/hello-world-c:latest' } });
 
       let manager_error;
       try {
@@ -502,10 +465,8 @@ describe('components spec v1', function () {
         }
       };
 
-      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } }
-      });
+      nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
+        .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
@@ -542,10 +503,8 @@ describe('components spec v1', function () {
         }
       };
 
-      moxios.stubRequest(`/accounts/architect/components/cloud/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } }
-      });
+      nock('http://localhost').get(`/accounts/architect/components/cloud/versions/v1`)
+        .reply(200, { tag: 'v1', config: component_config_json, service: { url: 'architect/cloud:v1' } });
 
       const manager = new LocalDependencyManager(axios.create());
       const component_config = await manager.loadComponentConfig('architect/cloud:v1');
@@ -600,18 +559,14 @@ describe('components spec v1', function () {
               TEST_REQUIRED: \${{ parameters.test_required }}
         `;
 
-      moxios.stubRequest(`/accounts/examples/components/component-a/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: yaml.load(component_a), service: { url: 'examples/component-a:v1' } }
-      });
-      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v1`, {
-        status: 200,
-        response: { tag: 'v1', config: yaml.load(component_b_v1), service: { url: 'examples/component-b:v1' } }
-      });
-      moxios.stubRequest(`/accounts/examples/components/component-b/versions/v2`, {
-        status: 200,
-        response: { tag: 'v2', config: yaml.load(component_b_v2), service: { url: 'examples/component-b:v2' } }
-      });
+      nock('http://localhost').get(`/accounts/examples/components/component-a/versions/v1`)
+        .reply(200, { tag: 'v1', config: yaml.load(component_a), service: { url: 'examples/component-a:v1' } });
+
+      nock('http://localhost').get(`/accounts/examples/components/component-b/versions/v1`)
+        .reply(200, { tag: 'v1', config: yaml.load(component_b_v1), service: { url: 'examples/component-b:v1' } });
+
+      nock('http://localhost').get(`/accounts/examples/components/component-b/versions/v2`)
+        .reply(200, { tag: 'v2', config: yaml.load(component_b_v2), service: { url: 'examples/component-b:v2' } });
 
       const manager = new LocalDependencyManager(axios.create());
       const graph = await manager.getGraph([

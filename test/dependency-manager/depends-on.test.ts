@@ -1,35 +1,10 @@
 import { expect } from '@oclif/test';
 import axios from 'axios';
 import mock_fs from 'mock-fs';
-import moxios from 'moxios';
-import sinon from 'sinon';
-import Register from '../../src/commands/register';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import PortUtil from '../../src/common/utils/port';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('graph depends_on', () => {
-  beforeEach(() => {
-    moxios.install();
-    moxios.wait(function () {
-      let request = moxios.requests.mostRecent()
-      if (request) {
-        request.respondWith({
-          status: 404,
-        })
-      }
-    })
-
-    sinon.replace(Register.prototype, 'log', sinon.stub());
-    sinon.replace(PortUtil, 'isPortAvailable', async () => true);
-    PortUtil.reset();
-  });
-
-  afterEach(() => {
-    sinon.restore();
-    mock_fs.restore();
-    moxios.uninstall();
-  });
 
   it('happy path depends_on', async () => {
     const component_config = `
