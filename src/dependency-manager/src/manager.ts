@@ -61,13 +61,13 @@ export default abstract class DependencyManager {
   interpolateInterfaces(initial_component: ComponentConfig): ComponentConfig {
     // Interpolate component to fully resolve edges between dependencies/ingress/services
     // Important for host overrides where values might comes from parameters
-    initial_component.source_yml = replaceInterpolationBrackets(initial_component.source_yml);
+    const source_yml = replaceInterpolationBrackets(initial_component.source_yml);
     const context: ComponentContext = JSON.parse(JSON.stringify(initial_component.context));
 
     const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
     let matches;
 
-    while ((matches = interpolation_regex.exec(initial_component.source_yml)) != null) {
+    while ((matches = interpolation_regex.exec(source_yml)) != null) {
       const [_, match] = matches;
       const names = match.split('.');
 

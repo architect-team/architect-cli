@@ -6,6 +6,7 @@ import { ResourceSpec } from '../resource-spec';
 import { ServiceSpec } from '../service-spec';
 import { SidecarSpec } from '../sidecar-spec';
 import { TaskSpec } from '../task-spec';
+import { EXPRESSION_REGEX_STRING } from './interpolation';
 import { REF_PREFIX } from './json-schema-annotations';
 
 const SCHEMA_ID = 'https://raw.githubusercontent.com/architect-team/architect-cli/master/src/dependency-manager/schema/architect.schema.json';
@@ -221,6 +222,28 @@ const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string,
 };
 
 /**
+ * Add support for template expressions like ${{ if eq(parameters.environment, dev) }}:
+ */
+const addExpressions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
+  for (const definition of Object.values(definitions)) {
+    for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {
+      if (property.type === 'object') {
+        if (property.patternProperties) {
+          property.patternProperties[`^${EXPRESSION_REGEX_STRING}$`] = {
+            anyOf: [
+              JSON.parse(JSON.stringify(property)),
+            ],
+          };
+        }
+      }
+    }
+  }
+  return {
+    ...definitions,
+  };
+};
+
+/**
  * Perform a little post-processing on the definitions
  */
 const transformDefinitions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
@@ -229,6 +252,7 @@ const transformDefinitions = (definitions: Record<string, SchemaObject>): Record
   transformed_definitions = removeResourceSpec(transformed_definitions);
   transformed_definitions = addDocsLinks(transformed_definitions);
   transformed_definitions = mergeDebugSpec(transformed_definitions);
+  transformed_definitions = addExpressions(transformed_definitions);
   return {
     ...transformed_definitions,
   };

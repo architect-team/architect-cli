@@ -3,6 +3,7 @@ import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
+import { parseString } from './parser';
 
 const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
 
@@ -116,7 +117,8 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       const interpolation_ref = match[2];
       const sanitized_value = replaceBrackets(interpolation_ref);
       const nested_interpolation_ref = !!match[3].trim();
-      const value = context_map[sanitized_value];
+      //const value = context_map[sanitized_value];
+      const value = parseString(match[1], context_map, ignore_keys, max_depth);
 
       if (value === undefined) {
         const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
@@ -126,7 +128,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       }
 
       res = res.replace(match[1], normalizeValueForInterpolation(value, nested_interpolation_ref));
-      has_matches = true;
+      // has_matches = true;
     }
   }
 
