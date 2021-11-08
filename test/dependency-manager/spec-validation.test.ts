@@ -16,11 +16,10 @@ describe('superset spec validation', function () {
     it(`config interpolation works with multiline parameters`, async () => {
       const { component_config, source_path } = buildConfigFromPath(`test/mocks/superset/architect.yml`, Slugs.DEFAULT_TAG);
       const values_yml = `
-        param_string: |
+        param_string: |-
           {
             "multiline": "value"
-          }
-      `;
+          }`;
 
       const values_obj = parseSourceYml(values_yml) as any;
       component_config.context.parameters = {
@@ -44,10 +43,9 @@ describe('superset spec validation', function () {
     it(`config interpolation works with multiline parameters 2`, async () => {
       const { component_config, source_path } = buildConfigFromPath(`test/mocks/superset/architect.yml`, Slugs.DEFAULT_TAG);
       const values_yml = `
-        param_string: |
+        param_string: |-
           architect is great
-          architect is still great
-        `;
+          architect is still great`;
 
       const values_obj = parseSourceYml(values_yml) as any;
       component_config.context.parameters = {
@@ -63,7 +61,7 @@ describe('superset spec validation', function () {
       const spec = validateOrRejectSpec(parsed_yml);
       const interpolated_component_config = transformComponentSpec(spec, interpolated_component_string, component_config.tag, component_config.instance_metadata);
 
-      expect(interpolated_component_config.services['api-db'].environment.POSTGRES_USER).to.equal('architect is great\narchitect is still great')
+      expect(interpolated_component_config.services['api-db'].environment.POSTGRES_USER).to.equal(values_obj.param_string)
     });
 
   });

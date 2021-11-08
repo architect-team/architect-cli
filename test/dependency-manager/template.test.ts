@@ -6,37 +6,47 @@ import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/
 import { parseString } from '../../src/dependency-manager/src/utils/parser';
 
 describe('template', () => {
-  it('ast test', async () => {
-
+  it('divide parameters', async () => {
     const context = {
-      'parameters.test': 5,
-      'parameters.test2': '\${{ parameters.test + 5 }} == 10'
+      'parameters.left': `6`,
+      'parameters.right': `3`
+    }
+    const program = `\${{ parameters.left / parameters.right }}`;
+    expect(parseString(program, context)).to.eq(2);
+  });
+
+  it('divide parameter with slash', async () => {
+    const context = {
+      'parameters.test/slash': `6`,
+    }
+    const program = `\${{ parameters.test/slash / 3 }}`;
+    expect(parseString(program, context)).to.eq(2);
+  });
+
+  it('trim function', async () => {
+    const context = {
+      'parameters.test': `  whitespace  `,
     }
 
-    const program = `woot \${{ parameters.test2 }}`;
+    const base = `\${{ parameters.test }}`;
+    expect(parseString(base, context)).to.eq('  whitespace  ');
 
-    const replaced_ast = parseString(program, context);
-
-    console.log('-------------------------')
-
-    console.log(JSON.stringify(replaced_ast, null, 2))
+    const program = `\${{ 'no-' + trim(parameters.test) }}`;
+    expect(parseString(program, context)).to.eq('no-whitespace');
   });
 
   it('if statement', async () => {
     const component_config = `
     name: examples/hello-world
     parameters:
-      environment: dev
-      replicas: 1
+      environment: local
+
     services:
       api:
         environment:
           NODE_ENV: production
-          TEST: \${{ parameters['environment'] == 'dev' }}
           \${{ if (parameters.environment == 'local') }}:
             NODE_ENV: development
-        replicas: \${{ parameters.replicas + 1 }}
-
     `
 
     mock_fs({
@@ -51,9 +61,8 @@ describe('template', () => {
     ]);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.replicas).to.eq(2);
     expect(node.config.environment).to.deep.eq({
-      NODE_ENV: 'production'
+      NODE_ENV: 'development'
     });
   });
 });

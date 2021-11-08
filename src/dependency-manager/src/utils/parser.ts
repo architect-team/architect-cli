@@ -4,9 +4,25 @@ import { LooseParser } from 'acorn-loose';
 import estraverse from 'estraverse';
 import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
 
+function isIdentifier(node: any): boolean {
+  if (node.type === 'Identifier') {
+    return true;
+  } else if (node.type === 'MemberExpression') {
+    return true;
+  } else if (node.type === 'BinaryExpression') {
+    // Hack to support interpolation refs like: `dependencies.test/leaf.interfaces.api.protocol`
+    return (node.right.start - node.left.end) === 1 && isIdentifier(node.left) && isIdentifier(node.right);
+  } else {
+    return false;
+  }
+}
+
 function parseIdentifier(node: any): string {
   if (node.type === 'Identifier') {
     return node.name;
+  }
+  if (node.type === 'BinaryExpression') {
+    return `${parseIdentifier(node.left)}${node.operator}${parseIdentifier(node.right)}`;
   }
   const res = [];
   while (node.type === 'MemberExpression') {
@@ -45,7 +61,14 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
         return estraverse.VisitorOption.Remove;
       }
 
-      if (node.type === 'Identifier' || node.type === 'MemberExpression') {
+      if (isIdentifier(node)) {
+        // Function callee identifier
+        if (parent?.callee === node) {
+          return {
+            type: 'Literal',
+            value: node.name,
+          };
+        }
         const context_key = parseIdentifier(node);
         const value = context[context_key];
 
@@ -58,7 +81,7 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
         }
         return {
           type: 'Literal',
-          // TODO detect loop
+          // TODO:333 detect loop
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
           value: parseString(context[context_key], context),
         };
@@ -135,6 +158,17 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
           type: 'Literal',
           value: value,
         };
+      } else if (node.type == 'CallExpression') {
+        let value;
+        if (node.callee.value === 'trim') {
+          value = node.arguments[0].value.trim();
+        } else {
+          throw new Error(`Unsupported node.callee.value: ${node.callee.value} node.type: ${node.type}`);
+        }
+        return {
+          type: 'Literal',
+          value: value,
+        };
       } else if (node.type == 'IfStatement') {
         if (node.test.type === 'Literal') {
           return {
@@ -155,9 +189,19 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
 
 export function parseString(program: string, context: any, ignore_keys: string[] = [], max_depth = 25): any {
   let res = program;
+
+  let last_value;
+
   for (const match of matches(program, interpolation_regex)) {
     const ast = parseExpression(match[1], context, ignore_keys, max_depth);
     res = res.replace(match[0], ast.body[0].value);
+    last_value = ast.body[0].value;
   }
+
+  // Handle case where value a number or boolean. Ex ${{ parameters.replicas }} is a number
+  if (res === `${last_value}`) {
+    return last_value;
+  }
+
   return res;
 }

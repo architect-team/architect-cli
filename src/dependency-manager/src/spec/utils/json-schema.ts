@@ -224,6 +224,7 @@ const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string,
 /**
  * Add support for template expressions like ${{ if eq(parameters.environment, dev) }}:
  */
+// TODO:333 Test other types like refs and only accept if?
 const addExpressions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
   for (const definition of Object.values(definitions)) {
     for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {

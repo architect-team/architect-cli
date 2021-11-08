@@ -74,36 +74,11 @@ export const buildContextMap = (context: any): any => {
   return context_map;
 };
 
-// https://yaml.org/spec/1.2/spec.html#c-indicator
-const c_indicators = ['-', '?', ':', ',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '%', '@', '`', '\'', '"'];
-const startsWithCIndicator = (value: string): boolean => {
-  return c_indicators.some((c) => value.startsWith(c));
-};
-
-/**
- * Check if a value needs to be stringified or not.
- *
- * It does if it JSON.parses to an object or if it is a multiline string
- */
-export const normalizeValueForInterpolation = (value: any, nested = false): string => {
-  if (value === undefined) {
-    return '';
-  }
-  if (value instanceof Object) {
-    return JSON.stringify(value);
-  } else if (!nested && typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value) || value === '')) {
-    return JSON.stringify(value.trimEnd());
-  } else {
-    return value;
-  }
-};
-
 export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): { errors: ValidationError[]; interpolated_string: string } => {
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
 
-  let res = raw_value;
-
+  /*
   let has_matches = true;
   let depth = 0;
   const misses = new Set<string>();
@@ -131,6 +106,46 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       // has_matches = true;
     }
   }
+  */
+  // TODO:333 misses
+  const misses = new Set<string>();
+
+  const obj = yaml.load(raw_value);
+
+  const queue = [obj];
+  while (queue.length) {
+    const el = queue.shift() as any;
+    if (el instanceof Object) {
+      // TODO:333 handle array?
+      for (const [key, value] of Object.entries(el) as [string, any][]) {
+        // TODO:333 max depth
+        const parsed_key = parseString(key, context_map, ignore_keys, max_depth);
+
+        delete el[key];
+
+        // TODO:333 better check
+        if (key.startsWith('${{ if')) {
+          if (parsed_key === true) {
+            for (const [key2, value2] of Object.entries(value)) {
+              el[key2] = value2;
+              queue.push(el);
+            }
+          }
+        } else if (typeof value === 'string') {
+          const parsed_value = parseString(value, context_map, ignore_keys, max_depth);
+          el[parsed_key] = parsed_value;
+        } else {
+          el[parsed_key] = value;
+        }
+
+        if (value instanceof Object) {
+          queue.push(value);
+        }
+      }
+    }
+  }
+
+  const res = yaml.dump(obj);
 
   const reverse_context_map: Dictionary<string> = {};
   if (misses.size) {

@@ -20,6 +20,7 @@ import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateStringOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { parseString } from './utils/parser';
 import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
@@ -151,7 +152,7 @@ export default abstract class DependencyManager {
         if (!dep_component.interfaces[interface_name]) { continue; }
         let subdomain = dep_component.interfaces[interface_name].ingress?.subdomain || interface_name;
         try {
-          subdomain = interpolateStringOrReject(subdomain, dep_component.context);
+          subdomain = parseString(subdomain, dep_component.context);
           // eslint-disable-next-line no-empty
         } catch { }
 

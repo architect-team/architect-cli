@@ -1221,7 +1221,7 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       DB_ADDR: ':5432',
-      DB_ADDR2: ':""',
+      DB_ADDR2: ':',
       DB_ADDR3: '::5432',
       DB_ADDR4: '',
     });
@@ -1229,7 +1229,7 @@ describe('interpolation spec v1', () => {
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[api_ref].environment).to.deep.eq({
       DB_ADDR: ':5432',
-      DB_ADDR2: ':""',
+      DB_ADDR2: ':',
       DB_ADDR3: '::5432',
       DB_ADDR4: '',
     });
