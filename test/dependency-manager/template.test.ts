@@ -8,16 +8,16 @@ import { parseString } from '../../src/dependency-manager/src/utils/parser';
 describe('template', () => {
   it('divide parameters', async () => {
     const context = {
-      'parameters.left': `6`,
-      'parameters.right': `3`
+      'parameters.left-2.num': 6,
+      'parameters.right': 3
     }
-    const program = `\${{ parameters.left / parameters.right }}`;
+    const program = `\${{ parameters.left-2.num / parameters.right }}`;
     expect(parseString(program, context)).to.eq(2);
   });
 
   it('divide parameter with slash', async () => {
     const context = {
-      'parameters.test/slash': `6`,
+      'parameters.test/slash': 6,
     }
     const program = `\${{ parameters.test/slash / 3 }}`;
     expect(parseString(program, context)).to.eq(2);
@@ -35,18 +35,21 @@ describe('template', () => {
     expect(parseString(program, context)).to.eq('no-whitespace');
   });
 
-  it('if statement', async () => {
+  it('if statements', async () => {
     const component_config = `
     name: examples/hello-world
     parameters:
       environment: local
+      \${{ if false }}:
+        test: 1
 
     services:
       api:
-        environment:
-          NODE_ENV: production
-          \${{ if (parameters.environment == 'local') }}:
-            NODE_ENV: development
+        \${{ if true }}:
+          environment:
+            NODE_ENV: production
+            \${{ if (parameters.environment == 'local') }}:
+              NODE_ENV: development
     `
 
     mock_fs({
@@ -63,6 +66,14 @@ describe('template', () => {
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       NODE_ENV: 'development'
+    });
+
+    const graph2 = await manager.getGraph([
+      await manager.loadComponentConfig('examples/hello-world'),
+    ], { '*': { environment: 'prod' } });
+    const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
+    expect(node2.config.environment).to.deep.eq({
+      NODE_ENV: 'production'
     });
   });
 });

@@ -66,7 +66,7 @@ describe('external spec v1', () => {
       name: 'architect/cloud',
       parameters: {
         optional_host: { required: false },
-        optional_port: { default: '8080' }
+        optional_port: { default: 8080 }
       },
       services: {
         app: {
@@ -114,7 +114,7 @@ describe('external spec v1', () => {
       name: 'architect/cloud',
       parameters: {
         optional_host: {},
-        optional_port: { default: '8080' }
+        optional_port: { default: 8080 }
       },
       services: {
         app: {
@@ -142,7 +142,8 @@ describe('external spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentConfig('architect/cloud:latest')
-    ], { '*': { optional_host: 'cloud.architect.io', optional_port: '8081' } });
+      // @ts-ignore
+    ], { '*': { optional_host: 'cloud.architect.io', optional_port: 8081 } });
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([

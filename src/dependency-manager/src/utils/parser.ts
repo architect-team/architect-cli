@@ -1,17 +1,16 @@
+import { isIdentifierChar, isIdentifierStart } from 'acorn';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { LooseParser } from 'acorn-loose';
 import estraverse from 'estraverse';
-import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
+import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
+import { matches } from './interpolation';
 
 function isIdentifier(node: any): boolean {
   if (node.type === 'Identifier') {
     return true;
   } else if (node.type === 'MemberExpression') {
     return true;
-  } else if (node.type === 'BinaryExpression') {
-    // Hack to support interpolation refs like: `dependencies.test/leaf.interfaces.api.protocol`
-    return (node.right.start - node.left.end) === 1 && isIdentifier(node.left) && isIdentifier(node.right);
   } else {
     return false;
   }
@@ -20,9 +19,6 @@ function isIdentifier(node: any): boolean {
 function parseIdentifier(node: any): string {
   if (node.type === 'Identifier') {
     return node.name;
-  }
-  if (node.type === 'BinaryExpression') {
-    return `${parseIdentifier(node.left)}${node.operator}${parseIdentifier(node.right)}`;
   }
   const res = [];
   while (node.type === 'MemberExpression') {
@@ -35,25 +31,50 @@ function parseIdentifier(node: any): string {
   return res.join('.');
 }
 
-const matches = (text: string, pattern: RegExp) => ({
-  [Symbol.iterator]: function* () {
-    const clone = new RegExp(pattern.source, pattern.flags);
-    let match = null;
-    do {
-      match = clone.exec(text);
-      if (match) {
-        yield match;
-        clone.lastIndex = match.index + 1; // Support overlapping match groups
-      }
-    } while (match);
-  },
-});
+function codePointToString(code: number) {
+  // UTF-16 Decoding
+  if (code <= 0xFFFF) return String.fromCharCode(code);
+  code -= 0x10000;
+  return String.fromCharCode((code >> 10) + 0xD800, (code & 1023) + 0xDC00);
+}
 
-const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
+function getArchitectParser(Parser: any) {
+  return class extends Parser {
+    // https://github.com/acornjs/acorn/blob/27f01d6dccfd193ee4d892140b5e5844a83f0073/acorn/src/tokenize.js#L776
+    readWord1() {
+      this.containsEsc = false;
+      let word = "", first = true, chunkStart = this.pos;
+      const astral = this.options.ecmaVersion >= 6;
+      while (this.pos < this.input.length) {
+        const ch = this.fullCharCodeAtPos();
+        if (isIdentifierChar(ch, astral) || ch === 45 || ch === 47) {  // Override to support '-' or '/'
+          this.pos += ch <= 0xffff ? 1 : 2;
+        } else if (ch === 92) { // "\"
+          this.containsEsc = true;
+          word += this.input.slice(chunkStart, this.pos);
+          const escStart = this.pos;
+          if (this.input.charCodeAt(++this.pos) !== 117) // "u"
+            this.invalidStringToken(this.pos, "Expecting Unicode escape sequence \\uXXXX");
+          ++this.pos;
+          const esc = this.readCodePoint();
+          if (!(first ? isIdentifierStart : isIdentifierChar)(esc, astral))
+            this.invalidStringToken(escStart, "Invalid Unicode escape");
+          word += codePointToString(esc);
+          chunkStart = this.pos;
+        } else {
+          break;
+        }
+        first = false;
+      }
+      return word + this.input.slice(chunkStart, this.pos);
+    }
+  };
+}
+
+LooseParser.BaseParser = LooseParser.BaseParser.extend(getArchitectParser);
 
 export function parseExpression(program: string, context: any, ignore_keys: string[] = [], max_depth = 25): any {
-  const MyParser = LooseParser.extend();
-  const ast = MyParser.parse(program, { ecmaVersion: 2020 });
+  const ast = LooseParser.parse(program, { ecmaVersion: 2020 });
 
   estraverse.replace(ast, {
     enter: function (node: any, parent: any) {
@@ -83,7 +104,7 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
           type: 'Literal',
           // TODO:333 detect loop
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          value: parseString(context[context_key], context),
+          value: parseString(context[context_key], context, ignore_keys, max_depth),
         };
       }
     },
@@ -192,7 +213,7 @@ export function parseString(program: string, context: any, ignore_keys: string[]
 
   let last_value;
 
-  for (const match of matches(program, interpolation_regex)) {
+  for (const match of matches(program, EXPRESSION_REGEX)) {
     const ast = parseExpression(match[1], context, ignore_keys, max_depth);
     res = res.replace(match[0], ast.body[0].value);
     last_value = ast.body[0].value;

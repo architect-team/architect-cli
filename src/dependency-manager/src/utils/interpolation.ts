@@ -1,17 +1,15 @@
 import yaml from 'js-yaml';
-import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
+import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
 import { parseString } from './parser';
 
-const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
-
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
 };
 
-const matches = (text: string, pattern: RegExp) => ({
+export const matches = (text: string, pattern: RegExp): { [Symbol.iterator]: () => Generator<RegExpExecArray, void, unknown>; } => ({
   [Symbol.iterator]: function* () {
     const clone = new RegExp(pattern.source, pattern.flags);
     let match = null;
@@ -31,7 +29,7 @@ ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cl
 */
 export const replaceInterpolationBrackets = (value: string): string => {
   let res = value;
-  for (const match of matches(value, interpolation_regex)) {
+  for (const match of matches(value, EXPRESSION_REGEX)) {
     res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
   }
   return res;
@@ -123,8 +121,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
 
         delete el[key];
 
-        // TODO:333 better check
-        if (key.startsWith('${{ if')) {
+        if (IF_EXPRESSION_REGEX.test(key)) {
           if (parsed_key === true) {
             for (const [key2, value2] of Object.entries(value)) {
               el[key2] = value2;
@@ -154,7 +151,7 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
       const context_map = buildContextMap(value);
       for (const [k, v] of Object.entries(context_map)) {
         if (typeof v === 'string') {
-          for (const match of matches(v, interpolation_regex)) {
+          for (const match of matches(v, EXPRESSION_REGEX)) {
             reverse_context_map[match[1]] = k;
           }
         }

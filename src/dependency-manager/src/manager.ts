@@ -16,10 +16,11 @@ import { ComponentSpec } from './spec/component-spec';
 import { transformComponentContext, transformComponentSpec } from './spec/transform/component-transform';
 import { parseSourceYml } from './spec/utils/component-builder';
 import { interpolateConfigOrReject } from './spec/utils/component-interpolation';
+import { IF_EXPRESSION_REGEX } from './spec/utils/interpolation';
 import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { Dictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
-import { interpolateStringOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { buildContextMap, interpolateStringOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 import { parseString } from './utils/parser';
 import { ValuesConfig } from './values/values';
 
@@ -152,9 +153,9 @@ export default abstract class DependencyManager {
         if (!dep_component.interfaces[interface_name]) { continue; }
         let subdomain = dep_component.interfaces[interface_name].ingress?.subdomain || interface_name;
         try {
-          subdomain = parseString(subdomain, dep_component.context);
+          subdomain = parseString(subdomain, buildContextMap(dep_component.context));
           // eslint-disable-next-line no-empty
-        } catch { }
+        } catch (err) { }
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -624,7 +625,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.parameters)) {
-      if (pv.required !== false && (pv.default === undefined)) {
+      if (pv.required !== false && (pv.default === undefined) && !IF_EXPRESSION_REGEX.test(pk)) {
         const validation_error = new ValidationError({
           component: component.name,
           path: `parameters.${pk}`,
