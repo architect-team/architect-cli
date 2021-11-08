@@ -76,35 +76,6 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
 
-  /*
-  let has_matches = true;
-  let depth = 0;
-  const misses = new Set<string>();
-  while (has_matches) {
-    has_matches = false;
-    depth += 1;
-    if (depth >= max_depth) {
-      throw new Error('Max interpolation depth exceeded');
-    }
-    for (const match of matches(res, new RegExp('(' + interpolation_regex.source + ')' + '(.*)', 'g'))) {
-      const interpolation_ref = match[2];
-      const sanitized_value = replaceBrackets(interpolation_ref);
-      const nested_interpolation_ref = !!match[3].trim();
-      //const value = context_map[sanitized_value];
-      const value = parseString(match[1], context_map, ignore_keys, max_depth);
-
-      if (value === undefined) {
-        const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
-        if (!ignored) {
-          misses.add(interpolation_ref);
-        }
-      }
-
-      res = res.replace(match[1], normalizeValueForInterpolation(value, nested_interpolation_ref));
-      // has_matches = true;
-    }
-  }
-  */
   // TODO:333 misses
   const misses = new Set<string>();
 
@@ -114,7 +85,6 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
   while (queue.length) {
     const el = queue.shift() as any;
     if (el instanceof Object) {
-      // TODO:333 handle array?
       for (const [key, value] of Object.entries(el) as [string, any][]) {
         // TODO:333 max depth
         const parsed_key = parseString(key, context_map, ignore_keys, max_depth);
@@ -133,10 +103,9 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
           el[parsed_key] = parsed_value;
         } else {
           el[parsed_key] = value;
-        }
-
-        if (value instanceof Object) {
-          queue.push(value);
+          if (value instanceof Object) {
+            queue.push(value);
+          }
         }
       }
     }

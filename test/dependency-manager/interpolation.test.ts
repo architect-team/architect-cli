@@ -9,8 +9,22 @@ import DockerComposeTemplate, { DockerService } from '../../src/common/docker-co
 import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import ComponentNode from '../../src/dependency-manager/src/graph/node/component';
+import { interpolateStringOrReject } from '../../src/dependency-manager/src/utils/interpolation';
 
 describe('interpolation spec v1', () => {
+  it('interpolate array', () => {
+    const source = `
+    test:
+      - 1
+      - \${{ parameters.test2 }}`
+    const context = {
+      parameters: {
+        test2: 2
+      }
+    }
+    expect(interpolateStringOrReject(source, context)).to.eq('test:\n  - 1\n  - 2\n')
+  })
+
   it('interpolation null value', async () => {
     const component_config = `
     name: examples/hello-world
