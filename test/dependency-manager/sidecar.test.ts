@@ -459,22 +459,22 @@ describe('sidecar spec v1', () => {
 
     const admin_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
     const admin_instance_id = 'env1-tenant-1';
-    admin_component.instance_metadata!.instance_id = admin_instance_id;
+    admin_component.metadata!.instance_id = admin_instance_id;
 
     const test_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test_component));
 
     const test2_component = await manager.loadComponentConfig('voic/admin-ui@tenant-2');
-    test2_component.instance_metadata!.instance_id = 'env1-tenant-1';
+    test2_component.metadata!.instance_id = 'env1-tenant-1';
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test2_component));
 
     const test3_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
-    test3_component.instance_metadata!.instance_id = 'env1-tenant-1-test';
+    test3_component.metadata!.instance_id = 'env1-tenant-1-test';
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test3_component));
 
     const catalog_component = await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' })
     const catalog_instance_id = 'env1'
-    catalog_component.instance_metadata!.instance_id = catalog_instance_id;
+    catalog_component.metadata!.instance_id = catalog_instance_id;
 
     const graph = await manager.getGraph([
       admin_component,

@@ -111,6 +111,6 @@ export const validateOrRejectConfig = (component: ComponentConfig): void => {
   const errors = validateConfig(component);
 
   if (errors.length) {
-    throw new ValidationErrors(errors, component.file);
+    throw new ValidationErrors(errors, component.metadata.file);
   }
 };

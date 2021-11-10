@@ -4,12 +4,9 @@ import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
 import { ValidationErrors } from '../..';
-import { ComponentConfig } from '../../config/component-config';
-import { validateOrRejectConfig } from '../../config/component-validator';
 import { ArchitectError, ValidationError } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ComponentSpec } from '../component-spec';
-import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
 
 // a typing for the raw result of js-yaml.load();
@@ -62,24 +59,7 @@ export const buildSpecFromYml = (source_yml: string): ComponentSpec => {
   return validateOrRejectSpec(parsed_yml);
 };
 
-const _buildConfigFromYml = (source_yml: string, tag: string): { component_config: ComponentConfig; component_spec: ComponentSpec; } => {
-  const component_spec = buildSpecFromYml(source_yml);
-  const component_config = transformComponentSpec(component_spec, source_yml, tag);
-  validateOrRejectConfig(component_config);
-  return { component_config, component_spec };
-};
-
-export const buildConfigFromYml = (source_yml: string, tag: string): ComponentConfig => {
-  const { component_config } = _buildConfigFromYml(source_yml, tag);
-  return component_config;
-};
-
-export const buildConfigFromObject = (config: Record<string, any>, tag: string): ComponentConfig => {
-  const source_yaml = yaml.dump(config);
-  return buildConfigFromYml(source_yaml, tag);
-};
-
-export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { component_config: ComponentConfig; component_spec: ComponentSpec; source_path: string } => {
+export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
   const { source_path, source_yml, file_contents } = loadSourceYmlFromPathOrReject(spec_path);
 
   const file = {
@@ -88,13 +68,9 @@ export const buildConfigFromPath = (spec_path: string, tag = 'latest'): { compon
   };
 
   try {
-    const { component_config, component_spec } = _buildConfigFromYml(source_yml, tag);
-    component_config.file = file;
-    return {
-      component_spec,
-      component_config,
-      source_path,
-    };
+    const component_spec = buildSpecFromYml(source_yml);
+    component_spec.metadata.file = file;
+    return component_spec;
   } catch (err) {
     if (err instanceof ValidationErrors) {
       const errors = JSON.parse(err.message) as ValidationError[];

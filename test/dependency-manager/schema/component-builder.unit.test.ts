@@ -34,10 +34,10 @@ describe('component builder unit test', function () {
   it(`buildConfigFromYml parses yaml and builds into config`, async () => {
     const { source_path, source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
-    const config = buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
+    const config = buildConfigFromYml(source_yml);
 
     expect(config.name).to.equal('tests/superset');
-    expect(config.tag).to.equal(Slugs.DEFAULT_TAG);
+    expect(config.metadata.tag).to.equal(Slugs.DEFAULT_TAG);
   });
 
 });

@@ -1,5 +1,5 @@
-import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
-import { ComponentContext, OutputValue, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
+import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
+import { ComponentContext, OutputValue, ParameterValue, ServiceContext } from '../../config/component-context';
 import { ServiceInterfaceConfig } from '../../config/service-config';
 import { Dictionary, transformDictionary } from '../../utils/dictionary';
 import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, ParameterDefinitionSpec } from '../component-spec';
@@ -59,7 +59,7 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
-const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
+export const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
   return typeof interface_spec === 'string' ? { url: interface_spec } : interface_spec;
 };
 
@@ -119,14 +119,6 @@ export const transformComponentContext = (config: ComponentConfig): ComponentCon
     }
     service_context[sk] = {
       interfaces: service_interfaces,
-      environment: sv.environment,
-    };
-  }
-
-  const task_context: Dictionary<TaskContext> = {};
-  for (const [tk, tv] of Object.entries(config.tasks)) {
-    task_context[tk] = {
-      environment: tv.environment,
     };
   }
 
@@ -138,15 +130,15 @@ export const transformComponentContext = (config: ComponentConfig): ComponentCon
     ingresses: ingress_context,
     interfaces: interface_context,
     services: service_context,
-    tasks: task_context,
   };
 };
 
-export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ComponentConfig => {
+// TODO:333 change args
+export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
-  const services = transformDictionary(transformServiceSpec, spec.services, spec.name, tag, instance_metadata);
-  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, tag, instance_metadata);
+  const services = transformDictionary(transformServiceSpec, spec.services, spec.name, spec.metadata);
+  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, spec.metadata);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 
@@ -154,9 +146,8 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
 
   return {
     name,
-    tag,
 
-    instance_metadata: instance_metadata,
+    metadata: spec.metadata,
 
     description: spec.description,
     keywords: spec.keywords || [],
@@ -174,18 +165,5 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
     interfaces,
 
     artifact_image: spec.artifact_image,
-
-    source_yml,
-
-    context: transformComponentContext(
-      {
-        dependencies,
-        parameters,
-        outputs,
-        interfaces,
-        services,
-        tasks,
-      } as ComponentConfig
-    ),
   };
 };

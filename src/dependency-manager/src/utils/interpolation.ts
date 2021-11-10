@@ -1,4 +1,3 @@
-import yaml from 'js-yaml';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
@@ -72,61 +71,86 @@ export const buildContextMap = (context: any): any => {
   return context_map;
 };
 
-export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): { errors: ValidationError[]; interpolated_string: string } => {
+export interface InterpolateObjectOptions {
+  keys?: boolean;
+  values?: boolean;
+  ignore_keys?: string[]
+}
+
+function _interpolateObject(obj: any, context_map: any, options?: InterpolateObjectOptions) {
+  options = {
+    keys: false,
+    values: true,
+    ignore_keys: [],
+    ...options,
+  };
+
+  let queue = [obj];
+  while (queue.length) {
+    const el = queue.shift() as any;
+    if (el instanceof Object) {
+      let has_conditional = false;
+      const to_add = [];
+      for (const [key, value] of Object.entries(el) as [string, any][]) {
+        delete el[key];
+        if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
+          const parsed_key = parseString(key, context_map, options.ignore_keys);
+          if (parsed_key === true) {
+            has_conditional = true;
+            for (const [key2, value2] of Object.entries(value)) {
+              el[key2] = value2;
+
+              // TODO:333 remove
+              if (key2 === 'host') {
+                context_map['services.api-db.interfaces.main.host'] = value2;
+              }
+            }
+          }
+        } else if (options.values && typeof value === 'string') {
+          const parsed_value = parseString(value, context_map, options.ignore_keys);
+          el[key] = parsed_value;
+        } else {
+          el[key] = value;
+          if (value instanceof Object) {
+            to_add.push(value);
+          }
+        }
+      }
+      if (has_conditional) {
+        queue.unshift(el);
+      } else {
+        queue = queue.concat(to_add);
+      }
+    }
+  }
+}
+
+export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
+  // Clone object
+  obj = JSON.parse(JSON.stringify(obj));
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
+
+  // TODO:333 make interpolateString -> interpolateObject
+  // TODO:333 remove source_yml
 
   // TODO:333 misses
   const misses = new Set<string>();
 
-  const obj = yaml.load(raw_value);
-
-  const queue = [obj];
-  while (queue.length) {
-    const el = queue.shift() as any;
-    if (el instanceof Object) {
-      for (const [key, value] of Object.entries(el) as [string, any][]) {
-        // TODO:333 max depth
-        const parsed_key = parseString(key, context_map, ignore_keys, max_depth);
-
-        delete el[key];
-
-        if (IF_EXPRESSION_REGEX.test(key)) {
-          if (parsed_key === true) {
-            for (const [key2, value2] of Object.entries(value)) {
-              el[key2] = value2;
-              queue.push(el);
-            }
-          }
-        } else if (typeof value === 'string') {
-          const parsed_value = parseString(value, context_map, ignore_keys, max_depth);
-          el[parsed_key] = parsed_value;
-        } else {
-          el[parsed_key] = value;
-          if (value instanceof Object) {
-            queue.push(value);
-          }
-        }
-      }
-    }
-  }
-
-  const res = yaml.dump(obj);
+  // Interpolate only keys first to flatten conditionals
+  _interpolateObject(obj, context_map, options);
+  _interpolateObject(obj, context_map, options);
 
   const reverse_context_map: Dictionary<string> = {};
   if (misses.size) {
-    try {
-      const value = yaml.load(raw_value);
-      const context_map = buildContextMap(value);
-      for (const [k, v] of Object.entries(context_map)) {
-        if (typeof v === 'string') {
-          for (const match of matches(v, EXPRESSION_REGEX)) {
-            reverse_context_map[match[1]] = k;
-          }
+    const context_map = buildContextMap(obj);
+    for (const [k, v] of Object.entries(context_map)) {
+      if (typeof v === 'string') {
+        for (const match of matches(v, EXPRESSION_REGEX)) {
+          reverse_context_map[match[1]] = k;
         }
       }
-      // eslint-disable-next-line no-empty
-    } catch { }
+    }
   }
 
   const errors: ValidationError[] = [];
@@ -145,13 +169,13 @@ export const interpolateString = (raw_value: string, context: any, ignore_keys: 
     }));
   }
 
-  return { errors, interpolated_string: res };
+  return { errors, interpolated_obj: obj };
 };
 
-export const interpolateStringOrReject = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
-  const { interpolated_string, errors } = interpolateString(raw_value, context, ignore_keys, max_depth);
+export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
+  const { interpolated_obj, errors } = interpolateObject(obj, context, options);
   if (errors.length) {
     throw new ValidationErrors(errors);
   }
-  return interpolated_string;
+  return interpolated_obj;
 };

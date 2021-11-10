@@ -4,7 +4,7 @@ import tmp from 'tmp';
 import untildify from 'untildify';
 import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
-import { buildConfigFromPath, Slugs } from '../dependency-manager/src';
+import { buildSpecFromPath } from '../dependency-manager/src';
 
 tmp.setGracefulCleanup();
 
@@ -61,7 +61,7 @@ export default class ComponentValidate extends Command {
     }
 
     for (const config_path of config_paths) {
-      const { component_config, source_path } = buildConfigFromPath(config_path, Slugs.DEFAULT_TAG);
+      const { component_config, source_path } = buildSpecFromPath(config_path);
       this.log(chalk.green(`✅ ${component_config.name}: ${source_path}`));
     }
   }

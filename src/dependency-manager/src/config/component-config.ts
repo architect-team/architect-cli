@@ -1,7 +1,6 @@
 import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
-import { ComponentContext } from './component-context';
 import { ServiceConfig } from './service-config';
 import { TaskConfig } from './task-config';
 
@@ -50,11 +49,17 @@ export interface OutputDefinitionConfig {
 }
 
 export interface ComponentInstanceMetadata {
+  ref: string;
+  tag: string;
+
   instance_name: string;
   instance_id: string;
   instance_date: Date;
 
-  local_path?: string;
+  file?: {
+    path: string;
+    contents: string;
+  }
 }
 
 export interface ComponentVersionMetadata {
@@ -81,8 +86,7 @@ export interface ComponentVersionMetadata {
 export interface ComponentConfig {
   name: string;
 
-  tag: string; // TODO:291: we should consider allowing these to live next to the ComponentConfig instead of attached to it. (see ComponentVersionConfig above)
-  instance_metadata?: ComponentInstanceMetadata; // TODO:291: we should consider allowing these to live next to the ComponentConfig instead of attached to it. (see ComponentInstanceConfig above)
+  metadata: ComponentInstanceMetadata;
 
   description?: string;
   keywords: string[];
@@ -100,20 +104,16 @@ export interface ComponentConfig {
 
   artifact_image?: string;
 
-  source_yml: string;
-  context: ComponentContext; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager interpolation logic
-
   proxy_port_mapping?: any; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager sidecar logic
 
-  file?: {
-    path: string;
-    contents: string;
-  }
+  /*
+
+  */
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {
   const split = ComponentSlugUtils.parse(config.name);
-  return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, config.tag, config.instance_metadata?.instance_name);
+  return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, config.metadata?.tag, config.metadata?.instance_name);
 };
 
 export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
@@ -145,20 +145,21 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 export const buildNodeRef = (component_config: ComponentConfig, service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   const component_ref = buildComponentRef(component_config);
   const parsed = ComponentVersionSlugUtils.parse(component_ref);
-  const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.instance_metadata?.instance_name);
-  return resourceRefToNodeRef(service_ref, component_config.instance_metadata?.instance_id, max_length);
+  const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.metadata?.instance_name);
+  return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
 
-export const buildInterfacesRef = (component_config: ComponentConfig, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
-  // instance_id must be set to be unique across environments
-  const component_ref = buildComponentRef(component_config);
-  return resourceRefToNodeRef(component_ref, component_config.instance_metadata?.instance_id, max_length);
-};
+
+// TODO:333 remove
+export function buildInterfacesRef(component_config: any): string {
+  const component_ref = component_config.metadata?.ref || buildComponentRef(component_config);
+  return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id);
+}
 
 export const getServiceByRef = (component_config: ComponentConfig, service_ref: string): ServiceConfig | undefined => {
   if (service_ref.startsWith(component_config.name)) {
     const [service_name, component_tag] = service_ref.substr(component_config.name.length + 1).split(':');
-    if (component_tag === component_config.tag) {
+    if (component_tag === component_config.metadata?.tag) {
       return component_config.services[service_name];
     }
   }
@@ -167,7 +168,7 @@ export const getServiceByRef = (component_config: ComponentConfig, service_ref: 
 export const getTaskByRef = (component_config: ComponentConfig, task_ref: string): TaskConfig | undefined => {
   if (task_ref.startsWith(component_config.name)) {
     const [task_name, component_tag] = task_ref.substr(component_config.name.length + 1).split(':');
-    if (component_tag === component_config.tag) {
+    if (component_tag === component_config.metadata?.tag) {
       return component_config.tasks[task_name];
     }
   }

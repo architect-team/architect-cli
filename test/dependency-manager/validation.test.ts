@@ -4,8 +4,11 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildConfigFromPath, interpolateConfigOrReject, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
+import { buildSpecFromPath, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
+
+// TODO:333
+function interpolateConfigOrReject(x: any, y: any) { }
 
 describe('validate spec', () => {
 
@@ -21,7 +24,7 @@ describe('validate spec', () => {
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid nested debug', async () => {
@@ -41,7 +44,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        buildConfigFromPath('/architect.yml')
+        buildSpecFromPath('/architect.yml')
       } catch (e) {
         err = e;
       }
@@ -66,7 +69,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -96,7 +99,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -125,7 +128,7 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid task schedule', async () => {
@@ -139,7 +142,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -170,7 +173,7 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid task depends_on', async () => {
@@ -192,7 +195,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -218,7 +221,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -244,7 +247,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -275,7 +278,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;
@@ -314,7 +317,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
+        const { component_config } = buildSpecFromPath('/architect.yml')
         interpolateConfigOrReject(component_config, [])
       } catch (e) {
         err = e;

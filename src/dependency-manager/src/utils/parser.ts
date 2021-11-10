@@ -2,6 +2,7 @@ import { isIdentifierChar, isIdentifierStart } from 'acorn';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { LooseParser } from 'acorn-loose';
+import assert from 'assert';
 import estraverse from 'estraverse';
 import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { matches } from './interpolation';
@@ -73,7 +74,7 @@ function getArchitectParser(Parser: any) {
 
 LooseParser.BaseParser = LooseParser.BaseParser.extend(getArchitectParser);
 
-export function parseExpression(program: string, context: any, ignore_keys: string[] = [], max_depth = 25): any {
+export function parseExpression(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
   const ast = LooseParser.parse(program, { ecmaVersion: 2020 });
 
   estraverse.replace(ast, {
@@ -91,7 +92,7 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
           };
         }
         const context_key = parseIdentifier(node);
-        const value = context[context_key];
+        const value = context_map[context_key];
 
         if (value === undefined) {
           const ignored = ignore_keys.some((k) => context_key.startsWith(k));
@@ -102,9 +103,8 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
         }
         return {
           type: 'Literal',
-          // TODO:333 detect loop
           // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          value: parseString(context[context_key], context, ignore_keys, max_depth),
+          value: parseString(value, context_map, ignore_keys, _depth + 1),
         };
       }
     },
@@ -131,7 +131,7 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
       } else if (node.type === 'ConditionalExpression') {
         return {
           type: 'Literal',
-          value: node.test.value ? node.consequent.value : node.alternative.value,
+          value: node.test.value ? node.consequent.value : node.alternate.value,
         };
       } else if (node.type === 'BinaryExpression') {
         const left_value = node.left.value;
@@ -208,13 +208,13 @@ export function parseExpression(program: string, context: any, ignore_keys: stri
   return ast;
 }
 
-export function parseString(program: string, context: any, ignore_keys: string[] = [], max_depth = 25): any {
+export function parseString(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
+  assert(_depth < 25);
   let res = program;
 
   let last_value;
-
   for (const match of matches(program, EXPRESSION_REGEX)) {
-    const ast = parseExpression(match[1], context, ignore_keys, max_depth);
+    const ast = parseExpression(match[1], context_map, ignore_keys, _depth);
     res = res.replace(match[0], ast.body[0].value);
     last_value = ast.body[0].value;
   }

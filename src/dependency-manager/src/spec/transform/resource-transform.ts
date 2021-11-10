@@ -3,7 +3,7 @@ import { ComponentInstanceMetadata } from '../../config/component-config';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
-import { ComponentSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
+import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
 
 export const transformResourceSpecName = (name: string | undefined): string => {
   const split = ServiceVersionSlugUtils.parse(name || '');
@@ -78,13 +78,14 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   };
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec, component_ref: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ResourceConfig => {
+export const transformResourceSpec = (key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
-  const { component_account_name, component_name } = ComponentSlugUtils.parse(component_ref);
+  console.log('WTF', metadata.ref);
+  const { component_account_name, component_name } = ComponentVersionSlugUtils.parse(metadata.ref);
   return {
     name: key,
-    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, tag, instance_metadata?.instance_name),
-    tag,
+    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, metadata.tag, metadata?.instance_name),
+    tag: metadata.tag,
     description: spec.description,
     image: spec.image,
     command: transformResourceSpecCommand(spec.command),

@@ -4,8 +4,8 @@ import { SidecarSpec } from '../sidecar-spec';
 import { transformLivenessProbeSpec } from './common-transform';
 import { transformResourceSpec } from './resource-transform';
 
-export const transformSidecarSpec = (key: string, spec: SidecarSpec, component_ref: string, tag: string, instance_metadata?: ComponentInstanceMetadata): SidecarConfig => {
-  const resource_config = transformResourceSpec(key, spec, component_ref, tag, instance_metadata);
+export const transformSidecarSpec = (key: string, spec: SidecarSpec, metadata: ComponentInstanceMetadata): SidecarConfig => {
+  const resource_config = transformResourceSpec(key, spec, metadata);
 
   return {
     ...resource_config,

@@ -225,8 +225,18 @@ const addDocsLinks = (definitions: Record<string, SchemaObject>): Record<string,
  * Add support for template expressions like ${{ if eq(parameters.environment, dev) }}:
  */
 const addExpressions = (definitions: Record<string, SchemaObject>): Record<string, SchemaObject> => {
-  for (const definition of Object.values(definitions)) {
+  for (const [definition_name, definition] of Object.entries(definitions)) {
+    // Don't allow if statements in parameters
+    if (definition_name === 'ParameterDefinitionSpec') {
+      continue;
+    }
     for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {
+      // TODO:333 write tests
+      // Don't allow if statements in parameters or dependencies block
+      if (property_name === 'parameters' || property_name === 'dependencies') {
+        continue;
+      }
+
       if (property.type === 'object') {
         if (!property.patternProperties) {
           property.patternProperties = {};

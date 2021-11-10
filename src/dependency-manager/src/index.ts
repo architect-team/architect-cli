@@ -24,7 +24,6 @@ export * from './spec/transform/service-transform';
 export * from './spec/transform/sidecar-transform';
 export * from './spec/transform/task-transform';
 export * from './spec/utils/component-builder';
-export * from './spec/utils/component-interpolation';
 export * from './spec/utils/json-schema';
 export * from './spec/utils/slugs';
 export * from './spec/utils/spec-validator';

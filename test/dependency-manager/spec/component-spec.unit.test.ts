@@ -1,4 +1,4 @@
-import { buildConfigFromYml, dumpToYml, Slugs } from '../../../src/dependency-manager/src';
+import { buildConfigFromYml, dumpToYml } from '../../../src/dependency-manager/src';
 import { loadAllTestSpecCombinations } from './partials/spec-test-harness';
 
 describe('component spec unit test', () => {
@@ -8,7 +8,7 @@ describe('component spec unit test', () => {
     console.debug(`recursively testing ${all_spec_combinations.length} combined components...`);
     for (const component of all_spec_combinations) {
       const source_yml = dumpToYml(component);
-      buildConfigFromYml(source_yml, Slugs.DEFAULT_TAG);
+      buildConfigFromYml(source_yml);
     }
   }).timeout(20000);
 
