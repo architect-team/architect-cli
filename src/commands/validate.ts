@@ -61,8 +61,8 @@ export default class ComponentValidate extends Command {
     }
 
     for (const config_path of config_paths) {
-      const { component_config, source_path } = buildSpecFromPath(config_path);
-      this.log(chalk.green(`✅ ${component_config.name}: ${source_path}`));
+      const component_spec = buildSpecFromPath(config_path);
+      this.log(chalk.green(`✅ ${component_spec.name}: ${component_spec.metadata.file?.path}`));
     }
   }
 }

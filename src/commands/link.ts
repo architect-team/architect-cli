@@ -29,7 +29,7 @@ export default class Link extends Command {
     const component_path = path.resolve(untildify(args.componentPath));
     // Try to load the component from the path to ensure it exists and is valid
     try {
-      const { component_config } = buildSpecFromPath(component_path);
+      const component_config = buildSpecFromPath(component_path);
       this.app.linkComponentPath(component_config.name, component_path);
       this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
     } catch (err) {

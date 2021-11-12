@@ -208,5 +208,11 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   }
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
+  component_spec.metadata = {
+    ref: `${component_spec.name}:latest`,
+    tag: 'latest',
+    instance_date: new Date(),
+    interfaces: {},
+  };
   return component_spec;
 };

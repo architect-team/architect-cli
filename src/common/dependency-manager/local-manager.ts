@@ -1,5 +1,6 @@
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
+import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
 import DependencyManager, { buildSpecFromYml, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../../dependency-manager/src';
 import { ComponentInstanceMetadata } from '../../dependency-manager/src/config/component-config';
@@ -43,6 +44,7 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_name,
       instance_id: component_ref,
       instance_date: new Date(),
+      interfaces: interfaces || {},
     };
     // Load locally linked component config
     if (component_slug in this.linked_components) {
@@ -63,82 +65,35 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     spec.metadata = {
-      ...metadata,
       ...spec.metadata,
+      ...metadata,
     };
 
-    // TODO:333 config.metadata = metadata;
-
-    /* TODO:333
-    // Set debug values
-    const merged_spec = buildSpecFromYml(config.source_yml);
-
-    const inverted_interfaces: Dictionary<string> = {};
-    for (const [interface_from, interface_to] of Object.entries(interfaces || {})) {
-      inverted_interfaces[interface_to] = interface_from;
+    const interface_names = Object.values(spec.metadata.interfaces);
+    if (merged_options.map_all_interfaces) {
+      for (const interface_name of Object.keys(spec.interfaces || {})) {
+        if (!interface_names.includes(interface_name)) {
+          spec.metadata.interfaces[interface_name] = interface_name;
+        }
+      }
     }
 
-    for (const [interface_to, interface_obj] of Object.entries(config.interfaces)) {
-      const interface_from = inverted_interfaces[interface_to];
-
-      // If the interface hasn't been explictely mapped and we aren't configured
-      // to implicitely map all interfaces, then just skip this interface
-      if (!interface_from && !merged_options.map_all_interfaces) {
-        continue;
-      }
-
-      if (!interface_obj.ingress) {
-        interface_obj.ingress = {};
-      }
-      interface_obj.ingress.enabled = true;
-
-      // If interface_from has a value, then it was manually mapped by the user, and we
-      // should set that value while building the interface object. If interface_from
-      // is undefined, we should build the interface object using the config defaults
-      if (interface_from) {
-        interface_obj.ingress.subdomain = interface_from;
-      } else if (!interface_obj.ingress.subdomain) {
-        interface_obj.ingress.subdomain = interface_to;
-      }
-      // TODO:269:new-ticket find way to avoid modifying source_yml - def non-trivial with interpolation
-      // potentially create a "deployConfig": a merged source_yml prior to interpolation
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      merged_spec.interfaces[interface_to] = interface_obj;
-    }
-
-    if (config.metadata?.local_path && !this.production) {
+    if (spec.metadata.file?.path && !this.production) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-      for (const [sk, sv] of Object.entries(config.services)) {
+      for (const [sk, sv] of Object.entries(spec.services || {})) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (sv.debug) {
-          config.services[sk] = deepmerge(sv, sv.debug, { arrayMerge: overwriteMerge });
+          spec.services![sk] = deepmerge(sv, sv.debug, { arrayMerge: overwriteMerge });
         }
       }
-      for (const [tk, tv] of Object.entries(config.tasks)) {
+      for (const [tk, tv] of Object.entries(spec.tasks || {})) {
         // If debug is enabled merge in debug options ex. debug.command -> command
         if (tv.debug) {
-          config.tasks[tk] = deepmerge(tv, tv.debug, { arrayMerge: overwriteMerge });
+          spec.tasks![tk] = deepmerge(tv, tv.debug, { arrayMerge: overwriteMerge });
         }
       }
-
-      const services: Dictionary<ServiceSpec> = {};
-      for (const [sk, sv] of Object.entries(merged_spec.services || {})) {
-        services[sk] = deepmerge(sv, sv.debug || {}, { arrayMerge: overwriteMerge });
-      }
-
-      // TODO:285: add test for task debug block
-      const tasks: Dictionary<TaskSpec> = {};
-      for (const [sk, sv] of Object.entries(merged_spec.tasks || {})) {
-        tasks[sk] = deepmerge(sv, sv.debug || {}, { arrayMerge: overwriteMerge });
-      }
-
-      merged_spec.services = services;
-      merged_spec.tasks = tasks;
     }
-    config.source_yml = yaml.dump(merged_spec);
-    */
 
     return spec;
   }

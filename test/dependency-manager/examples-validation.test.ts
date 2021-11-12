@@ -1,6 +1,6 @@
 import { expect } from '@oclif/test';
 import fs from 'fs-extra';
-import { buildSpecFromPath } from '../../src/dependency-manager/src';
+import { buildConfigFromPath } from '../../src/dependency-manager/src';
 
 // This test validates the architect.yml file for each of our example components to ensure that none go out of date
 describe('example component validation', function () {
@@ -13,9 +13,9 @@ describe('example component validation', function () {
       if (fs.existsSync(`${EXAMPLES_DIR}/${example_dir}/architect.yml`)) {
 
         it(`${EXAMPLES_DIR}/${example_dir}/architect.yml passes ajv json schema validation`, async () => {
-          const { component_config, source_path } = buildSpecFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+          const component_config = buildConfigFromPath(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
 
-          expect(source_path).to.equal(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
+          expect(component_config.metadata.file?.path).to.equal(`${EXAMPLES_DIR}/${example_dir}/architect.yml`);
           expect(component_config).to.not.be.undefined;
         });
 

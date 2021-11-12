@@ -6,10 +6,10 @@ describe('superset spec validation', function () {
   describe('superset component', function () {
 
     it(`test/mocks/superset/architect.yml passes ajv json schema validation`, async () => {
-      const { component_config, source_path } = buildSpecFromPath(`test/mocks/superset/architect.yml`);
+      const component_spec = buildSpecFromPath(`test/mocks/superset/architect.yml`);
 
-      expect(source_path).to.equal(`test/mocks/superset/architect.yml`);
-      expect(component_config).to.not.be.undefined;
+      expect(component_spec.metadata.file?.path).to.equal(`test/mocks/superset/architect.yml`);
+      expect(component_spec).to.not.be.undefined;
     });
 
 

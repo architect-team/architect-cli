@@ -52,36 +52,17 @@ export interface ComponentInstanceMetadata {
   ref: string;
   tag: string;
 
-  instance_name: string;
-  instance_id: string;
+  instance_name?: string;
+  instance_id?: string;
   instance_date: Date;
+
+  interfaces: Dictionary<string>;
 
   file?: {
     path: string;
     contents: string;
   }
 }
-
-export interface ComponentVersionMetadata {
-  tag: string;
-}
-
-// TODO:291: we should consider wrapping ComponentConfig in a ComponentVersionConfig and a ComponentInstanceConfig:
-// this allows us to factor out `tag` from `buildComponentConfig` and only apply it when it is needed
-// the graph then could be a graph of ComponentVersions or ComponentInstances
-//
-// export interface ComponentVersion {
-//   tag: string;
-//   config: ComponentConfig;
-// }
-
-// export interface ComponentInstance {
-//   component: ComponentVersion;
-
-//   instance_name: string;
-//   instance_id: string;
-//   instance_date: Date;
-// }
 
 export interface ComponentConfig {
   name: string;
@@ -105,10 +86,6 @@ export interface ComponentConfig {
   artifact_image?: string;
 
   proxy_port_mapping?: any; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager sidecar logic
-
-  /*
-
-  */
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {

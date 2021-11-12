@@ -3,10 +3,11 @@
 import fs from 'fs-extra';
 import yaml from 'js-yaml';
 import path from 'path';
-import { ValidationErrors } from '../..';
-import { ArchitectError, ValidationError } from '../../utils/errors';
+import { ComponentConfig } from '../../config/component-config';
+import { ArchitectError, ValidationError, ValidationErrors } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ComponentSpec } from '../component-spec';
+import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
 
 // a typing for the raw result of js-yaml.load();
@@ -59,6 +60,11 @@ export const buildSpecFromYml = (source_yml: string): ComponentSpec => {
   return validateOrRejectSpec(parsed_yml);
 };
 
+export const buildConfigFromYml = (source_yml: string): ComponentConfig => {
+  const component_spec = buildSpecFromYml(source_yml);
+  return transformComponentSpec(component_spec);
+};
+
 export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
   const { source_path, source_yml, file_contents } = loadSourceYmlFromPathOrReject(spec_path);
 
@@ -78,4 +84,9 @@ export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
     }
     throw err;
   }
+};
+
+export const buildConfigFromPath = (spec_path: string): ComponentConfig => {
+  const component_spec = buildSpecFromPath(spec_path);
+  return transformComponentSpec(component_spec);
 };

@@ -94,11 +94,11 @@ export function parseExpression(program: string, context_map: any, ignore_keys: 
         const context_key = parseIdentifier(node);
         const value = context_map[context_key];
 
-        if (value === undefined) {
+        if (!(context_key in context_map)) {
           const ignored = ignore_keys.some((k) => context_key.startsWith(k));
           if (!ignored) {
             // misses.add(interpolation_ref);
-            throw new Error(`Invalid context key: ${context_key}`);
+            throw new Error(`${context_map.name ? `${context_map.name}\n` : ''}Invalid context key: ${context_key}`);
           }
         }
         return {

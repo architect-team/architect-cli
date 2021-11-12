@@ -80,7 +80,6 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
 
 export const transformResourceSpec = (key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
-  console.log('WTF', metadata.ref);
   const { component_account_name, component_name } = ComponentVersionSlugUtils.parse(metadata.ref);
   return {
     name: key,

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import mock_fs from 'mock-fs';
-import { buildSpecFromPath } from '../../src/dependency-manager/src';
+import { buildConfigFromPath } from '../../src/dependency-manager/src';
 
 describe('config spec v1', () => {
   it('simple configs', async () => {
@@ -17,7 +17,7 @@ describe('config spec v1', () => {
       '/architect.yml': component_yml,
     });
 
-    const component_spec = buildSpecFromPath('/architect.yml');
+    const component_spec = buildConfigFromPath('/architect.yml');
     expect(component_spec.interfaces.frontend).to.eq("${{ services['stateless-app'].interfaces.main.url }}")
   });
 

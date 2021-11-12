@@ -96,18 +96,6 @@ describe('template', () => {
         environment:
           DB_HOST: \${{ services.api-db.interfaces.main.host }}
           DB_ADDR: \${{ services.api-db.interfaces.main.url }}
-          CORS: \${{ ingresses.api.consumers }}
-
-      app:
-        interfaces:
-          main: 8080
-        environment:
-          APP_ADDR: \${{ ingresses.app.url }}
-          API_ADDR: \${{ ingresses.api.url }}
-
-    interfaces:
-      api: \${{ services.api.interfaces.main.url }}
-      app: \${{ services.app.interfaces.main.url }}
     `
 
     mock_fs({
@@ -125,12 +113,6 @@ describe('template', () => {
     expect(api_node.config.environment).to.deep.eq({
       DB_HOST: 'db.aws.com',
       DB_ADDR: 'postgres://db.aws.com:5432'
-    });
-
-    const app_ref = resourceRefToNodeRef('examples/hello-world/app:latest');
-    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
-    expect(app_node.config.environment).to.deep.eq({
-      API_ADDR: 'http://api.arc.localhost',
     });
   });
 });
