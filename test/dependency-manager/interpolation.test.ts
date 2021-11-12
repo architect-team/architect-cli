@@ -21,7 +21,7 @@ describe('interpolation spec v1', () => {
         test2: 2
       }
     }
-    expect(interpolateObjectOrReject(yaml.load(source), context)).to.eq('test:\n  - 1\n  - 2\n')
+    expect(interpolateObjectOrReject(yaml.load(source), context)).to.deep.eq({ test: [1, 2] })
   })
 
   it('interpolation null value', async () => {

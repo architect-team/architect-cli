@@ -6,37 +6,116 @@ import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/
 import { parseString } from '../../src/dependency-manager/src/utils/parser';
 
 describe('template', () => {
-  it('divide parameters', async () => {
-    const context = {
-      'parameters.left-2.num': 6,
-      'parameters.right': 3
-    }
-    const program = `\${{ parameters.left-2.num / parameters.right }}`;
-    expect(parseString(program, context)).to.eq(2);
+  describe('operations', () => {
+    it('base cases', async () => {
+      const programs = {
+        string: {
+          input: '"test"',
+          output: 'test'
+        },
+        boolean: {
+          input: true,
+          output: true
+        },
+        number: {
+          input: 5,
+          output: 5
+        },
+        unary!: {
+          input: '!true',
+          output: false
+        },
+        eq: {
+          input: '5 == 5',
+          output: true
+        },
+        neq: {
+          input: '5 != 5',
+          output: false
+        },
+        gt: {
+          input: '5 > 5',
+          output: false
+        },
+        gte: {
+          input: '5 >= 5',
+          output: true
+        },
+        lt: {
+          input: '5 < 5',
+          output: false
+        },
+        lte: {
+          input: '5 <= 5',
+          output: true
+        },
+        add: {
+          input: '5 + 5',
+          output: 10
+        },
+        sub: {
+          input: '5 - 5',
+          output: 0
+        },
+        div: {
+          input: '5 / 5',
+          output: 1
+        },
+        mul: {
+          input: '5 * 5',
+          output: 25
+        },
+        and: {
+          input: 'true && false',
+          output: false
+        },
+        or: {
+          input: 'false || true',
+          output: true
+        }
+      }
+
+      for (const [program_name, { input, output }] of Object.entries(programs)) {
+        const program = `\${{ ${input} }}`
+        expect(parseString(program, {}), program_name).to.eq(output);
+      }
+    });
+
+    it('divide parameters', async () => {
+      const context = {
+        'parameters.left-2.num': 6,
+        'parameters.right': 3
+      }
+      const program = `\${{ parameters.left-2.num / parameters.right }}`;
+      expect(parseString(program, context)).to.eq(2);
+    });
+
+    it('divide parameter with slash', async () => {
+      const context = {
+        'parameters.test/slash': 6,
+      }
+      const program = `\${{ parameters.test/slash / 3 }}`;
+      expect(parseString(program, context)).to.eq(2);
+    });
   });
 
-  it('divide parameter with slash', async () => {
-    const context = {
-      'parameters.test/slash': 6,
-    }
-    const program = `\${{ parameters.test/slash / 3 }}`;
-    expect(parseString(program, context)).to.eq(2);
+  describe('functions', () => {
+    it('trim', async () => {
+      const context = {
+        'parameters.test': `  whitespace  `,
+      }
+
+      const base = `\${{ parameters.test }}`;
+      expect(parseString(base, context)).to.eq('  whitespace  ');
+
+      const program = `\${{ 'no-' + trim(parameters.test) }}`;
+      expect(parseString(program, context)).to.eq('no-whitespace');
+    });
   });
 
-  it('trim function', async () => {
-    const context = {
-      'parameters.test': `  whitespace  `,
-    }
-
-    const base = `\${{ parameters.test }}`;
-    expect(parseString(base, context)).to.eq('  whitespace  ');
-
-    const program = `\${{ 'no-' + trim(parameters.test) }}`;
-    expect(parseString(program, context)).to.eq('no-whitespace');
-  });
-
-  it('if statements', async () => {
-    const component_config = `
+  describe('statements', () => {
+    it('nested if statements', async () => {
+      const component_config = `
     name: examples/hello-world
     parameters:
       environment: local
@@ -50,33 +129,33 @@ describe('template', () => {
               NODE_ENV: development
     `
 
-    mock_fs({
-      '/stack/architect.yml': component_config,
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('examples/hello-world'),
+      ]);
+      const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      const node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(node.config.environment).to.deep.eq({
+        NODE_ENV: 'development'
+      });
+
+      const graph2 = await manager.getGraph([
+        await manager.loadComponentConfig('examples/hello-world'),
+      ], { '*': { environment: 'prod' } });
+      const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
+      expect(node2.config.environment).to.deep.eq({
+        NODE_ENV: 'production'
+      });
     });
 
-    const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
-    });
-    const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
-    ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
-    const node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(node.config.environment).to.deep.eq({
-      NODE_ENV: 'development'
-    });
-
-    const graph2 = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
-    ], { '*': { environment: 'prod' } });
-    const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
-    expect(node2.config.environment).to.deep.eq({
-      NODE_ENV: 'production'
-    });
-  });
-
-  it('if statements for host overrides', async () => {
-    const component_config = `
+    it('if statements for host overrides', async () => {
+      const component_config = `
     name: examples/hello-world
     parameters:
       environment: prod
@@ -98,21 +177,22 @@ describe('template', () => {
           DB_ADDR: \${{ services.api-db.interfaces.main.url }}
     `
 
-    mock_fs({
-      '/stack/architect.yml': component_config,
-    });
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
 
-    const manager = new LocalDependencyManager(axios.create(), {
-      'examples/hello-world': '/stack/architect.yml',
-    });
-    const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
-    ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
-    const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
-    expect(api_node.config.environment).to.deep.eq({
-      DB_HOST: 'db.aws.com',
-      DB_ADDR: 'postgres://db.aws.com:5432'
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentConfig('examples/hello-world'),
+      ]);
+      const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+      expect(api_node.config.environment).to.deep.eq({
+        DB_HOST: 'db.aws.com',
+        DB_ADDR: 'postgres://db.aws.com:5432'
+      });
     });
   });
 });
