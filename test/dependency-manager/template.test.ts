@@ -3,7 +3,7 @@ import axios from 'axios';
 import mock_fs from 'mock-fs';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
-import { parseString } from '../../src/dependency-manager/src/utils/parser';
+import { ArchitectParser } from '../../src/dependency-manager/src/utils/parser';
 
 describe('template', () => {
   describe('operations', () => {
@@ -75,9 +75,11 @@ describe('template', () => {
         }
       }
 
+      const parser = new ArchitectParser();
       for (const [program_name, { input, output }] of Object.entries(programs)) {
         const program = `\${{ ${input} }}`
-        expect(parseString(program, {}), program_name).to.eq(output);
+        expect(parser.parseString(program, {}), program_name).to.eq(output);
+        expect(parser.errors).to.have.lengthOf(0);
       }
     });
 
@@ -87,7 +89,9 @@ describe('template', () => {
         'parameters.right': 3
       }
       const program = `\${{ parameters.left-2.num / parameters.right }}`;
-      expect(parseString(program, context)).to.eq(2);
+      const parser = new ArchitectParser();
+      expect(parser.parseString(program, context)).to.eq(2);
+      expect(parser.errors).to.have.lengthOf(0);
     });
 
     it('divide parameter with slash', async () => {
@@ -95,7 +99,9 @@ describe('template', () => {
         'parameters.test/slash': 6,
       }
       const program = `\${{ parameters.test/slash / 3 }}`;
-      expect(parseString(program, context)).to.eq(2);
+      const parser = new ArchitectParser();
+      expect(parser.parseString(program, context)).to.eq(2);
+      expect(parser.errors).to.have.lengthOf(0);
     });
   });
 
@@ -106,10 +112,13 @@ describe('template', () => {
       }
 
       const base = `\${{ parameters.test }}`;
-      expect(parseString(base, context)).to.eq('  whitespace  ');
+      const parser = new ArchitectParser();
+      expect(parser.parseString(base, context)).to.eq('  whitespace  ');
+      expect(parser.errors).to.have.lengthOf(0);
 
       const program = `\${{ 'no-' + trim(parameters.test) }}`;
-      expect(parseString(program, context)).to.eq('no-whitespace');
+      expect(parser.parseString(program, context)).to.eq('no-whitespace');
+      expect(parser.errors).to.have.lengthOf(0);
     });
   });
 

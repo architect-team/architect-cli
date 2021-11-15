@@ -2,7 +2,7 @@ import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolati
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
-import { parseString } from './parser';
+import { ArchitectParser } from './parser';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
@@ -77,7 +77,14 @@ export interface InterpolateObjectOptions {
   ignore_keys?: string[]
 }
 
-function _interpolateObject(obj: any, context_map: any, options?: InterpolateObjectOptions) {
+export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
+  // Clone object
+  obj = JSON.parse(JSON.stringify(obj));
+
+  const context_map = buildContextMap(context);
+  const context_keys = Object.keys(context_map);
+
+  // Interpolate only keys first to flatten conditionals
   options = {
     keys: false,
     values: true,
@@ -85,88 +92,59 @@ function _interpolateObject(obj: any, context_map: any, options?: InterpolateObj
     ...options,
   };
 
-  let queue = [obj];
+  const parser = new ArchitectParser();
+
+  let errors: ValidationError[] = [];
+
+  let queue = [[obj, []]];
   while (queue.length) {
-    const el = queue.shift() as any;
+    const [el, path_keys] = queue.shift() as [any, string[]];
     if (el instanceof Object) {
       let has_conditional = false;
       const to_add = [];
       for (const [key, value] of Object.entries(el) as [string, any][]) {
+        // TODO:333
+        if (key === 'metadata') {
+          continue;
+        }
+        const current_path_keys = [...path_keys, key];
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
-          const parsed_key = parseString(key, context_map, options.ignore_keys);
+          const parsed_key = parser.parseString(key, context_map, options.ignore_keys);
           if (parsed_key === true) {
             has_conditional = true;
             for (const [key2, value2] of Object.entries(value)) {
               el[key2] = value2;
-
-              // TODO:333 remove
-              if (key2 === 'host') {
-                context_map['services.api-db.interfaces.main.host'] = value2;
-              }
             }
           }
+          for (const error of parser.errors) {
+            error.invalid_key = true;
+          }
         } else if (options.values && typeof value === 'string') {
-          const parsed_value = parseString(value, context_map, options.ignore_keys);
+          const parsed_value = parser.parseString(value, context_map, options.ignore_keys);
           el[key] = parsed_value;
         } else {
           el[key] = value;
           if (value instanceof Object) {
-            to_add.push(value);
+            to_add.push([value, current_path_keys]);
           }
         }
+        for (const error of parser.errors) {
+          const potential_match = findPotentialMatch(error.value, context_keys);
+          if (potential_match) {
+            error.message += ` - Did you mean \${{ ${potential_match} }}?`;
+          }
+          error.path = current_path_keys.join('.');
+        }
+        errors = errors.concat(parser.errors);
+        parser.errors = [];
       }
       if (has_conditional) {
-        queue.unshift(el);
+        queue.unshift([el, path_keys]);
       } else {
         queue = queue.concat(to_add);
       }
     }
-  }
-}
-
-export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
-  // Clone object
-  obj = JSON.parse(JSON.stringify(obj));
-  const context_map = buildContextMap(context);
-  const context_keys = Object.keys(context_map);
-
-  // TODO:333 make interpolateString -> interpolateObject
-  // TODO:333 remove source_yml
-
-  // TODO:333 misses
-  const misses = new Set<string>();
-
-  // Interpolate only keys first to flatten conditionals
-  _interpolateObject(obj, context_map, options);
-  _interpolateObject(obj, context_map, options);
-
-  const reverse_context_map: Dictionary<string> = {};
-  if (misses.size) {
-    const context_map = buildContextMap(obj);
-    for (const [k, v] of Object.entries(context_map)) {
-      if (typeof v === 'string') {
-        for (const match of matches(v, EXPRESSION_REGEX)) {
-          reverse_context_map[match[1]] = k;
-        }
-      }
-    }
-  }
-
-  const errors: ValidationError[] = [];
-  for (const miss of misses) {
-    const potential_match = findPotentialMatch(miss, context_keys);
-
-    let message = `Invalid interpolation ref: \${{ ${miss} }}`;
-    if (potential_match) {
-      message += ` - Did you mean \${{ ${potential_match} }}?`;
-    }
-    errors.push(new ValidationError({
-      component: context.name,
-      path: reverse_context_map[miss] || '<unknown>',
-      message,
-      value: miss,
-    }));
   }
 
   return { errors, interpolated_obj: obj };
@@ -175,7 +153,8 @@ export const interpolateObject = <T>(obj: T, context: any, options?: Interpolate
 export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
   const { interpolated_obj, errors } = interpolateObject(obj, context, options);
   if (errors.length) {
-    throw new ValidationErrors(errors);
+    // @ts-ignore TODO:333
+    throw new ValidationErrors(errors, obj.metadata?.file);
   }
   return interpolated_obj;
 };

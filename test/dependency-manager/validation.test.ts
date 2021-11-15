@@ -7,9 +7,6 @@ import LocalDependencyManager from '../../src/common/dependency-manager/local-ma
 import { buildSpecFromPath, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
-// TODO:333
-function interpolateConfigOrReject(x: any, y: any) { }
-
 describe('validate spec', () => {
 
   describe('component config validation', () => {
@@ -67,10 +64,14 @@ services:
           replicas: '1'
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -97,10 +98,14 @@ services:
         frontend: \${{ services.fake.interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -140,10 +145,14 @@ services:
           image: ellerbrock/alpine-bash-curl-ssl
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -193,10 +202,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -219,10 +232,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -232,7 +249,7 @@ services:
       expect(errors[0].path).eq(`services.stateless-app.depends_on`);
     });
 
-    it('invalid service reference', async () => {
+    it('invalid service depends_on reference', async () => {
       const component_config = `
       name: test/component
       services:
@@ -245,10 +262,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -276,10 +297,15 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -315,10 +341,14 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const component_spec = buildSpecFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentConfig('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -564,10 +594,11 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.api.url',
-        'interfaces.api2.url'
+        'interfaces.api',
+        'interfaces.api2'
       ])
       expect(errors[0].message).includes('services.api.interfaces.main.url')
+      expect(errors[1].message).includes('services.api.interfaces.main.url')
     });
 
     it('deploy time validation', async () => {

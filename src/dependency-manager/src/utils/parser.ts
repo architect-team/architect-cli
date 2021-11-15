@@ -5,7 +5,9 @@ import { LooseParser } from 'acorn-loose';
 import assert from 'assert';
 import estraverse from 'estraverse';
 import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
+import { ValidationError } from './errors';
 import { matches } from './interpolation';
+
 
 function isIdentifier(node: any): boolean {
   if (node.type === 'Identifier') {
@@ -39,9 +41,10 @@ function codePointToString(code: number) {
   return String.fromCharCode((code >> 10) + 0xD800, (code & 1023) + 0xDC00);
 }
 
-function getArchitectParser(Parser: any) {
+function getArchitectAcornParser(Parser: any) {
   return class extends Parser {
     // https://github.com/acornjs/acorn/blob/27f01d6dccfd193ee4d892140b5e5844a83f0073/acorn/src/tokenize.js#L776
+    // Override to support '-' or '/'
     readWord1() {
       this.containsEsc = false;
       let word = "", first = true, chunkStart = this.pos;
@@ -72,157 +75,175 @@ function getArchitectParser(Parser: any) {
   };
 }
 
-LooseParser.BaseParser = LooseParser.BaseParser.extend(getArchitectParser);
+LooseParser.BaseParser = LooseParser.BaseParser.extend(getArchitectAcornParser);
 
-export function parseExpression(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
-  const ast = LooseParser.parse(program, { ecmaVersion: 2020 });
+export class ArchitectParser {
+  errors: ValidationError[];
 
-  estraverse.replace(ast, {
-    enter: function (node: any, parent: any) {
-      if (node.type === 'EmptyStatement') {
-        return estraverse.VisitorOption.Remove;
-      }
+  constructor() {
+    this.errors = [];
+  }
 
-      if (isIdentifier(node)) {
-        // Function callee identifier
-        if (parent?.callee === node) {
-          return {
-            type: 'Literal',
-            value: node.name,
-          };
+  protected parseExpression(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
+    const ast = LooseParser.parse(program, { ecmaVersion: 2020 });
+
+    estraverse.replace(ast, {
+      enter: (node: any, parent: any) => {
+        if (node.type === 'EmptyStatement') {
+          return estraverse.VisitorOption.Remove;
         }
-        const context_key = parseIdentifier(node);
-        const value = context_map[context_key];
 
-        if (!(context_key in context_map)) {
-          const ignored = ignore_keys.some((k) => context_key.startsWith(k));
-          if (!ignored) {
-            // misses.add(interpolation_ref);
-            throw new Error(`${context_map.name ? `${context_map.name}\n` : ''}Invalid context key: ${context_key}`);
+        if (isIdentifier(node)) {
+          // Function callee identifier
+          if (parent?.callee === node) {
+            return {
+              type: 'Literal',
+              value: node.name,
+            };
           }
-        }
-        return {
-          type: 'Literal',
-          // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          value: parseString(value, context_map, ignore_keys, _depth + 1),
-        };
-      }
-    },
-    leave: function (node: any, parent: any) {
-      if (node.type === 'ExpressionStatement') {
-        return {
-          type: 'Literal',
-          value: node.expression.value,
-        };
-      }
-      if (node.type === 'UnaryExpression') {
-        let value: boolean | number;
-        if (node.operator === '!') {
-          value = !node.argument.value;
-        } else if (node.operator === '-') {
-          value = -node.argument.value;
-        } else {
-          throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
-        }
-        return {
-          type: 'Literal',
-          value: value,
-        };
-      } else if (node.type === 'ConditionalExpression') {
-        return {
-          type: 'Literal',
-          value: node.test.value ? node.consequent.value : node.alternate.value,
-        };
-      } else if (node.type === 'BinaryExpression') {
-        const left_value = node.left.value;
-        const right_value = node.right.value;
-        let value: boolean | number | string;
-        if (node.operator === '==') {
-          value = left_value === right_value;
-        } else if (node.operator === '!=') {
-          value = left_value !== right_value;
-        } else if (node.operator === '>') {
-          value = left_value > right_value;
-        } else if (node.operator === '>=') {
-          value = left_value >= right_value;
-        } else if (node.operator === '<') {
-          value = left_value < right_value;
-        } else if (node.operator === '<=') {
-          value = left_value <= right_value;
-        } else if (node.operator === '+') {
-          value = left_value + right_value;
-        } else if (node.operator === '-') {
-          value = left_value - right_value;
-        } else if (node.operator === '*') {
-          value = left_value * right_value;
-        } else if (node.operator === '/') {
-          value = left_value / right_value;
-        } else {
-          throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
-        }
-        return {
-          type: 'Literal',
-          value: value,
-        };
-      } else if (node.type === 'LogicalExpression') {
-        const left_value = node.left.value;
-        const right_value = node.right.value;
-        let value: boolean;
-        if (node.operator === '&&') {
-          value = left_value && right_value;
-        } else if (node.operator === '||') {
-          value = left_value || right_value;
-        } else {
-          throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
-        }
-        return {
-          type: 'Literal',
-          value: value,
-        };
-      } else if (node.type == 'CallExpression') {
-        let value;
-        if (node.callee.value === 'trim') {
-          value = node.arguments[0].value.trim();
-        } else {
-          throw new Error(`Unsupported node.callee.value: ${node.callee.value} node.type: ${node.type}`);
-        }
-        return {
-          type: 'Literal',
-          value: value,
-        };
-      } else if (node.type == 'IfStatement') {
-        if (node.test.type === 'Literal') {
+          const context_key = parseIdentifier(node);
+          const value = context_map[context_key];
+
+          if (!(context_key in context_map)) {
+            const ignored = ignore_keys.some((k) => context_key.startsWith(k));
+            if (!ignored) {
+              this.errors.push(new ValidationError({
+                component: context_map.name,
+                path: '<unknown>',
+                message: `Invalid interpolation ref: \${{ ${context_key} }}`,
+                value: context_key,
+              }));
+              return {
+                type: 'Literal',
+                value: `<error: ${context_key}>`,
+              };
+            }
+          }
           return {
             type: 'Literal',
-            value: !!node.test.value,
+            value: this.parseString(value, context_map, ignore_keys, _depth + 1),
           };
-        } else {
-          throw new Error(`Unsupported node.test.type: ${node.test.type}`);
         }
-      } else if (node.type !== 'Literal' && node.type !== 'Program') {
-        throw new Error(`Unsupported node.type: ${node.type}`);
-      }
-    },
-  });
+      },
+      leave: (node: any, parent: any) => {
+        if (node.type === 'ExpressionStatement') {
+          return {
+            type: 'Literal',
+            value: node.expression.value,
+          };
+        }
+        if (node.type === 'UnaryExpression') {
+          let value: boolean | number;
+          if (node.operator === '!') {
+            value = !node.argument.value;
+          } else if (node.operator === '-') {
+            value = -node.argument.value;
+          } else {
+            throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
+          }
+          return {
+            type: 'Literal',
+            value: value,
+          };
+        } else if (node.type === 'ConditionalExpression') {
+          return {
+            type: 'Literal',
+            value: node.test.value ? node.consequent.value : node.alternate.value,
+          };
+        } else if (node.type === 'BinaryExpression') {
+          const left_value = node.left.value;
+          const right_value = node.right.value;
+          let value: boolean | number | string;
+          if (node.operator === '==') {
+            value = left_value === right_value;
+          } else if (node.operator === '!=') {
+            value = left_value !== right_value;
+          } else if (node.operator === '>') {
+            value = left_value > right_value;
+          } else if (node.operator === '>=') {
+            value = left_value >= right_value;
+          } else if (node.operator === '<') {
+            value = left_value < right_value;
+          } else if (node.operator === '<=') {
+            value = left_value <= right_value;
+          } else if (node.operator === '+') {
+            value = left_value + right_value;
+          } else if (node.operator === '-') {
+            value = left_value - right_value;
+          } else if (node.operator === '*') {
+            value = left_value * right_value;
+          } else if (node.operator === '/') {
+            value = left_value / right_value;
+          } else {
+            throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
+          }
+          return {
+            type: 'Literal',
+            value: value,
+          };
+        } else if (node.type === 'LogicalExpression') {
+          const left_value = node.left.value;
+          const right_value = node.right.value;
+          let value: boolean;
+          if (node.operator === '&&') {
+            value = left_value && right_value;
+          } else if (node.operator === '||') {
+            value = left_value || right_value;
+          } else {
+            throw new Error(`Unsupported node.operator: ${node.operator} node.type: ${node.type}`);
+          }
+          return {
+            type: 'Literal',
+            value: value,
+          };
+        } else if (node.type == 'CallExpression') {
+          let value;
+          if (node.callee.value === 'trim') {
+            value = node.arguments[0].value.trim();
+          } else {
+            throw new Error(`Unsupported node.callee.value: ${node.callee.value} node.type: ${node.type}`);
+          }
+          return {
+            type: 'Literal',
+            value: value,
+          };
+        } else if (node.type == 'IfStatement') {
+          if (node.test.type === 'Literal') {
+            return {
+              type: 'Literal',
+              value: !!node.test.value,
+            };
+          } else {
+            throw new Error(`Unsupported node.test.type: ${node.test.type}`);
+          }
+        } else if (node.type !== 'Literal' && node.type !== 'Program') {
+          throw new Error(`Unsupported node.type: ${node.type}`);
+        }
+      },
+    });
 
-  return ast;
-}
-
-export function parseString(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
-  assert(_depth < 25);
-  let res = program;
-
-  let last_value;
-  for (const match of matches(program, EXPRESSION_REGEX)) {
-    const ast = parseExpression(match[1], context_map, ignore_keys, _depth);
-    res = res.replace(match[0], ast.body[0].value);
-    last_value = ast.body[0].value;
+    return ast;
   }
 
-  // Handle case where value a number or boolean. Ex ${{ parameters.replicas }} is a number
-  if (res === `${last_value}`) {
-    return last_value;
-  }
+  public parseString(program: string, context_map: any, ignore_keys: string[] = [], _depth = 0): any {
+    if (_depth === 0) {
+      this.errors = [];
+    }
+    assert(_depth < 25);
+    let res = program;
 
-  return res;
+    let last_value;
+    for (const match of matches(program, EXPRESSION_REGEX)) {
+      const ast = this.parseExpression(match[1], context_map, ignore_keys, _depth);
+      res = res.replace(match[0], ast.body[0].value);
+      last_value = ast.body[0].value;
+    }
+
+    // Handle case where value a number or boolean. Ex ${{ parameters.replicas }} is a number
+    if (res === `${last_value}`) {
+      return last_value;
+    }
+
+    return res;
+  }
 }

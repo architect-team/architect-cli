@@ -156,7 +156,8 @@ export default abstract class DependencyManager {
         if (!dep_component.interfaces[interface_name]) { continue; }
 
         const dep_context = context_map[dep_component.metadata.ref];
-        const subdomain = dep_context.ingresses![interface_name].subdomain!;
+        const subdomain = dep_context.ingresses[interface_name]?.subdomain;
+        if (!subdomain) { continue; }
 
         let ingress_edge = graph.edges.find(edge => edge.from === 'gateway' && edge.to === buildInterfacesRef(dep_component)) as IngressEdge;
         if (!ingress_edge) {
@@ -780,6 +781,20 @@ export default abstract class DependencyManager {
         const matches = url_regex.exec(interface_config.url);
         if (matches) {
           const interface_ref = matches[1];
+
+          const [services_text, service_name, interfaces_text, service_interface_name] = interface_ref.split('.');
+          if (services_text !== 'services') {
+            continue;
+          }
+          if (interfaces_text !== 'interfaces') {
+            continue;
+          }
+          if (!(service_name in context.services)) {
+            continue;
+          }
+          if (!(service_interface_name in context.services[service_name].interfaces)) {
+            continue;
+          }
           context.interfaces[interface_name] = {
             host: interface_config.host || `\${{ ${interface_ref}.host }}`,
             port: interface_config.port || `\${{ ${interface_ref}.port }}`,
