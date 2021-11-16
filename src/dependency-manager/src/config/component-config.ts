@@ -1,3 +1,4 @@
+import { ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
@@ -58,6 +59,8 @@ export interface ComponentInstanceMetadata {
 
   interfaces: Dictionary<string>;
 
+  proxy_port_mapping: Dictionary<number>;
+
   file?: {
     path: string;
     contents: string;
@@ -84,8 +87,6 @@ export interface ComponentConfig {
   interfaces: Dictionary<ComponentInterfaceConfig>;
 
   artifact_image?: string;
-
-  proxy_port_mapping?: any; // TODO:291: consider removing from ComponentConfig. this is a transient property that can be passed in the dependency-manager sidecar logic
 }
 
 export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {
@@ -128,8 +129,8 @@ export const buildNodeRef = (component_config: ComponentConfig, service_name: st
 
 
 // TODO:333 remove
-export function buildInterfacesRef(component_config: any): string {
-  const component_ref = component_config.metadata?.ref || buildComponentRef(component_config);
+export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
+  const component_ref = component_config.metadata.ref;
   return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id);
 }
 

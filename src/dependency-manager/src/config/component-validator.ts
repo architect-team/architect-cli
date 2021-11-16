@@ -1,12 +1,12 @@
+import { ComponentSpec } from '../spec/component-spec';
 import { ValidationError, ValidationErrors } from '../utils/errors';
-import { ComponentConfig } from './component-config';
 
-export const validateServiceAndTaskKeys = (component: ComponentConfig): ValidationError[] => {
+export const validateServiceAndTaskKeys = (component: ComponentSpec): ValidationError[] => {
   const errors = [];
 
   // checks for duplicate keys across the two dictionaries
-  const service_keys = Object.keys(component.services);
-  const task_keys = Object.keys(component.tasks);
+  const service_keys = Object.keys(component.services || {});
+  const task_keys = Object.keys(component.tasks || {});
   const duplicates = service_keys.filter(s => task_keys.includes(s));
 
   if (duplicates.length) {
@@ -47,17 +47,17 @@ export const isPartOfCircularReference = (search_name: string, depends_on_map: {
   return false;
 };
 
-export const validateDependsOn = (component: ComponentConfig): ValidationError[] => {
+export const validateDependsOn = (component: ComponentSpec): ValidationError[] => {
   const errors = [];
   const depends_on_map: { [name: string]: string[] } = {};
 
-  for (const [name, service] of Object.entries(component.services)) {
-    depends_on_map[name] = service.depends_on;
+  for (const [name, service] of Object.entries(component.services || {})) {
+    depends_on_map[name] = service.depends_on || [];
   }
 
   const task_map: { [name: string]: boolean } = {};
-  for (const [name, service] of Object.entries(component.tasks)) {
-    depends_on_map[name] = service.depends_on;
+  for (const [name, service] of Object.entries(component.tasks || {})) {
+    depends_on_map[name] = service.depends_on || [];
     task_map[name] = true;
   }
 
@@ -98,7 +98,7 @@ export const validateDependsOn = (component: ComponentConfig): ValidationError[]
   return errors;
 };
 
-export const validateConfig = (component: ComponentConfig): ValidationError[] => {
+export const validateConfig = (component: ComponentSpec): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   errors.push(...validateServiceAndTaskKeys(component));
@@ -107,7 +107,7 @@ export const validateConfig = (component: ComponentConfig): ValidationError[] =>
   return errors;
 };
 
-export const validateOrRejectConfig = (component: ComponentConfig): void => {
+export const validateOrRejectConfig = (component: ComponentSpec): void => {
   const errors = validateConfig(component);
 
   if (errors.length) {

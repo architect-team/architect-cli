@@ -4,6 +4,7 @@ import addFormats from "ajv-formats";
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import leven from 'leven';
+import { validateOrRejectConfig } from '../../config/component-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
@@ -213,6 +214,8 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
     tag: 'latest',
     instance_date: new Date(),
     interfaces: {},
+    proxy_port_mapping: {},
   };
+  validateOrRejectConfig(component_spec);
   return component_spec;
 };

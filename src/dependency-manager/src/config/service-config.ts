@@ -1,7 +1,7 @@
 import { Dictionary } from '../utils/dictionary';
+import { LivenessProbeConfig, VolumeConfig } from './common-config';
 import { ResourceConfig } from './resource-config';
 import { SidecarConfig } from './sidecar-config';
-import { LivenessProbeConfig, VolumeConfig } from './common-config';
 
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number
@@ -17,7 +17,7 @@ export interface ScalingConfig {
 export interface ServiceInterfaceConfig {
   description?: string;
   host?: null | string; // TODO:290:string
-  port?: number | string; // TODO:290:number
+  port: number | string; // TODO:290:number
   protocol?: string;
   username?: null | string; // TODO:290:string
   password?: null | string; // TODO:290:string

@@ -45,6 +45,7 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_id: component_ref,
       instance_date: new Date(),
       interfaces: interfaces || {},
+      proxy_port_mapping: {},
     };
     // Load locally linked component config
     if (component_slug in this.linked_components) {

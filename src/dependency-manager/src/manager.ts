@@ -748,6 +748,8 @@ export default abstract class DependencyManager {
       for (const [key, value] of Object.entries(component_config.outputs)) {
         context.outputs[key] = value.value;
       }
+
+      component_spec.metadata.proxy_port_mapping = {};
       for (const [service_name, service] of Object.entries(component_config.services)) {
         if (!context.services[service_name]) {
           context.services[service_name] = {
@@ -755,10 +757,18 @@ export default abstract class DependencyManager {
             environment: {},
           };
         }
+        const service_ref = buildNodeRef(component_config, service_name);
         for (const [interface_name, value] of Object.entries(service.interfaces)) {
           const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
+          const sidecar_service = `${service_ref}--${interface_name}`;
+          component_spec.metadata.proxy_port_mapping[sidecar_service];
+          if (!component_spec.metadata.proxy_port_mapping[sidecar_service]) {
+            component_spec.metadata.proxy_port_mapping[sidecar_service] = Math.max(12344, ...Object.values(component_spec.metadata.proxy_port_mapping)) + 1;
+          }
+
           const architect_host = this.use_sidecar ? '127.0.0.1' : buildNodeRef(component_config, service_name);
+          const architect_port = this.use_sidecar ? component_spec.metadata.proxy_port_mapping[sidecar_service] : value.port;
           context.services[service_name].interfaces[interface_name] = {
             protocol: 'http',
             username: '',
@@ -766,6 +776,7 @@ export default abstract class DependencyManager {
             ...value,
             // @ts-ignore TODO:333
             external_host: value.host,
+            port: `\${{ ${interface_ref}.external_host ? ${value.port} : ${architect_port} }}`,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
             url: this.generateUrl(interface_ref),
           };
@@ -874,12 +885,25 @@ export default abstract class DependencyManager {
           outputs: dependency_context.outputs || {},
         };
 
+
+        for (const [dependency_interface_name, dependency_interface] of Object.entries(context.dependencies[dependency_spec.name].interfaces)) {
+          const sidecar_service = `${buildInterfacesRef(dependency_spec)}--${dependency_interface_name}`;
+          component_spec.metadata.proxy_port_mapping[sidecar_service];
+          if (!component_spec.metadata.proxy_port_mapping[sidecar_service]) {
+            component_spec.metadata.proxy_port_mapping[sidecar_service] = Math.max(12344, ...Object.values(component_spec.metadata.proxy_port_mapping)) + 1;
+          }
+          if (this.use_sidecar && dependency_interface.host === '127.0.0.1') {
+            dependency_interface.port = component_spec.metadata.proxy_port_mapping[sidecar_service];
+            dependency_interface.url = `${dependency_interface.url.split('127.0.0.1')[0]}127.0.0.1:${dependency_interface.port}`;
+          }
+        }
+
         // Deprecated: environment.ingresses
-        if (!context.environment!.ingresses[dependency_spec.name]) {
-          context.environment!.ingresses[dependency_spec.name] = {};
+        if (!context.environment.ingresses[dependency_spec.name]) {
+          context.environment.ingresses[dependency_spec.name] = {};
         }
         for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dependency_spec.name].ingresses)) {
-          context.environment!.ingresses[dependency_spec.name][dep_ingress_name] = dep_ingress;
+          context.environment.ingresses[dependency_spec.name][dep_ingress_name] = dep_ingress;
         }
       }
 
@@ -898,9 +922,8 @@ export default abstract class DependencyManager {
               consumers.push(consumer_interface[consumer_interface_to].url);
             }
           }
-          context.ingresses![interface_name].consumers = consumers.sort();
+          context.ingresses[interface_name].consumers = consumers.sort();
         }
-
       }
 
       component_spec = interpolateObjectOrReject(component_spec, context, { keys: false, values: true });
@@ -928,7 +951,7 @@ export default abstract class DependencyManager {
       for (const resource_config of Object.values({ ...component_config.services, ...component_config.tasks })) {
         const resource_ref = buildNodeRef(component_config, resource_config.name);
         const node = graph.getNodeByRef(resource_ref) as ServiceNode | TaskNode;
-        node.proxy_port_mapping = component_config.proxy_port_mapping;
+        node.proxy_port_mapping = component_config.metadata.proxy_port_mapping;
         node.config = resource_config;
       }
     }

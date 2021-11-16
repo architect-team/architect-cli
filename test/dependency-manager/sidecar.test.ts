@@ -568,7 +568,7 @@ describe('sidecar spec v1', () => {
       }
     }
 
-    expect(ports).to.deep.equal(['12345'])
+    expect(ports).to.deep.equal([12345])
   });
 
   it('sidecar should support HTTP basic auth', async () => {

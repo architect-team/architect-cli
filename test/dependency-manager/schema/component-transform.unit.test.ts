@@ -21,7 +21,8 @@ describe('component transform unit test', function () {
       instance_name: 'instance-1',
       instance_id: 'test-instance-id',
       instance_date: new Date(),
-      interfaces: {}
+      interfaces: {},
+      proxy_port_mapping: {}
     }
     const spec = buildSpecFromYml(source_yml);
     spec.metadata = metadata;
