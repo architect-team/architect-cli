@@ -114,7 +114,7 @@ export default abstract class DependencyManager {
       const from = buildNodeRef(component, resource_name);
       const from_node = graph.getNodeByRef(from);
 
-      const service_string = serialize(resource_config);
+      const service_string = replaceInterpolationBrackets(serialize(resource_config));
       let matches;
 
       // Start Ingress Edges

@@ -492,9 +492,9 @@ describe('sidecar spec v1', () => {
     ])
     const dashboard_node = graph.getNodeByRef(admin_ref) as ServiceNode;
     expect(dashboard_node.config.environment).to.deep.eq({
-      ADMIN_ADDR: `http://127.0.0.1:12346`,
-      API_ADDR: `http://127.0.0.1:12345`,
-      PRIVATE_ADDR: `http://127.0.0.1:12347`,
+      ADMIN_ADDR: `http://127.0.0.1:12347`,
+      API_ADDR: `http://127.0.0.1:12346`,
+      PRIVATE_ADDR: `http://127.0.0.1:12348`,
       EXTERNAL_API_ADDR: 'http://public2.arc.localhost',
       EXTERNAL_API_ADDR2: 'http://public2.arc.localhost',
     });
@@ -568,7 +568,7 @@ describe('sidecar spec v1', () => {
       }
     }
 
-    expect(ports).to.deep.equal([12345])
+    expect(ports).to.deep.equal([12346])
   });
 
   it('sidecar should support HTTP basic auth', async () => {
