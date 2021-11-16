@@ -105,6 +105,7 @@ export class ArchitectParser {
           const value = context_map[context_key];
 
           if (!(context_key in context_map)) {
+            // TODO:333 instead of ignore_keys - opt-in
             const ignored = ignore_keys.some((k) => context_key.startsWith(k));
             if (!ignored) {
               this.errors.push(new ValidationError({

@@ -383,8 +383,7 @@ export default class Deploy extends DeployCommand {
       flags.production
     );
 
-    // TODO:333 rename
-    const component_configs: ComponentSpec[] = [];
+    const component_specs: ComponentSpec[] = [];
 
     // Check if multiple instances of the same component are being deployed. This check is needed
     // so that we can disable automatic interface mapping since we can't map a single interface to
@@ -400,12 +399,12 @@ export default class Deploy extends DeployCommand {
 
       if (flags.recursive) {
         const dependency_configs = await dependency_manager.loadComponentSpecs(component_config);
-        component_configs.push(...dependency_configs);
+        component_specs.push(...dependency_configs);
       } else {
-        component_configs.push(component_config);
+        component_specs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_configs, component_secrets);
+    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }

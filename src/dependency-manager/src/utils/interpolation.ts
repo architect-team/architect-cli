@@ -1,3 +1,4 @@
+import deepmerge from 'deepmerge';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
@@ -79,7 +80,7 @@ export interface InterpolateObjectOptions {
 
 export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
   // Clone object
-  obj = JSON.parse(JSON.stringify(obj));
+  obj = deepmerge(obj, {}) as T;
 
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
@@ -156,5 +157,10 @@ export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: Int
     // @ts-ignore TODO:333
     throw new ValidationErrors(errors, obj.metadata?.file);
   }
+  return interpolated_obj;
+};
+
+export const interpolateObjectLoose = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
+  const { interpolated_obj } = interpolateObject(obj, context, options);
   return interpolated_obj;
 };

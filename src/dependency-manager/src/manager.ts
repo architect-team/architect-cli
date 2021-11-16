@@ -17,7 +17,7 @@ import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
-import { interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
+import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 import { ValuesConfig } from './values/values';
 
 interface ComponentConfigNode {
@@ -54,50 +54,6 @@ export default abstract class DependencyManager {
       nodes.push(node);
     }
     return nodes;
-  }
-
-  interpolateInterfaces(initial_component: ComponentConfig): ComponentConfig {
-    return initial_component;
-    /* TODO:333
-    // Interpolate component to fully resolve edges between dependencies/ingress/services
-    // Important for host overrides where values might comes from parameters
-    const source_yml = replaceInterpolationBrackets(initial_component.source_yml);
-    const context: ComponentContext = JSON.parse(JSON.stringify(initial_component.context));
-
-    const interpolation_regex = new RegExp(`\\\${{\\s*(.*?)\\s*}}`, 'g');
-    let matches;
-
-    while ((matches = interpolation_regex.exec(source_yml)) != null) {
-      const [_, match] = matches;
-      const names = match.split('.');
-
-      if (!(match.includes('ingresses.') || match.includes('interfaces.') || match.includes('outputs.'))) {
-        continue;
-      }
-
-      // without partially interpolating we don't know to draw an edge between the api/worker
-      let iterations = names.length;
-      let c = context;
-      for (const name of names) {
-        if (!--iterations) {
-          c[name] = `__arc__{{ ${match} }}`;
-        } else {
-          if (!c[name]) { c[name] = {}; }
-          c = c[name];
-        }
-      }
-    }
-
-    const ignore_keys = ['']; // Ignore all errors
-
-    const x = interpolateObjectOrReject(initial_component, context, ignore_keys);
-    const y = classToPlain(x).replace(/__arc__{{/g, '${{');
-
-
-    // TODO:333 const interpolated_component_config = transformComponentSpec(parsed_yml as ComponentSpec, interpolated_component_string, initial_component.tag, initial_component.metadata);
-    // @ts-ignore
-    return plainToClass(ComponentConfig, y);
-    */
   }
 
   addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>, external_addr: string): void {
@@ -149,8 +105,6 @@ export default abstract class DependencyManager {
         }
       }
 
-      // TODO:333 const context = context_map[component.metadata.ref];
-
       for (const [dep_component, interface_name] of ingresses) {
         if (!dep_component) { continue; }
         if (!dep_component.interfaces[interface_name]) { continue; }
@@ -181,12 +135,6 @@ export default abstract class DependencyManager {
         ingress_edge.consumers_map[interface_name].add(from);
       }
       // End Ingress Edges
-
-      if (from_node.is_external) {
-        continue;
-      }
-
-      // TODO:ingresses only run regex once
 
       // Add edges between services inside the component and dependencies
       const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
@@ -294,32 +242,6 @@ export default abstract class DependencyManager {
     }
   }
 
-  /* TODO:333
-  setValuesForComponent(component: ComponentConfig, all_values: Dictionary<Dictionary<string | null>>): void {
-    // pre-sort values dictionary to properly stack/override any colliding keys
-    const sorted_values_keys = Object.keys(all_values).sort();
-    const sorted_values_dict: Dictionary<Dictionary<string | null>> = {};
-    for (const key of sorted_values_keys) {
-      sorted_values_dict[key] = all_values[key];
-    }
-
-    const component_ref = buildComponentRef(component);
-    const component_parameters = component.parameters;
-    // add values from values file to all existing, matching components
-    for (const [pattern, params] of Object.entries(sorted_values_dict)) {
-      const component_has_tag = component_ref.includes(':');
-      if (isMatch(component_has_tag ? component_ref : `${component_ref}:latest`, [pattern])) {
-        for (const [param_key, param_value] of Object.entries(params)) {
-          if (component_parameters[param_key]) {
-            component_parameters[param_key].default = param_value;
-            component.parameters[param_key] = component_parameters[param_key];
-          }
-        }
-      }
-    }
-  }
-  */
-
   getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | null>>): Dictionary<ParameterValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
@@ -410,7 +332,7 @@ export default abstract class DependencyManager {
     const validation_errors = [];
     // Check required parameters for components
     for (const [pk, pv] of Object.entries(component.parameters)) {
-      if (pv.required !== false && (pv.default === undefined) && !(pk in parameters)) {
+      if (pv.required !== false && parameters[pk] === undefined) {
         const validation_error = new ValidationError({
           component: component.name,
           path: `parameters.${pk}`,
@@ -447,8 +369,34 @@ export default abstract class DependencyManager {
     }
   }
 
+  detectCircularDependencies(component_specs: ComponentSpec[]): void {
+    const component_specs_map: Dictionary<ComponentSpec> = {};
+    for (const component_spec of component_specs) {
+      component_specs_map[component_spec.metadata.ref] = component_spec;
+    }
+    const component_specs_queue = component_specs.map(component_spec => ({ component_spec, seen_refs: [component_spec.metadata.ref] }));
+    while (component_specs_queue.length) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const { component_spec, seen_refs } = component_specs_queue.pop()!;
+      for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
+        const dep_ref = `${dep_name}:${dep_tag}`;
+        if (seen_refs.includes(dep_ref)) {
+          throw new ArchitectError(`Circular component dependency detected (${seen_refs.join(' <> ')})`);
+        }
+        if (component_specs_map[dep_ref]) {
+          component_specs_queue.push({ component_spec: component_specs_map[dep_ref], seen_refs: [...seen_refs, dep_ref] });
+        }
+      }
+    }
+  }
+
   async getGraph(component_specs: ComponentSpec[], all_secrets: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
-    ValuesConfig.validate(all_secrets);
+    if (validate) {
+      this.detectCircularDependencies(component_specs);
+      ValuesConfig.validate(all_secrets);
+    }
+
+    const interpolateObject = validate ? interpolateObjectOrReject : interpolateObjectLoose;
 
     const graph = new DependencyGraph();
 
@@ -481,15 +429,17 @@ export default abstract class DependencyManager {
         ...secrets,
       };
 
-      // Interpolate parameters
-      context = interpolateObjectOrReject(context, context, { keys: false, values: true });
+      if (interpolate) {
+        // Interpolate parameters
+        context = interpolateObject(context, context, { keys: false, values: true });
 
-      // Replace conditionals
-      component_spec = interpolateObjectOrReject(component_spec, context, { keys: true, values: false });
+        // Replace conditionals
+        component_spec = interpolateObject(component_spec, context, { keys: true, values: false });
+      }
 
       const component_config = transformComponentSpec(component_spec);
 
-      if (validate) {
+      if (interpolate && validate) {
         this.validateRequiredParameters(component_config, context.parameters || {});
       }
 
@@ -607,8 +557,10 @@ export default abstract class DependencyManager {
         }
       }
 
-      // Interpolate interfaces/ingresses/services
-      context = interpolateObjectOrReject(context, context, { keys: false, values: true });
+      if (interpolate) {
+        // Interpolate interfaces/ingresses/services
+        context = interpolateObject(context, context, { keys: false, values: true });
+      }
 
       context_map[component_spec.metadata.ref] = context;
       evaluated_component_specs.push(component_spec);
@@ -696,7 +648,9 @@ export default abstract class DependencyManager {
         }
       }
 
-      component_spec = interpolateObjectOrReject(component_spec, context, { keys: false, values: true });
+      if (interpolate) {
+        component_spec = interpolateObject(component_spec, context, { keys: false, values: true });
+      }
 
       if (validate) {
         const component_spec_copy = JSON.parse(JSON.stringify(component_spec));

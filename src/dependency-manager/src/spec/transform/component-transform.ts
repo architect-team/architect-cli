@@ -72,6 +72,7 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
     if (!interfaces[interface_to].ingress) {
       interfaces[interface_to].ingress = {};
     }
+    // TODO:333 lint
     interfaces[interface_to].ingress!.enabled = true;
     interfaces[interface_to].ingress!.subdomain = interface_from;
   }
