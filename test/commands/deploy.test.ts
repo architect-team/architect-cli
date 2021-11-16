@@ -413,7 +413,9 @@ describe('local deploy environment', function () {
   test
     .timeout(20000)
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(yaml.dump(local_database_seeding_component_config))
+      const spec = buildSpecFromYml(yaml.dump(local_database_seeding_component_config));
+      spec.metadata.file = { path: './examples/database-seeding/architect.yml', contents: '' }
+      return spec;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Deploy.prototype, 'runCompose', sinon.stub().returns(undefined))

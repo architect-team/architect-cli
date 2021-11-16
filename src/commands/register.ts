@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import { cli } from 'cli-ux';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
@@ -131,9 +132,15 @@ export default class ComponentRegister extends Command {
       task_config.image = image;
     }
 
+    if (new_spec.services) {
+      for (const service_name of Object.keys(new_spec.services)) {
+        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
+      }
+    }
+
     const component_dto = {
       tag: tag,
-      config: new_spec,
+      config: classToPlain(new_spec),
     };
 
     let previous_config_data;
@@ -144,12 +151,8 @@ export default class ComponentRegister extends Command {
 
     this.log(chalk.blue(`Begin component config diff`));
     const previous_source_yml = dumpToYml(previous_config_data);
-    if (new_spec.services) {
-      for (const service_name of Object.keys(new_spec.services)) {
-        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
-      }
-    }
-    const new_source_yml = dumpToYml(new_spec);
+
+    const new_source_yml = dumpToYml(component_dto.config);
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');

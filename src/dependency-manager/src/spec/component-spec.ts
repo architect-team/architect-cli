@@ -1,4 +1,5 @@
 
+import { Exclude } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { ComponentInstanceMetadata } from '../config/component-config';
@@ -160,6 +161,7 @@ export class OutputDefinitionSpec {
   description: 'The top level object of the `architect.yml`; defines a deployable Architect Component.',
 })
 export class ComponentSpec {
+  @Exclude()
   metadata!: ComponentInstanceMetadata;
 
   @IsString()

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import fs from 'fs-extra';
+import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import * as Docker from '../../src/common/utils/docker';
@@ -84,7 +85,11 @@ describe('register', function () {
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => body)
-      .reply(200, {})
+      .reply(200, (uri, body: any, cb) => {
+        const contents = yaml.load(fs.readFileSync('examples/hello-world/architect.yml').toString());
+        expect(body.config).to.deep.equal(contents);
+        cb(null, body)
+      })
     )
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples/components/hello-world/versions/1.0.0`)

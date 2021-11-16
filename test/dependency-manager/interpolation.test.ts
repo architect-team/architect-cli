@@ -86,20 +86,15 @@ describe('interpolation spec v1', () => {
     }
     const worker_component_config = {
       name: 'concourse/worker',
-      parameters: {
-        regular: '${{ dependencies.concourse/web.interfaces.main.host }}:2222',
-        single_quote: "${{ dependencies['concourse/web'].interfaces.main.host }}:2222",
-        double_quote: '${{ dependencies["concourse/web"].interfaces.main.host }}:2222'
-      },
       dependencies: {
         'concourse/web': 'latest'
       },
       services: {
         worker: {
           environment: {
-            REGULAR: '${{ parameters.regular }}',
-            SINGLE_QUOTE: '${{ parameters.single_quote }}',
-            DOUBLE_QUOTE: '${{ parameters.double_quote }}',
+            REGULAR: '${{ dependencies.concourse/web.interfaces.main.host }}:2222',
+            SINGLE_QUOTE: '${{ dependencies[\'concourse/web\'].interfaces.main.host }}:2222',
+            DOUBLE_QUOTE: '${{ dependencies["concourse/web"].interfaces.main.host }}:2222',
           }
         }
       },
@@ -317,7 +312,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/frontend')
-    ]);
+    ], {}, true, false);
 
     const frontend_ref = resourceRefToNodeRef('examples/frontend/app:latest');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
