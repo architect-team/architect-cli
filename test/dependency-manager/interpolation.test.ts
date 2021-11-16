@@ -422,8 +422,8 @@ describe('interpolation spec v1', () => {
     const template = await DockerComposeUtils.generate(graph);
     const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
     expect(template.services[backend_ref].environment).to.deep.eq({
-      CORS: JSON.stringify([`http://arc.localhost`, 'http://frontend.arc.localhost', 'https://app.architect.io']),
-      CORS2: JSON.stringify(['http://frontend.arc.localhost'])
+      CORS: JSON.stringify([`http://arc.localhost`, 'http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost', 'https://app.architect.io']),
+      CORS2: JSON.stringify(['http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost'])
     })
     expect(template.services[backend_ref].labels).includes(
       `traefik.http.routers.${backend_ref}-main.rule=Host(\`main.arc.localhost\`)`,
@@ -1109,13 +1109,13 @@ describe('interpolation spec v1', () => {
     const node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       ADDR: 'http://test-subdomain.arc.localhost',
-      CORS_URLS: '["http://api.arc.localhost"]',
+      CORS_URLS: '["http://api.arc.localhost","http://test-subdomain.arc.localhost"]',
       DNS_ZONE: 'arc.localhost'
     });
 
     const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency:latest')) as IngressEdge
     expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
-    expect(ingress_edge.consumers_map).keys('test-subdomain')
+    expect(ingress_edge.consumers_map).keys('app')
   });
 
   it('interpolate parameter for replicas', async () => {
