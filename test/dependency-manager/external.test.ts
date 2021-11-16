@@ -38,7 +38,7 @@ describe('external spec v1', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
@@ -93,7 +93,7 @@ describe('external spec v1', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
@@ -141,7 +141,7 @@ describe('external spec v1', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
       // @ts-ignore
     ], { '*': { optional_host: 'cloud.architect.io', optional_port: 8081 } });
 
@@ -199,7 +199,7 @@ describe('external spec v1', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
     const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
@@ -289,8 +289,8 @@ describe('external spec v1', () => {
       'architect/dependency': '/stack/dependency/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/component:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/component/app:latest')
@@ -335,7 +335,7 @@ describe('external spec v1', () => {
       'architect/component': '/stack/component/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest')
+      await manager.loadComponentSpec('architect/component:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/component/app:latest')
@@ -385,7 +385,7 @@ describe('external spec v1', () => {
 
     // No host override
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest')
+      await manager.loadComponentSpec('architect/component:latest')
     ], { '*': { MYSQL_DATABASE: 'test' } });
     const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -395,7 +395,7 @@ describe('external spec v1', () => {
 
     // Host override
     const graph2 = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest')
+      await manager.loadComponentSpec('architect/component:latest')
     ], { '*': { MYSQL_HOST: 'external', MYSQL_DATABASE: 'test' } });
     const test_node2 = graph2.getNodeByRef(core_ref) as ServiceNode;
     expect(test_node2.config.environment).to.deep.eq({

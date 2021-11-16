@@ -26,7 +26,7 @@ export default class LocalDependencyManager extends DependencyManager {
     this.production = production;
   }
 
-  async loadComponentConfig(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentSpec> {
+  async loadComponentSpec(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentSpec> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -99,7 +99,7 @@ export default class LocalDependencyManager extends DependencyManager {
     return spec;
   }
 
-  async loadComponentConfigs(initial_component: ComponentSpec): Promise<ComponentSpec[]> {
+  async loadComponentSpecs(initial_component: ComponentSpec): Promise<ComponentSpec[]> {
     const component_configs = [];
     const component_configs_queue = [initial_component];
     const loaded_components = new Set();
@@ -114,7 +114,7 @@ export default class LocalDependencyManager extends DependencyManager {
       component_configs.push(component_config);
 
       for (const [dep_name, dep_tag] of Object.entries(component_config.dependencies || {})) {
-        const dep_component_config = await this.loadComponentConfig(`${dep_name}:${dep_tag}`);
+        const dep_component_config = await this.loadComponentSpec(`${dep_name}:${dep_tag}`);
         component_configs_queue.push(dep_component_config);
       }
     }

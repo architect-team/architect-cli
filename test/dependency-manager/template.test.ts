@@ -146,7 +146,7 @@ describe('template', () => {
         'examples/hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('examples/hello-world'),
+        await manager.loadComponentSpec('examples/hello-world'),
       ]);
       const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -155,7 +155,7 @@ describe('template', () => {
       });
 
       const graph2 = await manager.getGraph([
-        await manager.loadComponentConfig('examples/hello-world'),
+        await manager.loadComponentSpec('examples/hello-world'),
       ], { '*': { environment: 'prod' } });
       const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
       expect(node2.config.environment).to.deep.eq({
@@ -194,7 +194,7 @@ describe('template', () => {
         'examples/hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('examples/hello-world'),
+        await manager.loadComponentSpec('examples/hello-world'),
       ]);
       const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;

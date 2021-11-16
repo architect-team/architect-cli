@@ -768,15 +768,17 @@ export default abstract class DependencyManager {
           }
 
           const architect_host = this.use_sidecar ? '127.0.0.1' : buildNodeRef(component_config, service_name);
-          const architect_port = this.use_sidecar ? component_spec.metadata.proxy_port_mapping[sidecar_service] : value.port;
+          const architect_port = this.use_sidecar ? component_spec.metadata.proxy_port_mapping[sidecar_service] : `${interface_ref}.external_port`;
           context.services[service_name].interfaces[interface_name] = {
             protocol: 'http',
             username: '',
             password: '',
             ...value,
-            // @ts-ignore TODO:333
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            external_port: value.port,
             external_host: value.host,
-            port: `\${{ ${interface_ref}.external_host ? ${value.port} : ${architect_port} }}`,
+            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_port : ${architect_port} }}`,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
             url: this.generateUrl(interface_ref),
           };

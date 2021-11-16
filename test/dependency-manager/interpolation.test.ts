@@ -63,7 +63,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ], { '*': { null_required: null } });
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -116,8 +116,8 @@ describe('interpolation spec v1', () => {
       'concourse/worker': '/stack/worker.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('concourse/web'),
-      await manager.loadComponentConfig('concourse/worker')
+      await manager.loadComponentSpec('concourse/web'),
+      await manager.loadComponentSpec('concourse/worker')
     ]);
 
     const web_interfaces_ref = resourceRefToNodeRef('concourse/web:latest');
@@ -179,8 +179,8 @@ describe('interpolation spec v1', () => {
       'concourse/worker': '/stack/worker.json'
     });
     const public_graph = await public_manager.getGraph([
-      await manager.loadComponentConfig('concourse/web', { public: 'main' }),
-      await manager.loadComponentConfig('concourse/worker')
+      await manager.loadComponentSpec('concourse/web', { public: 'main' }),
+      await manager.loadComponentSpec('concourse/worker')
     ]);
 
     expect(public_graph.nodes.map((n) => n.ref)).has.members([
@@ -267,8 +267,8 @@ describe('interpolation spec v1', () => {
       'examples/frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/backend'),
-      await manager.loadComponentConfig('examples/frontend')
+      await manager.loadComponentSpec('examples/backend'),
+      await manager.loadComponentSpec('examples/frontend')
     ]);
 
     const backend_ref = resourceRefToNodeRef('examples/backend/api:latest');
@@ -316,7 +316,7 @@ describe('interpolation spec v1', () => {
       'examples/frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/frontend')
+      await manager.loadComponentSpec('examples/frontend')
     ]);
 
     const frontend_ref = resourceRefToNodeRef('examples/frontend/app:latest');
@@ -413,10 +413,10 @@ describe('interpolation spec v1', () => {
     });
 
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/backend'),
-      await manager.loadComponentConfig('examples/frontend', { frontend: 'main' }),
-      await manager.loadComponentConfig('examples/frontend2'),
-      await manager.loadComponentConfig('examples/frontend3')
+      await manager.loadComponentSpec('examples/backend'),
+      await manager.loadComponentSpec('examples/frontend', { frontend: 'main' }),
+      await manager.loadComponentSpec('examples/frontend2'),
+      await manager.loadComponentSpec('examples/frontend3')
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
@@ -478,8 +478,8 @@ describe('interpolation spec v1', () => {
       'examples/frontend': '/frontend/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/backend', { backend: 'main', backend2: 'main2' }),
-      await manager.loadComponentConfig('examples/frontend')
+      await manager.loadComponentSpec('examples/backend', { backend: 'main', backend2: 'main2' }),
+      await manager.loadComponentSpec('examples/frontend')
     ]);
     const backend_external_url = 'http://backend.arc.localhost'
     const backend2_external_url = 'http://backend2.arc.localhost'
@@ -537,7 +537,7 @@ describe('interpolation spec v1', () => {
   //     'test/component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('test/component'),
+  //     await manager.loadComponentSpec('test/component'),
   //   ]);
   //   const web_ref = resourceRefToNodeRef('test/component/web:latest');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
@@ -576,7 +576,7 @@ describe('interpolation spec v1', () => {
   //     'test/component': '/stack/web/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('test/component'),
+  //     await manager.loadComponentSpec('test/component'),
   //   ]);
   //   const web_ref = resourceRefToNodeRef('test/component/web:latest');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
@@ -611,7 +611,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -646,7 +646,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -681,7 +681,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -718,7 +718,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -754,7 +754,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -790,7 +790,7 @@ describe('interpolation spec v1', () => {
   //     'test/component': '/stack/web.json',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('test/component'),
+  //     await manager.loadComponentSpec('test/component'),
   //   ]);
   //   const web_ref = resourceRefToNodeRef('test/component/web:latest');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
@@ -825,7 +825,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/arc/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -862,7 +862,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -892,7 +892,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ], { '*': { secret: '[abc' } });
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -926,7 +926,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ]);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -961,7 +961,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -1001,7 +1001,7 @@ describe('interpolation spec v1', () => {
   //     'examples/hello-world': '/stack/architect.yml',
   //   });
   //   const graph = await manager.getGraph([
-  //     await manager.loadComponentConfig('examples/hello-world'),
+  //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
   //   const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -1042,7 +1042,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ], {
       '*': { aws_secret: 'test' },
       'examples/hello-world*': { other_secret: 'shown' }
@@ -1102,7 +1102,7 @@ describe('interpolation spec v1', () => {
       'examples/dependency': '/stack2/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')), {
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/hello-world')), {
       '*': { test_subdomain: 'test-subdomain' },
     });
     const app_ref = resourceRefToNodeRef('examples/dependency/app:latest');
@@ -1136,7 +1136,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')), {
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/hello-world')), {
       // TODO:269 allow for number types in values.yml?
       // @ts-ignore
       '*': { replicas: 1 },
@@ -1167,7 +1167,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/hello-world')));
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(3);
@@ -1193,7 +1193,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/hello-world')));
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
@@ -1229,7 +1229,7 @@ describe('interpolation spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/hello-world')));
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/hello-world')));
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
@@ -1271,9 +1271,9 @@ describe('interpolation spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentConfig('examples/hello-world');
+    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(config));
+      await manager.loadComponentSpecs(config));
     /* TODO:333
     const interfaces_ref = buildInterfacesRef(config);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
@@ -1318,9 +1318,9 @@ describe('interpolation spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentConfig('examples/hello-world');
+    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(config),
+      await manager.loadComponentSpecs(config),
       // @ts-ignore
       { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
     );
@@ -1382,7 +1382,7 @@ describe('interpolation spec v1', () => {
       'examples/consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer')));
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/consumer')));
     const api_ref = resourceRefToNodeRef('examples/consumer/api:latest');
     // Check the interpolated values on the service node resolved correctly
     const service_node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -1393,7 +1393,7 @@ describe('interpolation spec v1', () => {
       TOPIC4: 'test'
     });
     // Check the component interface node has the outputs set on its config
-    const config = await manager.loadComponentConfig('examples/publisher');
+    const config = await manager.loadComponentSpec('examples/publisher');
     /* TODO:333
     const interfaces_ref = buildInterfacesRef(config);
     const interface_node = graph.getNodeByRef(interfaces_ref) as ComponentNode;
@@ -1433,7 +1433,7 @@ describe('interpolation spec v1', () => {
       'examples/consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/consumer'))
     );
     expect(graph.edges).to.deep.eq([
       {
@@ -1486,7 +1486,7 @@ describe('interpolation spec v1', () => {
       'examples/consumer': '/stack/consumer/architect.yml',
     });
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(await manager.loadComponentConfig('examples/consumer'))
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/consumer'))
     );
     const publisher_component_ref = resourceRefToNodeRef('examples/publisher:latest');
     const publisher_api_ref = resourceRefToNodeRef('examples/publisher/publisher-api:latest');

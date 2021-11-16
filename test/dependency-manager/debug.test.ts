@@ -43,7 +43,7 @@ describe('debug spec v1', () => {
       'examples/hello-world': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ]);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
@@ -78,7 +78,7 @@ describe('debug spec v1', () => {
 
     const manager = new LocalDependencyManager(axios.create());
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('examples/hello-world'),
+      await manager.loadComponentSpec('examples/hello-world'),
     ]);
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;

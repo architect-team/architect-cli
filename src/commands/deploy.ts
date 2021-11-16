@@ -396,10 +396,10 @@ export default class Deploy extends DeployCommand {
     const component_options = { map_all_interfaces: !flags.production && !duplicates };
 
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map, component_options);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, interfaces_map, component_options);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentConfigs(component_config);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config);
         component_configs.push(...dependency_configs);
       } else {
         component_configs.push(component_config);

@@ -70,7 +70,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -104,7 +104,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -151,7 +151,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -208,7 +208,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -238,7 +238,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -268,7 +268,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -304,7 +304,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -347,7 +347,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -378,7 +378,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -419,7 +419,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -455,7 +455,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -508,8 +508,8 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
-          await manager.loadComponentConfig('test/other')
+          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('test/other')
         ]);
       } catch (e) {
         err = e;
@@ -549,7 +549,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -585,7 +585,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component', { api: 'api', api2: 'api2' }),
+          await manager.loadComponentSpec('test/component', { api: 'api', api2: 'api2' }),
         ]);
       } catch (e) {
         err = e;
@@ -625,7 +625,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -659,7 +659,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -690,7 +690,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -721,7 +721,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -765,8 +765,8 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
-          await manager.loadComponentConfig('test/other')
+          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('test/other')
         ]);
       } catch (e) {
         err = e;
@@ -824,7 +824,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -891,9 +891,9 @@ services:
       });
       let err;
       try {
-        const component_config = await manager.loadComponentConfig('examples/hello-world');
+        const component_config = await manager.loadComponentSpec('examples/hello-world');
         await manager.getGraph([
-          ...await manager.loadComponentConfigs(component_config),
+          ...await manager.loadComponentSpecs(component_config),
         ]);
       } catch (e) {
         err = e;
@@ -1029,7 +1029,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1059,7 +1059,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1086,7 +1086,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1120,7 +1120,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1147,7 +1147,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1181,7 +1181,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1209,7 +1209,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1241,7 +1241,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1272,7 +1272,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1302,7 +1302,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1337,7 +1337,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1371,7 +1371,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1400,7 +1400,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1428,7 +1428,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1464,7 +1464,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;

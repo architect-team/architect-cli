@@ -79,7 +79,7 @@ describe('interfaces spec v1', () => {
         'test/leaf': '/stack/leaf/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf')
+        await manager.loadComponentSpec('test/leaf')
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -115,8 +115,8 @@ describe('interfaces spec v1', () => {
         'test/branch': '/stack/branch/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf'),
-        await manager.loadComponentConfig('test/branch')
+        await manager.loadComponentSpec('test/leaf'),
+        await manager.loadComponentSpec('test/branch')
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -191,9 +191,9 @@ describe('interfaces spec v1', () => {
         'test/other-leaf': '/stack/other-leaf/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf', { public: 'api' }),
-        await manager.loadComponentConfig('test/branch'),
-        await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentSpec('test/leaf', { public: 'api' }),
+        await manager.loadComponentSpec('test/branch'),
+        await manager.loadComponentSpec('test/other-leaf', { publicv1: 'api' })
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
@@ -360,7 +360,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentSpec('architect/cloud', { app: 'app', admin: 'admin' }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -429,7 +429,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud', undefined, { map_all_interfaces: true }),
+      await manager.loadComponentSpec('architect/cloud', undefined, { map_all_interfaces: true }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -519,8 +519,8 @@ describe('interfaces spec v1', () => {
       'voic/product-catalog': '/stack/product-catalog/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('voic/admin-ui'),
-      await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+      await manager.loadComponentSpec('voic/admin-ui'),
+      await manager.loadComponentSpec('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
     ]);
 
     const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest')
@@ -572,7 +572,7 @@ describe('interfaces spec v1', () => {
       'architect/smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
+      await manager.loadComponentSpec('architect/smtp'),
     ]);
 
     const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
@@ -618,7 +618,7 @@ describe('interfaces spec v1', () => {
       'architect/smtp': '/stack/smtp/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
+      await manager.loadComponentSpec('architect/smtp'),
     ]);
 
     const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
@@ -672,8 +672,8 @@ describe('interfaces spec v1', () => {
       'architect/upstream': '/stack/upstream/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
-      await manager.loadComponentConfig('architect/upstream'),
+      await manager.loadComponentSpec('architect/smtp'),
+      await manager.loadComponentSpec('architect/upstream'),
     ]);
 
     const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
@@ -716,9 +716,9 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentConfig('examples/hello-world');
+    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(config));
+      await manager.loadComponentSpecs(config));
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
@@ -755,10 +755,10 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentConfig('examples/hello-world');
+    const config = await manager.loadComponentSpec('examples/hello-world');
     let err;
     try {
-      await manager.getGraph(await manager.loadComponentConfigs(config));
+      await manager.getGraph(await manager.loadComponentSpecs(config));
     } catch (e) {
       err = e;
     }
@@ -788,9 +788,9 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/dependency': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentConfig('architect/dependency');
+    const config = await manager.loadComponentSpec('architect/dependency');
     const graph = await manager.getGraph(
-      await manager.loadComponentConfigs(config));
+      await manager.loadComponentSpecs(config));
 
     expect(graph.edges.length).eq(1);
 

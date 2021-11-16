@@ -82,7 +82,7 @@ describe('sidecar spec v1', () => {
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf')
+        await manager.loadComponentSpec('test/leaf')
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -119,8 +119,8 @@ describe('sidecar spec v1', () => {
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf'),
-        await manager.loadComponentConfig('test/branch')
+        await manager.loadComponentSpec('test/leaf'),
+        await manager.loadComponentSpec('test/branch')
       ]);
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -196,9 +196,9 @@ describe('sidecar spec v1', () => {
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
-        await manager.loadComponentConfig('test/leaf', { public: 'api' }),
-        await manager.loadComponentConfig('test/branch'),
-        await manager.loadComponentConfig('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentSpec('test/leaf', { public: 'api' }),
+        await manager.loadComponentSpec('test/branch'),
+        await manager.loadComponentSpec('test/other-leaf', { publicv1: 'api' })
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
@@ -366,7 +366,7 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentSpec('architect/cloud', { app: 'app', admin: 'admin' }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -457,22 +457,22 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const admin_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    const admin_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
     const admin_instance_id = 'env1-tenant-1';
     admin_component.metadata!.instance_id = admin_instance_id;
 
-    const test_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    const test_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test_component));
 
-    const test2_component = await manager.loadComponentConfig('voic/admin-ui@tenant-2');
+    const test2_component = await manager.loadComponentSpec('voic/admin-ui@tenant-2');
     test2_component.metadata!.instance_id = 'env1-tenant-1';
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test2_component));
 
-    const test3_component = await manager.loadComponentConfig('voic/admin-ui@tenant-1');
+    const test3_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
     test3_component.metadata!.instance_id = 'env1-tenant-1-test';
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test3_component));
 
-    const catalog_component = await manager.loadComponentConfig('voic/product-catalog', { public2: 'public', admin2: 'admin' })
+    const catalog_component = await manager.loadComponentSpec('voic/product-catalog', { public2: 'public', admin2: 'admin' })
     const catalog_instance_id = 'env1'
     catalog_component.metadata!.instance_id = catalog_instance_id;
 
@@ -547,8 +547,8 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const stateless_component = await manager.loadComponentConfig('examples/stateless-component:latest')
-    const hello_component = await manager.loadComponentConfig('examples/hello-world:latest')
+    const stateless_component = await manager.loadComponentSpec('examples/stateless-component:latest')
+    const hello_component = await manager.loadComponentSpec('examples/hello-world:latest')
 
     const graph = await manager.getGraph([
       stateless_component,
@@ -601,7 +601,7 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
+      await manager.loadComponentSpec('architect/smtp'),
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
@@ -655,8 +655,8 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/smtp'),
-      await manager.loadComponentConfig('architect/upstream'),
+      await manager.loadComponentSpec('architect/smtp'),
+      await manager.loadComponentSpec('architect/upstream'),
     ]);
 
     const raw = serialize(graph);
