@@ -1574,5 +1574,19 @@ services:
         'dependencies.${{ if true }}',
       ]);
     })
+
+    it('can use if statement in service block', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          environment:
+            TEST: 1
+          \${{ if true }}:
+            environment:
+              TEST2: 2
+      `
+      buildSpecFromYml(yml);
+    })
   })
 });

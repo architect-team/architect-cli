@@ -63,6 +63,8 @@ export interface InterpolateObjectOptions {
   ignore_keys?: string[]
 }
 
+const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
+
 export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
   // Clone object
   obj = deepmerge(obj, {}) as T;
@@ -99,7 +101,7 @@ export const interpolateObject = <T>(obj: T, context: any, options?: Interpolate
           const parsed_key = parser.parseString(key, context_map, options.ignore_keys);
           if (parsed_key === true) {
             has_conditional = true;
-            for (const [key2, value2] of Object.entries(value)) {
+            for (const [key2, value2] of Object.entries(deepmerge(el, value, { arrayMerge: overwriteMerge }))) {
               el[key2] = value2;
             }
           }
