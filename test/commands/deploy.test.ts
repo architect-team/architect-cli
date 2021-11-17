@@ -832,3 +832,105 @@ describe('auto-approve flag with underscore style still works', function () {
       expect(ctx.stdout).to.contain('Deployed');
     });
 });
+
+describe('pollPipeline handles failed deployments', function () {
+  const aborted_deployment = JSON.stringify({
+    failed_at: "foo",
+  });
+  const failed_environment_deployment = JSON.stringify({
+    failed_at: "foo",
+  });
+  const failed_platform_deployment = JSON.stringify({
+    failed_at: "foo",
+  });
+
+  describe('when deployment is aborted', function () {
+    const remoteDeploy = mockArchitectAuth
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.name}`)
+        .reply(200, account))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.id}/environments/${environment.name}`)
+        .reply(200, environment))
+      .nock(MOCK_API_HOST, api => api
+        .post(`/environments/${environment.id}/deploy`)
+        .reply(200, mock_pipeline))
+      .nock(MOCK_API_HOST, api => api
+        .post(`/pipelines/${mock_pipeline.id}/approve`)
+        .reply(200, {}))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/pipelines/${mock_pipeline.id}`)
+        .reply(200, aborted_deployment))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/pipelines/${mock_pipeline.id}/deployments`)
+        .reply(200, { deployments: [] }))
+      .stdout({ print })
+      .stderr({ print });
+
+    remoteDeploy
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+      .it('prints useful error with expected url', ctx => {
+        expect(ctx.stderr).to.contain('this should be the error message');
+      });
+  });
+
+  describe('when environment deployment fails', function () {
+    const remoteDeploy = mockArchitectAuth
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.name}`)
+        .reply(200, account))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.id}/environments/${environment.name}`)
+        .reply(200, environment))
+        .nock(MOCK_API_HOST, api => api
+          .post(`/environments/${environment.id}/deploy`)
+          .reply(200, mock_pipeline))
+        .nock(MOCK_API_HOST, api => api
+          .post(`/pipelines/${mock_pipeline.id}/approve`)
+          .reply(200, {}))
+        .nock(MOCK_API_HOST, api => api
+          .get(`/pipelines/${mock_pipeline.id}`)
+          .reply(200, failed_environment_deployment))
+      .stdout({ print })
+      .stderr({ print });
+
+    remoteDeploy
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+      .it('prints useful error with expected url', ctx => {
+        expect(ctx.stderr).to.contain('this should be the error message');
+      });
+  });
+
+  describe('when pipeline deployment fails', function () {
+    const remoteDeploy = mockArchitectAuth
+      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.name}`)
+        .reply(200, account))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/accounts/${account.id}/environments/${environment.name}`)
+        .reply(200, environment))
+        .nock(MOCK_API_HOST, api => api
+          .post(`/environments/${environment.id}/deploy`)
+          .reply(200, mock_pipeline))
+        .nock(MOCK_API_HOST, api => api
+          .post(`/pipelines/${mock_pipeline.id}/approve`)
+          .reply(200, {}))
+        .nock(MOCK_API_HOST, api => api
+          .get(`/pipelines/${mock_pipeline.id}`)
+          .reply(200, failed_platform_deployment))
+      .stdout({ print })
+      .stderr({ print });
+
+    remoteDeploy
+      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
+      .it('prints useful error with expected url', ctx => {
+        expect(ctx.stderr).to.contain('this should be the error message');
+      });
+  });
+});
