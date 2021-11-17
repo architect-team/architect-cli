@@ -71,6 +71,35 @@ describe('interpolation spec v1', () => {
     expect(node.config.environment).to.deep.eq({});
   });
 
+  it('interpolation multiple refs on same line', async () => {
+    const component_config = `
+    name: examples/hello-world
+
+    parameters:
+      first: 1
+      second: 2
+
+    services:
+      api:
+        environment:
+          TEST: \${{ parameters.first }} and \${{ parameters.second }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('examples/hello-world'),
+    ]);
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(node.config.environment).to.deep.eq({ TEST: '1 and 2' });
+  });
+
   it('interpolation dependencies', async () => {
     const web_component_config = {
       name: 'concourse/web',

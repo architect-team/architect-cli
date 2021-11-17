@@ -265,7 +265,8 @@ export default abstract class DependencyManager {
     const url_auth = `(${interface_ref}.password ? (${interface_ref}.username + ':' + ${interface_ref}.password + '@') : '')`;
     const url_protocol = `(${interface_ref}.protocol == 'grpc' ? '' : (${interface_ref}.protocol + '://' + ${url_auth}))`;
     const url_port = `((${interface_ref}.port == 80 || ${interface_ref}.port == 443) ? '' : ':' + ${interface_ref}.port)`;
-    return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} }}`;
+    const url_path = `(${interface_ref}.path ? ${interface_ref}.path : '')`;
+    return `\${{ ${url_protocol} + ${interface_ref}.host + ${url_port} + ${url_path} }}`;
   }
 
   findClosestComponent(component_configs: ComponentSpec[], date: Date): ComponentSpec | undefined {
@@ -483,6 +484,7 @@ export default abstract class DependencyManager {
             protocol: 'http',
             username: '',
             password: '',
+            path: '',
             ...value,
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
@@ -536,7 +538,7 @@ export default abstract class DependencyManager {
             protocol: `\${{ ${interface_ref}.external_host ? ${interface_ref}.protocol : '${external_protocol}' }}`,
             username: '',
             password: '',
-            // TODO:333 include ingress.path in url? Add test
+            path: interface_config.ingress?.path,
             url: this.generateUrl(ingress_ref),
             consumers: [],
           };

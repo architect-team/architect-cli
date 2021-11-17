@@ -727,6 +727,9 @@ describe('interfaces spec v1', () => {
       api:
         interfaces:
           main: 8080
+        environment:
+          EXT_ADDR: \${{ ingresses.api.url }}
+          EXT_ADDR2: \${{ ingresses.api2.url }}
     `
 
     mock_fs({
@@ -742,6 +745,10 @@ describe('interfaces spec v1', () => {
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
+    expect(template.services[api_ref].environment).to.deep.eq({
+      EXT_ADDR: 'http://cloud.arc.localhost/api',
+      EXT_ADDR2: 'http://cloud.arc.localhost/api2'
+    })
     expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api\`)`);
     expect(template.services[api_ref].labels).to.include(`traefik.http.routers.${api_ref}-api2.rule=Host(\`cloud.arc.localhost\`) && PathPrefix(\`/api2\`)`);
   });

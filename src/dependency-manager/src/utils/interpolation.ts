@@ -35,22 +35,6 @@ export const replaceInterpolationBrackets = (value: string): string => {
   return res;
 };
 
-export const escapeJSON = (value: any): any => {
-  if (value instanceof Object) {
-    value = JSON.stringify(value);
-  }
-
-  // Support json strings
-  try {
-    const escaped = JSON.stringify(value);
-    if (`${value}` !== escaped) {
-      value = escaped.substr(1, escaped.length - 2);
-    }
-    // eslint-disable-next-line no-empty
-  } catch { }
-  return value;
-};
-
 export const buildContextMap = (context: any): any => {
   const context_map: Dictionary<any> = {};
   const queue = [['', context]];
