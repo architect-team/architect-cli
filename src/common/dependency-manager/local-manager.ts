@@ -74,7 +74,7 @@ export default class LocalDependencyManager extends DependencyManager {
     if (merged_options.map_all_interfaces) {
       for (const interface_name of Object.keys(spec.interfaces || {})) {
         if (!interface_names.includes(interface_name)) {
-          spec.metadata.interfaces[interface_name] = interface_name;
+          spec.metadata.interfaces['__arc__' + interface_name] = interface_name;
         }
       }
     }
@@ -82,16 +82,20 @@ export default class LocalDependencyManager extends DependencyManager {
     if (spec.metadata.file?.path && !this.production) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-      for (const [sk, sv] of Object.entries(spec.services || {})) {
-        // If debug is enabled merge in debug options ex. debug.command -> command
-        if (sv.debug) {
-          spec.services![sk] = deepmerge(sv, sv.debug, { arrayMerge: overwriteMerge });
+      if (spec.services) {
+        for (const [sk, sv] of Object.entries(spec.services)) {
+          // If debug is enabled merge in debug options ex. debug.command -> command
+          if (sv.debug) {
+            spec.services[sk] = deepmerge(sv, sv.debug, { arrayMerge: overwriteMerge });
+          }
         }
       }
-      for (const [tk, tv] of Object.entries(spec.tasks || {})) {
-        // If debug is enabled merge in debug options ex. debug.command -> command
-        if (tv.debug) {
-          spec.tasks![tk] = deepmerge(tv, tv.debug, { arrayMerge: overwriteMerge });
+      if (spec.tasks) {
+        for (const [tk, tv] of Object.entries(spec.tasks)) {
+          // If debug is enabled merge in debug options ex. debug.command -> command
+          if (tv.debug) {
+            spec.tasks[tk] = deepmerge(tv, tv.debug, { arrayMerge: overwriteMerge });
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-import { serialize } from 'class-transformer';
+import { plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ComponentContext, ParameterValue } from './config/component-context';
@@ -19,14 +19,6 @@ import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
 import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolationBrackets } from './utils/interpolation';
 import { ValuesConfig } from './values/values';
-
-interface ComponentConfigNode {
-  config: ComponentConfig;
-  interpolated_config?: ComponentConfig;
-  parents: ComponentConfigNode[];
-  children: ComponentConfigNode[];
-  level: number;
-}
 
 export default abstract class DependencyManager {
   use_sidecar = true;
@@ -431,10 +423,10 @@ export default abstract class DependencyManager {
 
       if (interpolate) {
         // Interpolate parameters
-        context = interpolateObject(context, context, { keys: false, values: true });
+        context = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
 
         // Replace conditionals
-        component_spec = interpolateObject(component_spec, context, { keys: true, values: false });
+        component_spec = interpolateObject(component_spec, context, { keys: true, values: false, file: component_spec.metadata.file });
       }
 
       const component_config = transformComponentSpec(component_spec);
@@ -559,7 +551,7 @@ export default abstract class DependencyManager {
 
       if (interpolate) {
         // Interpolate interfaces/ingresses/services
-        context = interpolateObject(context, context, { keys: false, values: true });
+        context = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
       }
 
       context_map[component_spec.metadata.ref] = context;
@@ -649,13 +641,11 @@ export default abstract class DependencyManager {
       }
 
       if (interpolate) {
-        component_spec = interpolateObject(component_spec, context, { keys: false, values: true });
+        component_spec = interpolateObject(component_spec, context, { keys: false, values: true, file: component_spec.metadata.file });
       }
 
       if (validate) {
-        const component_spec_copy = JSON.parse(JSON.stringify(component_spec));
-        delete component_spec_copy.metadata;
-        validateOrRejectSpec(component_spec_copy);
+        validateOrRejectSpec(plainToClass(ComponentSpec, component_spec));
       }
 
       const component_config = transformComponentSpec(component_spec);

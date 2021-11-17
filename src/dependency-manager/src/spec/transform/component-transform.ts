@@ -68,13 +68,13 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
   const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   for (const [interface_from, interface_to] of Object.entries(spec.metadata.interfaces)) {
+    const interface_obj = interfaces[interface_to];
     // TODO:333 validation against invalid interface_to
-    if (!interfaces[interface_to].ingress) {
-      interfaces[interface_to].ingress = {};
+    if (!interface_obj.ingress) {
+      interface_obj.ingress = {};
     }
-    // TODO:333 lint
-    interfaces[interface_to].ingress!.enabled = true;
-    interfaces[interface_to].ingress!.subdomain = interface_from;
+    interface_obj.ingress.enabled = true;
+    interface_obj.ingress.subdomain = interface_from.startsWith('__arc__') ? interface_obj.ingress.subdomain || interface_to : interface_from;
   }
 
   const dependencies = spec.dependencies || {};

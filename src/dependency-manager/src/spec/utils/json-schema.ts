@@ -231,7 +231,6 @@ const addExpressions = (definitions: Record<string, SchemaObject>): Record<strin
       continue;
     }
     for (const [property_name, property] of Object.entries(definition.properties || {}) as [string, SchemaObject][]) {
-      // TODO:333 write tests
       // Don't allow if statements in parameters or dependencies block
       if (property_name === 'parameters' || property_name === 'dependencies') {
         continue;

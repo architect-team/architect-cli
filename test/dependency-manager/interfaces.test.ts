@@ -417,7 +417,19 @@ describe('interfaces spec v1', () => {
       },
       interfaces: {
         app: '${{ services.api.interfaces.main.url }}',
-        admin: '${{ services.api.interfaces.admin.url }}'
+        admin: {
+          url: '${{ services.api.interfaces.admin.url }}',
+          ingress: {
+            subdomain: 'staff'
+          }
+        },
+        admin2: '${{ services.api.interfaces.admin.url }}',
+        admin3: {
+          url: '${{ services.api.interfaces.admin.url }}',
+          ingress: {
+            subdomain: 'wrong'
+          }
+        }
       }
     };
 
@@ -429,7 +441,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', undefined, { map_all_interfaces: true }),
+      await manager.loadComponentSpec('architect/cloud', { 'staff2': 'admin2', 'staff3': 'admin3' }, { map_all_interfaces: true }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -441,8 +453,8 @@ describe('interfaces spec v1', () => {
       api_ref,
     ])
     expect(graph.edges.map((e) => e.toString())).has.members([
-      `${cloud_interfaces_ref} [app, admin] -> ${api_ref} [main, admin]`,
-      `gateway [app, admin] -> ${cloud_interfaces_ref} [app, admin]`
+      `${cloud_interfaces_ref} [app, admin, admin2, admin3] -> ${api_ref} [main, admin, admin, admin]`,
+      `gateway [app, staff, staff2, staff3] -> ${cloud_interfaces_ref} [app, admin, admin2, admin3]`
     ])
 
     const template = await DockerComposeUtils.generate(graph);
@@ -454,13 +466,21 @@ describe('interfaces spec v1', () => {
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-app.service=${api_ref}-app-service`,
         `traefik.http.services.${api_ref}-app-service.loadbalancer.server.port=8080`,
-        `traefik.http.routers.${api_ref}-admin.rule=Host(\`admin.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin.rule=Host(\`staff.arc.localhost\`)`,
         `traefik.http.routers.${api_ref}-admin.service=${api_ref}-admin-service`,
         `traefik.http.services.${api_ref}-admin-service.loadbalancer.server.port=8081`,
+        `traefik.http.routers.${api_ref}-admin2.rule=Host(\`staff2.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin2.service=${api_ref}-admin2-service`,
+        `traefik.http.services.${api_ref}-admin2-service.loadbalancer.server.port=8081`,
+        `traefik.http.routers.${api_ref}-admin3.rule=Host(\`staff3.arc.localhost\`)`,
+        `traefik.http.routers.${api_ref}-admin3.service=${api_ref}-admin3-service`,
+        `traefik.http.services.${api_ref}-admin3-service.loadbalancer.server.port=8081`,
       ],
       "external_links": [
         "gateway:app.arc.localhost",
-        "gateway:admin.arc.localhost"
+        "gateway:staff.arc.localhost",
+        "gateway:staff2.arc.localhost",
+        "gateway:staff3.arc.localhost"
       ],
       "ports": [
         "50000:8080",

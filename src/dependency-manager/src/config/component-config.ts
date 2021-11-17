@@ -127,8 +127,6 @@ export const buildNodeRef = (component_config: ComponentConfig, service_name: st
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
 
-
-// TODO:333 remove
 export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
   const component_ref = component_config.metadata.ref;
   return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id);

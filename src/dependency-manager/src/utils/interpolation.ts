@@ -75,6 +75,7 @@ export const buildContextMap = (context: any): any => {
 export interface InterpolateObjectOptions {
   keys?: boolean;
   values?: boolean;
+  file?: { path: string, contents: string };
   ignore_keys?: string[]
 }
 
@@ -154,8 +155,7 @@ export const interpolateObject = <T>(obj: T, context: any, options?: Interpolate
 export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
   const { interpolated_obj, errors } = interpolateObject(obj, context, options);
   if (errors.length) {
-    // @ts-ignore TODO:333
-    throw new ValidationErrors(errors, obj.metadata?.file);
+    throw new ValidationErrors(errors, options?.file);
   }
   return interpolated_obj;
 };
