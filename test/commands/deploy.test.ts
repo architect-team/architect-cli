@@ -895,7 +895,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, { deployments: [ aborted_deployment ] }))
+      .reply(200, [ aborted_deployment ] ))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -911,7 +911,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, { deployments: [ failed_environment_deployment ] }))
+      .reply(200, [ failed_environment_deployment ] ))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -927,7 +927,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, { deployments: [ failed_platform_deployment ] }))
+      .reply(200, [ failed_platform_deployment ] ))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -943,7 +943,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, { deployments: [ failed_environment_deployment, failed_environment_deployment_2 ] }))
+      .reply(200, [ failed_environment_deployment, failed_environment_deployment_2 ] ))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])

@@ -1,22 +1,28 @@
 import AppService from '../../app-config/service';
 import { DeploymentFailedError, PipelineAbortedError } from '../errors/pipeline-errors';
+import { Account } from './account';
 import { Deployment } from './deployment';
+import { Platform } from './platform';
 
-interface Pipeline {
+export interface Pipeline {
   id: string;
   failed_at?: string;
   applied_at?: string;
-}
-
-interface DeploymentPrime extends Deployment {
-  environment: any;
+  aborted_at?: string;
+  environment?: {
+    id: string;
+    name: string;
+    platform: Platform;
+    account: Account;
+  };
+  platform?: Platform;
 }
 
 export class PipelineUtils {
 
   static POLL_INTERVAL = 1000;
 
-  static getDeploymentUrl(app: AppService, deployment: any): string {
+  static getDeploymentUrl(app: AppService, deployment: Deployment): string {
     if (deployment.pipeline.environment) {
       const environment = deployment.pipeline.environment;
       return `${app.config.app_host}/${environment.account.name}/environments/${environment.name}/deployments/${deployment.id}`;
@@ -64,10 +70,10 @@ export class PipelineUtils {
     } else if (pipeline.failed_at) {
       // Query deployments for pipline to determine cause of failure
       const response = await app.api.get(`/pipelines/${pipeline.id}/deployments`);
-      const deployments: DeploymentPrime[] = response.data.deployments;
+      const deployments: Deployment[] = response.data;
 
       // Check if the deployment failed due to a user aborting the deployment
-      const aborted_deployments = deployments.filter((d: any) => d.aborted_at);
+      const aborted_deployments = deployments.filter((d: Deployment) => d.aborted_at);
 
       if (aborted_deployments.length !== 0) {
         const deployment_url = this.getDeploymentUrl(app, aborted_deployments[0]);

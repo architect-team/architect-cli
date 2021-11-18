@@ -4,9 +4,10 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { Account } from './account';
 
-interface Platform {
+export interface Platform {
   id: string;
   name: string;
+  account: Account;
 }
 
 export interface CreatePlatformInput {
