@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths:
-      - "src/dependency-manager/src/**/*"
+      - 'src/dependency-manager/src/**/*'
 
 jobs:
   detect-changes:
@@ -28,6 +28,7 @@ jobs:
           if [[ -z `git status --porcelain` ]]; then exit 0; fi
           git config --global user.name "Github Actions"
           git config --global user.email "bot@architect.io"
+          git config --global pull.rebase false
           git add src/dependency-manager/schema/architect.schema.json
           git add docs/5-reference/2-architect-yml.md
           git commit -m "Generated new Spec/Docs: ${{ github.sha }}"
