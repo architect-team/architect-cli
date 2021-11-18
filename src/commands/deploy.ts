@@ -16,9 +16,8 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
 import { PipelineUtils } from '../common/utils/pipeline';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, Slugs } from '../dependency-manager/src';
-import { ComponentConfig } from '../dependency-manager/src/config/component-config';
-import { buildConfigFromPath } from '../dependency-manager/src/spec/utils/component-builder';
+import { ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
+import { buildSpecFromPath } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 export abstract class DeployCommand extends Command {
@@ -371,9 +370,9 @@ export default class Deploy extends DeployCommand {
 
       let component_version = config_or_component;
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
-        const res = buildConfigFromPath(config_or_component, Slugs.DEFAULT_TAG);
-        linked_components[res.component_config.name] = config_or_component;
-        component_version = res.component_config.name;
+        const res = buildSpecFromPath(config_or_component);
+        linked_components[res.name] = config_or_component;
+        component_version = res.name;
       }
       component_versions.push(component_version);
     }
@@ -384,7 +383,7 @@ export default class Deploy extends DeployCommand {
       flags.production
     );
 
-    const component_configs: ComponentConfig[] = [];
+    const component_specs: ComponentSpec[] = [];
 
     // Check if multiple instances of the same component are being deployed. This check is needed
     // so that we can disable automatic interface mapping since we can't map a single interface to
@@ -396,16 +395,16 @@ export default class Deploy extends DeployCommand {
     const component_options = { map_all_interfaces: !flags.production && !duplicates };
 
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentConfig(component_version, interfaces_map, component_options);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, interfaces_map, component_options);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentConfigs(component_config);
-        component_configs.push(...dependency_configs);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config);
+        component_specs.push(...dependency_configs);
       } else {
-        component_configs.push(component_config);
+        component_specs.push(component_config);
       }
     }
-    const graph = await dependency_manager.getGraph(component_configs, component_secrets);
+    const graph = await dependency_manager.getGraph(component_specs, component_secrets);
     const compose = await DockerComposeUtils.generate(graph);
     await this.runCompose(compose);
   }

@@ -27,7 +27,7 @@ describe('volumes spec v1', () => {
       'test/component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('test/component')
+      await manager.loadComponentSpec('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members(['/data'])
@@ -51,7 +51,7 @@ describe('volumes spec v1', () => {
       'test/component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('test/component')
+      await manager.loadComponentSpec('test/component')
     ]);
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`${path.resolve('/component/data')}:/data`])
@@ -74,7 +74,7 @@ describe('volumes spec v1', () => {
       'test/component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('test/component')
+      await manager.loadComponentSpec('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members([`/user/app/data:/data`])
@@ -114,7 +114,7 @@ describe('volumes spec v1', () => {
       'test/component': '/component/component.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('test/component')
+      await manager.loadComponentSpec('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[test_component_api_safe_ref].volumes).has.members(['/data', '/data2', `${path.resolve('/component/data3')}:/data3`])

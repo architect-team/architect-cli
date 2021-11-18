@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildConfigFromPath, interpolateConfigOrReject, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
+import { buildSpecFromPath, buildSpecFromYml, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
 describe('validate spec', () => {
@@ -21,7 +21,7 @@ describe('validate spec', () => {
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid nested debug', async () => {
@@ -41,7 +41,7 @@ services:
       mock_fs({ '/architect.yml': component_config });
       let err;
       try {
-        buildConfigFromPath('/architect.yml')
+        buildSpecFromPath('/architect.yml')
       } catch (e) {
         err = e;
       }
@@ -64,10 +64,14 @@ services:
           replicas: '1'
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -94,10 +98,14 @@ services:
         frontend: \${{ services.fake.interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -125,7 +133,7 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid task schedule', async () => {
@@ -137,10 +145,14 @@ services:
           image: ellerbrock/alpine-bash-curl-ssl
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -170,7 +182,7 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
-      buildConfigFromPath('/architect.yml')
+      buildSpecFromPath('/architect.yml')
     });
 
     it('invalid task depends_on', async () => {
@@ -190,10 +202,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -216,10 +232,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -229,7 +249,7 @@ services:
       expect(errors[0].path).eq(`services.stateless-app.depends_on`);
     });
 
-    it('invalid service reference', async () => {
+    it('invalid service depends_on reference', async () => {
       const component_config = `
       name: test/component
       services:
@@ -242,10 +262,14 @@ services:
         frontend: \${{ services['stateless-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -273,10 +297,15 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -312,10 +341,14 @@ services:
         frontend: \${{ services['stateful-app'].interfaces.main.url }}
       `
       mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/architect.yml',
+      });
       let err;
       try {
-        const { component_config } = buildConfigFromPath('/architect.yml')
-        interpolateConfigOrReject(component_config, [])
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
       } catch (e) {
         err = e;
       }
@@ -345,7 +378,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -386,7 +419,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -422,7 +455,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -475,8 +508,8 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
-          await manager.loadComponentConfig('test/other')
+          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('test/other')
         ]);
       } catch (e) {
         err = e;
@@ -516,7 +549,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -552,7 +585,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component', { api: 'api', api2: 'api2' }),
+          await manager.loadComponentSpec('test/component', { api: 'api', api2: 'api2' }),
         ]);
       } catch (e) {
         err = e;
@@ -561,10 +594,11 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.api.url',
-        'interfaces.api2.url'
+        'interfaces.api',
+        'interfaces.api2'
       ])
       expect(errors[0].message).includes('services.api.interfaces.main.url')
+      expect(errors[1].message).includes('services.api.interfaces.main.url')
     });
 
     it('deploy time validation', async () => {
@@ -591,7 +625,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -625,7 +659,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -656,7 +690,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -687,7 +721,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -731,8 +765,8 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
-          await manager.loadComponentConfig('test/other')
+          await manager.loadComponentSpec('test/component'),
+          await manager.loadComponentSpec('test/other')
         ]);
       } catch (e) {
         err = e;
@@ -790,7 +824,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentConfig('test/component'),
+          await manager.loadComponentSpec('test/component'),
         ]);
       } catch (e) {
         err = e;
@@ -857,9 +891,9 @@ services:
       });
       let err;
       try {
-        const component_config = await manager.loadComponentConfig('examples/hello-world');
+        const component_config = await manager.loadComponentSpec('examples/hello-world');
         await manager.getGraph([
-          ...await manager.loadComponentConfigs(component_config),
+          ...await manager.loadComponentSpecs(component_config),
         ]);
       } catch (e) {
         err = e;
@@ -995,7 +1029,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1025,7 +1059,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1052,7 +1086,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1086,7 +1120,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1113,7 +1147,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1147,7 +1181,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1175,7 +1209,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1207,7 +1241,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1238,7 +1272,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1268,7 +1302,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1303,7 +1337,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1337,7 +1371,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1366,7 +1400,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1394,7 +1428,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1430,7 +1464,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentConfig('test/component'),
+        await manager.loadComponentSpec('test/component'),
       ]);
     } catch (e) {
       err = e;
@@ -1445,5 +1479,114 @@ services:
     expect(errors.map(e => e.message)).members([
       `must have required property 'command' or must have required property 'port' or must match exactly one schema in oneOf`,
     ]);
+  })
+
+  describe('validate if statements', () => {
+    it('cannot use if statement at top level of component', async () => {
+      const yml = `
+      name: test/component
+      \${{ if true }}:
+        parameters:
+          test: test
+      `
+
+      let err;
+      try {
+        buildSpecFromYml(yml);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        '${{ if true }}',
+      ]);
+    })
+
+    it('cannot use if statement in parameters block', async () => {
+      const yml = `
+      name: test/component
+      parameters:
+        \${{ if true }}:
+          test: test
+      `
+
+      let err;
+      try {
+        buildSpecFromYml(yml);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        'parameters.${{ if true }}',
+      ]);
+    })
+
+    it('cannot use if statement in parameter value block', async () => {
+      const yml = `
+      name: test/component
+      parameters:
+        test:
+          \${{ if true }}:
+            default: test
+      `
+
+      let err;
+      try {
+        buildSpecFromYml(yml);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        'parameters.test.${{ if true }}',
+      ]);
+    })
+
+    it('cannot use if statement in dependencies block', async () => {
+      const yml = `
+      name: test/component
+      dependencies:
+        \${{ if true }}:
+          test/dependency: latest
+      `
+
+      let err;
+      try {
+        buildSpecFromYml(yml);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        'dependencies.${{ if true }}',
+      ]);
+    })
+
+    it('can use if statement in service block', async () => {
+      const yml = `
+      name: test/component
+      services:
+        app:
+          environment:
+            TEST: 1
+          \${{ if true }}:
+            environment:
+              TEST2: 2
+      `
+      buildSpecFromYml(yml);
+    })
   })
 });

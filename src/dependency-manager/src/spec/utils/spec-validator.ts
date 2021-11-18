@@ -1,14 +1,16 @@
 import Ajv, { ErrorObject, ValidateFunction } from "ajv";
 import ajv_errors from "ajv-errors";
 import addFormats from "ajv-formats";
+import { plainToClass } from 'class-transformer';
+import cron from 'cron-validate';
 import leven from 'leven';
+import { validateOrRejectConfig } from '../../config/component-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { ComponentSpec } from '../component-spec';
 import { ParsedYaml } from './component-builder';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
-import cron from 'cron-validate';
 
 export type AjvError = ErrorObject[] | null | undefined;
 
@@ -177,7 +179,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
   return errors;
 };
 
-const cron_options = { preset: 'default', override: { useBlankDay: true }};
+const cron_options = { preset: 'default', override: { useBlankDay: true } };
 
 let _cached_validate: ValidateFunction;
 export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
@@ -206,5 +208,14 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
     throw new ValidationErrors(errors);
   }
 
-  return parsed_yml as ComponentSpec;
+  const component_spec = plainToClass(ComponentSpec, parsed_yml);
+  component_spec.metadata = {
+    ref: `${component_spec.name}:latest`,
+    tag: 'latest',
+    instance_date: new Date(),
+    interfaces: {},
+    proxy_port_mapping: {},
+  };
+  validateOrRejectConfig(component_spec);
+  return component_spec;
 };

@@ -8,8 +8,8 @@ import untildify from 'untildify';
 import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
-import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import ComponentNode from '../../dependency-manager/src/graph/node/component';
+import GatewayNode from '../../dependency-manager/src/graph/node/gateway';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
@@ -75,8 +75,6 @@ export class DockerComposeUtils {
       };
     }
 
-    let autoheal = false;
-
     const service_task_nodes = graph.nodes.filter((n) => n instanceof ServiceNode || n instanceof TaskNode) as (ServiceNode | TaskNode)[];
 
     // Enrich base service details
@@ -137,8 +135,6 @@ export class DockerComposeUtils {
           if (!service.labels) {
             service.labels = [];
           }
-          service.labels.push(`autoheal.${gateway_port}=true`);
-          autoheal = true;
         }
       }
 
@@ -208,19 +204,6 @@ export class DockerComposeUtils {
       }
 
       compose.services[node.ref] = service;
-    }
-
-    if (autoheal) {
-      // https://github.com/moby/moby/pull/22719
-      compose.services['autoheal'] = {
-        image: 'willfarrell/autoheal:1.1.0',
-        environment: {
-          AUTOHEAL_CONTAINER_LABEL: `autoheal.${gateway_port}`,
-        },
-        volumes: [
-          '/var/run/docker.sock:/var/run/docker.sock:ro',
-        ],
-      };
     }
 
     // Enrich service relationships

@@ -1,7 +1,5 @@
-import { ComponentConfig, ComponentInstanceMetadata, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
-import { ComponentContext, OutputValue, ParameterValue, ServiceContext, TaskContext } from '../../config/component-context';
-import { ServiceInterfaceConfig } from '../../config/service-config';
-import { Dictionary, transformDictionary } from '../../utils/dictionary';
+import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
+import { transformDictionary } from '../../utils/dictionary';
 import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, ParameterDefinitionSpec } from '../component-spec';
 import { ComponentSlug, ComponentSlugUtils, Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
@@ -59,104 +57,34 @@ export const transformOutputDefinitionSpec = (key: string, output_spec: string |
   }
 };
 
-const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
+export const transformComponentInterfaceSpec = function (_: string, interface_spec: ComponentInterfaceSpec | string): ComponentInterfaceConfig {
   return typeof interface_spec === 'string' ? { url: interface_spec } : interface_spec;
 };
 
-export const transformComponentContext = (config: ComponentConfig): ComponentContext => {
-  const dependency_context: Dictionary<any> = {};
-  for (const dk of Object.keys(config.dependencies)) {
-    dependency_context[dk] = { ingresses: {}, interfaces: {} };
-  }
-
-  const parameter_context: Dictionary<ParameterValue> = {};
-  for (const [pk, pv] of Object.entries(config.parameters)) {
-    if (pv.default === null) {
-      parameter_context[pk] = null;
-    } else {
-      parameter_context[pk] = pv.default === undefined ? '' : pv.default;
-    }
-  }
-
-  const output_context: Dictionary<OutputValue> = {};
-  for (const [pk, pv] of Object.entries(config.outputs)) {
-    output_context[pk] = pv.value;
-  }
-
-  const interface_filler = {
-    port: '',
-    host: '',
-    username: '',
-    password: '',
-    protocol: '',
-    url: '',
-  };
-
-  const interface_context: Dictionary<ComponentInterfaceConfig> = {};
-  const ingress_context: Dictionary<ComponentInterfaceConfig> = {};
-  for (const [ik, iv] of Object.entries(config.interfaces)) {
-    interface_context[ik] = {
-      ...interface_filler,
-      ...iv,
-    };
-    ingress_context[ik] = {
-      ...interface_filler,
-      consumers: [],
-      dns_zone: '',
-      subdomain: '',
-      path: '',
-    };
-  }
-
-  const service_context: Dictionary<ServiceContext> = {};
-  for (const [sk, sv] of Object.entries(config.services)) {
-    const service_interfaces: Dictionary<ServiceInterfaceConfig> = {};
-    for (const [ik, iv] of Object.entries(sv.interfaces)) {
-      service_interfaces[ik] = {
-        ...interface_filler,
-        ...iv,
-      };
-    }
-    service_context[sk] = {
-      interfaces: service_interfaces,
-      environment: sv.environment,
-    };
-  }
-
-  const task_context: Dictionary<TaskContext> = {};
-  for (const [tk, tv] of Object.entries(config.tasks)) {
-    task_context[tk] = {
-      environment: tv.environment,
-    };
-  }
-
-  return {
-    name: config.name,
-    dependencies: dependency_context,
-    parameters: parameter_context,
-    outputs: output_context,
-    ingresses: ingress_context,
-    interfaces: interface_context,
-    services: service_context,
-    tasks: task_context,
-  };
-};
-
-export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, tag: string, instance_metadata?: ComponentInstanceMetadata): ComponentConfig => {
+export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => {
   const parameters = transformDictionary(transformParameterDefinitionSpec, spec.parameters);
   const outputs = transformDictionary(transformOutputDefinitionSpec, spec.outputs);
-  const services = transformDictionary(transformServiceSpec, spec.services, spec.name, tag, instance_metadata);
-  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.name, tag, instance_metadata);
+  const services = transformDictionary(transformServiceSpec, spec.services, spec.metadata);
+  const tasks = transformDictionary(transformTaskSpec, spec.tasks, spec.metadata);
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
+  for (const [interface_from, interface_to] of Object.entries(spec.metadata.interfaces)) {
+    const interface_obj = interfaces[interface_to];
+    // TODO:333 validation against invalid interface_to
+    if (!interface_obj.ingress) {
+      interface_obj.ingress = {};
+    }
+    interface_obj.ingress.enabled = true;
+    interface_obj.ingress.subdomain = interface_from.startsWith('__arc__') ? interface_obj.ingress.subdomain || interface_to : interface_from;
+  }
+
   const dependencies = spec.dependencies || {};
 
   const name = transformComponentSpecName(spec.name);
 
   return {
     name,
-    tag,
 
-    instance_metadata: instance_metadata,
+    metadata: spec.metadata,
 
     description: spec.description,
     keywords: spec.keywords || [],
@@ -174,18 +102,5 @@ export const transformComponentSpec = (spec: ComponentSpec, source_yml: string, 
     interfaces,
 
     artifact_image: spec.artifact_image,
-
-    source_yml,
-
-    context: transformComponentContext(
-      {
-        dependencies,
-        parameters,
-        outputs,
-        interfaces,
-        services,
-        tasks,
-      } as ComponentConfig
-    ),
   };
 };

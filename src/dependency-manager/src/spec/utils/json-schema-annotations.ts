@@ -1,6 +1,6 @@
 import { SchemaObject } from 'ajv';
 import { DecoratorSchema } from 'class-validator-jsonschema/build/decorators';
-import { EXPRESSION_REGEX_STRING } from './interpolation';
+import { EXPRESSION_REGEX } from './interpolation';
 
 export const REF_PREFIX = '#/definitions/';
 const PRIMITIVES = ['integer', 'number', 'string', 'boolean', 'object', 'null', 'array'];
@@ -165,7 +165,7 @@ export const ExpressionOr = (schema: SchemaObject): DecoratorSchema => {
       schema,
       {
         type: 'string',
-        pattern: EXPRESSION_REGEX_STRING,
+        pattern: EXPRESSION_REGEX.source,
         errorMessage: {
           // __arc__ is replaced later to avoid json pointer issues with ajv
           pattern: 'must be an interpolation ref ex. $__arc__{{ parameters.example }}',

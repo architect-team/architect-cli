@@ -32,7 +32,7 @@ describe('graph depends_on', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -83,7 +83,7 @@ describe('graph depends_on', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -130,7 +130,7 @@ describe('graph depends_on', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -180,7 +180,7 @@ describe('graph depends_on', () => {
       'architect/cloud': '/stack/architect.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest')
+      await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -239,8 +239,8 @@ describe('graph depends_on', () => {
       'architect/dependency': '/stack/dependency.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/cloud:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -301,8 +301,8 @@ describe('graph depends_on', () => {
       'architect/dependency': '/stack/dependency.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/cloud:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -361,8 +361,8 @@ describe('graph depends_on', () => {
       'architect/dependency': '/stack/dependency.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/cloud:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -417,8 +417,8 @@ describe('graph depends_on', () => {
       'architect/dependency': '/stack/dependency.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/cloud:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
@@ -482,8 +482,8 @@ describe('graph depends_on', () => {
       'architect/dependency': '/stack/dependency.yml'
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/cloud:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/cloud:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
     const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');

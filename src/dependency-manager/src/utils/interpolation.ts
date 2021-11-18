@@ -1,16 +1,15 @@
-import yaml from 'js-yaml';
-import { EXPRESSION_REGEX_STRING } from '../spec/utils/interpolation';
+import deepmerge from 'deepmerge';
+import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
-
-const interpolation_regex = new RegExp(EXPRESSION_REGEX_STRING, 'g');
+import { ArchitectParser } from './parser';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
 };
 
-const matches = (text: string, pattern: RegExp) => ({
+export const matches = (text: string, pattern: RegExp): { [Symbol.iterator]: () => Generator<RegExpExecArray, void, unknown>; } => ({
   [Symbol.iterator]: function* () {
     const clone = new RegExp(pattern.source, pattern.flags);
     let match = null;
@@ -30,26 +29,10 @@ ${{ dependencies["architect/cloud"].services }} -> ${{ dependencies.architect/cl
 */
 export const replaceInterpolationBrackets = (value: string): string => {
   let res = value;
-  for (const match of matches(value, interpolation_regex)) {
+  for (const match of matches(value, EXPRESSION_REGEX)) {
     res = res.replace(match[0], `\${{ ${replaceBrackets(match[1])} }}`);
   }
   return res;
-};
-
-export const escapeJSON = (value: any): any => {
-  if (value instanceof Object) {
-    value = JSON.stringify(value);
-  }
-
-  // Support json strings
-  try {
-    const escaped = JSON.stringify(value);
-    if (`${value}` !== escaped) {
-      value = escaped.substr(1, escaped.length - 2);
-    }
-    // eslint-disable-next-line no-empty
-  } catch { }
-  return value;
 };
 
 export const buildContextMap = (context: any): any => {
@@ -73,102 +56,97 @@ export const buildContextMap = (context: any): any => {
   return context_map;
 };
 
-// https://yaml.org/spec/1.2/spec.html#c-indicator
-const c_indicators = ['-', '?', ':', ',', '[', ']', '{', '}', '#', '&', '*', '!', '|', '>', '%', '@', '`', '\'', '"'];
-const startsWithCIndicator = (value: string): boolean => {
-  return c_indicators.some((c) => value.startsWith(c));
-};
+export interface InterpolateObjectOptions {
+  keys?: boolean;
+  values?: boolean;
+  file?: { path: string, contents: string };
+  ignore_keys?: string[]
+}
 
-/**
- * Check if a value needs to be stringified or not.
- *
- * It does if it JSON.parses to an object or if it is a multiline string
- */
-export const normalizeValueForInterpolation = (value: any, nested = false): string => {
-  if (value === undefined) {
-    return '';
-  }
-  if (value instanceof Object) {
-    return JSON.stringify(value);
-  } else if (!nested && typeof value === 'string' && (value.includes('\n') || startsWithCIndicator(value) || value === '')) {
-    return JSON.stringify(value.trimEnd());
-  } else {
-    return value;
-  }
-};
+const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
-export const interpolateString = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): { errors: ValidationError[]; interpolated_string: string } => {
+export const interpolateObject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): { errors: ValidationError[]; interpolated_obj: T } => {
+  // Clone object
+  obj = deepmerge(obj, {}) as T;
+
   const context_map = buildContextMap(context);
   const context_keys = Object.keys(context_map);
 
-  let res = raw_value;
+  // Interpolate only keys first to flatten conditionals
+  options = {
+    keys: false,
+    values: true,
+    ignore_keys: [],
+    ...options,
+  };
 
-  let has_matches = true;
-  let depth = 0;
-  const misses = new Set<string>();
-  while (has_matches) {
-    has_matches = false;
-    depth += 1;
-    if (depth >= max_depth) {
-      throw new Error('Max interpolation depth exceeded');
-    }
-    for (const match of matches(res, new RegExp('(' + interpolation_regex.source + ')' + '(.*)', 'g'))) {
-      const interpolation_ref = match[2];
-      const sanitized_value = replaceBrackets(interpolation_ref);
-      const nested_interpolation_ref = !!match[3].trim();
-      const value = context_map[sanitized_value];
+  const parser = new ArchitectParser();
 
-      if (value === undefined) {
-        const ignored = ignore_keys.some((k) => sanitized_value.startsWith(k));
-        if (!ignored) {
-          misses.add(interpolation_ref);
+  let errors: ValidationError[] = [];
+
+  let queue = [[obj, []]];
+  while (queue.length) {
+    const [el, path_keys] = queue.shift() as [any, string[]];
+    if (el instanceof Object) {
+      let has_conditional = false;
+      const to_add = [];
+      for (const [key, value] of Object.entries(el) as [string, any][]) {
+        // TODO:333
+        if (key === 'metadata') {
+          continue;
         }
-      }
-
-      res = res.replace(match[1], normalizeValueForInterpolation(value, nested_interpolation_ref));
-      has_matches = true;
-    }
-  }
-
-  const reverse_context_map: Dictionary<string> = {};
-  if (misses.size) {
-    try {
-      const value = yaml.load(raw_value);
-      const context_map = buildContextMap(value);
-      for (const [k, v] of Object.entries(context_map)) {
-        if (typeof v === 'string') {
-          for (const match of matches(v, interpolation_regex)) {
-            reverse_context_map[match[1]] = k;
+        const current_path_keys = [...path_keys, key];
+        delete el[key];
+        if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
+          const parsed_key = parser.parseString(key, context_map, options.ignore_keys);
+          if (parsed_key === true) {
+            has_conditional = true;
+            for (const [key2, value2] of Object.entries(deepmerge(el, value, { arrayMerge: overwriteMerge }))) {
+              el[key2] = value2;
+            }
+          }
+          for (const error of parser.errors) {
+            error.invalid_key = true;
+          }
+        } else if (options.values && typeof value === 'string') {
+          const parsed_value = parser.parseString(value, context_map, options.ignore_keys);
+          el[key] = parsed_value;
+        } else {
+          el[key] = value;
+          if (value instanceof Object) {
+            to_add.push([value, current_path_keys]);
           }
         }
+        for (const error of parser.errors) {
+          const potential_match = findPotentialMatch(error.value, context_keys);
+          if (potential_match) {
+            error.message += ` - Did you mean \${{ ${potential_match} }}?`;
+          }
+          error.path = current_path_keys.join('.');
+        }
+        errors = errors.concat(parser.errors);
+        parser.errors = [];
       }
-      // eslint-disable-next-line no-empty
-    } catch { }
-  }
-
-  const errors: ValidationError[] = [];
-  for (const miss of misses) {
-    const potential_match = findPotentialMatch(miss, context_keys);
-
-    let message = `Invalid interpolation ref: \${{ ${miss} }}`;
-    if (potential_match) {
-      message += ` - Did you mean \${{ ${potential_match} }}?`;
+      if (has_conditional) {
+        queue.unshift([el, path_keys]);
+      } else {
+        queue = queue.concat(to_add);
+      }
     }
-    errors.push(new ValidationError({
-      component: context.name,
-      path: reverse_context_map[miss] || '<unknown>',
-      message,
-      value: miss,
-    }));
   }
 
-  return { errors, interpolated_string: res };
+  return { errors, interpolated_obj: obj };
 };
 
-export const interpolateStringOrReject = (raw_value: string, context: any, ignore_keys: string[] = [], max_depth = 25): string => {
-  const { interpolated_string, errors } = interpolateString(raw_value, context, ignore_keys, max_depth);
+export const interpolateObjectOrReject = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
+  const { interpolated_obj, errors } = interpolateObject(obj, context, options);
   if (errors.length) {
-    throw new ValidationErrors(errors);
+    throw new ValidationErrors(errors, options?.file);
   }
-  return interpolated_string;
+  return interpolated_obj;
+};
+
+export const interpolateObjectLoose = <T>(obj: T, context: any, options?: InterpolateObjectOptions): T => {
+  const { interpolated_obj } = interpolateObject(obj, context, options);
+  return interpolated_obj;
 };

@@ -1,5 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import { classToPlain } from 'class-transformer';
 import { cli } from 'cli-ux';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
@@ -13,7 +14,7 @@ import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
-import { buildConfigFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
+import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -78,9 +79,9 @@ export default class ComponentRegister extends Command {
 
   private async registerComponent(config_path: string, tag: string) {
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
-    const { source_path, component_spec } = buildConfigFromPath(config_path, tag);
+    const component_spec = buildSpecFromPath(config_path);
 
-    const component_path = path.dirname(source_path);
+    const component_path = path.dirname(component_spec.metadata.file?.path || config_path);
     const new_spec = component_spec;
 
     if (!new_spec.name) {
@@ -131,9 +132,15 @@ export default class ComponentRegister extends Command {
       task_config.image = image;
     }
 
+    if (new_spec.services) {
+      for (const service_name of Object.keys(new_spec.services)) {
+        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
+      }
+    }
+
     const component_dto = {
       tag: tag,
-      config: new_spec,
+      config: classToPlain(new_spec),
     };
 
     let previous_config_data;
@@ -144,12 +151,8 @@ export default class ComponentRegister extends Command {
 
     this.log(chalk.blue(`Begin component config diff`));
     const previous_source_yml = dumpToYml(previous_config_data);
-    if (new_spec.services) {
-      for (const service_name of Object.keys(new_spec.services)) {
-        delete new_spec.services[service_name].debug; // we don't need to compare the debug block for remotely-deployed components
-      }
-    }
-    const new_source_yml = dumpToYml(new_spec);
+
+    const new_source_yml = dumpToYml(component_dto.config);
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');

@@ -197,7 +197,7 @@ export class ServiceVersionSlugUtils extends SlugUtils {
   public static RegexBase = `${ServiceSlugUtils.RegexBase}${Slugs.TAG_DELIMITER}${Slugs.ComponentTagRegexBase}(?:${Slugs.INSTANCE_DELIMITER}${Slugs.ComponentTagRegexBase})?`;
   public static Validator = new RegExp(`^${ServiceVersionSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string, component_name: string, service_name: string, tag: string, instance_name = ''): ServiceVersionSlug => {
+  public static build = (account_name: string, component_name: string, service_name: string, tag = Slugs.DEFAULT_TAG, instance_name = ''): ServiceVersionSlug => {
     let slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}${Slugs.NAMESPACE_DELIMITER}${service_name}${Slugs.TAG_DELIMITER}${tag}`;
     if (instance_name) {
       slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;

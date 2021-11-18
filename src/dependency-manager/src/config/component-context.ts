@@ -1,3 +1,4 @@
+import { EnvironmentSpecValue } from '../spec/resource-spec';
 import { Dictionary } from '../utils/dictionary';
 import { ComponentInterfaceConfig } from './component-config';
 import { ServiceInterfaceConfig } from './service-config';
@@ -7,17 +8,23 @@ export type OutputValue = string | number | boolean | null;
 export type ParameterValue = string | number | boolean | null | object | undefined;
 
 export interface ServiceContext {
-  environment: Dictionary<string | null>;
+  environment?: Dictionary<EnvironmentSpecValue>;
   interfaces: Dictionary<ServiceInterfaceConfig>;
 }
 
 export interface TaskContext {
-  environment: Dictionary<string | null>;
+  environment?: Dictionary<EnvironmentSpecValue>;
+}
+
+export interface DependencyContext {
+  outputs: Dictionary<OutputValue>;
+  ingresses: Dictionary<ComponentInterfaceConfig>;
+  interfaces: Dictionary<ComponentInterfaceConfig>;
 }
 
 export interface ComponentContext {
   name: string;
-  dependencies: Dictionary<ComponentContext>;
+  dependencies: Dictionary<DependencyContext>;
   parameters: Dictionary<ParameterValue>;
   outputs: Dictionary<OutputValue>;
   ingresses: Dictionary<ComponentInterfaceConfig>;
@@ -25,9 +32,7 @@ export interface ComponentContext {
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 
-  environment?: {
+  environment: {
     ingresses: Dictionary<Dictionary<ComponentInterfaceConfig>>;
   };
-
-  [name: string]: any;
 }

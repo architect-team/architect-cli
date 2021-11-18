@@ -72,8 +72,8 @@ describe('graph', () => {
     const manager = new LocalDependencyManager(axios.create());
 
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest', { db2: 'db' })
+      await manager.loadComponentSpec('architect/component:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest', { db2: 'db' })
     ], {}, false);
 
     expect(graph.nodes).to.have.length(7);
@@ -127,8 +127,8 @@ describe('graph', () => {
     const manager = new LocalDependencyManager(axios.create());
 
     const graph = await manager.getGraph([
-      await manager.loadComponentConfig('architect/component:latest'),
-      await manager.loadComponentConfig('architect/dependency:latest')
+      await manager.loadComponentSpec('architect/component:latest'),
+      await manager.loadComponentSpec('architect/dependency:latest')
     ], {}, true, false);
 
     expect(graph.nodes).to.have.length(3);
