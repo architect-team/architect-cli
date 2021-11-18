@@ -11,6 +11,7 @@ import { resourceRefToNodeRef, Slugs } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
+import { app_host } from '../config.json';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = false;
@@ -22,7 +23,8 @@ const account = {
 
 const environment = {
   id: 'test-env-id',
-  name: 'test-env'
+  name: 'test-env',
+  account,
 }
 
 const mock_pipeline = {
@@ -833,104 +835,108 @@ describe('auto-approve flag with underscore style still works', function () {
     });
 });
 
-describe('pollPipeline handles failed deployments', function () {
-  const aborted_deployment = JSON.stringify({
-    failed_at: "foo",
-  });
-  const failed_environment_deployment = JSON.stringify({
-    failed_at: "foo",
-  });
-  const failed_platform_deployment = JSON.stringify({
-    failed_at: "foo",
-  });
+describe('pollPipeline handles failed deployments', () => {
+  let randomId = () => (Math.random() + 1).toString(36).substring(2);
 
-  describe('when deployment is aborted', function () {
-    const remoteDeploy = mockArchitectAuth
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/environments/${environment.id}/deploy`)
-        .reply(200, mock_pipeline))
-      .nock(MOCK_API_HOST, api => api
-        .post(`/pipelines/${mock_pipeline.id}/approve`)
-        .reply(200, {}))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/pipelines/${mock_pipeline.id}`)
-        .reply(200, aborted_deployment))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/pipelines/${mock_pipeline.id}/deployments`)
-        .reply(200, { deployments: [] }))
-      .stdout({ print })
-      .stderr({ print });
+  const mock_platform = {
+    id: randomId(),
+    name: 'my-mocked-platform',
+    account,
+  }
+  const failed_pipeline = {
+    id: mock_pipeline.id,
+    failed_at: new Date(),
+    environment,
+    platform: mock_platform,
+  };
+  const aborted_deployment = {
+    id: randomId(),
+    aborted_at: new Date(),
+    pipeline: failed_pipeline,
+  };
+  const failed_environment_deployment = {
+    id: randomId(),
+    failed_at: new Date(),
+    pipeline: {
+      ...failed_pipeline,
+      platform: undefined,
+    },
+  };
+  const failed_environment_deployment_2 = {
+    ...failed_environment_deployment,
+    id: randomId(),
+  }
+  const failed_platform_deployment = {
+    id: randomId(),
+    failed_at: new Date(),
+    pipeline: {
+      ...failed_pipeline,
+      environment: undefined,
+    },
+  };
 
-    remoteDeploy
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
-      .it('prints useful error with expected url', ctx => {
-        expect(ctx.stderr).to.contain('this should be the error message');
-      });
-  });
+  const baseRemoteDeploy = mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves(failed_pipeline))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.id}/environments/${environment.name}`)
+      .reply(200, environment))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/environments/${environment.id}/deploy`)
+      .reply(200, mock_pipeline))
+    .nock(MOCK_API_HOST, api => api
+      .post(`/pipelines/${mock_pipeline.id}/approve`)
+      .reply(200, {}));
 
-  describe('when environment deployment fails', function () {
-    const remoteDeploy = mockArchitectAuth
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-        .nock(MOCK_API_HOST, api => api
-          .post(`/environments/${environment.id}/deploy`)
-          .reply(200, mock_pipeline))
-        .nock(MOCK_API_HOST, api => api
-          .post(`/pipelines/${mock_pipeline.id}/approve`)
-          .reply(200, {}))
-        .nock(MOCK_API_HOST, api => api
-          .get(`/pipelines/${mock_pipeline.id}`)
-          .reply(200, failed_environment_deployment))
-      .stdout({ print })
-      .stderr({ print });
+  baseRemoteDeploy
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/${mock_pipeline.id}/deployments`)
+      .reply(200, { deployments: [ aborted_deployment ] }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .it('when deployment is aborted it prints useful error with expected url', (ctx) => {
+      expect(ctx.stderr).to.contain(`Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`);
+      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${aborted_deployment.pipeline.environment.name}/deployments/${aborted_deployment.id}`);
+    });
 
-    remoteDeploy
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
-      .it('prints useful error with expected url', ctx => {
-        expect(ctx.stderr).to.contain('this should be the error message');
-      });
-  });
+  baseRemoteDeploy
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/${mock_pipeline.id}/deployments`)
+      .reply(200, { deployments: [ failed_environment_deployment ] }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .it('when environment deployment fails it prints useful error with expected url', ctx => {
+      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`);
+      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment!.name}/deployments/${failed_environment_deployment.id}`);
+    });
 
-  describe('when pipeline deployment fails', function () {
-    const remoteDeploy = mockArchitectAuth
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(PipelineUtils, 'POLL_INTERVAL', () => 1)
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.name}`)
-        .reply(200, account))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account.id}/environments/${environment.name}`)
-        .reply(200, environment))
-        .nock(MOCK_API_HOST, api => api
-          .post(`/environments/${environment.id}/deploy`)
-          .reply(200, mock_pipeline))
-        .nock(MOCK_API_HOST, api => api
-          .post(`/pipelines/${mock_pipeline.id}/approve`)
-          .reply(200, {}))
-        .nock(MOCK_API_HOST, api => api
-          .get(`/pipelines/${mock_pipeline.id}`)
-          .reply(200, failed_platform_deployment))
-      .stdout({ print })
-      .stderr({ print });
+  baseRemoteDeploy
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/${mock_pipeline.id}/deployments`)
+      .reply(200, { deployments: [ failed_platform_deployment ] }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .it('when pipeline deployment fails it prints useful error with expected url', ctx => {
+      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`);
+      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/platforms/${failed_platform_deployment.pipeline.platform!.name}`);
+    });
 
-    remoteDeploy
-      .command(['deploy', '-e', environment.name, '-a', account.name, '--auto_approve', 'examples/echo:latest'])
-      .it('prints useful error with expected url', ctx => {
-        expect(ctx.stderr).to.contain('this should be the error message');
-      });
-  });
+  baseRemoteDeploy
+    .nock(MOCK_API_HOST, api => api
+      .get(`/pipelines/${mock_pipeline.id}/deployments`)
+      .reply(200, { deployments: [ failed_environment_deployment, failed_environment_deployment_2 ] }))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .it('when multiple pipeline deployments fail it prints useful error with expected urls', ctx => {
+      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`);
+      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`);
+      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment_2.pipeline.environment.name}/deployments/${failed_environment_deployment_2.id}`);
+    });
 });
