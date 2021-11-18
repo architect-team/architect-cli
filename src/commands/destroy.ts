@@ -48,7 +48,7 @@ export default class Destroy extends DeployCommand {
     }
 
     cli.action.start(chalk.blue('Deploying'));
-    await PipelineUtils.pollPipeline(this.app.api, pipeline.id);
+    await PipelineUtils.pollPipeline(this.app, pipeline.id);
     this.log(chalk.green(`Deployed`));
     cli.action.stop();
   }

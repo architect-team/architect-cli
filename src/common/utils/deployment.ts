@@ -1,7 +1,11 @@
+import { Pipeline } from "./pipeline";
+
 export interface Deployment {
   id: string;
   instance_id: string;
-  name: string;
+  applied_at?: string;
+  failed_at?: string;
+  aborted_at?: string;
   type: string;
   component_version: {
     tag: string;
@@ -9,4 +13,5 @@ export interface Deployment {
       name: string;
     };
   };
+  pipeline: Pipeline;
 }

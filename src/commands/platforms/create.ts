@@ -134,7 +134,7 @@ export default class PlatformCreate extends Command {
     this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
     cli.action.start(chalk.blue('Installing platform applications'));
     const pipeline_id = await this.createPlatformApplications(created_platform.id);
-    await PipelineUtils.pollPipeline(this.app.api, pipeline_id);
+    await PipelineUtils.pollPipeline(this.app, pipeline_id);
     cli.action.stop();
 
     return created_platform;

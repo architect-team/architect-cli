@@ -12,6 +12,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
+import { DeploymentFailedError, PipelineAbortedError } from '../common/errors/pipeline-errors';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
@@ -456,9 +457,18 @@ export default class Deploy extends DeployCommand {
 
     cli.action.start(chalk.blue('Deploying'));
     await Promise.all(
-      approved_pipelines.map(async (pipeline) => {
-        await PipelineUtils.pollPipeline(this.app.api, pipeline.pipeline.id);
-        this.log(chalk.green(`${pipeline.component_name} Deployed`));
+      approved_pipelines.map((pipeline) => {
+        return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
+          .then(() => {
+            this.log(chalk.green(`${pipeline.component_name} Deployed`));
+          })
+          .catch((err) => {
+            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError) {
+              this.warn(err.message);
+            } else {
+              throw err;
+            }
+          });
       })
     );
     cli.action.stop();

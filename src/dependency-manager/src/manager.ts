@@ -329,7 +329,7 @@ export default abstract class DependencyManager {
         const validation_error = new ValidationError({
           component: component.name,
           path: `parameters.${pk}`,
-          message: `${pk} is a required parameter`,
+          message: `required parameter '${pk}' was not provided`,
           value: pv.default,
         });
         validation_errors.push(validation_error);
