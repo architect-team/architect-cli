@@ -162,10 +162,7 @@ const propertyToRegex = (prop_body: SchemaObject | ReferenceObject): string => {
     const pattern = (prop_body as SchemaObject).pattern as string;
     return `Must match: <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(pattern)}">Regex</a>`;
   } else if ((prop_body as SchemaObject)?.patternProperties) {
-    if (Object.entries((prop_body as SchemaObject)?.patternProperties).length > 1) {
-      throw new Error('The spec-docs generator was not written with multiple patternProperties in mind, please update it.');
-    }
-    for (const [key, value] of Object.entries((prop_body as SchemaObject)?.patternProperties)) {
+    for (const [key, value] of Object.entries((prop_body as SchemaObject)?.patternProperties).slice(0, 1)) {
       return `<a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent(key)}">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=${encodeURIComponent((value as any).pattern)}">ValueRegex</a>, `;
     }
   }
