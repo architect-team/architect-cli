@@ -1,7 +1,7 @@
 import { expect, test } from '@oclif/test';
 import yaml from 'js-yaml';
 import path from 'path';
-import sinon from 'sinon';
+import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../src/app-config/service';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
@@ -892,6 +892,7 @@ describe('pollPipeline handles failed deployments', () => {
       .reply(200, {}));
 
   baseRemoteDeploy
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
       .reply(200, { deployments: [ aborted_deployment ] }))
@@ -899,11 +900,15 @@ describe('pollPipeline handles failed deployments', () => {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when deployment is aborted it prints useful error with expected url', (ctx) => {
-      expect(ctx.stderr).to.contain(`Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`);
-      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${aborted_deployment.pipeline.environment.name}/deployments/${aborted_deployment.id}`);
+      const message = `Deployment ${aborted_deployment.id} was aborted. See the deployment log for more details:`;
+      const link = `${app_host}/${account.name}/environments/${aborted_deployment.pipeline.environment.name}/deployments/${aborted_deployment.id}`;
+      const expected_error = `${message}\n${link}`
+      expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
+      expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
 
   baseRemoteDeploy
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
       .reply(200, { deployments: [ failed_environment_deployment ] }))
@@ -911,11 +916,15 @@ describe('pollPipeline handles failed deployments', () => {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when environment deployment fails it prints useful error with expected url', ctx => {
-      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`);
-      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment!.name}/deployments/${failed_environment_deployment.id}`);
+      const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
+      const link = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment!.name}/deployments/${failed_environment_deployment.id}`;
+      const expected_error = `${message}\n${link}`
+      expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
+      expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
 
   baseRemoteDeploy
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
       .reply(200, { deployments: [ failed_platform_deployment ] }))
@@ -923,11 +932,15 @@ describe('pollPipeline handles failed deployments', () => {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when pipeline deployment fails it prints useful error with expected url', ctx => {
-      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`);
-      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/platforms/${failed_platform_deployment.pipeline.platform!.name}`);
+      const message = `Pipeline ${mock_pipeline.id} failed because 1 deployment failed:`;
+      const link = `- ${app_host}/${account.name}/platforms/${failed_platform_deployment.pipeline.platform!.name}`;
+      const expected_error = `${message}\n${link}`
+      expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
+      expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
 
   baseRemoteDeploy
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
       .reply(200, { deployments: [ failed_environment_deployment, failed_environment_deployment_2 ] }))
@@ -935,8 +948,11 @@ describe('pollPipeline handles failed deployments', () => {
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
     .it('when multiple pipeline deployments fail it prints useful error with expected urls', ctx => {
-      expect(ctx.stderr).to.contain(`Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`);
-      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`);
-      expect(ctx.stderr).to.contain(`${app_host}/${account.name}/environments/${failed_environment_deployment_2.pipeline.environment.name}/deployments/${failed_environment_deployment_2.id}`);
+      const message = `Pipeline ${mock_pipeline.id} failed because 2 deployments failed:`;
+      const link1 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`;
+      const link2 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment_2.pipeline.environment.name}/deployments/${failed_environment_deployment_2.id}`;
+      const expected_error = `${message}\n${link1}\n${link2}`
+      expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
+      expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });
 });
