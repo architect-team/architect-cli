@@ -29,7 +29,7 @@ export default class ComponentVersions extends Command {
       return;
     }
 
-    const account: Account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account: Account = await AccountUtils.getAccount(this.app, flags.account);
 
     const { data: component } = await this.app.api.get(`/accounts/${account.name}/components/${args.component_name}`);
     const { data: { rows: component_versions } } = await this.app.api.get(`/components/${component.component_id}/versions`);

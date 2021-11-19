@@ -30,7 +30,7 @@ export default class Destroy extends DeployCommand {
   async run(): Promise<void> {
     const { flags } = this.parse(Destroy);
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     cli.action.start(chalk.blue('Creating pipeline'));

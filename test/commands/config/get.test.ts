@@ -27,6 +27,7 @@ const expectConfigValues = async (config_dir: string, config: AppConfig) => {
   await expectValueForField(config_dir, 'api_host', config.api_host);
   await expectValueForField(config_dir, 'oauth_host', config.oauth_host);
   await expectValueForField(config_dir, 'oauth_client_id', config.oauth_client_id);
+  await expectValueForField(config_dir, 'account', config.account);
 };
 
 describe('config:get', function () {

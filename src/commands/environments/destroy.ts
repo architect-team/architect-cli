@@ -48,7 +48,7 @@ export default class EnvironmentDestroy extends Command {
   async run(): Promise<void> {
     const { args, flags } = this.parse(EnvironmentDestroy);
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);
 
     let answers = await inquirer.prompt([{

@@ -418,7 +418,7 @@ export default class Deploy extends DeployCommand {
     const interfaces_map = this.getInterfacesMap();
     const component_secrets = this.getComponentSecrets();
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     const deployment_dtos = [];
