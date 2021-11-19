@@ -23,7 +23,7 @@ export default class Platforms extends Command {
 
     let account: Account | undefined = undefined;
     if (flags.account) {
-      account = await AccountUtils.getAccount(this.app.api, flags.account);
+      account = await AccountUtils.getAccount(this.app, flags.account);
     }
 
     const params = {

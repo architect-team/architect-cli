@@ -32,7 +32,7 @@ export default class Components extends Command {
 
     let account: Account | undefined = undefined;
     if (flags.account) {
-      account = await AccountUtils.getAccount(this.app.api, flags.account);
+      account = await AccountUtils.getAccount(this.app, flags.account);
     }
 
     const params = {

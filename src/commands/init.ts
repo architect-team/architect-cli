@@ -65,7 +65,7 @@ export abstract class InitCommand extends Command {
     const from_path = path.resolve(untildify(flags['from-compose']));
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const answers: any = await inquirer.prompt([
       {
         type: 'input',

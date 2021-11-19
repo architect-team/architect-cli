@@ -48,7 +48,7 @@ export default class PlatformDestroy extends Command {
   async run(): Promise<void> {
     const { args, flags } = this.parse(PlatformDestroy);
 
-    const account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const account = await AccountUtils.getAccount(this.app, flags.account);
     const platform = await PlatformUtils.getPlatform(this.app.api, account, args.platform);
 
     let answers = await inquirer.prompt([{

@@ -89,7 +89,7 @@ export default class ComponentRegister extends Command {
     }
 
     const account_name = new_spec.name.split('/')[0];
-    const selected_account = await AccountUtils.getAccount(this.app.api, account_name);
+    const selected_account = await AccountUtils.getAccount(this.app, account_name);
 
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;

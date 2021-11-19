@@ -114,7 +114,7 @@ export default class TaskExec extends Command {
   async runRemote(): Promise<void> {
     const { flags, args } = this.parse(TaskExec);
 
-    const selected_account = await AccountUtils.getAccount(this.app.api, flags.account);
+    const selected_account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);
 
     let parsed_slug;

@@ -11,6 +11,7 @@ export default class AppConfig {
   app_host: string;
   oauth_host: string;
   oauth_client_id: string;
+  account: string;
 
   constructor(config_dir: string, partial?: Partial<AppConfig>) {
     this.config_dir = config_dir;
@@ -26,6 +27,7 @@ export default class AppConfig {
     this.app_host = 'https://cloud.architect.io';
     this.oauth_host = 'https://auth.architect.io';
     this.oauth_client_id = '079Kw3UOB5d2P6yZlyczP9jMNNq8ixds';
+    this.account = '';
 
     // Override defaults with input values
     Object.assign(this, partial);
@@ -34,6 +36,10 @@ export default class AppConfig {
     if (this.app_host.includes('app.architect.io')) {
       this.app_host = 'https://cloud.architect.io';
     }
+  }
+
+  defaultAccount(): string | null {
+    return this.account === '' ? null : this.account;
   }
 
   getConfigDir(): string {
@@ -53,6 +59,7 @@ export default class AppConfig {
       app_host: this.app_host,
       oauth_host: this.oauth_host,
       oauth_client_id: this.oauth_client_id,
+      account: this.account,
     };
   }
 }
