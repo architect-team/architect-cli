@@ -17,3 +17,10 @@ export class DeploymentFailedError extends Error {
     this.message = `Pipeline ${pipeline_id} failed because ${deployment_string} failed:\n${listified_link_string}`;
   }
 }
+
+export class PollingTimeout extends Error {
+  constructor() {
+    super();
+    this.message = 'Timeout while polling the pipeline';
+  }
+}

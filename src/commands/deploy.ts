@@ -12,7 +12,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { DeploymentFailedError, PipelineAbortedError } from '../common/errors/pipeline-errors';
+import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
 import { EnvironmentUtils } from '../common/utils/environment';
@@ -463,7 +463,7 @@ export default class Deploy extends DeployCommand {
             this.log(chalk.green(`${pipeline.component_name} Deployed`));
           })
           .catch((err) => {
-            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError) {
+            if (err instanceof PipelineAbortedError || err instanceof DeploymentFailedError || err instanceof PollingTimeout) {
               this.warn(err.message);
             } else {
               throw err;
