@@ -735,7 +735,7 @@ describe('local deploy environment', function () {
 describe('remote deploy environment', function () {
   const remoteDeploy = mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -769,7 +769,7 @@ describe('remote deploy environment', function () {
 describe('auto-approve flag with underscore style still works', function () {
   const remoteDeploy = mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(PipelineUtils, 'pollPipeline', async () => null)
+    .stub(PipelineUtils, 'pollPipeline', async () => mock_pipeline)
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -835,7 +835,7 @@ describe('pollPipeline handles failed deployments', () => {
 
   const baseRemoteDeploy = mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves(failed_pipeline))
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ pipeline: failed_pipeline }))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/${account.name}`)
       .reply(200, account))
@@ -910,6 +910,18 @@ describe('pollPipeline handles failed deployments', () => {
       const link1 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment.pipeline.environment.name}/deployments/${failed_environment_deployment.id}`;
       const link2 = `- ${app_host}/${account.name}/environments/${failed_environment_deployment_2.pipeline.environment.name}/deployments/${failed_environment_deployment_2.id}`;
       const expected_error = `${message}\n${link1}\n${link2}`
+      expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
+      expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
+    });
+
+  baseRemoteDeploy
+    .stub(PipelineUtils, 'awaitPipeline', sinon.stub().resolves({ poll_timeout: true }))
+    .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
+    .stdout({ print })
+    .stderr({ print })
+    .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
+    .it('when polling times out it prints expected message', ctx => {
+      const expected_error = 'Timeout while polling the pipeline'
       expect((Deploy.prototype.warn as SinonSpy).getCalls().length).to.equal(1);
       expect((Deploy.prototype.warn as SinonSpy).firstCall.args[0]).to.equal(expected_error);
     });

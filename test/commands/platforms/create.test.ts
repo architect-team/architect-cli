@@ -24,7 +24,10 @@ describe('platform:create', function () {
     // Stub the logger
     sinon.replace(PlatformCreate.prototype, 'log', sinon.stub());
 
-    sinon.replace(PipelineUtils, 'pollPipeline', async () => null);
+    const mock_pipeline = {
+      id: 'test-pipeline-id'
+    }
+    sinon.replace(PipelineUtils, 'pollPipeline', async () => mock_pipeline);
 
     // Stub the log_level
     const config = new AppConfig('', {
