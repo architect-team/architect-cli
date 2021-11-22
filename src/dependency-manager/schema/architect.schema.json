@@ -552,481 +552,6 @@
     }
   },
   "definitions": {
-    "DeployModuleSpec": {
-      "properties": {
-        "path": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-        },
-        "inputs": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "path",
-        "inputs"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
-                },
-                "inputs": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                          },
-                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "path",
-                "inputs"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "DeploySpec": {
-      "properties": {
-        "strategy": {
-          "type": "string",
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Selects the preferred deploy strategy for the service."
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/DeployModuleSpec"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-          "additionalProperties": false
-        }
-      },
-      "type": "object",
-      "required": [
-        "strategy",
-        "modules"
-      ],
-      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "strategy": {
-                  "type": "string",
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Selects the preferred deploy strategy for the service."
-                },
-                "modules": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/definitions/DeployModuleSpec"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
-                              "anyOf": [
-                                {
-                                  "$ref": "#/definitions/DeployModuleSpec"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                          },
-                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
-                  "additionalProperties": false
-                }
-              },
-              "type": "object",
-              "required": [
-                "strategy",
-                "modules"
-              ],
-              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "BuildSpec": {
-      "properties": {
-        "context": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
-        },
-        "args": {
-          "type": "object",
-          "patternProperties": {
-            "^[a-zA-Z0-9_]+$": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "^\\${{\\s*if(.*?)\\s*}}$": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-zA-Z0-9_]+$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "Build args to be passed into `docker build`.",
-                  "additionalProperties": false
-                }
-              ]
-            }
-          },
-          "errorMessage": {
-            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-          },
-          "description": "Build args to be passed into `docker build`.",
-          "additionalProperties": false
-        },
-        "dockerfile": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The path to the Dockerfile relative to the `build.context`",
-          "default": "Dockerfile"
-        }
-      },
-      "type": "object",
-      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "context": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to the directory containing the source code relative to the `architect.yml` file."
-                },
-                "args": {
-                  "type": "object",
-                  "patternProperties": {
-                    "^[a-zA-Z0-9_]+$": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "^\\${{\\s*if(.*?)\\s*}}$": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "patternProperties": {
-                            "^[a-zA-Z0-9_]+$": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            }
-                          },
-                          "errorMessage": {
-                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                          },
-                          "description": "Build args to be passed into `docker build`.",
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "errorMessage": {
-                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
-                  },
-                  "description": "Build args to be passed into `docker build`.",
-                  "additionalProperties": false
-                },
-                "dockerfile": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The path to the Dockerfile relative to the `build.context`",
-                  "default": "Dockerfile"
-                }
-              },
-              "type": "object",
-              "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
     "LivenessProbeSpec": {
       "properties": {
         "success_threshold": {
@@ -1548,6 +1073,481 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "DeployModuleSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+        },
+        "inputs": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "path",
+        "inputs"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path to a Terraform module relative to the `architect.yml` file. Loaded at component registeration time."
+                },
+                "inputs": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                          },
+                          "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "A set of key-value pairs that represent Terraform inputs and their values.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "required": [
+                "path",
+                "inputs"
+              ],
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deploymodulespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "DeploySpec": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Selects the preferred deploy strategy for the service."
+        },
+        "modules": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DeployModuleSpec"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DeployModuleSpec"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+          "additionalProperties": false
+        }
+      },
+      "type": "object",
+      "required": [
+        "strategy",
+        "modules"
+      ],
+      "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Selects the preferred deploy strategy for the service."
+                },
+                "modules": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/DeployModuleSpec"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^[a-z0-9]+(?:[-_][a-z0-9]+)*$": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/definitions/DeployModuleSpec"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                          },
+                          "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.",
+                  "additionalProperties": false
+                }
+              },
+              "type": "object",
+              "required": [
+                "strategy",
+                "modules"
+              ],
+              "description": "The DeploySpec represents deploy-time configuration for a service or a task.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#deployspec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "BuildSpec": {
+      "properties": {
+        "context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+        },
+        "args": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "^\\${{\\s*if(.*?)\\s*}}$": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_]+$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "Build args to be passed into `docker build`.",
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "errorMessage": {
+            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+          },
+          "description": "Build args to be passed into `docker build`.",
+          "additionalProperties": false
+        },
+        "dockerfile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path to the Dockerfile relative to the `build.context`",
+          "default": "Dockerfile"
+        }
+      },
+      "type": "object",
+      "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "context": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path to the directory containing the source code relative to the `architect.yml` file."
+                },
+                "args": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-zA-Z0-9_]+$": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "^\\${{\\s*if(.*?)\\s*}}$": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "patternProperties": {
+                            "^[a-zA-Z0-9_]+$": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "errorMessage": {
+                            "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                          },
+                          "description": "Build args to be passed into `docker build`.",
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "errorMessage": {
+                    "additionalProperties": "must contain only lower alphanumeric and single hyphens or underscores in the middle"
+                  },
+                  "description": "Build args to be passed into `docker build`.",
+                  "additionalProperties": false
+                },
+                "dockerfile": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path to the Dockerfile relative to the `build.context`",
+                  "default": "Dockerfile"
+                }
+              },
+              "type": "object",
+              "description": "An object containing the details necessary for Architect to build the service via Docker. Whenever a service that specifies a build field is registered with Architect, the CLI will trigger a docker build and replace the build field with a resolvable image.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
               },
               "patternProperties": {}
             }
@@ -5155,6 +5155,460 @@
         }
       }
     },
+    "_DebugLivenessProbeSpec": {
+      "properties": {
+        "success_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a health check before the container is considered healthy.",
+          "default": 1
+        },
+        "failure_threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+          "default": 3
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+          "default": "5s"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+          "default": "30s"
+        },
+        "initial_delay": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Delays the check from running for the specified amount of time",
+          "default": "0s"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+        }
+      },
+      "type": "object",
+      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "success_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The number of times to retry a health check before the container is considered healthy.",
+                  "default": 1
+                },
+                "failure_threshold": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
+                  "default": 3
+                },
+                "timeout": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
+                  "default": "5s"
+                },
+                "interval": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
+                  "default": "30s"
+                },
+                "initial_delay": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Delays the check from running for the specified amount of time",
+                  "default": "0s"
+                },
+                "path": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\/.*$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
+                },
+                "command": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
+                },
+                "port": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
+                }
+              },
+              "type": "object",
+              "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
+    "_DebugVolumeSpec": {
+      "properties": {
+        "mount_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Directory at which the volume will be mounted inside the container."
+        },
+        "host_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+          "externalDocs": {
+            "url": "/docs/configuration/services#volumes"
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of volume"
+        },
+        "readonly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "Marks the volume as readonly.",
+          "default": false
+        }
+      },
+      "type": "object",
+      "not": {
+        "type": "object",
+        "required": [
+          "host_path",
+          "key"
+        ]
+      },
+      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+      "additionalProperties": false,
+      "externalDocs": {
+        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+      },
+      "patternProperties": {
+        "^\\${{\\s*if(.*?)\\s*}}$": {
+          "anyOf": [
+            {
+              "properties": {
+                "mount_path": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Directory at which the volume will be mounted inside the container."
+                },
+                "host_path": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
+                },
+                "key": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
+                  "externalDocs": {
+                    "url": "/docs/configuration/services#volumes"
+                  }
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable description of volume"
+                },
+                "readonly": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "Marks the volume as readonly.",
+                  "default": false
+                }
+              },
+              "type": "object",
+              "not": {
+                "type": "object",
+                "required": [
+                  "host_path",
+                  "key"
+                ]
+              },
+              "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
+              "additionalProperties": false,
+              "externalDocs": {
+                "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
+              },
+              "patternProperties": {}
+            }
+          ]
+        }
+      }
+    },
     "_DebugDeployModuleSpec": {
       "properties": {
         "path": {
@@ -5607,460 +6061,6 @@
               "additionalProperties": false,
               "externalDocs": {
                 "url": "https://www.architect.io/docs/reference/architect-yml#buildspec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugLivenessProbeSpec": {
-      "properties": {
-        "success_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a health check before the container is considered healthy.",
-          "default": 1
-        },
-        "failure_threshold": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-          "default": 3
-        },
-        "timeout": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
-          "default": "5s"
-        },
-        "interval": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
-          "default": "30s"
-        },
-        "initial_delay": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Delays the check from running for the specified amount of time",
-          "default": "0s"
-        },
-        "path": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^\\/.*$"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
-        },
-        "command": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
-        },
-        "port": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
-        }
-      },
-      "type": "object",
-      "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "success_threshold": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The number of times to retry a health check before the container is considered healthy.",
-                  "default": 1
-                },
-                "failure_threshold": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The number of times to retry a failed health check before the container is considered unhealthy.",
-                  "default": 3
-                },
-                "timeout": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s",
-                  "default": "5s"
-                },
-                "interval": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "The time period in seconds between each health check execution. You may specify any value between: 5s and 300s",
-                  "default": "30s"
-                },
-                "initial_delay": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Delays the check from running for the specified amount of time",
-                  "default": "0s"
-                },
-                "path": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "pattern": "^\\/.*$"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set)."
-                },
-                "command": {
-                  "anyOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set)."
-                },
-                "port": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set)."
-                }
-              },
-              "type": "object",
-              "description": "Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#livenessprobespec"
-              },
-              "patternProperties": {}
-            }
-          ]
-        }
-      }
-    },
-    "_DebugVolumeSpec": {
-      "properties": {
-        "mount_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Directory at which the volume will be mounted inside the container."
-        },
-        "host_path": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
-        },
-        "key": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
-          "externalDocs": {
-            "url": "/docs/configuration/services#volumes"
-          }
-        },
-        "description": {
-          "type": "string",
-          "description": "Human-readable description of volume"
-        },
-        "readonly": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "string",
-              "pattern": "\\${{\\s*(.*?)\\s*}}",
-              "errorMessage": {
-                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-              }
-            }
-          ],
-          "description": "Marks the volume as readonly.",
-          "default": false
-        }
-      },
-      "type": "object",
-      "not": {
-        "type": "object",
-        "required": [
-          "host_path",
-          "key"
-        ]
-      },
-      "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
-      "additionalProperties": false,
-      "externalDocs": {
-        "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
-      },
-      "patternProperties": {
-        "^\\${{\\s*if(.*?)\\s*}}$": {
-          "anyOf": [
-            {
-              "properties": {
-                "mount_path": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Directory at which the volume will be mounted inside the container."
-                },
-                "host_path": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set)."
-                },
-                "key": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).",
-                  "externalDocs": {
-                    "url": "/docs/configuration/services#volumes"
-                  }
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Human-readable description of volume"
-                },
-                "readonly": {
-                  "anyOf": [
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "\\${{\\s*(.*?)\\s*}}",
-                      "errorMessage": {
-                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
-                      }
-                    }
-                  ],
-                  "description": "Marks the volume as readonly.",
-                  "default": false
-                }
-              },
-              "type": "object",
-              "not": {
-                "type": "object",
-                "required": [
-                  "host_path",
-                  "key"
-                ]
-              },
-              "description": "Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.",
-              "additionalProperties": false,
-              "externalDocs": {
-                "url": "https://www.architect.io/docs/reference/architect-yml#volumespec"
               },
               "patternProperties": {}
             }
