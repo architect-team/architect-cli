@@ -1,4 +1,4 @@
-import { plainToClass, serialize } from 'class-transformer';
+import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ComponentContext, ParameterValue } from './config/component-context';
@@ -92,7 +92,7 @@ export default abstract class DependencyManager {
         ingresses.push([component, interface_name]);
       }
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
-        if (interface_obj?.ingress?.subdomain && interface_obj.ingress?.enabled) {
+        if (interface_obj?.ingress?.subdomain || interface_obj.ingress?.enabled) {
           ingresses.push([component, interface_name]);
         }
       }
@@ -647,7 +647,7 @@ export default abstract class DependencyManager {
       }
 
       if (validate) {
-        validateOrRejectSpec(plainToClass(ComponentSpec, component_spec));
+        validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)));
       }
 
       const component_config = transformComponentSpec(component_spec);

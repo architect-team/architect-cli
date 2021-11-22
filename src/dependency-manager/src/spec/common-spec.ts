@@ -114,6 +114,8 @@ export class LivenessProbeSpec {
   description: 'Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
 })
 export class VolumeSpec {
+  static readonly merge_key = 'mount_path';
+
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString(),

@@ -594,8 +594,8 @@ services:
       const errors = JSON.parse(err.message) as ValidationError[];
       expect(errors).lengthOf(2);
       expect(errors.map(e => e.path)).members([
-        'interfaces.api',
-        'interfaces.api2'
+        'interfaces.api.url',
+        'interfaces.api2.url'
       ])
       expect(errors[0].message).includes('services.api.interfaces.main.url')
       expect(errors[1].message).includes('services.api.interfaces.main.url')
@@ -1480,6 +1480,43 @@ services:
       `must have required property 'command' or must have required property 'port' or must match exactly one schema in oneOf`,
     ]);
   })
+
+  it('throw error for trying to expose incorrect interface', async () => {
+    const yml = `
+    name: test/component
+    services:
+      app:
+        interfaces:
+          main: 8080
+    interfaces:
+      app: \${{ services.app.interfaces.main.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': yml,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'test/component': '/stack/architect.yml',
+    });
+
+    let err;
+    try {
+      await manager.getGraph([
+        await manager.loadComponentSpec('test/component', { 'cloud': 'appppp' }),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+
+    expect(err).instanceOf(ValidationErrors)
+    const errors = JSON.parse(err.message) as ValidationError[];
+    expect(errors).lengthOf(1);
+    expect(errors.map(e => e.path)).members([
+      'interfaces.appppp',
+    ]);
+    expect(errors[0].message).to.include('interfaces.app')
+  });
 
   describe('validate if statements', () => {
     it('cannot use if statement at top level of component', async () => {

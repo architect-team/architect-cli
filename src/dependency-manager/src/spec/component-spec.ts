@@ -1,11 +1,12 @@
 
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { ComponentInstanceMetadata } from '../config/component-config';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
+import { transformObject } from './transform/common-transform';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
@@ -51,6 +52,8 @@ export class IngressSpec {
   description: 'Component Interfaces are the primary means by which components advertise their resolvable addresses to others. Interfaces are the only means by which other components can communicate with your component.',
 })
 export class ComponentInterfaceSpec {
+  static readonly merge_key = 'url';
+
   @IsOptional()
   @ValidateNested()
   ingress?: IngressSpec;
@@ -116,6 +119,8 @@ export class ComponentInterfaceSpec {
   description: 'Components can define configurable parameters that can be used to enrich the contained services with environment-specific information (i.e. environment variables).',
 })
 export class ParameterDefinitionSpec {
+  static readonly merge_key = 'default';
+
   @IsOptional()
   @JSONSchema({
     type: 'boolean',
@@ -161,7 +166,7 @@ export class OutputDefinitionSpec {
   description: 'The top level object of the `architect.yml`; defines a deployable Architect Component.',
 })
 export class ComponentSpec {
-  @Exclude()
+  @Exclude({ toPlainOnly: true })
   metadata!: ComponentInstanceMetadata;
 
   @IsString()
@@ -212,6 +217,7 @@ export class ComponentSpec {
     },
     description: 'A map of named, configurable fields for the component. If a component contains properties that differ across environments (i.e. environment variables), you\'ll want to capture them as parameters. Specifying a primitive value here will set the default parameter value. For more detailed configuration, specify a ParameterDefinitionSpec',
   })
+  @Transform(transformObject(ParameterDefinitionSpec))
   parameters?: Dictionary<string | number | boolean | ParameterDefinitionSpec | null>;
 
   @IsOptional()
@@ -225,6 +231,7 @@ export class ComponentSpec {
     },
     description: 'A map of named, configurable outputs for the component. Outputs allow components to expose configuration details that should be shared with consumers, like API keys or notification topic names.',
   })
+  @Transform(transformObject(OutputDefinitionSpec))
   outputs?: Dictionary<string | number | boolean | OutputDefinitionSpec | null>;
 
   @IsOptional()
@@ -238,6 +245,7 @@ export class ComponentSpec {
     },
     description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
+  @Transform(transformObject(ServiceSpec))
   services?: Dictionary<ServiceSpec>;
 
   @IsOptional()
@@ -251,6 +259,7 @@ export class ComponentSpec {
     },
     description: 'A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.',
   })
+  @Transform(transformObject(TaskSpec))
   tasks?: Dictionary<TaskSpec>;
 
   @IsOptional()
@@ -280,6 +289,7 @@ export class ComponentSpec {
     },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
   })
+  @Transform(transformObject(ComponentInterfaceSpec))
   interfaces?: Dictionary<string | ComponentInterfaceSpec>;
 
   @IsOptional()

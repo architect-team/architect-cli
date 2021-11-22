@@ -4,7 +4,6 @@ import addFormats from "ajv-formats";
 import { plainToClass } from 'class-transformer';
 import cron from 'cron-validate';
 import leven from 'leven';
-import { validateOrRejectConfig } from '../../config/component-validator';
 import { Dictionary } from '../../utils/dictionary';
 import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
@@ -202,8 +201,107 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
   return [];
 };
 
+
+export const validateServiceAndTaskKeys = (component: ComponentSpec): ValidationError[] => {
+  const errors = [];
+
+  // checks for duplicate keys across the two dictionaries
+  const service_keys = Object.keys(component.services || {});
+  const task_keys = Object.keys(component.tasks || {});
+  const duplicates = service_keys.filter(s => task_keys.includes(s));
+
+  if (duplicates.length) {
+    const error = new ValidationError({
+      component: component.name,
+      path: 'services',
+      message: 'services and tasks must not share the same keys',
+      value: duplicates,
+    });
+    errors.push(error);
+  }
+
+  return errors;
+};
+
+export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []): boolean => {
+  const next_name = current_name || search_name;
+  const dependencies = depends_on_map[next_name];
+
+  if (seen_names.includes(next_name)) {
+    return false;
+  }
+
+  seen_names.push(next_name);
+
+  if (!dependencies?.length) {
+    return false;
+  }
+
+  for (const dependency of dependencies) {
+    if (dependency === search_name) {
+      return true;
+    } else if (isPartOfCircularReference(search_name, depends_on_map, dependency, seen_names)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export const validateDependsOn = (component: ComponentSpec): ValidationError[] => {
+  const errors = [];
+  const depends_on_map: { [name: string]: string[] } = {};
+
+  for (const [name, service] of Object.entries(component.services || {})) {
+    depends_on_map[name] = service.depends_on || [];
+  }
+
+  const task_map: { [name: string]: boolean } = {};
+  for (const [name, service] of Object.entries(component.tasks || {})) {
+    depends_on_map[name] = service.depends_on || [];
+    task_map[name] = true;
+  }
+
+  for (const [name, dependencies] of Object.entries(depends_on_map)) {
+    for (const dependency of dependencies) {
+
+      if (task_map[dependency]) {
+        const error = new ValidationError({
+          component: component.name,
+          path: `services.${name}.depends_on`,
+          message: `services.${name}.depends_on.${dependency} must refer to a service, not a task`,
+          value: dependency,
+        });
+        errors.push(error);
+      }
+
+      if (!depends_on_map[dependency]) {
+        const error = new ValidationError({
+          component: component.name,
+          path: `services.${name}.depends_on`,
+          message: `services.${name}.depends_on.${dependency} must refer to a valid service`,
+          value: dependency,
+        });
+        errors.push(error);
+      }
+    }
+    if (isPartOfCircularReference(name, depends_on_map)) {
+      const error = new ValidationError({
+        component: component.name,
+        path: `services.${name}.depends_on`,
+        message: `services.${name}.depends_on must not contain a circular reference`,
+        value: depends_on_map[name],
+      });
+      errors.push(error);
+    }
+  }
+
+  return errors;
+};
+
 export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
+
   if (errors && errors.length) {
     throw new ValidationErrors(errors);
   }
@@ -213,9 +311,15 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
     ref: `${component_spec.name}:latest`,
     tag: 'latest',
     instance_date: new Date(),
-    interfaces: {},
     proxy_port_mapping: {},
   };
-  validateOrRejectConfig(component_spec);
+
+  errors.push(...validateServiceAndTaskKeys(component_spec));
+  errors.push(...validateDependsOn(component_spec));
+
+  if (errors && errors.length) {
+    throw new ValidationErrors(errors);
+  }
+
   return component_spec;
 };

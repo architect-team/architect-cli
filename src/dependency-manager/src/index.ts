@@ -4,7 +4,6 @@ export default DependencyManager;
 export * from './config/common-config';
 export * from './config/component-config';
 export * from './config/component-context';
-export * from './config/component-validator';
 export * from './config/resource-config';
 export * from './config/service-config';
 export * from './config/sidecar-config';

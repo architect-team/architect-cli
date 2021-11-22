@@ -57,8 +57,6 @@ export interface ComponentInstanceMetadata {
   instance_id?: string;
   instance_date: Date;
 
-  interfaces: Dictionary<string>;
-
   proxy_port_mapping: Dictionary<number>;
 
   file?: {

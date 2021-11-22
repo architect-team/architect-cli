@@ -2,10 +2,11 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { buildSpecFromYml, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../../dependency-manager/src';
+import DependencyManager, { buildSpecFromYml, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
 import { ComponentInstanceMetadata } from '../../dependency-manager/src/config/component-config';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/component-builder';
+import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/src/spec/utils/spec-merge';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 
@@ -44,7 +45,6 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_name,
       instance_id: component_ref,
       instance_date: new Date(),
-      interfaces: interfaces || {},
       proxy_port_mapping: {},
     };
     // Load locally linked component config
@@ -70,15 +70,25 @@ export default class LocalDependencyManager extends DependencyManager {
       ...metadata,
     };
 
-    const interface_names = Object.values(spec.metadata.interfaces);
+    const ingresses: Dictionary<IngressSpec> = {};
     if (merged_options.map_all_interfaces) {
       for (const interface_name of Object.keys(spec.interfaces || {})) {
-        if (!interface_names.includes(interface_name)) {
-          spec.metadata.interfaces['__arc__' + interface_name] = interface_name;
-        }
+        ingresses[interface_name] = {
+          enabled: true,
+        };
       }
     }
+    for (const [subdomain, interface_name] of Object.entries(interfaces || {})) {
+      ingresses[interface_name] = {
+        enabled: true,
+        subdomain: subdomain,
+      };
+    }
 
+    const interfaces_spec = generateIngressesOverrideSpec(spec, ingresses);
+    spec = overrideSpec(spec, interfaces_spec);
+
+    // Deprecated: Use if statements instead of debug block
     if (spec.metadata.file?.path && !this.production) {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
@@ -104,30 +114,30 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async loadComponentSpecs(initial_component: ComponentSpec): Promise<ComponentSpec[]> {
-    const component_configs = [];
-    const component_configs_queue = [initial_component];
+    const component_specs = [];
+    const component_specs_queue = [initial_component];
     const loaded_components = new Set();
-    while (component_configs_queue.length) {
-      const component_config = component_configs_queue.pop();
-      if (!component_config) { break; }
-      const ref = component_config.metadata.ref;
+    while (component_specs_queue.length) {
+      const component_spec = component_specs_queue.pop();
+      if (!component_spec) { break; }
+      const ref = component_spec.metadata.ref;
       if (loaded_components.has(ref)) {
         continue;
       }
       loaded_components.add(ref);
-      component_configs.push(component_config);
+      component_specs.push(component_spec);
 
-      for (const [dep_name, dep_tag] of Object.entries(component_config.dependencies || {})) {
-        const dep_component_config = await this.loadComponentSpec(`${dep_name}:${dep_tag}`);
-        component_configs_queue.push(dep_component_config);
+      for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
+        const dep_component_spec = await this.loadComponentSpec(`${dep_name}:${dep_tag}`);
+        component_specs_queue.push(dep_component_spec);
       }
     }
-    return component_configs;
+    return component_specs;
   }
 
-  async getGraph(component_configs: ComponentSpec[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
+  async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
     const gateway_port = await PortUtil.getAvailablePort(80);
     const external_addr = `arc.localhost:${gateway_port}`;
-    return super.getGraph(component_configs, values, interpolate, validate, external_addr);
+    return super.getGraph(component_specs, values, interpolate, validate, external_addr);
   }
 }

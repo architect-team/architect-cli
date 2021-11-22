@@ -1,3 +1,4 @@
+import { ClassConstructor, plainToClass, TransformFnParams } from 'class-transformer';
 import { parse as shell_parse } from 'shell-quote';
 import { LivenessProbeConfig, VolumeConfig } from '../../config/common-config';
 import { Dictionary } from '../../utils/dictionary';
@@ -43,4 +44,13 @@ export const transformVolumeSpec = (key: string, volume: VolumeSpec | string): V
       host_path: volume,
     };
   }
+};
+
+export const transformObject = (cls: ClassConstructor<any>): (params: TransformFnParams) => any => {
+  return ({ value }) => {
+    for (const [k, v] of Object.entries(value)) {
+      value[k] = v instanceof Object ? plainToClass(cls, v) : v;
+    }
+    return value;
+  };
 };
