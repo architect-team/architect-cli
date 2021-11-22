@@ -109,6 +109,35 @@ A Task represents a recurring and/or exiting runtime (e.g. crons, schedulers, tr
  | `labels` | Dict&lt;string&gt; | A simple key-value annotation store; useful to organize, categorize, scope, and select services and tasks. | <a target="_blank" href="https://regexr.com/?expression=%5E(%3F%3D(.%7B1%2C63%7D%2F)%3F.%7B1%2C63%7D%24)(((%5Ba-z0-9%5D%5B-a-z0-9_.%5D*)%3F%5Ba-z0-9%5D)%3F%2F)%3F((%5BA-Za-z0-9%5D%5B-A-Za-z0-9_.%5D*)%3F%5BA-Za-z0-9%5D)%3F%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>, [More](/docs/configuration/services#labels) |
 
 
+## LivenessProbeSpec
+
+Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `success_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a health check before the container is considered healthy. | default: `1` |
+ | `failure_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
+ | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
+ | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
+ | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
+ | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
+ | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
+ | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
+
+
+## VolumeSpec
+
+Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.
+
+| Field  (*=required)  | Type       | Description    | Misc           |
+| -------------------- | ---------- | -------------- | -------------- |
+ | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
+ | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
+ | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
+ | `description` | string | Human-readable description of volume |  |
+ | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
+
+
 ## DeployModuleSpec
 
 The DeploySpec represents deploy-time configuration for a service or a task.
@@ -138,35 +167,6 @@ An object containing the details necessary for Architect to build the service vi
  | `context` | string \| [Expression](/docs/reference/contexts) | The path to the directory containing the source code relative to the `architect.yml` file. |  |
  | `args` | Dict&lt;string&gt; | Build args to be passed into `docker build`. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dockerfile` | string \| [Expression](/docs/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
-
-
-## LivenessProbeSpec
-
-Configuration for service health checks. Architect uses health checks are used for load balancing and rolling updates.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `success_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a health check before the container is considered healthy. | default: `1` |
- | `failure_threshold` | number \| [Expression](/docs/reference/contexts) | The number of times to retry a failed health check before the container is considered unhealthy. | default: `3` |
- | `timeout` | string \| [Expression](/docs/reference/contexts) | The time period to wait for a health check to succeed before it is considered a failure. You may specify any value between: 2s and 60s | default: `5s` |
- | `interval` | string \| [Expression](/docs/reference/contexts) | The time period in seconds between each health check execution. You may specify any value between: 5s and 300s | default: `30s` |
- | `initial_delay` | string \| [Expression](/docs/reference/contexts) | Delays the check from running for the specified amount of time | default: `0s` |
- | `path` | string \| [Expression](/docs/reference/contexts) | Path for the http check executable. Path should be absolute (e.g. /health). If `path` is set, `port` also must be set. This field is disjunctive with `command` (only one of `path` or `command` can be set). |  |
- | `command` | Array&lt;string&gt; \| string | Command that runs the http check. This field is disjunctive with `path` and `port` (only one of `command` or `path`/`port` can be set). |  |
- | `port` | number \| [Expression](/docs/reference/contexts) | Port that the http check will run against. If `port` is set, `path` also must be set. This field is disjunctive with `command` (only one of `port` or `command` can be set). |  |
-
-
-## VolumeSpec
-
-Architect can mount volumes onto your services and tasks to store data that should be shared between running containers or that should persist beyond the lifetime of a container.
-
-| Field  (*=required)  | Type       | Description    | Misc           |
-| -------------------- | ---------- | -------------- | -------------- |
- | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
- | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
- | `description` | string | Human-readable description of volume |  |
- | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
 
 
 ## SidecarSpec
