@@ -1,3 +1,6 @@
+import Account from '../account/account.entity';
+import Platform from '../platform/platform.entity';
+
 export default interface Pipeline {
   id: string;
   failed_at?: string;

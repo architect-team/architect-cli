@@ -1,3 +1,5 @@
+import Pipeline from '../pipeline/pipeline.entity';
+
 export default interface Deployment {
   id: string;
   instance_id: string;
