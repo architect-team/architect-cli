@@ -2,15 +2,7 @@ import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Account } from './account';
-
-export interface Environment {
-  id: string;
-  name: string;
-  platform: {
-    type: string;
-  };
-}
+import Environment from './environment.entity';
 
 export class EnvironmentUtils {
   static flags = {

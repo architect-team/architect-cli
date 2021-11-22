@@ -1,27 +1,14 @@
 import deepmerge from 'deepmerge';
 import { EXPRESSION_REGEX, IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
-import { findPotentialMatch } from '../spec/utils/spec-validator';
 import { Dictionary } from './dictionary';
 import { ValidationError, ValidationErrors } from './errors';
+import { findPotentialMatch } from './match';
 import { ArchitectParser } from './parser';
+import { matches } from './regex';
 
 export const replaceBrackets = (value: string): string => {
   return value.replace(/\[/g, '.').replace(/['|"|\]|\\]/g, '');
 };
-
-export const matches = (text: string, pattern: RegExp): { [Symbol.iterator]: () => Generator<RegExpExecArray, void, unknown>; } => ({
-  [Symbol.iterator]: function* () {
-    const clone = new RegExp(pattern.source, pattern.flags);
-    let match = null;
-    do {
-      match = clone.exec(text);
-      if (match) {
-        yield match;
-        clone.lastIndex = match.index + 1; // Support overlapping match groups
-      }
-    } while (match);
-  },
-});
 
 /*
 ${{ dependencies['architect/cloud'].services }} -> ${{ dependencies.architect/cloud.services }}

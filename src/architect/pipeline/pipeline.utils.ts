@@ -1,29 +1,14 @@
 import AppService from '../../app-config/service';
-import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../errors/pipeline-errors';
-import { Account } from './account';
-import { Deployment } from './deployment';
-import { Platform } from './platform';
-
-export interface Pipeline {
-  id: string;
-  failed_at?: string;
-  applied_at?: string;
-  aborted_at?: string;
-  environment?: {
-    id: string;
-    name: string;
-    platform: Platform;
-    account: Account;
-  };
-  platform?: Platform;
-}
+import Pipeline from '../../architect/pipeline/pipeline.entity';
+import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../../common/errors/pipeline-errors';
+import Deployment from '../deployment/deployment.entity';
 
 interface PipelineResult {
   poll_timeout?: boolean;
   pipeline?: Pipeline;
 }
 
-export class PipelineUtils {
+export default class PipelineUtils {
 
   static POLL_INTERVAL = 10000;
 
@@ -72,7 +57,7 @@ export class PipelineUtils {
     });
   }
 
-  static async handlePipelineResult(app: AppService, {poll_timeout, pipeline}: PipelineResult): Promise<Pipeline> {
+  static async handlePipelineResult(app: AppService, { poll_timeout, pipeline }: PipelineResult): Promise<Pipeline> {
     // Throw timeout error if polling timed out
     if (poll_timeout) {
       throw new PollingTimeout();
@@ -102,6 +87,6 @@ export class PipelineUtils {
       throw new DeploymentFailedError(pipeline.id, failed_deployment_links);
     }
 
-    throw new Error(`Unexpected error while polling pipeline ${pipeline ? pipeline.id : '' }`);
+    throw new Error(`Unexpected error while polling pipeline ${pipeline ? pipeline.id : ''}`);
   }
 }

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { PipelineUtils } from '../../../src/common/utils/pipeline';
+import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import { mockArchitectAuth, MOCK_API_HOST } from '../../utils/mocks';
 
 describe('environment:destroy', () => {

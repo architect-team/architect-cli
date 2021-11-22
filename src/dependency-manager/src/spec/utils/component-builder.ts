@@ -6,13 +6,10 @@ import path from 'path';
 import { ComponentConfig } from '../../config/component-config';
 import { ArchitectError, ValidationError, ValidationErrors } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
+import { ParsedYaml } from '../../utils/types';
 import { ComponentSpec } from '../component-spec';
 import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
-
-// a typing for the raw result of js-yaml.load();
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type ParsedYaml = object | string | number | null | undefined;
 
 export const parseSourceYml = (source_yml: string): ParsedYaml => {
   return yaml.load(source_yml);

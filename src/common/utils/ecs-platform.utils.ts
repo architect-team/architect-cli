@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { CreatePlatformInput } from './platform';
+import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 
 export class EcsPlatformUtils {
 

@@ -1,4 +1,4 @@
-import { ComponentSpec } from '../spec/component-spec';
+import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
 import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
@@ -47,22 +47,6 @@ export interface ParameterDefinitionConfig {
 export interface OutputDefinitionConfig {
   description?: string;
   value: boolean | number | string | null;
-}
-
-export interface ComponentInstanceMetadata {
-  ref: string;
-  tag: string;
-
-  instance_name?: string;
-  instance_id?: string;
-  instance_date: Date;
-
-  proxy_port_mapping: Dictionary<number>;
-
-  file?: {
-    path: string;
-    contents: string;
-  }
 }
 
 export interface ComponentConfig {

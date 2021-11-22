@@ -7,11 +7,11 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
+import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { AccountUtils } from '../common/utils/account';
-import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
+import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {

@@ -1,6 +1,6 @@
-import { ComponentInstanceMetadata } from '../../config/component-config';
 import { ServiceConfig, ServiceInterfaceConfig } from '../../config/service-config';
 import { transformDictionary } from '../../utils/dictionary';
+import { ComponentInstanceMetadata } from '../component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../service-spec';
 import { transformLivenessProbeSpec, transformVolumeSpec } from './common-transform';
 import { transformResourceSpec } from './resource-transform';

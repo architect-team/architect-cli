@@ -1,6 +1,6 @@
+import AccountUtils from '../../architect/account/account.utils';
 import Command from '../../base-command';
 import Table from '../../base-table';
-import { Account, AccountUtils } from '../../common/utils/account';
 import localizedTimestamp from '../../common/utils/localized-timestamp';
 
 export default class Platforms extends Command {

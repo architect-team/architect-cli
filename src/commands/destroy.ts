@@ -2,10 +2,10 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import 'reflect-metadata';
-import { AccountUtils } from '../common/utils/account';
-import { Deployment } from '../common/utils/deployment';
-import { EnvironmentUtils } from '../common/utils/environment';
-import { PipelineUtils } from '../common/utils/pipeline';
+import AccountUtils from '../architect/account/account.utils';
+import Deployment from '../architect/deployment/deployment.entity';
+import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import { DeployCommand } from './deploy';
 
 export default class Destroy extends DeployCommand {

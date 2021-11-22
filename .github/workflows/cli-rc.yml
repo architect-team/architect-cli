@@ -27,6 +27,7 @@ jobs:
           node-version: '14'
       - run: npm ci
       - run: npm run lint
+      - run: npm run check-circular
   test:
     strategy:
       matrix:

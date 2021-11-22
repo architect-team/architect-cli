@@ -1,5 +1,5 @@
-import { ComponentInstanceMetadata } from '../../config/component-config';
 import { TaskConfig } from '../../config/task-config';
+import { ComponentInstanceMetadata } from '../component-spec';
 import { TaskSpec } from '../task-spec';
 import { transformResourceSpec } from './resource-transform';
 

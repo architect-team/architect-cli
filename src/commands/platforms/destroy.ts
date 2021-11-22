@@ -2,9 +2,9 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
+import AccountUtils from '../../architect/account/account.utils';
+import PlatformUtils from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
-import { AccountUtils } from '../../common/utils/account';
-import { PlatformUtils } from '../../common/utils/platform';
 
 export default class PlatformDestroy extends Command {
   static aliases = ['platforms:deregister', 'platform:destroy', 'platforms:destroy'];

@@ -1,6 +1,6 @@
-import { Pipeline } from "./pipeline";
+import Pipeline from '../pipeline/pipeline.entity';
 
-export interface Deployment {
+export default interface Deployment {
   id: string;
   instance_id: string;
   applied_at?: string;
