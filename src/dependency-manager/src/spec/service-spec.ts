@@ -1,10 +1,12 @@
+import { Transform } from 'class-transformer';
 import { Allow, IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
 import { Dictionary } from '../utils/dictionary';
+import { LivenessProbeSpec, VolumeSpec } from './common-spec';
 import { ResourceSpec } from './resource-spec';
 import { SidecarSpec } from './sidecar-spec';
-import { LivenessProbeSpec, VolumeSpec } from './common-spec';
-import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString, StringOrStringArray } from './utils/json-schema-annotations';
+import { transformObject } from './transform/common-transform';
+import { AnyOf, ExclusiveOr, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { Slugs } from './utils/slugs';
 
 @JSONSchema({
@@ -56,6 +58,8 @@ export class ScalingSpec {
   description: 'A service interface exposes service functionality over the network to other services within the same component. If you would like to expose services on the network to external components, see the ComponentInterfaceSpec',
 })
 export class ServiceInterfaceSpec {
+  static readonly merge_key = 'port';
+
   @IsOptional()
   @JSONSchema({
     ...ExpressionOrString(),
@@ -134,6 +138,7 @@ export class ServiceSpec extends ResourceSpec {
     },
     description: 'A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.',
   })
+  @Transform(transformObject(ServiceInterfaceSpec))
   interfaces?: Dictionary<ServiceInterfaceSpec | string | number>;
 
   @IsOptional()
@@ -147,6 +152,7 @@ export class ServiceSpec extends ResourceSpec {
     },
     description: 'A set of services to run as a sidecar for this service.',
   })
+  @Transform(transformObject(SidecarSpec))
   sidecars?: Dictionary<SidecarSpec>;
 
   @IsOptional()
@@ -164,6 +170,7 @@ export class ServiceSpec extends ResourceSpec {
     },
     description: 'A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
   })
+  @Transform(transformObject(VolumeSpec))
   volumes?: Dictionary<VolumeSpec | string>;
 
   @IsOptional()
@@ -173,12 +180,8 @@ export class ServiceSpec extends ResourceSpec {
   })
   replicas?: number | string;
 
-  //TODO:290: JSONschema for interpolation
-  // @IsOptional()/
-  // @JSONSchema({ type: ['string', 'interpolation_ref'] })
-  // replicas?: string | InterpolationString; // consider making this generic on Config
-
   @IsOptional()
   @ValidateNested()
+  @Transform(transformObject(ScalingSpec))
   scaling?: ScalingSpec;
 }
