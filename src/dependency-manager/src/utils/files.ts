@@ -2,7 +2,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import { ParsedYaml } from '../spec/utils/component-builder';
+import { ParsedYaml } from './types';
 
 // https://stackoverflow.com/questions/4253367/how-to-escape-a-json-string-containing-newline-characters-using-javascript
 const escape = (str: string): string => {

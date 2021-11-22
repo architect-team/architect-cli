@@ -1,7 +1,7 @@
 import { parse as shell_parse } from 'shell-quote';
-import { ComponentInstanceMetadata } from '../../config/component-config';
 import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
+import { ComponentInstanceMetadata } from '../component-spec';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
 import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
 

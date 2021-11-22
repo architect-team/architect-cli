@@ -2,9 +2,9 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
+import AccountUtils from '../../architect/account/account.utils';
+import { EnvironmentUtils } from '../../architect/environment/environment.utils';
 import Command from '../../base-command';
-import { AccountUtils } from '../../common/utils/account';
-import { EnvironmentUtils } from '../../common/utils/environment';
 
 export default class EnvironmentDestroy extends Command {
   static aliases = ['environment:destroy', 'envs:destroy', 'env:destroy', 'env:deregister', 'environment:deregister'];

@@ -1,5 +1,5 @@
-import { ComponentInstanceMetadata } from '../../config/component-config';
 import { SidecarConfig } from '../../config/sidecar-config';
+import { ComponentInstanceMetadata } from '../component-spec';
 import { SidecarSpec } from '../sidecar-spec';
 import { transformLivenessProbeSpec } from './common-transform';
 import { transformResourceSpec } from './resource-transform';

@@ -1,11 +1,11 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
+import AccountUtils from '../architect/account/account.utils';
+import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { AccountUtils } from '../common/utils/account';
 import * as Docker from '../common/utils/docker';
-import { EnvironmentUtils } from '../common/utils/environment';
 import { ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class TaskExec extends Command {

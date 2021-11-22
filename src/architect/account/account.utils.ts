@@ -3,12 +3,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
 
-export interface Account {
-  id: string;
-  name: string;
-}
-
-export class AccountUtils {
+export default class AccountUtils {
   static flags = {
     account: flags.string({
       description: 'Architect account',

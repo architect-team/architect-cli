@@ -6,8 +6,7 @@ import assert from 'assert';
 import estraverse from 'estraverse';
 import { EXPRESSION_REGEX } from '../spec/utils/interpolation';
 import { ValidationError } from './errors';
-import { matches } from './interpolation';
-
+import { matches } from './regex';
 
 function isIdentifier(node: any): boolean {
   if (node.type === 'Identifier') {

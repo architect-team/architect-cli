@@ -3,15 +3,15 @@ import yaml from 'js-yaml';
 import path from 'path';
 import sinon, { SinonSpy } from 'sinon';
 import AppService from '../../src/app-config/service';
+import PipelineUtils from '../../src/architect/pipeline/pipeline.utils';
 import Deploy from '../../src/commands/deploy';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
 import * as Docker from '../../src/common/utils/docker';
-import { PipelineUtils } from '../../src/common/utils/pipeline';
 import { resourceRefToNodeRef } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { buildSpecFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
-import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 import { app_host } from '../config.json';
+import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = false;
@@ -853,7 +853,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [ aborted_deployment ] ))
+      .reply(200, [aborted_deployment]))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -869,7 +869,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [ failed_environment_deployment ] ))
+      .reply(200, [failed_environment_deployment]))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -885,7 +885,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [ failed_platform_deployment ] ))
+      .reply(200, [failed_platform_deployment]))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])
@@ -901,7 +901,7 @@ describe('pollPipeline handles failed deployments', () => {
     .stub(Deploy.prototype, 'warn', sinon.fake.returns(null))
     .nock(MOCK_API_HOST, api => api
       .get(`/pipelines/${mock_pipeline.id}/deployments`)
-      .reply(200, [ failed_environment_deployment, failed_environment_deployment_2 ] ))
+      .reply(200, [failed_environment_deployment, failed_environment_deployment_2]))
     .stdout({ print })
     .stderr({ print })
     .command(['deploy', '-e', environment.name, '-a', account.name, '--auto-approve', 'examples/echo:latest'])

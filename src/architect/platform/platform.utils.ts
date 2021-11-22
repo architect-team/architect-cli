@@ -2,13 +2,7 @@ import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Account } from './account';
-
-export interface Platform {
-  id: string;
-  name: string;
-  account: Account;
-}
+import Platform from './platform.entity';
 
 export interface CreatePlatformInput {
   type: string;
@@ -34,7 +28,7 @@ export interface EcsPlatformCredentials {
   access_secret: string;
 }
 
-export class PlatformUtils {
+export default class PlatformUtils {
   static flags = {
     platform: flags.string({
       description: 'Architect platform',

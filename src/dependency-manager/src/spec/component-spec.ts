@@ -2,13 +2,28 @@
 import { Exclude, Transform } from 'class-transformer';
 import { Allow, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { ComponentInstanceMetadata } from '../config/component-config';
 import { Dictionary } from '../utils/dictionary';
 import { ServiceSpec } from './service-spec';
 import { TaskSpec } from './task-spec';
 import { transformObject } from './transform/common-transform';
 import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-schema-annotations';
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
+
+export interface ComponentInstanceMetadata {
+  ref: string;
+  tag: string;
+
+  instance_name?: string;
+  instance_id?: string;
+  instance_date: Date;
+
+  proxy_port_mapping: Dictionary<number>;
+
+  file?: {
+    path: string;
+    contents: string;
+  }
+}
 
 @JSONSchema({
   description: 'An ingress exposes an interface to external network traffic through an architect-deployed gateway.',

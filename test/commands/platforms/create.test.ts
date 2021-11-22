@@ -7,9 +7,9 @@ import path from 'path';
 import sinon from 'sinon';
 import AppConfig from '../../../src/app-config/config';
 import AppService from '../../../src/app-config/service';
+import PipelineUtils from '../../../src/architect/pipeline/pipeline.utils';
 import PlatformCreate from '../../../src/commands/platforms/create';
 import { KubernetesPlatformUtils } from '../../../src/common/utils/kubernetes-platform.utils';
-import { PipelineUtils } from '../../../src/common/utils/pipeline';
 import ARCHITECTPATHS from '../../../src/paths';
 
 describe('platform:create', function () {

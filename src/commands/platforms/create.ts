@@ -2,12 +2,12 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
+import AccountUtils from '../../architect/account/account.utils';
+import PipelineUtils from '../../architect/pipeline/pipeline.utils';
+import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
-import { AccountUtils } from '../../common/utils/account';
 import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
-import { PipelineUtils } from '../../common/utils/pipeline';
-import { CreatePlatformInput } from '../../common/utils/platform';
 import { Slugs } from '../../dependency-manager/src';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 
