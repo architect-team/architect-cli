@@ -306,7 +306,7 @@ export default class Deploy extends DeployCommand {
     let component_secrets: any = {};
     if (secrets_file_path && fs.statSync(secrets_file_path)) {
       const secrets_file_data = fs.readFileSync(secrets_file_path);
-      component_secrets = yaml.load(secrets_file_data.toString('utf-8'), { schema: yaml.FAILSAFE_SCHEMA });
+      component_secrets = yaml.load(secrets_file_data.toString('utf-8'));
     }
     return component_secrets;
   }
