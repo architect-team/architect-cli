@@ -18,6 +18,7 @@ export default class LocalDependencyManager extends DependencyManager {
   linked_components: Dictionary<string>;
   use_sidecar = false;
   production = false;
+  now = new Date();
 
   constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}, production = false) {
     super();
@@ -43,7 +44,7 @@ export default class LocalDependencyManager extends DependencyManager {
       tag: tag,
       instance_name,
       instance_id: component_ref,
-      instance_date: new Date(),
+      instance_date: this.now,
       proxy_port_mapping: {},
     };
     // Load locally linked component config
