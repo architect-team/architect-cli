@@ -68,12 +68,13 @@ describe('local deploy environment', function () {
         required: true
       compose_escaped_variable:
         required: false
+      api_port:
 
     services:
       api:
         image: heroku/nodejs-hello-world
         interfaces:
-          main: 3000
+          main: \${{ parameters.api_port }}
         environment:
           a_required_key: \${{ parameters.a_required_key }}
           another_required_key: \${{ parameters.another_required_key }}
@@ -91,11 +92,13 @@ describe('local deploy environment', function () {
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value',
       'compose_escaped_variable': 'variable_split_$_with_dollar$signs',
+      'api_port': 3000
     },
   }
   const wildcard_parameter_secrets = {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
+      'api_port': 3000
     },
     'examples/hello-world:la*': {
       'one_more_required_param': 'one_more_value'
@@ -108,7 +111,8 @@ describe('local deploy environment', function () {
     'examples/hello-world:*': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
-      'one_more_required_param': 'one_more_value'
+      'one_more_required_param': 'one_more_value',
+      'api_port': 3000
     },
     '*': {
       'a_required_key': 'a_value_which_will_be_overwritten',

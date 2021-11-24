@@ -684,6 +684,77 @@ describe('components spec v1', function () {
       ])
     });
 
+    it('components with shared dependencies', async () => {
+      const component_a = `
+      name: examples/component-a
+      dependencies:
+        examples/component-c: latest
+      services:
+        app:
+          image: test:v1
+          environment:
+            C_ADDR: \${{ dependencies.examples/component-c.interfaces.api.url }}
+            C_EXT_ADDR: \${{ dependencies.examples/component-c.ingresses.api.url }}
+      `;
+
+      const component_b = `
+      name: examples/component-b
+      dependencies:
+        examples/component-c: latest
+      services:
+        api:
+          image: test:v1
+          environment:
+            C_ADDR: \${{ dependencies.examples/component-c.interfaces.api.url }}
+            C_EXT_ADDR: \${{ dependencies.examples/component-c.ingresses.api.url }}
+      `;
+
+      const component_c = `
+      name: examples/component-c
+      services:
+        api:
+          image: test:v1
+          interfaces:
+            main: 8080
+      interfaces:
+        api: \${{ services.api.interfaces.main.url }}
+      `;
+
+      mock_fs({
+        '/a/architect.yaml': component_a,
+        '/b/architect.yaml': component_b,
+        '/c/architect.yaml': component_c,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/component-a': '/a/architect.yaml',
+        'examples/component-b': '/b/architect.yaml',
+        'examples/component-c': '/c/architect.yaml'
+      });
+      const graph = await manager.getGraph([
+        ...await manager.loadComponentSpecs(
+          await manager.loadComponentSpec('examples/component-a')),
+        ...await manager.loadComponentSpecs(
+          await manager.loadComponentSpec('examples/component-b')),
+      ]);
+
+      const a_ref = resourceRefToNodeRef('examples/component-a/app:latest');
+      const b_ref = resourceRefToNodeRef('examples/component-b/api:latest');
+      const c_ref = resourceRefToNodeRef('examples/component-c/api:latest');
+
+      const a_node = graph.getNodeByRef(a_ref) as ServiceNode;
+      expect(a_node.config.environment).to.deep.equal({
+        C_ADDR: `http://${c_ref}:8080`,
+        C_EXT_ADDR: `http://api.arc.localhost`
+      })
+
+      const b_node = graph.getNodeByRef(b_ref) as ServiceNode;
+      expect(b_node.config.environment).to.deep.equal({
+        C_ADDR: `http://${c_ref}:8080`,
+        C_EXT_ADDR: `http://api.arc.localhost`
+      })
+    });
+
     it('validation does not run if validate is set to false', async () => {
       const component_config_yml = `
         name: architect/cloud
