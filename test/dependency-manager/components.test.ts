@@ -343,6 +343,21 @@ describe('components spec v1', function () {
         },
         interfaces: {},
         dependencies: {
+          'examples/hello-world2': 'latest'
+        }
+      };
+
+      const component_config2 = {
+        name: 'examples/hello-world2',
+        services: {
+          api: {
+            interfaces: {
+              main: 8080
+            }
+          }
+        },
+        interfaces: {},
+        dependencies: {
           'examples/hello-circular-world': 'latest'
         }
       };
@@ -366,6 +381,9 @@ describe('components spec v1', function () {
         '/stack/architect.yml': yaml.dump(component_config),
       });
 
+      nock('http://localhost').get(`/accounts/examples/components/hello-world2/versions/latest`)
+        .reply(200, { tag: 'latest', config: component_config2, service: { url: 'examples/hello-world2:latest' } });
+
       nock('http://localhost').get(`/accounts/examples/components/hello-circular-world/versions/latest`)
         .reply(200, { tag: 'latest', config: circular_component_config, service: { url: 'examples/hello-circular-world:latest' } });
 
@@ -376,12 +394,13 @@ describe('components spec v1', function () {
         });
         await manager.getGraph([
           await manager.loadComponentSpec('examples/hello-world:latest'),
+          await manager.loadComponentSpec('examples/hello-world2:latest'),
           await manager.loadComponentSpec('examples/hello-circular-world:latest'),
         ]);
       } catch (err) {
         manager_error = err.message;
       }
-      expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world:latest <> examples/hello-world:latest)');
+      expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world:latest <> examples/hello-world:latest <> examples/hello-world2:latest)');
     });
 
     it('non-circular component dependency is not rejected', async () => {
