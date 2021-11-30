@@ -16,6 +16,9 @@ keywords:
   - search
   - keywords
 parameters:
+  environment:
+    default: local
+    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
   db_user:
     required: true
     description: Human-readable description of my parameter
@@ -63,7 +66,8 @@ services:
       path: /health
     environment:
       API_ADDR: ${{ services['my-api'].interfaces.public.url }}
-    debug:
+    # Local configuration for my-frontend service
+    ${{ if parameters.environment == 'local' }}:
       command: npm run dev
       volumes:
         src:
