@@ -22,6 +22,10 @@ export interface DependencyContext {
   interfaces: Dictionary<ComponentInterfaceConfig>;
 }
 
+export interface ArchitectContext {
+  environment: string;
+}
+
 export interface ComponentContext {
   name: string;
   dependencies: Dictionary<DependencyContext>;
@@ -32,6 +36,9 @@ export interface ComponentContext {
   services: Dictionary<ServiceContext>;
   tasks: Dictionary<TaskContext>;
 
+  architect: ArchitectContext;
+
+  // Deprecated
   environment: {
     ingresses: Dictionary<Dictionary<ComponentInterfaceConfig>>;
   };

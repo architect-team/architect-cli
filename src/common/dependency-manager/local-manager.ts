@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
+import DependencyManager, { ArchitectContext, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/component-builder';
 import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/src/spec/utils/spec-merge';
@@ -133,6 +133,12 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
     return component_specs;
+  }
+
+  getArchitectContext(): ArchitectContext {
+    return {
+      environment: 'local',
+    };
   }
 
   async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {

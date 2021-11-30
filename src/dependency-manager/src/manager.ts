@@ -1,7 +1,7 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
 import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
-import { ComponentContext, ParameterValue } from './config/component-context';
+import { ArchitectContext, ComponentContext, ParameterValue } from './config/component-context';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
 import OutputEdge from './graph/edge/output';
@@ -383,6 +383,8 @@ export default abstract class DependencyManager {
     }
   }
 
+  abstract getArchitectContext(): ArchitectContext;
+
   async getGraph(component_specs: ComponentSpec[], all_secrets: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
     if (validate) {
       this.detectCircularDependencies(component_specs);
@@ -399,6 +401,7 @@ export default abstract class DependencyManager {
     for (let component_spec of component_specs) {
       let context: ComponentContext = {
         name: component_spec.name,
+        architect: this.getArchitectContext(),
         environment: {
           ingresses: {},
         },

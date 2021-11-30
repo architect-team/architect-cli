@@ -136,6 +136,8 @@ describe('template', () => {
             NODE_ENV: production
             \${{ if (parameters.environment == 'local') }}:
               NODE_ENV: development
+            \${{ if architect.environment == 'local' }}:
+              LOCAL: 1
         \${{ if 1 }}:
           environment:
             TEST: 1
@@ -154,6 +156,7 @@ describe('template', () => {
       const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node.config.environment).to.deep.eq({
+        LOCAL: '1',
         NODE_ENV: 'development',
         TEST: '1'
       });
@@ -163,6 +166,7 @@ describe('template', () => {
       ], { '*': { environment: 'prod' } });
       const node2 = graph2.getNodeByRef(api_ref) as ServiceNode;
       expect(node2.config.environment).to.deep.eq({
+        LOCAL: '1',
         NODE_ENV: 'production',
         TEST: '1'
       });
