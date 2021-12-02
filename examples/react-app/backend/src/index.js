@@ -3,7 +3,6 @@ require('./tracer');
 const winston = require('winston');
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 
 const logger = winston.createLogger({
   level: 'info',
@@ -22,7 +21,6 @@ const sequelize = new Sequelize(process.env.DB_ADDR, {
   password: process.env.DB_PASS,
   dialect: 'postgres',
   retry: {
-    max: 3,
     timeout: 10000,
     match: [
       Sequelize.ConnectionError,
@@ -36,8 +34,10 @@ const Name = sequelize.define('name', {
 });
 
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({
+  extended: true
+}));
 
 app.get('/names', async (req, res) => {
   logger.info(`GET /names`)
