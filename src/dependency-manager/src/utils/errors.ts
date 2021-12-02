@@ -1,4 +1,3 @@
-import yaml from 'js-yaml';
 
 function escapeRegex(string: string) {
   return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -8,7 +7,7 @@ const addLineNumbers = (value: string, errors: ValidationError[]): void => {
   const rows = value.split('\n');
   const total_rows = rows.length;
   for (const error of errors) {
-    const keys = error.path.split('.');
+    const keys = error.path.split(/(?<!\$\{\{)\.(?![^.]+[}}])/); // Split on periods except when inside ${{ }}
     let pattern = '(.*?)' + keys.map((key) => `${escapeRegex(key)}:`).join('(.*?)');
 
     const target_value = `${error.value}`.split('\n')[0];
@@ -78,17 +77,24 @@ export class ValidationError {
 export class ValidationErrors extends ArchitectError {
   file?: { path: string; contents: string };
 
-  constructor(errors: any[], file?: { path: string; contents: string }) {
+  constructor(errors: ValidationError[], file?: { path: string; contents: string }) {
     super();
 
     this.name = `ValidationErrors`;
     if (file) {
       addLineNumbers(file.contents, errors);
-      try {
-        this.name += `\ncomponent: ${(yaml.load(file.contents) as any).name}`;
-        // eslint-disable-next-line no-empty
-      } catch { }
-      this.name += `\nfile: ${file.path}`;
+
+      let first_error: ValidationError | undefined;
+      for (const error of errors) {
+        if (!first_error || (first_error.start?.row || 1) > (error.start?.row || 1)) {
+          first_error = error;
+        }
+      }
+
+      if (first_error) {
+        this.name += `\ncomponent: ${first_error?.component}`;
+      }
+      this.name += `\nfile: ${file.path}:${first_error?.start?.row || 1}:${first_error?.start?.column || 1}`;
     }
 
     this.message = JSON.stringify(errors, null, 2);

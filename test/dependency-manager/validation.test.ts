@@ -398,6 +398,46 @@ services:
       expect(errors[0].end?.column).eq(25);
     });
 
+    it('invalid key value', async () => {
+      const component_config = `
+      name: test/component
+      parameters:
+        environment: missing if
+      services:
+        app:
+          \${{ parameters.environment == 'local' }}:
+            environment:
+              TEST: 1
+      `
+
+      mock_fs({
+        '/component.yml': component_config,
+      });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'test/component': '/component.yml',
+      });
+      let err;
+      try {
+        await manager.getGraph([
+          await manager.loadComponentSpec('test/component'),
+        ]);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).instanceOf(ValidationErrors)
+      const errors = JSON.parse(err.message) as ValidationError[];
+      expect(errors).lengthOf(1);
+      expect(errors.map(e => e.path)).members([
+        `services.app.\${{ parameters.environment == 'local' }}`,
+      ])
+      expect(errors[0].invalid_key).is.true;
+      expect(errors[0].start?.row).eq(7);
+      expect(errors[0].start?.column).eq(11);
+      expect(errors[0].end?.row).eq(7);
+      expect(errors[0].end?.column).eq(51);
+    });
+
     it('invalid component parameter keys', async () => {
       const component_config = `
       name: test/component
@@ -777,18 +817,14 @@ services:
       expect(errors.map(e => e.path)).members([
         'services.api.environment.OTHER_ADDR',
       ])
-
-      /* TODO:288 line #s
-      expect(err).instanceOf(ValidationErrors)
-      expect(err.errors).to.deep.eq({
-        "interpolation.dependencies.test/other.interfaces.fake.url": {
-          "interpolation": "${{ dependencies.test/other.interfaces.fake.url }} is invalid",
-          "value": "dependencies.test/other.interfaces.fake.url",
-          "column": 24,
-          "line": 9,
-        }
+      expect(errors[0].start).to.deep.equal({
+        row: 7,
+        column: 29
       })
-      */
+      expect(errors[0].end).to.deep.equal({
+        row: 7,
+        column: 71
+      })
     });
   });
 
