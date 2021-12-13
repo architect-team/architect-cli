@@ -33,6 +33,7 @@ export default class PlatformUtils {
     platform: flags.string({
       description: 'Architect platform',
       env: 'ARCHITECT_PLATFORM',
+      parse: value => value.toLowerCase(),
     }),
   };
 
