@@ -9,6 +9,7 @@ export default class AccountUtils {
       description: 'Architect account',
       env: 'ARCHITECT_ACCOUNT',
       char: 'a',
+      parse: value => value.toLowerCase(),
     }),
   };
 

@@ -10,6 +10,7 @@ export class EnvironmentUtils {
       description: 'Architect environment',
       char: 'e',
       env: 'ARCHITECT_ENVIRONMENT',
+      parse: value => value.toLowerCase(),
     }),
   };
 
