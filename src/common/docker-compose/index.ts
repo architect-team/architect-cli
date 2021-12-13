@@ -118,6 +118,7 @@ export class DockerComposeUtils {
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
 
+      /* Disable healthcheck since we removed autoheal container
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
@@ -137,6 +138,7 @@ export class DockerComposeUtils {
           }
         }
       }
+      */
 
       const is_wsl = os.release().toLowerCase().includes('microsoft');
       if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
