@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix: ${{fromJson(needs.detect-changes.outputs.matrix)}}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: '16'

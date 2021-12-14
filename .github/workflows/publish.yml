@@ -90,9 +90,10 @@ jobs:
           - -win32-x86.tar.gz
           - -darwin-x64.tar.gz
     steps:
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v2
         with:
           name: dist
+          path: dist
       - name: Find artifact path
         id: find-artifact
         run: |
