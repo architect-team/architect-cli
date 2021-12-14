@@ -85,8 +85,7 @@ jobs:
           git commit -m "New CLI RC from commit: ${{ github.sha }}"
           git pull
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: oclif-dev pack
-        run: sudo npx oclif-dev pack
+      - run: npm run pack
       - name: Archive artifact
         uses: actions/upload-artifact@v2
         with:
