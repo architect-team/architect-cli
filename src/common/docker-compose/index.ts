@@ -161,15 +161,17 @@ export class DockerComposeUtils {
           }
 
           if (build.context || args.length) {
-            const compose_build: any = {};
+            const compose_build: DockerServiceBuild = {};
             if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
             if (args.length) compose_build.args = args;
             service.build = compose_build;
           }
 
           if (build.dockerfile) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
+            if (!service.build) {
+              service.build = {};
+            }
+            (service.build as DockerServiceBuild).dockerfile = build.dockerfile;
           }
         } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");

@@ -137,7 +137,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
   getArchitectContext(): ArchitectContext {
     return {
-      environment: 'local',
+      environment: this.production ? 'local-production' : 'local',
     };
   }
 
