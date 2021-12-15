@@ -1,4 +1,5 @@
 import execa, { Options } from 'execa';
+import which from 'which';
 
 export const oras = async (args: string[], options?: Options): Promise<any> => {
   const cmd = execa('oras', args, options);
@@ -10,7 +11,7 @@ export const oras = async (args: string[], options?: Options): Promise<any> => {
     return await cmd;
   } catch (err) {
     try {
-      await execa('which', ['oras']);
+      which.sync('oras');
     } catch {
       throw new Error('Architect requires oras to be installed for custom modules.\nhttps://github.com/deislabs/oras#cli-installation');
     }

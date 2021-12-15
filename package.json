@@ -45,7 +45,8 @@
     "simple-oauth2": "^4.2.0",
     "tmp": "^0.2.1",
     "tslib": "2.1.0",
-    "untildify": "4.0.0"
+    "untildify": "4.0.0",
+    "which": "^2.0.2"
   },
   "devDependencies": {
     "@oclif/dev-cli": "1.26.0",
@@ -67,6 +68,7 @@
     "@types/simple-oauth2": "^4.1.0",
     "@types/sinon": "9.0.10",
     "@types/tmp": "^0.2.0",
+    "@types/which": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "4.29.3",
     "@typescript-eslint/parser": "4.29.3",
     "chai": "4.3.0",

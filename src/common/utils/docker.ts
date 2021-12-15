@@ -1,4 +1,5 @@
 import execa, { Options } from 'execa';
+import which from 'which';
 import { Slugs } from '../../dependency-manager/src/spec/utils/slugs';
 
 const CACHE_TAG = 'architect-cache';
@@ -20,7 +21,7 @@ export const docker = async (args: string[], opts = { stdout: true }, execa_opts
  */
 export const verify = async (): Promise<void> => {
   try {
-    await execa('which', ['docker']);
+    which.sync('docker');
   } catch {
     throw new Error('Architect requires Docker to be installed. Please install it and try again.');
   }

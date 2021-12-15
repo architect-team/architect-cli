@@ -5,6 +5,7 @@ import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
+import which from 'which';
 import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -325,7 +326,7 @@ export class DockerComposeUtils {
       return await cmd;
     } catch (err) {
       try {
-        await execa('which', ['docker-compose']);
+        which.sync('docker-compose');
       } catch {
         throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
       }
