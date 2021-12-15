@@ -10,11 +10,14 @@ import untildify from 'untildify';
 import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
+import { validateOrRejectSpec } from '../dependency-manager/src';
 import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
 import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {
+  local_config_placeholder = '<LOCAL_CONFIG_PLACEHOLDER>'; // TODO: update? currently passes validation, but change to something less general?
+
   auth_required(): boolean {
     return false;
   }
@@ -32,7 +35,7 @@ export abstract class InitCommand extends Command {
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
     }),
-    account: flags.string({
+    account: flags.string({ // TODO: should this be required? why can't we use this offline or without an account?
       char: 'a',
     }),
     name: flags.string({
@@ -87,7 +90,6 @@ export abstract class InitCommand extends Command {
     architect_component.services = {};
     for (const [service_name, service] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
-      architect_service.description = `${service_name} converted to an Architect service with "architect init"`;
       architect_service.environment = service.environment;
       architect_service.command = service.command;
       architect_service.entrypoint = service.entrypoint;
@@ -122,13 +124,15 @@ export abstract class InitCommand extends Command {
       let port_index = 0;
       architect_service.interfaces = {};
       for (const port of service.ports || []) {
+        const interface_name = port_index === 0 ? 'main' : `main${port_index + 1}`;
+
         if (typeof port === 'string' || typeof port === 'number') {
           const single_number_port_regex = new RegExp('^\\d+$');
           const single_port_regex = new RegExp('(\\d+[:]\\d+)\\/*([a-zA-Z]+)*$');
           const port_range_regex = new RegExp('(\\d+[-]\\d+)\\/*([a-zA-Z]+)*$');
 
           if (single_number_port_regex.test(port)) {
-            architect_service.interfaces[`interface${port_index}`] = port;
+            architect_service.interfaces[interface_name] = typeof port === 'string' ? parseInt(port) : port;
             port_index++;
           } else if (single_port_regex.test(port)) {
             const matches = single_port_regex.exec(port);
@@ -139,14 +143,14 @@ export abstract class InitCommand extends Command {
             if (matches && matches.length >= 2) {
               interface_spec.port = parseInt(matches[1].split(':')[1]);
             }
-            (architect_service.interfaces[`interface${port_index}`] as Partial<ServiceInterfaceSpec>) = interface_spec;
+            (architect_service.interfaces[interface_name] as Partial<ServiceInterfaceSpec>) = interface_spec;
             port_index++;
           } else if (port_range_regex.test(port)) {
             const matches = port_range_regex.exec(port);
             if (matches && matches.length >= 2) {
               const [start, end] = matches[1].split('-');
               for (let i = parseInt(start); i < parseInt(end) + 1; i++) {
-                architect_service.interfaces[`interface${port_index}`] = i;
+                architect_service.interfaces[interface_name] = i;
                 port_index++;
               }
             }
@@ -159,9 +163,12 @@ export abstract class InitCommand extends Command {
           if (port.protocol) {
             interface_spec.protocol = port.protocol;
           }
-          (architect_service.interfaces[`interface${port_index}`] as Partial<ServiceInterfaceSpec>) = interface_spec;
+          (architect_service.interfaces[interface_name] as Partial<ServiceInterfaceSpec>) = interface_spec;
           port_index++;
         }
+      }
+      if (!Object.keys(architect_service.interfaces).length) {
+        delete architect_service.interfaces;
       }
 
       const compose_volumes = Object.keys(docker_compose.volumes || {});
@@ -170,7 +177,7 @@ export abstract class InitCommand extends Command {
       debug_config.volumes = {};
       architect_service.volumes = {};
       for (const volume of (service.volumes || [])) {
-        const volume_key = `volume${volume_index}`;
+        const volume_key = volume_index === 0 ? 'volume' : `volume${volume_index + 1}`;
         if (typeof volume === 'string') {
           const volume_parts = volume.split(':');
           if (volume_parts.length === 1) {
@@ -216,8 +223,14 @@ export abstract class InitCommand extends Command {
         }
         volume_index++;
       }
-      if (debug_config) {
-        architect_service.debug = debug_config;
+      if (!Object.keys(debug_config.volumes).length) {
+        delete debug_config.volumes;
+      }
+      if (!Object.keys(architect_service.volumes).length) {
+        delete architect_service.volumes;
+      }
+      if (Object.keys(debug_config).length) {
+        (architect_service as any)[this.local_config_placeholder] = debug_config;
       }
 
       if (service.depends_on?.length || service.external_links?.length) {
@@ -228,12 +241,14 @@ export abstract class InitCommand extends Command {
         }
       }
 
-      architect_component.interfaces = {};
-      architect_component.parameters = {};
       architect_component.services[service_name] = architect_service;
     }
 
-    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
+    let architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
+    const debug_regex = new RegExp(`${this.local_config_placeholder}:`, 'gm');
+    architect_yml = architect_yml.replace(debug_regex, "${{ if architect.environment == 'local' }}:");
+    validateOrRejectSpec(yaml.load(architect_yml));
+
     fs.writeFileSync(flags['component-file'], architect_yml);
     this.log(chalk.green(`Wrote Architect component config to ${flags['component-file']}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
