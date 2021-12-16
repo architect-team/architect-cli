@@ -320,7 +320,10 @@ export default class Deploy extends DeployCommand {
         try {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
-          extra_env_vars[param_name.substring(4)] = parseFloat(extra_env_vars[param_name.substring(4)]);
+          const parsed = parseFloat(param_value);
+          if (!isNaN(parsed)) {
+            extra_env_vars[param_name.substring(4)] = parsed;
+          }
           // eslint-disable-next-line no-empty
         } catch { }
       }
