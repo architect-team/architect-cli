@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import fs from 'fs';
+import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
-import yaml from 'js-yaml';
 
 describe('init', function () {
 
@@ -225,6 +225,16 @@ describe('init', function () {
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].mount_path).eq('/etc/configs/');
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].host_path).eq('~/configs');
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].readonly).eq(true);
+    });
 
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .it('prints a warning if a field from the docker compose cannot be converted', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      expect(ctx.stderr).to.contain(`Could not convert elasticsearch property networks`);
+      expect(ctx.stderr).to.contain(`Could not convert logstash property networks`);
+      expect(ctx.stderr).to.contain(`Could not convert kibana property networks`);
     });
 });

@@ -17,7 +17,7 @@ import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
 export abstract class InitCommand extends Command {
-  local_config_placeholder = '<LOCAL_CONFIG_PLACEHOLDER>'; // TODO: update? currently passes validation, but change to something less general?
+  local_config_placeholder = '<LOCAL_CONFIG_IF_PLACEHOLDER>';
 
   auth_required(): boolean {
     return false;
@@ -46,9 +46,7 @@ export abstract class InitCommand extends Command {
       description: `${Command.DEPRECATED} Please use --from-compose.`,
       hidden: true,
     }),
-    'from-compose': flags.string({
-      // default: process.cwd(),
-    }),
+    'from-compose': flags.string(),
   };
 
   parse(options: any, argv = this.argv): any {
@@ -109,11 +107,11 @@ export abstract class InitCommand extends Command {
       },
     ]);
 
-    const compose_property_converters: { [key: string]: { architect_property: string, func: Function } } = { // TODO: make tuples for compose-architect properties that aren't 1:1?
-      environment: { architect_property: 'environment', func: function convertEnvironment(environment: any) { return { standard: environment }; } },
-      command: { architect_property: 'command', func: function convertCommand(command: any) { return { standard: command }; } },
-      entrypoint: { architect_property: 'entrypoint', func: function convertEntrypoint(entrypoint: any) { return { standard: entrypoint }; } },
-      image: { architect_property: 'image', func: function convertImage(image: string) { return { standard: image }; } },
+    const compose_property_converters: { [key: string]: { architect_property: string, func: Function } } = {
+      environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
+      command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
+      entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
+      image: { architect_property: 'image', func: (image: string) => { return { base: image }; } },
       build: { architect_property: 'build', func: this.convertBuild },
       ports: { architect_property: 'interfaces', func: this.convertPorts },
       volumes: { architect_property: 'volumes', func: this.convertVolumes },
@@ -127,36 +125,37 @@ export abstract class InitCommand extends Command {
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
-        // console.log(property_name) // TODO: remove
         if (compose_property_converters[property_name]) {
           const architect_property_name = compose_property_converters[property_name].architect_property;
-          const converted_props: { debug?: any, standard?: any } = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
-          if (converted_props.debug) {
-            if (!(architect_service as any)[this.local_config_placeholder]) { // TODO: any
+          const converted_props: { local?: any, base?: any } = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
+          if (converted_props.local) {
+            if (!(architect_service as any)[this.local_config_placeholder]) { // TODO: how do we add interpolated fields more cleanly to the ServiceSpec?
               (architect_service as any)[this.local_config_placeholder] = {};
             }
-            (architect_service as any)[this.local_config_placeholder][architect_property_name] = converted_props.debug;
+            (architect_service as any)[this.local_config_placeholder][architect_property_name] = converted_props.local;
           }
-          if (converted_props.standard) {
-            (architect_service as any)[architect_property_name] = converted_props.standard;
+          if (converted_props.base) {
+            (architect_service as any)[architect_property_name] = converted_props.base;
           }
+        } else {
+          console.warn(chalk.yellow(`Could not convert ${service_name} property ${property_name}`));
         }
       }
       architect_component.services[service_name] = architect_service;
     }
 
-    for (const [service_name, service_config] of Object.entries(architect_component.services || {})) {
-      for (const link of (service_config.depends_on || [])) {
+    for (const service_config of Object.values(architect_component.services || {})) {
+      for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
-        if (Object.keys(architect_component.services[link].interfaces || {}).length) {
-          service_config.environment[`${link.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${link}.interfaces.main.url }}`; // TODO: remove in favor of depends_on?
+        if (Object.keys(architect_component.services[depends_on].interfaces || {}).length) {
+          service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`; // TODO: remove in favor of depends_on?
         }
       }
     }
 
     let architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
-    const debug_regex = new RegExp(`${this.local_config_placeholder}:`, 'gm');
-    architect_yml = architect_yml.replace(debug_regex, "${{ if architect.environment == 'local' }}:");
+    const local_regex = new RegExp(`${this.local_config_placeholder}:`, 'gm');
+    architect_yml = architect_yml.replace(local_regex, "${{ if architect.environment == 'local' }}:");
     validateOrRejectSpec(yaml.load(architect_yml));
 
     fs.writeFileSync(flags['component-file'], architect_yml);
@@ -176,7 +175,7 @@ export abstract class InitCommand extends Command {
           if (key && value) {
             build.args[key] = value;
           } else {
-            // this.warn(chalk.yellow(`Could not convert environment variable ${arg} for service ${service_name}`)); // TODO
+            this.warn(chalk.yellow(`Could not convert environment variable ${arg}`));
           }
         }
       } else {
@@ -187,7 +186,7 @@ export abstract class InitCommand extends Command {
         build.dockerfile = compose_build.dockerfile;
       }
     }
-    return { standard: build };
+    return { base: build };
   }
 
   convertPorts(compose_ports: any[]) {
@@ -217,7 +216,6 @@ export abstract class InitCommand extends Command {
           (interfaces[interface_name] as Partial<ServiceInterfaceSpec>) = interface_spec;
           port_index++;
         } else if (port_range_regex.test(string_port)) {
-          console.log('RANGE ' + string_port)
           const matches = port_range_regex.exec(string_port);
           if (matches && matches.length >= 2) {
             const [start, end] = matches[1].split('-');
@@ -228,7 +226,7 @@ export abstract class InitCommand extends Command {
             }
           }
         } else {
-          // this.warn(chalk.yellow(`Could not convert port with spec ${port} for service ${service_name}`)); // TODO
+          this.warn(chalk.yellow(`Could not convert port with spec ${port}`));
         }
       } else {
         const interface_spec: Partial<ServiceInterfaceSpec> = {};
@@ -240,13 +238,13 @@ export abstract class InitCommand extends Command {
         port_index++;
       }
     }
-    return { standard: interfaces };
+    return { base: interfaces };
   }
 
   convertVolumes(service_compose_volumes: any[], docker_compose: DockerComposeTemplate) {
     const compose_volumes = Object.keys(docker_compose.volumes || {});
     let volume_index = 0;
-    const debug_volumes: Dictionary<any> = {};
+    const local_volumes: Dictionary<any> = {};
     const volumes: Dictionary<any> = {};
     for (const volume of (service_compose_volumes || [])) {
       const volume_key = volume_index === 0 ? 'volume' : `volume${volume_index + 1}`;
@@ -265,12 +263,12 @@ export abstract class InitCommand extends Command {
           if (volume_parts.length === 3 && volume_parts[2] === 'ro') {
             service_volume.readonly = true;
           }
-          (debug_volumes[volume_key] as Partial<VolumeSpec>) = service_volume;
+          (local_volumes[volume_key] as Partial<VolumeSpec>) = service_volume;
         } else {
-          // this.warn(chalk.yellow(`Could not convert volume with spec ${volume} for service ${service_name}`)); // TODO
+          this.warn(chalk.yellow(`Could not convert volume with spec ${volume}`));
         }
       } else {
-        if (volume.source) { // debug volume
+        if (volume.source) { // local volume
           const service_volume: Partial<VolumeSpec> = {};
           service_volume.host_path = volume.source;
           service_volume.mount_path = volume.target;
@@ -282,7 +280,7 @@ export abstract class InitCommand extends Command {
             service_volume.host_path = undefined;
             volumes[volume_key] = service_volume;
           } else {
-            debug_volumes[volume_key] = service_volume;
+            local_volumes[volume_key] = service_volume;
           }
         } else {
           const service_volume: Partial<VolumeSpec> = {};
@@ -296,14 +294,14 @@ export abstract class InitCommand extends Command {
       volume_index++;
     }
 
-    const valid_volumes: { debug?: any, standard?: any } = {};
-    if (Object.entries(debug_volumes).length) {
-      valid_volumes.debug = debug_volumes;
+    const converted_volumes: { local?: any, base?: any } = {};
+    if (Object.entries(local_volumes).length) {
+      converted_volumes.local = local_volumes;
     }
     if (Object.entries(volumes).length) {
-      valid_volumes.standard = volumes;
+      converted_volumes.base = volumes;
     }
-    return valid_volumes;
+    return converted_volumes;
   }
 
   convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceConfig>) {
@@ -318,6 +316,6 @@ export abstract class InitCommand extends Command {
         depends_on?.push(link);
       }
     }
-    return { standard: depends_on.length ? depends_on : undefined };
+    return { base: depends_on.length ? depends_on : undefined };
   }
 }
