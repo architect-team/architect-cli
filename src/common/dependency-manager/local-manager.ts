@@ -5,6 +5,7 @@ import yaml from 'js-yaml';
 import DependencyManager, { ArchitectContext, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/component-builder';
+import { IF_EXPRESSION_REGEX } from '../../dependency-manager/src/spec/utils/interpolation';
 import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/src/spec/utils/spec-merge';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
@@ -73,9 +74,11 @@ export default class LocalDependencyManager extends DependencyManager {
     const ingresses: Dictionary<IngressSpec> = {};
     if (merged_options.map_all_interfaces) {
       for (const interface_name of Object.keys(spec.interfaces || {})) {
-        ingresses[interface_name] = {
-          enabled: true,
-        };
+        if (!IF_EXPRESSION_REGEX.test(interface_name)) {
+          ingresses[interface_name] = {
+            enabled: true,
+          };
+        }
       }
     }
     for (const [subdomain, interface_name] of Object.entries(interfaces || {})) {
