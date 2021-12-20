@@ -1,3 +1,4 @@
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import Command from '../../base-command';
 import Table from '../../base-table';
