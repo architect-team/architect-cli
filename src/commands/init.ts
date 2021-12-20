@@ -16,6 +16,11 @@ import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
 import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
 
+interface ComposeConversion {
+  local?: any
+  base?: any;
+}
+
 export abstract class InitCommand extends Command {
   local_config_placeholder = '<LOCAL_CONFIG_IF_PLACEHOLDER>';
 
@@ -107,7 +112,7 @@ export abstract class InitCommand extends Command {
       },
     ]);
 
-    const compose_property_converters: { [key: string]: { architect_property: string, func: Function } } = {
+    const compose_property_converters: { [key: string]: { architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion } } = {
       environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
       command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
       entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
@@ -115,9 +120,9 @@ export abstract class InitCommand extends Command {
       build: { architect_property: 'build', func: this.convertBuild },
       ports: { architect_property: 'interfaces', func: this.convertPorts },
       volumes: { architect_property: 'volumes', func: this.convertVolumes },
-      depends_on: { architect_property: 'depends_on', func: this.convertDependsOn }, // TODO: shouldn't run this twice
+      depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
       external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
-    }
+    };
 
     const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
@@ -127,7 +132,7 @@ export abstract class InitCommand extends Command {
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
         if (compose_property_converters[property_name]) {
           const architect_property_name = compose_property_converters[property_name].architect_property;
-          const converted_props: { local?: any, base?: any } = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
+          const converted_props: ComposeConversion = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
           if (converted_props.local) {
             if (!(architect_service as any)[this.local_config_placeholder]) { // TODO: how do we add interpolated fields more cleanly to the ServiceSpec?
               (architect_service as any)[this.local_config_placeholder] = {};
@@ -163,7 +168,7 @@ export abstract class InitCommand extends Command {
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
 
-  convertBuild(compose_build: any) {
+  convertBuild(compose_build: any): ComposeConversion {
     const build: BuildSpec = {};
     if (typeof compose_build === 'string') {
       build.context = compose_build;
@@ -189,7 +194,7 @@ export abstract class InitCommand extends Command {
     return { base: build };
   }
 
-  convertPorts(compose_ports: any[]) {
+  convertPorts(compose_ports: any[]): ComposeConversion {
     let port_index = 0;
     const interfaces: Dictionary<any> = {};
     for (const port of compose_ports || []) {
@@ -241,7 +246,7 @@ export abstract class InitCommand extends Command {
     return { base: interfaces };
   }
 
-  convertVolumes(service_compose_volumes: any[], docker_compose: DockerComposeTemplate) {
+  convertVolumes(service_compose_volumes: any[], docker_compose: DockerComposeTemplate): ComposeConversion {
     const compose_volumes = Object.keys(docker_compose.volumes || {});
     let volume_index = 0;
     const local_volumes: Dictionary<any> = {};
@@ -294,7 +299,7 @@ export abstract class InitCommand extends Command {
       volume_index++;
     }
 
-    const converted_volumes: { local?: any, base?: any } = {};
+    const converted_volumes: ComposeConversion = {};
     if (Object.entries(local_volumes).length) {
       converted_volumes.local = local_volumes;
     }
@@ -304,9 +309,9 @@ export abstract class InitCommand extends Command {
     return converted_volumes;
   }
 
-  convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceConfig>) {
+  convertDependsOn(depends_on_or_links: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>): ComposeConversion {
     if (!depends_on_or_links.length) {
-      return undefined;
+      return {};
     }
 
     const depends_on: string[] = [];
