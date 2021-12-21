@@ -153,7 +153,7 @@ export abstract class InitCommand extends Command {
       for (const depends_on of (service_config.depends_on || [])) {
         service_config.environment = service_config.environment || {};
         if (Object.keys(architect_component.services[depends_on].interfaces || {}).length) {
-          service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`; // TODO: remove in favor of depends_on?
+          service_config.environment[`${depends_on.replace('-', '_').toUpperCase()}_URL`] = `\${{ services.${depends_on}.interfaces.main.url }}`;
         }
       }
     }
