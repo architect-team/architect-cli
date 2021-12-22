@@ -1,7 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import ms from 'ms';
 import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
 import Environment from '../architect/environment/environment.entity';
@@ -79,19 +78,18 @@ export default class Logs extends Command {
       display_name = `${service_name}:${pod_names.indexOf(pod_name)}`;
     }
 
-    const log_params: any = {
-      container: node_ref,
-    };
+    const log_params: any = {};
     if (flags.follow)
       log_params.follow = flags.follow;
     if (flags.since)
-      log_params.sinceSeconds = Math.round(ms(flags.since as string) / 1000);
+      log_params.since = flags.since;
     if (flags.tail >= 0)
-      log_params.tailLines = flags.tail;
+      log_params.tail = flags.tail;
     if (flags.timestamps)
       log_params.timestamps = flags.timestamps;
 
-    const { data: log_stream } = await this.app.api.get(`${proxy_prefix}/namespaces/${namespace}/pods/${pod_name}/log`, {
+
+    const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
       params: log_params,
       responseType: 'stream',
     });
