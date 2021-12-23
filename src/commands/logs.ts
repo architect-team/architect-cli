@@ -121,6 +121,18 @@ export default class Logs extends Command {
     const columns = process.stdout.columns - (display_name.length + 3);
 
     let show_header = true;
+
+    function chunkSubstring(str: string, size: number) {
+      const numChunks = Math.ceil(str.length / size);
+      const chunks = new Array(numChunks);
+
+      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+        chunks[i] = str.substring(o, o + size);
+      }
+
+      return chunks;
+    }
+
     const log = (txt: string) => {
       if (flags.raw) {
         this.log(txt);
@@ -130,11 +142,9 @@ export default class Logs extends Command {
           this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
           show_header = false;
         }
-        // Truncate
-        if (txt.length > columns) {
-          txt = txt.substring(0, columns - 3) + '...';
+        for (const chunk of chunkSubstring(txt, columns)) {
+          this.log(prefix, chalk.cyan(chunk));
         }
-        this.log(prefix, chalk.cyan(txt));
       }
     };
 
