@@ -68,6 +68,8 @@ services:
           host_path: ./backend/src
 
   app:
+    depends_on:
+      - api
     build:
       context: ./frontend
       args:

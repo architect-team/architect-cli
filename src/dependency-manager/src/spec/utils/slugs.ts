@@ -279,3 +279,20 @@ export class GatewaySlugUtils extends SlugUtils {
     };
   };
 }
+
+type ParsedUnknownSlug = ParsedComponentSlug | ParsedComponentVersionSlug | ParsedServiceSlug | ParsedServiceVersionSlug;
+export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
+  try {
+    return ComponentSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  try {
+    return ComponentVersionSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  try {
+    return ServiceSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  return ServiceVersionSlugUtils.parse(unknown);
+};

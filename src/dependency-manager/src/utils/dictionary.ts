@@ -13,3 +13,19 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
   }
   return output;
 };
+
+export const sortOnKeys = <T>(dict: Dictionary<T>): Dictionary<T> => {
+
+  const sorted = [];
+  for (const key in dict) {
+    sorted[sorted.length] = key;
+  }
+  sorted.sort();
+
+  const tempDict: Dictionary<T> = {};
+  for (let i = 0; i < sorted.length; i++) {
+    tempDict[sorted[i]] = dict[sorted[i]];
+  }
+
+  return tempDict;
+};
