@@ -56,19 +56,22 @@ export default class Logs extends Command {
 
     const namespace = environment.namespace;
 
-    const proxy_prefix = `/environments/${environment.id}/k8s-api/api/v1`;
+    interface Replicas {
+      ext_ref: string;
+      node_ref: string;
+      resource_ref: string;
+    }
 
-    const { node_ref, service_name } = await this.getNodeRef(environment, args.resource);
+    const { data: replicas }: { data: Replicas[] } = await this.app.api.get(`/environments/${environment.id}/replicas`);
 
-    const { data: { items: pods } } = await this.app.api.get(`${proxy_prefix}/namespaces/${namespace}/pods`, {
-      params: {
-        labelSelector: `app=${node_ref}`,
-      },
-    });
+    if (!replicas.length)
+      throw new ArchitectError(`No replicas found for ${'TODO:534'}`);
 
-    if (!pods.length)
-      throw new ArchitectError(`No replicas found for ${service_name}`);
+    const replica = replicas[0];
 
+    const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
+    const display_name = service_name;
+    /*
     const pod_names = pods.map((pod: any) => pod.metadata.name) as string[];
     const pod_name = await this.getPodName(service_name, pod_names);
     let display_name;
@@ -77,8 +80,11 @@ export default class Logs extends Command {
     } else {
       display_name = `${service_name}:${pod_names.indexOf(pod_name)}`;
     }
+    */
 
     const log_params: any = {};
+    log_params.ext_ref = replica.ext_ref;
+    log_params.container = replica.node_ref;
     if (flags.follow)
       log_params.follow = flags.follow;
     if (flags.since)
@@ -87,7 +93,6 @@ export default class Logs extends Command {
       log_params.tail = flags.tail;
     if (flags.timestamps)
       log_params.timestamps = flags.timestamps;
-
 
     const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
       params: log_params,
