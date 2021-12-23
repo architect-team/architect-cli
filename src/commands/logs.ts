@@ -2,12 +2,17 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
-import Deployment from '../architect/deployment/deployment.entity';
-import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
-import { ArchitectError, ComponentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../dependency-manager/src';
-import { resourceRefToNodeRef } from '../dependency-manager/src/config/component-config';
+import { ArchitectError, Dictionary, parseUnknownSlug, ServiceVersionSlugUtils, sortOnKeys } from '../dependency-manager/src';
+
+interface Replica {
+  ext_ref: string;
+  node_ref: string;
+  resource_ref: string;
+  created_at: string;
+  display_name?: string;
+}
 
 export default class Logs extends Command {
   static description = 'Get logs from services';
@@ -54,33 +59,38 @@ export default class Logs extends Command {
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
-    const namespace = environment.namespace;
-
-    interface Replicas {
-      ext_ref: string;
-      node_ref: string;
-      resource_ref: string;
+    let component_account_name: string | undefined;
+    let component_name: string | undefined;
+    let service_name: string | undefined;
+    let tag: string | undefined;
+    let instance_name: string | undefined;
+    if (args.resource) {
+      const parsed = parseUnknownSlug(args.resource);
+      component_account_name = parsed.component_account_name;
+      component_name = parsed.component_name;
+      service_name = parsed.service_name;
+      tag = parsed.tag;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      instance_name = parsed.instance_name; //TODO:534
     }
 
-    const { data: replicas }: { data: Replicas[] } = await this.app.api.get(`/environments/${environment.id}/replicas`);
+    const replica_params = {
+      component_account_name,
+      component_name,
+      component_resource_name: service_name,
+      component_tag: tag,
+      component_instance_name: instance_name,
+    };
+
+    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+      params: replica_params,
+    });
 
     if (!replicas.length)
-      throw new ArchitectError(`No replicas found for ${'TODO:534'}`);
+      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = replicas[0];
-
-    const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
-    const display_name = service_name;
-    /*
-    const pod_names = pods.map((pod: any) => pod.metadata.name) as string[];
-    const pod_name = await this.getPodName(service_name, pod_names);
-    let display_name;
-    if (pods.length === 1) {
-      display_name = service_name;
-    } else {
-      display_name = `${service_name}:${pod_names.indexOf(pod_name)}`;
-    }
-    */
+    const replica = await this.getReplica(replicas);
 
     const log_params: any = {};
     log_params.ext_ref = replica.ext_ref;
@@ -97,10 +107,17 @@ export default class Logs extends Command {
     const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
       params: log_params,
       responseType: 'stream',
+      timeout: 1000 * 60 * 60 * 24, // one day
     });
 
+    let display_name = replica.display_name;
+    if (!display_name) {
+      const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
+      display_name = service_name;
+    }
+
     // Stream logs
-    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('⏐')}`;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
     const columns = process.stdout.columns - (display_name.length + 3);
 
     let show_header = true;
@@ -115,7 +132,7 @@ export default class Logs extends Command {
         }
         // Truncate
         if (txt.length > columns) {
-          txt = txt.substr(0, columns - 3) + '...';
+          txt = txt.substring(0, columns - 3) + '...';
         }
         this.log(prefix, chalk.cyan(txt));
       }
@@ -138,112 +155,67 @@ export default class Logs extends Command {
     });
   }
 
-  async getNodeRef(environment: Environment, resource: string): Promise<{ node_ref: string, service_name: string }> {
-    let account_name = '';
-    let component_name = '';
-    let service_name = '';
-    if (resource) {
-      try {
-        const parsed = ComponentSlugUtils.parse(resource);
-        account_name = parsed.component_account_name;
-        component_name = parsed.component_name;
-      } catch {
-        const parsed = ServiceSlugUtils.parse(resource);
-        account_name = parsed.component_account_name;
-        component_name = parsed.component_name;
-        service_name = parsed.service_name;
-      }
-    }
-
-    const { data: deployments }: { data: Deployment[] } = await this.app.api.get(`/environments/${environment.id}/instances`);
-
-    if (!deployments)
-      throw new ArchitectError('This environment has no deployed components.');
-
-    const matching_deployments = deployments.filter((deployment) => {
-      if (!deployment.component_version) {
-        return false;
-      }
-      if (account_name && component_name) {
-        return `${account_name}/${component_name}` === deployment.component_version.config.name;
-      } else if (account_name) {
-        return deployment.component_version.config.name.startsWith(`${account_name}/`);
-      }
-      return true;
-    });
-
-    if (!matching_deployments.length)
-      throw new ArchitectError('No components found matching search criteria');
-
-    let deployment: Deployment;
-    if (matching_deployments.length === 1) {
-      deployment = matching_deployments[0];
+  async getReplica(replicas: Replica[]): Promise<Replica> {
+    let replica;
+    if (replicas.length === 1) {
+      return replicas[0];
     } else {
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'autocomplete',
-          name: 'component',
-          message: 'Select a component',
-          source: (answers_so_far: any, input: string) => {
-            return matching_deployments.map((d) => ({
-              name: d.component_version.config.name,
-              value: d,
-            }));
+      let service_refs: Dictionary<Replica[]> = {};
+      for (const replica of replicas) {
+        if (!service_refs[replica.resource_ref]) {
+          service_refs[replica.resource_ref] = [];
+        }
+        service_refs[replica.resource_ref].push(replica);
+      }
+      service_refs = sortOnKeys(service_refs);
+
+      let filtered_replicas: Replica[];
+      if (Object.keys(service_refs).length === 1) {
+        filtered_replicas = replicas;
+      } else {
+        const answers: any = await inquirer.prompt([
+          {
+            type: 'autocomplete',
+            name: 'service',
+            message: 'Select a service',
+            source: (answers_so_far: any, input: string) => {
+              return Object.entries(service_refs).map(([service_ref, sub_replicas]) => ({
+                name: service_ref,
+                value: sub_replicas,
+              }));
+            },
           },
-        },
-      ]);
-      deployment = answers.component;
-    }
-    account_name = deployment.component_version.component.account.name;
-    component_name = deployment.component_version.component.name;
+        ]);
+        filtered_replicas = answers.service;
+      }
 
-    if (!service_name) {
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'autocomplete',
-          name: 'service',
-          message: `Select a service from ${deployment.component_version.config.name}`,
-          source: (answers_so_far: any, input: string) => {
-            return Object.keys(deployment.component_version.config.services || {}).map((service_name) => ({
-              name: service_name,
-              value: service_name,
-            }));
-          },
-        },
-      ]);
-      service_name = answers.service;
-    }
+      if (filtered_replicas.length === 1) {
+        return filtered_replicas[0];
+      }
 
-    const service_ref = ServiceVersionSlugUtils.build(account_name, component_name, service_name, deployment?.component_version.tag, deployment.metadata.instance_name);
-    const node_ref = resourceRefToNodeRef(service_ref, deployment.instance_id);
+      filtered_replicas = filtered_replicas.sort((a, b) => {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
 
-    return {
-      node_ref,
-      service_name,
-    };
-  }
-
-  async getPodName(service_name: string, pod_names: string[]): Promise<string> {
-    let pod_name;
-    if (pod_names.length === 1) {
-      pod_name = pod_names[0];
-    } else {
-      this.log(`Found ${pod_names.length} replicas of service:`);
+      this.log(`Found ${filtered_replicas.length} replicas of service:`);
       const answers: any = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'replica',
           message: 'Select a replica',
           source: (answers_so_far: any, input: string) => {
-            return pod_names.map((pn: any) => ({
-              name: `${service_name}:${pod_names.indexOf(pn)} (pod:${pn})`,
-              value: pn,
-            }));
+            return filtered_replicas.map((r, index) => {
+              const { service_name } = ServiceVersionSlugUtils.parse(r.resource_ref);
+              r.display_name = `${service_name}:${index}`;
+              return {
+                name: `${r.display_name} (${r.ext_ref})`,
+                value: r,
+              };
+            });
           },
         },
       ]);
-      pod_name = answers.replica;
+      return answers.replica;
     }
-    return pod_name;
   }
 }
