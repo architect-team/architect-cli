@@ -2,17 +2,9 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
-import { EnvironmentUtils } from '../architect/environment/environment.utils';
+import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
-import { ArchitectError, Dictionary, parseUnknownSlug, ServiceVersionSlugUtils, sortOnKeys } from '../dependency-manager/src';
-
-interface Replica {
-  ext_ref: string;
-  node_ref: string;
-  resource_ref: string;
-  created_at: string;
-  display_name?: string;
-}
+import { ArchitectError, parseUnknownSlug, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class Logs extends Command {
   static description = 'Get logs from services';
@@ -75,7 +67,7 @@ export default class Logs extends Command {
       instance_name = parsed.instance_name; //TODO:534
     }
 
-    const replica_params = {
+    const replica_query = {
       component_account_name,
       component_name,
       component_resource_name: service_name,
@@ -84,28 +76,26 @@ export default class Logs extends Command {
     };
 
     const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-      params: replica_params,
+      params: replica_query,
     });
 
     if (!replicas.length)
       throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await this.getReplica(replicas);
+    const replica = await EnvironmentUtils.getReplica(replicas);
 
-    const log_params: any = {};
-    log_params.ext_ref = replica.ext_ref;
-    log_params.container = replica.node_ref;
-    if (flags.follow)
-      log_params.follow = flags.follow;
+    const logs_query: any = {};
+    logs_query.ext_ref = replica.ext_ref;
+    logs_query.container = replica.node_ref;
+    logs_query.follow = flags.follow;
     if (flags.since)
-      log_params.since = flags.since;
+      logs_query.since = flags.since;
     if (flags.tail >= 0)
-      log_params.tail = flags.tail;
-    if (flags.timestamps)
-      log_params.timestamps = flags.timestamps;
+      logs_query.tail = flags.tail;
+    logs_query.timestamps = flags.timestamps;
 
     const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
-      params: log_params,
+      params: logs_query,
       responseType: 'stream',
       timeout: 1000 * 60 * 60 * 24, // one day
     });
@@ -163,69 +153,5 @@ export default class Logs extends Command {
         log(stdout);
       }
     });
-  }
-
-  async getReplica(replicas: Replica[]): Promise<Replica> {
-    let replica;
-    if (replicas.length === 1) {
-      return replicas[0];
-    } else {
-      let service_refs: Dictionary<Replica[]> = {};
-      for (const replica of replicas) {
-        if (!service_refs[replica.resource_ref]) {
-          service_refs[replica.resource_ref] = [];
-        }
-        service_refs[replica.resource_ref].push(replica);
-      }
-      service_refs = sortOnKeys(service_refs);
-
-      let filtered_replicas: Replica[];
-      if (Object.keys(service_refs).length === 1) {
-        filtered_replicas = replicas;
-      } else {
-        const answers: any = await inquirer.prompt([
-          {
-            type: 'autocomplete',
-            name: 'service',
-            message: 'Select a service',
-            source: (answers_so_far: any, input: string) => {
-              return Object.entries(service_refs).map(([service_ref, sub_replicas]) => ({
-                name: service_ref,
-                value: sub_replicas,
-              }));
-            },
-          },
-        ]);
-        filtered_replicas = answers.service;
-      }
-
-      if (filtered_replicas.length === 1) {
-        return filtered_replicas[0];
-      }
-
-      filtered_replicas = filtered_replicas.sort((a, b) => {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      });
-
-      this.log(`Found ${filtered_replicas.length} replicas of service:`);
-      const answers: any = await inquirer.prompt([
-        {
-          type: 'autocomplete',
-          name: 'replica',
-          message: 'Select a replica',
-          source: (answers_so_far: any, input: string) => {
-            return filtered_replicas.map((r, index) => {
-              const { service_name } = ServiceVersionSlugUtils.parse(r.resource_ref);
-              r.display_name = `${service_name}:${index}`;
-              return {
-                name: `${r.display_name} (${r.ext_ref})`,
-                value: r,
-              };
-            });
-          },
-        },
-      ]);
-      return answers.replica;
-    }
   }
 }
