@@ -46,7 +46,8 @@
     "tmp": "^0.2.1",
     "tslib": "2.1.0",
     "untildify": "4.0.0",
-    "which": "^2.0.2"
+    "which": "^2.0.2",
+    "ws": "^8.4.0"
   },
   "devDependencies": {
     "@oclif/dev-cli": "1.26.0",
@@ -69,6 +70,7 @@
     "@types/sinon": "9.0.10",
     "@types/tmp": "^0.2.0",
     "@types/which": "^2.0.1",
+    "@types/ws": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "4.29.3",
     "@typescript-eslint/parser": "4.29.3",
     "chai": "4.3.0",

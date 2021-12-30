@@ -1,13 +1,13 @@
 import Command, { flags } from '@oclif/command';
-import 'reflect-metadata';
+import * as Parser from '@oclif/parser';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
-import { ArchitectError, ValidationErrors } from './dependency-manager/src/utils/errors';
+import { ValidationErrors } from './dependency-manager/src/utils/errors';
 
 const DEPRECATED_LABEL = '[deprecated]';
 
-export default abstract class extends Command {
+export default abstract class BaseCommand extends Command {
   static readonly DEPRECATED: string = DEPRECATED_LABEL;
 
   app!: AppService;
@@ -19,6 +19,7 @@ export default abstract class extends Command {
 
   static flags = {
     help: flags.help({ char: 'h' }),
+    verbose: flags.boolean(),
   };
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
@@ -58,8 +59,18 @@ export default abstract class extends Command {
   }
 
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
-  parse(options: any, argv = this.argv): any {
+  protected parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Parser.Input<F>, argv = this.argv): Parser.Output<F, A> {
     const flag_definitions = (this.constructor as any).flags;
+
+    // Support -- input ex. architect exec -- ls -la
+    const double_dash_index = argv.indexOf('--');
+    if (double_dash_index >= 0) {
+      const command = argv.slice(double_dash_index + 1, argv.length).join(' ');
+      argv = argv.slice(0, double_dash_index);
+      argv.unshift(command);
+    }
 
     const args = [];
     const flags = [];
@@ -96,6 +107,13 @@ export default abstract class extends Command {
       message += `${err.config.url} [${err.config.method}] `;
     }
 
+    let verbose = false;
+    try {
+      const { flags }: any = this.parse(this.constructor as any);
+      verbose = flags.verbose;
+      // eslint-disable-next-line no-empty
+    } catch { }
+
     if (err.response?.data instanceof Object) {
       message += `${err.request.path} (${err.response.status})`;
       for (const [k, v] of Object.entries(err.response.data)) {
@@ -103,11 +121,11 @@ export default abstract class extends Command {
       }
     } else if (err.stderr) {
       message += err.stderr;
-    } else if (err.stack && !(err instanceof ArchitectError)) {
+    } else if (err.stack && verbose) {
       message += err.stack.replace('Error: ', '');
     } else {
       message += err.message || 'Unknown error';
     }
-    this.error(err.name + '\n' + message);
+    this.error(!err.name || err.name === 'Error' ? '\n' + message : err.name + '\n' + message);
   }
 }
