@@ -15,6 +15,7 @@ import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
+import { IF_EXPRESSION_REGEX } from '../dependency-manager/src/spec/utils/interpolation';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -94,6 +95,9 @@ export default class ComponentRegister extends Command {
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
       // Build image for service
       if (!service_config.build && !service_config.image) {
         service_config.build = { context: '.', dockerfile: 'Dockerfile' };
