@@ -396,6 +396,7 @@ export default abstract class DependencyManager {
     const graph = new DependencyGraph();
 
     const context_map: Dictionary<ComponentContext> = {};
+    const dependency_context_map: Dictionary<ComponentContext> = {};
 
     const evaluated_component_specs: ComponentSpec[] = [];
     for (let component_spec of component_specs) {
@@ -493,7 +494,8 @@ export default abstract class DependencyManager {
             // @ts-ignore
             external_port: value.port,
             external_host: value.host,
-            port: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_port : ${architect_port} }}`,
+            // Return different value for port when a service is refing its own port value
+            port: `\${{ ${interface_ref}.external_host || startsWith(_path, 'services.${service_name}.') ? ${interface_ref}.external_port : ${architect_port} }}`,
             host: `\${{ ${interface_ref}.external_host ? ${interface_ref}.external_host : '${architect_host}' }}`,
             url: this.generateUrl(interface_ref),
           };
@@ -555,8 +557,10 @@ export default abstract class DependencyManager {
       }
 
       if (interpolate) {
-        // Interpolate interfaces/ingresses/services
-        context = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
+        // Interpolate interfaces/ingresses/services for dependencies
+        dependency_context_map[component_spec.metadata.ref] = interpolateObject(context, context, { keys: false, values: true, file: component_spec.metadata.file });
+      } else {
+        dependency_context_map[component_spec.metadata.ref] = context;
       }
 
       context_map[component_spec.metadata.ref] = context;
@@ -568,7 +572,7 @@ export default abstract class DependencyManager {
       const component_config = transformComponentSpec(component_spec);
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       const dependency_configs = dependency_specs.map(d => transformComponentSpec(d));
-      this.addComponentEdges(graph, component_config, dependency_configs, context_map, external_addr);
+      this.addComponentEdges(graph, component_config, dependency_configs, dependency_context_map, external_addr);
 
       for (const edge of graph.edges) {
         const from_node = graph.getNodeByRef(edge.from);
@@ -597,7 +601,7 @@ export default abstract class DependencyManager {
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       context.dependencies = {};
       for (const dependency_spec of dependency_specs) {
-        const dependency_context = context_map[dependency_spec.metadata.ref];
+        const dependency_context = dependency_context_map[dependency_spec.metadata.ref];
         context.dependencies[dependency_spec.name] = {
           ingresses: dependency_context.ingresses || {},
           interfaces: dependency_context.interfaces || {},
@@ -636,7 +640,7 @@ export default abstract class DependencyManager {
           const consumers = new Set<string>();
           for (const consumer_ingress_edge of consumer_ingress_edges) {
             const interface_node = graph.getNodeByRef(consumer_ingress_edge.to) as ComponentNode;
-            const consumer_interface = context_map[interface_node.slug].ingresses || {};
+            const consumer_interface = dependency_context_map[interface_node.slug].ingresses || {};
             for (const { interface_to: consumer_interface_to } of consumer_ingress_edge.interface_mappings) {
               consumers.add(consumer_interface[consumer_interface_to].url);
             }
