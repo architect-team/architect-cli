@@ -1,7 +1,6 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { cli } from 'cli-ux';
-import 'reflect-metadata';
 import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';

@@ -311,12 +311,21 @@ export default class Deploy extends DeployCommand {
     return component_secrets;
   }
 
-  getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | undefined> {
-    const extra_env_vars: { [s: string]: string | undefined } = {};
+  getExtraEnvironmentVariables(parameters: string[]): Dictionary<string | number | undefined> {
+    const extra_env_vars: { [s: string]: string | number | undefined } = {};
 
     for (const [param_name, param_value] of Object.entries(process.env || {})) {
       if (param_name.startsWith('ARC_')) {
         extra_env_vars[param_name.substring(4)] = param_value;
+        try {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const parsed = parseFloat(param_value);
+          if (!isNaN(parsed)) {
+            extra_env_vars[param_name.substring(4)] = parsed;
+          }
+          // eslint-disable-next-line no-empty
+        } catch { }
       }
     }
 

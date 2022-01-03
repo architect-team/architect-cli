@@ -129,18 +129,30 @@ describe('template', () => {
     parameters:
       environment: local
 
+    interfaces:
+      \${{ if architect.environment == 'local' }}:
+        api:
+          url: \${{ services.api.interfaces.main.url }}
+          ingress:
+            enabled: true
+      api2:
+        url: \${{ services.api.interfaces.main.url }}
+
     services:
-      api:
-        \${{ if true }}:
-          environment:
-            NODE_ENV: production
-            \${{ if (parameters.environment == 'local') }}:
-              NODE_ENV: development
-            \${{ if architect.environment == 'local' }}:
-              LOCAL: 1
-        \${{ if 1 }}:
-          environment:
-            TEST: 1
+      \${{ if architect.environment == 'local' }}:
+        api:
+          interfaces:
+            main: 8080
+          \${{ if true }}:
+            environment:
+              NODE_ENV: production
+              \${{ if (parameters.environment == 'local') }}:
+                NODE_ENV: development
+              \${{ if architect.environment == 'local' }}:
+                LOCAL: 1
+          \${{ if 1 }}:
+            environment:
+              TEST: 1
     `
 
       mock_fs({
@@ -151,7 +163,7 @@ describe('template', () => {
         'examples/hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world'),
+        await manager.loadComponentSpec('examples/hello-world', {}, { map_all_interfaces: true }),
       ]);
       const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;

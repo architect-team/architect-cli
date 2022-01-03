@@ -1,6 +1,7 @@
 process.env.CI = 'true'
 import mock_fs from 'mock-fs';
 import nock from 'nock';
+import 'reflect-metadata';
 import sinon from 'sinon';
 import CredentialManager from '../src/app-config/credentials';
 import PortUtil from '../src/common/utils/port';

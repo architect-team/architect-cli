@@ -633,15 +633,15 @@ export default abstract class DependencyManager {
         for (const [interface_name, consumer_refs] of Object.entries(ingress_edge.consumers_map)) {
           const interfaces_refs = graph.edges.filter(edge => consumer_refs.has(edge.to) && graph.getNodeByRef(edge.from) instanceof ComponentNode).map(edge => edge.from);
           const consumer_ingress_edges = graph.edges.filter(edge => edge instanceof IngressEdge && interfaces_refs.includes(edge.to)) as IngressEdge[];
-          const consumers: string[] = [];
+          const consumers = new Set<string>();
           for (const consumer_ingress_edge of consumer_ingress_edges) {
             const interface_node = graph.getNodeByRef(consumer_ingress_edge.to) as ComponentNode;
             const consumer_interface = context_map[interface_node.slug].ingresses || {};
             for (const { interface_to: consumer_interface_to } of consumer_ingress_edge.interface_mappings) {
-              consumers.push(consumer_interface[consumer_interface_to].url);
+              consumers.add(consumer_interface[consumer_interface_to].url);
             }
           }
-          context.ingresses[interface_name].consumers = consumers.sort();
+          context.ingresses[interface_name].consumers = [...consumers].sort();
         }
       }
 

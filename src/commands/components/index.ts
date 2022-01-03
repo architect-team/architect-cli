@@ -1,3 +1,4 @@
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import Command from '../../base-command';
 import Table from '../../base-table';
@@ -44,7 +45,11 @@ export default class Components extends Command {
     components = components.filter((c: Component) => c.account);
 
     if (!components.length) {
-      this.log('You have not registered any components yet.');
+      if (args.query) {
+        this.log(`No components found matching ${args.query}.`);
+      } else {
+        this.log('You have not registered any components yet. Use `architect register` to set up your first one.');
+      }
       return;
     }
 

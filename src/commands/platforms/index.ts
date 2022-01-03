@@ -1,3 +1,4 @@
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import Command from '../../base-command';
 import Table from '../../base-table';
@@ -34,7 +35,11 @@ export default class Platforms extends Command {
     const { data: { rows: platforms } } = await this.app.api.get(`/platforms`, { params });
 
     if (!platforms.length) {
-      this.log('You have not configured any platforms yet. Use `architect platform:create` to set up your first one.');
+      if (args.query) {
+        this.log(`No platforms found matching ${args.query}.`);
+      } else {
+        this.log('You have not configured any platforms yet. Use `architect platform:create` to set up your first one.');
+      }
       return;
     }
 

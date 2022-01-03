@@ -1,3 +1,4 @@
+import Account from '../../architect/account/account.entity';
 import AccountUtils from '../../architect/account/account.utils';
 import Command from '../../base-command';
 import Table from '../../base-table';
@@ -33,7 +34,11 @@ export default class Environments extends Command {
     const { data: { rows: environments } } = await this.app.api.get(`/environments`, { params });
 
     if (!environments.length) {
-      this.log('You have not configured any environments yet.');
+      if (args.query) {
+        this.log(`No environments found matching ${args.query}.`);
+      } else {
+        this.log('You have not configured any environments yet. Use `architect environments:create` to set up your first one.');
+      }
       return;
     }
 
