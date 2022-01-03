@@ -41,7 +41,7 @@ export abstract class InitCommand extends Command {
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
     }),
-    account: flags.string({ // TODO: should this be required? why can't we use this offline or without an account?
+    account: flags.string({
       char: 'a',
     }),
     name: flags.string({
@@ -150,7 +150,7 @@ export abstract class InitCommand extends Command {
             (architect_service as any)[architect_property_name] = converted_props.base;
           }
         } else {
-          console.warn(chalk.yellow(`Could not convert ${service_name} property ${property_name}`));
+          this.log(chalk.yellow(`Could not convert ${service_name} property ${property_name}`));
         }
       }
       architect_component.services[service_name] = architect_service;

@@ -9,7 +9,7 @@ import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 describe('init', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true; // TODO: undo
+  const print = false;
 
   const account_name = 'examples';
   const compose_file_name = 'init-compose.yml';
@@ -181,7 +181,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]); // TODO: how do we handle if statement interpolation?
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_config.services['elasticsearch'].volumes['volume2'].mount_path).eq('/usr/share/elasticsearch/data');
       expect(component_object.services['elasticsearch']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/elasticsearch/config/elasticsearch.yml');
@@ -195,7 +195,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]); // TODO: how do we handle if statement interpolation?
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./logstash/config/logstash.yml');
@@ -211,7 +211,7 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]); // TODO: how do we handle if statement interpolation?
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/kibana/config/kibana.yml');
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./kibana/config/kibana.yml');
