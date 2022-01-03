@@ -233,9 +233,9 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      expect(ctx.stderr).to.contain(`Could not convert elasticsearch property networks`);
-      expect(ctx.stderr).to.contain(`Could not convert logstash property networks`);
-      expect(ctx.stderr).to.contain(`Could not convert kibana property networks`);
+      expect(ctx.stdout).to.contain(`Could not convert elasticsearch property networks`);
+      expect(ctx.stdout).to.contain(`Could not convert logstash property networks`);
+      expect(ctx.stdout).to.contain(`Could not convert kibana property networks`);
     });
 
   mockArchitectAuth
