@@ -11,7 +11,7 @@ import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { BuildSpec, Dictionary, ServiceConfig, validateOrRejectSpec } from '../dependency-manager/src';
+import { BuildSpec, Dictionary, validateOrRejectSpec } from '../dependency-manager/src';
 import { VolumeSpec } from '../dependency-manager/src/spec/common-spec';
 import { ComponentSpec } from '../dependency-manager/src/spec/component-spec';
 import { ServiceInterfaceSpec, ServiceSpec } from '../dependency-manager/src/spec/service-spec';
@@ -95,7 +95,14 @@ export abstract class InitCommand extends Command {
     }
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
 
-    const account = await AccountUtils.getAccount(this.app, flags.account);
+    let account_name = 'my-account';
+    try {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      account_name = account.name;
+    } catch(err) {
+      this.log(chalk.yellow('No accounts found, using default account name "my-account"'));
+    }
+
     const answers: any = await inquirer.prompt([
       {
         type: 'input',
@@ -125,7 +132,7 @@ export abstract class InitCommand extends Command {
     };
 
     const architect_component: Partial<ComponentSpec> = {};
-    architect_component.name = `${flags.account || account.name}/${flags.name || answers.name}`;
+    architect_component.name = `${flags.account || account_name}/${flags.name || answers.name}`;
     architect_component.services = {};
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
@@ -134,7 +141,7 @@ export abstract class InitCommand extends Command {
           const architect_property_name = compose_property_converters[property_name].architect_property;
           const converted_props: ComposeConversion = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
           if (converted_props.local) {
-            if (!(architect_service as any)[this.local_config_placeholder]) { // TODO: how do we add interpolated fields more cleanly to the ServiceSpec?
+            if (!(architect_service as any)[this.local_config_placeholder]) {
               (architect_service as any)[this.local_config_placeholder] = {};
             }
             (architect_service as any)[this.local_config_placeholder][architect_property_name] = converted_props.local;
