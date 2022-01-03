@@ -1,7 +1,7 @@
 
 /* eslint-disable no-empty */
 import fs from 'fs-extra';
-import yaml from 'js-yaml';
+import yaml, { DumpOptions } from 'js-yaml';
 import path from 'path';
 import { ComponentConfig } from '../../config/component-config';
 import { ArchitectError, ValidationError, ValidationErrors } from '../../utils/errors';
@@ -48,8 +48,8 @@ export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path:
   };
 };
 
-export const dumpToYml = (spec: any): string => {
-  return yaml.dump(spec);
+export const dumpToYml = (spec: any, options: DumpOptions = {}): string => {
+  return yaml.dump(spec, options);
 };
 
 export const buildSpecFromYml = (source_yml: string): ComponentSpec => {

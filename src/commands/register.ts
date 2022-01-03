@@ -154,9 +154,9 @@ export default class ComponentRegister extends Command {
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));
-    const previous_source_yml = dumpToYml(previous_config_data);
+    const previous_source_yml = dumpToYml(previous_config_data, { lineWidth: -1 });
 
-    const new_source_yml = dumpToYml(component_dto.config);
+    const new_source_yml = dumpToYml(component_dto.config, { lineWidth: -1 });
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
