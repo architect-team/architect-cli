@@ -100,7 +100,7 @@ export abstract class InitCommand extends Command {
       const account = await AccountUtils.getAccount(this.app, flags.account);
       account_name = account.name;
     } catch(err) {
-      this.log(chalk.yellow('No accounts found, using default account name "my-account"'));
+      this.log(chalk.yellow(`No accounts found, using default account name "${account_name}"`));
     }
 
     const answers: any = await inquirer.prompt([
