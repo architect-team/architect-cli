@@ -12,6 +12,8 @@ The best way to maintain a staging environment is by syncing it with your mainli
 
 The workflows below will first create a new `latest` tag of your component in Architects registry. Then it will trigger `architect deploy` to ship that component and its changes to an existing `staging` environment. This environment is not created by this workflow since it is intended to be persistent, so you'll have to create the environment in advance.
 
+> `ARCHITECT_PASSWORD` must be a <a href="https://cloud.architect.io/users/me/access-tokens" target="_blank">personal access token</a>.
+
 ### Github Actions
 
 ```yaml
@@ -58,6 +60,8 @@ jobs:
 The last step of your GitOps workflow is to finally get your code into production! If you want, you're welcome to use the workflow described previously to automatically deploy from `master` straight to production, but in this workflow we'll show how to trigger the deployment on a manual release cut. By triggering on new releases, we can log a version history of all the code that made its way to production to make it easier to instrument rollbacks.
 
 The workflows below will first register the component with a tag matching the name of the new release. Then they will deploy the new component tag to an environment named `production`. Obviously production is intended to be persistent, so you'll have to create the environment in advance.
+
+> `ARCHITECT_PASSWORD` must be a <a href="https://cloud.architect.io/users/me/access-tokens" target="_blank">personal access token</a>.
 
 ### Github Actions
 

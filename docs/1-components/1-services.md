@@ -9,11 +9,6 @@ Services describe the runtimes that power your application. Each service describ
 ```yaml
 name: examples/my-component
 
-parameters:
-  environment:
-    default: local
-    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
-
 services:
   my-api:
     build:
@@ -40,7 +35,7 @@ services:
     cpu: 1
     memory: 512mb
     # Local configuration for my-api service
-    ${{ if parameters.environment == 'local' }}:
+    ${{ if architect.environment == 'local' }}:
       command: npm run dev
       volumes:
         src:

@@ -18,11 +18,6 @@ Each language and framework has its own tools to detect and react to code change
 name: component/name
 description: An example component that includes debugging details to faciliate hot-reloading
 
-parameters:
-  environment:
-    default: local
-    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
-
 services:
   api:
     build:
@@ -30,7 +25,7 @@ services:
     interfaces:
       api: 8080
     # Local configuration for api service
-    ${{ if parameters.environment == 'local' }}:
+    ${{ if architect.environment == 'local' }}:
       build:
         # The main difference between the main dockerfile and the debug one is the need
         # to install `devDependencies`, which in this case includes the `nodemon` utility
@@ -53,11 +48,6 @@ Another common need for teams working on rapid code changes is the use of an IDE
 ```yaml
 name: component/name
 
-parameters:
-  environment:
-    default: local
-    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
-
 services:
   api:
     build:
@@ -65,7 +55,7 @@ services:
     interfaces:
       api: 8080
     # Local configuration for api service
-    ${{ if parameters.environment == 'local' }}:
+    ${{ if architect.environment == 'local' }}:
       # First thing we need to do is attach the debugger. Node has a handy built-in flag, `--inspect`.
       command: node --brk-inspect=0.0.0.0:9229 index.js
       # Next, we need to expose the port the debugger is listening on.
@@ -84,18 +74,13 @@ In order to avoid this, you'll have to mount the data volume for the database to
 ```yaml
 name: postgres/postgres
 
-parameters:
-  environment:
-    default: local
-    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
-
 services:
   db:
     image: postgres:13
     interfaces:
       postgres: 5432
     # Local configuration for db service
-    ${{ if parameters.environment == 'local' }}:
+    ${{ if architect.environment == 'local' }}:
       environment:
         PGDATA: /var/lib/postgresql/data/pgdata
       volumes:

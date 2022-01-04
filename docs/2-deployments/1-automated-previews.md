@@ -14,6 +14,8 @@ What this means is that not only can developers run the stack privately, but the
 
 The workflow below can be pasted into a file in your repository in the `.github` folder to trigger automated preview environments via Architect. These previews will be created whenever a pull request is submitted that targets the master branch. Be sure to set values in Github Secrets for the architect fields: `ARCHITECT_EMAIL` and `ARCHITECT_PASSWORD`. Replace `<account-name>`, `<platform-name>`, and `<component-name>` with the appropriate values. With the `--ttl` flag set to `3d`, the environment will be destroyed automatically in three days from creation.
 
+> `ARCHITECT_PASSWORD` must be a <a href="https://cloud.architect.io/users/me/access-tokens" target="_blank">personal access token</a>.
+
 ```yaml
 name: Architect Create Preview
 
@@ -127,6 +129,8 @@ Use the code below in a GitHub workflow to post to a Slack channel on specified 
 This job can be pasted into your `.gitlab-ci.yml` at the root of your repository. You are welcome to change the `stage` to whatever fits your needs to allow you to run tests before the preview is generated, and please be sure to assign correct values for the variables in the job. Additionally, you'll need to assign values for variables in the below config not prefixed with `$CI_` in your repository's CI variables configuration so that the architect commands will run successfully.
 
 This configuration takes advantage of GitLab environments in order to give you better control and visibility into what environments exist and what's deployed to them. On PR creation, both a GitLab and Architect environment will be created. The component specified in the repository will be registered with the Architect Cloud and deployed to the environment. When the PR is either merged or closed, the GitLab environment will be automatically deleted and the component deployed to the environment in the Architect Cloud will be destroyed.
+
+> `ARCHITECT_PASSWORD` must be a <a href="https://cloud.architect.io/users/me/access-tokens" target="_blank">personal access token</a>.
 
 ```yaml
 # this example assumes that the repo has ARCHITECT_ACCOUNT and ARCHITECT_PLATFORM set as CI/CD variables
