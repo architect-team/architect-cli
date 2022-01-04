@@ -60,7 +60,7 @@ services:
       DB_USER: ${{ parameters.root_db_user }}
       DB_PASS: ${{ parameters.root_db_pass }}
       DB_NAME: ${{ parameters.api_db_name }}
-    debug:
+    ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
         src:
@@ -84,7 +84,7 @@ services:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
       WORLD_TEXT: ${{ parameters.world_text }}
-    debug:
+    ${{ if architect.environment == 'local' }}:
       build:
         dockerfile: Dockerfile.dev
         context: ./frontend

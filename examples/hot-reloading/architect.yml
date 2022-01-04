@@ -13,7 +13,7 @@ services:
       context: ./
     interfaces:
       main: 8080
-    debug:
+    ${{ if architect.environment == 'local' }}:
       command: npm run dev
       volumes:
         src:
