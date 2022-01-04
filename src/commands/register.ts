@@ -232,10 +232,10 @@ export default class ComponentRegister extends Command {
       }
       const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
-      throw new Error(err);
+      throw new Error(err as any);
     }
   }
 
@@ -243,7 +243,7 @@ export default class ComponentRegister extends Command {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
       await Docker.pushImage(image);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
     }
