@@ -73,9 +73,6 @@ The `architect.yml` file contains the component descriptors that power Architect
 name: examples/react-app
 
 parameters:
-  environment:
-    default: local
-    description: Used to alter the configuration based on the deployment target (ex. local, dev, prod)
   world_text:
     description: Default greeting text for the landing page
     default: world
