@@ -235,7 +235,7 @@ export default class ComponentRegister extends Command {
     } catch (err: any) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
-      throw new Error(err as any);
+      throw new Error(err);
     }
   }
 
