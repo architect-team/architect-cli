@@ -5,6 +5,7 @@ import os from 'os';
 import pLimit from 'p-limit';
 import path from 'path';
 import untildify from 'untildify';
+import which from 'which';
 import { ServiceNode, TaskNode } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import IngressEdge from '../../dependency-manager/src/graph/edge/ingress';
@@ -118,6 +119,7 @@ export class DockerComposeUtils {
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
 
+      /* Disable healthcheck since we removed autoheal container
       // Set liveness and healthcheck for services (not supported by Tasks)
       if (node instanceof ServiceNode) {
         const liveness_probe = node.config.liveness_probe;
@@ -137,6 +139,7 @@ export class DockerComposeUtils {
           }
         }
       }
+      */
 
       const is_wsl = os.release().toLowerCase().includes('microsoft');
       if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
@@ -159,15 +162,17 @@ export class DockerComposeUtils {
           }
 
           if (build.context || args.length) {
-            const compose_build: any = {};
+            const compose_build: DockerServiceBuild = {};
             if (build.context) compose_build.context = path.resolve(component_path, untildify(build.context));
             if (args.length) compose_build.args = args;
             service.build = compose_build;
           }
 
           if (build.dockerfile) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (service.build! as DockerServiceBuild).dockerfile = build.dockerfile;
+            if (!service.build) {
+              service.build = {};
+            }
+            (service.build as DockerServiceBuild).dockerfile = build.dockerfile;
           }
         } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");
@@ -321,7 +326,7 @@ export class DockerComposeUtils {
       return await cmd;
     } catch (err) {
       try {
-        await execa('which', ['docker-compose']);
+        which.sync('docker-compose');
       } catch {
         throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
       }

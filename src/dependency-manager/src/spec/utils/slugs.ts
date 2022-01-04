@@ -1,3 +1,5 @@
+import { ArchitectError } from '../../utils/errors';
+
 export type ArchitectSlug = string; // a string that passes Slugs.ArchitectSlugValidator (ie "account-name")
 export type ComponentTag = string; // "tag"
 
@@ -77,7 +79,7 @@ export class ComponentSlugUtils extends SlugUtils {
 
   public static parse = (slug: ComponentSlug): ParsedComponentSlug => {
     if (!ComponentSlugUtils.Validator.test(slug)) {
-      throw new Error(ComponentSlugUtils.Description);
+      throw new ArchitectError(`${slug} ${ComponentSlugUtils.Description}`);
     }
 
     const [full_component_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
@@ -133,12 +135,12 @@ export class ComponentVersionSlugUtils extends SlugUtils {
         };
         // eslint-disable-next-line no-empty
       } catch { }
-      throw new Error(ComponentVersionSlugUtils.Description);
+      throw new ArchitectError(`${slug} ${ComponentVersionSlugUtils.Description}`);
     }
     const [full_component_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
     const [component_slug, tag] = full_component_slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
-      throw new Error(Slugs.ComponentTagDescription);
+      throw new ArchitectError(`${tag} ${Slugs.ComponentTagDescription}`);
     }
     const { component_account_name, component_name } = ComponentSlugUtils.parse(component_slug);
     return {
@@ -170,7 +172,7 @@ export class ServiceSlugUtils extends SlugUtils {
 
   public static parse = (slug: ServiceSlug): ParsedServiceSlug => {
     if (!ServiceSlugUtils.Validator.test(slug)) {
-      throw new Error(ServiceSlugUtils.Description);
+      throw new ArchitectError(`${slug} ${ServiceSlugUtils.Description}`);
     }
     const [account_name, component_name, service_name] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
@@ -207,12 +209,12 @@ export class ServiceVersionSlugUtils extends SlugUtils {
 
   public static parse = (slug: ServiceVersionSlug): ParsedServiceVersionSlug => {
     if (!ServiceVersionSlugUtils.Validator.test(slug)) {
-      throw new Error(ServiceVersionSlugUtils.Description);
+      throw new ArchitectError(`${slug} ${ServiceVersionSlugUtils.Description}`);
     }
     const [full_service_slug, instance_name] = slug.split(Slugs.INSTANCE_DELIMITER);
     const [service_slug, tag] = full_service_slug.split(Slugs.TAG_DELIMITER);
     if (!Slugs.ComponentTagValidator.test(tag)) {
-      throw new Error(Slugs.ComponentTagDescription);
+      throw new ArchitectError(`${tag} ${Slugs.ComponentTagDescription}`);
     }
     const { component_account_name, component_name, service_name } = ServiceSlugUtils.parse(service_slug);
 
@@ -245,7 +247,7 @@ export class EnvironmentSlugUtils extends SlugUtils {
 
   public static parse = (slug: EnvironmentSlug): ParsedEvironmentSlug => {
     if (!EnvironmentSlugUtils.Validator.test(slug)) {
-      throw new Error(EnvironmentSlugUtils.Description);
+      throw new ArchitectError(`${slug} ${EnvironmentSlugUtils.Description}`);
     }
     const [account_slug, environment_slug] = slug.split(Slugs.NAMESPACE_DELIMITER);
     return {
@@ -272,10 +274,27 @@ export class GatewaySlugUtils extends SlugUtils {
 
   public static parse = (slug: string): ParsedGatewaySlug => {
     if (!GatewaySlugUtils.Validator.test(slug)) {
-      throw new Error(GatewaySlugUtils.Description);
+      throw new ArchitectError(`${slug} ${GatewaySlugUtils.Description}`);
     }
     return {
       kind: 'gateway',
     };
   };
 }
+
+type ParsedUnknownSlug = ParsedComponentSlug | ParsedComponentVersionSlug | ParsedServiceSlug | ParsedServiceVersionSlug;
+export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
+  try {
+    return ComponentSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  try {
+    return ComponentVersionSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  try {
+    return ServiceSlugUtils.parse(unknown);
+    // eslint-disable-next-line no-empty
+  } catch { }
+  return ServiceVersionSlugUtils.parse(unknown);
+};

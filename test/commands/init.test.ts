@@ -232,6 +232,30 @@ describe('init', function () {
       expect(component_config.services['kibana'].debug!.volumes['volume4'].mount_path).eq('/etc/configs/');
       expect(component_config.services['kibana'].debug!.volumes['volume4'].host_path).eq('~/configs');
       expect(component_config.services['kibana'].debug!.volumes['volume4'].readonly).eq(true);
+    });
 
+  mockArchitectAuth
+    .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/users/me`)
+      .reply(200, {
+        memberships: [
+          {
+            account: {
+              name: 'my-account'
+            },
+          }
+        ],
+      })
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
+    .it('uses only account membership if only one exists and account is unspecified', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
+
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+      expect(component_config.name).eq('my-account/test-component');
     });
 });

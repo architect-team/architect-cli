@@ -65,8 +65,7 @@ jobs:
           git add package.json package-lock.json
           git commit -m "Published CLI ${GITHUB_REF/refs\/tags\//}"
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - name: oclif-dev pack
-        run: sudo npx oclif-dev pack
+      - run: npm run pack
       - name: Archive artifact
         uses: actions/upload-artifact@v2
         with:
@@ -90,9 +89,10 @@ jobs:
           - -win32-x86.tar.gz
           - -darwin-x64.tar.gz
     steps:
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v2
         with:
           name: dist
+          path: dist
       - name: Find artifact path
         id: find-artifact
         run: |

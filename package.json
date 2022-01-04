@@ -1,29 +1,29 @@
 {
   "name": "@architect-io/cli",
   "description": "Command-line interface for Architect.io",
-  "version": "1.12.11-rc.27",
+  "version": "1.13.8-rc.5",
   "author": "Architect.io",
   "bin": {
     "architect": "./bin/run"
   },
   "bugs": "https://github.com/architect-team/architect-cli/issues",
   "dependencies": {
-    "@oclif/command": "1.8.0",
-    "@oclif/config": "1.17.0",
-    "@oclif/plugin-autocomplete": "^0.3.0",
-    "@oclif/plugin-help": "3.2.2",
-    "@oclif/plugin-not-found": "^1.2.4",
-    "@oclif/plugin-warn-if-update-available": "^1.7.0",
+    "@oclif/command": "1.8.16",
+    "@oclif/config": "1.18.2",
+    "@oclif/plugin-autocomplete": "1.0.0",
+    "@oclif/plugin-help": "5.1.10",
+    "@oclif/plugin-not-found": "2.2.3",
+    "@oclif/plugin-warn-if-update-available": "2.0.3",
     "acorn-loose": "^8.2.1",
     "ajv": "^8.6.3",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
-    "axios": "0.21.1",
+    "axios": "^0.21.4",
     "class-transformer": "^0.4.0",
-    "class-validator": "^0.13.1",
+    "class-validator": "^0.13.2",
     "class-validator-jsonschema": "^3.1.0",
     "cli-table3": "0.6.0",
-    "cli-ux": "5.4.9",
+    "cli-ux": "6.0.6",
     "cron-validate": "^1.4.3",
     "deepmerge": "^4.2.2",
     "diff": "^5.0.0",
@@ -45,10 +45,11 @@
     "simple-oauth2": "^4.2.0",
     "tmp": "^0.2.1",
     "tslib": "2.1.0",
-    "untildify": "4.0.0"
+    "untildify": "4.0.0",
+    "which": "^2.0.2",
+    "ws": "^8.4.0"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "1.26.0",
     "@oclif/test": "1.2.8",
     "@types/chai": "4.2.15",
     "@types/diff": "^5.0.1",
@@ -67,6 +68,9 @@
     "@types/simple-oauth2": "^4.1.0",
     "@types/sinon": "9.0.10",
     "@types/tmp": "^0.2.0",
+    "@types/validator": "^13.7.1",
+    "@types/which": "^2.0.1",
+    "@types/ws": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "4.29.3",
     "@typescript-eslint/parser": "4.29.3",
     "chai": "4.3.0",
@@ -79,6 +83,7 @@
     "mock-fs": "^5.1.1",
     "nock": "^13.1.3",
     "nyc": "15.1.0",
+    "oclif": "^2.1.0",
     "sinon": "9.2.4",
     "ts-node": "9.1.1",
     "typescript": "4.2.3"
@@ -128,11 +133,9 @@
     "check-circular": "madge --ts-config ./tsconfig.json --circular --extensions ts ./src/",
     "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
-    "postpack": "rm -f oclif.manifest.json",
-    "prepack": "oclif-dev manifest && oclif-dev readme",
     "coverage": "nyc --extension .ts npm test",
     "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
-    "version": "oclif-dev readme && git add README.md"
+    "pack": "oclif pack:tarballs"
   },
   "types": "lib/index.d.ts"
 }

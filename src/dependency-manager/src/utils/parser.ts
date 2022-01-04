@@ -200,6 +200,8 @@ export class ArchitectParser {
           let value;
           if (node.callee.value === 'trim') {
             value = node.arguments[0].value.trim();
+          } else if (node.callee.value === 'startsWith') {
+            value = node.arguments[0].value.startsWith(node.arguments[1].value);
           } else {
             throw new Error(`Unsupported node.callee.value: ${node.callee.value} node.type: ${node.type}`);
           }

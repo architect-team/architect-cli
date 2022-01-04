@@ -2,6 +2,7 @@ import { flags } from '@oclif/command';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import Account from '../account/account.entity';
 import Platform from './platform.entity';
 
 export interface CreatePlatformInput {
@@ -33,6 +34,7 @@ export default class PlatformUtils {
     platform: flags.string({
       description: 'Architect platform',
       env: 'ARCHITECT_PLATFORM',
+      parse: value => value.toLowerCase(),
     }),
   };
 

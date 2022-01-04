@@ -15,6 +15,7 @@ import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
 import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
+import { IF_EXPRESSION_REGEX } from '../dependency-manager/src/spec/utils/interpolation';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 tmp.setGracefulCleanup();
@@ -94,6 +95,9 @@ export default class ComponentRegister extends Command {
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
     for (const [service_name, service_config] of Object.entries(new_spec.services || {})) {
+      if (IF_EXPRESSION_REGEX.test(service_name)) {
+        continue;
+      }
       // Build image for service
       if (!service_config.build && !service_config.image) {
         service_config.build = { context: '.', dockerfile: 'Dockerfile' };
@@ -150,9 +154,9 @@ export default class ComponentRegister extends Command {
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));
-    const previous_source_yml = dumpToYml(previous_config_data);
+    const previous_source_yml = dumpToYml(previous_config_data, { lineWidth: -1 });
 
-    const new_source_yml = dumpToYml(component_dto.config);
+    const new_source_yml = dumpToYml(component_dto.config, { lineWidth: -1 });
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
@@ -228,7 +232,7 @@ export default class ComponentRegister extends Command {
       }
       const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
       throw new Error(err);
@@ -239,7 +243,7 @@ export default class ComponentRegister extends Command {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
       await Docker.pushImage(image);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
     }

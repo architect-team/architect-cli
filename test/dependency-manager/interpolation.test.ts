@@ -1514,4 +1514,76 @@ describe('interpolation spec v1', () => {
       `${consumer_api_ref} [output->topic1] -> ${publisher_component_ref} [topic1]`
     ])
   });
+
+  it('interpolating service port returns a different value based on context for sidecars', async () => {
+    const config = `
+    name: examples/test
+
+    parameters:
+      api_port: 8080
+
+    interfaces:
+      api: \${{ services.api.interfaces.main.url }}
+
+    services:
+      app:
+        environment:
+          API_PORT: \${{ services.api.interfaces.main.port }}
+          API_ADDR: \${{ services.api.interfaces.main.url }}
+      api:
+        interfaces:
+          main: \${{ parameters.api_port }}
+        environment:
+          MY_PORT: \${{ services.api.interfaces.main.port }}
+          MY_ADDR: \${{ services.api.interfaces.main.url }}
+    `
+
+    const upstream_config = `
+    name: examples/upstream
+
+    dependencies:
+      examples/test: latest
+
+    services:
+      app:
+        environment:
+          API_PORT: \${{ dependencies.examples/test.interfaces.api.port }}
+          API_ADDR: \${{ dependencies.examples/test.interfaces.api.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': config,
+      '/stack/upstream/architect.yml': upstream_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/test': '/stack/architect.yml',
+      'examples/upstream': '/stack/upstream/architect.yml'
+    });
+    manager.use_sidecar = true;
+    const graph = await manager.getGraph(
+      await manager.loadComponentSpecs(await manager.loadComponentSpec('examples/upstream'))
+    );
+
+    const app_ref = resourceRefToNodeRef('examples/test/app:latest');
+    const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
+    expect(app_node.config.environment).to.deep.eq({
+      API_PORT: '12345',
+      API_ADDR: 'http://127.0.0.1:12345'
+    })
+
+    const api_ref = resourceRefToNodeRef('examples/test/api:latest');
+    const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
+    expect(api_node.config.environment).to.deep.eq({
+      MY_PORT: '8080',
+      MY_ADDR: 'http://127.0.0.1:8080'
+    })
+
+    const upstream_ref = resourceRefToNodeRef('examples/upstream/app:latest');
+    const upstream_node = graph.getNodeByRef(upstream_ref) as ServiceNode;
+    expect(upstream_node.config.environment).to.deep.eq({
+      API_PORT: '12345',
+      API_ADDR: 'http://127.0.0.1:12345'
+    })
+  });
 });

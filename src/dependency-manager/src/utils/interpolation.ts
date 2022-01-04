@@ -83,6 +83,7 @@ export const interpolateObject = <T>(obj: T, context: any, options?: Interpolate
           continue;
         }
         const current_path_keys = [...path_keys, key];
+        context_map['_path'] = current_path_keys.join('.');
         delete el[key];
         if (options.keys && IF_EXPRESSION_REGEX.test(key)) {
           const parsed_key = parser.parseString(key, context_map, options.ignore_keys);

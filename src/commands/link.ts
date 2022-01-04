@@ -32,7 +32,7 @@ export default class Link extends Command {
       const component_config = buildSpecFromPath(component_path);
       this.app.linkComponentPath(component_config.name, component_path);
       this.log(`Successfully linked ${chalk.green(component_config.name)} to local system at ${chalk.green(component_path)}.`);
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === 'missing_config_file') {
         this.log(chalk.red(err.message));
       } else {

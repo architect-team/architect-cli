@@ -2,6 +2,7 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
+import Account from './account.entity';
 
 export default class AccountUtils {
   static flags = {
@@ -9,6 +10,7 @@ export default class AccountUtils {
       description: 'Architect account',
       env: 'ARCHITECT_ACCOUNT',
       char: 'a',
+      parse: value => value.toLowerCase(),
     }),
   };
 
@@ -21,6 +23,13 @@ export default class AccountUtils {
 
     if (process.env.ARCHITECT_ACCOUNT === account_name && process.env.ARCHITECT_ACCOUNT) {
       console.log(chalk.blue(`Using account from environment variables: `) + account_name);
+    }
+
+    if (!account_name) {
+      const { data: user_data } = await app.api.get('/users/me');
+      if (user_data.memberships?.length === 1) { // if user only has one account, use it by default
+        return user_data.memberships[0].account;
+      }
     }
 
     let account: Account;

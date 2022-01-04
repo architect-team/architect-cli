@@ -5,7 +5,7 @@
     "name": "Architect.io",
     "url": "https://architect.io"
   },
-  "version": "1.12.11-rc.28",
+  "version": "1.13.8-rc.4",
   "repository": {
     "type": "git",
     "directory": "src/dependency-graph",
@@ -22,7 +22,7 @@
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
     "class-transformer": "^0.4.0",
-    "class-validator": "^0.13.1",
+    "class-validator": "^0.13.2",
     "class-validator-jsonschema": "^3.1.0",
     "cron-validate": "^1.4.3",
     "deepmerge": "^4.2.2",
@@ -42,6 +42,7 @@
     "@types/fs-extra": "^8.0.1",
     "@types/js-yaml": "^4.0.1",
     "@types/shell-quote": "^1.7.0",
+    "@types/validator": "^13.7.1",
     "ts-node": "9.1.1",
     "typescript": "^4.2.3"
   },
