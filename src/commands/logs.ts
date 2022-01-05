@@ -123,7 +123,7 @@ export default class Logs extends Command {
       return chunks;
     }
 
-    const displayRawLogs = flags.raw || !process.stdout.isTTY
+    const displayRawLogs = flags.raw || !process.stdout.isTTY;
     const log = (txt: string) => {
       if (displayRawLogs) {
         this.log(txt);
