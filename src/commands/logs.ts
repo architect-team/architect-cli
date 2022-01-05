@@ -123,8 +123,9 @@ export default class Logs extends Command {
       return chunks;
     }
 
+    const displayRawLogs = flags.raw || !process.stdout.isTTY;
     const log = (txt: string) => {
-      if (flags.raw) {
+      if (displayRawLogs) {
         this.log(txt);
       } else {
         if (show_header) {
