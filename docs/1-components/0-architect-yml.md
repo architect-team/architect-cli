@@ -63,7 +63,8 @@ services:
       path: /health
     environment:
       API_ADDR: ${{ services['my-api'].interfaces.public.url }}
-    debug:
+    # Local configuration for my-frontend service
+    ${{ if architect.environment == 'local' }}:
       command: npm run dev
       volumes:
         src:

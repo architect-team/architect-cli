@@ -7,6 +7,8 @@ title: Services
 Services describe the runtimes that power your application. Each service described in an `architect.yml` file will automatically be deployed to its own horizontally scaling replica with load balancing seamlessly between instances.
 
 ```yaml
+name: examples/my-component
+
 services:
   my-api:
     build:
@@ -32,7 +34,8 @@ services:
     replicas: 2
     cpu: 1
     memory: 512mb
-    debug:
+    # Local configuration for my-api service
+    ${{ if architect.environment == 'local' }}:
       command: npm run dev
       volumes:
         src:
@@ -261,30 +264,6 @@ Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS 
 
 The config above assumes that a volume has been created in EFS with the ID `my-efs-id`. The volume should be mounted with an AWS volume mount into the same VPC as the platform apps that were installed, which is a VPC named `arc-managed-apps--<architect account name>-<architect platform name>`. The security group of the volume mount should have an inbound rule allowing NFS type traffic to port 2049 from a source which is the CIDR block of the previously-mentioned VPC.
 
-### debug
-
-(optional) A set of values for the service that will override the others when the service is being run locally. All values that are supported by the top-level service are also supported inside the `debug` object.
-
-```yaml
-debug:
-  # An entrypoint for the container that will take effect locally
-  entrypoint: npm
-
-  # A command to be run only when the service is running locally
-  command: run dev
-
-  # An alternative build process to use for local dev
-  build:
-    dockerfile: Dockerfile.dev
-
-  # A set of volumes to mount only when running locally
-  volumes:
-    src:
-      description: Mount the src dir for hot-reloading
-      host_path: ./src/
-      mount_path: /usr/app/src/
-```
-
 ### cpu & memory
 
 `cpu`: a whole number or decimal that represents the vCPUs allocated to the service when it runs.
@@ -302,13 +281,13 @@ memory: 2GB
 **Note for ECS platforms only:**
 When deploying to platforms of type ECS, there are constraints in the underlying provider that require `cpu` and `memory` to be correlated. In the table below you can find the required memory values for a given vCPU value. See [underlying ECS constraints here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html).
 
-| cpu | memory |
-| ----- | ----------- |
-| .25   | 0.5GB, 1GB, 2GB |
-| .5  | 1GB, 2GB, 3GB, 4GB |
-| 1  | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
-| 2 | 4GB - 16GB (in increments of 1GB) |
-| 4 | 8GB - 30GB (in increments of 1GB) |
+| cpu | memory                            |
+| --- | --------------------------------- |
+| .25 | 0.5GB, 1GB, 2GB                   |
+| .5  | 1GB, 2GB, 3GB, 4GB                |
+| 1   | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
+| 2   | 4GB - 16GB (in increments of 1GB) |
+| 4   | 8GB - 30GB (in increments of 1GB) |
 
 ### depends_on
 
@@ -333,3 +312,7 @@ services:
 ```
 
 Note: Circular dependencies and self-references are detected and rejected at component registration time.
+
+## Local development
+
+When developing your service locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](7-local-configuration.md).
