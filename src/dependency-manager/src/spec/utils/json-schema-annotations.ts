@@ -76,6 +76,19 @@ export const ArrayOf = (arg: any): DecoratorSchema => {
   return ArrayOfAny(arg);
 };
 
+export const RequiredOr = (...properties: string[]): DecoratorSchema => {
+  const anyOf = properties.map(p => {
+    return {
+      type: "object",
+      required: [p],
+    };
+  });
+
+  return {
+    anyOf,
+  } as DecoratorSchema;
+};
+
 /**
  * Should be used in a class-level @JSONSchema() annotation
  *
