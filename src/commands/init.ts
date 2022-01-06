@@ -22,7 +22,17 @@ interface ComposeConversion {
 }
 
 export abstract class InitCommand extends Command {
-  local_config_placeholder = '<LOCAL_CONFIG_IF_PLACEHOLDER>';
+  compose_property_converters: { [key: string]: { architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion } } = {
+    environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
+    command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
+    entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
+    image: { architect_property: 'image', func: (image: string) => { return { base: image }; } },
+    build: { architect_property: 'build', func: this.convertBuild },
+    ports: { architect_property: 'interfaces', func: this.convertPorts },
+    volumes: { architect_property: 'volumes', func: this.convertVolumes },
+    depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
+    external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
+  };
 
   auth_required(): boolean {
     return false;
@@ -69,30 +79,7 @@ export abstract class InitCommand extends Command {
   async run(): Promise<void> {
     const { flags } = this.parse(InitCommand);
 
-    let from_path;
-    if (flags['from-compose']) {
-      from_path = path.resolve(untildify(flags['from-compose']));
-    } else {
-      const files_in_current_dir = fs.readdirSync('.');
-      const default_compose = files_in_current_dir.find(f => f === 'docker-compose.yml' || f === 'docker-compose.yaml' || (f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml'))));
-
-      if (default_compose) {
-        from_path = default_compose;
-      } else {
-        const answers: any = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'from_compose',
-            message: 'What is the filename of the Docker Compose file you would like to convert?',
-            default: default_compose,
-            validate: (value: any) => {
-              return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
-            },
-          },
-        ]);
-        from_path = path.resolve(untildify(answers.from_compose));
-      }
-    }
+    const from_path = await this.getComposeFromPath(flags);
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
 
     let account_name = 'my-account';
@@ -119,32 +106,21 @@ export abstract class InitCommand extends Command {
       },
     ]);
 
-    const compose_property_converters: { [key: string]: { architect_property: string, func: (compose_property: any, docker_compose: DockerComposeTemplate, architect_service: Partial<ServiceSpec>) => ComposeConversion } } = {
-      environment: { architect_property: 'environment', func: (environment: any) => { return { base: environment }; } },
-      command: { architect_property: 'command', func: (command: any) => { return { base: command }; } },
-      entrypoint: { architect_property: 'entrypoint', func: (entrypoint: any) => { return { base: entrypoint }; } },
-      image: { architect_property: 'image', func: (image: string) => { return { base: image }; } },
-      build: { architect_property: 'build', func: this.convertBuild },
-      ports: { architect_property: 'interfaces', func: this.convertPorts },
-      volumes: { architect_property: 'volumes', func: this.convertVolumes },
-      depends_on: { architect_property: 'depends_on', func: this.convertDependsOn },
-      external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
-    };
-
     const architect_component: Partial<ComponentSpec> = {};
     architect_component.name = `${flags.account || account_name}/${flags.name || answers.name}`;
     architect_component.services = {};
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
       for (const [property_name, property_data] of Object.entries(service_data || {})) {
-        if (compose_property_converters[property_name]) {
-          const architect_property_name = compose_property_converters[property_name].architect_property;
-          const converted_props: ComposeConversion = compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
+        if (this.compose_property_converters[property_name]) {
+          const architect_property_name = this.compose_property_converters[property_name].architect_property;
+          const converted_props: ComposeConversion = this.compose_property_converters[property_name].func(property_data, docker_compose, architect_service);
           if (converted_props.local) {
-            if (!(architect_service as any)[this.local_config_placeholder]) {
-              (architect_service as any)[this.local_config_placeholder] = {};
+            const local_block_key = "${{ if architect.environment == 'local' }}";
+            if (!(architect_service as any)[local_block_key]) {
+              (architect_service as any)[local_block_key] = {};
             }
-            (architect_service as any)[this.local_config_placeholder][architect_property_name] = converted_props.local;
+            (architect_service as any)[local_block_key][architect_property_name] = converted_props.local;
           }
           if (converted_props.base) {
             (architect_service as any)[architect_property_name] = converted_props.base;
@@ -166,13 +142,39 @@ export abstract class InitCommand extends Command {
     }
 
     let architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
-    const local_regex = new RegExp(`${this.local_config_placeholder}:`, 'gm');
-    architect_yml = architect_yml.replace(local_regex, "${{ if architect.environment == 'local' }}:");
     validateOrRejectSpec(yaml.load(architect_yml));
 
     fs.writeFileSync(flags['component-file'], architect_yml);
     this.log(chalk.green(`Converted ${path.basename(from_path)} and wrote Architect component config to ${flags['component-file']}`));
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
+  }
+
+  async getComposeFromPath(flags: any) {
+    let from_path;
+    if (flags['from-compose']) {
+      from_path = path.resolve(untildify(flags['from-compose']));
+    } else {
+      const files_in_current_dir = fs.readdirSync('.');
+      const default_compose = files_in_current_dir.find(f => f.includes('compose') && (f.endsWith('.yml') || f.endsWith('.yaml')));
+
+      if (default_compose) {
+        from_path = default_compose;
+      } else {
+        const answers: any = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'from_compose',
+            message: 'What is the filename of the Docker Compose file you would like to convert?',
+            default: default_compose,
+            validate: (value: any) => {
+              return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
+            },
+          },
+        ]);
+        from_path = path.resolve(untildify(answers.from_compose));
+      }
+    }
+    return from_path;
   }
 
   convertBuild(compose_build: any): ComposeConversion {
