@@ -24,7 +24,8 @@ services:
       context: ./
     interfaces:
       api: 8080
-    debug:
+    # Local configuration for api service
+    ${{ if architect.environment == 'local' }}:
       build:
         # The main difference between the main dockerfile and the debug one is the need
         # to install `devDependencies`, which in this case includes the `nodemon` utility
@@ -53,7 +54,8 @@ services:
       context: ./
     interfaces:
       api: 8080
-    debug:
+    # Local configuration for api service
+    ${{ if architect.environment == 'local' }}:
       # First thing we need to do is attach the debugger. Node has a handy built-in flag, `--inspect`.
       command: node --brk-inspect=0.0.0.0:9229 index.js
       # Next, we need to expose the port the debugger is listening on.
@@ -77,7 +79,8 @@ services:
     image: postgres:13
     interfaces:
       postgres: 5432
-    debug:
+    # Local configuration for db service
+    ${{ if architect.environment == 'local' }}:
       environment:
         PGDATA: /var/lib/postgresql/data/pgdata
       volumes:

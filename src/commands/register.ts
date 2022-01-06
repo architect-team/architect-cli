@@ -154,9 +154,9 @@ export default class ComponentRegister extends Command {
     } catch { }
 
     this.log(chalk.blue(`Begin component config diff`));
-    const previous_source_yml = dumpToYml(previous_config_data);
+    const previous_source_yml = dumpToYml(previous_config_data, { lineWidth: -1 });
 
-    const new_source_yml = dumpToYml(component_dto.config);
+    const new_source_yml = dumpToYml(component_dto.config, { lineWidth: -1 });
     const component_config_diff = Diff.diffLines(previous_source_yml, new_source_yml);
     for (const diff_section of component_config_diff) {
       const line_parts = diff_section.value.split('\n');
@@ -232,7 +232,7 @@ export default class ComponentRegister extends Command {
       }
       const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
       throw new Error(err);
@@ -243,7 +243,7 @@ export default class ComponentRegister extends Command {
     cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
       await Docker.pushImage(image);
-    } catch (err) {
+    } catch (err: any) {
       cli.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
     }

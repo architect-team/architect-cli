@@ -2146,7 +2146,7 @@
         }
       },
       "type": "object",
-      "oneOf": [
+      "anyOf": [
         {
           "type": "object",
           "required": [
@@ -2208,7 +2208,7 @@
                 }
               },
               "type": "object",
-              "oneOf": [
+              "anyOf": [
                 {
                   "type": "object",
                   "required": [

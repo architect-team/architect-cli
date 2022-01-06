@@ -77,29 +77,9 @@ environment:
   STRIPE_API_KEY: abc-123
 ```
 
-### debug
+## Local development
 
-(optional) A set of values for the service that will override the others when the service is being run locally. All values that are supported by the top-level service are also supported inside the `debug` object.
-
-```yaml
-debug:
-  # An entrypoint for the container that will take effect locally
-  entrypoint: npm
-
-  # A command to be run only when the service is running locally
-  command: run dev
-
-  # An alternative build process to use for local dev
-  build:
-    dockerfile: Dockerfile.dev
-
-  # A set of volumes to mount only when running locally
-  volumes:
-    src:
-      description: Mount the src dir for hot-reloading
-      host_path: ./src/
-      mount_path: /usr/app/src/
-```
+When developing your task locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](7-local-configuration.md).
 
 ## Manual execution
 

@@ -138,7 +138,7 @@ the container with the script from the local filesystem:
      schedule: ""
      build:
        context: ./
-+    debug:
++    ${{ if architect.environment == 'local' }}:
 +      volumes:
 +        src:
 +          mount_path: /my-task.sh
@@ -199,7 +199,7 @@ The `architect.yml` file:
        context: ./
 +    environment:
 +      GREETING: ${{ parameters.greeting }}
-     debug:
+     ${{ if architect.environment == 'local' }}:
        volumes:
          src:
 ```
@@ -286,7 +286,7 @@ the environment variable we reference in the script:
      environment:
        GREETING: ${{ parameters.greeting }}
 +      API_URL: ${{ services.name-generator.interfaces.main.url }}
-     debug:
+     ${{ if architect.environment == 'local' }}:
        volumes:
          src:
 ```

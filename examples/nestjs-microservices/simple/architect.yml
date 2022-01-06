@@ -19,7 +19,7 @@ services:
       main:
         port: 8080
         protocol: tcp
-    debug:
+    ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
         src:

@@ -113,7 +113,7 @@ services:
       DB_NAME: ${{ parameters.api_db_name }}
     # The debug block defines features only used for local deployments. In this
     # case, we've mounted to src directory and instrumented a hot-reloading cmd
-    debug:
+    ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
         src:
@@ -130,7 +130,7 @@ services:
       PORT: *app-port
       API_ADDR: ${{ services.api.interfaces.main.url }}
       WORLD_TEXT: ${{ parameters.world_text }}
-    debug:
+    ${{ if architect.environment == 'local' }}:
       build:
         dockerfile: Dockerfile.dev
       volumes:

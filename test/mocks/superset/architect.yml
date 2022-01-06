@@ -31,10 +31,10 @@ services:
   api-db:
     description: api-db service description
     image: postgres:12
-    command: "postgres"
+    command: 'postgres'
     entrypoint:
-      - "echo"
-      - "hello"
+      - 'echo'
+      - 'hello'
     language: postgresql
     environment:
       POSTGRES_USER: ${{ parameters.param_string }}
@@ -75,9 +75,9 @@ services:
     liveness_probe:
       success_threshold: 3
       failure_threshold: 3
-      timeout: "12s"
-      interval: "20s"
-      initial_delay: "30s"
+      timeout: '12s'
+      interval: '20s'
+      initial_delay: '30s'
       path: /liveness
       port: 5432
     replicas: 2
@@ -86,13 +86,13 @@ services:
       max_replicas: 3
       metrics:
         memory: 2GB
-    debug:
+    ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
-      command: "postgres"
+      command: 'postgres'
       entrypoint:
-        - "echo"
-        - "hello"
+        - 'echo'
+        - 'hello'
       language: postgresql
       environment:
         POSTGRES_USER: ${{ parameters.param_string }}
@@ -137,12 +137,10 @@ services:
       liveness_probe:
         success_threshold: 3
         failure_threshold: 3
-        timeout: "12s"
-        interval: "20s"
-        initial_delay: "30s"
-        command:
-          - "check"
-          - "liveness"
+        timeout: '12s'
+        interval: '20s'
+        initial_delay: '30s'
+        path: /status
         port: 5432
       replicas: 2
       scaling:
@@ -167,7 +165,7 @@ services:
       web: 8081
     environment:
       API_ADDR: ${{ services.stateful-api.interfaces.http.url }}
-    debug:
+    ${{ if architect.environment == 'local' }}:
       build:
         args:
           NODE_ENV: development
@@ -178,7 +176,7 @@ services:
 
 tasks:
   curler:
-    schedule: "*/5 * * * ?"
+    schedule: '*/5 * * * ?'
     image: ellerbrock/alpine-bash-curl-ssl
     command:
       - sh
