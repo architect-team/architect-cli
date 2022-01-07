@@ -141,7 +141,7 @@ export abstract class InitCommand extends Command {
       }
     }
 
-    let architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
+    const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
     validateOrRejectSpec(yaml.load(architect_yml));
 
     fs.writeFileSync(flags['component-file'], architect_yml);
@@ -149,7 +149,7 @@ export abstract class InitCommand extends Command {
     this.log(chalk.blue('The component config may be incomplete and should be checked for consistency with the context of your application. Helpful reference docs can be found at https://www.architect.io/docs/reference/component-spec.'));
   }
 
-  async getComposeFromPath(flags: any) {
+  async getComposeFromPath(flags: any): Promise<string> {
     let from_path;
     if (flags['from-compose']) {
       from_path = path.resolve(untildify(flags['from-compose']));
