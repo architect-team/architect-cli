@@ -17,9 +17,7 @@ module "vpc" {
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
 
   enable_nat_gateway = true
-
-  one_nat_gateway_per_az = false
-  single_nat_gateway     = true
+  single_nat_gateway = true
 
   create_database_subnet_group = true
   database_subnets             = ["10.0.3.0/24", "10.0.4.0/24"]
@@ -50,9 +48,7 @@ module "postgres_db" {
   database_name          = var.postgres_database
   port                   = var.postgres_port
 
-  skip_final_snapshot                 = true
-  deletion_protection                 = false
-  iam_database_authentication_enabled = true
+  skip_final_snapshot = true
 }
 
 data "aws_eks_cluster" "cluster" {
