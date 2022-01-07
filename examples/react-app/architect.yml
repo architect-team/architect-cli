@@ -25,7 +25,7 @@ parameters:
     default: architect
   root_db_user:
     description: Root user to assign to the generated database
-    default: potgres
+    default: postgres
   world_text:
     description: Default greeting text for the landing page
     default: world
