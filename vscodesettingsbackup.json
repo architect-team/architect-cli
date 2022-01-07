@@ -1,0 +1,65 @@
+{
+  "workbench.editor.enablePreview": false,
+  "files.autoSave": "onFocusChange",
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.home": "/usr/lib/jvm/java-11-openjdk-amd64/bin/java/",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true,
+    "source.fixAll.eslint": true
+  },
+  "[html]": {
+    "editor.tabSize": 2
+  },
+  "[typescript]": {
+    "editor.tabSize": 2,
+  },
+  "files.trimTrailingWhitespace": true,
+  "go.toolsEnvVars": {
+    "GO111MODULE": "on",
+    "GOFLAGS": "-mod=vendor"
+  },
+  "go.useCodeSnippetsOnFunctionSuggest": true,
+  "go.useLanguageServer": true,
+  "editor.formatOnSave": true,
+  "[vue]": {
+    "editor.formatOnSave": false
+  },
+  "files.insertFinalNewline": true,
+  "eslint.autoFixOnSave": true,
+  "eslint.alwaysShowStatus": true,
+  "eslint.run": "onSave",
+  "eslint.validate": [
+    {
+      "language": "vue",
+      "autoFix": true
+    },
+    {
+      "language": "html",
+      "autoFix": true
+    },
+    {
+      "language": "javascript",
+      "autoFix": true
+    },
+    {
+      "language": "typescript",
+      "autoFix": true
+    }
+  ],
+  "vetur.format.defaultFormatter.html": "none",
+  "vetur.format.defaultFormatter.js": "none",
+  "vetur.format.defaultFormatter.ts": "none",
+  "vetur.useWorkspaceDependencies": true,
+  "editor.tabSize": 2,
+  "editor.suggestSelection": "first",
+  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "terraform.languageServer.enabled": true,
+  "terraform.languageServer": {
+    "external": true,
+    "args": [
+      "serve"
+    ]
+  },
+  "sync.gist": "tjhiggins/288c3b83adcb6c2899fee49d274ea9db",
+  "sync.autoDownload": true
+}

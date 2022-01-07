@@ -36,6 +36,8 @@ Once the deploy has completed, you can reach your new service by going to http:/
 
 ## Creating remote infrastructure
 
+TODO: note about required AWS permissions
+
 Terraform templates for running the component in a remote environment can be found in the `terraform` directory. Ensure that [`terraform`](https://learn.hashicorp.com/tutorials/terraform/install-cli) is installed and that you have an AWS account, then follow the next steps.
 
 First, navigate to the `terraform` folder in your terminal, then set the environment variables for your AWS credentials like so:

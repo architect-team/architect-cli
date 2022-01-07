@@ -26,7 +26,10 @@ const sequelize = new Sequelize(process.env.DB_ADDR, {
       Sequelize.ConnectionError,
       Sequelize.ConnectionRefusedError
     ],
-  }
+  },
+  ssl: {
+    ca: process.env.CA_CERT,
+  },
 });
 
 const Name = sequelize.define('name', {

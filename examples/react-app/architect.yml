@@ -29,6 +29,9 @@ parameters:
   world_text:
     description: Default greeting text for the landing page
     default: world
+  ca_cert:
+    description: Root cert contents for SSL Postgres connections
+    required: false
 
 services:
   api-db:
@@ -63,6 +66,7 @@ services:
       DB_USER: ${{ parameters.root_db_user }}
       DB_PASS: ${{ parameters.root_db_pass }}
       DB_NAME: ${{ parameters.api_db_name }}
+      CA_CERT: ${{ parameters.ca_cert }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
