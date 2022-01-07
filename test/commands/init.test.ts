@@ -3,6 +3,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import sinon from 'sinon';
+import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
@@ -195,7 +196,6 @@ describe('init', function () {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
       const component_object: any = yaml.load(writeFileSync.args[0][1]);
       expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].mount_path).eq('/usr/share/logstash/config/logstash.yml');
       expect(component_object.services['logstash']["${{ if architect.environment == 'local' }}"].volumes['volume'].host_path).eq('./logstash/config/logstash.yml');
@@ -246,7 +246,7 @@ describe('init', function () {
         memberships: [
           {
             account: {
-              name: 'my-account'
+              name: 'my-account-name'
             },
           }
         ],
@@ -260,6 +260,33 @@ describe('init', function () {
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.name).eq('my-account/test-component');
+      expect(component_config.name).eq('my-account-name/test-component');
     });
+
+    mockArchitectAuth
+      .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
+      .nock(MOCK_API_HOST, api => api
+        .get(`/users/me`)
+        .reply(500)
+      )
+      .stdout({ print })
+      .stderr({ print })
+      .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
+      .it('falls back to default account name if getting accounts fails and account is unspecified', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        expect(ctx.stdout).to.contain('No accounts found, using default account name "my-account"');
+        const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+        expect(component_config.name).eq('my-account/test-component');
+      });
+
+    mockInit()
+      .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(Promise.resolve('')))
+      .command(['init', '-a', account_name, '-n', 'test-component'])
+      .it('finds a compose file in the current directory if one was unspecified', ctx => {
+        const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
+        expect(loadDockerCompose.called).to.be.true;
+        expect(loadDockerCompose.args[0][0]).eq('docker-compose.yml');
+      });
 });
