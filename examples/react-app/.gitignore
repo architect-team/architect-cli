@@ -102,3 +102,11 @@ dist
 
 # TernJS port file
 .tern-port
+
+# terraform
+terraform/.terraform.lock.hcl
+terraform/.terraform
+terraform/kubeconfig*
+terraform/*tfplan*
+values.tfvars
+secrets.yml

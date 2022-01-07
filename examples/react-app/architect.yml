@@ -12,6 +12,8 @@ interfaces:
   app: ${{ services.app.interfaces.main.url }}
 
 parameters:
+  api_db_host:
+    description: API database host override
   api_db_name:
     description: Name of the database used by the API
     default: test_database
@@ -33,6 +35,7 @@ services:
     image: postgres:11
     interfaces:
       postgres:
+        host: ${{ parameters.api_db_host }}
         port: 5432
         protocol: postgres
     environment:

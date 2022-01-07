@@ -23,7 +23,7 @@ Architect component specs are declarative, so it can be run locally or remotely 
 ```sh
 # Clone the repository and navigate to this directory
 $ git clone https://github.com/architect-team/architect-cli.git
-$ cd ./architect-cli/examples/react-app
+$ cd ./architect-cli/examples/react-app-rds
 
 # Register the component to the local registry
 $ architect link .
@@ -34,16 +34,49 @@ $ architect deploy --local examples/react-app:latest -i app:app
 
 Once the deploy has completed, you can reach your new service by going to http://app.arc.localhost/.
 
-## Deploying to the cloud
+## Creating remote infrastructure
 
-Want to try deploying this to a cloud environment? Architect's got you covered there too! Just click the button below to deploy it to a sample Kubernetes cluster powered by Architect Cloud:
+Terraform templates for running the component in a remote environment can be found in the `terraform` directory. Ensure that [`terraform`](https://learn.hashicorp.com/tutorials/terraform/install-cli) is installed and that you have an AWS account, then follow the next steps.
 
-[![Deploy Button](https://www.architect.io/deploy-button.svg)](https://cloud.architect.io/examples/components/react-app/deploy?tag=latest&interface=app%3Aapp)
-
-Alternatively, if you're already familiar with Architect and have your own environment registered, you can use the command below instead:
+First, navigate to the `terraform` folder in your terminal, then set the environment variables for your AWS credentials like so:
 
 ```sh
-$ architect deploy examples/react-app:latest -a <account-name> -e <environment-name> -i app:app
+export AWS_ACCESS_KEY_ID=<aws_access_key>
+export AWS_SECRET_ACCESS_KEY=<aws_secret_access_key>
+export AWS_DEFAULT_REGION=<aws_region>
 ```
 
+Next, create an AWS S3 bucket where the terraform remote state should be stored. Use it in the following command to initialize terraform:
+
+```sh
+terraform init -backend-config="bucket=<s3_bucket_name>" -backend-config="region=<aws_region>" -backend-config="key=<aws_access_key>"
+```
+
+Once terraform is initialized, some values will need to be set for the future infrastructure. Still in the `terraform` folder, create a file called `values.tfvars` and add the following contents:
+
+```
+prefix = "react-app-rds"
+postgres_user = "architect"
+postgres_password = "architect"
+postgres_database = "architect"
+postgres_port = "5432"
+```
+
+These values can be changed but reasonable defaults have been provided. Next, plan the infrastructure by running the following in your terminal:
+
+```sh
+terraform plan -out tfplan -var-file values.tfvars
+```
+
+A list of resources to create will be displayed. Create the infrastructure by running the following:
+
+```sh
+terraform apply tfplan
+```
+
+This will take several minutes and once it's done, the message `Apply complete!` will be printed. Move on to the next section to learn how to run the Architect component on your new infrastructure.
+
+## Deploying to the cloud
+
+TODO
 
