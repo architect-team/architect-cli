@@ -1,0 +1,28 @@
+name: Architect Deployment
+
+on:
+  pull_request_target:
+    branches:
+      - master
+    types:
+      - closed
+
+env:
+  COMPONENT_TAG: latest
+
+jobs:
+  architect_create_preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Install Architect CLI
+        run: sudo npm install -g @architect-io/cli
+      - name: Login to Architect Cloud
+        run: architect login -e ${{ secrets.ARCHITECT_EMAIL }} -p ${{ secrets.ARCHITECT_PASSWORD }}
+      - name: Register component w/ Architect
+        run: architect register architect.yml -t ${{ env.COMPONENT_TAG }}
+      - name: Deploy component
+        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ secrets.POSTGRES_HOST }} -i app:app

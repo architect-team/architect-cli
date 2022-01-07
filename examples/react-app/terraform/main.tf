@@ -4,7 +4,7 @@ data "aws_availability_zones" "available" {
 
 data "aws_region" "current" {}
 
-#  TODO: add comments
+# The VPC in which the Postgres database and Kubernetes cluster will live
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 3.0.0"
@@ -27,6 +27,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
+# The Postgres database that stores react-app data
 module "postgres_db" {
   source  = "terraform-aws-modules/rds-aurora/aws"
   version = "~> 5.2.0"
@@ -42,8 +43,6 @@ module "postgres_db" {
   replica_count           = 1
   allowed_security_groups = [module.eks.worker_security_group_id]
   allowed_cidr_blocks     = module.vpc.database_subnets_cidr_blocks
-
-  storage_encrypted = true
 
   username               = var.postgres_user
   create_random_password = false
@@ -71,6 +70,7 @@ provider "kubernetes" {
   load_config_file       = false
 }
 
+# The Kubernetes cluster which the react app is deployed to
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "17.24.0"
@@ -81,7 +81,7 @@ module "eks" {
 
   worker_groups = [
     {
-      instance_type = "t2.large"
+      instance_type = "t2.medium"
       asg_max_size  = 2
     }
   ]
