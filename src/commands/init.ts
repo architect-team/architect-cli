@@ -60,8 +60,11 @@ export abstract class InitCommand extends Command {
     from_compose: flags.string({
       description: `${Command.DEPRECATED} Please use --from-compose.`,
       hidden: true,
+      required: false,
     }),
-    'from-compose': flags.string(),
+    'from-compose': flags.string({
+      required: false,
+    }),
   };
 
   parse(options: any, argv = this.argv): any {
