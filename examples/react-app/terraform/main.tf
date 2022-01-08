@@ -72,7 +72,7 @@ module "postgres_db" {
   database_name          = var.postgres_database
   port                   = var.postgres_port
 
-  skip_final_snapshot = false
+  skip_final_snapshot                 = false
   enabled_cloudwatch_logs_exports     = ["postgresql"]
   db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.aurora_ssl.name
   deletion_protection                 = true

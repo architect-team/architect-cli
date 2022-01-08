@@ -25,4 +25,4 @@ jobs:
       - name: Register component w/ Architect
         run: architect register architect.yml -t ${{ env.COMPONENT_TAG }}
       - name: Deploy component
-        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ secrets.POSTGRES_HOST }} -i app:app
+        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ secrets.POSTGRES_HOST }} -p db_use_ssl=true -i app:app
