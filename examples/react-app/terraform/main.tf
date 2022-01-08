@@ -7,7 +7,7 @@ data "aws_region" "current" {}
 # The VPC in which the Postgres database and Kubernetes cluster will live
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 3.11.0" # TODO: check version
+  version = "~> 3.11.0"
 
   name = "${var.prefix}-vpc"
   cidr = "10.0.0.0/16"
@@ -26,7 +26,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-# TODO: comment
+# RDS cluster parameter group to instruct RDS to only use SSL connections
 resource "aws_rds_cluster_parameter_group" "aurora_ssl" {
   name   = "${var.prefix}-postgres"
   family = "aurora-postgresql11"
@@ -41,7 +41,7 @@ resource "aws_rds_cluster_parameter_group" "aurora_ssl" {
 # The Postgres database that stores react-app data
 module "postgres_db" {
   source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "~> 6.1.3" # TODO: update to v6
+  version = "~> 6.1.3"
 
   name           = "${var.prefix}-postgres"
   engine         = "aurora-postgresql"
@@ -60,7 +60,7 @@ module "postgres_db" {
   autoscaling_min_capacity = 2
   autoscaling_max_capacity = 5
 
-  allowed_security_groups = [module.eks.cluster_security_group_id] # TODO: or cluster_primary_security_group_id? or node_security_group_id?
+  allowed_security_groups = [module.eks.node_security_group_id] # TODO: double check this
   allowed_cidr_blocks     = module.vpc.database_subnets_cidr_blocks
 
   storage_encrypted = true
@@ -100,7 +100,7 @@ module "eks" {
   source          = "terraform-aws-modules/eks/aws"
   version         = "18.0.4"
   cluster_name    = "${var.prefix}-cluster"
-  cluster_version = "1.21" # TODO: update?
+  cluster_version = "1.21"
   subnet_ids      = module.vpc.private_subnets
   vpc_id          = module.vpc.vpc_id
 
@@ -113,8 +113,22 @@ module "eks" {
       min_size     = 1
       max_size     = 10
       desired_size = 1
+
+      security_group_rules = {
+        allOutbound = {
+          type             = "egress"
+          from_port        = 0
+          to_port          = 0
+          protocol         = "-1"
+          cidr_blocks      = ["0.0.0.0/0"]
+          ipv6_cidr_blocks = ["::/0"]
+        }
+      }
     }
   }
 
-
+  # cluster_encryption_config = [{ # TODO: add kms key?
+  #   provider_key_arn = aws_kms_key.eks.arn
+  #   resources        = ["secrets"]
+  # }]
 }

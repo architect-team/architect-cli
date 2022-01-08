@@ -27,9 +27,11 @@ const sequelize = new Sequelize(process.env.DB_ADDR, {
       Sequelize.ConnectionRefusedError
     ],
   },
-  ssl: {
-    ca: process.env.CA_CERT,
-  },
+  dialectOptions: process.env.DB_USE_SSL === 'true' ? {
+    ssl: {
+      rejectUnauthorized: false, // very important for RDS SSL
+    }
+  } : {},
 });
 
 const Name = sequelize.define('name', {

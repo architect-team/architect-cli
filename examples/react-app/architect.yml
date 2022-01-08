@@ -14,6 +14,9 @@ interfaces:
 parameters:
   api_db_host:
     description: API database host override
+  db_use_ssl:
+    description: Whether or not the database connection should use SSL
+    default: false
   api_db_name:
     description: Name of the database used by the API
     default: test_database
@@ -29,9 +32,6 @@ parameters:
   world_text:
     description: Default greeting text for the landing page
     default: world
-  ca_cert:
-    description: Root cert contents for SSL Postgres connections
-    required: false
 
 services:
   api-db:
@@ -66,7 +66,7 @@ services:
       DB_USER: ${{ parameters.root_db_user }}
       DB_PASS: ${{ parameters.root_db_pass }}
       DB_NAME: ${{ parameters.api_db_name }}
-      CA_CERT: ${{ parameters.ca_cert }}
+      DB_USE_SSL: ${{ parameters.db_use_ssl }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
