@@ -249,7 +249,7 @@ export default class Deploy extends DeployCommand {
       let open_browser_attempts = 0;
       const poll_interval = 2000;
       const browser_interval = setInterval(async () => {
-        if (open_browser_attempts === 300) {
+        if (open_browser_attempts === 150) {
           clearInterval(browser_interval);
           return;
         }
@@ -261,6 +261,7 @@ export default class Deploy extends DeployCommand {
             headers: {
               Host: host_name,
             },
+            maxRedirects: 0,
             timeout: poll_interval,
             validateStatus: (status: number) => { return status < 500 && status !== 404; },
           }));
