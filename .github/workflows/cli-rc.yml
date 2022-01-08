@@ -85,12 +85,6 @@ jobs:
           git commit -m "New CLI RC from commit: ${{ github.sha }}"
           git pull
           git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-      - run: npm run pack
-      - name: Archive artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: dist
-          path: dist/channels/rc/architect-${{ steps.npm-version-bump.outputs.version }}
       - name: npm publish (release candidate)
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISH_TOKEN }}" > .npmrc
