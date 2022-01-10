@@ -14,7 +14,3 @@ variable "postgres_password" {
 variable "postgres_database" {
   type = string
 }
-
-variable "postgres_port" {
-  type = string
-}

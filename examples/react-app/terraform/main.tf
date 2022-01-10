@@ -70,7 +70,7 @@ module "postgres_db" {
   create_random_password = false
   master_password        = var.postgres_password
   database_name          = var.postgres_database
-  port                   = var.postgres_port
+  port                   = 5432 # TODO: default?
 
   skip_final_snapshot                 = false
   enabled_cloudwatch_logs_exports     = ["postgresql"]
