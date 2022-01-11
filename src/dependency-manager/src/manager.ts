@@ -591,6 +591,12 @@ export default abstract class DependencyManager {
       const context = context_map[component_spec.metadata.ref];
 
       for (const [service_name, service] of Object.entries(component_spec.services || {})) {
+        if (!context.services[service_name]) {
+          context.services[service_name] = {
+            interfaces: {},
+            environment: {},
+          };
+        }
         context.services[service_name].environment = service.environment;
       }
 
