@@ -10,7 +10,7 @@ import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 describe('init', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = false;
+  const print = true; // TODO: undo
 
   const account_name = 'examples';
   const compose_file_name = 'init-compose.yml';
@@ -21,7 +21,9 @@ describe('init', function () {
       .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
       .nock(MOCK_API_HOST, api => api
         .get(`/accounts/${account_name}`)
-        .reply(200, {})
+        .reply(200, {
+          name: 'examples',
+        })
       )
       .stdout({ print })
       .stderr({ print })

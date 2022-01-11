@@ -89,7 +89,10 @@ export abstract class InitCommand extends Command {
     try {
       const account = await AccountUtils.getAccount(this.app, flags.account);
       account_name = account.name;
-    } catch(err) {
+    } catch(err: any) {
+      if (err.response.status === 404) {
+        this.error(chalk.red(`Account ${flags.account} not found`));
+      }
       this.log(chalk.yellow(`No accounts found, using default account name "${account_name}"`));
     }
 
@@ -110,7 +113,7 @@ export abstract class InitCommand extends Command {
     ]);
 
     const architect_component: Partial<ComponentSpec> = {};
-    architect_component.name = `${flags.account || account_name}/${flags.name || answers.name}`;
+    architect_component.name = `${account_name}/${flags.name || answers.name}`;
     architect_component.services = {};
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};
@@ -145,7 +148,11 @@ export abstract class InitCommand extends Command {
     }
 
     const architect_yml = yaml.dump(yaml.load(JSON.stringify(classToPlain(architect_component))));
-    validateOrRejectSpec(yaml.load(architect_yml));
+    try {
+      validateOrRejectSpec(yaml.load(architect_yml));
+    } catch (err: any) {
+      this.error(chalk.red(`${err}\nYour docker compose file at ${from_path} was unable to be converted to an Architect component. If you think this is a bug, please submit an issue at https://github.com/architect-team/architect-cli/issues.`));
+    }
 
     fs.writeFileSync(flags['component-file'], architect_yml);
     this.log(chalk.green(`Converted ${path.basename(from_path)} and wrote Architect component config to ${flags['component-file']}`));
