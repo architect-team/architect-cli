@@ -14,7 +14,7 @@ env:
   AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
-  apply_terraform:
+  deploy: # TODO: break into terraform and deploy steps? need something other than needs outputs for redaction issue https://github.community/t/environment-url-not-set-because-env-may-contain-secret/153708
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -38,17 +38,10 @@ jobs:
           cd ./terraform
           POSTGRES_HOST=$(terraform output -json | jq -r .postgres_host.value)
           echo "::set-output name=postgres_host::$POSTGRES_HOST"
-    outputs:
-      postgres_host: ${{ steps.set_postgres_host.outputs.postgres_host }}
-
 # TODO:
 # initial deployment will need:
 # awscli installed
 # kubeconfig from awscli for platform/environment creation - second job assumes that platform/env exist already
-  deploy_component:
-    runs-on: ubuntu-latest
-    needs: [apply_terraform]
-    steps:
       - name: Check out repository
         uses: actions/checkout@v2
       - name: Set up node 14
@@ -62,4 +55,4 @@ jobs:
       - name: Register component w/ Architect
         run: architect register ./architect.yml -t ${{ env.COMPONENT_TAG }}
       - name: Deploy component
-        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ needs.apply_terraform.outputs.postgres_host }} -p db_use_ssl=true -i app:app
+        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ steps.set_postgres_host.outputs.postgres_host }} -p db_use_ssl=true -i app:app
