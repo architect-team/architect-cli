@@ -22,3 +22,7 @@ dependencies - architect account, terraform, awscli, architect, aws user credent
 setting up a github workflow
 what github secrets to set if using the github workflow
 
+
+
+add platform and environment creation workflow/no op and echo platform exists
+artifacts to pass vars between jobs - terraform/architect jobs
