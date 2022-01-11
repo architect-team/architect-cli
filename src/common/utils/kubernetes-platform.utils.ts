@@ -38,25 +38,31 @@ export class KubernetesPlatformUtils {
       'config', 'current-context',
     ]);
 
-    const new_platform_answers: any = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'context',
-        message: 'Which kube context points to your cluster?',
-        choices: kubeconfig.contexts.map((ctx: any) => ctx.name),
-        filter: async value => {
-          // Set the context to the one the user selected
-          await execa('kubectl', [
-            ...set_kubeconfig,
-            'config', 'set',
-            'current-context', value,
-          ]);
+    let kube_context: any;
+    if (kubeconfig.contexts.length === 1 && flags['auto-approve']) {
+      kube_context = kubeconfig.contexts[0];
+    } else {
+      const new_platform_answers: any = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'context',
+          message: 'Which kube context points to your cluster?',
+          choices: kubeconfig.contexts.map((ctx: any) => ctx.name),
+          filter: async value => {
+            // Set the context to the one the user selected
+            await execa('kubectl', [
+              ...set_kubeconfig,
+              'config', 'set',
+              'current-context', value,
+            ]);
 
-          // Set the context value to the matching object from the kubeconfig
-          return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
+            // Set the context value to the matching object from the kubeconfig
+            return kubeconfig.contexts.find((ctx: any) => ctx.name === value);
+          },
         },
-      },
-    ]);
+      ]);
+      kube_context = new_platform_answers.context;
+    }
 
     let use_existing_sa;
     try {
@@ -112,7 +118,7 @@ export class KubernetesPlatformUtils {
     cli.action.start('Loading kubernetes configuration info');
 
     // Retrieve cluster host and ca certificate
-    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === new_platform_answers.context.context.cluster);
+    const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === kube_context.context.cluster);
     let cluster_ca_cert: string;
     if ('certificate-authority-data' in cluster.cluster) {
       const ca_cert_buffer = Buffer.from(cluster.cluster['certificate-authority-data'], 'base64');
