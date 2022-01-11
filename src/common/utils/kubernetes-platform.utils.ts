@@ -7,6 +7,7 @@ import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
+import { ArchitectError } from '../../dependency-manager/src';
 
 const SERVICE_ACCOUNT_NAME = 'architect';
 
@@ -39,8 +40,14 @@ export class KubernetesPlatformUtils {
     ]);
 
     let kube_context: any;
-    if (kubeconfig.contexts.length === 1 && flags['auto-approve']) {
-      kube_context = kubeconfig.contexts[0];
+    if (flags['auto-approve']) {
+      if (kubeconfig.contexts.length === 1) {
+        kube_context = kubeconfig.contexts[0];
+      } else if (kubeconfig.contexts.length > 1) {
+        throw new ArchitectError('Multiple kubeconfig contexts detected');
+      } else {
+        throw new ArchitectError('No kubeconfig contexts detected');
+      }
     } else {
       const new_platform_answers: any = await inquirer.prompt([
         {
