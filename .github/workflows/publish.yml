@@ -82,12 +82,12 @@ jobs:
     strategy:
       matrix:
         artifact_suffix:
-          - .tar.gz # base artifact
-          - -linux-arm.tar.gz
-          - -linux-x64.tar.gz
-          - -win32-x64.tar.gz
-          - -win32-x86.tar.gz
-          - -darwin-x64.tar.gz
+          - linux-x64
+          - linux-arm
+          - win32-x64
+          - win32-x86
+          - darwin-x64
+          - darwin-arm64
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -97,7 +97,8 @@ jobs:
         id: find-artifact
         run: |
           VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
-          ARTIFACT_PATH=$(find ./dist -type f -name "architect-${VERSION}${{ matrix.artifact_suffix }}")
+          SHA=$(git rev-parse --short=7 HEAD)
+          ARTIFACT_PATH=./dist/architect-${VERSION}-${SHA}-${{ matrix.artifact_suffix }}.tar.gz
           echo "::set-output name=version::${VERSION}"
           echo "::set-output name=path::${ARTIFACT_PATH}"
       - name: Upload artifact
