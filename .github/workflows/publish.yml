@@ -97,8 +97,7 @@ jobs:
         id: find-artifact
         run: |
           VERSION=$(echo ${GITHUB_REF/refs\/tags\//})
-          SHA=$(git rev-parse --short=7 HEAD)
-          ARTIFACT_PATH=./dist/architect-${VERSION}-${SHA}-${{ matrix.artifact_suffix }}.tar.gz
+          ARTIFACT_PATH=$(find ./dist -type f -name "architect-${VERSION}-*-${{ matrix.artifact_suffix }}.tar.gz")
           echo "::set-output name=version::${VERSION}"
           echo "::set-output name=path::${ARTIFACT_PATH}"
       - name: Upload artifact

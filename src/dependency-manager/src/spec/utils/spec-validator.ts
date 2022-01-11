@@ -9,6 +9,7 @@ import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { findPotentialMatch } from '../../utils/match';
 import { ParsedYaml } from '../../utils/types';
 import { ComponentSpec } from '../component-spec';
+import { IF_EXPRESSION_REGEX } from './interpolation';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
@@ -139,7 +140,7 @@ export const validateServiceAndTaskKeys = (component: ComponentSpec): Validation
   // checks for duplicate keys across the two dictionaries
   const service_keys = Object.keys(component.services || {});
   const task_keys = Object.keys(component.tasks || {});
-  const duplicates = service_keys.filter(s => task_keys.includes(s));
+  const duplicates = service_keys.filter(s => task_keys.includes(s)).filter(s => !IF_EXPRESSION_REGEX.test(s));
 
   if (duplicates.length) {
     const error = new ValidationError({

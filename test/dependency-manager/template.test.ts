@@ -224,5 +224,39 @@ describe('template', () => {
         DB_ADDR: 'postgres://db.aws.com:5432'
       });
     });
+
+    it('if statements without interpolation', async () => {
+      const component_config = `
+    name: examples/hello-world
+
+    interfaces:
+      \${{ if architect.environment === 'local' }}:
+        api: \${{ services.api.interfaces.main.url }}
+
+    tasks:
+      \${{ if architect.environment === 'local' }}:
+        task:
+          schedule: ''
+
+    services:
+      \${{ if architect.environment === 'local' }}:
+        api:
+          interfaces:
+            main: 8080
+    `
+
+      mock_fs({
+        '/stack/architect.yml': component_config,
+      });
+
+      const manager = new LocalDependencyManager(axios.create(), {
+        'examples/hello-world': '/stack/architect.yml',
+      });
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('examples/hello-world'),
+      ], undefined, false);
+      expect(graph.nodes).lengthOf(0);
+      expect(graph.edges).lengthOf(0);
+    });
   });
 });

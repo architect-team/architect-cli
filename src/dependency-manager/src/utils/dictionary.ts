@@ -1,3 +1,5 @@
+import { IF_EXPRESSION_REGEX } from '../spec/utils/interpolation';
+
 export interface Dictionary<T> {
   [key: string]: T;
 }
@@ -9,6 +11,9 @@ export const transformDictionary = <T, U>(transform: (key: string, value: T, ...
 
   const output: Dictionary<U> = {};
   for (const [key, value] of Object.entries(input)) {
+    if (IF_EXPRESSION_REGEX.test(key)) {
+      continue;
+    }
     output[key] = transform(key, value, ...args);
   }
   return output;
