@@ -1,20 +1,26 @@
 import { expect } from 'chai';
 import fs from 'fs';
 import yaml from 'js-yaml';
+import mock_fs from 'mock-fs';
 import path from 'path';
 import sinon from 'sinon';
-import { DockerComposeUtils } from '../../src/common/docker-compose';
+import { InitCommand } from '../../src/commands/init';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('init', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-  const print = true; // TODO: undo
+  const print = false;
 
   const account_name = 'examples';
   const compose_file_name = 'init-compose.yml';
   const compose_file_path = path.join(__dirname, `../mocks/${compose_file_name}`);
+  const mock_compose_contents = `
+version: "3.7"
+
+services:
+`;
 
   const mockInit = () => {
     return mockArchitectAuth
@@ -283,12 +289,36 @@ describe('init', function () {
         expect(component_config.name).eq('my-account/test-component');
       });
 
-    mockInit()
-      .stub(DockerComposeUtils, 'loadDockerCompose', sinon.stub().returns(Promise.resolve('')))
-      .command(['init', '-a', account_name, '-n', 'test-component'])
-      .it('finds a compose file in the current directory if one was unspecified', ctx => {
-        const loadDockerCompose = DockerComposeUtils.loadDockerCompose as sinon.SinonStub;
-        expect(loadDockerCompose.called).to.be.true;
-        expect(loadDockerCompose.args[0][0]).eq('docker-compose.yml');
+      it('finds a compose file in the current directory if one was unspecified', async () => {
+        mock_fs({
+          './docker-compose.yml': mock_compose_contents,
+        });
+
+        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+        const compose_path = await getComposeFromPath({});
+        expect(compose_path).eq('docker-compose.yml');
+      });
+
+      it('finds and returns a valid compose file path if it was specified', async () => {
+        mock_fs({
+          '/stack/docker-compose.yml': mock_compose_contents,
+        });
+
+        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+        const compose_path = await getComposeFromPath({ 'from-compose': '/stack/docker-compose.yml' });
+        expect(compose_path).eq(`/stack/docker-compose.yml`);
+      });
+
+      it(`returns an error if the compose file was specified, but it doesn't exist`, async () => {
+        mock_fs({
+          '/stack/docker-compose.yml': mock_compose_contents,
+        });
+
+        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+        try {
+          await getComposeFromPath({ 'from-compose': '/stack/bad-path/docker-compose.yml' });
+        } catch(err) {
+          expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
+        }
       });
 });

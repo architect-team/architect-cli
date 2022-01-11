@@ -60,11 +60,8 @@ export abstract class InitCommand extends Command {
     from_compose: flags.string({
       description: `${Command.DEPRECATED} Please use --from-compose.`,
       hidden: true,
-      required: false,
     }),
-    'from-compose': flags.string({
-      required: false,
-    }),
+    'from-compose': flags.string({}),
   };
 
   parse(options: any, argv = this.argv): any {
@@ -169,13 +166,15 @@ export abstract class InitCommand extends Command {
 
       if (default_compose) {
         from_path = default_compose;
+        if (!fs.existsSync(from_path) || !fs.statSync(from_path).isFile()) {
+          throw new Error(`The Docker Compose file ${from_path} couldn't be found.`);
+        }
       } else {
         const answers: any = await inquirer.prompt([
           {
             type: 'input',
             name: 'from_compose',
             message: 'What is the filename of the Docker Compose file you would like to convert?',
-            default: default_compose,
             validate: (value: any) => {
               return fs.existsSync(value) && fs.statSync(value).isFile() ? true : `The Docker Compose file ${value} couldn't be found.`;
             },
