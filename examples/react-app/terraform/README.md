@@ -17,7 +17,7 @@ Note that the name of the component, `examples/react-app`, should also be change
 
 TODO: what content do we actually want here?
 
-will the terraform ever be run locally? or just within the github workflow?
+will the terraform ever be run locally? or just within the github workflow? what flows/use cases do we actually want to document?
 dependencies - architect account, terraform, awscli, architect, aws user credentials and permissions
 setting up a github workflow
 what github secrets to set if using the github workflow
