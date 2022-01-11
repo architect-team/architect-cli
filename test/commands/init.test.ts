@@ -306,7 +306,7 @@ services:
 
         const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
         const compose_path = await getComposeFromPath({ 'from-compose': '/stack/docker-compose.yml' });
-        expect(compose_path).eq(`/stack/docker-compose.yml`);
+        expect(compose_path).eq(path.join(path.parse(process.cwd()).root, 'stack', 'docker-compose.yml'));
       });
 
       it(`returns an error if the compose file was specified, but it doesn't exist`, async () => {
