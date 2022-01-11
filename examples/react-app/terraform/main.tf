@@ -26,7 +26,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-# RDS cluster parameter group to instruct RDS to only use SSL connections
+# RDS cluster parameter group to force RDS to only use SSL connections
 resource "aws_rds_cluster_parameter_group" "aurora_ssl" {
   name   = "${var.prefix}-postgres"
   family = "aurora-postgresql11"
@@ -51,7 +51,7 @@ module "postgres_db" {
   subnets = module.vpc.database_subnets
 
   instance_class = "db.t3.large"
-  instances = {
+  instances = { # minimum one write and one read db instance
     main   = {}
     reader = {}
   }
@@ -60,21 +60,20 @@ module "postgres_db" {
   autoscaling_min_capacity = 2
   autoscaling_max_capacity = 5
 
-  allowed_security_groups = [module.eks.node_security_group_id] # TODO: double check this
+  allowed_security_groups = [module.eks.node_security_group_id]
   allowed_cidr_blocks     = module.vpc.database_subnets_cidr_blocks
 
   storage_encrypted = true
-  # kms_key_id        = aws_kms_key.architect.arn TODO: do we want the CMK/KMS key
 
   master_username        = var.postgres_user
   create_random_password = false
   master_password        = var.postgres_password
   database_name          = var.postgres_database
-  port                   = 5432 # TODO: default?
+  port                   = 5432
 
   skip_final_snapshot                 = false
   enabled_cloudwatch_logs_exports     = ["postgresql"]
-  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.aurora_ssl.name
+  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.aurora_ssl.name # require ssl connections to the database
   deletion_protection                 = true
   iam_database_authentication_enabled = true
   monitoring_interval                 = 60
@@ -114,7 +113,7 @@ module "eks" {
       max_size     = 10
       desired_size = 1
 
-      security_group_rules = {
+      security_group_rules = { # required for outbound communication from nodes
         allOutbound = {
           type             = "egress"
           from_port        = 0
@@ -126,9 +125,4 @@ module "eks" {
       }
     }
   }
-
-  # cluster_encryption_config = [{ # TODO: add kms key?
-  #   provider_key_arn = aws_kms_key.eks.arn
-  #   resources        = ["secrets"]
-  # }]
 }
