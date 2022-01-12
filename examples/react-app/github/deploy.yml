@@ -10,16 +10,19 @@ on:
 env:
   COMPONENT_TAG: latest
   KUBECONFIG_NAME: eks-kubeconfig
-  ARTIFACT_NAME: architect-artifact
-  POSTGRES_HOST_FILENAME: postgres-host.txt
-  KUBERNETES_CLUSTER_NAME: kubernetes-cluster-name.txt
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_DEFAULT_REGION: us-east-2
+  PLATFORM_NAME: aws-eks
+  ENVIRONMENT_NAME: aws-eks
+  ACCOUNT_NAME: architect-ryan # TODO: note for the user to edit/set this
 
 jobs:
   terraform_setup:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
@@ -29,28 +32,23 @@ jobs:
           terraform_version: 1.1.3
           terraform_wrapper: false
       - name: Initialize terraform
-        run: cd ./terraform && terraform init -backend-config="bucket=${{ secrets.REMOTE_STATE_BUCKET }}" -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" -backend-config="key=${{ secrets.AWS_ACCESS_KEY_ID }}"
+        run: terraform init -backend-config="bucket=ryan-react-app-tfstate" -backend-config="key=state" # TODO: note for the user to edit/set these
       - name: Terraform plan
-        id: plan
-        run: cd ./terraform && terraform plan -no-color -out tfplan -var prefix=${{ secrets.PREFIX }} -var postgres_user=${{ secrets.POSTGRES_USER }} -var postgres_password=${{ secrets.POSTGRES_PASSWORD }} -var postgres_database=${{ secrets.POSTGRES_DATABASE }}
+        id: plan  # TODO: note for the user to edit/set prefix
+        run: terraform plan -no-color -out tfplan -var prefix=react-app-ryan -var postgres_user=${{ secrets.POSTGRES_USER }} -var postgres_password=${{ secrets.POSTGRES_PASSWORD }} -var postgres_database=${{ secrets.POSTGRES_DATABASE }}
       - name: Terraform apply
         id: apply
-        run: cd ./terraform && terraform apply tfplan -no-color
+        run: terraform apply tfplan -no-color
       - name: Set terraform outputs
         id: set_terraform_outputs
         run: |
-          cd ./terraform
-          POSTGRES_HOST=$(terraform output -json | jq -r .postgres_host.value)
-          echo $POSTGRES_HOST > ${{ env.POSTGRES_HOST_FILENAME }}
+          AURORA_HOST=$(terraform output -json | jq -r .aurora_host.value)
+          echo "::set-output name=aurora_host::$AURORA_HOST"
           KUBERNETES_CLUSTER_NAME=$(terraform output -json | jq -r .kubernetes_cluster_name.value)
-          echo $KUBERNETES_CLUSTER_NAME > ${{ env.KUBERNETES_CLUSTER_NAME }}
-      - name: Upload postgres host artifact
-        uses: actions/upload-artifact@v2.3.1
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ./terraform/${{ env.POSTGRES_HOST_FILENAME }}
-            ./terraform/${{ env.KUBERNETES_CLUSTER_NAME }}
+          echo "::set-output name=kubernetes_cluster_name::$KUBERNETES_CLUSTER_NAME"
+    outputs:
+      aurora_host: ${{ steps.set_terraform_outputs.outputs.aurora_host }}
+      kubernetes_cluster_name: ${{ steps.set_terraform_outputs.outputs.kubernetes_cluster_name }}
   architect_deploy:
     runs-on: ubuntu-latest
     needs: [terraform_setup]
@@ -63,9 +61,6 @@ jobs:
           node-version: '14'
       - name: Kubectl tool installer
         uses: Azure/setup-kubectl@v2.0
-      - uses: actions/download-artifact@v2
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
       - name: Install Architect CLI
         run: sudo npm install -g @architect-io/cli
       - name: Login to Architect Cloud
@@ -73,10 +68,10 @@ jobs:
       - name: Register component w/ Architect
         run: architect register ./architect.yml -t ${{ env.COMPONENT_TAG }}
       - name: Create kubeconfig for platform
-        run: aws eks update-kubeconfig --name $(cat ${{ env.KUBERNETES_CLUSTER_NAME }}) --kubeconfig ${{ env.KUBECONFIG_NAME }}
+        run: aws eks update-kubeconfig --name ${{ needs.terraform_setup.outputs.kubernetes_cluster_name }} --kubeconfig ${{ env.KUBECONFIG_NAME }}
       - name: Create Architect platform
-        run: architect platform:create ${{ secrets.PLATFORM_NAME }} --type kubernetes -a ${{ secrets.ACCOUNT_NAME }} --kubeconfig ${{ env.KUBECONFIG_NAME }} --auto-approve || exit 0
+        run: architect platform:create ${{ env.PLATFORM_NAME }} --type kubernetes -a ${{ env.ACCOUNT_NAME }} --kubeconfig ${{ env.KUBECONFIG_NAME }} --auto-approve || echo "Platform ${{ env.PLATFORM_NAME }} is already created. Skipping..."
       - name: Create Architect environment
-        run: architect environment:create ${{ secrets.ENVIRONMENT_NAME }} --platform ${{ secrets.PLATFORM_NAME }} -a ${{ secrets.ACCOUNT_NAME }} || exit 0
+        run: architect environment:create ${{ env.ENVIRONMENT_NAME }} --platform ${{ env.PLATFORM_NAME }} -a ${{ env.ACCOUNT_NAME }}  || echo "Platform ${{ env.ENVIRONMENT_NAME }} is already created. Skipping..."
       - name: Deploy component
-        run: architect deploy --auto-approve -a ${{ secrets.ACCOUNT_NAME }} -e ${{ secrets.ENVIRONMENT_NAME }} ${{ secrets.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=$(cat ${{ env.POSTGRES_HOST_FILENAME }}) -p db_use_ssl=true -i app:app
+        run: architect deploy --auto-approve -a ${{ env.ACCOUNT_NAME }} -e ${{ env.ENVIRONMENT_NAME }} ${{ env.ACCOUNT_NAME }}/react-app:${{ env.COMPONENT_TAG }} -p api_db_host=${{ needs.terraform_setup.outputs.aurora_host }} -p db_use_ssl=true

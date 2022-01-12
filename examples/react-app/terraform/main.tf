@@ -2,8 +2,6 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_region" "current" {}
-
 # The VPC in which the Postgres database and Kubernetes cluster will live
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -26,7 +24,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-# RDS cluster parameter group to force RDS to only use SSL connections
+# RDS cluster parameter group to instruct RDS to only use SSL connections
 resource "aws_rds_cluster_parameter_group" "aurora_ssl" {
   name   = "${var.prefix}-postgres"
   family = "aurora-postgresql11"
@@ -43,7 +41,7 @@ module "postgres_db" {
   source  = "terraform-aws-modules/rds-aurora/aws"
   version = "~> 6.1.3"
 
-  name           = "${var.prefix}-postgres"
+  name           = "${var.prefix}-aurora"
   engine         = "aurora-postgresql"
   engine_version = "11.9"
 
@@ -51,7 +49,7 @@ module "postgres_db" {
   subnets = module.vpc.database_subnets
 
   instance_class = "db.t3.large"
-  instances = { # minimum one write and one read db instance
+  instances = {
     main   = {}
     reader = {}
   }
@@ -73,7 +71,7 @@ module "postgres_db" {
 
   skip_final_snapshot                 = false
   enabled_cloudwatch_logs_exports     = ["postgresql"]
-  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.aurora_ssl.name # require ssl connections to the database
+  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.aurora_ssl.name
   deletion_protection                 = true
   iam_database_authentication_enabled = true
   monitoring_interval                 = 60
@@ -104,23 +102,31 @@ module "eks" {
   vpc_id          = module.vpc.vpc_id
 
   eks_managed_node_group_defaults = {
-    instance_types = ["m5.xlarge"]
+    instance_types = ["t3a.medium"]
   }
 
   eks_managed_node_groups = {
     main = {
-      min_size     = 1
+      min_size     = 3
       max_size     = 10
-      desired_size = 1
+      desired_size = 3
 
-      security_group_rules = { # required for outbound communication from nodes
-        allOutbound = {
+      security_group_rules = {
+        allOutbound = { # outbound communication from nodes including to DB
           type             = "egress"
           from_port        = 0
           to_port          = 0
           protocol         = "-1"
           cidr_blocks      = ["0.0.0.0/0"]
           ipv6_cidr_blocks = ["::/0"]
+        }
+
+        VPCInbound = { # communication between cluster nodes
+          type             = "ingress"
+          from_port        = 0
+          to_port          = 0
+          protocol         = "-1"
+          cidr_blocks      = module.vpc.private_subnets_cidr_blocks
         }
       }
     }

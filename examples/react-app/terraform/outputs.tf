@@ -1,4 +1,4 @@
-output "postgres_host" {
+output "aurora_host" {
   value = module.postgres_db.cluster_endpoint
 }
 
