@@ -2450,6 +2450,22 @@
           ],
           "description": "A Basic Auth password required to access the interface"
         },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface"
+        },
         "url": {
           "anyOf": [
             {
@@ -2625,6 +2641,22 @@
                     }
                   ],
                   "description": "A Basic Auth password required to access the interface"
+                },
+                "path": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\/.*$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path of the interface"
                 },
                 "url": {
                   "anyOf": [
@@ -6374,6 +6406,22 @@
           ],
           "description": "A Basic Auth password required to access the interface"
         },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\/.*$"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The path of the interface"
+        },
         "url": {
           "anyOf": [
             {
@@ -6532,6 +6580,22 @@
                     }
                   ],
                   "description": "A Basic Auth password required to access the interface"
+                },
+                "path": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\/.*$"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The path of the interface"
                 },
                 "url": {
                   "anyOf": [

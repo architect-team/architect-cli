@@ -224,6 +224,7 @@ A service interface exposes service functionality over the network to other serv
  | `protocol` | string \| [Expression](/docs/reference/contexts) | Protocol that the interface responds to | default: `http` |
  | `username` | null \| string \| [Expression](/docs/reference/contexts) | A Basic Auth username required to access the interface |  |
  | `password` | null \| string \| [Expression](/docs/reference/contexts) | A Basic Auth password required to access the interface |  |
+ | `path` | string \| [Expression](/docs/reference/contexts) | The path of the interface |  |
  | `url` | string \| [Expression](/docs/reference/contexts) | The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url. |  |
  | `sticky` | boolean \| [Expression](/docs/reference/contexts) | Denotes that if this interface is made external, the gateway should use sticky sessions |  |
 
