@@ -707,6 +707,49 @@ describe('interfaces spec v1', () => {
     });
   });
 
+  it('service interface with path', async () => {
+    const component_config = `
+    name: examples/hello-world
+    services:
+      app:
+        environment:
+          API_PATH: \${{ services.api.interfaces.main.path }}
+          API_ADDR: \${{ services.api.interfaces.main.url }}
+      api:
+        interfaces:
+          main:
+            port: 8080
+            path: /api
+        environment:
+          MY_PATH: \${{ services.api.interfaces.main.path }}
+          MY_ADDR: \${{ services.api.interfaces.main.url }}
+    `
+
+    mock_fs({
+      '/stack/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'examples/hello-world': '/stack/architect.yml',
+    });
+    const config = await manager.loadComponentSpec('examples/hello-world');
+    const graph = await manager.getGraph(
+      await manager.loadComponentSpecs(config));
+    const template = await DockerComposeUtils.generate(graph);
+
+    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    expect(template.services[api_ref].environment).to.deep.eq({
+      MY_PATH: '/api',
+      MY_ADDR: `http://${api_ref}:8080/api`
+    })
+
+    const app_ref = resourceRefToNodeRef('examples/hello-world/app:latest');
+    expect(template.services[app_ref].environment).to.deep.eq({
+      API_PATH: '/api',
+      API_ADDR: `http://${api_ref}:8080/api`
+    })
+  });
+
   it('interfaces with same subdomain and different paths', async () => {
     const component_config = `
     name: examples/hello-world
