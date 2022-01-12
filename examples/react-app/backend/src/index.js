@@ -3,6 +3,7 @@ require('./tracer');
 const winston = require('winston');
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 
 const logger = winston.createLogger({
   level: 'info',
@@ -16,10 +17,13 @@ const logger = winston.createLogger({
 const app = express();
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize(process.env.DB_ADDR, {
-  username: process.env.DB_USER,
-  password: process.env.DB_PASS,
+const sequelize = new Sequelize(`${process.env.DB_ADDR}${ process.env.DB_USE_SSL === 'true' ? '?sslmode=verify-full' : '' }`, {
   dialect: 'postgres',
+  dialectOptions: process.env.DB_USE_SSL === 'true' ? {
+    ssl: {
+      ca: fs.readFileSync('/etc/ssl/certs/global-bundle.pem').toString(),
+    },
+  } : {},
   retry: {
     timeout: 10000,
     match: [
@@ -27,14 +31,7 @@ const sequelize = new Sequelize(process.env.DB_ADDR, {
       Sequelize.ConnectionRefusedError
     ],
   },
-  ssl: process.env.DB_USE_SSL === 'true',
-  dialectOptions: process.env.DB_USE_SSL === 'true' ? {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    }
-  } : {},
-});
+})
 
 const Name = sequelize.define('name', {
   name: Sequelize.STRING

@@ -8,4 +8,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
+RUN wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+RUN mv global-bundle.pem /etc/ssl/certs/global-bundle.pem
+
 CMD [ "npm", "run", "start" ]

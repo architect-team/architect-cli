@@ -1,4 +1,4 @@
-name: architect-ryan/react-app # TODO: name change
+name: examples/react-app
 description: |
   Example component that includes a Next.js frontend, Node.js backend, and a postgres database.
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/react-app
@@ -43,6 +43,8 @@ services:
       postgres:
         host: ${{ parameters.api_db_host }}
         port: 5432
+        username: ${{ parameters.root_db_user }}
+        password: ${{ parameters.root_db_pass }}
         protocol: postgres
     environment:
       POSTGRES_USER: ${{ parameters.root_db_user }}
@@ -65,11 +67,8 @@ services:
       failure_threshold: 3
     environment:
       PORT: *api-port
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
-      DB_USER: ${{ parameters.root_db_user }}
-      DB_PASS: ${{ parameters.root_db_pass }}
-      DB_NAME: ${{ parameters.api_db_name }}
       DB_USE_SSL: ${{ parameters.db_use_ssl }}
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.api_db_name }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
