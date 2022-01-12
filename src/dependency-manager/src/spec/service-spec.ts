@@ -105,6 +105,13 @@ export class ServiceInterfaceSpec {
 
   @IsOptional()
   @JSONSchema({
+    ...ExpressionOr({ type: 'string', pattern: '^\\/.*$' }),
+    description: 'The path of the interface',
+  })
+  path?: string;
+
+  @IsOptional()
+  @JSONSchema({
     ...ExpressionOrString(),
     description: 'The url of an existing service to use instead of provisioning a new one. Setting this field effectively overrides any deployment of this service and directs all traffic to the given url.',
   })
