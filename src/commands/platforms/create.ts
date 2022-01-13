@@ -6,7 +6,6 @@ import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
 import { CreatePlatformInput } from '../../architect/platform/platform.utils';
 import Command from '../../base-command';
-import { EcsPlatformUtils } from '../../common/utils/ecs-platform.utils';
 import { KubernetesPlatformUtils } from '../../common/utils/kubernetes-platform.utils';
 import { Slugs } from '../../dependency-manager/src';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
@@ -29,36 +28,12 @@ export default class PlatformCreate extends Command {
       hidden: true,
     }),
     ['auto-approve']: flags.boolean(),
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes', 'ECS', 'ecs'] }),
+    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'] }),
     host: flags.string({ char: 'h' }),
     kubeconfig: flags.string({
       char: 'k',
       default: '~/.kube/config',
       exclusive: ['host'],
-    }),
-    aws_key: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
-      description: `${Command.DEPRECATED} Please use --aws-key.`,
-      hidden: true,
-    }),
-    ['aws-key']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
-    }),
-    aws_secret: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
-      description: `${Command.DEPRECATED} Please use --aws-secret.`,
-      hidden: true,
-    }),
-    ['aws-secret']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
-    }),
-    aws_region: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
-      description: `${Command.DEPRECATED} Please use --aws-region.`,
-      hidden: true,
-    }),
-    ['aws-region']: flags.string({
-      exclusive: ['awsconfig', 'kubeconfig', 'host'],
     }),
     flag: flags.string({ multiple: true, default: [] }),
   };
@@ -69,9 +44,6 @@ export default class PlatformCreate extends Command {
 
     // Merge any values set via deprecated flags into their supported counterparts
     flags['auto-approve'] = flags.auto_approve ? flags.auto_approve : flags['auto-approve'];
-    flags['aws-key'] = flags.aws_key ? flags.aws_key : flags['aws-key'];
-    flags['aws-secret'] = flags.aws_secret ? flags.aws_secret : flags['aws-secret'];
-    flags['aws-region'] = flags.aws_region ? flags.aws_region : flags['aws-region'];
     parsed.flags = flags;
 
     return parsed;
@@ -149,7 +121,6 @@ export default class PlatformCreate extends Command {
         message: 'What type of platform would you like to register?',
         choices: [
           'kubernetes',
-          'ecs',
         ],
       },
     ]);
@@ -159,8 +130,6 @@ export default class PlatformCreate extends Command {
     switch (selected_type) {
       case 'kubernetes':
         return await KubernetesPlatformUtils.configureKubernetesPlatform(flags);
-      case 'ecs':
-        return await EcsPlatformUtils.configureEcsPlatform(flags);
       case 'architect':
         throw new Error(`You cannot create an Architect platform from the CLI. One Architect platform is registered by default per account.`);
       default:
