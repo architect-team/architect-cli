@@ -36,7 +36,7 @@ export const toCacheImage = (image_ref: string): string => {
   return image_ref.replace(new RegExp(`:${Slugs.ComponentTagRegexBase}$`), `:${CACHE_TAG}`);
 };
 
-export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = []): Promise<string> => {
+export const buildImage = async (build_path: string, image_tag: string, dockerfile?: string, build_args: string[] = [], target?: string): Promise<string> => {
   const dockerfile_args = dockerfile ? ['-f', dockerfile] : [];
   for (const build_arg of build_args) {
     dockerfile_args.push('--build-arg');
@@ -52,6 +52,7 @@ export const buildImage = async (build_path: string, image_tag: string, dockerfi
     '-t', cache_tag,
     '-t', image_tag,
     ...dockerfile_args,
+    ...(target ? ['--target', target] : []),
     build_path,
   ]);
   return image_tag;

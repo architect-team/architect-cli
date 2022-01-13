@@ -400,7 +400,7 @@ describe('register', function () {
     .it('override build arg specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       expect(buildImage.callCount).to.eq(2);
-      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev'])
+      expect(buildImage.firstCall.args[3]).to.deep.equal(['NODE_ENV=dev'])
     });
 
   mockArchitectAuth
@@ -427,6 +427,6 @@ describe('register', function () {
     .it('set build arg not specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       expect(buildImage.callCount).to.eq(2);
-      expect(buildImage.firstCall.lastArg).to.deep.equal(['NODE_ENV=dev', 'SSH_PUB_KEY="abc==\ntest.architect.io"'])
+      expect(buildImage.firstCall.args[3]).to.deep.equal(['NODE_ENV=dev', 'SSH_PUB_KEY="abc==\ntest.architect.io"'])
     });
 });
