@@ -167,6 +167,7 @@ An object containing the details necessary for Architect to build the service vi
  | `context` | string \| [Expression](/docs/reference/contexts) | The path to the directory containing the source code relative to the `architect.yml` file. |  |
  | `args` | Dict&lt;string&gt; | Build args to be passed into `docker build`. | <a target="_blank" href="https://regexr.com/?expression=%5E%5Ba-zA-Z0-9_%5D%2B%24">KeyRegex</a>, <a target="_blank" href="https://regexr.com/?expression=undefined">ValueRegex</a>,  |
  | `dockerfile` | string \| [Expression](/docs/reference/contexts) | The path to the Dockerfile relative to the `build.context` | default: `Dockerfile` |
+ | `target` | string \| [Expression](/docs/reference/contexts) | The stage to build in the Dockerfile |  |
 
 
 ## SidecarSpec

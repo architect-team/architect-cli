@@ -1454,6 +1454,21 @@
           ],
           "description": "The path to the Dockerfile relative to the `build.context`",
           "default": "Dockerfile"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The stage to build in the Dockerfile"
         }
       },
       "type": "object",
@@ -1541,6 +1556,21 @@
                   ],
                   "description": "The path to the Dockerfile relative to the `build.context`",
                   "default": "Dockerfile"
+                },
+                "target": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The stage to build in the Dockerfile"
                 }
               },
               "type": "object",
@@ -5999,6 +6029,21 @@
           ],
           "description": "The path to the Dockerfile relative to the `build.context`",
           "default": "Dockerfile"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "pattern": "\\${{\\s*(.*?)\\s*}}",
+              "errorMessage": {
+                "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+              }
+            }
+          ],
+          "description": "The stage to build in the Dockerfile"
         }
       },
       "type": "object",
@@ -6086,6 +6131,21 @@
                   ],
                   "description": "The path to the Dockerfile relative to the `build.context`",
                   "default": "Dockerfile"
+                },
+                "target": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "\\${{\\s*(.*?)\\s*}}",
+                      "errorMessage": {
+                        "pattern": "must be an interpolation ref ex. $__arc__{{ parameters.example }}"
+                      }
+                    }
+                  ],
+                  "description": "The stage to build in the Dockerfile"
                 }
               },
               "type": "object",
