@@ -88,6 +88,13 @@ export class BuildSpec {
     default: 'Dockerfile',
   })
   dockerfile?: string;
+
+  @IsOptional()
+  @JSONSchema({
+    ...ExpressionOrString(),
+    description: 'The stage to build in the Dockerfile',
+  })
+  target?: string;
 }
 
 @JSONSchema({

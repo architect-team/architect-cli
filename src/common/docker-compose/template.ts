@@ -2,6 +2,7 @@ export interface DockerServiceBuild {
   context?: string;
   args?: string[] | { [s: string]: string };
   dockerfile?: string;
+  target?: string;
 }
 
 export interface DockerComposeVolume {

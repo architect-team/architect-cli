@@ -7,6 +7,7 @@ services:
       args:
         - ELK_VERSION=$ELK_VERSION
       dockerfile: Dockerfile.elasticsearch
+      target: production
     volumes:
       - type: bind
         source: ./elasticsearch/config/elasticsearch.yml
@@ -31,6 +32,7 @@ services:
       context: logstash/
       args:
         ELK_VERSION: $ELK_VERSION
+      target: build
     volumes:
       - type: bind
         source: ./logstash/config/logstash.yml
