@@ -15,7 +15,7 @@ env:
   AWS_DEFAULT_REGION: us-east-2
   PLATFORM_NAME: aws-eks
   ENVIRONMENT_NAME: aws-eks
-  ACCOUNT_NAME: architect-ryan # TODO: note for the user to edit/set this
+  ACCOUNT_NAME: examples
 
 jobs:
   terraform_setup:
@@ -32,10 +32,10 @@ jobs:
           terraform_version: 1.1.3
           terraform_wrapper: false
       - name: Initialize terraform
-        run: terraform init -backend-config="bucket=ryan-react-app-tfstate" -backend-config="key=state" # TODO: note for the user to edit/set these
+        run: terraform init -backend-config="bucket=react-app-tfstate" -backend-config="key=state"
       - name: Terraform plan
-        id: plan  # TODO: note for the user to edit/set prefix
-        run: terraform plan -no-color -out tfplan -var prefix=react-app-ryan -var postgres_user=${{ secrets.POSTGRES_USER }} -var postgres_password=${{ secrets.POSTGRES_PASSWORD }} -var postgres_database=${{ secrets.POSTGRES_DATABASE }}
+        id: plan
+        run: terraform plan -no-color -out tfplan -var prefix=react-app -var postgres_user=${{ secrets.POSTGRES_USER }} -var postgres_password=${{ secrets.POSTGRES_PASSWORD }} -var postgres_database=${{ secrets.POSTGRES_DATABASE }}
       - name: Terraform apply
         id: apply
         run: terraform apply tfplan -no-color
