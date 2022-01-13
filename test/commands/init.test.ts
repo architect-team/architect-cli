@@ -235,6 +235,18 @@ services:
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].readonly).eq(true);
     });
 
+    mockInit()
+      .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+      .it('adds context targets to compose where appropriate', ctx => {
+        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+        expect(writeFileSync.called).to.be.true;
+
+        const component_object: any = yaml.load(writeFileSync.args[0][1]);
+        expect(component_object.services['elasticsearch'].build.target).eq('production');
+        expect(component_object.services['logstash'].build.target).eq('build');
+        expect(component_object.services['kibana'].build?.target).undefined;
+      });
+
   mockInit()
     .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
     .it('prints a warning if a field from the docker compose cannot be converted', ctx => {

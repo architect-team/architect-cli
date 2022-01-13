@@ -87,7 +87,7 @@ export abstract class InitCommand extends Command {
       const account = await AccountUtils.getAccount(this.app, flags.account);
       account_name = account.name;
     } catch(err: any) {
-      if (err.response.status === 404) {
+      if (err.response?.status === 404) {
         this.error(chalk.red(`Account ${flags.account} not found`));
       }
       this.log(chalk.yellow(`No accounts found, using default account name "${account_name}"`));
@@ -207,6 +207,9 @@ export abstract class InitCommand extends Command {
       build.context = compose_build.context;
       if (compose_build.dockerfile) {
         build.dockerfile = compose_build.dockerfile;
+      }
+      if (compose_build.target) {
+        build.target = compose_build.target;
       }
     }
     return { base: build };

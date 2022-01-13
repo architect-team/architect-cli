@@ -174,6 +174,13 @@ export class DockerComposeUtils {
             }
             (service.build as DockerServiceBuild).dockerfile = build.dockerfile;
           }
+
+          if (build.target) {
+            if (!service.build) {
+              service.build = {};
+            }
+            (service.build as DockerServiceBuild).target = build.target;
+          }
         } else if (!node.config.build) {
           throw new Error("Either `image` or `build` must be defined");
         }

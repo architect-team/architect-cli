@@ -226,7 +226,8 @@ describe('local deploy environment', function () {
       "app": {
         "build": {
           "context": "./",
-          "dockerfile": "Dockerfile"
+          "dockerfile": "Dockerfile",
+          "target": "production",
         },
         "interfaces": {
           "main": 3000,
@@ -292,7 +293,8 @@ describe('local deploy environment', function () {
         ],
         "build": {
           "context": path.resolve('./examples/database-seeding'),
-          "dockerfile": "Dockerfile"
+          "dockerfile": "Dockerfile",
+          "target": "production",
         },
         "external_links": [
           "gateway:app.arc.localhost"
@@ -430,8 +432,8 @@ describe('local deploy environment', function () {
     .command(['deploy', '-l', './examples/database-seeding/architect.yml', '-p', 'AUTO_DDL=seed', '-p', 'DB_NAME=test-db', '-i', 'app:main'])
     .it('Create a local deploy with a component, parameters, and an interface', ctx => {
       const runCompose = Deploy.prototype.runCompose as sinon.SinonStub;
-      expect(runCompose.calledOnce).to.be.true
-      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose)
+      expect(runCompose.calledOnce).to.be.true;
+      expect(runCompose.firstCall.args[0]).to.deep.equal(seeding_component_expected_compose);
     })
 
   test

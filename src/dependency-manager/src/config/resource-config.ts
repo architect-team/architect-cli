@@ -14,6 +14,7 @@ export interface BuildConfig {
   context?: string;
   args?: Dictionary<string>;
   dockerfile?: string;
+  target?: string;
 }
 
 export interface ResourceConfig {
