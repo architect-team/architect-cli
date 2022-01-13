@@ -152,6 +152,7 @@ services:
   stateful-api:
     build:
       context: ./backend
+      target: production
     interfaces:
       http: 8080
     environment:
