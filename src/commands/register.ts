@@ -231,7 +231,7 @@ export default class ComponentRegister extends Command {
         build_args_map[key] = value;
       }
       const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
-      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args);
+      return await Docker.buildImage(build_path, image_tag, dockerfile, build_args, resource_spec.build?.target);
     } catch (err: any) {
       cli.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
