@@ -17,6 +17,7 @@ interfaces:
 parameters:
   api_db_host:
     description: API database host override
+    required: false
   db_use_ssl:
     description: Whether or not the database connection should use SSL
     default: false
