@@ -9,9 +9,18 @@ keywords:
   - postgres
 
 interfaces:
-  app: ${{ services.app.interfaces.main.url }}
+  app:
+    url: ${{ services.app.interfaces.main.url }}
+    ingress:
+      subdomain: app
 
 parameters:
+  api_db_host:
+    description: API database host override
+    required: false
+  db_use_ssl:
+    description: Whether or not the database connection should use SSL
+    default: false
   api_db_name:
     description: Name of the database used by the API
     default: test_database
@@ -33,7 +42,10 @@ services:
     image: postgres:11
     interfaces:
       postgres:
+        host: ${{ parameters.api_db_host }}
         port: 5432
+        username: ${{ parameters.root_db_user }}
+        password: ${{ parameters.root_db_pass }}
         protocol: postgres
     environment:
       POSTGRES_USER: ${{ parameters.root_db_user }}
@@ -56,10 +68,8 @@ services:
       failure_threshold: 3
     environment:
       PORT: *api-port
-      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}
-      DB_USER: ${{ parameters.root_db_user }}
-      DB_PASS: ${{ parameters.root_db_pass }}
-      DB_NAME: ${{ parameters.api_db_name }}
+      DB_USE_SSL: ${{ parameters.db_use_ssl }}
+      DB_ADDR: ${{ services.api-db.interfaces.postgres.url }}/${{ parameters.api_db_name }}
     ${{ if architect.environment == 'local' }}:
       command: npm run start:dev
       volumes:
