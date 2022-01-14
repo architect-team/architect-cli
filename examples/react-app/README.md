@@ -48,4 +48,4 @@ $ architect deploy examples/react-app:latest -a <account-name> -e <environment-n
 
 ## Advanced deployment example
 
-See [this readme](https://github.com/architect-team/architect-cli/blob/master/examples/react-app/terraform/README.md) for an advanced configuration and deployment example which includes steps to create your own AWS infrastructure all the way to automated deployments using Architect.
+See [this readme](https://github.com/architect-team/architect-cli/blob/master/examples/react-app/github/README.md) for an advanced configuration and deployment example which includes steps to create your own AWS infrastructure all the way to automated deployments using Architect.

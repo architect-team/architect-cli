@@ -109,5 +109,3 @@ terraform/.terraform
 terraform/kubeconfig*
 terraform/*tfplan*
 terraform/*kubeconfig*
-values.tfvars
-secrets.yml
