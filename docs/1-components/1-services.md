@@ -246,24 +246,6 @@ Architect deployments to Kubernetes platforms also support dynamic volume provis
 ...
 ```
 
-#### ECS
-
-Deployments to AWS ECS can leverage EFS volumes for data storage. To use an EFS volume in a component configure the volume in the service config like so:
-
-```yml
-...
-  volumes:
-    my-volume:
-      # Directory at which the volume will be mounted inside the container
-      mount_path: /usr/app/images
-
-      # ID of the EFS volume that has been created in AWS
-      key: my-efs-id
-...
-```
-
-The config above assumes that a volume has been created in EFS with the ID `my-efs-id`. The volume should be mounted with an AWS volume mount into the same VPC as the platform apps that were installed, which is a VPC named `arc-managed-apps--<architect account name>-<architect platform name>`. The security group of the volume mount should have an inbound rule allowing NFS type traffic to port 2049 from a source which is the CIDR block of the previously-mentioned VPC.
-
 ### cpu & memory
 
 `cpu`: a whole number or decimal that represents the vCPUs allocated to the service when it runs.
@@ -277,17 +259,6 @@ cpu: 1
 ```yaml
 memory: 2GB
 ```
-
-**Note for ECS platforms only:**
-When deploying to platforms of type ECS, there are constraints in the underlying provider that require `cpu` and `memory` to be correlated. In the table below you can find the required memory values for a given vCPU value. See [underlying ECS constraints here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-cpu-memory-error.html).
-
-| cpu | memory                            |
-| --- | --------------------------------- |
-| .25 | 0.5GB, 1GB, 2GB                   |
-| .5  | 1GB, 2GB, 3GB, 4GB                |
-| 1   | 2GB, 3GB, 4GB, 5GB, 6GB, 7GB, 8GB |
-| 2   | 4GB - 16GB (in increments of 1GB) |
-| 4   | 8GB - 30GB (in increments of 1GB) |
 
 ### depends_on
 
