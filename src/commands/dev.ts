@@ -11,7 +11,7 @@ import Command from '../base-command';
 import LocalDependencyManager from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
-import { getComponentSecrets, getInterfacesMap, parseFlags } from '../common/utils/deploy';
+import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import { ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 import { buildSpecFromPath } from '../dependency-manager/src/spec/utils/component-builder';
@@ -111,7 +111,7 @@ export default class Dev extends DevCommand {
     const parsed = super.parse(options, argv);
     parsed.args.configs_or_components = parsed.argv;
 
-    parsed.flags = parseFlags(parsed.flags);
+    parsed.flags = DeployUtils.parseFlags(parsed.flags);
 
     return parsed;
   }
@@ -235,8 +235,8 @@ export default class Dev extends DevCommand {
       args.configs_or_components = ['./architect.yml'];
     }
 
-    const interfaces_map = getInterfacesMap(flags.interface);
-    const component_secrets = getComponentSecrets(flags.secrets, flags.parameter);
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secrets, flags.parameter);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];

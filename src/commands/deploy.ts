@@ -7,7 +7,7 @@ import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import Command from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
-import { getComponentSecrets, getInterfacesMap, parseFlags } from '../common/utils/deploy';
+import DeployUtils from '../common/utils/deploy.utils';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 
 
@@ -118,7 +118,7 @@ export default class Deploy extends DeployCommand {
     const parsed = super.parse(options, argv);
     parsed.args.configs_or_components = parsed.argv;
 
-    parsed.flags = parseFlags(parsed.flags);
+    parsed.flags = DeployUtils.parseFlags(parsed.flags);
     return parsed;
   }
 
@@ -156,8 +156,8 @@ export default class Deploy extends DeployCommand {
 
     const components = args.configs_or_components;
 
-    const interfaces_map = getInterfacesMap(flags.interface);
-    const component_secrets = getComponentSecrets(flags.secrets, flags.parameter);
+    const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.secrets, flags.parameter);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);

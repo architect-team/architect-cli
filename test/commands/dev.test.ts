@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import AppService from '../../src/app-config/service';
 import Dev from '../../src/commands/dev';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
+import DeployUtils from '../../src/common/utils/deploy.utils';
 import * as Docker from '../../src/common/utils/docker';
 import { resourceRefToNodeRef } from '../../src/dependency-manager/src';
 import * as ComponentBuilder from '../../src/dependency-manager/src/spec/utils/component-builder';
@@ -439,7 +440,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(local_component_config_with_parameters)
     })
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
@@ -463,7 +464,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(local_component_config_with_parameters)
     })
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
@@ -486,7 +487,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(local_component_config_with_parameters)
     })
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return wildcard_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
@@ -508,7 +509,7 @@ describe('local dev environment', function () {
       return buildSpecFromYml(local_component_config_with_parameters)
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return stacked_parameter_secrets;
     })
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -529,7 +530,7 @@ describe('local dev environment', function () {
       return buildSpecFromYml(yaml.dump(local_component_config_with_dependency))
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
@@ -553,7 +554,7 @@ describe('local dev environment', function () {
       return buildSpecFromYml(yaml.dump(local_component_config_with_dependency))
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
@@ -579,7 +580,7 @@ describe('local dev environment', function () {
     .stub(ComponentBuilder, 'buildSpecFromPath', () => {
       return buildSpecFromYml(local_component_config_with_parameters)
     })
-    .stub(Dev.prototype, 'readSecretsFile', () => {
+    .stub(DeployUtils, 'readSecretsFile', () => {
       return basic_parameter_secrets;
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
@@ -652,7 +653,7 @@ describe('local dev environment', function () {
         hello_json.services.api.environment.SELF_URL = `\${{ ingresses['hello'].url }}`
         return buildSpecFromYml(yaml.dump(hello_json));
       })
-      .stub(Dev.prototype, 'readSecretsFile', () => {
+      .stub(DeployUtils, 'readSecretsFile', () => {
         return {
           'examples/hello-world:latest@tenant-1': {
             'hello_ingress': 'hello-1'
