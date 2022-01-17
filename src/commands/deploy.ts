@@ -87,7 +87,7 @@ export default class Deploy extends DeployCommand {
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
     }),
     production: flags.boolean({
-      description: 'Build and run components without debug blocks',
+      description: `${Command.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
     }),
     compose_file: flags.string({
@@ -391,8 +391,12 @@ export default class Deploy extends DeployCommand {
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
       linked_components,
-      flags.production
     );
+    if (flags.environment) {
+      dependency_manager.environment = flags.environment;
+    } else if (flags.production) {
+      dependency_manager.environment = 'local-production';
+    }
 
     const component_specs: ComponentSpec[] = [];
 

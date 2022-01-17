@@ -403,4 +403,46 @@ describe('external spec v1', () => {
       MYSQL_DB_URL2: `jdbc:mysql://external:3306/test?serverTimezone=UTC`,
     });
   });
+
+  it('host override via templating', async () => {
+    const component_config = `
+      name: architect/component
+
+      services:
+        db:
+          image: mysql:5.6.35
+          command: mysqld
+          interfaces:
+            mysql:
+              \${{ if architect.environment == 'local' }}:
+                port: 3306
+                host: external-db.localhost
+              port: 3306
+              protocol: mysql
+
+        core:
+          environment:
+            MYSQL_DB_URL: \${{ services.db.interfaces.mysql.url }}
+    `;
+
+    mock_fs({
+      '/stack/component/architect.yml': component_config,
+    });
+
+    const manager = new LocalDependencyManager(axios.create(), {
+      'architect/component': '/stack/component/architect.yml'
+    });
+    manager.use_sidecar = true;
+
+    const core_ref = resourceRefToNodeRef('architect/component/core:latest')
+
+    const graph = await manager.getGraph([
+      await manager.loadComponentSpec('architect/component:latest')
+    ]);
+
+    const test_node = graph.getNodeByRef(core_ref) as ServiceNode;
+    expect(test_node.config.environment).to.deep.eq({
+      MYSQL_DB_URL: `mysql://external-db.localhost:3306`,
+    });
+  });
 });
