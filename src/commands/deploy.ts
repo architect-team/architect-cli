@@ -9,6 +9,7 @@ import Command from '../base-command';
 import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../common/errors/pipeline-errors';
 import DeployUtils from '../common/utils/deploy.utils';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
+import Dev from "./dev";
 
 
 export abstract class DeployCommand extends Command {
@@ -70,6 +71,32 @@ export default class Deploy extends DeployCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
+    local: flags.boolean({
+      char: 'l',
+      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    production: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --environment.`,
+      dependsOn: ['local'],
+    }),
+    compose_file: flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    'compose-file': flags.string({
+      char: 'o',
+      description: 'Path where the compose file should be written to',
+      default: '',
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+    }),
+    detached: flags.boolean({
+      description: 'Run in detached mode',
+      char: 'd',
+      dependsOn: ['local'],
+    }),
     parameter: flags.string({
       char: 'p',
       description: 'Component parameters',
@@ -95,12 +122,32 @@ export default class Deploy extends DeployCommand {
       default: true,
       allowNo: true,
       description: '[default: true] Toggle for deletion protection on deployments',
+      exclusive: ['local'],
     }),
     recursive: flags.boolean({
       char: 'r',
       default: true,
       allowNo: true,
       description: '[default: true] Toggle to automatically deploy all dependencies',
+    }),
+    refresh: flags.boolean({
+      default: true,
+      hidden: true,
+      allowNo: true,
+      exclusive: ['local', 'compose-file', 'compose_file'],
+    }),
+    browser: flags.boolean({
+      default: true,
+      allowNo: true,
+      description: '[default: true] Automatically open urls in the browser for local deployments',
+    }),
+    build_parallel: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --build-parallel.`,
+      hidden: true,
+    }),
+    'build-parallel': flags.boolean({
+      default: false,
+      description: '[default: false] Build docker images in parallel',
     }),
   };
 
@@ -132,7 +179,7 @@ export default class Deploy extends DeployCommand {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           const parsed = parseFloat(param_value);
-          if (!isNaN(parsed)) {
+          if (!isNaN(parsed) && param_value === `${parsed}`) {
             extra_env_vars[param_name.substring(4)] = parsed;
           }
           // eslint-disable-next-line no-empty
@@ -224,6 +271,14 @@ export default class Deploy extends DeployCommand {
       }
     }
 
-    await this.runRemote();
+    if (flags.local) {
+      this.log(flags);
+      this.log(args);
+      this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await Dev.run();
+    } else {
+      await this.runRemote();
+    }
   }
 }

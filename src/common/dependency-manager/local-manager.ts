@@ -18,14 +18,13 @@ export default class LocalDependencyManager extends DependencyManager {
   api: AxiosInstance;
   linked_components: Dictionary<string>;
   use_sidecar = false;
-  production = false;
+  environment = 'local';
   now = new Date();
 
-  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}, production = false) {
+  constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
     this.linked_components = linked_components;
-    this.production = production;
   }
 
   async loadComponentSpec(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentSpec> {
@@ -92,7 +91,7 @@ export default class LocalDependencyManager extends DependencyManager {
     spec = overrideSpec(spec, interfaces_spec);
 
     // Deprecated: Use if statements instead of debug block
-    if (spec.metadata.file?.path && !this.production) {
+    if (spec.metadata.file?.path && this.environment === 'local') {
       const overwriteMerge = (destinationArray: any[], sourceArray: any[], options: deepmerge.Options) => sourceArray;
 
       if (spec.services) {
@@ -140,7 +139,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
   getArchitectContext(): ArchitectContext {
     return {
-      environment: this.production ? 'local-production' : 'local',
+      environment: this.environment,
     };
   }
 

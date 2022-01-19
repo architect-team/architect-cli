@@ -44,11 +44,6 @@ export default class Dev extends DevCommand {
     ...DevCommand.flags,
     ...EnvironmentUtils.flags,
 
-    compose_file: flags.string({
-      description: `${Command.DEPRECATED} Please use --compose-file.`,
-      exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
-      hidden: true,
-    }),
     'compose-file': flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
@@ -71,11 +66,6 @@ export default class Dev extends DevCommand {
       char: 's',
       description: 'Path of secrets file',
     }),
-    values: flags.string({
-      char: 'v',
-      hidden: true,
-      description: `${Command.DEPRECATED} Please use --secrets.`,
-    }),
     recursive: flags.boolean({
       char: 'r',
       default: true,
@@ -86,10 +76,6 @@ export default class Dev extends DevCommand {
       default: true,
       allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
-    }),
-    build_parallel: flags.boolean({
-      description: `${Command.DEPRECATED} Please use --build-parallel.`,
-      hidden: true,
     }),
     'build-parallel': flags.boolean({
       default: false,
@@ -253,9 +239,14 @@ export default class Dev extends DevCommand {
 
     const dependency_manager = new LocalDependencyManager(
       this.app.api,
-      linked_components,
-      flags.production
+      linked_components
     );
+
+    if (flags.environment) {
+      dependency_manager.environment = flags.environment;
+    } else if (flags.production) {
+      dependency_manager.environment = 'local-production';
+    }
 
     const component_specs: ComponentSpec[] = [];
 
@@ -291,6 +282,9 @@ export default class Dev extends DevCommand {
         throw new Error('Interface flag not supported if deploying multiple components in the same command.');
       }
     }
+
+    this.log(flags);
+    this.log(args);
 
     await this.runLocal();
   }
