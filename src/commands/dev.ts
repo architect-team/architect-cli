@@ -81,6 +81,33 @@ export default class Dev extends DevCommand {
       default: false,
       description: '[default: false] Build docker images in parallel',
     }),
+
+    // Used for proxy from deploy to dev. These will be removed once --local is deprecated
+    local: flags.boolean({
+      char: 'l',
+      description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
+      exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    production: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --environment.`,
+      dependsOn: ['local'],
+      hidden: true,
+    }),
+    compose_file: flags.string({
+      description: `${Command.DEPRECATED} Please use --compose-file.`,
+      exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
+      hidden: true,
+    }),
+    values: flags.string({
+      char: 'v',
+      hidden: true,
+      description: `${Command.DEPRECATED} Please use --secrets.`,
+    }),
+    build_parallel: flags.boolean({
+      description: `${Command.DEPRECATED} Please use --build-parallel.`,
+      hidden: true,
+    }),
   };
 
   static args = [{
@@ -275,6 +302,10 @@ export default class Dev extends DevCommand {
   }
 
   async run(): Promise<void> {
+    // Oclif only removes the command name if you are running that command
+    if (this.argv[0].toLocaleLowerCase() === "deploy") {
+      this.argv.splice(0, 1);
+    }
     const { args, flags } = this.parse(Dev);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
@@ -282,9 +313,6 @@ export default class Dev extends DevCommand {
         throw new Error('Interface flag not supported if deploying multiple components in the same command.');
       }
     }
-
-    this.log(flags);
-    this.log(args);
 
     await this.runLocal();
   }

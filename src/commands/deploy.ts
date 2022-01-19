@@ -263,6 +263,7 @@ export default class Deploy extends DeployCommand {
   }
 
   async run(): Promise<void> {
+    this.log(JSON.stringify(this.argv));
     const { args, flags } = this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
@@ -272,9 +273,8 @@ export default class Deploy extends DeployCommand {
     }
 
     if (flags.local) {
-      this.log(flags);
-      this.log(args);
       this.log(chalk.yellow("The --local(-l) flag will be deprecated soon. Please switch over to using the architect dev command instead."));
+      this.log(chalk.yellow("All deprecated flags will also be removed."));
       await new Promise(resolve => setTimeout(resolve, 2000));
       await Dev.run();
     } else {
