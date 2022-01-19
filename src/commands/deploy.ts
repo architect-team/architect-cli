@@ -263,7 +263,6 @@ export default class Deploy extends DeployCommand {
   }
 
   async run(): Promise<void> {
-    this.log(JSON.stringify(this.argv));
     const { args, flags } = this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
