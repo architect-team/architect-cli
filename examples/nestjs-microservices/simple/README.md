@@ -42,7 +42,7 @@ Successfully linked examples/nestjs-simple-client to local system at /architect-
 The REST client service cites the TCP server as a dependency. This means that Architect can automatically deploy and connect to it whenever the client is deployed, and all we have to do is deploy the client component:
 
 ```bash
-$ architect deploy --local examples/nestjs-simple-client:latest -i main:client
+$ architect dev examples/nestjs-simple-client:latest -i main:client
 ```
 
 Once the application is done booting, the REST client will be available on http://app.arc.localhost/hello/Name

@@ -151,7 +151,7 @@ This `architect.yml` describes each of our three `services`, exposes the fronten
 Now that we have a better understanding of what we're deploying, let's go ahead and start it up!
 
 ```sh
-$ architect deploy --local examples/react-app:latest -i app:app
+$ architect dev examples/react-app:latest -i app:app
 
 Using locally linked examples/react-app found at /architect-cli/examples/react-app
 http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo

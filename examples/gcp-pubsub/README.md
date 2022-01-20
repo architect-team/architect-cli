@@ -11,5 +11,5 @@
 With event-driven architectures, applications are dependent on both the component publishing a topic they need to consume as well as the broker facilitating the request. The subscriber component has a dependency on the GCP pub/sub component as well as the publisher component, so that means we can simply deploy the subscriber to see the whole stack materialize:
 
 ```sh
-$ architect deploy --local ./subscriber --values values.yml
+$ architect dev ./subscriber --values values.yml
 ```

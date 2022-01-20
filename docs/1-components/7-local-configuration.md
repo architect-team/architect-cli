@@ -97,7 +97,7 @@ The debug block is used whenever local source code is leveraged instead of built
 
 ```sh
 # Deploying a component from source
-$ architect deploy --local ./architect.yml
+$ architect dev ./architect.yml
 
 # Linking a component and using by name
 $ architect link ./architect.yml
@@ -106,8 +106,10 @@ $ architect deploy component/name
 
 ## How can I test non-debugging behavior locally?
 
-Sometimes you might want to test out the production deployment process before registering the component. To simulate the regular deployment flow, use the `--production` flag:
+Sometimes you might want to test out the production deployment process before registering the component. To simulate the regular deployment flow, use the `--environment` flag:
 
 ```sh
-$ architect deploy --local ./architect.yml --production
+$ architect dev ./architect.yml --environment=production
 ```
+
+This will cause ```${{ if architect.environment == 'local' }}``` to return false, which in return will not set the environment variable  ```PGDATA``` or mount the volume.

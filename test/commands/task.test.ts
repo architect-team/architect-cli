@@ -276,7 +276,7 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', DockerComposeUtils.DEFAULT_PROJECT)}. Please run \`architect deploy -l -e ${DockerComposeUtils.DEFAULT_PROJECT} ${namespaced_component_name}\` before executing any tasks in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment.`);
+      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', DockerComposeUtils.DEFAULT_PROJECT)}. Please run \`architect dev -e ${DockerComposeUtils.DEFAULT_PROJECT} ${namespaced_component_name}\` before executing any tasks in your local ${DockerComposeUtils.DEFAULT_PROJECT} environment.`);
     })
     .it('fails with a useful message if no docker compose file is found');
 
@@ -288,7 +288,7 @@ describe('task:exec', async function () {
     .stderr({ print })
     .command(['task:exec', '-l', '-e', mock_local_env_name, namespaced_component_name, mock_task.name])
     .catch(err => {
-      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', mock_local_env_name)}. Please run \`architect deploy -l -e ${mock_local_env_name} ${namespaced_component_name}\` before executing any tasks in your local ${mock_local_env_name} environment.`);
+      expect(err.message).to.contain(`Could not find docker compose file at ${DockerComposeUtils.buildComposeFilepath('test', mock_local_env_name)}. Please run \`architect dev -e ${mock_local_env_name} ${namespaced_component_name}\` before executing any tasks in your local ${mock_local_env_name} environment.`);
     })
     .it('fails with a useful message if no docker compose file is found');
 
