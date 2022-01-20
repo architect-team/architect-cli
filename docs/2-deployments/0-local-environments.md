@@ -22,7 +22,7 @@ Successfully linked examples/react-app to local system at /architect-cli/example
 Once you've registered a component locally or remotely, that component can then be deployed with a single command:
 
 ```sh
-$ architect deploy --local examples/react-app:latest -i app:app -p world_text="dude"
+$ architect dev examples/react-app:latest -i app:app -p world_text="dude"
 
 Using locally linked examples/react-app found at /architect-cli/examples/react-app
 http://app.arc.localhost:80/ => examples--react-app--app--latest--aklmrtvo
@@ -33,7 +33,7 @@ http://localhost:50002/ => examples--react-app--app--latest--aklmrtvo
 http://localhost:80/ => gateway
 ```
 
-The first thing you might notice in the command is the `--local` flag. This flag tells the CLI to use the current machine as the deploy target for the component. Whenever this flag is used, the `debug` fields associated with each service will serve as override values for the service configuration.
+When running this command we are telling Architect to deploy the application to the local machine. Each component will run for the duration of the command. Whenever this commnad is used, the `debug` fields associated with each service will serve as override values for the service configuration.
 
 The next portion of the command to call attention to is the reference to the component and tag, `examples/react-app:latest`. This refers to a component name and tag, and the CLI will first attempt to find it in the local registry before then trying to find it in the cloud registry. If the component is found locally, the CLI will inform you via the first line of the logs.
 
@@ -49,13 +49,13 @@ Interface mapping serves the added function of telling the environment which int
 
 ### Setting parameter values
 
-Finally, the `-p` flag in the deploy command allows you to specify values for parameters defined by the component.
+Finally, the `-p` flag in the dev command allows you to specify values for parameters defined by the component.
 
 Additionally, environment variables found on the local machine prefixed with `ARC_` will be used to populate the parameter values of any components being deployed. For example, if we wanted to set the `world_text` parameter via environment parmeters, all we have to do is define a parameter named `ARC_world_text`:
 
 ```sh
 $ ARC_world_text="dude"
-$ architect deploy --local examples/react-app:latest -i app:app
+$ architect dev examples/react-app:latest -i app:app
 ```
 
 _In order to streamline local development, we recommend creating a single `.env` file checked into source control that includes a set of configuration options for developers to use when developing locally. They can easily mount the included parameters by running `source .env` before deploying._
