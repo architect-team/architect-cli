@@ -67,9 +67,10 @@ Interface values are referenced in many places, `dependencies`, `ingresses`, `in
 
 | Property     | Type      | Description                                                                                            |
 | ------------ | --------- | ------------------------------------------------------------------------------------------------------ |
-| `url`        | `string`  | The fully resolvable URL of the interface (e.g. `<protocol>://<username>:<password>@<host>:<port>`)    |
-| `protocol`   | `string`  | The protocol component of the interface                                                                |
-| `host`       | `string`  | The host component of the interface                                                                    |
-| `port`       | `string`  | The port component of the interface                                                                    |
-| `username`   | `string`  | The username component of the interface. This will be empty if there is no username for the interface. |
-| `password`   | `string`  | The password component of the interface. This will be empty if there is no password for the interface. |
+| url   | The fully composed URL of the reference interface. This will take the format, `<protocol>://<username>:<password>@<host>:<port><path>`. |
+| protocol | The protocol of the interface being referenced. This will always be the specific value assigned to the interface by the developer. |
+| username | The username of the interface being referenced. Not all interfaces have usernames, so this will be an empty string if none is set. |
+| password | The password of the interface being referenced. Not all interfaces have passwords, so this will be an empty string if none is set. |
+| host  | The host value of the interface being referenced. This value is usually dynamic to accomodate the differences between service discovery solutions available to each environment. |
+| port  | The port value of the interface being referenced. This will not always be the specific port that the interface is listening on as many container platforms leverage port mapping to ensure that there are no port collisions when sharing hardware in a cluster. |
+| path  | The path value of the interface being referenced. Not all interfaces have paths, so this will be an empty string if none is set. |

@@ -96,6 +96,9 @@ interfaces:
     # (optional) A basic auth password required to access the interface
     password: ${{ parameters.API_PASSWORD }}
 
+    # (optional) Specific path that the service is listening on
+    path: /api
+
     # (optional, defaults to false) Requests made to this interface, if made external, will use sticky sessions
     sticky: true
 ```
