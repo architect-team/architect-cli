@@ -218,7 +218,7 @@ export default class Dev extends DevCommand {
       }, poll_interval);
     }
 
-    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--force-recreate', '--renew-anon-volumes', '--timeout', '0'];
+    const compose_args = ['-f', compose_file, '-p', project_name, 'up', '--renew-anon-volumes', '--timeout', '0'];
     if (flags.detached) {
       compose_args.push('-d');
     }
