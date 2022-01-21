@@ -25,7 +25,7 @@ const sequelize = new Sequelize(`${process.env.DB_ADDR}${ process.env.DB_USE_SSL
     },
   } : {},
   retry: {
-    timeout: 10000,
+    max: 10,
     match: [
       Sequelize.ConnectionError,
       Sequelize.ConnectionRefusedError
