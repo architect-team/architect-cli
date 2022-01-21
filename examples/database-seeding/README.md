@@ -26,8 +26,8 @@ $ cd ./architect-cli/examples/database-seeding
 # Register the component to the local registry
 $ architect link .
 
-# Deploy using the --local flag
-$ architect deploy --local examples/database-seeding:latest -i main:main -p AUTO_DDL=migrate
+# Deploy using the dev command
+$ architect dev examples/database-seeding:latest -i main:main -p AUTO_DDL=migrate
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://main.arc.localhost/.

@@ -94,12 +94,12 @@ To run this locally, we'll need to link the component by running:
 Successfully linked brahm-testing/my-task to local system at /Users/brahmlower/development/my-task/architect.yml.
 ```
 
-Now that the component is linked, we can deploy it locally using the normal `architect deploy`
-command with the `--local` flag. Under the hood, this creates a docker-compose file which will be used
+Now that the component is linked, we can deploy it locally using the `architect dev`
+command. Under the hood, this creates a docker-compose file which will be used
 as we execute the task.
 
 ```shell
-% architect deploy --local brahm-testing/my-task
+% architect dev brahm-testing/my-task
 ...
 ```
 
@@ -122,7 +122,7 @@ friction during development.
 
 ## Local Task Development
 
-Development generally requires rapid iteration, and needing to run `deploy` and `task:exec` each time you
+Development generally requires rapid iteration, and needing to run `dev` and `task:exec` each time you
 want to test can be a tedious experience. To alleviate this, we can make use of the `debug` feature to mount
 our source code when we run the task without having to re-deploy. This can be achieved by updating the
 component with a debug block, re-deploying (just the once) to update the component configuration. We will
@@ -149,7 +149,7 @@ We will have to redeploy the component because we change its definition, so lets
 again to make sure everything is still working as expected.
 
 ```shell
-% architect deploy --local brahm-testing/my-task
+% architect dev brahm-testing/my-task
 ...
 % architect task:exec --local brahm-testing/my-task hello-world
 ...
@@ -210,7 +210,7 @@ when we execute the task.
 
 
 ```shell
-% architect deploy --local brahm-testing/my-task -p greeting=Hola
+% architect dev brahm-testing/my-task -p greeting=Hola
 ...
 % architect task:exec --local brahm-testing/my-task hello-world
 Hola, world! 👋
@@ -291,11 +291,10 @@ the environment variable we reference in the script:
          src:
 ```
 
-Great! Now lets deploy this, but with the `--detached` flag to run the service in the background so we can continue using
-this same terminal to execute the task.
+Great! Now lets deploy our changes.
 
 ```shell
-% architect deploy --local --detached brahm-testing/my-task -p greeting=Hola
+% architect dev --detached brahm-testing/my-task -p greeting=Hola
 Building containers... done
 
 Once the containers are running they will be accessible via the following urls:

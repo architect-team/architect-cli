@@ -86,7 +86,7 @@ export default class TaskExec extends Command {
     try {
       compose = DockerComposeUtils.loadDockerCompose(compose_file);
     } catch (err) {
-      throw new Error(`Could not find docker compose file at ${compose_file}. Please run \`architect deploy -l -e ${project_name} ${args.component}\` before executing any tasks in your local ${project_name} environment.`);
+      throw new Error(`Could not find docker compose file at ${compose_file}. Please run \`architect dev -e ${project_name} ${args.component}\` before executing any tasks in your local ${project_name} environment.`);
     }
 
     let parsed_slug;

@@ -28,8 +28,8 @@ $ cd ./architect-cli/examples/stateful-component
 # Register the component to the local registry
 $ architect link .
 
-# Deploy using the --local flag
-$ architect deploy --local examples/stateless-component:latest -i frontend:frontend
+# Deploy using the dev command
+$ architect dev examples/stateless-component:latest -i frontend:frontend
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://frontend.arc.localhost/.

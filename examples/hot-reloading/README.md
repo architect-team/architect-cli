@@ -26,8 +26,8 @@ $ cd ./architect-cli/examples/hot-reloading
 # Register the component to the local registry
 $ architect link .
 
-# Deploy using the --local flag
-$ architect deploy --local examples/hot-reloading:latest -i http:http
+# Deploy using the dev command
+$ architect dev examples/hot-reloading:latest -i http:http
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://http.arc.localhost/. Whenever you make changes to code in the `./src` directory, you'll see the logs indicating that the service has restart automatically.

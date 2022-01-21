@@ -189,9 +189,36 @@ ALIASES
 
 _See code: [src/commands/config/view.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/config/view.ts)_
 
+## `architect dev [CONFIGS_OR_COMPONENTS]`
+
+Run your stacks locally
+
+```
+USAGE
+  $ architect dev [CONFIGS_OR_COMPONENTS]
+
+ARGUMENTS
+  CONFIGS_OR_COMPONENTS  Path to an architect.yml file or component `account/component:latest`. Multiple components are
+                         accepted.
+
+OPTIONS
+  -e, --environment=environment    Architect environment
+  -h, --help                       show CLI help
+  -i, --interface=interface        [default: ] Component interfaces
+  -o, --compose-file=compose-file  Path where the compose file should be written to
+  -p, --parameter=parameter        [default: ] Component parameters
+  -r, --[no-]recursive             [default: true] Toggle to automatically deploy all dependencies
+  -s, --secrets=secrets            Path of secrets file
+  --[no-]browser                   [default: true] Automatically open urls in the browser for local deployments
+  --build-parallel                 [default: false] Build docker images in parallel
+  --production                     Build and run components without debug blocks
+```
+
+_See code: [src/commands/dev.ts](https://github.com/architect-team/architect-cli/blob/v1.13.1/src/commands/dev.ts)_
+
 ## `architect deploy [CONFIGS_OR_COMPONENTS]`
 
-Create a deploy job on Architect Cloud or run stacks locally
+Create a deploy job on Architect Cloud
 
 ```
 USAGE
@@ -207,7 +234,6 @@ OPTIONS
   -e, --environment=environment    Architect environment
   -h, --help                       show CLI help
   -i, --interface=interface        [default: ] Component interfaces
-  -l, --local                      Deploy the stack locally instead of via Architect Cloud
   -o, --compose-file=compose-file  Path where the compose file should be written to
   -p, --parameter=parameter        [default: ] Component parameters
   -r, --[no-]recursive             [default: true] Toggle to automatically deploy all dependencies

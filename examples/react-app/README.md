@@ -28,8 +28,8 @@ $ cd ./architect-cli/examples/react-app
 # Register the component to the local registry
 $ architect link .
 
-# Deploy using the --local flag
-$ architect deploy --local examples/react-app:latest -i app:app
+# Deploy using the dev command
+$ architect dev examples/react-app:latest -i app:app
 ```
 
 Once the deploy has completed, you can reach your new service by going to http://app.arc.localhost/.
