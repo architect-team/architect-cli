@@ -203,8 +203,9 @@ export class DockerComposeUtils {
               compose.volumes[spec.key] = { external: true };
               volume = `${spec.key}:${service_volume}${spec.readonly ? ':ro' : ''}`;
             } else {
-              volume = `${key}:${service_volume}`;
-              compose.volumes[key] = {};
+              const volume_key = `${node.config.name}-${key}`;
+              volume = `${volume_key}:${service_volume}`;
+              compose.volumes[volume_key] = {};
             }
             volumes.push(volume);
           }

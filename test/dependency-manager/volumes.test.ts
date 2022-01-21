@@ -30,7 +30,7 @@ describe('volumes spec v1', () => {
       await manager.loadComponentSpec('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_safe_ref].volumes).has.members(['data:/data'])
+    expect(template.services[test_component_api_safe_ref].volumes).has.members(['api-data:/data'])
   });
 
   it('simple debug volume', async () => {
@@ -117,7 +117,7 @@ describe('volumes spec v1', () => {
       await manager.loadComponentSpec('test/component')
     ])
     const template = await DockerComposeUtils.generate(graph);
-    expect(template.services[test_component_api_safe_ref].volumes).has.members(['data:/data', 'data2:/data2', `${path.resolve('/component/data3')}:/data3`])
-    expect(template.services[test_component_app_safe_ref].volumes).has.members(['data:/data', 'data2:/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_api_safe_ref].volumes).has.members(['api-data:/data', 'api-data2:/data2', `${path.resolve('/component/data3')}:/data3`])
+    expect(template.services[test_component_app_safe_ref].volumes).has.members(['app-data:/data', 'app-data2:/data2', `${path.resolve('/component/data3')}:/data3`])
   });
 });
