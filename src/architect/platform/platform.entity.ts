@@ -1,3 +1,5 @@
+import Account from '../account/account.entity';
+
 export default interface Platform {
   id: string;
   name: string;
