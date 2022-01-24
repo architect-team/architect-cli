@@ -303,7 +303,7 @@ export default class Dev extends DevCommand {
 
   async run(): Promise<void> {
     // Oclif only removes the command name if you are running that command
-    if (this.argv[0].toLocaleLowerCase() === "deploy") {
+    if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
       this.argv.splice(0, 1);
     }
     const { args, flags } = this.parse(Dev);
