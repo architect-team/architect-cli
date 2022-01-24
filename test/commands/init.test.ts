@@ -329,7 +329,7 @@ services:
         const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
         try {
           await getComposeFromPath({ 'from-compose': '/stack/bad-path/docker-compose.yml' });
-        } catch(err) {
+        } catch(err: any) {
           expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
         }
       });

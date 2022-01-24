@@ -397,7 +397,7 @@ describe('components spec v1', function () {
           await manager.loadComponentSpec('examples/hello-world2:latest'),
           await manager.loadComponentSpec('examples/hello-circular-world:latest'),
         ]);
-      } catch (err) {
+      } catch (err: any) {
         manager_error = err.message;
       }
       expect(manager_error).eq('Circular component dependency detected (examples/hello-circular-world:latest <> examples/hello-world:latest <> examples/hello-world2:latest)');
@@ -468,7 +468,7 @@ describe('components spec v1', function () {
           await manager.loadComponentSpec('examples/hello-world-b:latest'),
           await manager.loadComponentSpec('examples/hello-world-c:latest')
         ]);
-      } catch (err) {
+      } catch (err: any) {
         manager_error = err.message;
       }
       expect(manager_error).undefined;

@@ -42,7 +42,7 @@ services:
       let err;
       try {
         buildSpecFromPath('/architect.yml')
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors);
@@ -72,7 +72,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -106,7 +106,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -153,7 +153,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -210,7 +210,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -240,7 +240,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -270,7 +270,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -306,7 +306,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -349,7 +349,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -380,7 +380,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -421,7 +421,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -461,7 +461,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -497,7 +497,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -551,7 +551,7 @@ services:
           await manager.loadComponentSpec('test/component'),
           await manager.loadComponentSpec('test/other')
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -591,7 +591,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -627,7 +627,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component', { api: 'api', api2: 'api2' }),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -667,7 +667,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -701,7 +701,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -732,7 +732,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors);
@@ -763,7 +763,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors);
@@ -808,7 +808,7 @@ services:
           await manager.loadComponentSpec('test/component'),
           await manager.loadComponentSpec('test/other')
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -862,7 +862,7 @@ services:
         await manager.getGraph([
           await manager.loadComponentSpec('test/component'),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -931,7 +931,7 @@ services:
         await manager.getGraph([
           ...await manager.loadComponentSpecs(component_config),
         ]);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
       expect(err).instanceOf(ValidationErrors)
@@ -961,7 +961,7 @@ services:
     try {
       ValuesConfig.validate(values_dict)
       passed_validation = true;
-    } catch (e) { }
+    } catch (e: any) { }
     expect(passed_validation).true;
   });
 
@@ -975,7 +975,7 @@ services:
     let err;
     try {
       ValuesConfig.validate(values_dict)
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -994,7 +994,7 @@ services:
     let err;
     try {
       ValuesConfig.validate(values_dict)
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1012,7 +1012,7 @@ services:
     let err;
     try {
       ValuesConfig.validate(values_dict)
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1038,7 +1038,7 @@ services:
     let err;
     try {
       ValuesConfig.validate(values_dict)
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).to.be.undefined;
@@ -1067,7 +1067,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors)
@@ -1097,7 +1097,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1124,7 +1124,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1158,7 +1158,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1185,7 +1185,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1219,7 +1219,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).to.be.undefined;
@@ -1247,7 +1247,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1279,7 +1279,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors);
@@ -1310,7 +1310,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).to.be.undefined;
@@ -1340,7 +1340,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors)
@@ -1375,7 +1375,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ValidationErrors)
@@ -1409,7 +1409,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1438,7 +1438,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1466,7 +1466,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1502,7 +1502,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component'),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1541,7 +1541,7 @@ services:
       await manager.getGraph([
         await manager.loadComponentSpec('test/component', { 'cloud': 'appppp' }),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
 
@@ -1566,7 +1566,7 @@ services:
       let err;
       try {
         buildSpecFromYml(yml);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -1589,7 +1589,7 @@ services:
       let err;
       try {
         buildSpecFromYml(yml);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -1613,7 +1613,7 @@ services:
       let err;
       try {
         buildSpecFromYml(yml);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 
@@ -1636,7 +1636,7 @@ services:
       let err;
       try {
         buildSpecFromYml(yml);
-      } catch (e) {
+      } catch (e: any) {
         err = e;
       }
 

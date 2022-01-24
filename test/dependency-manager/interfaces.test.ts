@@ -829,7 +829,7 @@ describe('interfaces spec v1', () => {
     let err;
     try {
       await manager.getGraph(await manager.loadComponentSpecs(config));
-    } catch (e) {
+    } catch (e: any) {
       err = e;
     }
     expect(err).instanceOf(ArchitectError);
