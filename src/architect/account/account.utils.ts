@@ -14,10 +14,22 @@ export default class AccountUtils {
     }),
   };
 
-  static async getAccount(app: AppService, account_name?: string, account_message?: string): Promise<Account> {
+  static getLocalAccount(): Account {
+    // Account ids are UUID so there is no chance of collision
+    return {
+      id: 'dev',
+      name: 'dev (Local Machine)',
+    };
+  }
+
+  static isLocalAccount(account: Account): boolean {
+    return account.id === "dev";
+  }
+
+  static async getAccount(app: AppService, account_name?: string, account_message?: string, ask_local_account?: boolean): Promise<Account> {
     const config_account = app.config.defaultAccount();
     // Set the account name from the config only if an account name wasn't set as cli flag
-    if (config_account && !account_name) {
+    if (config_account && !account_name && !ask_local_account) {
       account_name = config_account;
     }
 
@@ -41,6 +53,9 @@ export default class AccountUtils {
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       let accounts: Account[] = [];
+      if (ask_local_account) {
+        accounts.push(this.getLocalAccount());
+      }
       const answers: any = await inquirer.prompt([
         {
           type: 'autocomplete',
@@ -49,7 +64,7 @@ export default class AccountUtils {
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });
-            accounts = data.rows;
+            accounts = accounts.concat(data.rows);
             return accounts;
           },
         },

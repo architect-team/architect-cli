@@ -1,13 +1,17 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
+import execa from 'execa';
 import inquirer from 'inquirer';
+import { Transform } from 'stream';
+import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
+import { DockerComposeUtils } from '../common/docker-compose';
 import { ArchitectError, parseUnknownSlug, ServiceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class Logs extends Command {
-  static description = 'Get logs from services';
+  static description = 'Get logs from services both locally and remote';
 
   static flags = {
     ...Command.flags,
@@ -19,7 +23,7 @@ export default class Logs extends Command {
       default: false,
     }),
     since: flags.string({
-      description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used.',
+      description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used. Only works on remote deploys.',
       default: '',
     }),
     raw: flags.boolean({
@@ -43,12 +47,90 @@ export default class Logs extends Command {
     parse: (value: string): string => value.toLowerCase(),
   }];
 
-  async run(): Promise<void> {
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+  private createLogger(display_name: string) {
+    const { args, flags } = this.parse(Logs);
+    const displayRawLogs = flags.raw || !process.stdout.isTTY;
+    let show_header = true;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
+    const columns = process.stdout.columns - (display_name.length + 3);
 
+    function chunkSubstring(str: string, size: number) {
+      const numChunks = Math.ceil(str.length / size);
+      const chunks = new Array(numChunks);
+
+      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+        chunks[i] = str.substring(o, o + size);
+      }
+
+      return chunks;
+    }
+
+    return (txt: string) => {
+      if (displayRawLogs) {
+        this.log(txt);
+      } else {
+        if (show_header) {
+          this.log(chalk.bold(chalk.white('Logs:')));
+          this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
+          show_header = false;
+        }
+        for (const chunk of chunkSubstring(txt, columns)) {
+          this.log(prefix, chalk.cyan(chunk));
+        }
+      }
+    };
+  }
+
+  async runLocal(): Promise<void> {
     const { args, flags } = this.parse(Logs);
 
-    const account = await AccountUtils.getAccount(this.app, flags.account);
+    const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
+    const service_name = await DockerComposeUtils.getLocalServiceForEnvironment(environment_name, compose_file, args.resource);
+
+    const compose_args = ['-f', compose_file, '-p', environment_name, 'logs'];
+    if (flags.follow) {
+      compose_args.push('--follow');
+    }
+    if (flags.timestamps) {
+      compose_args.push('--timestamps');
+    }
+    if (flags.tail != -1) {
+      compose_args.push('--tail');
+      compose_args.push(flags.tail.toString());
+    }
+    compose_args.push(service_name);
+    const cmd = execa('docker-compose', compose_args);
+
+    const log = this.createLogger(service_name);
+
+    const logger = new Transform({
+      decodeStrings: false,
+    });
+
+    logger._transform = function (chunk, _encoding, done) {
+      chunk.toString().split('\n').forEach((line: string) => {
+        // This removes the service name so that the logger
+        // can display it the same way regardless of where the logs
+        // came from.
+        if (!flags.raw) {
+          line = line.substr(line.indexOf('|') + 1);
+        }
+        log(line);
+      });
+      done(null, chunk.toString());
+    };
+
+    cmd.stdin?.pipe(process.stdin);
+    cmd.stdout?.pipe(logger);
+    cmd.stderr?.pipe(process.stderr);
+
+    await cmd;
+  }
+
+  async runRemote(account: Account): Promise<void> {
+    const { args, flags } = this.parse(Logs);
+
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
     let component_account_name: string | undefined;
@@ -106,38 +188,7 @@ export default class Logs extends Command {
       display_name = service_name;
     }
 
-    // Stream logs
-    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
-    const columns = process.stdout.columns - (display_name.length + 3);
-
-    let show_header = true;
-
-    function chunkSubstring(str: string, size: number) {
-      const numChunks = Math.ceil(str.length / size);
-      const chunks = new Array(numChunks);
-
-      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-        chunks[i] = str.substring(o, o + size);
-      }
-
-      return chunks;
-    }
-
-    const displayRawLogs = flags.raw || !process.stdout.isTTY;
-    const log = (txt: string) => {
-      if (displayRawLogs) {
-        this.log(txt);
-      } else {
-        if (show_header) {
-          this.log(chalk.bold(chalk.white('Logs:')));
-          this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
-          show_header = false;
-        }
-        for (const chunk of chunkSubstring(txt, columns)) {
-          this.log(prefix, chalk.cyan(chunk));
-        }
-      }
-    };
+    const log = this.createLogger(display_name);
 
     let stdout = '';
     log_stream.on('data', (chunk: string) => {
@@ -154,5 +205,29 @@ export default class Logs extends Command {
         log(stdout);
       }
     });
+  }
+
+  async run(): Promise<void> {
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+
+    const { flags } = this.parse(Logs);
+
+    // If no account is default to local first.
+    if (!flags.account && flags.environment) {
+      // If the env exists locally then just assume local
+      const is_local_env = DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      if (is_local_env) {
+        return await this.runLocal();
+      }
+    }
+
+    // If no env is set then we don't know if this is local or remote so ask
+    const account = await AccountUtils.getAccount(this.app, flags.account, undefined, !flags.environment);
+
+    if (AccountUtils.isLocalAccount(account)) {
+      return await this.runLocal();
+    }
+
+    await this.runRemote(account);
   }
 }
