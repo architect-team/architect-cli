@@ -1,5 +1,5 @@
 import { flags } from '@oclif/command';
-import execa from 'execa';
+import { spawn } from 'child_process';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
@@ -213,6 +213,7 @@ export default class Exec extends Command {
 
   async runLocal(): Promise<void> {
     const { args, flags } = this.parse(Exec);
+    console.log(args);
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
@@ -220,19 +221,21 @@ export default class Exec extends Command {
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
     // https://docs.docker.com/compose/reference/exec/
-    if (!flags.tty) {
+    if (!flags.tty || !process.stdout.isTTY) {
       compose_args.push('-T');
     }
     compose_args.push(service_name);
     compose_args.push(args.command);
 
-    const cmd = execa('docker-compose', compose_args);
+    // execa has an issue where the go library thinks it is not an interactive terminal
+    // session. I have not tracked down the root cause, but the default linux behavior
+    // works here.
+    const childProcess = spawn('docker-compose', compose_args,
+      { stdio: [process.stdin, process.stdout, process.stderr] });
 
-    cmd.stdin?.pipe(process.stdin);
-    cmd.stdout?.pipe(process.stdout);
-    cmd.stderr?.pipe(process.stderr);
-
-    await cmd;
+    await new Promise((resolve) => {
+      childProcess.on('close', resolve);
+    });
   }
 
   async run(): Promise<void> {
