@@ -387,8 +387,8 @@ export class DockerComposeUtils {
     const services = lines.map(line => {
       let name = line.split(' ')[0];
       // Remove env name and counter: cloud_gateway_1
-      name = name.substr(name.indexOf('_') + 1);
-      name = name.substr(0, name.lastIndexOf('_'));
+      name = name.substring(name.indexOf('_') + 1);
+      name = name.substring(0, name.lastIndexOf('_'));
       const service = new LocalService();
       // Remove the slug for the display name
       service.display_name = name.substr(0, name.lastIndexOf('-'));

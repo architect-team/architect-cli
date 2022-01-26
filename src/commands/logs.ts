@@ -114,7 +114,7 @@ export default class Logs extends Command {
         // can display it the same way regardless of where the logs
         // came from.
         if (!flags.raw) {
-          line = line.substr(line.indexOf('|') + 1);
+          line = line.substring(line.indexOf('|') + 1);
         }
         log(line);
       });
