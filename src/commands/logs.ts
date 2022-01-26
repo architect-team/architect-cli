@@ -100,23 +100,21 @@ export default class Logs extends Command {
       compose_args.push(flags.tail.toString());
     }
     compose_args.push(service_name);
-    const cmd = execa('docker-compose', compose_args);
 
-    const log = this.createLogger(service_name);
+    const cmd = execa('docker-compose', compose_args);
 
     const logger = new Transform({
       decodeStrings: false,
     });
 
+    const this_log = this.log;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service_name))} ${chalk.hex('#D3D3D3')('|')}`;
     logger._transform = function (chunk, _encoding, done) {
       chunk.toString().split('\n').forEach((line: string) => {
-        // This removes the service name so that the logger
-        // can display it the same way regardless of where the logs
-        // came from.
         if (!flags.raw) {
           line = line.substring(line.indexOf('|') + 1);
         }
-        log(line);
+        this_log(prefix, chalk.cyan(line));
       });
       done(null, chunk.toString());
     };
