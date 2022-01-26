@@ -385,13 +385,15 @@ export class DockerComposeUtils {
     lines.shift();
     lines.shift();
     const services = lines.map(line => {
-      let name = line.split(' ')[0];
+      // Split the line by space but not if the space is in double qoutes
+      const line_parts = line.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+      let name = line_parts[0];
       // Remove env name and counter: cloud_gateway_1
       name = name.substring(name.indexOf('_') + 1);
       name = name.substring(0, name.lastIndexOf('_'));
       const service = new LocalService();
-      // Remove the slug for the display name
-      service.display_name = name.substr(0, name.lastIndexOf('-'));
+      // Remove the slug for the display name and add the status of the service
+      service.display_name = name.substring(0, name.lastIndexOf('-')) + ` (${line_parts[3].toUpperCase()})`;
       service.service_name = name;
       return service;
     }).filter((service) => {
