@@ -1,10 +1,13 @@
 import { flags } from '@oclif/command';
+import execa from 'execa';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
+import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
+import { DockerComposeUtils } from '../common/docker-compose';
 import { ArchitectError, Dictionary, parseUnknownSlug } from '../dependency-manager/src';
 
 export default class Exec extends Command {
@@ -16,13 +19,13 @@ export default class Exec extends Command {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
     stdin: flags.boolean({
-      description: 'Pass stdin to the container',
+      description: 'Pass stdin to the container. Only works on remote deploys.',
       char: 'i',
       allowNo: true,
       default: true,
     }),
     tty: flags.boolean({
-      description: 'Stdin is a TTY',
+      description: 'Stdin is a TTY.',
       char: 't',
       allowNo: true,
       default: true,
@@ -44,61 +47,6 @@ export default class Exec extends Command {
   public static readonly StdoutStream = 1;
   public static readonly StderrStream = 2;
   public static readonly StatusStream = 3;
-
-  async run(): Promise<void> {
-    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-
-    const { args, flags } = this.parse(Exec);
-
-    const account = await AccountUtils.getAccount(this.app, flags.account);
-    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
-
-    let component_account_name: string | undefined;
-    let component_name: string | undefined;
-    let service_name: string | undefined;
-    let tag: string | undefined;
-    let instance_name: string | undefined;
-    if (args.resource) {
-      const parsed = parseUnknownSlug(args.resource);
-      component_account_name = parsed.component_account_name;
-      component_name = parsed.component_name;
-      service_name = parsed.service_name;
-      tag = parsed.tag;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      instance_name = parsed.instance_name; //TODO:534
-    }
-
-    const replica_query = {
-      component_account_name,
-      component_name,
-      component_resource_name: service_name,
-      component_tag: tag,
-      component_instance_name: instance_name,
-    };
-
-    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-      params: replica_query,
-    });
-
-    if (!replicas.length)
-      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
-
-    const replica = await EnvironmentUtils.getReplica(replicas);
-
-    const query = new URLSearchParams({
-      ext_ref: replica.ext_ref,
-      container: replica.node_ref,
-      stdin: flags.stdin.toString(),
-      tty: flags.tty.toString(),
-    });
-    for (const c of args.command.split(' ')) {
-      query.append('command', c);
-    }
-
-    const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
-    await this.exec(uri);
-  }
 
   async exec(uri: string): Promise<void> {
     const { args, flags } = this.parse(Exec);
@@ -209,5 +157,105 @@ export default class Exec extends Command {
       }
     };
     return transform;
+  }
+
+  async runRemote(account: Account): Promise<void> {
+    const { args, flags } = this.parse(Exec);
+
+    const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
+
+    let component_account_name: string | undefined;
+    let component_name: string | undefined;
+    let service_name: string | undefined;
+    let tag: string | undefined;
+    let instance_name: string | undefined;
+    if (args.resource) {
+      const parsed = parseUnknownSlug(args.resource);
+      component_account_name = parsed.component_account_name;
+      component_name = parsed.component_name;
+      service_name = parsed.service_name;
+      tag = parsed.tag;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      instance_name = parsed.instance_name; //TODO:534
+    }
+
+    const replica_query = {
+      component_account_name,
+      component_name,
+      component_resource_name: service_name,
+      component_tag: tag,
+      component_instance_name: instance_name,
+    };
+
+    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+      params: replica_query,
+    });
+
+    if (!replicas.length)
+      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
+
+    const replica = await EnvironmentUtils.getReplica(replicas);
+
+    const query = new URLSearchParams({
+      ext_ref: replica.ext_ref,
+      container: replica.node_ref,
+      stdin: flags.stdin.toString(),
+      tty: flags.tty.toString(),
+    });
+    for (const c of args.command.split(' ')) {
+      query.append('command', c);
+    }
+
+    const uri = `${this.app.config.api_host}/environments/${environment.id}/ws/exec?${query}`;
+    await this.exec(uri);
+  }
+
+  async runLocal(): Promise<void> {
+    const { args, flags } = this.parse(Exec);
+
+    const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+    const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
+    const service_name = await DockerComposeUtils.getLocalServiceForEnvironment(environment_name, compose_file, args.resource);
+
+    const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
+    // https://docs.docker.com/compose/reference/exec/
+    if (!flags.tty) {
+      compose_args.push('-T');
+    }
+    compose_args.push(service_name);
+    compose_args.push(args.command);
+
+    const cmd = execa('docker-compose', compose_args);
+
+    cmd.stdin?.pipe(process.stdin);
+    cmd.stdout?.pipe(process.stdout);
+    cmd.stderr?.pipe(process.stderr);
+
+    await cmd;
+  }
+
+  async run(): Promise<void> {
+    inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
+
+    const { flags } = this.parse(Exec);
+
+    // If no account is default to local first.
+    if (!flags.account && flags.environment) {
+      // If the env exists locally then just assume local
+      const is_local_env = await DockerComposeUtils.isLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
+      if (is_local_env) {
+        return await this.runLocal();
+      }
+    }
+
+    // If no env is set then we don't know if this is local or remote so ask
+    const account = await AccountUtils.getAccount(this.app, flags.account, undefined, !flags.environment);
+
+    if (AccountUtils.isLocalAccount(account)) {
+      return await this.runLocal();
+    }
+
+    await this.runRemote(account);
   }
 }

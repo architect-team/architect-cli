@@ -379,7 +379,6 @@ export class DockerComposeUtils {
   }
 
   public static async getLocalServiceForEnvironment(environment: string, compose_file: string, service_name?: string): Promise<string> {
-    console.log(compose_file);
     const cmd = await execa('docker-compose', ['-f', compose_file, '-p', environment, 'ps']);
     const lines = cmd.stdout.split('\n');
     //Remove the headers
