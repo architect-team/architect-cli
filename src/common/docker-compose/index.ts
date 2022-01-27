@@ -393,7 +393,11 @@ export class DockerComposeUtils {
       name = name.substring(0, name.lastIndexOf('_'));
       const service = new LocalService();
       // Remove the slug for the display name and add the status of the service
-      service.display_name = name.substring(0, name.lastIndexOf('-')) + ` (${line_parts[3].toUpperCase()})`;
+      const slugless_name = name.substring(0, name.lastIndexOf('-'));
+      if (!slugless_name) {
+        return service;
+      }
+      service.display_name = slugless_name + ` (${line_parts[3].toUpperCase()})`;
       service.service_name = name;
       return service;
     }).filter((service) => {

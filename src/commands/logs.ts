@@ -1,8 +1,8 @@
 import { flags } from '@oclif/command';
 import chalk from 'chalk';
-import execa from 'execa';
+import { spawn } from 'child_process';
 import inquirer from 'inquirer';
-import { Transform } from 'stream';
+import { Readable, Writable } from 'node:stream';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
@@ -101,29 +101,33 @@ export default class Logs extends Command {
     }
     compose_args.push(service_name);
 
-    const cmd = execa('docker-compose', compose_args);
-
-    const logger = new Transform({
-      decodeStrings: false,
-    });
-
-    const this_log = this.log;
+    let show_header = true;
     const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service_name))} ${chalk.hex('#D3D3D3')('|')}`;
-    logger._transform = function (chunk, _encoding, done) {
-      chunk.toString().split('\n').forEach((line: string) => {
+
+    const logger = new Writable();
+
+    logger._write = (chunk, _encoding, next) => {
+      chunk.toString().split('\n').filter((e: string) => e).forEach((line: string) => {
+        if (!flags.raw && show_header) {
+          this.log(chalk.bold(chalk.white('Logs:')));
+          this.log(chalk.bold(chalk.white('―'.repeat(process.stdout.columns))));
+          show_header = false;
+        }
         if (!flags.raw) {
           line = line.substring(line.indexOf('|') + 1);
         }
-        this_log(prefix, chalk.cyan(line));
+        this.log(prefix, chalk.cyan(line));
       });
-      done(null, chunk.toString());
+      next();
     };
 
-    cmd.stdin?.pipe(process.stdin);
-    cmd.stdout?.pipe(logger);
-    cmd.stderr?.pipe(process.stderr);
+    const childProcess = spawn('docker-compose', compose_args,
+      { stdio: [process.stdin, null, process.stderr] });
+    (childProcess.stdout as Readable).pipe(logger);
 
-    await cmd;
+    await new Promise((resolve) => {
+      childProcess.on('close', resolve);
+    });
   }
 
   async runRemote(account: Account): Promise<void> {
