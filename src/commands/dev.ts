@@ -234,6 +234,7 @@ export default class Dev extends DevCommand {
       this.log('Gracefully shutting down...');
       execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
       this.log('Stopping operation...');
+      fs.removeSync(compose_file);
       process.exit(0);
     });
 
