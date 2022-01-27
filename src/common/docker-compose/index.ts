@@ -1,5 +1,6 @@
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
+import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import os from 'os';
 import pLimit from 'p-limit';
@@ -15,6 +16,11 @@ import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import LocalPaths from '../../paths';
 import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
+
+class LocalService {
+  display_name!: string;
+  service_name!: string;
+}
 
 export class DockerComposeUtils {
 
@@ -341,6 +347,80 @@ export class DockerComposeUtils {
       }
       throw err;
     }
+  }
+
+  public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
+    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
+    const files = await fs.readdir(path.join(search_directory));
+    return files.map((file) => file.split('.')[0]);
+  }
+
+  public static async isLocalEnvironment(config_dir: string, environment_name: string): Promise<boolean> {
+    const local_enviromments = await DockerComposeUtils.getLocalEnvironments(config_dir);
+    return !!(local_enviromments.find(env => env == environment_name));
+  }
+
+  public static async getLocalEnvironment(config_dir: string, environment_name?: string): Promise<string> {
+    const search_directory = path.join(config_dir, LocalPaths.LOCAL_DEPLOY_PATH);
+    const files = await fs.readdir(path.join(search_directory));
+    const local_enviromments = files.map((file) => file.split('.')[0]);
+    const answers: any = await inquirer.prompt([
+      {
+        when: !environment_name,
+        type: 'autocomplete',
+        name: 'environment',
+        message: 'Select a environment',
+        source: async () => {
+          return local_enviromments;
+        },
+      },
+    ]);
+    return environment_name || answers.environment;
+  }
+
+  public static async getLocalServiceForEnvironment(environment: string, compose_file: string, service_name?: string): Promise<string> {
+    const cmd = await execa('docker-compose', ['-f', compose_file, '-p', environment, 'ps']);
+    const lines = cmd.stdout.split('\n');
+    //Remove the headers
+    lines.shift();
+    lines.shift();
+    const services = lines.map(line => {
+      // Split the line by space but not if the space is in double qoutes
+      const line_parts = line.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+      let name = line_parts[0];
+      // Remove env name and counter: cloud_gateway_1
+      name = name.substring(name.indexOf('_') + 1);
+      name = name.substring(0, name.lastIndexOf('_'));
+      const service = new LocalService();
+      // Remove the slug for the display name and add the status of the service
+      const slugless_name = name.substring(0, name.lastIndexOf('-'));
+      if (!slugless_name) {
+        return service;
+      }
+      service.display_name = slugless_name + ` (${line_parts[3].toUpperCase()})`;
+      service.service_name = name;
+      return service;
+    }).filter((service) => {
+      // Our services do not have a slug attached and have an empty display name at this point
+      return service.display_name;
+    });
+    const answers: any = await inquirer.prompt([
+      {
+        when: !service_name,
+        type: 'autocomplete',
+        name: 'service',
+        message: 'Select a service',
+        source: async () => {
+          return services.map(service => service.display_name);
+        },
+      },
+    ]);
+    const display_service_name = service_name || answers.service;
+    const full_service_name = services.find((service) => service.display_name == display_service_name)?.service_name;
+    if (!full_service_name) {
+      throw new Error(`Could not find service=${display_service_name}`);
+    }
+    return full_service_name;
   }
 
   public static async run(service_name: string, project_name: string, compose_file?: string): Promise<void> {

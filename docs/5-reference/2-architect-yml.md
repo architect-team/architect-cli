@@ -133,7 +133,7 @@ Architect can mount volumes onto your services and tasks to store data that shou
 | -------------------- | ---------- | -------------- | -------------- |
  | `mount_path` | string \| [Expression](/docs/reference/contexts) | Directory at which the volume will be mounted inside the container. |  |
  | `host_path` | string \| [Expression](/docs/reference/contexts) | A directory on the host machine to sync with the mount_path on the docker image. This field is only relevant inside the debug block for local deployments. This field is disjunctive with `key` (only one of `host_path` or `key` can be set). |  |
- | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
+ | `key` | string \| [Expression](/docs/reference/contexts) | A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set). | [More](/docs/configuration/services#volumes) |
  | `description` | string | Human-readable description of volume |  |
  | `readonly` | boolean \| [Expression](/docs/reference/contexts) | Marks the volume as readonly. |  |
 
