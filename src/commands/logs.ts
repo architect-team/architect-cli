@@ -101,8 +101,9 @@ export default class Logs extends Command {
     }
     compose_args.push(service_name);
 
+    const display_service_name = service_name.substring(0, service_name.lastIndexOf('-'));
     let show_header = true;
-    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service_name))} ${chalk.hex('#D3D3D3')('|')}`;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_service_name))} ${chalk.hex('#D3D3D3')('|')}`;
 
     const logger = new Writable();
 
