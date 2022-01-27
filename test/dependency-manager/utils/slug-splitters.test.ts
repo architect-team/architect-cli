@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { environmentRef } from '../../../src/dependency-manager/src/config/component-config';
 import { ComponentSlugUtils, ComponentVersionSlugUtils, EnvironmentSlugUtils, ServiceSlugUtils, ServiceVersionSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
 
 describe('slug validators', () => {
@@ -99,4 +100,19 @@ describe('slug validators', () => {
   it(`EnvironmentSlugUtils.parse throws exception on ${invalid_environment_slug}`, async () => {
     expect(() => EnvironmentSlugUtils.parse(invalid_environment_slug)).to.throw(`must be of the form <account-name>/<environment-name>`);
   });
+
+  describe('environmentRef', () => {
+    it(`account doesn't get included if it is the same as the current`, async () => {
+      expect(environmentRef(component_account_name, service_version_slug)).to.equal(`${component_name}.${service_name}`)
+    });
+    it(`account doesn't get included if it is the same as the current (tenancy)`, async () => {
+      expect(environmentRef(component_account_name, service_version_slug + '@tenant-1')).to.equal(`tenant-1--${component_name}.${service_name}`)
+    });
+    it(`account does get included if it isn't the same as the current`, async () => {
+      expect(environmentRef('examples', service_version_slug)).to.equal(`${component_account_name}.${component_name}.${service_name}`)
+    });
+    it(`account does get included if it isn't the same as the current (tenancy)`, async () => {
+      expect(environmentRef('examples', service_version_slug + '@tenant-1')).to.equal(`tenant-1--${component_account_name}.${component_name}.${service_name}`)
+    });
+  })
 });

@@ -109,6 +109,18 @@ export const buildNodeRef = (component_config: ComponentConfig, service_name: st
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
 
+export const environmentRef = (current_account: string, ref: string): string => {
+  const { component_account_name, component_name, service_name, instance_name } = ServiceVersionSlugUtils.parse(ref);
+  let environment_ref = `${component_name}.${service_name}`;
+  if (current_account !== component_account_name) {
+    environment_ref = `${component_account_name}.${environment_ref}`;
+  }
+  if (instance_name) {
+    environment_ref = `${instance_name}--${environment_ref}`;
+  }
+  return environment_ref;
+};
+
 export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
   const component_ref = component_config.metadata.ref;
   return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id);
