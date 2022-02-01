@@ -1,5 +1,5 @@
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import execa from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -117,12 +117,12 @@ export class KubernetesPlatformUtils {
     }
 
     if (!use_existing_sa) {
-      cli.action.start('Creating the service account');
+      CliUx.ux.action.start('Creating the service account');
       await KubernetesPlatformUtils.createKubernetesServiceAccount(untildify(kubeconfig_path), SERVICE_ACCOUNT_NAME);
-      cli.action.stop();
+      CliUx.ux.action.stop();
     }
 
-    cli.action.start('Loading kubernetes configuration info');
+    CliUx.ux.action.start('Loading kubernetes configuration info');
 
     // Retrieve cluster host and ca certificate
     const cluster = kubeconfig.clusters.find((cluster: any) => cluster.name === kube_context.context.cluster);
@@ -155,7 +155,7 @@ export class KubernetesPlatformUtils {
     const sa_token_buffer = Buffer.from(JSON.parse(secret_res.stdout).data.token, 'base64');
     const service_token = sa_token_buffer.toString('utf-8');
 
-    cli.action.stop();
+    CliUx.ux.action.stop();
 
     try {
       const nodes = await execa('kubectl', [
@@ -175,7 +175,7 @@ export class KubernetesPlatformUtils {
       'config', 'set',
       'current-context', original_kubecontext,
     ]);
-    cli.action.stop();
+    CliUx.ux.action.stop();
 
     return {
       description: cluster_host,

@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import cli from 'cli-ux';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -10,7 +10,6 @@ import { DeploymentFailedError, PipelineAbortedError, PollingTimeout } from '../
 import DeployUtils from '../common/utils/deploy.utils';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
 import Dev from "./dev";
-
 
 export abstract class DeployCommand extends Command {
 
@@ -221,14 +220,14 @@ export default class Deploy extends DeployCommand {
       deployment_dtos.push(deploy_dto);
     }
 
-    cli.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
+    CliUx.ux.action.start(chalk.blue(`Creating pipeline${deployment_dtos.length ? 's' : ''}`));
     const pipelines = await Promise.all(
       deployment_dtos.map(async (deployment_dto) => {
         const { data: pipeline } = await this.app.api.post(`/environments/${environment.id}/deploy`, deployment_dto);
         return { component_name: deployment_dto.component, pipeline };
       })
     );
-    cli.action.stop();
+    CliUx.ux.action.stop();
 
     const approved_pipelines = [];
     for (const pipeline of pipelines) {
@@ -243,7 +242,7 @@ export default class Deploy extends DeployCommand {
       return;
     }
 
-    cli.action.start(chalk.blue('Deploying'));
+    CliUx.ux.action.start(chalk.blue('Deploying'));
     await Promise.all(
       approved_pipelines.map((pipeline) => {
         return PipelineUtils.pollPipeline(this.app, pipeline.pipeline.id)
@@ -259,7 +258,7 @@ export default class Deploy extends DeployCommand {
           });
       })
     );
-    cli.action.stop();
+    CliUx.ux.action.stop();
   }
 
   async run(): Promise<void> {

@@ -1,7 +1,7 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
 import { classToPlain } from 'class-transformer';
-import { cli } from 'cli-ux';
 import * as Diff from 'diff';
 import fs from 'fs-extra';
 import isCi from 'is-ci';
@@ -174,9 +174,9 @@ export default class ComponentRegister extends Command {
     }
     this.log(chalk.blue(`End component config diff`));
 
-    cli.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
+    CliUx.ux.action.start(chalk.blue(`Registering component ${new_spec.name}:${tag} with Architect Cloud...`));
     await this.app.api.post(`/accounts/${selected_account.id}/components`, component_dto);
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully registered component`));
   }
 
@@ -233,31 +233,31 @@ export default class ComponentRegister extends Command {
       const build_args = Object.entries(build_args_map).map(([key, value]) => `${key}=${value}`);
       return await Docker.buildImage(build_path, image_tag, dockerfile, build_args, resource_spec.build?.target);
     } catch (err: any) {
-      cli.action.stop(chalk.red(`Build failed`));
+      CliUx.ux.action.stop(chalk.red(`Build failed`));
       this.log(`Docker build failed. If an image is not specified in your component spec, then a Dockerfile must be present`);
       throw new Error(err);
     }
   }
 
   private async pushImage(image: string) {
-    cli.action.start(chalk.blue(`Pushing Docker image for ${image}`));
+    CliUx.ux.action.start(chalk.blue(`Pushing Docker image for ${image}`));
     try {
       await Docker.pushImage(image);
     } catch (err: any) {
-      cli.action.stop(chalk.red(`Push failed for image ${image}`));
+      CliUx.ux.action.stop(chalk.red(`Push failed for image ${image}`));
       throw new Error(err);
     }
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green(`Successfully pushed Docker image for ${image}`));
   }
 
   private async getDigest(image: string) {
-    cli.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
+    CliUx.ux.action.start(chalk.blue(`Running \`docker inspect\` on the given image: ${image}`));
     const digest = await Docker.getDigest(image).catch(err => {
-      cli.action.stop(chalk.red(`Inspect failed`));
+      CliUx.ux.action.stop(chalk.red(`Inspect failed`));
       throw new Error(err);
     });
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green(`Image verified`));
     return digest;
   }

@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
@@ -124,7 +124,7 @@ export default class TaskExec extends Command {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    cli.action.start(chalk.blue(`Kicking off task ${args.component}/${args.task} in ${flags.environment}...`));
+    CliUx.ux.action.start(chalk.blue(`Kicking off task ${args.component}/${args.task} in ${flags.environment}...`));
     const res = await this.app.api.post(`/environments/${environment.id}/exec`, {
       component_account_name: parsed_slug.component_account_name,
       component_name: parsed_slug.component_name,
@@ -132,7 +132,7 @@ export default class TaskExec extends Command {
       task_name: args.task,
       tag: parsed_slug.tag,
     });
-    cli.action.stop();
+    CliUx.ux.action.stop();
 
     this.log(chalk.green(`Successfully kicked off task. ${environment.platform.type.toLowerCase()} reference= ${res.data}`));
   }

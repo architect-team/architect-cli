@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
@@ -67,13 +67,13 @@ export default class PlatformDestroy extends Command {
     answers = { ...args, ...flags, ...answers };
     const { data: account_platform } = await this.app.api.get(`/accounts/${account.id}/platforms/${platform.name}`);
 
-    cli.action.start(chalk.blue('Deregistering platform'));
+    CliUx.ux.action.start(chalk.blue('Deregistering platform'));
     const params: any = {};
     if (answers.force) {
       params.force = 1;
     }
     await this.app.api.delete(`/platforms/${account_platform.id}`, { params });
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green('Platform deregistered'));
   }
 }

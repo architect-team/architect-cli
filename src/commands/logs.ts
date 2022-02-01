@@ -2,7 +2,7 @@ import { flags } from '@oclif/command';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
 import inquirer from 'inquirer';
-import { Readable, Writable } from 'node:stream';
+import { Readable, Writable } from 'stream';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';

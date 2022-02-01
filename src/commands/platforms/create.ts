@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import PipelineUtils from '../../architect/pipeline/pipeline.utils';
@@ -86,9 +86,9 @@ export default class PlatformCreate extends Command {
 
     const platform_dto = { name: platform_name, ...platform, flags: flags_map };
 
-    cli.action.start('Registering platform with Architect');
+    CliUx.ux.action.start('Registering platform with Architect');
     const created_platform = await this.postPlatformToApi(platform_dto, account.id);
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(`Platform registered: ${this.app.config.app_host}/${account.name}/platforms/new?platform_id=${created_platform.id}`);
 
     if (!flags['auto-approve']) {
@@ -104,10 +104,10 @@ export default class PlatformCreate extends Command {
     }
 
     this.log(`Hang tight! This could take as long as 15m, so feel free to grab a cup of coffee while you wait.`);
-    cli.action.start(chalk.blue('Installing platform applications'));
+    CliUx.ux.action.start(chalk.blue('Installing platform applications'));
     const pipeline_id = await this.createPlatformApplications(created_platform.id);
     await PipelineUtils.pollPipeline(this.app, pipeline_id);
-    cli.action.stop();
+    CliUx.ux.action.stop();
 
     return created_platform;
   }

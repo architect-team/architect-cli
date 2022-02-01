@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import { EnvironmentUtils } from '../../architect/environment/environment.utils';
@@ -64,7 +64,7 @@ export default class EnvironmentDestroy extends Command {
       when: !flags['auto-approve'],
     }]);
 
-    cli.action.start(chalk.blue('Deregistering environment'));
+    CliUx.ux.action.start(chalk.blue('Deregistering environment'));
     answers = { ...args, ...flags, ...answers };
     const { data: account_environment } = await this.app.api.get(`/accounts/${account.id}/environments/${environment.name}`);
 
@@ -73,7 +73,7 @@ export default class EnvironmentDestroy extends Command {
         force: answers.force ? 1 : 0,
       },
     });
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green('Environment deregistered'));
   }
 }

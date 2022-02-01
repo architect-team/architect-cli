@@ -1,6 +1,6 @@
 import { flags } from '@oclif/command';
+import { CliUx } from '@oclif/core';
 import chalk from 'chalk';
-import { cli } from 'cli-ux';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
 import PlatformUtils from '../../architect/platform/platform.utils';
@@ -61,7 +61,7 @@ export default class EnvironmentCreate extends Command {
     const account = await AccountUtils.getAccount(this.app, flags.account, 'Select an account to register the environment with');
     const platform = await PlatformUtils.getPlatform(this.app.api, account, flags.platform);
 
-    cli.action.start(chalk.blue('Registering environment with Architect'));
+    CliUx.ux.action.start(chalk.blue('Registering environment with Architect'));
 
     const dto: CreateEnvironmentDto = {
       name: environment_name,
@@ -74,7 +74,7 @@ export default class EnvironmentCreate extends Command {
     await this.app.api.post(`/accounts/${account.id}/environments`, dto);
 
     const environment_url = `${this.app.config.app_host}/${account.name}/environments/${environment_name}`;
-    cli.action.stop();
+    CliUx.ux.action.stop();
     this.log(chalk.green(`Environment created: ${environment_url}`));
   }
 }
