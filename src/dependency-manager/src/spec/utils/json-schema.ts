@@ -47,7 +47,7 @@ export const findDefinition = (pointer: string, schema: SchemaObject): SchemaObj
     if (property.$ref) {
       definition = schema.definitions[property.$ref.replace(REF_PREFIX, '')];
     } else if (additional_properties?.anyOf) {
-      for (const x of additional_properties?.anyOf) {
+      for (const x of additional_properties.anyOf) {
         if (x.$ref) {
           definition = schema.definitions[x.$ref.replace(REF_PREFIX, '')];
           skip_key = true;
