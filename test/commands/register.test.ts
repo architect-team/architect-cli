@@ -71,15 +71,6 @@ describe('register', function () {
 
   mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['register', '--help'])
-    .it('it succinctly describes the register command', ctx => {
-      expect(ctx.stdout).to.contain('Register a new Component with Architect Cloud\n')
-    });
-
-  mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account_response)

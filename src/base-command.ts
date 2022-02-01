@@ -17,7 +17,6 @@ export default abstract class BaseCommand extends Command {
   }
 
   static flags = {
-    help: Flags.help({ char: 'h' }),
     verbose: Flags.boolean(),
   };
 
