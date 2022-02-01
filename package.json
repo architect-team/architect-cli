@@ -132,7 +132,7 @@
     "lint": "eslint --ext .ts,.js --max-warnings=0 .",
     "fix": "eslint --ext .ts,.js . --fix",
     "check-circular": "madge --ts-config ./tsconfig.json --circular --extensions ts ./src/",
-    "build": "rm -rf ./lib && tsc -b && npm run copy-static",
+    "build": "rm -rf ./lib && rm -f tsconfig.tsbuildinfo && tsc -b && npm run copy-static",
     "copy-static": "copyfiles -u 1 \"src/static/*.html\" lib",
     "coverage": "nyc --extension .ts npm test",
     "test": "rm -rf src/dependency-manager/node_modules && mocha --forbid-only \"test/**/*.test.ts\" --config ./test/.mocharc.yml",
