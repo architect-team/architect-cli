@@ -1,5 +1,5 @@
 /* eslint-disable no-empty */
-import { flags } from '@oclif/command';
+import { Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import { classToPlain } from 'class-transformer';
 import fs from 'fs';
@@ -34,7 +34,7 @@ export abstract class InitCommand extends Command {
     external_links: { architect_property: 'depends_on', func: this.convertDependsOn },
   };
 
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -42,30 +42,32 @@ export abstract class InitCommand extends Command {
 
   static flags = {
     ...Command.flags,
-    component_file: flags.string({
+    component_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --component-file.`,
       hidden: true,
     }),
-    'component-file': flags.string({
+    'component-file': Flags.string({
       char: 'o',
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
     }),
-    account: flags.string({
+    account: Flags.string({
       char: 'a',
     }),
-    name: flags.string({
+    name: Flags.string({
       char: 'n',
     }),
-    from_compose: flags.string({
+    from_compose: Flags.string({
       description: `${Command.DEPRECATED} Please use --from-compose.`,
       hidden: true,
     }),
-    'from-compose': flags.string({}),
+    'from-compose': Flags.string({}),
   };
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -77,7 +79,7 @@ export abstract class InitCommand extends Command {
   }
 
   async run(): Promise<void> {
-    const { flags } = this.parse(InitCommand);
+    const { flags } = await this.parse(InitCommand);
 
     const from_path = await this.getComposeFromPath(flags);
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
@@ -86,7 +88,7 @@ export abstract class InitCommand extends Command {
     try {
       const account = await AccountUtils.getAccount(this.app, flags.account);
       account_name = account.name;
-    } catch(err: any) {
+    } catch (err: any) {
       if (err.response?.status === 404) {
         this.error(chalk.red(`Account ${flags.account} not found`));
       }

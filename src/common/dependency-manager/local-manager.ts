@@ -49,7 +49,7 @@ export default class LocalDependencyManager extends DependencyManager {
     };
     // Load locally linked component config
     if (component_slug in this.linked_components) {
-      if (process.env.NODE_ENV !== 'test') {
+      if (process.env.TEST !== '1') {
         console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
       }
       const component_spec = buildSpecFromPath(this.linked_components[component_slug]);

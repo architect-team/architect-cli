@@ -29,7 +29,7 @@ export default class Components extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(Components);
+    const { args, flags } = await this.parse(Components);
 
     let account: Account | undefined = undefined;
     if (flags.account) {

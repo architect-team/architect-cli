@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -16,11 +16,11 @@ export interface Replica {
 
 export class EnvironmentUtils {
   static flags = {
-    environment: flags.string({
+    environment: Flags.string({
       description: 'Architect environment',
       char: 'e',
       env: 'ARCHITECT_ENVIRONMENT',
-      parse: value => value.toLowerCase(),
+      parse: async (value) => value.toLowerCase(),
     }),
   };
 

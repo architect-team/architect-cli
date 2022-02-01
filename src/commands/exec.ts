@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import { spawn } from 'child_process';
 import inquirer from 'inquirer';
 import stream from 'stream';
@@ -18,13 +18,13 @@ export default class Exec extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    stdin: flags.boolean({
+    stdin: Flags.boolean({
       description: 'Pass stdin to the container. Only works on remote deploys.',
       char: 'i',
       allowNo: true,
       default: true,
     }),
-    tty: flags.boolean({
+    tty: Flags.boolean({
       description: 'Stdin is a TTY.',
       char: 't',
       allowNo: true,
@@ -40,7 +40,7 @@ export default class Exec extends Command {
     name: 'resource',
     description: 'Name of resource',
     required: false,
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
   public static readonly StdinStream = 0;
@@ -49,7 +49,7 @@ export default class Exec extends Command {
   public static readonly StatusStream = 3;
 
   async exec(uri: string): Promise<void> {
-    const { args, flags } = this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
 
     const ws = await this.getWebSocket(uri);
 
@@ -87,7 +87,7 @@ export default class Exec extends Command {
       url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
 
       // Set HOST header for local dev
-      if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+      if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
         headers.HOST = url.hostname;
         url.hostname = 'localhost';
       }
@@ -160,7 +160,7 @@ export default class Exec extends Command {
   }
 
   async runRemote(account: Account): Promise<void> {
-    const { args, flags } = this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
 
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
@@ -212,7 +212,7 @@ export default class Exec extends Command {
   }
 
   async runLocal(): Promise<void> {
-    const { args, flags } = this.parse(Exec);
+    const { args, flags } = await this.parse(Exec);
     console.log(args);
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
@@ -241,7 +241,7 @@ export default class Exec extends Command {
   async run(): Promise<void> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const { flags } = this.parse(Exec);
+    const { flags } = await this.parse(Exec);
 
     // If no account is default to local first.
     if (!flags.account && flags.environment) {

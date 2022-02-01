@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import opener from 'opener';
 import { AuthorizationCode } from 'simple-oauth2';
@@ -10,7 +10,7 @@ import PromptUtils from '../common/utils/prompt-utils';
 import inquirer = require('inquirer');
 
 export default class Login extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -18,12 +18,12 @@ export default class Login extends Command {
 
   static flags = {
     ...Command.flags,
-    email: flags.string({
+    email: Flags.string({
       char: 'e',
       description: 'Email',
       env: 'ARCHITECT_EMAIL',
     }),
-    password: flags.string({
+    password: Flags.string({
       char: 'p',
       description: 'Password',
       env: 'ARCHITECT_PASSWORD',
@@ -31,7 +31,7 @@ export default class Login extends Command {
   };
 
   async run(): Promise<void> {
-    const { flags } = this.parse(Login);
+    const { flags } = await this.parse(Login);
     await Docker.verify(); // docker is required for login because we run `docker login`
 
     if (flags.email || flags.password) {

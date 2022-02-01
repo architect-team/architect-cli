@@ -1,10 +1,10 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import path from 'path';
 import Command from '../base-command';
 
 export default class Unlink extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -12,7 +12,7 @@ export default class Unlink extends Command {
 
   static flags = {
     ...Command.flags,
-    all: flags.boolean({
+    all: Flags.boolean({
       description: 'Unlink all components registered locally',
     }),
   };
@@ -21,12 +21,12 @@ export default class Unlink extends Command {
     name: 'componentPathOrName',
     char: 'p',
     default: path.basename(process.cwd()),
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
     required: false,
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(Unlink);
+    const { args, flags } = await this.parse(Unlink);
 
     if (flags.all) {
       this.app.unlinkAllComponents();

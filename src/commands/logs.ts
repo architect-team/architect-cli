@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { spawn } from 'child_process';
 import inquirer from 'inquirer';
@@ -17,24 +17,24 @@ export default class Logs extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    follow: flags.boolean({
+    follow: Flags.boolean({
       description: 'Specify if the logs should be streamed.',
       char: 'f',
       default: false,
     }),
-    since: flags.string({
+    since: Flags.string({
       description: 'Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs. Only one of since-time / since may be used. Only works on remote deploys.',
       default: '',
     }),
-    raw: flags.boolean({
+    raw: Flags.boolean({
       description: 'Show the raw output of the logs.',
       default: false,
     }),
-    tail: flags.integer({
+    tail: Flags.integer({
       description: 'Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.',
       default: -1,
     }),
-    timestamps: flags.boolean({
+    timestamps: Flags.boolean({
       description: 'Include timestamps on each line in the log output.',
       default: false,
     }),
@@ -44,11 +44,11 @@ export default class Logs extends Command {
     name: 'resource',
     description: 'Name of resource',
     required: false,
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  private createLogger(display_name: string) {
-    const { args, flags } = this.parse(Logs);
+  private async createLogger(display_name: string) {
+    const { args, flags } = await this.parse(Logs);
     const displayRawLogs = flags.raw || !process.stdout.isTTY;
     let show_header = true;
     const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_name))} ${chalk.hex('#D3D3D3')('|')}`;
@@ -82,7 +82,7 @@ export default class Logs extends Command {
   }
 
   async runLocal(): Promise<void> {
-    const { args, flags } = this.parse(Logs);
+    const { args, flags } = await this.parse(Logs);
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
@@ -132,7 +132,7 @@ export default class Logs extends Command {
   }
 
   async runRemote(account: Account): Promise<void> {
-    const { args, flags } = this.parse(Logs);
+    const { args, flags } = await this.parse(Logs);
 
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
 
@@ -191,7 +191,7 @@ export default class Logs extends Command {
       display_name = service_name;
     }
 
-    const log = this.createLogger(display_name);
+    const log = await this.createLogger(display_name);
 
     let stdout = '';
     log_stream.on('data', (chunk: string) => {
@@ -213,7 +213,7 @@ export default class Logs extends Command {
   async run(): Promise<void> {
     inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
 
-    const { flags } = this.parse(Logs);
+    const { flags } = await this.parse(Logs);
 
     // If no account is default to local first.
     if (!flags.account && flags.environment) {

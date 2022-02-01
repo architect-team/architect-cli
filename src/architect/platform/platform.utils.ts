@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -31,10 +31,10 @@ export interface EcsPlatformCredentials {
 
 export default class PlatformUtils {
   static flags = {
-    platform: flags.string({
+    platform: Flags.string({
       description: 'Architect platform',
       env: 'ARCHITECT_PLATFORM',
-      parse: value => value.toLowerCase(),
+      parse: async value => value.toLowerCase(),
     }),
   };
 

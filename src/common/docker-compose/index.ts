@@ -148,7 +148,7 @@ export class DockerComposeUtils {
       */
 
       const is_wsl = os.release().toLowerCase().includes('microsoft');
-      if (process.platform === 'linux' && !is_wsl && process.env.NODE_ENV !== 'test') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
+      if (process.platform === 'linux' && !is_wsl && process.env.TEST !== '1') { // https://github.com/docker/for-linux/issues/264#issuecomment-772844305
         service.extra_hosts = ['host.docker.internal:host-gateway'];
       }
 

@@ -7,7 +7,7 @@ import { buildSpecFromPath } from '../dependency-manager/src/spec/utils/componen
 declare const process: NodeJS.Process;
 
 export default class Link extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -24,7 +24,7 @@ export default class Link extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args } = this.parse(Link);
+    const { args } = await this.parse(Link);
 
     const component_path = path.resolve(untildify(args.componentPath));
     // Try to load the component from the path to ensure it exists and is valid

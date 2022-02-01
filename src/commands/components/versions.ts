@@ -23,7 +23,7 @@ export default class ComponentVersions extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(ComponentVersions);
+    const { args, flags } = await this.parse(ComponentVersions);
 
     if (!args.component_name) {
       this.log('You must specify the name of a component.');

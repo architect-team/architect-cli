@@ -15,19 +15,25 @@ for (const env_key of Object.keys(process.env)) {
   }
 }
 process.env.ARCHITECT_CONFIG_DIR = './test'
-process.env.NODE_ENV = 'test'
+process.env.NODE_ENV = 'development'
+process.env.TEST = '1'
 
-CredentialManager.prototype.get = async (service: string) => {
-  return {
-    account: 'test',
-    password: '{}'
-  }
-}
+// @ts-ignore
+global.oclif = global.oclif || {}
+// @ts-ignore
+global.oclif.columns = 120
 
 exports.mochaHooks = {
   beforeEach(done: any) {
     nock.disableNetConnect();
     nock('localhost').get('/v1/auth/approle/login').reply(200, { auth: {} });
+
+    sinon.replace(CredentialManager.prototype, 'get', async (service: string) => {
+      return {
+        account: 'test',
+        password: '{}'
+      }
+    });
 
     sinon.replace(PortUtil, 'isPortAvailable', async () => true);
     PortUtil.reset();

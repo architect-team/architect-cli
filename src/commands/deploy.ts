@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../architect/account/account.utils';
@@ -15,19 +14,21 @@ export abstract class DeployCommand extends Command {
 
   static flags = {
     ...Command.flags,
-    auto_approve: flags.boolean({
+    auto_approve: Flags.boolean({
       exclusive: ['compose-file', 'compose_file'],
       description: `${Command.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
     }),
-    'auto-approve': flags.boolean({
+    'auto-approve': Flags.boolean({
       exclusive: ['compose-file', 'compose_file'],
       description: 'Automatically approve the deployment without a review step. Used for debugging and CI flows.',
     }),
   };
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -38,7 +39,7 @@ export abstract class DeployCommand extends Command {
   }
 
   async approvePipeline(pipeline: any): Promise<boolean> {
-    const { flags } = this.parse(this.constructor as typeof DeployCommand);
+    const { flags } = await this.parse(this.constructor as typeof DeployCommand);
 
     if (!flags['auto-approve']) {
       this.log(`Pipeline ready for review: ${this.app.config.app_host}/${pipeline.environment.account.name}/environments/${pipeline.environment.name}/pipelines/${pipeline.id}`);
@@ -59,7 +60,7 @@ export abstract class DeployCommand extends Command {
 }
 
 export default class Deploy extends DeployCommand {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return true;
   }
 
@@ -70,81 +71,81 @@ export default class Deploy extends DeployCommand {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: flags.boolean({
+    local: Flags.boolean({
       char: 'l',
       description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
     }),
-    production: flags.boolean({
+    production: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
     }),
-    compose_file: flags.string({
+    compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
     }),
-    'compose-file': flags.string({
+    'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
     }),
-    detached: flags.boolean({
+    detached: Flags.boolean({
       description: 'Run in detached mode',
       char: 'd',
       dependsOn: ['local'],
     }),
-    parameter: flags.string({
+    parameter: Flags.string({
       char: 'p',
       description: 'Component parameters',
       multiple: true,
       default: [],
     }),
-    interface: flags.string({
+    interface: Flags.string({
       char: 'i',
       description: 'Component interfaces',
       multiple: true,
       default: [],
     }),
-    secrets: flags.string({
+    secrets: Flags.string({
       char: 's',
       description: 'Path of secrets file',
     }),
-    values: flags.string({
+    values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secrets.`,
     }),
-    'deletion-protection': flags.boolean({
+    'deletion-protection': Flags.boolean({
       default: true,
       allowNo: true,
       description: '[default: true] Toggle for deletion protection on deployments',
       exclusive: ['local'],
     }),
-    recursive: flags.boolean({
+    recursive: Flags.boolean({
       char: 'r',
       default: true,
       allowNo: true,
       description: '[default: true] Toggle to automatically deploy all dependencies',
     }),
-    refresh: flags.boolean({
+    refresh: Flags.boolean({
       default: true,
       hidden: true,
       allowNo: true,
       exclusive: ['local', 'compose-file', 'compose_file'],
     }),
-    browser: flags.boolean({
+    browser: Flags.boolean({
       default: true,
       allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
     }),
-    build_parallel: flags.boolean({
+    build_parallel: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --build-parallel.`,
       hidden: true,
     }),
-    'build-parallel': flags.boolean({
+    'build-parallel': Flags.boolean({
       default: false,
       description: '[default: false] Build docker images in parallel',
     }),
@@ -156,14 +157,20 @@ export default class Deploy extends DeployCommand {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  parse(options: any, argv = this.argv): any {
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    if (!options) {
+      return super.parse(options, argv);
+    }
     options.args = [];
     for (const _ of argv) {
       options.args.push({ name: 'filler' });
     }
-    const parsed = super.parse(options, argv);
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     parsed.args.configs_or_components = parsed.argv;
-
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
     return parsed;
   }
@@ -198,12 +205,12 @@ export default class Deploy extends DeployCommand {
   }
 
   protected async runRemote(): Promise<void> {
-    const { args, flags } = this.parse(Deploy);
+    const { args, flags } = await this.parse(Deploy);
 
     const components = args.configs_or_components;
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secrets, flags.parameter);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);
@@ -262,7 +269,7 @@ export default class Deploy extends DeployCommand {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(Deploy);
+    const { args, flags } = await this.parse(Deploy);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
       if (flags.interface?.length) {

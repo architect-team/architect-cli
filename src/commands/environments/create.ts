@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
@@ -22,10 +21,10 @@ export default class EnvironmentCreate extends Command {
     ...Command.flags,
     ...AccountUtils.flags,
     ...PlatformUtils.flags,
-    description: flags.string({
+    description: Flags.string({
       description: 'Environment Description',
     }),
-    ttl: flags.string({
+    ttl: Flags.string({
       description: 'The TTL of the environment in a duration of time, ex. 30d, 12h, or 30m',
     }),
   };
@@ -33,11 +32,11 @@ export default class EnvironmentCreate extends Command {
   static args = [{
     name: 'environment',
     description: 'Name to give the environment',
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(EnvironmentCreate);
+    const { args, flags } = await this.parse(EnvironmentCreate);
 
     const answers: any = await inquirer.prompt([
       {

@@ -19,7 +19,7 @@ export default class Environments extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(Environments);
+    const { args, flags } = await this.parse(Environments);
 
     let account: Account | undefined = undefined;
     if (flags.account) {

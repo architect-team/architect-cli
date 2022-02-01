@@ -5,7 +5,7 @@ import { Slugs } from '../../dependency-manager/src/spec/utils/slugs';
 const CACHE_TAG = 'architect-cache';
 
 export const docker = async (args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> => {
-  if (process.env.NODE_ENV === 'test') {
+  if (process.env.TEST === '1') {
     return;
   }
   const cmd = execa('docker', args, execa_opts);

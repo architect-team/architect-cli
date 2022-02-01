@@ -433,32 +433,32 @@ describe('register', function () {
       expect(buildImage.firstCall.lastArg).undefined;
     });
 
-    mockArchitectAuth
-      .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
-      .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
-      .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
-      .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
-      .stub(fs, 'copySync', sinon.stub().returns(Promise.resolve(true)))
-      .stub(ComponentRegister.prototype, 'pushArtifact', sinon.stub().returns(Promise.resolve(true)))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/tests`)
-        .reply(200, mock_account_response)
-      )
-      .nock(MOCK_API_HOST, api => api
-        .post(/\/accounts\/.*\/components/)
-        .reply(200, {})
-      )
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/tests/components/superset/versions/latest`)
-        .reply(200)
-      )
-      .stdout({ print })
-      .stderr({ print })
-      .command(['register', path.join(__dirname, `../mocks/superset/architect.yml`)])
-      .it('set build target for docker build', ctx => {
-        const buildImage = Docker.buildImage as sinon.SinonStub;
-        expect(buildImage.callCount).to.eq(2);
-        expect(buildImage.firstCall.lastArg).to.eq('production');
-      });
+  mockArchitectAuth
+    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
+    .stub(Docker, 'buildImage', sinon.stub().returns('repostory/account/some-image:1.0.0'))
+    .stub(Docker, 'pushImage', sinon.stub().returns(undefined))
+    .stub(Docker, 'getDigest', sinon.stub().returns(Promise.resolve('some-digest')))
+    .stub(Docker, 'imageExists', sinon.stub().returns(Promise.resolve(false)))
+    .stub(fs, 'copySync', sinon.stub().returns(Promise.resolve(true)))
+    .stub(ComponentRegister.prototype, 'pushArtifact', sinon.stub().returns(Promise.resolve(true)))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/tests`)
+      .reply(200, mock_account_response)
+    )
+    .nock(MOCK_API_HOST, api => api
+      .post(/\/accounts\/.*\/components/)
+      .reply(200, {})
+    )
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/tests/components/superset/versions/latest`)
+      .reply(200)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['register', path.join(__dirname, `../mocks/superset/architect.yml`)])
+    .it('set build target for docker build', ctx => {
+      const buildImage = Docker.buildImage as sinon.SinonStub;
+      expect(buildImage.callCount).to.eq(2);
+      expect(buildImage.firstCall.lastArg).to.eq('production');
+    });
 });

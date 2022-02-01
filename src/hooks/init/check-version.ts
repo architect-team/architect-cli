@@ -1,4 +1,4 @@
-import { Hook } from '@oclif/config';
+import { Hook } from '@oclif/core';
 import semver from 'semver';
 
 const hook: Hook<'init'> = async function (options) {

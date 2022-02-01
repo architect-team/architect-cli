@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AppService from '../../app-config/service';
@@ -6,11 +6,11 @@ import Account from './account.entity';
 
 export default class AccountUtils {
   static flags = {
-    account: flags.string({
+    account: Flags.string({
       description: 'Architect account',
       env: 'ARCHITECT_ACCOUNT',
       char: 'a',
-      parse: value => value.toLowerCase(),
+      parse: async value => value.toLowerCase(),
     }),
   };
 

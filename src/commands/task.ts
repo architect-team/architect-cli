@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
@@ -12,8 +11,8 @@ export default class TaskExec extends Command {
   static aliases = ['task:exec'];
   static description = 'Execute a task in the given environment';
 
-  auth_required(): boolean {
-    const { flags } = this.parse(TaskExec);
+  async auth_required(): Promise<boolean> {
+    const { flags } = await this.parse(TaskExec);
     return !flags.local;
   }
 
@@ -22,17 +21,17 @@ export default class TaskExec extends Command {
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
-    local: flags.boolean({
+    local: Flags.boolean({
       char: 'l',
       description: 'Deploy the stack locally instead of via Architect Cloud',
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
     }),
-    compose_file: flags.string({
+    compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
     }),
-    'compose-file': flags.string({
+    'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
@@ -53,8 +52,10 @@ export default class TaskExec extends Command {
     },
   ];
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -66,7 +67,7 @@ export default class TaskExec extends Command {
   }
 
   async run(): Promise<void> {
-    const { flags } = this.parse(TaskExec);
+    const { flags } = await this.parse(TaskExec);
 
     if (flags.local) {
       await this.runLocal();
@@ -76,7 +77,7 @@ export default class TaskExec extends Command {
   }
 
   async runLocal(): Promise<void> {
-    const { flags, args } = this.parse(TaskExec);
+    const { flags, args } = await this.parse(TaskExec);
     await Docker.verify();
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
@@ -112,7 +113,7 @@ export default class TaskExec extends Command {
   }
 
   async runRemote(): Promise<void> {
-    const { flags, args } = this.parse(TaskExec);
+    const { flags, args } = await this.parse(TaskExec);
 
     const selected_account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, selected_account, flags.environment);

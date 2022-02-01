@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
@@ -13,15 +12,15 @@ export default class EnvironmentDestroy extends Command {
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
-    auto_approve: flags.boolean({
+    auto_approve: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
     }),
-    ['auto-approve']: flags.boolean({
+    ['auto-approve']: Flags.boolean({
       description: 'Automatically apply the changes',
       default: false,
     }),
-    force: flags.boolean({
+    force: Flags.boolean({
       description: 'Force the deletion even if the environment is not empty',
       char: 'f',
       default: false,
@@ -31,11 +30,13 @@ export default class EnvironmentDestroy extends Command {
   static args = [{
     name: 'environment',
     description: 'Name of the environment to deregister',
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -46,7 +47,7 @@ export default class EnvironmentDestroy extends Command {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(EnvironmentDestroy);
+    const { args, flags } = await this.parse(EnvironmentDestroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, args.environment);

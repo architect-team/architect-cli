@@ -44,7 +44,7 @@ export default class AppService {
 
     const url = new URL(this.config.api_host);
     // Set HOST header for local dev
-    if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+    if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
       this._api.defaults.baseURL = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}${url.pathname}`;
       this._api.defaults.headers.HOST = url.hostname;
       this._api.defaults.httpsAgent = new https.Agent({

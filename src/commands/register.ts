@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import { classToPlain } from 'class-transformer';
 import * as Diff from 'diff';
@@ -26,17 +25,17 @@ export default class ComponentRegister extends Command {
 
   static flags = {
     ...Command.flags,
-    arg: flags.string({
+    arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
     }),
-    components: flags.string({
+    components: Flags.string({
       char: 'c',
       description: 'Path to a component to build',
       multiple: true,
       hidden: true,
     }),
-    tag: flags.string({
+    tag: Flags.string({
       char: 't',
       description: 'Tag to give to the new component',
       default: 'latest',
@@ -49,7 +48,7 @@ export default class ComponentRegister extends Command {
   }];
 
   async run(): Promise<void> {
-    const { flags, args } = this.parse(ComponentRegister);
+    const { flags, args } = await this.parse(ComponentRegister);
     await Docker.verify();
 
     const config_paths: Set<string> = new Set();
@@ -209,7 +208,7 @@ export default class ComponentRegister extends Command {
   }
 
   private async buildImage(config_path: string, resource_name: string, resource_spec: ResourceSpec, image_tag: string) {
-    const { flags } = this.parse(ComponentRegister);
+    const { flags } = await this.parse(ComponentRegister);
 
     const build_context = resource_spec?.build?.context;
     if (!build_context) {

@@ -57,7 +57,7 @@ export default class DeployUtils {
     return flags;
   }
 
-  static getComponentSecrets(secrets: string, parameters: string[]): any {
+  static getComponentSecrets(parameters: string[], secrets?: string): any {
     const component_secrets = DeployUtils.readSecretsFile(secrets);
     const extra_params = DeployUtils.getExtraEnvironmentVariables(parameters);
     if (extra_params && Object.keys(extra_params).length) {
