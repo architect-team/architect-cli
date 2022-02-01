@@ -389,8 +389,8 @@ export class DockerComposeUtils {
       const line_parts = line.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
       let name = line_parts[0];
       // Remove env name and counter: cloud_gateway_1
-      name = name.substring(name.indexOf('_') + 1);
-      name = name.substring(0, name.lastIndexOf('_'));
+      name = name.substring(name.indexOf('-') + 1);
+      name = name.substring(0, name.lastIndexOf('-'));
       const service = new LocalService();
       // Remove the slug for the display name and add the status of the service
       const slugless_name = name.substring(0, name.lastIndexOf('-'));

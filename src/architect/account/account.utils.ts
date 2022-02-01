@@ -37,7 +37,7 @@ export default class AccountUtils {
       console.log(chalk.blue(`Using account from environment variables: `) + account_name);
     }
 
-    if (!account_name) {
+    if (!account_name && !ask_local_account) {
       const { data: user_data } = await app.api.get('/users/me');
       if (user_data.memberships?.length === 1) { // if user only has one account, use it by default
         return user_data.memberships[0].account;
