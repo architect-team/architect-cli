@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags } from '@oclif/core';
 import chalk from 'chalk';
 import AccountUtils from '../architect/account/account.utils';
 import Deployment from '../architect/deployment/deployment.entity';
@@ -8,7 +7,7 @@ import PipelineUtils from '../architect/pipeline/pipeline.utils';
 import { DeployCommand } from './deploy';
 
 export default class Destroy extends DeployCommand {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return true;
   }
 
@@ -19,7 +18,7 @@ export default class Destroy extends DeployCommand {
     ...DeployCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
-    components: flags.string({
+    components: Flags.string({
       char: 'c',
       description: 'Component(s) to destroy',
       multiple: true,
@@ -27,7 +26,7 @@ export default class Destroy extends DeployCommand {
   };
 
   async run(): Promise<void> {
-    const { flags } = this.parse(Destroy);
+    const { flags } = await this.parse(Destroy);
 
     const account = await AccountUtils.getAccount(this.app, flags.account);
     const environment = await EnvironmentUtils.getEnvironment(this.app.api, account, flags.environment);

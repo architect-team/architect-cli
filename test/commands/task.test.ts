@@ -52,15 +52,6 @@ describe('task:exec', async function () {
 
   mockArchitectAuth
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-    .stdout({ print })
-    .stderr({ print })
-    .command(['task:exec', '--help'])
-    .it('it succinctly describes the task:exec command', ctx => {
-      expect(ctx.stdout).to.contain('Execute a task in the given environment\n')
-    });
-
-  mockArchitectAuth
-    .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples`)
       .reply(200, mock_account)

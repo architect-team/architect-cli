@@ -1,4 +1,4 @@
-import { Hook } from '@oclif/config';
+import { Hook } from '@oclif/core';
 import readline from 'readline';
 import PromptUtils from '../../common/utils/prompt-utils';
 

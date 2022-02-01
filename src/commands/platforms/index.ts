@@ -20,7 +20,7 @@ export default class Platforms extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(Platforms);
+    const { args, flags } = await this.parse(Platforms);
 
     let account: Account | undefined = undefined;
     if (flags.account) {

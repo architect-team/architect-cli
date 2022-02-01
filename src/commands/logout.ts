@@ -3,7 +3,7 @@ import Command from '../base-command';
 import * as Docker from '../common/utils/docker';
 
 export default class Logout extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 

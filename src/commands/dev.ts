@@ -1,4 +1,4 @@
-import { flags } from '@oclif/command';
+import { Flags, Interfaces } from '@oclif/core';
 import axios, { AxiosResponse } from 'axios';
 import chalk from 'chalk';
 import execa from 'execa';
@@ -22,8 +22,10 @@ export abstract class DevCommand extends Command {
     ...Command.flags,
   };
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -34,7 +36,7 @@ export abstract class DevCommand extends Command {
 }
 
 export default class Dev extends DevCommand {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -44,69 +46,73 @@ export default class Dev extends DevCommand {
     ...DevCommand.flags,
     ...EnvironmentUtils.flags,
 
-    'compose-file': flags.string({
+    'compose-file': Flags.string({
       char: 'o',
       description: 'Path where the compose file should be written to',
       default: '',
       exclusive: ['environment', 'auto-approve', 'auto_approve', 'refresh'],
     }),
-    parameter: flags.string({
+    parameter: Flags.string({
       char: 'p',
       description: 'Component parameters',
       multiple: true,
       default: [],
     }),
-    interface: flags.string({
+    interface: Flags.string({
       char: 'i',
       description: 'Component interfaces',
       multiple: true,
       default: [],
     }),
-    secrets: flags.string({
+    secrets: Flags.string({
       char: 's',
       description: 'Path of secrets file',
     }),
-    recursive: flags.boolean({
+    recursive: Flags.boolean({
       char: 'r',
       default: true,
       allowNo: true,
       description: '[default: true] Toggle to automatically deploy all dependencies',
     }),
-    browser: flags.boolean({
+    browser: Flags.boolean({
       default: true,
       allowNo: true,
       description: '[default: true] Automatically open urls in the browser for local deployments',
     }),
-    'build-parallel': flags.boolean({
+    'build-parallel': Flags.boolean({
       default: false,
       description: '[default: false] Build docker images in parallel',
     }),
 
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
-    local: flags.boolean({
+    local: Flags.boolean({
       char: 'l',
       description: `${Command.DEPRECATED} Deploy the stack locally instead of via Architect Cloud`,
       exclusive: ['account', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
     }),
-    production: flags.boolean({
+    production: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --environment.`,
       dependsOn: ['local'],
       hidden: true,
     }),
-    compose_file: flags.string({
+    compose_file: Flags.string({
       description: `${Command.DEPRECATED} Please use --compose-file.`,
       exclusive: ['account', 'environment', 'auto-approve', 'auto_approve', 'refresh'],
       hidden: true,
     }),
-    values: flags.string({
+    values: Flags.string({
       char: 'v',
       hidden: true,
       description: `${Command.DEPRECATED} Please use --secrets.`,
     }),
-    build_parallel: flags.boolean({
+    build_parallel: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --build-parallel.`,
       hidden: true,
+    }),
+    detached: Flags.boolean({
+      description: 'Run in detached mode',
+      char: 'd',
     }),
   };
 
@@ -116,12 +122,19 @@ export default class Dev extends DevCommand {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  parse(options: any, argv = this.argv): any {
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    if (!options) {
+      return super.parse(options, argv);
+    }
     options.args = [];
     for (const _ of argv) {
       options.args.push({ name: 'filler' });
     }
-    const parsed = super.parse(options, argv);
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     parsed.args.configs_or_components = parsed.argv;
 
     parsed.flags = DeployUtils.parseFlags(parsed.flags);
@@ -130,7 +143,7 @@ export default class Dev extends DevCommand {
   }
 
   async runCompose(compose: DockerComposeTemplate): Promise<void> {
-    const { flags } = this.parse(Dev);
+    const { flags } = await this.parse(Dev);
 
     const project_name = flags.environment || DockerComposeUtils.DEFAULT_PROJECT;
     const compose_file = flags['compose-file'] || DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), project_name);
@@ -242,7 +255,7 @@ export default class Dev extends DevCommand {
   }
 
   private async runLocal() {
-    const { args, flags } = this.parse(Dev);
+    const { args, flags } = await this.parse(Dev);
     await Docker.verify();
 
     if (!args.configs_or_components || !args.configs_or_components.length) {
@@ -250,7 +263,7 @@ export default class Dev extends DevCommand {
     }
 
     const interfaces_map = DeployUtils.getInterfacesMap(flags.interface);
-    const component_secrets = DeployUtils.getComponentSecrets(flags.secrets, flags.parameter);
+    const component_secrets = DeployUtils.getComponentSecrets(flags.parameter, flags.secrets);
 
     const linked_components = this.app.linkedComponents;
     const component_versions: string[] = [];
@@ -307,7 +320,7 @@ export default class Dev extends DevCommand {
     if (this.argv[0] && this.argv[0].toLocaleLowerCase() === "deploy") {
       this.argv.splice(0, 1);
     }
-    const { args, flags } = this.parse(Dev);
+    const { args, flags } = await this.parse(Dev);
 
     if (args.configs_or_components && args.configs_or_components.length > 1) {
       if (flags.interface?.length) {

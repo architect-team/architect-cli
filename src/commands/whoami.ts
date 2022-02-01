@@ -4,7 +4,7 @@ export default class WhoAmI extends Command {
   static aliases = ['whoami'];
   static description = 'Get the logged in user';
 
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return true;
   }
 

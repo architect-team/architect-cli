@@ -1,5 +1,4 @@
-import Command, { flags } from '@oclif/command';
-import * as Parser from '@oclif/parser';
+import { Command, Flags, Interfaces } from '@oclif/core';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
@@ -13,13 +12,12 @@ export default abstract class BaseCommand extends Command {
   app!: AppService;
   accounts?: any;
 
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return true;
   }
 
   static flags = {
-    help: flags.help({ char: 'h' }),
-    verbose: flags.boolean(),
+    verbose: Flags.boolean(),
   };
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
@@ -33,13 +31,13 @@ export default abstract class BaseCommand extends Command {
   }
 
   async init(): Promise<void> {
-    const { flags } = this.parse(this.constructor as any);
+    const { flags } = await this.parse(this.constructor as any);
     const flag_definitions = (this.constructor as any).flags;
     this.checkFlagDeprecations(flags, flag_definitions);
 
     if (!this.app) {
       this.app = await AppService.create(this.config.configDir, this.config.userAgent.split(/\/|\s/g)[2]);
-      if (this.auth_required()) {
+      if (await this.auth_required()) {
         const token_json = await this.app.auth.getPersistedTokenJSON();
         if (!token_json) {
           throw new LoginRequiredError();
@@ -61,7 +59,7 @@ export default abstract class BaseCommand extends Command {
   // Move all args to the front of the argv to get around: https://github.com/oclif/oclif/issues/190
   protected parse<F, A extends {
     [name: string]: any;
-  }>(options?: Parser.Input<F>, argv = this.argv): Parser.Output<F, A> {
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
     const flag_definitions = (this.constructor as any).flags;
 
     // Support -- input ex. architect exec -- ls -la
@@ -109,7 +107,7 @@ export default abstract class BaseCommand extends Command {
 
     let verbose = false;
     try {
-      const { flags }: any = this.parse(this.constructor as any);
+      const { flags }: any = await this.parse(this.constructor as any);
       verbose = flags.verbose;
       // eslint-disable-next-line no-empty
     } catch { }

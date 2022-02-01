@@ -3,7 +3,7 @@ import Command from '../../base-command';
 import InvalidConfigOption from '../../common/errors/invalid-config-option';
 
 export default class ConfigGet extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -20,7 +20,7 @@ export default class ConfigGet extends Command {
   }];
 
   async run(): Promise<void> {
-    const { args } = this.parse(ConfigGet);
+    const { args } = await this.parse(ConfigGet);
 
     if (!Object.keys(this.app.config).includes(args.option)) {
       throw new InvalidConfigOption(args.option);

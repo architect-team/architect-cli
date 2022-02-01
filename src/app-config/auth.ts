@@ -90,7 +90,7 @@ export default class AuthClient {
     let oauth_token_host = this.config.oauth_host;
     const url = new URL(this.config.oauth_host);
     // Set HOST header for local dev
-    if (url.hostname.endsWith('.localhost') && process.env.NODE_ENV !== 'test') {
+    if (url.hostname.endsWith('.localhost') && process.env.TEST !== '1') {
       oauth_token_host = `${url.protocol}//localhost:${url.port || (url.protocol === 'http:' ? 80 : 443)}`;
     }
 

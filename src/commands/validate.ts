@@ -1,3 +1,4 @@
+import { Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import path from 'path';
 import tmp from 'tmp';
@@ -9,7 +10,7 @@ import { buildSpecFromPath } from '../dependency-manager/src';
 tmp.setGracefulCleanup();
 
 export default class ComponentValidate extends Command {
-  auth_required(): boolean {
+  async auth_required(): Promise<boolean> {
     return false;
   }
 
@@ -26,12 +27,19 @@ export default class ComponentValidate extends Command {
   }];
 
   // overrides the oclif default parse to allow for configs_or_components to be a list of components
-  parse(options: any, argv = this.argv): any {
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    if (!options) {
+      return await super.parse(options, argv);
+    }
     options.args = [];
     for (const _ of argv) {
       options.args.push({ name: 'filler' });
     }
-    const parsed = super.parse(options, argv);
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     parsed.args.configs_or_components = parsed.argv;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -42,7 +50,7 @@ export default class ComponentValidate extends Command {
   }
 
   async run(): Promise<void> {
-    const { args, flags } = this.parse(ComponentValidate);
+    const { args } = await this.parse(ComponentValidate);
 
     const config_paths: Set<string> = new Set();
 

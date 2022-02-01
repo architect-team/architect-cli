@@ -1,5 +1,4 @@
-import { flags } from '@oclif/command';
-import { CliUx } from '@oclif/core';
+import { CliUx, Flags, Interfaces } from '@oclif/core';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import AccountUtils from '../../architect/account/account.utils';
@@ -17,29 +16,31 @@ export default class PlatformCreate extends Command {
   static args = [{
     name: 'platform',
     description: 'Name to give the platform',
-    parse: (value: string): string => value.toLowerCase(),
+    parse: async (value: string): Promise<string> => value.toLowerCase(),
   }];
 
   static flags = {
     ...Command.flags,
     ...AccountUtils.flags,
-    auto_approve: flags.boolean({
+    auto_approve: Flags.boolean({
       description: `${Command.DEPRECATED} Please use --auto-approve.`,
       hidden: true,
     }),
-    ['auto-approve']: flags.boolean(),
-    type: flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'] }),
-    host: flags.string({ char: 'h' }),
-    kubeconfig: flags.string({
+    ['auto-approve']: Flags.boolean(),
+    type: Flags.string({ char: 't', options: ['KUBERNETES', 'kubernetes'] }),
+    host: Flags.string({ char: 'h' }),
+    kubeconfig: Flags.string({
       char: 'k',
       default: '~/.kube/config',
       exclusive: ['host'],
     }),
-    flag: flags.string({ multiple: true, default: [] }),
+    flag: Flags.string({ multiple: true, default: [] }),
   };
 
-  parse(options: any, argv = this.argv): any {
-    const parsed = super.parse(options, argv);
+  protected async parse<F, A extends {
+    [name: string]: any;
+  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
+    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
     const flags: any = parsed.flags;
 
     // Merge any values set via deprecated flags into their supported counterparts
@@ -54,7 +55,7 @@ export default class PlatformCreate extends Command {
   }
 
   private async createPlatform() {
-    const { args, flags } = this.parse(PlatformCreate);
+    const { args, flags } = await this.parse(PlatformCreate);
 
     const answers: any = await inquirer.prompt([
       {
