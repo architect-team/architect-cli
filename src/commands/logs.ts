@@ -160,54 +160,75 @@ export default class Logs extends Command {
       component_instance_name: instance_name,
     };
 
-    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-      params: replica_query,
-    });
+    let log_stream_available = false;
+    let recovery_wait = 0;
+    let started_prompts = false;
+    const poll_interval = 2000;
+    setInterval(async () => {
+      if (!log_stream_available && !recovery_wait && !started_prompts) {
+        started_prompts = true;
+        const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+          params: replica_query,
+        });
 
-    if (!replicas.length)
-      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
+        if (!replicas.length)
+          throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-    const replica = await EnvironmentUtils.getReplica(replicas);
+        const replica = await EnvironmentUtils.getReplica(replicas);
 
-    const logs_query: any = {};
-    logs_query.ext_ref = replica.ext_ref;
-    logs_query.container = replica.node_ref;
-    logs_query.follow = flags.follow;
-    if (flags.since)
-      logs_query.since = flags.since;
-    if (flags.tail >= 0)
-      logs_query.tail = flags.tail;
-    logs_query.timestamps = flags.timestamps;
+        const logs_query: any = {};
+        logs_query.ext_ref = replica.ext_ref;
+        logs_query.container = replica.node_ref;
+        logs_query.follow = flags.follow;
+        if (flags.since)
+          logs_query.since = flags.since;
+        if (flags.tail >= 0)
+          logs_query.tail = flags.tail;
+        logs_query.timestamps = flags.timestamps;
 
-    const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
-      params: logs_query,
-      responseType: 'stream',
-      timeout: 1000 * 60 * 60 * 24, // one day
-    });
+        let display_name = replica.display_name;
+        if (!display_name) {
+          const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
+          display_name = service_name;
+        }
 
-    let display_name = replica.display_name;
-    if (!display_name) {
-      const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
-      display_name = service_name;
-    }
+        const log = await this.createLogger(display_name);
 
-    const log = await this.createLogger(display_name);
+        const { data: log_stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
+          params: logs_query,
+          responseType: 'stream',
+          timeout: 1000 * 60 * 60 * 24, // one day
+        });
+        log_stream_available = true;
 
-    let stdout = '';
-    log_stream.on('data', (chunk: string) => {
-      stdout += chunk;
-      const lines = stdout.split('\n');
-      while (lines.length > 1) {
-        const line = lines.shift() || '';
-        log(line);
+        let stdout = '';
+        log_stream.on('data', (chunk: string) => {
+          stdout += chunk;
+          const lines = stdout.split('\n');
+          while (lines.length > 1) {
+            const line = lines.shift() || '';
+            log(line);
+          }
+          stdout = lines.shift() || '';
+        });
+        log_stream.on('end', async () => {
+          if (stdout) {
+            log(stdout);
+          }
+          log_stream_available = false;
+          recovery_wait = 15;
+          started_prompts = false;
+        });
       }
-      stdout = lines.shift() || '';
-    });
-    log_stream.on('end', () => {
-      if (stdout) {
-        log(stdout);
+
+      if (recovery_wait > 0) {
+        const recovery_seconds = recovery_wait * poll_interval / 1000;
+        if (!(recovery_seconds % 5)) {
+          this.log(chalk.yellow(`Log stream ended, attempting to recover in ${recovery_wait * poll_interval / 1000} seconds...`));
+        }
+        recovery_wait--;
       }
-    });
+    }, poll_interval);
   }
 
   async run(): Promise<void> {
