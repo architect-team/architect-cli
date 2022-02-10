@@ -222,9 +222,7 @@ export default class Logs extends Command {
           recovery_wait = 15; // 2000ms * 15 = 30000 ms
           started_prompts = false;
         });
-      }
-
-      if (recovery_wait > 0) {
+      } else if (recovery_wait > 0) {
         const recovery_seconds = recovery_wait * poll_interval / 1000;
         if (!(recovery_seconds % 10)) {
           this.log(chalk.yellow(`Log stream ended, attempting to recover in ${recovery_wait * poll_interval / 1000} seconds...`));
