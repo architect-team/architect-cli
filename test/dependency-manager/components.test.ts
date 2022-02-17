@@ -248,7 +248,7 @@ describe('components spec v1', function () {
 
     it('local component with local dependency', async () => {
       const cloud_component_config = {
-        name: 'architect/cloud',
+        name: 'cloud',
         services: {
           api: {
             interfaces: {
@@ -293,14 +293,14 @@ describe('components spec v1', function () {
       });
 
       const manager = new LocalDependencyManager(axios.create(), {
-        'architect/cloud': '/stack/cloud/architect.yml',
+        'cloud': '/stack/cloud/architect.yml',
         'concourse/ci': '/stack/concourse/architect.yml'
       });
-      const component_config = await manager.loadComponentSpec('architect/cloud:latest');
       const graph = await manager.getGraph([
-        ...await manager.loadComponentSpecs(component_config),
+        ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
-      const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+      const api_ref = resourceRefToNodeRef('cloud.services.api:latest');
+      console.log('------')
       const ci_ref = resourceRefToNodeRef('concourse/ci:6.2');
       const web_ref = resourceRefToNodeRef('concourse/ci/web:6.2');
       const worker_ref = resourceRefToNodeRef('concourse/ci/worker:6.2');
@@ -323,7 +323,7 @@ describe('components spec v1', function () {
       expect(api_node.config.environment.CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
       expect(api_node.config.name).to.eq('api');
       expect(api_node.config.tag).to.eq('latest');
-      expect(api_node.config.ref).to.eq('architect/cloud/api:latest');
+      expect(api_node.config.ref).to.eq('cloud/api:latest');
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
@@ -405,7 +405,7 @@ describe('components spec v1', function () {
 
     it('non-circular component dependency is not rejected', async () => {
       const component_config_a = {
-        name: 'examples/hello-world-a',
+        name: 'hello-world-a',
         services: {
           api: {
             interfaces: {
@@ -416,7 +416,7 @@ describe('components spec v1', function () {
         interfaces: {},
         dependencies: {
           'examples/hello-world-b': 'latest',
-          'examples/hello-world-c': 'latest'
+          'hello-world-c': 'latest'
         }
       };
 
@@ -431,12 +431,12 @@ describe('components spec v1', function () {
         },
         interfaces: {},
         dependencies: {
-          'examples/hello-world-c': 'latest'
+          'hello-world-c': 'latest'
         }
       };
 
       const component_config_c = {
-        name: 'examples/hello-world-c',
+        name: 'hello-world-c',
         services: {
           api: {
             interfaces: {
@@ -458,20 +458,11 @@ describe('components spec v1', function () {
       nock('http://localhost').get(`/accounts/examples/components/hello-world-c/versions/latest`)
         .reply(200, { tag: 'latest', config: component_config_c, service: { url: 'examples/hello-world-c:latest' } });
 
-      let manager_error;
-      try {
-        const manager = new LocalDependencyManager(axios.create(), {
-          'examples/hello-world-a': '/stack/architect.yml',
-        });
-        await manager.getGraph([
-          await manager.loadComponentSpec('examples/hello-world-a:latest'),
-          await manager.loadComponentSpec('examples/hello-world-b:latest'),
-          await manager.loadComponentSpec('examples/hello-world-c:latest')
-        ]);
-      } catch (err: any) {
-        manager_error = err.message;
-      }
-      expect(manager_error).undefined;
+      const manager = new LocalDependencyManager(axios.create(), {
+        'hello-world-a': '/stack/architect.yml',
+      });
+      manager.account = 'examples';
+      await manager.getGraph(await manager.loadComponentSpecs('hello-world-a:latest'));
     });
 
     it('component with only one task', async () => {
@@ -636,7 +627,7 @@ describe('components spec v1', function () {
 
       const manager = new LocalDependencyManager(axios.create(), { 'architect/cloud': '/stack/cloud/architect.yml' });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('architect/cloud:latest', { api: 'api-interface' })
+        await manager.loadComponentSpec('architect/cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
 
       const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
@@ -686,10 +677,8 @@ describe('components spec v1', function () {
         'examples/component-b': '/b/architect.yaml',
         'examples/component-c': '/c/architect.yaml'
       });
-      const root_config = await manager.loadComponentSpec('examples/component-a');
       const graph = await manager.getGraph([
-        root_config,
-        ...await manager.loadComponentSpecs(root_config),
+        ...await manager.loadComponentSpecs('examples/component-a'),
       ]);
 
       const a_ref = resourceRefToNodeRef('examples/component-a/app:latest');
@@ -751,10 +740,8 @@ describe('components spec v1', function () {
         'examples/component-c': '/c/architect.yaml'
       });
       const graph = await manager.getGraph([
-        ...await manager.loadComponentSpecs(
-          await manager.loadComponentSpec('examples/component-a')),
-        ...await manager.loadComponentSpecs(
-          await manager.loadComponentSpec('examples/component-b')),
+        ...await manager.loadComponentSpecs('examples/component-a'),
+        ...await manager.loadComponentSpecs('examples/component-b'),
       ]);
 
       const a_ref = resourceRefToNodeRef('examples/component-a/app:latest');

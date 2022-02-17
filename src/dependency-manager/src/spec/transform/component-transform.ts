@@ -1,14 +1,9 @@
 import { ComponentConfig, ComponentInterfaceConfig, OutputDefinitionConfig, ParameterDefinitionConfig } from '../../config/component-config';
 import { transformDictionary } from '../../utils/dictionary';
 import { ComponentInterfaceSpec, ComponentSpec, OutputDefinitionSpec, ParameterDefinitionSpec } from '../component-spec';
-import { ComponentSlug, ComponentSlugUtils, Slugs } from '../utils/slugs';
+import { Slugs } from '../utils/slugs';
 import { transformServiceSpec } from './service-transform';
 import { transformTaskSpec } from './task-transform';
-
-export const transformComponentSpecName = (name: string): ComponentSlug => {
-  const split = ComponentSlugUtils.parse(name);
-  return ComponentSlugUtils.build(split.component_account_name, split.component_name);
-};
 
 export const transformComponentSpecTag = (tag?: string): string => {
   return tag || Slugs.DEFAULT_TAG;
@@ -69,10 +64,8 @@ export const transformComponentSpec = (spec: ComponentSpec): ComponentConfig => 
   const interfaces = transformDictionary(transformComponentInterfaceSpec, spec.interfaces);
   const dependencies = spec.dependencies || {};
 
-  const name = transformComponentSpecName(spec.name);
-
   return {
-    name,
+    name: spec.name,
 
     metadata: spec.metadata,
 

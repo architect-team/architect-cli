@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import deepmerge from 'deepmerge';
 import yaml from 'js-yaml';
-import DependencyManager, { ArchitectContext, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
+import DependencyManager, { ArchitectContext, ArchitectError, buildSpecFromYml, ComponentInstanceMetadata, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils, IngressSpec } from '../../dependency-manager/src';
 import DependencyGraph from '../../dependency-manager/src/graph';
 import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/component-builder';
 import { IF_EXPRESSION_REGEX } from '../../dependency-manager/src/spec/utils/interpolation';
@@ -11,7 +11,8 @@ import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 
 interface ComponentConfigOpts {
-  map_all_interfaces: boolean;
+  interfaces?: Dictionary<string>;
+  map_all_interfaces?: boolean;
 }
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -21,13 +22,15 @@ export default class LocalDependencyManager extends DependencyManager {
   environment = 'local';
   now = new Date();
 
+  loaded_components: Dictionary<ComponentSpec> = {};
+
   constructor(api: AxiosInstance, linked_components: Dictionary<string> = {}) {
     super();
     this.api = api;
     this.linked_components = linked_components;
   }
 
-  async loadComponentSpec(component_string: string, interfaces?: Dictionary<string>, options?: ComponentConfigOpts): Promise<ComponentSpec> {
+  async loadComponentSpec(component_string: string, options?: ComponentConfigOpts): Promise<ComponentSpec> {
     const merged_options = {
       ...{
         map_all_interfaces: false,
@@ -38,6 +41,12 @@ export default class LocalDependencyManager extends DependencyManager {
     const component_slug = ComponentSlugUtils.build(component_account_name, component_name);
     const component_ref = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
 
+    if (this.loaded_components[component_ref]) {
+      return this.loaded_components[component_ref];
+    }
+
+    console.log('TODO:344', component_string, component_ref);
+
     let spec: ComponentSpec;
     const metadata: ComponentInstanceMetadata = {
       ref: component_ref,
@@ -47,22 +56,32 @@ export default class LocalDependencyManager extends DependencyManager {
       instance_date: this.now,
       proxy_port_mapping: {},
     };
+
+    const account_name = component_account_name || this.account;
+
+    const linked_component_key = component_slug in this.linked_components ? component_slug : component_name;
+    const linked_component = this.linked_components[linked_component_key];
+    if (!linked_component && !account_name) {
+      throw new ArchitectError(`Didn't find link for component '${linked_component_key}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);
+    }
+
     // Load locally linked component config
-    if (component_slug in this.linked_components) {
+    if (linked_component) {
       if (process.env.TEST !== '1') {
-        console.log(`Using locally linked ${chalk.blue(component_slug)} found at ${chalk.blue(this.linked_components[component_slug])}`);
+        console.log(`Using locally linked ${chalk.blue(linked_component_key)} found at ${chalk.blue(linked_component)}`);
       }
-      const component_spec = buildSpecFromPath(this.linked_components[component_slug]);
+      const component_spec = buildSpecFromPath(linked_component, metadata);
       spec = component_spec;
     } else {
       // Load remote component config
-      const { data: component_version } = await this.api.get(`/accounts/${component_account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
-        err.message = `Could not download component for ${component_ref}\n${err.message}`;
+      const { data: component_version } = await this.api.get(`/accounts/${account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
+        // TODO:344 include link in error msg
+        err.message = `Could not download component for ${component_ref}. \n${err.message}`;
         throw err;
       });
 
       const config_yaml = yaml.dump(component_version.config);
-      spec = buildSpecFromYml(config_yaml);
+      spec = buildSpecFromYml(config_yaml, metadata);
     }
 
     spec.metadata = {
@@ -80,7 +99,7 @@ export default class LocalDependencyManager extends DependencyManager {
         }
       }
     }
-    for (const [subdomain, interface_name] of Object.entries(interfaces || {})) {
+    for (const [subdomain, interface_name] of Object.entries(options?.interfaces || {})) {
       ingresses[interface_name] = {
         enabled: true,
         subdomain: subdomain,
@@ -112,26 +131,31 @@ export default class LocalDependencyManager extends DependencyManager {
       }
     }
 
+    this.loaded_components[component_ref] = spec;
+
     return spec;
   }
 
-  async loadComponentSpecs(initial_component: ComponentSpec): Promise<ComponentSpec[]> {
+  async loadComponentSpecs(root_component_ref: string): Promise<ComponentSpec[]> {
     const component_specs = [];
-    const component_specs_queue = [initial_component];
-    const loaded_components = new Set();
-    while (component_specs_queue.length) {
-      const component_spec = component_specs_queue.pop();
-      if (!component_spec) { break; }
-      const ref = component_spec.metadata.ref;
-      if (loaded_components.has(ref)) {
+
+    const seen_component_refs = new Set();
+
+    const component_refs_queue = [root_component_ref];
+
+    while (component_refs_queue.length) {
+      const component_ref = component_refs_queue.pop() as string;
+
+      if (seen_component_refs.has(component_ref)) {
         continue;
       }
-      loaded_components.add(ref);
+      seen_component_refs.add(component_ref);
+
+      const component_spec = await this.loadComponentSpec(component_ref);
       component_specs.push(component_spec);
 
       for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
-        const dep_component_spec = await this.loadComponentSpec(`${dep_name}:${dep_tag}`);
-        component_specs_queue.push(dep_component_spec);
+        component_refs_queue.push(`${dep_name}:${dep_tag}`);
       }
     }
     return component_specs;

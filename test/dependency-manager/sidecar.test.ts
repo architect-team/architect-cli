@@ -67,10 +67,10 @@ describe('sidecar spec v1', () => {
       };
     });
 
-    const branch_ref = resourceRefToNodeRef('test/branch/api:latest');
+    const branch_ref = resourceRefToNodeRef('test/branch.services.api:latest');
     const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf:latest');
-    const leaf_db_ref = resourceRefToNodeRef('test/leaf/db:latest');
-    const leaf_api_ref = resourceRefToNodeRef('test/leaf/api:latest');
+    const leaf_db_ref = resourceRefToNodeRef('test/leaf.services.db:latest');
+    const leaf_api_ref = resourceRefToNodeRef('test/leaf.services.api:latest');
 
     it('sidecar should connect two services together', async () => {
       mock_fs({
@@ -196,9 +196,9 @@ describe('sidecar spec v1', () => {
       });
       manager.use_sidecar = true;
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf', { public: 'api' }),
+        await manager.loadComponentSpec('test/leaf', { interfaces: { public: 'api' } }),
         await manager.loadComponentSpec('test/branch'),
-        await manager.loadComponentSpec('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentSpec('test/other-leaf', { interfaces: { publicv1: 'api' } })
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
@@ -366,7 +366,7 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentSpec('architect/cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -472,7 +472,7 @@ describe('sidecar spec v1', () => {
     test3_component.metadata!.instance_id = 'env1-tenant-1-test';
     expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test3_component));
 
-    const catalog_component = await manager.loadComponentSpec('voic/product-catalog', { public2: 'public', admin2: 'admin' })
+    const catalog_component = await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } })
     const catalog_instance_id = 'env1'
     catalog_component.metadata!.instance_id = catalog_instance_id;
 

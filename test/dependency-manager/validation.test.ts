@@ -11,8 +11,9 @@ describe('validate spec', () => {
 
   describe('component config validation', () => {
     it('valid service ref brackets', async () => {
+      // TODO:344 test dependencies
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           interfaces:
@@ -625,7 +626,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component', { api: 'api', api2: 'api2' }),
+          await manager.loadComponentSpec('test/component', { interfaces: { api: 'api', api2: 'api2' } }),
         ]);
       } catch (e: any) {
         err = e;
@@ -927,9 +928,8 @@ services:
       });
       let err;
       try {
-        const component_config = await manager.loadComponentSpec('examples/hello-world');
         await manager.getGraph([
-          ...await manager.loadComponentSpecs(component_config),
+          ...await manager.loadComponentSpecs('examples/hello-world'),
         ]);
       } catch (e: any) {
         err = e;
@@ -1539,7 +1539,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component', { 'cloud': 'appppp' }),
+        await manager.loadComponentSpec('test/component', { interfaces: { 'cloud': 'appppp' } }),
       ]);
     } catch (e: any) {
       err = e;

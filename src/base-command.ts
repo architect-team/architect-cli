@@ -100,6 +100,7 @@ export default abstract class BaseCommand extends Command {
       return prettyValidationErrors(err);
     }
 
+    /* TODO:344
     let message = '';
     if (err.config) {
       message += `${err.config.url} [${err.config.method}] `;
@@ -124,6 +125,9 @@ export default abstract class BaseCommand extends Command {
     } else {
       message += err.message || 'Unknown error';
     }
-    this.error(!err.name || err.name === 'Error' ? '\n' + message : err.name + '\n' + message);
+    */
+
+    return super.catch(err);
+    //this.error(!err.name || err.name === 'Error' ? '\n' + message : err.name + '\n' + message);
   }
 }

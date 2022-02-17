@@ -21,7 +21,9 @@ import { interpolateObjectLoose, interpolateObjectOrReject, replaceInterpolation
 import { ValuesConfig } from './values/values';
 
 export default abstract class DependencyManager {
+
   use_sidecar = true;
+  account?: string;
 
   getComponentNodes(component: ComponentConfig): DependencyNode[] {
     const nodes = [];
@@ -68,7 +70,7 @@ export default abstract class DependencyManager {
       // Start Ingress Edges
       const ingresses: [ComponentConfig, string][] = [];
       // Deprecated environment.ingresses
-      const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexBase})?\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       while ((matches = environment_ingresses_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         if (dep_name === component.name) {
@@ -79,14 +81,14 @@ export default abstract class DependencyManager {
           ingresses.push([dep_component, interface_name]);
         }
       }
-      const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.ingresses\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.ingresses\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       while ((matches = dependencies_ingresses_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
         const dep_tag = component.dependencies[dep_name];
         const dep_component = dependency_map[`${dep_name}:${dep_tag}`];
         ingresses.push([dep_component, interface_name]);
       }
-      const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       while ((matches = ingresses_regex.exec(service_string)) != null) {
         const [_, interface_name] = matches;
         ingresses.push([component, interface_name]);
@@ -129,7 +131,7 @@ export default abstract class DependencyManager {
       // End Ingress Edges
 
       // Add edges between services inside the component and dependencies
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       const service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
@@ -146,7 +148,7 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and interface dependencies inside the component
-      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
       const dep_service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dep_interface_regex.exec(service_string)) != null) {
         const [_, dep_name, interface_name] = matches;
@@ -168,7 +170,7 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and output dependencies inside the component
-      const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.outputs\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?`, 'g');
+      const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.outputs\\.(${Slugs.ArchitectSlugRegexBase})?`, 'g');
       const dep_output_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dep_output_regex.exec(service_string)) != null) {
         const [_, dep_name, output_name] = matches;
@@ -194,7 +196,7 @@ export default abstract class DependencyManager {
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces)) {
       if (!component_interface) { continue; }
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = services_regex.exec(replaceInterpolationBrackets(component_interface.url!));
@@ -208,7 +210,7 @@ export default abstract class DependencyManager {
 
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces || {})) {
       if (!component_interface) { continue; }
-      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexNoMaxLength})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexNoMaxLength})?\\.`, 'g');
+      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = dependencies_regex.exec(replaceInterpolationBrackets(component_interface.url!));
@@ -280,7 +282,7 @@ export default abstract class DependencyManager {
     let best_diff = Number.NEGATIVE_INFINITY;
     for (const component_config of component_configs) {
       if (!component_config.metadata) {
-        throw new Error(`Metadata has not been set on component: ${component_config.name}`);
+        throw new Error(`Metadata has not been set on component`);
       }
       const current_time = component_config.metadata.instance_date.getTime();
       const current_diff = current_time - target_time;
@@ -311,7 +313,7 @@ export default abstract class DependencyManager {
       }
       const dep_components = component_map[dep_ref];
       if (!component_spec.metadata) {
-        throw new Error(`Metadata has not been set on component: ${component_spec.name}`);
+        throw new Error(`Metadata has not been set on component`);
       }
       const dep_component = this.findClosestComponent(dep_components, component_spec.metadata.instance_date || new Date());
       if (!dep_component) {
@@ -661,7 +663,7 @@ export default abstract class DependencyManager {
       }
 
       if (validate) {
-        validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)));
+        validateOrRejectSpec(classToPlain(plainToClass(ComponentSpec, component_spec)), component_spec.metadata);
       }
 
       const component_config = transformComponentSpec(component_spec);
@@ -692,5 +694,13 @@ export default abstract class DependencyManager {
     }
 
     return graph;
+  }
+
+  scopedComponentName(component_string: string): string {
+    if (component_string.includes('/')) {
+      return component_string;
+    } else {
+      return `${this.account}/${component_string}`;
+    }
   }
 }

@@ -112,7 +112,7 @@ export abstract class InitCommand extends Command {
     ]);
 
     const architect_component: Partial<ComponentSpec> = {};
-    architect_component.name = `${account_name}/${flags.name || answers.name}`;
+    architect_component.name = `${flags.name || answers.name}`;
     architect_component.services = {};
     for (const [service_name, service_data] of Object.entries(docker_compose.services || {})) {
       const architect_service: Partial<ServiceSpec> = {};

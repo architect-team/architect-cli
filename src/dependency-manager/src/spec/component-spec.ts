@@ -10,8 +10,8 @@ import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-s
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 export interface ComponentInstanceMetadata {
-  ref: string;
   tag: string;
+  ref: string;
 
   instance_name?: string;
   instance_id?: string;
@@ -187,7 +187,7 @@ export class ComponentSpec {
   @IsString()
   @JSONSchema({
     type: 'string',
-    pattern: ComponentSlugUtils.Validator.source,
+    // TODO:344 pattern: ComponentSlugUtils.Validator.source,
     errorMessage: ComponentSlugUtils.Description,
     description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
   })
@@ -253,10 +253,10 @@ export class ComponentSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(ServiceSpec),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(ServiceSpec),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A Service represents a non-exiting runtime (e.g. daemons, servers, etc.). Each service is independently deployable and scalable. Services are 1:1 with a docker image.',
   })
@@ -267,10 +267,10 @@ export class ComponentSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(TaskSpec),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(TaskSpec),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named recurring and/or exiting runtimes (e.g. crons, schedulers, triggered jobs) included with the component. Each task will run on its specified schedule and/or be triggerable via the Architect CLI. Tasks are 1:1 with a docker image.',
   })
@@ -280,15 +280,26 @@ export class ComponentSpec {
   @IsOptional()
   @JSONSchema({
     type: 'object',
+
+    patternProperties: {
+      ['.*']: { // TODO:344
+        type: 'string',
+        pattern: Slugs.ComponentTagValidator.source,
+      },
+    },
+
+    /* TODO:344
     patternProperties: {
       [ComponentSlugUtils.Validator.source]: {
         type: 'string',
         pattern: Slugs.ComponentTagValidator.source,
       },
     },
+
     errorMessage: {
       additionalProperties: ComponentSlugUtils.Description,
     },
+    */
     description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
   })
   dependencies?: Dictionary<string>;
@@ -297,10 +308,10 @@ export class ComponentSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf('string', ComponentInterfaceSpec),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf('string', ComponentInterfaceSpec),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named gateways that broker access to the services inside the component. All network traffic within a component is locked down to the component itself, unless included in this interfaces block. An interface represents a front-door to your component, granting access to upstream callers.',
   })

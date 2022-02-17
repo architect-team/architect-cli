@@ -1,5 +1,5 @@
 import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
-import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ServiceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ParsedResourceVersionSlug, ResourceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
@@ -79,7 +79,7 @@ export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug
 export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
-    parsed = ServiceVersionSlugUtils.parse(resource_ref);
+    parsed = ResourceVersionSlugUtils.parse(resource_ref);
   } catch {
     parsed = ComponentVersionSlugUtils.parse(resource_ref);
   }
@@ -88,8 +88,8 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
   }
 
   let friendly_name = `${parsed.component_name}`;
-  if (parsed.service_name) {
-    friendly_name += `-${parsed.service_name}`;
+  if ((parsed as ParsedResourceVersionSlug).resource_name) {
+    friendly_name += `-${(parsed as ParsedResourceVersionSlug).resource_name}`;
   }
   if (parsed.instance_name) {
     friendly_name += `-${parsed.instance_name}`;
@@ -105,20 +105,8 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 export const buildNodeRef = (component_config: ComponentConfig, service_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   const component_ref = buildComponentRef(component_config);
   const parsed = ComponentVersionSlugUtils.parse(component_ref);
-  const service_ref = ServiceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.metadata?.instance_name);
+  const service_ref = ResourceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, service_name, parsed.tag, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
-};
-
-export const environmentRef = (current_account: string, ref: string): string => {
-  const { component_account_name, component_name, service_name, instance_name } = ServiceVersionSlugUtils.parse(ref);
-  let environment_ref = `${component_name}.${service_name}`;
-  if (current_account !== component_account_name) {
-    environment_ref = `${component_account_name}.${environment_ref}`;
-  }
-  if (instance_name) {
-    environment_ref = `${instance_name}--${environment_ref}`;
-  }
-  return environment_ref;
 };
 
 export function buildInterfacesRef(component_config: ComponentSpec | ComponentConfig): string {
@@ -137,6 +125,7 @@ export const getServiceByRef = (component_config: ComponentConfig, service_ref: 
 
 export const getTaskByRef = (component_config: ComponentConfig, task_ref: string): TaskConfig | undefined => {
   if (task_ref.startsWith(component_config.name)) {
+    // TODO:344 substr
     const [task_name, component_tag] = task_ref.substr(component_config.name.length + 1).split(':');
     if (component_tag === component_config.metadata?.tag) {
       return component_config.tasks[task_name];

@@ -3,17 +3,7 @@ import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
-import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
-
-export const transformResourceSpecName = (name: string | undefined): string => {
-  const split = ServiceVersionSlugUtils.parse(name || '');
-  return split.service_name;
-};
-
-export const transformResourceSpecTag = (name: string | undefined): string => {
-  const split = ServiceVersionSlugUtils.parse(name || '');
-  return split.tag;
-};
+import { ComponentVersionSlugUtils, ResourceVersionSlugUtils } from '../utils/slugs';
 
 export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
   if (!command) return [];
@@ -84,7 +74,7 @@ export const transformResourceSpec = (key: string, spec: ResourceSpec, metadata:
   const { component_account_name, component_name } = ComponentVersionSlugUtils.parse(metadata.ref);
   return {
     name: key,
-    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, metadata.tag, metadata?.instance_name),
+    ref: ResourceVersionSlugUtils.build(component_account_name, component_name, key, metadata.tag, metadata?.instance_name),
     tag: metadata.tag,
     description: spec.description,
     image: spec.image,

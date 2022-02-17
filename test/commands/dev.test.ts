@@ -13,28 +13,18 @@ import { buildSpecFromYml } from '../../src/dependency-manager/src/spec/utils/co
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = false;
+const print = true; // TODO:344
 
 const account = {
   id: 'test-account-id',
   name: 'test-account'
 }
 
-const environment = {
-  id: 'test-env-id',
-  name: 'test-env',
-  account,
-}
-
-const mock_pipeline = {
-  id: 'test-pipeline-id'
-}
-
 describe('local dev environment', function () {
 
   function getHelloComponentConfig(): any {
     return `
-    name: examples/hello-world
+    name: hello-world
 
     parameters:
       hello_ingress: hello
@@ -56,7 +46,7 @@ describe('local dev environment', function () {
   }
 
   const local_component_config_with_parameters = `
-    name: examples/hello-world
+    name: hello-world
 
     parameters:
       a_required_key:
@@ -262,8 +252,8 @@ describe('local dev environment', function () {
     }
   };
 
-  const seed_app_ref = resourceRefToNodeRef('examples/database-seeding/app:latest');
-  const seed_db_ref = resourceRefToNodeRef('examples/database-seeding/my-demo-db:latest');
+  const seed_app_ref = resourceRefToNodeRef('examples/database-seeding.services.app:latest');
+  const seed_db_ref = resourceRefToNodeRef('examples/database-seeding.services.my-demo-db:latest');
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -337,7 +327,7 @@ describe('local dev environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+  const hello_api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -384,8 +374,8 @@ describe('local dev environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
-      return buildSpecFromYml(getHelloComponentConfig());
+    .stub(ComponentBuilder, 'loadFile', () => {
+      return getHelloComponentConfig();
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -400,10 +390,10 @@ describe('local dev environment', function () {
 
   test
     .timeout(20000)
-    .stub(ComponentBuilder, 'buildSpecFromPath', () => {
+    .stub(ComponentBuilder, 'loadFile', () => {
       const hello_json = yaml.load(getHelloComponentConfig()) as any;
       hello_json.services.api.interfaces.main.sticky = true;
-      return buildSpecFromYml(yaml.dump(hello_json));
+      return yaml.dump(hello_json);
     })
     .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
@@ -615,7 +605,7 @@ describe('local dev environment', function () {
   });
 
   describe('instance devs', function () {
-    const hello_api_instance_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
+    const hello_api_instance_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-1');
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_dev = test

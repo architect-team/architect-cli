@@ -8,7 +8,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ArchitectError, parseUnknownSlug, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ArchitectError, parseUnknownSlug, ResourceVersionSlugUtils } from '../dependency-manager/src';
 
 export default class Logs extends Command {
   static description = 'Get logs from services both locally and remote';
@@ -187,7 +187,7 @@ export default class Logs extends Command {
 
         let display_name = replica.display_name;
         if (!display_name) {
-          const { service_name } = ServiceVersionSlugUtils.parse(replica.resource_ref);
+          const { service_name } = ResourceVersionSlugUtils.parse(replica.resource_ref);
           display_name = service_name;
         }
 
@@ -201,7 +201,7 @@ export default class Logs extends Command {
             timeout: 1000 * 60 * 60 * 24, // one day
           });
           log_stream = stream;
-        } catch(err) {
+        } catch (err) {
           this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
         }
 

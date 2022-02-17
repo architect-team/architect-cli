@@ -13,8 +13,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
-import { ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
-import { buildSpecFromPath } from '../dependency-manager/src/spec/utils/component-builder';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
 export abstract class DevCommand extends Command {
 
@@ -270,6 +269,7 @@ export default class Dev extends DevCommand {
     for (const config_or_component of args.configs_or_components) {
 
       let component_version = config_or_component;
+      // Load architect.yml if passed
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
         const res = buildSpecFromPath(config_or_component);
         linked_components[res.name] = config_or_component;
@@ -298,13 +298,13 @@ export default class Dev extends DevCommand {
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
-    const component_options = { map_all_interfaces: !flags.production && !duplicates };
+    const component_options = { map_all_interfaces: !flags.production && !duplicates, interfaces_map };
 
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, interfaces_map, component_options);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);

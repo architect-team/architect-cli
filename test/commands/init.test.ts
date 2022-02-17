@@ -235,17 +235,17 @@ services:
       expect(component_object.services['kibana']["${{ if architect.environment == 'local' }}"].volumes['volume5'].readonly).eq(true);
     });
 
-    mockInit()
-      .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
-      .it('adds context targets to compose where appropriate', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockInit()
+    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .it('adds context targets to compose where appropriate', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        const component_object: any = yaml.load(writeFileSync.args[0][1]);
-        expect(component_object.services['elasticsearch'].build.target).eq('production');
-        expect(component_object.services['logstash'].build.target).eq('build');
-        expect(component_object.services['kibana'].build?.target).undefined;
-      });
+      const component_object: any = yaml.load(writeFileSync.args[0][1]);
+      expect(component_object.services['elasticsearch'].build.target).eq('production');
+      expect(component_object.services['logstash'].build.target).eq('build');
+      expect(component_object.services['kibana'].build?.target).undefined;
+    });
 
   mockInit()
     .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
@@ -283,54 +283,54 @@ services:
       expect(component_config.name).eq('my-account-name/test-component');
     });
 
-    mockArchitectAuth
-      .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/users/me`)
-        .reply(500)
-      )
-      .stdout({ print })
-      .stderr({ print })
-      .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
-      .it('falls back to default account name if getting accounts fails and account is unspecified', ctx => {
-        const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-        expect(writeFileSync.called).to.be.true;
+  mockArchitectAuth
+    .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/users/me`)
+      .reply(500)
+    )
+    .stdout({ print })
+    .stderr({ print })
+    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
+    .it('falls back to default account name if getting accounts fails and account is unspecified', ctx => {
+      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
+      expect(writeFileSync.called).to.be.true;
 
-        expect(ctx.stdout).to.contain('No accounts found, using default account name "my-account"');
-        const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-        expect(component_config.name).eq('my-account/test-component');
-      });
+      expect(ctx.stdout).to.contain('No accounts found, using default account name "my-account"');
+      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
+      expect(component_config.name).eq('my-account/test-component');
+    });
 
-      it('finds a compose file in the current directory if one was unspecified', async () => {
-        mock_fs({
-          './docker-compose.yml': mock_compose_contents,
-        });
+  it('finds a compose file in the current directory if one was unspecified', async () => {
+    mock_fs({
+      './docker-compose.yml': mock_compose_contents,
+    });
 
-        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-        const compose_path = await getComposeFromPath({});
-        expect(compose_path).eq('docker-compose.yml');
-      });
+    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+    const compose_path = await getComposeFromPath({});
+    expect(compose_path).eq('docker-compose.yml');
+  });
 
-      it('finds and returns a valid compose file path if it was specified', async () => {
-        mock_fs({
-          '/stack/docker-compose.yml': mock_compose_contents,
-        });
+  it('finds and returns a valid compose file path if it was specified', async () => {
+    mock_fs({
+      '/stack/docker-compose.yml': mock_compose_contents,
+    });
 
-        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-        const compose_path = await getComposeFromPath({ 'from-compose': '/stack/docker-compose.yml' });
-        expect(compose_path).eq(path.join(path.parse(process.cwd()).root, 'stack', 'docker-compose.yml'));
-      });
+    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+    const compose_path = await getComposeFromPath({ 'from-compose': '/stack/docker-compose.yml' });
+    expect(compose_path).eq(path.join(path.parse(process.cwd()).root, 'stack', 'docker-compose.yml'));
+  });
 
-      it(`returns an error if the compose file was specified, but it doesn't exist`, async () => {
-        mock_fs({
-          '/stack/docker-compose.yml': mock_compose_contents,
-        });
+  it(`returns an error if the compose file was specified, but it doesn't exist`, async () => {
+    mock_fs({
+      '/stack/docker-compose.yml': mock_compose_contents,
+    });
 
-        const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
-        try {
-          await getComposeFromPath({ 'from-compose': '/stack/bad-path/docker-compose.yml' });
-        } catch(err: any) {
-          expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
-        }
-      });
+    const getComposeFromPath = InitCommand.prototype.getComposeFromPath;
+    try {
+      await getComposeFromPath({ 'from-compose': '/stack/bad-path/docker-compose.yml' });
+    } catch (err: any) {
+      expect(err.message).eq(`The Docker Compose file /stack/bad-path/docker-compose.yml couldn't be found.`);
+    }
+  });
 });

@@ -65,10 +65,10 @@ describe('interfaces spec v1', () => {
       };
     });
 
-    const branch_ref = resourceRefToNodeRef('test/branch/api:latest');
+    const branch_ref = resourceRefToNodeRef('test/branch.services.api:latest');
     const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf:latest');
-    const leaf_db_ref = resourceRefToNodeRef('test/leaf/db:latest');
-    const leaf_api_ref = resourceRefToNodeRef('test/leaf/api:latest');
+    const leaf_db_ref = resourceRefToNodeRef('test/leaf.services.db:latest');
+    const leaf_api_ref = resourceRefToNodeRef('test/leaf.services.api:latest');
 
     it('should connect two services together', async () => {
       mock_fs({
@@ -191,9 +191,9 @@ describe('interfaces spec v1', () => {
         'test/other-leaf': '/stack/other-leaf/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf', { public: 'api' }),
+        await manager.loadComponentSpec('test/leaf', { interfaces: { public: 'api' } }),
         await manager.loadComponentSpec('test/branch'),
-        await manager.loadComponentSpec('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentSpec('test/other-leaf', { interfaces: { publicv1: 'api' } })
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
@@ -360,7 +360,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentSpec('architect/cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -441,7 +441,7 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { 'staff2': 'admin2', 'staff3': 'admin3' }, { map_all_interfaces: true }),
+      await manager.loadComponentSpec('architect/cloud', { map_all_interfaces: true, interfaces: { 'staff2': 'admin2', 'staff3': 'admin3' }, }),
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
@@ -540,7 +540,7 @@ describe('interfaces spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('voic/admin-ui'),
-      await manager.loadComponentSpec('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+      await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } }),
     ]);
 
     const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest')
@@ -732,9 +732,8 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
+      await manager.loadComponentSpecs('examples/hello-world'));
     const template = await DockerComposeUtils.generate(graph);
 
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
@@ -782,9 +781,8 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
+      await manager.loadComponentSpecs('examples/hello-world'));
     const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
@@ -825,10 +823,9 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     let err;
     try {
-      await manager.getGraph(await manager.loadComponentSpecs(config));
+      await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
     } catch (e: any) {
       err = e;
     }
@@ -858,9 +855,8 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/dependency': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('architect/dependency');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
+      await manager.loadComponentSpecs('architect/dependency'));
 
     expect(graph.edges.length).eq(1);
 

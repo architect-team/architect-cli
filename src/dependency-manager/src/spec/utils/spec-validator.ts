@@ -8,7 +8,7 @@ import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { findPotentialMatch } from '../../utils/match';
 import { ParsedYaml } from '../../utils/types';
-import { ComponentSpec } from '../component-spec';
+import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { IF_EXPRESSION_REGEX } from './interpolation';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
@@ -231,7 +231,7 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
   return errors;
 };
 
-export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
+export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
 
   if (errors && errors.length) {
@@ -239,13 +239,22 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   }
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
-  component_spec.metadata = {
-    ref: `${component_spec.name}:latest`,
-    tag: 'latest',
-    instance_date: new Date(),
-    proxy_port_mapping: {},
-  };
 
+  if (metadata) {
+    component_spec.metadata = metadata;
+  } else {
+    throw new Error('TODO:344');
+    // TODO:344 cleanup
+    const name = (parsed_yml as any).name.includes('/') ? (parsed_yml as any).name : 'local/' + (parsed_yml as any).name;
+    component_spec.metadata = {
+      ref: `${name}:latest`,
+      tag: 'latest',
+      instance_date: new Date(),
+      proxy_port_mapping: {},
+    };
+  }
+
+  // TODO:344 remove
   errors.push(...validateServiceAndTaskKeys(component_spec));
   errors.push(...validateDependsOn(component_spec));
 

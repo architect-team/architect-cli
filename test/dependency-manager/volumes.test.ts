@@ -8,8 +8,8 @@ import { resourceRefToNodeRef } from '../../src/dependency-manager/src';
 
 describe('volumes spec v1', () => {
 
-  const test_component_api_safe_ref = resourceRefToNodeRef('test/component/api:latest');
-  const test_component_app_safe_ref = resourceRefToNodeRef('test/component/app:latest');
+  const test_component_api_safe_ref = resourceRefToNodeRef('test/component.services.api:latest');
+  const test_component_app_safe_ref = resourceRefToNodeRef('test/component.services.app:latest');
 
   it('simple volume', async () => {
     const component_config = `

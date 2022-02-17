@@ -16,6 +16,7 @@ describe('component transform unit test', function () {
     const { source_yml } = loadSourceYmlFromPathOrReject(`test/mocks/superset/architect.yml`);
 
     const metadata = {
+      name: 'superset',
       ref: 'tests/superset',
       tag: 'latest',
       instance_name: 'instance-1',

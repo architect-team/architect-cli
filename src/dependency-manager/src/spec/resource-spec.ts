@@ -19,10 +19,10 @@ export class DeployModuleSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf('string', 'null'),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf('string', 'null'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of key-value pairs that represent Terraform inputs and their values.',
   })
@@ -44,10 +44,10 @@ export class DeploySpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(DeployModuleSpec),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(DeployModuleSpec),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named Terraform modules to override the default Terraform that architect uses at deploy-time.',
   })
@@ -75,7 +75,7 @@ export class BuildSpec {
       '^[a-zA-Z0-9_]+$': AnyOf('string', 'null'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'Build args to be passed into `docker build`.',
   })
@@ -143,7 +143,7 @@ export abstract class ResourceSpec {
       '^[a-zA-Z0-9_]+$': AnyOf('array', 'boolean', 'null', 'number', 'object', 'string'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of key-value pairs that describes environment variables and their values. Often, these are set to ${{ parameters.* }} or an architect-injected reference so they vary across environments.',
     externalDocs: { url: '/docs/configuration/services#local-configuration' },

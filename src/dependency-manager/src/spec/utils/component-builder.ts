@@ -7,7 +7,7 @@ import { ComponentConfig } from '../../config/component-config';
 import { ArchitectError, ValidationError, ValidationErrors } from '../../utils/errors';
 import { replaceFileReference } from '../../utils/files';
 import { ParsedYaml } from '../../utils/types';
-import { ComponentSpec } from '../component-spec';
+import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { transformComponentSpec } from '../transform/component-transform';
 import { validateOrRejectSpec } from './spec-validator';
 
@@ -36,9 +36,13 @@ const getComponentFilePath = (spec_path: string): string => {
   }
 };
 
+export const loadFile = (path: string): string => {
+  return fs.readFileSync(path, 'utf-8');
+};
+
 export const loadSourceYmlFromPathOrReject = (spec_path: string): { source_path: string; source_yml: string; file_contents: string } => {
   const component_path = getComponentFilePath(spec_path);
-  const file_contents = fs.readFileSync(component_path, 'utf-8');
+  const file_contents = loadFile(component_path);
   const parsed_yml = parseSourceYml(file_contents);
   const source_yml = replaceFileReference(parsed_yml, component_path);
   return {
@@ -52,17 +56,17 @@ export const dumpToYml = (spec: any, options: DumpOptions = {}): string => {
   return yaml.dump(spec, options);
 };
 
-export const buildSpecFromYml = (source_yml: string): ComponentSpec => {
+export const buildSpecFromYml = (source_yml: string, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const parsed_yml = parseSourceYml(source_yml);
-  return validateOrRejectSpec(parsed_yml);
+  return validateOrRejectSpec(parsed_yml, metadata);
 };
 
-export const buildConfigFromYml = (source_yml: string): ComponentConfig => {
-  const component_spec = buildSpecFromYml(source_yml);
+export const buildConfigFromYml = (source_yml: string, metadata?: ComponentInstanceMetadata): ComponentConfig => {
+  const component_spec = buildSpecFromYml(source_yml, metadata);
   return transformComponentSpec(component_spec);
 };
 
-export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
+export const buildSpecFromPath = (spec_path: string, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const { source_path, source_yml, file_contents } = loadSourceYmlFromPathOrReject(spec_path);
 
   const file = {
@@ -71,7 +75,7 @@ export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
   };
 
   try {
-    const component_spec = buildSpecFromYml(source_yml);
+    const component_spec = buildSpecFromYml(source_yml, metadata);
     component_spec.metadata.file = file;
     return component_spec;
   } catch (err) {
@@ -83,7 +87,7 @@ export const buildSpecFromPath = (spec_path: string): ComponentSpec => {
   }
 };
 
-export const buildConfigFromPath = (spec_path: string): ComponentConfig => {
-  const component_spec = buildSpecFromPath(spec_path);
+export const buildConfigFromPath = (spec_path: string, metadata?: ComponentInstanceMetadata): ComponentConfig => {
+  const component_spec = buildSpecFromPath(spec_path, metadata);
   return transformComponentSpec(component_spec);
 };
