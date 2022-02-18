@@ -197,8 +197,8 @@ describe('interfaces spec v1', () => {
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
-      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf/api:latest');
-      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf/db:latest');
+      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf.services.api:latest');
+      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf.services.db:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -364,7 +364,7 @@ describe('interfaces spec v1', () => {
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -445,7 +445,7 @@ describe('interfaces spec v1', () => {
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -543,9 +543,9 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } }),
     ]);
 
-    const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest')
+    const admin_ref = resourceRefToNodeRef('voic/admin-ui.services.dashboard:latest')
     const catalog_interfaces_ref = resourceRefToNodeRef('voic/product-catalog:latest')
-    const api_ref = resourceRefToNodeRef('voic/product-catalog/api:latest')
+    const api_ref = resourceRefToNodeRef('voic/product-catalog.services.api:latest')
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interfaces_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -595,8 +595,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev:latest');
+    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -641,8 +641,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev:latest');
+    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -696,8 +696,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/upstream'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/upstream/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev:latest');
+    const app_ref = resourceRefToNodeRef('architect/upstream.services.test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -736,13 +736,13 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpecs('examples/hello-world'));
     const template = await DockerComposeUtils.generate(graph);
 
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
     expect(template.services[api_ref].environment).to.deep.eq({
       MY_PATH: '/api',
       MY_ADDR: `http://${api_ref}:8080/api`
     })
 
-    const app_ref = resourceRefToNodeRef('examples/hello-world/app:latest');
+    const app_ref = resourceRefToNodeRef('examples/hello-world.services.app:latest');
     expect(template.services[app_ref].environment).to.deep.eq({
       API_PATH: '/api',
       API_ADDR: `http://${api_ref}:8080/api`
@@ -783,7 +783,7 @@ describe('interfaces spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
 
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[api_ref].environment).to.deep.eq({

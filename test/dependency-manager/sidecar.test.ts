@@ -202,8 +202,8 @@ describe('sidecar spec v1', () => {
       ]);
 
       const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
-      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf/api:latest');
-      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf/db:latest');
+      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf.services.api:latest');
+      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf.services.db:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -370,7 +370,7 @@ describe('sidecar spec v1', () => {
     ]);
 
     const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -481,9 +481,9 @@ describe('sidecar spec v1', () => {
       catalog_component,
     ]);
 
-    const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest@tenant-1', admin_instance_id)
+    const admin_ref = resourceRefToNodeRef('voic/admin-ui.services.dashboard:latest@tenant-1', admin_instance_id)
     const catalog_interface_ref = resourceRefToNodeRef('voic/product-catalog:latest', catalog_instance_id)
-    const api_ref = resourceRefToNodeRef('voic/product-catalog/api:latest', catalog_instance_id)
+    const api_ref = resourceRefToNodeRef('voic/product-catalog.services.api:latest', catalog_instance_id)
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interface_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -555,7 +555,7 @@ describe('sidecar spec v1', () => {
       hello_component
     ], undefined, true, false);
 
-    const app_ref = resourceRefToNodeRef('examples/stateless-component/stateless-app:latest');
+    const app_ref = resourceRefToNodeRef('examples/stateless-component.services.stateless-app:latest');
     const app_node = graph.getNodeByRef(app_ref);
 
     const ports = [];
@@ -604,7 +604,7 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
+    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -664,7 +664,7 @@ describe('sidecar spec v1', () => {
     expect(new_graph).instanceOf(DependencyGraph);
     expect(new_graph.nodes[0]).instanceOf(DependencyNode);
 
-    const app_ref = resourceRefToNodeRef('architect/upstream/test-app:latest');
+    const app_ref = resourceRefToNodeRef('architect/upstream.services.test-app:latest');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({

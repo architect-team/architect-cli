@@ -41,7 +41,7 @@ describe('external spec v1', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -96,7 +96,7 @@ describe('external spec v1', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -145,7 +145,7 @@ describe('external spec v1', () => {
       // @ts-ignore
     ], { '*': { optional_host: 'cloud.architect.io', optional_port: 8081 } });
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest')
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
     ])
@@ -201,8 +201,8 @@ describe('external spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest')
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       app_ref,
@@ -293,7 +293,7 @@ describe('external spec v1', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/component/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/component.services.app:latest')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
       DEP_ADDR: `https://external.localhost`,
@@ -302,7 +302,7 @@ describe('external spec v1', () => {
       CI_EXTERNAL_ADDR: `https://ci.architect.io:8501`
     });
 
-    const dep_ref = resourceRefToNodeRef('architect/dependency/app:latest')
+    const dep_ref = resourceRefToNodeRef('architect/dependency.services.app:latest')
     const dep_node = graph.getNodeByRef(dep_ref) as ServiceNode;
     expect(dep_node.config.environment).to.deep.eq({
       DEP_EXTERNAL_ADDR: `https://external.localhost`,
@@ -338,7 +338,7 @@ describe('external spec v1', () => {
       await manager.loadComponentSpec('architect/component:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/component/app:latest')
+    const app_ref = resourceRefToNodeRef('architect/component.services.app:latest')
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
       SELF_ADDR: `http://app.arc.localhost`,
@@ -381,7 +381,7 @@ describe('external spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const core_ref = resourceRefToNodeRef('architect/component/core:latest')
+    const core_ref = resourceRefToNodeRef('architect/component.services.core:latest')
 
     // No host override
     const graph = await manager.getGraph([
@@ -434,7 +434,7 @@ describe('external spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const core_ref = resourceRefToNodeRef('architect/component/core:latest')
+    const core_ref = resourceRefToNodeRef('architect/component.services.core:latest')
 
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('architect/component:latest')

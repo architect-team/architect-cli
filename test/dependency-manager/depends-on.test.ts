@@ -35,13 +35,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/cloud.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -86,13 +86,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/cloud.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -133,13 +133,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/cloud.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -183,13 +183,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/cloud:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/cloud/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/cloud.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -243,13 +243,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/dependency.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/dependency.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -305,13 +305,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/dependency.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/dependency.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -365,10 +365,10 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/dependency.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -421,13 +421,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/dependency.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/dependency.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);
@@ -486,13 +486,13 @@ describe('graph depends_on', () => {
       await manager.loadComponentSpec('architect/dependency:latest')
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
+    const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
     const app = graph.getNodeByRef(app_ref) as ServiceNode;
 
-    const api_ref = resourceRefToNodeRef('architect/dependency/api:latest');
+    const api_ref = resourceRefToNodeRef('architect/dependency.services.api:latest');
     const api = graph.getNodeByRef(api_ref) as ServiceNode;
 
-    const db_ref = resourceRefToNodeRef('architect/dependency/db:latest');
+    const db_ref = resourceRefToNodeRef('architect/dependency.services.db:latest');
     const db = graph.getNodeByRef(db_ref) as ServiceNode;
 
     const app_depends_on = graph.getDependsOn(app);

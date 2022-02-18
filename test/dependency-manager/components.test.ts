@@ -36,8 +36,8 @@ describe('components spec v1', function () {
         await manager.loadComponentSpec('architect/cloud:latest')
       ]);
 
-      const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
-      const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
+      const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
@@ -97,8 +97,8 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('architect/cloud:v1')
       ]);
-      const app_ref = resourceRefToNodeRef('architect/cloud/app:v1');
-      const api_ref = resourceRefToNodeRef('architect/cloud/api:v1');
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app:v1');
+      const api_ref = resourceRefToNodeRef('architect/cloud.services.api:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
@@ -132,7 +132,7 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('architect/cloud:v1')
       ], { '*': { log_level: 'debug' } });
-      const app_ref = resourceRefToNodeRef('architect/cloud/app:v1');
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app:v1');
       expect(graph.nodes.map((n) => n.ref)).has.members([app_ref]);
       expect(graph.edges.map((e) => e.toString())).has.members([]);
       const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
@@ -180,9 +180,9 @@ describe('components spec v1', function () {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('architect/cloud:latest')
       ]);
-      const app_ref = resourceRefToNodeRef('architect/cloud/app:latest');
-      const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
-      const db_ref = resourceRefToNodeRef('architect/cloud/db:latest');
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app:latest');
+      const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
+      const db_ref = resourceRefToNodeRef('architect/cloud.services.db:latest');
       expect(graph.nodes.map((n) => n.ref)).has.members([
         app_ref,
         api_ref,
@@ -481,7 +481,7 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentSpec('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = resourceRefToNodeRef('architect/cloud/syncer:v1');
+      const syncer_ref = resourceRefToNodeRef('architect/cloud.services.syncer:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
@@ -519,8 +519,8 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentSpec('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = resourceRefToNodeRef('architect/cloud/syncer:v1');
-      const app_ref = resourceRefToNodeRef('architect/cloud/app:v1');
+      const syncer_ref = resourceRefToNodeRef('architect/cloud.services.syncer:v1');
+      const app_ref = resourceRefToNodeRef('architect/cloud.services.app:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
@@ -592,8 +592,8 @@ describe('components spec v1', function () {
         }
       });
 
-      const api_ref = resourceRefToNodeRef('examples/component-b/api:v1');
-      const api2_ref = resourceRefToNodeRef('examples/component-b/api:v2');
+      const api_ref = resourceRefToNodeRef('examples/component-b.services.api:v1');
+      const api2_ref = resourceRefToNodeRef('examples/component-b.services.api:v2');
 
       const node_b_v1 = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node_b_v1.config.environment.TEST_REQUIRED).to.eq('foo3');
@@ -629,7 +629,7 @@ describe('components spec v1', function () {
         await manager.loadComponentSpec('architect/cloud:latest', { interfaces: { api: 'api-interface' } })
       ]);
 
-      const api_ref = resourceRefToNodeRef('architect/cloud/api:latest');
+      const api_ref = resourceRefToNodeRef('architect/cloud.services.api:latest');
 
       expect(graph.edges.filter(e => e instanceof IngressEdge).length).eq(1);
       const ingress_edge = graph.edges.find(e => e instanceof IngressEdge);
@@ -680,9 +680,9 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('examples/component-a'),
       ]);
 
-      const a_ref = resourceRefToNodeRef('examples/component-a/app:latest');
-      const b_ref = resourceRefToNodeRef('examples/component-b/api:latest');
-      const c_ref = resourceRefToNodeRef('examples/component-c/api:latest');
+      const a_ref = resourceRefToNodeRef('examples/component-a.services.app:latest');
+      const b_ref = resourceRefToNodeRef('examples/component-b.services.api:latest');
+      const c_ref = resourceRefToNodeRef('examples/component-c.services.api:latest');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         a_ref,
@@ -743,9 +743,9 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('examples/component-b'),
       ]);
 
-      const a_ref = resourceRefToNodeRef('examples/component-a/app:latest');
-      const b_ref = resourceRefToNodeRef('examples/component-b/api:latest');
-      const c_ref = resourceRefToNodeRef('examples/component-c/api:latest');
+      const a_ref = resourceRefToNodeRef('examples/component-a.services.app:latest');
+      const b_ref = resourceRefToNodeRef('examples/component-b.services.api:latest');
+      const c_ref = resourceRefToNodeRef('examples/component-c.services.api:latest');
 
       const a_node = graph.getNodeByRef(a_ref) as ServiceNode;
       expect(a_node.config.environment).to.deep.equal({

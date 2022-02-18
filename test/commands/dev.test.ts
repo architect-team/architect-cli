@@ -403,7 +403,7 @@ describe('local dev environment', function () {
     .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      const hello_api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      const hello_api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
       expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain(`traefik.http.services.${hello_api_ref}-hello-service.loadBalancer.sticky.cookie=true`);
     })
 
@@ -557,7 +557,7 @@ describe('local dev environment', function () {
     .it('Create a local recursive dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = resourceRefToNodeRef('examples/react-app/app:latest');
+      const react_app_ref = resourceRefToNodeRef('examples/react-app.services.app:latest');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
@@ -658,8 +658,8 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
 
-        const tenant_1_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-1');
-        const tenant_2_ref = resourceRefToNodeRef('examples/hello-world/api:latest@tenant-2');
+        const tenant_1_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-1');
+        const tenant_2_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
         expect(Object.keys(compose.services)).includes(tenant_1_ref, tenant_2_ref)
@@ -719,9 +719,9 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];
-        const app_ref = resourceRefToNodeRef('examples/app/app:latest');
+        const app_ref = resourceRefToNodeRef('examples/app.services.app:latest');
         expect(compose.services[app_ref].labels).includes('traefik.enable=true');
-        const auth_ref = resourceRefToNodeRef('examples/auth/auth:latest');
+        const auth_ref = resourceRefToNodeRef('examples/auth.services.auth:latest');
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });
