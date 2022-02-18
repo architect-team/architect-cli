@@ -70,27 +70,30 @@ export default abstract class DependencyManager {
       // Start Ingress Edges
       const ingresses: [ComponentConfig, string][] = [];
       // Deprecated environment.ingresses
-      const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(${ComponentSlugUtils.RegexBase})?\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const environment_ingresses_regex = new RegExp(`\\\${{\\s*environment\\.ingresses\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       while ((matches = environment_ingresses_regex.exec(service_string)) != null) {
-        const [_, dep_name, interface_name] = matches;
-        if (dep_name === component.name) {
+        if (!matches.groups) { continue; }
+        const { dependency_name, interface_name } = matches.groups;
+        if (dependency_name === component.name) {
           ingresses.push([component, interface_name]);
         } else {
-          const dep_tag = component.dependencies[dep_name];
-          const dep_component = dependency_map[`${dep_name}:${dep_tag}`];
+          const dep_tag = component.dependencies[dependency_name];
+          const dep_component = dependency_map[`${dependency_name}:${dep_tag}`];
           ingresses.push([dep_component, interface_name]);
         }
       }
-      const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.ingresses\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const dependencies_ingresses_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       while ((matches = dependencies_ingresses_regex.exec(service_string)) != null) {
-        const [_, dep_name, interface_name] = matches;
-        const dep_tag = component.dependencies[dep_name];
-        const dep_component = dependency_map[`${dep_name}:${dep_tag}`];
+        if (!matches.groups) { continue; }
+        const { dependency_name, interface_name } = matches.groups;
+        const dep_tag = component.dependencies[dependency_name];
+        const dep_component = dependency_map[`${dependency_name}:${dep_tag}`];
         ingresses.push([dep_component, interface_name]);
       }
-      const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       while ((matches = ingresses_regex.exec(service_string)) != null) {
-        const [_, interface_name] = matches;
+        if (!matches.groups) { continue; }
+        const { interface_name } = matches.groups;
         ingresses.push([component, interface_name]);
       }
       for (const [interface_name, interface_obj] of Object.entries(component.interfaces)) {
@@ -131,10 +134,11 @@ export default abstract class DependencyManager {
       // End Ingress Edges
 
       // Add edges between services inside the component and dependencies
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       const service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = services_regex.exec(service_string)) != null) {
-        const [_, service_name, interface_name] = matches;
+        if (!matches.groups) { continue; }
+        const { service_name, interface_name } = matches.groups;
         const to = buildNodeRef(component, 'services', service_name);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
@@ -148,13 +152,14 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and interface dependencies inside the component
-      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const dep_interface_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
       const dep_service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dep_interface_regex.exec(service_string)) != null) {
-        const [_, dep_name, interface_name] = matches;
-        const dep_tag = component.dependencies[dep_name];
+        if (!matches.groups) { continue; }
+        const { dependency_name, interface_name } = matches.groups;
+        const dep_tag = component.dependencies[dependency_name];
 
-        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+        const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -170,13 +175,14 @@ export default abstract class DependencyManager {
       }
 
       // Add edges between services and output dependencies inside the component
-      const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.outputs\\.(${Slugs.ArchitectSlugRegexBase})?`, 'g');
+      const dep_output_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.outputs\\.(?<output_name>${Slugs.ArchitectSlugRegexBase})`, 'g');
       const dep_output_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = dep_output_regex.exec(service_string)) != null) {
-        const [_, dep_name, output_name] = matches;
-        const dep_tag = component.dependencies[dep_name];
+        if (!matches.groups) { continue; }
+        const { dependency_name, output_name } = matches.groups;
+        const dep_tag = component.dependencies[dependency_name];
 
-        const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+        const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -196,13 +202,13 @@ export default abstract class DependencyManager {
     const service_edge_map: Dictionary<Dictionary<string>> = {};
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces)) {
       if (!component_interface) { continue; }
-      const services_regex = new RegExp(`\\\${{\\s*services\\.(${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const services_regex = new RegExp(`\\\${{\\s*services\\.(?<service_name>${Slugs.ArchitectSlugRegexBase})?\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = services_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
-
-      const [_, service_name, interface_name] = matches;
+      if (!matches.groups) { continue; }
+      const { service_name, interface_name } = matches.groups;
       const to = buildNodeRef(component, 'services', service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
@@ -210,16 +216,17 @@ export default abstract class DependencyManager {
 
     for (const [component_interface_name, component_interface] of Object.entries(component.interfaces || {})) {
       if (!component_interface) { continue; }
-      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(${ComponentSlugUtils.RegexBase})?\\.interfaces\\.(${Slugs.ArchitectSlugRegexBase})?\\.`, 'g');
+      const dependencies_regex = new RegExp(`\\\${{\\s*dependencies\\.(?<dependency_name>${ComponentSlugUtils.RegexBase})\\.interfaces\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const matches = dependencies_regex.exec(replaceInterpolationBrackets(component_interface.url!));
       if (!matches) continue;
 
-      const [_, dep_name, interface_name] = matches;
-      const dep_tag = component.dependencies[dep_name];
+      if (!matches.groups) { continue; }
+      const { dependency_name, interface_name } = matches.groups;
+      const dep_tag = component.dependencies[dependency_name];
 
-      const dependency = dependency_map[`${dep_name}:${dep_tag}`];
+      const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
       if (!dependency) continue;
       const to = buildInterfacesRef(dependency);
 
