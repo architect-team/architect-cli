@@ -97,6 +97,16 @@ describe('slug validators without account', () => {
     expect(() => ComponentSlugUtils.parse(invalid_component_slug)).to.throw(ComponentSlugUtils.Description);
   });
 
+  it(`ComponentVersionSlugUtils.parse accurately splits ${component_slug}`, async () => {
+    const result = ComponentVersionSlugUtils.parse(component_slug);
+    expect(result.component_account_name).to.be.undefined;
+    expect(result.component_name).to.equal(component_name);
+    expect(result.tag).to.equal('latest');
+
+    const build = ComponentVersionSlugUtils.build.apply(null, Object.values(result) as any)
+    expect(build).to.equal(`${component_slug}:latest`);
+  });
+
   it(`ComponentVersionSlugUtils.parse accurately splits ${component_version_slug}`, async () => {
     const result = ComponentVersionSlugUtils.parse(component_version_slug);
     expect(result.component_account_name).to.be.undefined;
@@ -124,6 +134,18 @@ describe('slug validators without account', () => {
 
   it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
     expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(ResourceSlugUtils.Description);
+  });
+
+  it(`ResourceVersionSlugUtils.parse accurately splits ${resource_slug}`, async () => {
+    const result = ResourceVersionSlugUtils.parse(resource_slug);
+    expect(result.component_account_name).to.be.undefined;
+    expect(result.component_name).to.equal(component_name);
+    expect(result.resource_type).to.equal('services');
+    expect(result.resource_name).to.equal(resource_name);
+    expect(result.tag).to.equal('latest');
+
+    const build = ResourceVersionSlugUtils.build.apply(null, Object.values(result) as any)
+    expect(build).to.equal(`${resource_slug}:latest`);
   });
 
   it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {

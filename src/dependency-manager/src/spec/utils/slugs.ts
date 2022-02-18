@@ -61,7 +61,12 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
     }
 
     const matches = slug.match(this.RegexBase);
-    return matches?.groups || {} as any;
+
+    const groups = matches?.groups || {};
+    if ('tag' in groups && groups.tag === undefined) {
+      groups.tag = 'latest';
+    }
+    return groups as any;
   }
   return parse;
 }
@@ -100,7 +105,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Description = `must be of the form <account-name>/<component-name>:<tag> OR <account-name>/<component-name>. The latter will assume \`${Slugs.DEFAULT_TAG}\` tag`;
 
-  public static RegexTag = `(?:${Slugs.TAG_DELIMITER}(?<tag>${Slugs.ComponentTagRegexBase}))`;
+  public static RegexTag = `(?:${Slugs.TAG_DELIMITER}(?<tag>${Slugs.ComponentTagRegexBase}))?`;
 
   public static RegexBase = `${ComponentSlugUtils.RegexName}${ComponentVersionSlugUtils.RegexTag}${ComponentSlugUtils.RegexInstance}`; // tag is required
 
