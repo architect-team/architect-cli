@@ -1,5 +1,5 @@
 import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
-import { ComponentSlugUtils, ComponentVersionSlug, ComponentVersionSlugUtils, ParsedResourceVersionSlug, ResourceType, ResourceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
+import { ComponentVersionSlugUtils, ParsedResourceVersionSlug, ResourceType, ResourceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
@@ -71,11 +71,6 @@ export interface ComponentConfig {
   artifact_image?: string;
 }
 
-export const buildComponentRef = (config: ComponentConfig): ComponentVersionSlug => {
-  const split = ComponentSlugUtils.parse(config.name);
-  return ComponentVersionSlugUtils.build(split.component_account_name, split.component_name, config.metadata?.tag, config.metadata?.instance_name);
-};
-
 export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
@@ -103,7 +98,7 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 };
 
 export const buildNodeRef = (component_config: ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
-  const component_ref = buildComponentRef(component_config);
+  const component_ref = component_config.metadata.ref;
   const parsed = ComponentVersionSlugUtils.parse(component_ref);
   const service_ref = ResourceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, parsed.tag, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);

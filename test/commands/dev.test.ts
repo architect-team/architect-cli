@@ -585,10 +585,10 @@ describe('local dev environment', function () {
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
       .stdout({ print })
       .stderr({ print })
-      .command(['dev', 'examples/hello-world:latest', '-i', 'hello'])
+      .command(['dev', 'hello-world:latest', '-i', 'hello'])
       .it('Create a local dev with a component and an interface', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true

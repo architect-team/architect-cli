@@ -1,6 +1,6 @@
 import { classToPlain, plainToClass, serialize } from 'class-transformer';
 import { isMatch } from 'matcher';
-import { buildComponentRef, buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
+import { buildInterfacesRef, buildNodeRef, ComponentConfig } from './config/component-config';
 import { ArchitectContext, ComponentContext, ParameterValue } from './config/component-context';
 import DependencyGraph from './graph';
 import IngressEdge from './graph/edge/ingress';
@@ -55,7 +55,7 @@ export default abstract class DependencyManager {
 
     const dependency_map: Dictionary<ComponentConfig> = {};
     for (const dependency_component of dependency_configs) {
-      const dependency_ref = buildComponentRef(dependency_component);
+      const dependency_ref = dependency_component.metadata.ref;
       dependency_map[dependency_ref] = dependency_component;
     }
 
@@ -455,7 +455,7 @@ export default abstract class DependencyManager {
       const has_interfaces = Object.keys(component_config.interfaces).length > 0;
       const has_outputs = Object.keys(component_config.outputs).length > 0;
       if (has_interfaces || has_outputs) {
-        const ref = buildComponentRef(component_config);
+        const ref = component_config.metadata.ref;
         const config = {
           outputs: component_config.outputs,
           interfaces: component_config.interfaces,
@@ -703,13 +703,5 @@ export default abstract class DependencyManager {
     }
 
     return graph;
-  }
-
-  scopedComponentName(component_string: string): string {
-    if (component_string.includes('/')) {
-      return component_string;
-    } else {
-      return `${this.account}/${component_string}`;
-    }
   }
 }
