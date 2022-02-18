@@ -138,14 +138,18 @@ export default class Logs extends Command {
 
     let component_account_name: string | undefined;
     let component_name: string | undefined;
-    let service_name: string | undefined;
+    let resource_name: string | undefined;
     let tag: string | undefined;
     let instance_name: string | undefined;
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
       component_name = parsed.component_name;
-      service_name = parsed.service_name;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      resource_name = parsed.resource_name;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       tag = parsed.tag;
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -155,7 +159,7 @@ export default class Logs extends Command {
     const replica_query = {
       component_account_name,
       component_name,
-      component_resource_name: service_name,
+      component_resource_name: resource_name,
       component_tag: tag,
       component_instance_name: instance_name,
     };
@@ -187,8 +191,8 @@ export default class Logs extends Command {
 
         let display_name = replica.display_name;
         if (!display_name) {
-          const { service_name } = ResourceVersionSlugUtils.parse(replica.resource_ref);
-          display_name = service_name;
+          const { resource_name } = ResourceVersionSlugUtils.parse(replica.resource_ref);
+          display_name = resource_name;
         }
 
         const log = await this.createLogger(display_name);

@@ -44,7 +44,7 @@ describe('task:exec', async function () {
   const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
   const task_name = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
   const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
-  const instanced_task_name = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
+  const instanced_task_name = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, tag, instance_name);
   const instanced_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag, instance_name);
 
   const mock_remote_task_id = 'remote-task-id';
@@ -185,7 +185,7 @@ describe('task:exec', async function () {
   const mock_docker_compose_service: { [key: string]: {} } = {};
   const mock_slug = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
   const mock_ref = resourceRefToNodeRef(mock_slug);
-  const instanced_mock_slug = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
+  const instanced_mock_slug = ResourceVersionSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, tag, instance_name);
   const instanced_mock_ref = resourceRefToNodeRef(instanced_mock_slug);
   mock_docker_compose_service[mock_ref] = {};
   mock_docker_compose_service[instanced_mock_ref] = {};

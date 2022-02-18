@@ -3,7 +3,7 @@ import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
-import { ComponentVersionSlugUtils, ResourceVersionSlugUtils } from '../utils/slugs';
+import { ComponentVersionSlugUtils, ResourceType, ResourceVersionSlugUtils } from '../utils/slugs';
 
 export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
   if (!command) return [];
@@ -69,12 +69,12 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   };
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
+export const transformResourceSpec = (resource_type: ResourceType, key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
   const { component_account_name, component_name } = ComponentVersionSlugUtils.parse(metadata.ref);
   return {
     name: key,
-    ref: ResourceVersionSlugUtils.build(component_account_name, component_name, key, metadata.tag, metadata?.instance_name),
+    ref: ResourceVersionSlugUtils.build(component_account_name, component_name, resource_type, key, metadata.tag, metadata?.instance_name),
     tag: metadata.tag,
     description: spec.description,
     image: spec.image,

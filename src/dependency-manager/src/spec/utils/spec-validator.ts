@@ -244,6 +244,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
     component_spec.metadata = metadata;
   } else {
     throw new Error('TODO:344');
+    /*
     // TODO:344 cleanup
     const name = (parsed_yml as any).name.includes('/') ? (parsed_yml as any).name : 'local/' + (parsed_yml as any).name;
     component_spec.metadata = {
@@ -252,6 +253,7 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
       instance_date: new Date(),
       proxy_port_mapping: {},
     };
+    */
   }
 
   // TODO:344 remove

@@ -300,10 +300,9 @@ describe('components spec v1', function () {
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api:latest');
-      console.log('------')
       const ci_ref = resourceRefToNodeRef('concourse/ci:6.2');
-      const web_ref = resourceRefToNodeRef('concourse/ci/web:6.2');
-      const worker_ref = resourceRefToNodeRef('concourse/ci/worker:6.2');
+      const web_ref = resourceRefToNodeRef('concourse/ci.services.web:6.2');
+      const worker_ref = resourceRefToNodeRef('concourse/ci.services.worker:6.2');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,

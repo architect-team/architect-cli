@@ -1,7 +1,7 @@
 import { IsOptional, ValidateNested } from 'class-validator';
 import { JSONSchema } from 'class-validator-jsonschema';
-import { ResourceSpec } from './resource-spec';
 import { LivenessProbeSpec } from './common-spec';
+import { ResourceSpec } from './resource-spec';
 
 @JSONSchema({
   description: 'A container to run as a sidecar to the related component or service',

@@ -15,7 +15,7 @@ export const transformInterfaceSpec = function (key: string, interface_spec: Ser
 };
 
 export const transformServiceSpec = (key: string, spec: ServiceSpec, metadata: ComponentInstanceMetadata): ServiceConfig => {
-  const resource_config = transformResourceSpec(key, spec, metadata);
+  const resource_config = transformResourceSpec('services', key, spec, metadata);
 
   return {
     ...resource_config,

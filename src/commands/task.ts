@@ -97,7 +97,7 @@ export default class TaskExec extends Command {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    const slug = ResourceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag, parsed_slug.instance_name);
+    const slug = ResourceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, 'tasks', args.task, parsed_slug.tag, parsed_slug.instance_name);
     const ref = resourceRefToNodeRef(slug);
     const service_name = Object.keys(compose.services).find(name => name === ref);
     if (!service_name) {

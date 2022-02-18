@@ -40,7 +40,7 @@ describe('slug validators with account', () => {
   });
 
   it(`ComponentVersionSlugUtils.parse throws exception on ${invalid_component_version_slug}`, async () => {
-    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>`);
+    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(`must be of the form`);
   });
 
   it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
@@ -50,7 +50,7 @@ describe('slug validators with account', () => {
   });
 
   it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
-    expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>`);
+    expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(ResourceSlugUtils.Description);
   });
 
   it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {
@@ -61,7 +61,7 @@ describe('slug validators with account', () => {
   });
 
   it(`ResourceVersionSlugUtils.parse throws exception on ${invalid_resource_version_slug}`, async () => {
-    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>:<tag>`);
+    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(ResourceVersionSlugUtils.Description);
   });
 });
 
@@ -108,26 +108,31 @@ describe('slug validators without account', () => {
   });
 
   it(`ComponentVersionSlugUtils.parse throws exception on ${invalid_component_version_slug}`, async () => {
-    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(`must be of the form <account-name>/<component-name>:<tag>`);
+    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(ComponentVersionSlugUtils.Description);
   });
 
   it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
     const result = ResourceSlugUtils.parse(resource_slug);
     expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
+    expect(result.resource_type).to.equal('services');
+    expect(result.resource_name).to.equal(resource_name);
 
     const build = ResourceSlugUtils.build.apply(null, Object.values(result) as any)
     expect(build).to.equal(resource_slug);
   });
 
   it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
-    expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>`);
+    expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(ResourceSlugUtils.Description);
   });
 
   it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {
     const result = ResourceVersionSlugUtils.parse(resource_version_slug);
+
     expect(result.component_account_name).to.be.undefined;
     expect(result.component_name).to.equal(component_name);
+    expect(result.resource_type).to.equal('services');
+    expect(result.resource_name).to.equal(resource_name);
     expect(result.tag).to.equal(tag);
 
     const build = ResourceVersionSlugUtils.build.apply(null, Object.values(result) as any)
@@ -135,6 +140,6 @@ describe('slug validators without account', () => {
   });
 
   it(`ResourceVersionSlugUtils.parse throws exception on ${invalid_resource_version_slug}`, async () => {
-    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(`must be of the form <account-name>/<component-name>/<resource-name>:<tag>`);
+    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(ResourceVersionSlugUtils.Description);
   });
 });

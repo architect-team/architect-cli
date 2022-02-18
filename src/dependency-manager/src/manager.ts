@@ -13,7 +13,7 @@ import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec, transformParameterDefinitionSpec } from './spec/transform/component-transform';
-import { ComponentSlugUtils, Slugs } from './spec/utils/slugs';
+import { ComponentSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
@@ -30,7 +30,7 @@ export default abstract class DependencyManager {
     // Load component services
     for (const [service_name, service_config] of Object.entries(component.services)) {
       const node = new ServiceNode({
-        ref: buildNodeRef(component, service_name),
+        ref: buildNodeRef(component, 'services', service_name),
         config: service_config,
         local_path: component.metadata.file?.path,
         artifact_image: component.artifact_image,
@@ -41,7 +41,7 @@ export default abstract class DependencyManager {
     // Load component tasks
     for (const [task_name, task_config] of Object.entries(component.tasks)) {
       const node = new TaskNode({
-        ref: buildNodeRef(component, task_name),
+        ref: buildNodeRef(component, 'tasks', task_name),
         config: task_config,
         local_path: component.metadata.file?.path,
       });
@@ -60,10 +60,10 @@ export default abstract class DependencyManager {
     }
 
     // Add edges FROM services to other services
-    for (const [resource_name, resource_config] of Object.entries({ ...component.tasks, ...component.services })) {
-      const from = buildNodeRef(component, resource_name);
-      const from_node = graph.getNodeByRef(from);
-
+    const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
+    const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
+    for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
+      const from = buildNodeRef(component, resource_type, resource_name);
       const service_string = replaceInterpolationBrackets(serialize(resource_config));
       let matches;
 
@@ -135,7 +135,7 @@ export default abstract class DependencyManager {
       const service_edge_map: Dictionary<Dictionary<string>> = {};
       while ((matches = services_regex.exec(service_string)) != null) {
         const [_, service_name, interface_name] = matches;
-        const to = buildNodeRef(component, service_name);
+        const to = buildNodeRef(component, 'services', service_name);
         if (to === from) continue;
         if (!service_edge_map[to]) service_edge_map[to] = {};
         service_edge_map[to][`service->${interface_name}`] = interface_name;
@@ -203,7 +203,7 @@ export default abstract class DependencyManager {
       if (!matches) continue;
 
       const [_, service_name, interface_name] = matches;
-      const to = buildNodeRef(component, service_name);
+      const to = buildNodeRef(component, 'services', service_name);
       if (!service_edge_map[to]) service_edge_map[to] = {};
       service_edge_map[to][component_interface_name] = interface_name;
     }
@@ -475,7 +475,7 @@ export default abstract class DependencyManager {
             environment: {},
           };
         }
-        const service_ref = buildNodeRef(component_config, service_name);
+        const service_ref = buildNodeRef(component_config, 'services', service_name);
         for (const [interface_name, value] of Object.entries(service.interfaces)) {
           const interface_ref = `services.${service_name}.interfaces.${interface_name}`;
 
@@ -485,7 +485,7 @@ export default abstract class DependencyManager {
             component_spec.metadata.proxy_port_mapping[sidecar_service] = Math.max(12344, ...Object.values(component_spec.metadata.proxy_port_mapping)) + 1;
           }
 
-          const architect_host = this.use_sidecar ? '127.0.0.1' : buildNodeRef(component_config, service_name);
+          const architect_host = this.use_sidecar ? '127.0.0.1' : service_ref;
           const architect_port = this.use_sidecar ? component_spec.metadata.proxy_port_mapping[sidecar_service] : `${interface_ref}.external_port`;
           context.services[service_name].interfaces[interface_name] = {
             protocol: 'http',
@@ -680,8 +680,10 @@ export default abstract class DependencyManager {
         component_node.config.outputs = component_config.outputs;
       }
 
-      for (const resource_config of Object.values({ ...component_config.services, ...component_config.tasks })) {
-        const resource_ref = buildNodeRef(component_config, resource_config.name);
+      const services = Object.entries(component_config.services).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'services' as ResourceType, resource_config }));
+      const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
+      for (const { resource_config, resource_type } of [...services, ...tasks]) {
+        const resource_ref = buildNodeRef(component_config, resource_type, resource_config.name);
         const node = graph.getNodeByRef(resource_ref) as ServiceNode | TaskNode;
         node.proxy_port_mapping = component_config.metadata.proxy_port_mapping;
         node.config = resource_config;

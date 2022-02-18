@@ -45,8 +45,6 @@ export default class LocalDependencyManager extends DependencyManager {
       return this.loaded_components[component_ref];
     }
 
-    console.log('TODO:344', component_string, component_ref);
-
     let spec: ComponentSpec;
     const metadata: ComponentInstanceMetadata = {
       ref: component_ref,
