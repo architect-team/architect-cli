@@ -9,7 +9,7 @@ describe('component transform unit test', function () {
     const spec = buildSpecFromYml(source_yml);
     const config = transformComponentSpec(spec);
 
-    expect(config.services['api-db'].ref).to.equal('tests/superset/api-db:latest');
+    expect(config.services['api-db'].ref).to.equal('tests/superset.services.api-db:latest');
   });
 
   it(`transformComponentSpec successfully transforms spec with metadata`, async () => {
@@ -29,6 +29,6 @@ describe('component transform unit test', function () {
     spec.metadata = metadata;
     const config = transformComponentSpec(spec);
 
-    expect(config.services['api-db'].ref).to.equal('tests/superset/api-db:latest@instance-1');
+    expect(config.services['api-db'].ref).to.equal('tests/superset.services.api-db:latest@instance-1');
   });
 });

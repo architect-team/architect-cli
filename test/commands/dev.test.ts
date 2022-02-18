@@ -15,11 +15,6 @@ import { MOCK_API_HOST } from '../utils/mocks';
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
 const print = true; // TODO:344
 
-const account = {
-  id: 'test-account-id',
-  name: 'test-account'
-}
-
 describe('local dev environment', function () {
 
   function getHelloComponentConfig(): any {
@@ -76,7 +71,7 @@ describe('local dev environment', function () {
     `;
 
   const basic_parameter_secrets = {
-    'examples/hello-world:latest': {
+    'hello-world:latest': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value',
@@ -85,11 +80,11 @@ describe('local dev environment', function () {
     },
   }
   const wildcard_parameter_secrets = {
-    'examples/hello-world:*': {
+    'hello-world:*': {
       'a_required_key': 'some_value',
       'api_port': 3000
     },
-    'examples/hello-world:la*': {
+    'hello-world:la*': {
       'one_more_required_param': 'one_more_value'
     },
     '*': {
@@ -97,7 +92,7 @@ describe('local dev environment', function () {
     }
   }
   const stacked_parameter_secrets = {
-    'examples/hello-world:*': {
+    'hello-world:*': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value',
@@ -110,7 +105,7 @@ describe('local dev environment', function () {
   }
 
   const local_component_config_with_dependency = {
-    "name": "examples/hello-world",
+    "name": "hello-world",
 
     "services": {
       "api": {
@@ -145,12 +140,12 @@ describe('local dev environment', function () {
     },
 
     "dependencies": {
-      "examples/react-app": "latest"
+      "react-app": "latest"
     }
   }
   const local_component_config_dependency = {
     'config': {
-      'name': 'examples/react-app',
+      'name': 'react-app',
       'interfaces': {
         'app': '\${{ services.app.interfaces.main.url }}'
       },
@@ -174,13 +169,10 @@ describe('local dev environment', function () {
         }
       }
     },
-    'component': {
-      'name': 'examples/react-app',
-    },
     'tag': 'latest'
   }
   const component_and_dependency_parameter_secrets = {
-    'examples/hello-world:*': {
+    'hello-world:*': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value'
@@ -194,7 +186,7 @@ describe('local dev environment', function () {
   }
 
   const local_database_seeding_component_config = {
-    "name": "examples/database-seeding",
+    "name": "database-seeding",
 
     "parameters": {
       "AUTO_DDL": {
@@ -252,8 +244,8 @@ describe('local dev environment', function () {
     }
   };
 
-  const seed_app_ref = resourceRefToNodeRef('examples/database-seeding.services.app:latest');
-  const seed_db_ref = resourceRefToNodeRef('examples/database-seeding.services.my-demo-db:latest');
+  const seed_app_ref = resourceRefToNodeRef('database-seeding.services.app:latest');
+  const seed_db_ref = resourceRefToNodeRef('database-seeding.services.my-demo-db:latest');
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -327,7 +319,7 @@ describe('local dev environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  const hello_api_ref = resourceRefToNodeRef('hello-world.services.api:latest');
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -403,7 +395,7 @@ describe('local dev environment', function () {
     .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      const hello_api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+      const hello_api_ref = resourceRefToNodeRef('hello-world.services.api:latest');
       expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain(`traefik.http.services.${hello_api_ref}-hello-service.loadBalancer.sticky.cookie=true`);
     })
 
@@ -529,7 +521,7 @@ describe('local dev environment', function () {
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-a', 'examples'])
     .it('Create a local dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -557,7 +549,7 @@ describe('local dev environment', function () {
     .it('Create a local recursive dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = resourceRefToNodeRef('examples/react-app.services.app:latest');
+      const react_app_ref = resourceRefToNodeRef('react-app.services.app:latest');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
@@ -605,7 +597,7 @@ describe('local dev environment', function () {
   });
 
   describe('instance devs', function () {
-    const hello_api_instance_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-1');
+    const hello_api_instance_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-1');
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_dev = test
@@ -658,8 +650,8 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
 
-        const tenant_1_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-1');
-        const tenant_2_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest@tenant-2');
+        const tenant_1_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-1');
+        const tenant_2_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
         expect(Object.keys(compose.services)).includes(tenant_1_ref, tenant_2_ref)
@@ -719,9 +711,9 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];
-        const app_ref = resourceRefToNodeRef('examples/app.services.app:latest');
+        const app_ref = resourceRefToNodeRef('app.services.app:latest');
         expect(compose.services[app_ref].labels).includes('traefik.enable=true');
-        const auth_ref = resourceRefToNodeRef('examples/auth.services.auth:latest');
+        const auth_ref = resourceRefToNodeRef('auth.services.auth:latest');
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });

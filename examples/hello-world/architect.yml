@@ -1,4 +1,4 @@
-name: hello-world
+name: examples/hello-world
 description: A simple hello-world component that returns "Hello World!" on every request.
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/hello-world
 keywords:

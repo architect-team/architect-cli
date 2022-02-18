@@ -6,14 +6,13 @@ import path from 'path';
 import sinon from 'sinon';
 import { InitCommand } from '../../src/commands/init';
 import { buildConfigFromYml } from '../../src/dependency-manager/src/spec/utils/component-builder';
-import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
+import { mockArchitectAuth } from '../utils/mocks';
 
 describe('init', function () {
 
   // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
   const print = false;
 
-  const account_name = 'examples';
   const compose_file_name = 'init-compose.yml';
   const compose_file_path = path.join(__dirname, `../mocks/${compose_file_name}`);
   const mock_compose_contents = `
@@ -25,18 +24,12 @@ services:
   const mockInit = () => {
     return mockArchitectAuth
       .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
-      .nock(MOCK_API_HOST, api => api
-        .get(`/accounts/${account_name}`)
-        .reply(200, {
-          name: 'examples',
-        })
-      )
       .stdout({ print })
       .stderr({ print })
   }
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('converts a docker-compose file to an architect component file', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -46,7 +39,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component', '-o', 'test-directory/architect.yml'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component', '-o', 'test-directory/architect.yml'])
     .it('converts a docker-compose file to an architect component file and writes the file to a specified output', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -56,17 +49,17 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('names the component based on the input args', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
 
       const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.name).eq(`${account_name}/test-component`);
+      expect(component_config.name).eq(`test-component`);
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('converts all services from the docker compose file to architect services', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -76,7 +69,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds environment variables to each service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -93,7 +86,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds command to logstash service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -103,7 +96,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds entrypoint to logstash service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -113,7 +106,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds image to kibana service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -123,7 +116,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds build context and args to elasticsearch service', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -135,7 +128,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds ports of various docker-compose types to kibana service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -160,7 +153,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds ports to service component config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -171,7 +164,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds ports to logstash service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -185,7 +178,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds debug and regular volumes to elasticsearch service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -199,7 +192,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds debug volumes to logstash service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -214,7 +207,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds debug and regular volumes to kibana service config', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -236,7 +229,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('adds context targets to compose where appropriate', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -248,7 +241,7 @@ services:
     });
 
   mockInit()
-    .command(['init', '--from-compose', compose_file_path, '-a', account_name, '-n', 'test-component'])
+    .command(['init', '--from-compose', compose_file_path, '-n', 'test-component'])
     .it('prints a warning if a field from the docker compose cannot be converted', ctx => {
       const writeFileSync = fs.writeFileSync as sinon.SinonStub;
       expect(writeFileSync.called).to.be.true;
@@ -256,49 +249,6 @@ services:
       expect(ctx.stdout).to.contain(`Could not convert elasticsearch property networks`);
       expect(ctx.stdout).to.contain(`Could not convert logstash property networks`);
       expect(ctx.stdout).to.contain(`Could not convert kibana property networks`);
-    });
-
-  mockArchitectAuth
-    .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/users/me`)
-      .reply(200, {
-        memberships: [
-          {
-            account: {
-              name: 'my-account-name'
-            },
-          }
-        ],
-      })
-    )
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
-    .it('uses only account membership if only one exists and account is unspecified', ctx => {
-      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-      expect(writeFileSync.called).to.be.true;
-
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.name).eq('my-account-name/test-component');
-    });
-
-  mockArchitectAuth
-    .stub(fs, 'writeFileSync', sinon.stub().returns(undefined))
-    .nock(MOCK_API_HOST, api => api
-      .get(`/users/me`)
-      .reply(500)
-    )
-    .stdout({ print })
-    .stderr({ print })
-    .command(['init', '--from-compose', path.join(__dirname, '../mocks/init-compose.yml'), '-n', 'test-component'])
-    .it('falls back to default account name if getting accounts fails and account is unspecified', ctx => {
-      const writeFileSync = fs.writeFileSync as sinon.SinonStub;
-      expect(writeFileSync.called).to.be.true;
-
-      expect(ctx.stdout).to.contain('No accounts found, using default account name "my-account"');
-      const component_config = buildConfigFromYml(writeFileSync.args[0][1]);
-      expect(component_config.name).eq('my-account/test-component');
     });
 
   it('finds a compose file in the current directory if one was unspecified', async () => {

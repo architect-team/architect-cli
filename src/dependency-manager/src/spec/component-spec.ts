@@ -187,7 +187,7 @@ export class ComponentSpec {
   @IsString()
   @JSONSchema({
     type: 'string',
-    // TODO:344 pattern: ComponentSlugUtils.Validator.source,
+    pattern: ComponentSlugUtils.Validator.source,
     errorMessage: ComponentSlugUtils.Description,
     description: `Globally unique friendly reference to the component. ${ComponentSlugUtils.Description}`,
   })
@@ -282,14 +282,6 @@ export class ComponentSpec {
     type: 'object',
 
     patternProperties: {
-      ['.*']: { // TODO:344
-        type: 'string',
-        pattern: Slugs.ComponentTagValidator.source,
-      },
-    },
-
-    /* TODO:344
-    patternProperties: {
       [ComponentSlugUtils.Validator.source]: {
         type: 'string',
         pattern: Slugs.ComponentTagValidator.source,
@@ -299,7 +291,8 @@ export class ComponentSpec {
     errorMessage: {
       additionalProperties: ComponentSlugUtils.Description,
     },
-    */
+
+    // TODO:344 update description
     description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
   })
   dependencies?: Dictionary<string>;

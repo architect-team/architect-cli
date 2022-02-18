@@ -1448,6 +1448,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/consumer')
     );
+    // TODO:344
     expect(graph.edges).to.deep.eq([
       {
         __type: 'output',

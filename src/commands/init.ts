@@ -7,7 +7,6 @@ import inquirer from 'inquirer';
 import yaml from 'js-yaml';
 import path from 'path';
 import untildify from 'untildify';
-import AccountUtils from '../architect/account/account.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
@@ -51,9 +50,6 @@ export abstract class InitCommand extends Command {
       description: 'Path where the component file should be written to',
       default: 'architect.yml',
     }),
-    account: Flags.string({
-      char: 'a',
-    }),
     name: Flags.string({
       char: 'n',
     }),
@@ -83,17 +79,6 @@ export abstract class InitCommand extends Command {
 
     const from_path = await this.getComposeFromPath(flags);
     const docker_compose = DockerComposeUtils.loadDockerCompose(from_path);
-
-    let account_name = 'my-account';
-    try {
-      const account = await AccountUtils.getAccount(this.app, flags.account);
-      account_name = account.name;
-    } catch (err: any) {
-      if (err.response?.status === 404) {
-        this.error(chalk.red(`Account ${flags.account} not found`));
-      }
-      this.log(chalk.yellow(`No accounts found, using default account name "${account_name}"`));
-    }
 
     const answers: any = await inquirer.prompt([
       {

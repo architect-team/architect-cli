@@ -367,7 +367,7 @@ services:
   describe('component validation', () => {
     it('invalid component name', async () => {
       const component_config = `
-      name: testcomponent
+      name: test_component
       `
 
       mock_fs({
@@ -392,11 +392,11 @@ services:
         'name',
       ])
       expect(errors[0].message).includes('architect/component-name');
-      expect(errors[0].component).eq('testcomponent');
+      expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
       expect(errors[0].end?.row).eq(2);
-      expect(errors[0].end?.column).eq(25);
+      expect(errors[0].end?.column).eq(26);
     });
 
     it('invalid key value', async () => {
