@@ -81,7 +81,7 @@ export default class PlatformCreate extends Command {
       flags_map[flag] = true;
     }
 
-    const account = await AccountUtils.getAccount(this.app, flags.account, 'Select an account to register the platform with');
+    const account = await AccountUtils.getAccount(this.app, flags.account, { account_message: 'Select an account to register the platform with' });
 
     const platform = await this.createArchitectPlatform(flags);
 

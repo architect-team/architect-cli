@@ -251,7 +251,7 @@ export default class Logs extends Command {
     }
 
     // If no env is set then we don't know if this is local or remote so ask
-    const account = await AccountUtils.getAccount(this.app, flags.account, undefined, !flags.environment);
+    const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
       return await this.runLocal();

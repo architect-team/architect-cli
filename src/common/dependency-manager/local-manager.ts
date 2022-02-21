@@ -10,7 +10,7 @@ import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-ma
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
 import PortUtil from '../utils/port';
 
-interface ComponentConfigOpts {
+export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
   map_all_interfaces?: boolean;
   instance_id?: string;

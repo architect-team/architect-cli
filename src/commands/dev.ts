@@ -6,15 +6,17 @@ import fs from 'fs-extra';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
+import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
+// TODO:344 remove?
 export abstract class DevCommand extends Command {
 
   static flags = {
@@ -43,6 +45,7 @@ export default class Dev extends DevCommand {
 
   static flags = {
     ...DevCommand.flags,
+    ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
     'compose-file': Flags.string({
@@ -283,6 +286,16 @@ export default class Dev extends DevCommand {
       linked_components
     );
 
+    if (flags.account) {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      dependency_manager.account = account.name;
+    } else {
+      const config_account = this.app.config.defaultAccount();
+      if (config_account) {
+        dependency_manager.account = config_account;
+      }
+    }
+
     if (flags.environment) {
       dependency_manager.environment = flags.environment;
     } else if (flags.production) {
@@ -298,7 +311,7 @@ export default class Dev extends DevCommand {
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
-    const component_options = { map_all_interfaces: !flags.production && !duplicates, interfaces_map };
+    const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
     for (const component_version of component_versions) {
       const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);

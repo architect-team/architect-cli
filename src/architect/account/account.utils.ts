@@ -26,10 +26,10 @@ export default class AccountUtils {
     return account.id === "dev";
   }
 
-  static async getAccount(app: AppService, account_name?: string, account_message?: string, ask_local_account?: boolean): Promise<Account> {
+  static async getAccount(app: AppService, account_name?: string, options?: { account_message?: string, ask_local_account?: boolean }): Promise<Account> {
     const config_account = app.config.defaultAccount();
     // Set the account name from the config only if an account name wasn't set as cli flag
-    if (config_account && !account_name && !ask_local_account) {
+    if (config_account && !account_name && !options?.ask_local_account) {
       account_name = config_account;
     }
 
@@ -37,7 +37,7 @@ export default class AccountUtils {
       console.log(chalk.blue(`Using account from environment variables: `) + account_name);
     }
 
-    if (!account_name && !ask_local_account) {
+    if (!account_name && !options?.ask_local_account) {
       const { data: user_data } = await app.api.get('/users/me');
       if (user_data.memberships?.length === 1) { // if user only has one account, use it by default
         return user_data.memberships[0].account;
@@ -53,14 +53,14 @@ export default class AccountUtils {
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
       let accounts: Account[] = [];
-      if (ask_local_account) {
+      if (options?.ask_local_account) {
         accounts.push(this.getLocalAccount());
       }
       const answers: any = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'account',
-          message: account_message || 'Select an account',
+          message: options?.account_message || 'Select an account',
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });

@@ -13,7 +13,12 @@ import { buildSpecFromYml } from '../../src/dependency-manager/src/spec/utils/co
 import { MOCK_API_HOST } from '../utils/mocks';
 
 // set to true while working on tests for easier debugging; otherwise oclif/test eats the stdout/stderr
-const print = true; // TODO:344
+const print = false;
+
+const account = {
+  id: 'test-account-id',
+  name: 'examples'
+}
 
 describe('local dev environment', function () {
 
@@ -516,7 +521,10 @@ describe('local dev environment', function () {
       return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
-      .get(`/accounts/examples/components/react-app/versions/latest`)
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}/components/react-app/versions/latest`)
       .reply(200, local_component_config_dependency))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
@@ -540,12 +548,15 @@ describe('local dev environment', function () {
       return component_and_dependency_parameter_secrets;
     })
     .nock(MOCK_API_HOST, api => api
+      .get(`/accounts/${account.name}`)
+      .reply(200, account))
+    .nock(MOCK_API_HOST, api => api
       .get(`/accounts/examples/components/react-app/versions/latest`)
       .reply(200, local_component_config_dependency))
     .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
     .stdout({ print })
     .stderr({ print })
-    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-r'])
+    .command(['dev', './examples/hello-world/architect.yml', '-i', 'test:hello', '-s', './examples/hello-world/values.yml', '-r', '-a', 'examples'])
     .it('Create a local recursive dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
@@ -606,13 +617,13 @@ describe('local dev environment', function () {
         return buildSpecFromYml(getHelloComponentConfig())
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
-      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'examples/hello-world': './examples/hello-world/architect.yml' }))
+      .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({ 'hello-world': './examples/hello-world/architect.yml' }))
       .stdout({ print })
       .stderr({ print })
 
     local_dev
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .command(['dev', 'examples/hello-world@tenant-1', '-i', 'hello'])
+      .command(['dev', 'hello-world@tenant-1', '-i', 'hello'])
       .it('Create a local dev with instance id and no tag', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
@@ -621,7 +632,7 @@ describe('local dev environment', function () {
 
     local_dev
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .command(['dev', 'examples/hello-world:latest@tenant-1', '-i', 'hello'])
+      .command(['dev', 'hello-world:latest@tenant-1', '-i', 'hello'])
       .it('Create a local dev with instance name and tag', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
@@ -637,15 +648,15 @@ describe('local dev environment', function () {
       })
       .stub(DeployUtils, 'readSecretsFile', () => {
         return {
-          'examples/hello-world:latest@tenant-1': {
+          'hello-world:latest@tenant-1': {
             'hello_ingress': 'hello-1'
           },
-          'examples/hello-world:latest@tenant-2': {
+          'hello-world:latest@tenant-2': {
             'hello_ingress': 'hello-2'
           }
         };
       })
-      .command(['dev', '-s', './examples/hello-world/values.yml', 'examples/hello-world@tenant-1', 'examples/hello-world@tenant-2'])
+      .command(['dev', '-s', './examples/hello-world/values.yml', 'hello-world@tenant-1', 'hello-world@tenant-2'])
       .it('Create a local dev with multiple instances of the same component', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
@@ -668,30 +679,30 @@ describe('local dev environment', function () {
         let config: string;
         if (path === './examples/react-app/architect.yml') {
           config = `
-          name: examples/auth
+          name: auth
           services:
             auth:
               interfaces:
                 main: 8080
               environment:
                 SELF_URL: \${{ ingresses.auth.url }} # is not auto-exposed
-                OLD_SELF_URL: \${{ environment.ingresses['examples/auth'].auth.url }} # is not auto-exposed
+                OLD_SELF_URL: \${{ environment.ingresses['auth'].auth.url }} # is not auto-exposed
           interfaces:
             auth: \${{ services.auth.interfaces.main.url }}
           `
         } else {
           config = `
-          name: examples/app
+          name: app
           dependencies:
-            examples/auth: latest
+            auth: latest
           services:
             app:
               interfaces:
                 main: 8080
               environment:
                 SELF_URL: \${{ ingresses.app.url }} # successfully auto-exposed as an ingress
-                OLD_SELF_URL: \${{ environment.ingresses['examples/app'].app.url }} # successfully auto-exposed as an ingress
-                DEPENDENCY_URL: \${{ dependencies['examples/auth'].ingresses.auth.url }} # is not auto-exposed
+                OLD_SELF_URL: \${{ environment.ingresses['app'].app.url }} # successfully auto-exposed as an ingress
+                DEPENDENCY_URL: \${{ dependencies['auth'].ingresses.auth.url }} # is not auto-exposed
           interfaces:
             app: \${{ services.app.interfaces.main.url }}
           `
@@ -700,13 +711,13 @@ describe('local dev environment', function () {
       })
       .stub(Docker, 'verify', sinon.stub().returns(Promise.resolve()))
       .stub(AppService.prototype, 'loadLinkedComponents', sinon.stub().returns({
-        'examples/app': './examples/hello-world/architect.yml',
-        'examples/auth': './examples/react-app/architect.yml'
+        'app': './examples/hello-world/architect.yml',
+        'auth': './examples/react-app/architect.yml'
       }))
       .stdout({ print })
       .stderr({ print })
       .stub(Dev.prototype, 'runCompose', sinon.stub().returns(undefined))
-      .command(['dev', 'examples/app'])
+      .command(['dev', 'app'])
       .it('Dev component with dependency with ingresses', ctx => {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
