@@ -8,7 +8,7 @@ import yaml from 'js-yaml';
 import opener from 'opener';
 import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
-import Command from '../base-command';
+import { default as BaseCommand, default as Command } from '../base-command';
 import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
@@ -16,27 +16,7 @@ import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
-// TODO:344 remove?
-export abstract class DevCommand extends Command {
-
-  static flags = {
-    ...Command.flags,
-  };
-
-  protected async parse<F, A extends {
-    [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
-    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const flags: any = parsed.flags;
-
-    // Merge any values set via deprecated flags into their supported counterparts
-    parsed.flags = flags;
-
-    return parsed;
-  }
-}
-
-export default class Dev extends DevCommand {
+export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -44,7 +24,7 @@ export default class Dev extends DevCommand {
   static description = 'Run your stack locally';
 
   static flags = {
-    ...DevCommand.flags,
+    ...BaseCommand.flags,
     ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 

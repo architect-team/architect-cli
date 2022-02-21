@@ -108,22 +108,3 @@ export function buildInterfacesRef(component_config: ComponentSpec | ComponentCo
   const component_ref = component_config.metadata.ref;
   return resourceRefToNodeRef(component_ref, component_config.metadata?.instance_id);
 }
-
-export const getServiceByRef = (component_config: ComponentConfig, service_ref: string): ServiceConfig | undefined => {
-  if (service_ref.startsWith(component_config.name)) {
-    const [service_name, component_tag] = service_ref.substr(component_config.name.length + 1).split(':');
-    if (component_tag === component_config.metadata?.tag) {
-      return component_config.services[service_name];
-    }
-  }
-};
-
-export const getTaskByRef = (component_config: ComponentConfig, task_ref: string): TaskConfig | undefined => {
-  if (task_ref.startsWith(component_config.name)) {
-    // TODO:344 substr
-    const [task_name, component_tag] = task_ref.substr(component_config.name.length + 1).split(':');
-    if (component_tag === component_config.metadata?.tag) {
-      return component_config.tasks[task_name];
-    }
-  }
-};

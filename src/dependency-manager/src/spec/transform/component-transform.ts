@@ -9,10 +9,6 @@ export const transformComponentSpecTag = (tag?: string): string => {
   return tag || Slugs.DEFAULT_TAG;
 };
 
-export const transformLocalPath = (component_extends?: string): string | undefined => {
-  return component_extends?.startsWith('file:') ? component_extends?.substr('file:'.length) : undefined;
-};
-
 export const transformBooleanString = (boolean_string: string | boolean): boolean => {
   if (boolean_string === 'true') {
     return true;

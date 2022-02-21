@@ -20,7 +20,6 @@ export class Slugs {
 
   public static LabelMax = 63;
   public static LabelSlugDescription = `max length ${Slugs.LabelMax} characters, must begin and end with an alphanumeric character ([a-z0-9A-Z]), could contain dashes (-), underscores (_), dots (.), and alphanumerics between.`;
-  // TODO:344 remove nomaxlength
   public static LabelValueSlugRegexNoMaxLength = '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?';
   public static LabelValueSlugValidatorString = `^(?=.{1,${Slugs.LabelMax}})${Slugs.LabelValueSlugRegexNoMaxLength}$`;
   public static LabelValueSlugValidator = new RegExp(Slugs.LabelValueSlugValidatorString);
@@ -74,8 +73,7 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
 
 export class ComponentSlugUtils extends SlugUtils {
 
-  // TODO:344 change description
-  public static Description = 'Must be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name). The following slug must be kebab-case: alphanumerics punctuated only by dashes.';
+  public static Description = `${Slugs.ArchitectSlugDescription}; optionally can be prefixed with a valid Architect account and separated by a slash (e.g. architect/component-name).`;
 
   static RegexName = `(?:(?<component_account_name>${Slugs.ArchitectSlugRegexBase})${Slugs.NAMESPACE_DELIMITER})?(?<component_name>${Slugs.ArchitectSlugRegexBase})`;
   static RegexInstance = `(?:${Slugs.INSTANCE_DELIMITER}(?<instance_name>${Slugs.ComponentTagRegexBase}))?`;
@@ -101,9 +99,11 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   tag: string;
   instance_name: string;
 }
+
+// TODO:344 remove tag?
 export class ComponentVersionSlugUtils extends SlugUtils {
 
-  public static Description = `must be of the form <account-name>/<component-name>:<tag> OR <account-name>/<component-name>. The latter will assume \`${Slugs.DEFAULT_TAG}\` tag`;
+  public static Description = ComponentSlugUtils.Description;
 
   public static RegexTag = `(?:${Slugs.TAG_DELIMITER}(?<tag>${Slugs.ComponentTagRegexBase}))?`;
 
@@ -140,14 +140,16 @@ export class ResourceSlugUtils extends SlugUtils {
 
   public static RegexResource = `${ComponentSlugUtils.RegexName}\\${Slugs.RESOURCE_DELIMITER}(?<resource_type>services|tasks)\\${Slugs.RESOURCE_DELIMITER}(?<resource_name>${Slugs.ArchitectSlugRegexBase})`;
 
-  // TODO:344 support instance name
   public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentSlugUtils.RegexInstance}`;
   public static Validator = new RegExp(`^${ResourceSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string | undefined, component_name: string, resource_type: ResourceType, resource_name: string): ResourceSlug => {
+  public static build = (account_name: string | undefined, component_name: string, resource_type: ResourceType, resource_name: string, instance_name = ''): ResourceSlug => {
     let slug = `${component_name}${Slugs.RESOURCE_DELIMITER}${resource_type}${Slugs.RESOURCE_DELIMITER}${resource_name}`;
     if (account_name) {
       slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
+    }
+    if (instance_name) {
+      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
     }
     return slug;
   };

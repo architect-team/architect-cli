@@ -4,14 +4,13 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildSpecFromPath, buildSpecFromYml, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
 describe('validate spec', () => {
 
   describe('component config validation', () => {
     it('valid service ref brackets', async () => {
-      // TODO:344 test dependencies
       const component_config = `
       name: component
       services:
@@ -116,6 +115,33 @@ services:
       expect(errors).lengthOf(1);
       expect(errors[0].message).includes(`services.stateless-app.interfaces.main.url`);
       expect(errors[0].path).eq(`interfaces.frontend`);
+    });
+
+    it('services and tasks can share the same name', async () => {
+      const component_config = `
+      name: component
+      services:
+        app:
+          environment:
+            TEST: 1
+      tasks:
+        app:
+          environment:
+            TEST: 1
+      `
+      mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'component': '/architect.yml',
+      });
+
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('component'),
+      ]);
+      expect(graph.nodes).to.have.lengthOf(2)
+      expect(graph.nodes.map((node) => node.ref)).to.have.members([
+        resourceRefToNodeRef('component.services.app:latest'),
+        resourceRefToNodeRef('component.tasks.app:latest')
+      ])
     });
 
     it('valid service depends_on', async () => {

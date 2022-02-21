@@ -40,7 +40,7 @@ describe('slug validators with account', () => {
   });
 
   it(`ComponentVersionSlugUtils.parse throws exception on ${invalid_component_version_slug}`, async () => {
-    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(`must be of the form`);
+    expect(() => ComponentVersionSlugUtils.parse(invalid_component_version_slug)).to.throw(ComponentVersionSlugUtils.Description);
   });
 
   it(`ResourceSlugUtils.parse accurately splits ${resource_slug}`, async () => {
