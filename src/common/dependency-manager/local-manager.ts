@@ -13,6 +13,7 @@ import PortUtil from '../utils/port';
 interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
   map_all_interfaces?: boolean;
+  instance_id?: string;
 }
 
 export default class LocalDependencyManager extends DependencyManager {
@@ -50,7 +51,7 @@ export default class LocalDependencyManager extends DependencyManager {
       ref: component_ref,
       tag: tag,
       instance_name,
-      instance_id: component_ref,
+      instance_id: options?.instance_id || component_ref,
       instance_date: this.now,
       proxy_port_mapping: {},
     };

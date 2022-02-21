@@ -10,12 +10,12 @@ import { AnyOf, ArrayOf, ExpressionOr, ExpressionOrString } from './utils/json-s
 import { ComponentSlugUtils, Slugs } from './utils/slugs';
 
 export interface ComponentInstanceMetadata {
-  tag: string;
-  ref: string;
+  readonly tag: string;
+  readonly ref: string;
 
-  instance_name?: string;
-  instance_id?: string;
-  instance_date: Date;
+  readonly instance_name?: string;
+  readonly instance_id?: string;
+  readonly instance_date: Date;
 
   proxy_port_mapping: Dictionary<number>;
 

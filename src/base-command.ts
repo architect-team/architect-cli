@@ -1,4 +1,5 @@
-import { Command, Flags, Interfaces } from '@oclif/core';
+import { Command, Interfaces } from '@oclif/core';
+import chalk from 'chalk';
 import AppService from './app-config/service';
 import { prettyValidationErrors } from './common/dependency-manager/validation';
 import LoginRequiredError from './common/errors/login-required';
@@ -16,9 +17,7 @@ export default abstract class BaseCommand extends Command {
     return true;
   }
 
-  static flags = {
-    verbose: Flags.boolean(),
-  };
+  static flags = {};
 
   checkFlagDeprecations(flags: any, flag_definitions: any): void {
     Object.keys(flags).forEach((flagName: string) => {
@@ -100,34 +99,19 @@ export default abstract class BaseCommand extends Command {
       return prettyValidationErrors(err);
     }
 
-    /* TODO:344
-    let message = '';
-    if (err.config) {
-      message += `${err.config.url} [${err.config.method}] `;
-    }
-
-    let verbose = false;
-    try {
-      const { flags }: any = await this.parse(this.constructor as any);
-      verbose = flags.verbose;
-      // eslint-disable-next-line no-empty
-    } catch { }
-
     if (err.response?.data instanceof Object) {
-      message += `${err.request.path} (${err.response.status})`;
+      err.message += `\nmethod: ${err.config.method}`;
       for (const [k, v] of Object.entries(err.response.data)) {
-        message += `\n${k}: ${v}`;
+        err.message += `\n${k}: ${v}`;
       }
-    } else if (err.stderr) {
-      message += err.stderr;
-    } else if (err.stack && verbose) {
-      message += err.stack.replace('Error: ', '');
-    } else {
-      message += err.message || 'Unknown error';
     }
-    */
+
+    if (err.stderr) {
+      err.message += `\nstderr: ${err.stderr}`;
+    }
+
+    err.message = chalk.red(err.message);
 
     return super.catch(err);
-    //this.error(!err.name || err.name === 'Error' ? '\n' + message : err.name + '\n' + message);
   }
 }

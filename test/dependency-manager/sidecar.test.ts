@@ -7,7 +7,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
-import { buildInterfacesRef, DependencyNode, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { DependencyNode, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import DependencyGraph from '../../src/dependency-manager/src/graph';
 
 describe('sidecar spec v1', () => {
@@ -457,24 +457,11 @@ describe('sidecar spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const admin_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
     const admin_instance_id = 'env1-tenant-1';
-    admin_component.metadata!.instance_id = admin_instance_id;
+    const admin_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1', { instance_id: admin_instance_id });
 
-    const test_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
-    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test_component));
-
-    const test2_component = await manager.loadComponentSpec('voic/admin-ui@tenant-2');
-    test2_component.metadata!.instance_id = 'env1-tenant-1';
-    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test2_component));
-
-    const test3_component = await manager.loadComponentSpec('voic/admin-ui@tenant-1');
-    test3_component.metadata!.instance_id = 'env1-tenant-1-test';
-    expect(buildInterfacesRef(admin_component)).to.not.equal(buildInterfacesRef(test3_component));
-
-    const catalog_component = await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } })
     const catalog_instance_id = 'env1'
-    catalog_component.metadata!.instance_id = catalog_instance_id;
+    const catalog_component = await manager.loadComponentSpec('voic/product-catalog', { instance_id: catalog_instance_id, interfaces: { public2: 'public', admin2: 'admin' } })
 
     const graph = await manager.getGraph([
       admin_component,

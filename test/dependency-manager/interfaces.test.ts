@@ -864,7 +864,6 @@ describe('interfaces spec v1', () => {
     expect(followed_edge.length).eq(1);
     expect(followed_edge[0].interface_from).eq('service->mysql');
     expect(followed_edge[0].interface_to).eq('mysql');
-    expect(followed_edge[0].node_to.ref).eq('dependency-db-zxdyijfg');
     expect(followed_edge[0].node_to_interface_name).eq('mysql');
   });
 });

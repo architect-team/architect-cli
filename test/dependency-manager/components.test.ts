@@ -481,7 +481,7 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentSpec('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = resourceRefToNodeRef('architect/cloud.services.syncer:v1');
+      const syncer_ref = resourceRefToNodeRef('architect/cloud.tasks.syncer:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         syncer_ref,
@@ -490,7 +490,7 @@ describe('components spec v1', function () {
       expect(task_node.__type).equals('task');
       expect(task_node.config.schedule).equals('*/1 * * * *');
       expect(task_node.config.name).equals('syncer');
-      expect(task_node.config.ref).equals('architect/cloud/syncer:v1');
+      expect(task_node.config.ref).equals('architect/cloud.tasks.syncer:v1');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });
@@ -519,7 +519,7 @@ describe('components spec v1', function () {
       const component_config = await manager.loadComponentSpec('architect/cloud:v1');
       const graph = await manager.getGraph([component_config]);
 
-      const syncer_ref = resourceRefToNodeRef('architect/cloud.services.syncer:v1');
+      const syncer_ref = resourceRefToNodeRef('architect/cloud.tasks.syncer:v1');
       const app_ref = resourceRefToNodeRef('architect/cloud.services.app:v1');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([

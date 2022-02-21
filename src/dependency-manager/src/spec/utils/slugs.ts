@@ -64,7 +64,7 @@ function parseCurry<S extends string, P extends ParsedSlug>() {
 
     const groups = matches?.groups || {};
     if ('tag' in groups && groups.tag === undefined) {
-      groups.tag = 'latest';
+      groups.tag = Slugs.DEFAULT_TAG;
     }
     return groups as any;
   }
