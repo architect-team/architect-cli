@@ -139,8 +139,8 @@ services:
       ]);
       expect(graph.nodes).to.have.lengthOf(2)
       expect(graph.nodes.map((node) => node.ref)).to.have.members([
-        resourceRefToNodeRef('component.services.app:latest'),
-        resourceRefToNodeRef('component.tasks.app:latest')
+        resourceRefToNodeRef('component.services.app'),
+        resourceRefToNodeRef('component.tasks.app')
       ])
     });
 
@@ -977,7 +977,7 @@ services:
       "*": {
         "POSTGRES_HOST": "172.17.0.1"
       },
-      "architect/cloud:latest": {
+      "architect/cloud": {
         "TEST": "string"
       }
 
@@ -1012,7 +1012,7 @@ services:
 
   it('invalid value keys in values files fail validation', () => {
     const values_dict = {
-      "architect/cloud:latest": {
+      "architect/cloud": {
         "TE@ST": "string"
       }
     };
@@ -1026,13 +1026,13 @@ services:
     expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
-    expect(errors[0].path).eq(`architect/cloud:latest.TE@ST`);
+    expect(errors[0].path).eq(`architect/cloud.TE@ST`);
   });
 
   it('component values are defined in an object', () => {
     const values_dict = {
-      "architect/cloud:latest": [],
-      "architect/cloud:*": 'string'
+      "architect/cloud": [],
+      "architect/cloud@v2": 'string'
     };
 
     let err;
@@ -1044,16 +1044,16 @@ services:
     expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(2);
-    expect(errors[0].path).eq(`architect/cloud:latest`);
-    expect(errors[1].path).eq(`architect/cloud:*`);
+    expect(errors[0].path).eq(`architect/cloud`);
+    expect(errors[1].path).eq(`architect/cloud@v2`);
   });
 
   it('component values are strings only', () => {
     const values_dict = {
-      "architect/cloud:latest": {
+      "architect/cloud": {
         'test': 'test value'
       },
-      "architect/cloud:*": {
+      "architect/cloud@v2": {
         'ANOTHER_test': 'another value'
       },
       "architect/*": {

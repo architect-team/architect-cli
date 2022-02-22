@@ -67,7 +67,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ], { '*': { null_required: null } });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({});
   });
@@ -96,7 +96,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({ TEST: '1 and 2' });
   });
@@ -146,9 +146,9 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpec('concourse/worker')
     ]);
 
-    const web_interfaces_ref = resourceRefToNodeRef('concourse/web:latest');
-    const web_ref = resourceRefToNodeRef('concourse/web.services.web:latest');
-    const worker_ref = resourceRefToNodeRef('concourse/worker.services.worker:latest');
+    const web_interfaces_ref = resourceRefToNodeRef('concourse/web');
+    const web_ref = resourceRefToNodeRef('concourse/web.services.web');
+    const worker_ref = resourceRefToNodeRef('concourse/worker.services.worker');
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       web_interfaces_ref,
@@ -297,10 +297,10 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpec('examples/frontend')
     ]);
 
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api:latest');
+    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
     const backend_interface_ref = `${backend_ref}-main`;
     const backend_external_url = `http://main.arc.localhost`
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app:latest');
+    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
       EXTERNAL_API_HOST: backend_external_url,
@@ -345,7 +345,7 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpec('examples/frontend')
     ], {}, true, false);
 
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app:latest');
+    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     const expected = {
       INTERNAL_ADDR: '<error: dependencies.examples/backend.interfaces.main.url>',
@@ -444,7 +444,7 @@ describe('interpolation spec v1', () => {
     ]);
 
     const template = await DockerComposeUtils.generate(graph);
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api:latest');
+    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
     expect(template.services[backend_ref].environment).to.deep.eq({
       CORS: JSON.stringify([`http://arc.localhost`, 'http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost', 'https://app.architect.io']),
       CORS2: JSON.stringify(['http://frontend.arc.localhost', 'http://main.arc.localhost', 'http://main2.arc.localhost'])
@@ -507,7 +507,7 @@ describe('interpolation spec v1', () => {
     ]);
     const backend_external_url = 'http://backend.arc.localhost'
     const backend2_external_url = 'http://backend2.arc.localhost'
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api:latest');
+    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
     const backend_node = graph.getNodeByRef(backend_ref) as ServiceNode;
     expect(backend_node.config.environment).to.deep.eq({
       DNS_ZONE: 'arc.localhost',
@@ -517,7 +517,7 @@ describe('interpolation spec v1', () => {
       EXTERNAL_HOST2: backend2_external_url,
       EXTERNAL_HOST3: backend_external_url
     })
-    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app:latest');
+    const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
     const frontend_node = graph.getNodeByRef(frontend_ref) as ServiceNode;
     expect(frontend_node.config.environment).to.deep.eq({
       DNS_ZONE: 'arc.localhost',
@@ -563,7 +563,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('test/component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web:latest');
+  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     APPLICATION_PROPERTIES: 'log_level=debug'
@@ -602,7 +602,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('test/component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web:latest');
+  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_DATA: 'some test file data from component param'
@@ -637,7 +637,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     T3ST_FILE_DATA16: 'some file data'
@@ -672,7 +672,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data'
@@ -707,7 +707,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data'
@@ -744,7 +744,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data',
@@ -780,7 +780,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line',
@@ -816,7 +816,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('test/component'),
   //   ]);
-  //   const web_ref = resourceRefToNodeRef('test/component.services.web:latest');
+  //   const web_ref = resourceRefToNodeRef('test/component.services.web');
   //   const node = graph.getNodeByRef(web_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_DATA: 'some file data\nsome file data on a new line\n  file data indented on a new line'
@@ -851,7 +851,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_DATA: 'some file data',
@@ -888,7 +888,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     TEST_FILE_ENV: 'manually set test file env'
@@ -918,7 +918,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ], { '*': { secret: '[abc' } });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       SECRET: '[abc'
@@ -952,7 +952,7 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       data_from_my_config_file: 'regular config file data'
@@ -987,7 +987,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     ENV_PARAM: 'env_param_data'
@@ -1027,7 +1027,7 @@ describe('interpolation spec v1', () => {
   //   const graph = await manager.getGraph([
   //     await manager.loadComponentSpec('examples/hello-world'),
   //   ]);
-  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+  //   const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
   //   const node = graph.getNodeByRef(api_ref) as ServiceNode;
   //   expect(node.config.environment).to.deep.eq({
   //     CONFIG_DATA: 'test.security.apiTrustedSecret=$${TEST_AUTH_CODE_SECRET:}\n    test.security.apiTrustedSecret2=$${ TEST_AUTH_CODE_SECRET }'
@@ -1071,7 +1071,7 @@ describe('interpolation spec v1', () => {
       '*': { aws_secret: 'test' },
       'examples/hello-world*': { other_secret: 'shown' }
     });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       AWS_SECRET: 'test',
@@ -1129,7 +1129,7 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpecs('examples/hello-world'), {
       '*': { test_subdomain: 'test-subdomain' },
     });
-    const app_ref = resourceRefToNodeRef('examples/dependency.services.app:latest');
+    const app_ref = resourceRefToNodeRef('examples/dependency.services.app');
     const node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       ADDR: 'http://test-subdomain.arc.localhost',
@@ -1137,7 +1137,7 @@ describe('interpolation spec v1', () => {
       DNS_ZONE: 'arc.localhost'
     });
 
-    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency:latest')) as IngressEdge
+    const ingress_edge = graph.edges.find((edge) => edge.to === resourceRefToNodeRef('examples/dependency')) as IngressEdge
     expect(ingress_edge.interface_mappings).to.deep.equal([{ interface_from: 'test-subdomain', interface_to: 'app' }]);
     expect(ingress_edge.consumers_map).keys('app')
   });
@@ -1165,7 +1165,7 @@ describe('interpolation spec v1', () => {
       // @ts-ignore
       '*': { replicas: 1 },
     });
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(1);
   });
@@ -1192,7 +1192,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.replicas).to.eq(3);
   });
@@ -1218,7 +1218,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       SECRET: ''
@@ -1254,7 +1254,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/hello-world'));
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       DB_ADDR: ':5432',
@@ -1297,7 +1297,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
 
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const hello_component = await manager.loadComponentSpec('examples/hello-world')
     const component_ref = buildInterfacesRef(hello_component);
     const node = graph.getNodeByRef(component_ref) as ComponentNode;
@@ -1345,7 +1345,7 @@ describe('interpolation spec v1', () => {
       // @ts-ignore
       { '*': { required_ip_whitelist: ['127.0.0.1/32'] } }
     );
-    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
 
     const hello_component = await manager.loadComponentSpec('examples/hello-world')
     const component_ref = buildInterfacesRef(hello_component);
@@ -1404,7 +1404,7 @@ describe('interpolation spec v1', () => {
     });
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/consumer'));
-    const api_ref = resourceRefToNodeRef('examples/consumer.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/consumer.services.api');
     // Check the interpolated values on the service node resolved correctly
     const service_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(service_node.config.environment).to.deep.eq({
@@ -1496,9 +1496,9 @@ describe('interpolation spec v1', () => {
     const graph = await manager.getGraph(
       await manager.loadComponentSpecs('examples/consumer')
     );
-    const publisher_component_ref = resourceRefToNodeRef('examples/publisher:latest');
-    const publisher_api_ref = resourceRefToNodeRef('examples/publisher.services.publisher-api:latest');
-    const consumer_api_ref = resourceRefToNodeRef('examples/consumer.services.consumer-api:latest');
+    const publisher_component_ref = resourceRefToNodeRef('examples/publisher');
+    const publisher_api_ref = resourceRefToNodeRef('examples/publisher.services.publisher-api');
+    const consumer_api_ref = resourceRefToNodeRef('examples/consumer.services.consumer-api');
     expect(graph.edges.map((e) => e.toString())).has.members([
       `${publisher_component_ref} [api] -> ${publisher_api_ref} [main]`,
       `${consumer_api_ref} [service->api] -> ${publisher_component_ref} [api]`,
@@ -1556,21 +1556,21 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpecs('examples/upstream')
     );
 
-    const app_ref = resourceRefToNodeRef('examples/test.services.app:latest');
+    const app_ref = resourceRefToNodeRef('examples/test.services.app');
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.config.environment).to.deep.eq({
       API_PORT: '12345',
       API_ADDR: 'http://127.0.0.1:12345'
     })
 
-    const api_ref = resourceRefToNodeRef('examples/test.services.api:latest');
+    const api_ref = resourceRefToNodeRef('examples/test.services.api');
     const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(api_node.config.environment).to.deep.eq({
       MY_PORT: '8080',
       MY_ADDR: 'http://127.0.0.1:8080'
     })
 
-    const upstream_ref = resourceRefToNodeRef('examples/upstream.services.app:latest');
+    const upstream_ref = resourceRefToNodeRef('examples/upstream.services.app');
     const upstream_node = graph.getNodeByRef(upstream_ref) as ServiceNode;
     expect(upstream_node.config.environment).to.deep.eq({
       API_PORT: '12345',

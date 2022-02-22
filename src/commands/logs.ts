@@ -8,7 +8,7 @@ import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
-import { ArchitectError, parseUnknownSlug, ResourceVersionSlugUtils } from '../dependency-manager/src';
+import { ArchitectError, parseUnknownSlug, ResourceSlugUtils } from '../dependency-manager/src';
 
 export default class Logs extends Command {
   static description = 'Get logs from services both locally and remote';
@@ -191,7 +191,7 @@ export default class Logs extends Command {
 
         let display_name = replica.display_name;
         if (!display_name) {
-          const { resource_name } = ResourceVersionSlugUtils.parse(replica.resource_ref);
+          const { resource_name } = ResourceSlugUtils.parse(replica.resource_ref);
           display_name = resource_name;
         }
 

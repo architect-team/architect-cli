@@ -76,7 +76,7 @@ describe('local dev environment', function () {
     `;
 
   const basic_parameter_secrets = {
-    'hello-world:latest': {
+    'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value',
@@ -85,11 +85,9 @@ describe('local dev environment', function () {
     },
   }
   const wildcard_parameter_secrets = {
-    'hello-world:*': {
+    'hello-world': {
       'a_required_key': 'some_value',
-      'api_port': 3000
-    },
-    'hello-world:la*': {
+      'api_port': 3000,
       'one_more_required_param': 'one_more_value'
     },
     '*': {
@@ -97,7 +95,7 @@ describe('local dev environment', function () {
     }
   }
   const stacked_parameter_secrets = {
-    'hello-world:*': {
+    'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value',
@@ -177,7 +175,7 @@ describe('local dev environment', function () {
     'tag': 'latest'
   }
   const component_and_dependency_parameter_secrets = {
-    'hello-world:*': {
+    'hello-world': {
       'a_required_key': 'some_value',
       'another_required_key': 'required_value',
       'one_more_required_param': 'one_more_value'
@@ -249,8 +247,8 @@ describe('local dev environment', function () {
     }
   };
 
-  const seed_app_ref = resourceRefToNodeRef('database-seeding.services.app:latest');
-  const seed_db_ref = resourceRefToNodeRef('database-seeding.services.my-demo-db:latest');
+  const seed_app_ref = resourceRefToNodeRef('database-seeding.services.app');
+  const seed_db_ref = resourceRefToNodeRef('database-seeding.services.my-demo-db');
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
     "version": "3",
@@ -324,7 +322,7 @@ describe('local dev environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = resourceRefToNodeRef('hello-world.services.api:latest');
+  const hello_api_ref = resourceRefToNodeRef('hello-world.services.api');
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -400,7 +398,7 @@ describe('local dev environment', function () {
     .it('Sticky label added for sticky interfaces', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       expect(runCompose.calledOnce).to.be.true;
-      const hello_api_ref = resourceRefToNodeRef('hello-world.services.api:latest');
+      const hello_api_ref = resourceRefToNodeRef('hello-world.services.api');
       expect(runCompose.firstCall.args[0].services[hello_api_ref].labels).to.contain(`traefik.http.services.${hello_api_ref}-hello-service.loadBalancer.sticky.cookie=true`);
     })
 
@@ -560,7 +558,7 @@ describe('local dev environment', function () {
     .it('Create a local recursive dev with a basic component, a dependency, and a values file', ctx => {
       const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
       const hello_world_environment = (runCompose.firstCall.args[0].services[hello_api_ref] as any).environment;
-      const react_app_ref = resourceRefToNodeRef('react-app.services.app:latest');
+      const react_app_ref = resourceRefToNodeRef('react-app.services.app');
       const react_app_environment = (runCompose.firstCall.args[0].services[react_app_ref] as any).environment;
       expect(hello_world_environment.a_required_key).to.equal('some_value');
       expect(hello_world_environment.another_required_key).to.equal('required_value');
@@ -608,7 +606,7 @@ describe('local dev environment', function () {
   });
 
   describe('instance devs', function () {
-    const hello_api_instance_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-1');
+    const hello_api_instance_ref = resourceRefToNodeRef('hello-world.services.api@tenant-1');
     const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
 
     const local_dev = test
@@ -648,10 +646,10 @@ describe('local dev environment', function () {
       })
       .stub(DeployUtils, 'readSecretsFile', () => {
         return {
-          'hello-world:latest@tenant-1': {
+          'hello-world@tenant-1': {
             'hello_ingress': 'hello-1'
           },
-          'hello-world:latest@tenant-2': {
+          'hello-world@tenant-2': {
             'hello_ingress': 'hello-2'
           }
         };
@@ -661,8 +659,8 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true;
 
-        const tenant_1_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-1');
-        const tenant_2_ref = resourceRefToNodeRef('hello-world.services.api:latest@tenant-2');
+        const tenant_1_ref = resourceRefToNodeRef('hello-world.services.api@tenant-1');
+        const tenant_2_ref = resourceRefToNodeRef('hello-world.services.api@tenant-2');
 
         const compose = runCompose.firstCall.args[0];
         expect(Object.keys(compose.services)).includes(tenant_1_ref, tenant_2_ref)
@@ -722,9 +720,9 @@ describe('local dev environment', function () {
         const runCompose = Dev.prototype.runCompose as sinon.SinonStub;
         expect(runCompose.calledOnce).to.be.true
         const compose = runCompose.firstCall.args[0];
-        const app_ref = resourceRefToNodeRef('app.services.app:latest');
+        const app_ref = resourceRefToNodeRef('app.services.app');
         expect(compose.services[app_ref].labels).includes('traefik.enable=true');
-        const auth_ref = resourceRefToNodeRef('auth.services.auth:latest');
+        const auth_ref = resourceRefToNodeRef('auth.services.auth');
         expect(compose.services[auth_ref].labels).includes('traefik.enable=true');
       })
   });

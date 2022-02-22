@@ -39,8 +39,7 @@ export default class LocalDependencyManager extends DependencyManager {
     };
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const component_slug = ComponentSlugUtils.build(component_account_name, component_name);
-    const component_ref = ComponentVersionSlugUtils.build(component_account_name, component_name, tag, instance_name);
+    const component_ref = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
 
     if (this.loaded_components[component_ref]) {
       return this.loaded_components[component_ref];
@@ -58,7 +57,7 @@ export default class LocalDependencyManager extends DependencyManager {
 
     const account_name = component_account_name || this.account;
 
-    const linked_component_key = component_slug in this.linked_components ? component_slug : component_name;
+    const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(component_account_name, component_name);
     const linked_component = this.linked_components[linked_component_key];
     if (!linked_component && !account_name) {
       throw new ArchitectError(`Didn't find link for component '${linked_component_key}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);

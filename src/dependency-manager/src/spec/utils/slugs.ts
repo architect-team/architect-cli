@@ -44,7 +44,7 @@ export type ComponentSlug = string; // "<account-name>/<component-name>"
 export interface ParsedComponentSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
-  instance_name: string;
+  instance_name?: string;
 }
 
 abstract class SlugUtils {
@@ -82,11 +82,15 @@ export class ComponentSlugUtils extends SlugUtils {
 
   public static Validator = new RegExp(`^${ComponentSlugUtils.RegexBase}$`);
 
-  public static build = (account_name: string | undefined, component_name: string): ComponentSlug => {
-    if (account_name)
-      return `${account_name}${Slugs.NAMESPACE_DELIMITER}${component_name}`;
-    else
-      return component_name;
+  public static build = (account_name: string | undefined, component_name: string, instance_name = ''): ComponentSlug => {
+    let slug = component_name;
+    if (account_name) {
+      slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
+    }
+    if (instance_name) {
+      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
+    }
+    return slug;
   };
 
   public static parse = parseCurry<ComponentSlug, ParsedComponentSlug>();
@@ -97,7 +101,7 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   component_account_name?: string;
   component_name: string;
   tag: string;
-  instance_name: string;
+  instance_name?: string;
 }
 
 // TODO:344 remove tag?
@@ -133,6 +137,7 @@ export interface ParsedResourceSlug extends ParsedSlug {
   component_name: string;
   resource_type: ResourceType;
   resource_name: string;
+  instance_name?: string;
 }
 export class ResourceSlugUtils extends SlugUtils {
 
@@ -157,36 +162,7 @@ export class ResourceSlugUtils extends SlugUtils {
   public static parse = parseCurry<ResourceSlug, ParsedResourceSlug>();
 }
 
-export type ResourceVersionSlug = string;
-export interface ParsedResourceVersionSlug extends ParsedSlug {
-  component_account_name?: string;
-  component_name: string;
-  resource_type: ResourceType;
-  resource_name: string;
-  tag: string;
-  instance_name?: string;
-}
-export class ResourceVersionSlugUtils extends SlugUtils {
-
-  public static Description = 'must be of the form <account-name>/<component-name>.services|tasks.<resource-name>:<tag>';
-  public static RegexBase = `${ResourceSlugUtils.RegexResource}${ComponentVersionSlugUtils.RegexTag}${ComponentSlugUtils.RegexInstance}`;
-  public static Validator = new RegExp(`^${ResourceVersionSlugUtils.RegexBase}$`);
-
-  public static build = (account_name: string | undefined, component_name: string, resource_type: ResourceType, resource_name: string, tag = Slugs.DEFAULT_TAG, instance_name = ''): ResourceVersionSlug => {
-    let slug = `${component_name}${Slugs.RESOURCE_DELIMITER}${resource_type}${Slugs.RESOURCE_DELIMITER}${resource_name}${Slugs.TAG_DELIMITER}${tag}`;
-    if (account_name) {
-      slug = `${account_name}${Slugs.NAMESPACE_DELIMITER}${slug}`;
-    }
-    if (instance_name) {
-      slug = `${slug}${Slugs.INSTANCE_DELIMITER}${instance_name}`;
-    }
-    return slug;
-  };
-
-  public static parse = parseCurry<ResourceVersionSlug, ParsedResourceVersionSlug>();
-}
-
-type ParsedUnknownSlug = ParsedComponentSlug | ParsedComponentVersionSlug | ParsedResourceSlug | ParsedResourceVersionSlug;
+type ParsedUnknownSlug = ParsedComponentSlug | ParsedComponentVersionSlug | ParsedResourceSlug;
 export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
   try {
     return ComponentSlugUtils.parse(unknown);
@@ -196,9 +172,5 @@ export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
     return ComponentVersionSlugUtils.parse(unknown);
     // eslint-disable-next-line no-empty
   } catch { }
-  try {
-    return ResourceSlugUtils.parse(unknown);
-    // eslint-disable-next-line no-empty
-  } catch { }
-  return ResourceVersionSlugUtils.parse(unknown);
+  return ResourceSlugUtils.parse(unknown);
 };

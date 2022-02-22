@@ -77,8 +77,7 @@ export default abstract class DependencyManager {
         if (dependency_name === component.name) {
           ingresses.push([component, interface_name]);
         } else {
-          const dep_tag = component.dependencies[dependency_name];
-          const dep_component = dependency_map[`${dependency_name}:${dep_tag}`];
+          const dep_component = dependency_map[dependency_name];
           ingresses.push([dep_component, interface_name]);
         }
       }
@@ -86,8 +85,7 @@ export default abstract class DependencyManager {
       while ((matches = dependencies_ingresses_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, interface_name } = matches.groups;
-        const dep_tag = component.dependencies[dependency_name];
-        const dep_component = dependency_map[`${dependency_name}:${dep_tag}`];
+        const dep_component = dependency_map[dependency_name];
         ingresses.push([dep_component, interface_name]);
       }
       const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
@@ -157,9 +155,8 @@ export default abstract class DependencyManager {
       while ((matches = dep_interface_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, interface_name } = matches.groups;
-        const dep_tag = component.dependencies[dependency_name];
 
-        const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
+        const dependency = dependency_map[dependency_name];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -180,9 +177,8 @@ export default abstract class DependencyManager {
       while ((matches = dep_output_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, output_name } = matches.groups;
-        const dep_tag = component.dependencies[dependency_name];
 
-        const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
+        const dependency = dependency_map[dependency_name];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -224,9 +220,8 @@ export default abstract class DependencyManager {
 
       if (!matches.groups) { continue; }
       const { dependency_name, interface_name } = matches.groups;
-      const dep_tag = component.dependencies[dependency_name];
 
-      const dependency = dependency_map[`${dependency_name}:${dep_tag}`];
+      const dependency = dependency_map[dependency_name];
       if (!dependency) continue;
       const to = buildInterfacesRef(dependency);
 
@@ -253,14 +248,13 @@ export default abstract class DependencyManager {
     }
 
     const component_ref = component_spec.metadata.ref;
-    const component_has_tag = component_ref.includes(':');
 
     const component_parameters = new Set(Object.keys(component_spec.parameters || {}));
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
     for (const [pattern, params] of Object.entries(sorted_values_dict)) {
-      if (isMatch(component_has_tag ? component_ref : `${component_ref}:latest`, [pattern])) {
+      if (isMatch(component_ref, [pattern])) {
         for (const [param_key, param_value] of Object.entries(params)) {
           if (component_parameters.has(param_key)) {
             res[param_key] = param_value;
@@ -313,8 +307,7 @@ export default abstract class DependencyManager {
     }
 
     const dependency_components = [];
-    for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
-      const dep_ref = `${dep_name}:${dep_tag}`;
+    for (const dep_ref of Object.keys(component_spec.dependencies || {})) {
       if (!component_map[dep_ref]) {
         continue;
       }
@@ -381,8 +374,7 @@ export default abstract class DependencyManager {
     while (component_specs_queue.length) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { component_spec, seen_refs } = component_specs_queue.pop()!;
-      for (const [dep_name, dep_tag] of Object.entries(component_spec.dependencies || {})) {
-        const dep_ref = `${dep_name}:${dep_tag}`;
+      for (const dep_ref of Object.keys(component_spec.dependencies || {})) {
         if (seen_refs.includes(dep_ref)) {
           throw new ArchitectError(`Circular component dependency detected (${seen_refs.join(' <> ')})`);
         }

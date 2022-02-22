@@ -1,5 +1,5 @@
 import { ComponentInstanceMetadata, ComponentSpec } from '../spec/component-spec';
-import { ComponentVersionSlugUtils, ParsedResourceVersionSlug, ResourceType, ResourceVersionSlugUtils, Slugs } from '../spec/utils/slugs';
+import { ComponentSlugUtils, ParsedResourceSlug, ResourceSlugUtils, ResourceType, Slugs } from '../spec/utils/slugs';
 import { Dictionary } from '../utils/dictionary';
 import { Refs } from '../utils/refs';
 import { ServiceConfig } from './service-config';
@@ -74,17 +74,17 @@ export interface ComponentConfig {
 export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   let parsed;
   try {
-    parsed = ResourceVersionSlugUtils.parse(resource_ref);
+    parsed = ResourceSlugUtils.parse(resource_ref);
   } catch {
-    parsed = ComponentVersionSlugUtils.parse(resource_ref);
+    parsed = ComponentSlugUtils.parse(resource_ref);
   }
   if (!instance_id) {
-    instance_id = ComponentVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, parsed.tag, parsed.instance_name);
+    instance_id = ComponentSlugUtils.build(parsed.component_account_name, parsed.component_name, parsed.instance_name);
   }
 
   let friendly_name = `${parsed.component_name}`;
-  if ((parsed as ParsedResourceVersionSlug).resource_name) {
-    friendly_name += `-${(parsed as ParsedResourceVersionSlug).resource_name}`;
+  if ((parsed as ParsedResourceSlug).resource_name) {
+    friendly_name += `-${(parsed as ParsedResourceSlug).resource_name}`;
   }
   if (parsed.instance_name) {
     friendly_name += `-${parsed.instance_name}`;
@@ -99,8 +99,8 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
 
 export const buildNodeRef = (component_config: ComponentConfig, resource_type: ResourceType, resource_name: string, max_length: number = Refs.DEFAULT_MAX_LENGTH): string => {
   const component_ref = component_config.metadata.ref;
-  const parsed = ComponentVersionSlugUtils.parse(component_ref);
-  const service_ref = ResourceVersionSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, parsed.tag, component_config.metadata?.instance_name);
+  const parsed = ComponentSlugUtils.parse(component_ref);
+  const service_ref = ResourceSlugUtils.build(parsed.component_account_name, parsed.component_name, resource_type, resource_name, component_config.metadata?.instance_name);
   return resourceRefToNodeRef(service_ref, component_config.metadata?.instance_id, max_length);
 };
 

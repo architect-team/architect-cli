@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceSlugUtils, ResourceVersionSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceSlugUtils } from '../../../src/dependency-manager/src/spec/utils/slugs';
 
 describe('slug validators with account', () => {
 
@@ -51,17 +51,6 @@ describe('slug validators with account', () => {
 
   it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
     expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(ResourceSlugUtils.Description);
-  });
-
-  it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {
-    const result = ResourceVersionSlugUtils.parse(resource_version_slug);
-    expect(result.component_account_name).to.equal(component_account_name);
-    expect(result.component_name).to.equal(component_name);
-    expect(result.tag).to.equal(tag);
-  });
-
-  it(`ResourceVersionSlugUtils.parse throws exception on ${invalid_resource_version_slug}`, async () => {
-    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(ResourceVersionSlugUtils.Description);
   });
 });
 
@@ -134,34 +123,5 @@ describe('slug validators without account', () => {
 
   it(`ResourceSlugUtils.parse throws exception on ${invalid_resource_slug}`, async () => {
     expect(() => ResourceSlugUtils.parse(invalid_resource_slug)).to.throw(ResourceSlugUtils.Description);
-  });
-
-  it(`ResourceVersionSlugUtils.parse accurately splits ${resource_slug}`, async () => {
-    const result = ResourceVersionSlugUtils.parse(resource_slug);
-    expect(result.component_account_name).to.be.undefined;
-    expect(result.component_name).to.equal(component_name);
-    expect(result.resource_type).to.equal('services');
-    expect(result.resource_name).to.equal(resource_name);
-    expect(result.tag).to.equal('latest');
-
-    const build = ResourceVersionSlugUtils.build.apply(null, Object.values(result) as any)
-    expect(build).to.equal(`${resource_slug}:latest`);
-  });
-
-  it(`ResourceVersionSlugUtils.parse accurately splits ${resource_version_slug}`, async () => {
-    const result = ResourceVersionSlugUtils.parse(resource_version_slug);
-
-    expect(result.component_account_name).to.be.undefined;
-    expect(result.component_name).to.equal(component_name);
-    expect(result.resource_type).to.equal('services');
-    expect(result.resource_name).to.equal(resource_name);
-    expect(result.tag).to.equal(tag);
-
-    const build = ResourceVersionSlugUtils.build.apply(null, Object.values(result) as any)
-    expect(build).to.equal(resource_version_slug);
-  });
-
-  it(`ResourceVersionSlugUtils.parse throws exception on ${invalid_resource_version_slug}`, async () => {
-    expect(() => ResourceVersionSlugUtils.parse(invalid_resource_version_slug)).to.throw(ResourceVersionSlugUtils.Description);
   });
 });
