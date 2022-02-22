@@ -65,7 +65,6 @@ describe('register', function () {
       expect(pushImage.notCalled).to.be.true;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stderr).to.contain('Registering component examples/fusionauth:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -89,7 +88,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it reports to the user that the component was registered successfully', ctx => {
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
@@ -106,7 +105,7 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/hello-world')
+        expect(body.config.name).to.eq('hello-world')
         expect(body.config.services.api.image).to.eq('heroku/nodejs-hello-world')
         return body;
       })
@@ -118,7 +117,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/hello-world/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('it does not call any docker commands if the image is provided', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -127,7 +126,7 @@ describe('register', function () {
       expect(pushImage.notCalled).to.be.true;
       expect(getDigest.notCalled).to.be.true;
 
-      expect(ctx.stderr).to.contain('Registering component examples/hello-world:1.0.0 with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component hello-world:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -147,9 +146,9 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/hello-world/architect.yml'])
+    .command(['register', '-c', 'examples/hello-world/architect.yml', '-a', 'examples'])
     .it('it defaults the tag to latest if not supplied', ctx => {
-      expect(ctx.stderr).to.contain('Registering component examples/hello-world:latest with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component hello-world:latest with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -163,7 +162,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/hello-world/architect.yml'])
+    .command(['register', '-c', 'examples/hello-world/architect.yml', '-a', 'examples'])
     .catch(err => {
       expect(err.message).to.contain('Friendly error message from server')
     })
@@ -434,7 +433,7 @@ describe('register', function () {
     .stub(ComponentRegister.prototype, 'pushArtifact', sinon.stub().returns(Promise.resolve(true)))
     .nock(MOCK_API_HOST, api => api
       .get(`/accounts/tests`)
-      .reply(200, mock_account_response)
+      .reply(200, { ...mock_account_response, name: 'tests' })
     )
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/)

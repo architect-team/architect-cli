@@ -255,18 +255,18 @@ describe('components spec v1', function () {
               main: 8080
             },
             environment: {
-              CONCOURSE_ADDR: '${{ dependencies.concourse/ci.interfaces.web.url }}'
+              CONCOURSE_ADDR: '${{ dependencies.ci.interfaces.web.url }}'
             }
           }
         },
         dependencies: {
-          'concourse/ci': '6.2'
+          'ci': '6.2'
         },
         interfaces: {}
       };
 
       const concourse_component_config = {
-        name: 'concourse/ci',
+        name: 'ci',
         services: {
           web: {
             interfaces: {
@@ -294,15 +294,15 @@ describe('components spec v1', function () {
 
       const manager = new LocalDependencyManager(axios.create(), {
         'cloud': '/stack/cloud/architect.yml',
-        'concourse/ci': '/stack/concourse/architect.yml'
+        'ci': '/stack/concourse/architect.yml'
       });
       const graph = await manager.getGraph([
         ...await manager.loadComponentSpecs('cloud:latest'),
       ]);
       const api_ref = resourceRefToNodeRef('cloud.services.api');
-      const ci_ref = resourceRefToNodeRef('concourse/ci');
-      const web_ref = resourceRefToNodeRef('concourse/ci.services.web');
-      const worker_ref = resourceRefToNodeRef('concourse/ci.services.worker');
+      const ci_ref = resourceRefToNodeRef('ci');
+      const web_ref = resourceRefToNodeRef('ci.services.web');
+      const worker_ref = resourceRefToNodeRef('ci.services.worker');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         api_ref,
@@ -327,7 +327,7 @@ describe('components spec v1', function () {
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
       expect(worker_node.config.metadata.tag).to.eq('6.2');
-      expect(worker_node.config.metadata.ref).to.eq('concourse/ci.services.worker');
+      expect(worker_node.config.metadata.ref).to.eq('ci.services.worker');
     });
 
     it('circular component dependency is rejected', async () => {

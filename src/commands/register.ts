@@ -25,6 +25,7 @@ export default class ComponentRegister extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
@@ -78,6 +79,8 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
+    const { flags } = await this.parse(ComponentRegister);
+
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
 
@@ -88,8 +91,8 @@ export default class ComponentRegister extends Command {
       throw new Error('Component Config must have a name');
     }
 
-    const account_name = new_spec.name.split('/')[0];
-    const selected_account = await AccountUtils.getAccount(this.app, account_name);
+    const { component_account_name, component_name } = ComponentSlugUtils.parse(new_spec.name);
+    const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
 
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
@@ -148,7 +151,7 @@ export default class ComponentRegister extends Command {
 
     let previous_config_data;
     try {
-      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(new_spec.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+      previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
       /* eslint-disable-next-line no-empty */
     } catch { }
 
