@@ -43,7 +43,7 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/fusionauth')
+        expect(body.config.name).to.eq('fusionauth')
         expect(body.config.services.fusionauth.image).to.eq('fusionauth/fusionauth-app:latest')
         expect(body.config.services.fusionauth.environment.ADMIN_USER_PASSWORD).to.eq('${{ parameters.admin_user_password }}')
         expect(body.config.services.fusionauth.environment.FUSIONAUTH_KICKSTART).to.eq('/usr/local/fusionauth/kickstart.json')
@@ -56,7 +56,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/fusionauth/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('test file: replacement', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -181,7 +181,7 @@ describe('register', function () {
     .nock(MOCK_API_HOST, api => api
       .post(/\/accounts\/.*\/components/, (body) => {
         expect(body.tag).to.eq('1.0.0')
-        expect(body.config.name).to.eq('examples/database-seeding')
+        expect(body.config.name).to.eq('database-seeding')
         expect(body.config.services.app.image).to.eq('repostory/account/some-image@some-digest')
         return body;
       })
@@ -193,7 +193,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback while running docker commands', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -211,7 +211,7 @@ describe('register', function () {
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
       expect(ctx.stdout).to.contain('Image verified');
 
-      expect(ctx.stderr).to.contain('Registering component examples/database-seeding:1.0.0 with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component database-seeding:1.0.0 with Architect Cloud');
       expect(ctx.stdout).to.contain('Successfully registered component');
     });
 
@@ -227,7 +227,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       expect(err.message).to.contain('Some internal docker build exception')
     })
@@ -256,7 +256,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -285,7 +285,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .catch(err => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -322,7 +322,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0'])
+    .command(['register', 'examples/stateless-component/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('gives user feedback for each component in the environment while running docker commands', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       const pushImage = Docker.pushImage as sinon.SinonStub;
@@ -336,7 +336,7 @@ describe('register', function () {
       expect(ctx.stdout).to.contain('Successfully pushed Docker image for repostory/account/some-image:1.0.0');
       expect(ctx.stderr).to.contain('Running `docker inspect` on the given image: repostory/account/some-image:1.0.0');
 
-      expect(ctx.stderr).to.contain('Registering component examples/stateless-component:1.0.0 with Architect Cloud');
+      expect(ctx.stderr).to.contain('Registering component stateless-component:1.0.0 with Architect Cloud');
     });
 
   mockArchitectAuth
@@ -359,7 +359,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0'])
+    .command(['register', '-c', 'examples/database-seeding/architect.yml', '-t', '1.0.0', '-a', 'examples'])
     .it('docker image built with dockerfile specified in architect.yml', ctx => {
       const current_path = path.join(__dirname, '../..').replace(/\/$/gi, '').replace(/\\$/gi, '').toLowerCase();
       const buildImage = Docker.buildImage as sinon.SinonStub;
@@ -387,7 +387,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev'])
+    .command(['register', 'examples/react-app/architect.yml', '--arg', 'NODE_ENV=dev', '-a', 'examples'])
     .it('override build arg specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       expect(buildImage.callCount).to.eq(2);
@@ -415,7 +415,7 @@ describe('register', function () {
     )
     .stdout({ print })
     .stderr({ print })
-    .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"'])
+    .command(['register', 'examples/stateful-component/architect.yml', '--arg', 'NODE_ENV=dev', '--arg', 'SSH_PUB_KEY="abc==\ntest.architect.io"', '-a', 'examples'])
     .it('set build arg not specified in architect.yml', ctx => {
       const buildImage = Docker.buildImage as sinon.SinonStub;
       expect(buildImage.callCount).to.eq(2);

@@ -1,4 +1,4 @@
-name: examples/stateless-component
+name: stateless-component
 description: A component without its own database or state. This shows how to connect to dependencies to serve business logic.
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/stateless-component
 keywords:
@@ -17,7 +17,7 @@ parameters:
       (oneof: ['error', 'warning', 'debug', 'info', 'trace'])
 
 dependencies:
-  examples/hello-world: latest
+  hello-world: latest
 
 services:
   stateless-app:

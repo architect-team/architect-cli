@@ -1,4 +1,4 @@
-name: examples/kafka
+name: kafka
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/kafka
 
 services:
