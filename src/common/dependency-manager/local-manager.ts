@@ -60,7 +60,7 @@ export default class LocalDependencyManager extends DependencyManager {
     const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(component_account_name, component_name);
     const linked_component = this.linked_components[linked_component_key];
     if (!linked_component && !account_name) {
-      throw new ArchitectError(`Didn't find link for component '${linked_component_key}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);
+      throw new ArchitectError(`Didn't find link for component '${component_ref}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);
     }
 
     // Load locally linked component config
@@ -71,12 +71,13 @@ export default class LocalDependencyManager extends DependencyManager {
       const component_spec = buildSpecFromPath(linked_component, metadata);
       spec = component_spec;
     } else {
+      console.log(`Didn't find link for component '${component_ref}'. Attempting to download from Architect...`);
       // Load remote component config
       const { data: component_version } = await this.api.get(`/accounts/${account_name}/components/${component_name}/versions/${tag}`).catch((err) => {
-        // TODO:344 include link in error msg
         err.message = `Could not download component for ${component_ref}. \n${err.message}`;
         throw err;
       });
+      console.log(`Downloaded ${component_ref} from Architect.`);
 
       const config_yaml = yaml.dump(component_version.config);
       spec = buildSpecFromYml(config_yaml, metadata);

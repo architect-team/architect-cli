@@ -71,12 +71,13 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
 
 export const transformResourceSpec = (resource_type: ResourceType, key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
-  const { component_account_name, component_name } = ComponentSlugUtils.parse(metadata.ref);
+  const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(metadata.ref);
   return {
     name: key,
-    ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, metadata?.instance_name),
-    // TODO:344 remove tag and set metadata?
-    tag: metadata.tag,
+    metadata: {
+      ...metadata,
+      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+    },
     description: spec.description,
     image: spec.image,
     command: transformResourceSpecCommand(spec.command),

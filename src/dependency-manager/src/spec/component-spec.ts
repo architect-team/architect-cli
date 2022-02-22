@@ -292,8 +292,7 @@ export class ComponentSpec {
       additionalProperties: ComponentSlugUtils.Description,
     },
 
-    // TODO:344 update description
-    description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `architect/cloud: latest`)',
+    description: 'A key-value set of dependencies and their respective tags. Reference each dependency by component name (e.g. `cloud: latest` or `architect/cloud: latest`)',
   })
   dependencies?: Dictionary<string>;
 

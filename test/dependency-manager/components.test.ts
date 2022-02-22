@@ -321,13 +321,13 @@ describe('components spec v1', function () {
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(api_node.config.environment.CONCOURSE_ADDR).eq(`http://${web_ref}:8080`)
       expect(api_node.config.name).to.eq('api');
-      expect(api_node.config.tag).to.eq('latest');
-      expect(api_node.config.ref).to.eq('cloud.services.api');
+      expect(api_node.config.metadata.tag).to.eq('latest');
+      expect(api_node.config.metadata.ref).to.eq('cloud.services.api');
       const worker_node = graph.getNodeByRef(worker_ref) as ServiceNode;
       expect(worker_node.config.environment.CONCOURSE_TSA_HOST).eq(web_ref);
       expect(worker_node.config.name).to.eq('worker');
-      expect(worker_node.config.tag).to.eq('6.2');
-      expect(worker_node.config.ref).to.eq('concourse/ci.services.worker');
+      expect(worker_node.config.metadata.tag).to.eq('6.2');
+      expect(worker_node.config.metadata.ref).to.eq('concourse/ci.services.worker');
     });
 
     it('circular component dependency is rejected', async () => {
@@ -490,7 +490,7 @@ describe('components spec v1', function () {
       expect(task_node.__type).equals('task');
       expect(task_node.config.schedule).equals('*/1 * * * *');
       expect(task_node.config.name).equals('syncer');
-      expect(task_node.config.ref).equals('architect/cloud.tasks.syncer');
+      expect(task_node.config.metadata.ref).equals('architect/cloud.tasks.syncer');
 
       expect(graph.edges.map((e) => e.toString())).has.members([])
     });

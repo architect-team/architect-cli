@@ -128,7 +128,7 @@ export class ComponentVersionSlugUtils extends SlugUtils {
   public static parse = parseCurry<ComponentVersionSlug, ParsedComponentVersionSlug>();
 }
 
-export type ResourceType = 'services' | 'tasks' | 'sidecars'; // TODO:344 sidecars?
+export type ResourceType = 'services' | 'tasks';
 
 export type ResourceSlug = string;
 export interface ParsedResourceSlug extends ParsedSlug {

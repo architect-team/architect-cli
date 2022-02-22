@@ -64,7 +64,9 @@ export default abstract class DependencyManager {
     const tasks = Object.entries(component_config.tasks).map(([resource_name, resource_config]) => ({ resource_name, resource_type: 'tasks' as ResourceType, resource_config }));
     for (const { resource_config, resource_name, resource_type } of [...services, ...tasks]) {
       const from = buildNodeRef(component, resource_type, resource_name);
-      const service_string = replaceInterpolationBrackets(serialize(resource_config));
+      const copy = { ...resource_config } as any;
+      delete copy.metadata;
+      const service_string = replaceInterpolationBrackets(serialize(copy));
       let matches;
 
       // Start Ingress Edges
