@@ -104,7 +104,6 @@ export interface ParsedComponentVersionSlug extends ParsedSlug {
   instance_name?: string;
 }
 
-// TODO:344 remove tag?
 export class ComponentVersionSlugUtils extends SlugUtils {
 
   public static Description = ComponentSlugUtils.Description;
@@ -162,7 +161,14 @@ export class ResourceSlugUtils extends SlugUtils {
   public static parse = parseCurry<ResourceSlug, ParsedResourceSlug>();
 }
 
-type ParsedUnknownSlug = ParsedComponentSlug | ParsedComponentVersionSlug | ParsedResourceSlug;
+export interface ParsedUnknownSlug extends ParsedSlug {
+  component_account_name?: string;
+  component_name: string;
+  resource_type?: ResourceType;
+  resource_name?: string;
+  instance_name?: string;
+}
+
 export const parseUnknownSlug = (unknown: string): ParsedUnknownSlug => {
   try {
     return ComponentSlugUtils.parse(unknown);
