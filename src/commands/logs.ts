@@ -145,22 +145,14 @@ export default class Logs extends Command {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
       component_name = parsed.component_name;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       resource_name = parsed.resource_name;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      tag = parsed.tag;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      instance_name = parsed.instance_name; //TODO:534
+      instance_name = parsed.instance_name;
     }
 
     const replica_query = {
       component_account_name,
       component_name,
       component_resource_name: resource_name,
-      component_tag: tag,
       component_instance_name: instance_name,
     };
 

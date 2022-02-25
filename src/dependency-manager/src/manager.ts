@@ -13,7 +13,7 @@ import { ServiceNode } from './graph/node/service';
 import { TaskNode } from './graph/node/task';
 import { ComponentSpec } from './spec/component-spec';
 import { transformComponentSpec, transformParameterDefinitionSpec } from './spec/transform/component-transform';
-import { ComponentSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, ResourceType, Slugs } from './spec/utils/slugs';
 import { validateOrRejectSpec } from './spec/utils/spec-validator';
 import { Dictionary, transformDictionary } from './utils/dictionary';
 import { ArchitectError, ValidationError, ValidationErrors } from './utils/errors';
@@ -255,7 +255,13 @@ export default abstract class DependencyManager {
 
     const res: Dictionary<any> = {};
     // add values from values file to all existing, matching components
-    for (const [pattern, params] of Object.entries(sorted_values_dict)) {
+    // eslint-disable-next-line prefer-const
+    for (let [pattern, params] of Object.entries(sorted_values_dict)) {
+      // Backwards compat for tags
+      if (ComponentVersionSlugUtils.Validator.test(pattern)) {
+        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
+        pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+      }
       if (isMatch(component_ref, [pattern])) {
         for (const [param_key, param_value] of Object.entries(params)) {
           if (component_parameters.has(param_key)) {

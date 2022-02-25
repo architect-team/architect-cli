@@ -5,6 +5,7 @@ import path from 'path';
 import sinon from 'sinon';
 import ComponentRegister from '../../src/commands/register';
 import * as Docker from '../../src/common/utils/docker';
+import { validateSpec } from '../../src/dependency-manager/src/spec/utils/spec-validator';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('register', function () {
@@ -79,6 +80,7 @@ describe('register', function () {
       .reply(200, (uri, body: any, cb) => {
         const contents = yaml.load(fs.readFileSync('examples/hello-world/architect.yml').toString());
         expect(body.config).to.deep.equal(contents);
+        expect(validateSpec(body.config)).to.have.lengthOf(0);
         cb(null, body)
       })
     )
