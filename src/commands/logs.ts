@@ -201,7 +201,7 @@ export default class Logs extends Command {
             timeout: 1000 * 60 * 60 * 24, // one day
           });
           log_stream = stream;
-        } catch(err) {
+        } catch (err) {
           this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
         }
 
