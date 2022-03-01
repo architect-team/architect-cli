@@ -55,8 +55,7 @@ export default class PlatformUtils {
         throw new Error(`No configured platforms. Run 'architect platform:create -a ${account.name}'.`);
       }
 
-      let platforms: Platform[] = [];
-      const answers: any = await inquirer.prompt([
+      const answers: { platform: Platform } = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'platform',
@@ -64,14 +63,12 @@ export default class PlatformUtils {
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await api.get(`/accounts/${account.id}/platforms`, { params: { q: input, limit: 10 } });
-            platforms = data.rows;
-            return platforms;
+            const platforms = data.rows as Platform[];
+            return platforms.map((p) => ({ name: p.name, value: p }));
           },
         },
       ]);
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      platform = platforms.find((platform) => platform.name === answers.platform)!;
+      platform = answers.platform;
     }
     return platform;
   }

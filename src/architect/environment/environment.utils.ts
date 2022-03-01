@@ -41,8 +41,7 @@ export class EnvironmentUtils {
         throw new Error(`No configured environments. Run 'architect environment:create -a ${account.name}'.`);
       }
 
-      let environments: Environment[] = [];
-      const answers: any = await inquirer.prompt([
+      const answers: { environment: Environment } = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'environment',
@@ -50,14 +49,12 @@ export class EnvironmentUtils {
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await api.get(`/accounts/${account.id}/environments`, { params: { q: input, limit: 10 } });
-            environments = data.rows;
-            return environments;
+            const environments = data.rows as Environment[];
+            return environments.map((e) => ({ name: e.name, value: e }));
           },
         },
       ]);
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      environment = environments.find((environment) => environment.name === answers.environment)!;
+      environment = answers.environment;
     }
     return environment;
   }
