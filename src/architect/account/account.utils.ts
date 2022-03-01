@@ -52,11 +52,7 @@ export default class AccountUtils {
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-      const accounts: Account[] = [];
-      if (ask_local_account) {
-        accounts.push(this.getLocalAccount());
-      }
-      const answers: any = await inquirer.prompt([
+      const answers: { account: Account } = await inquirer.prompt([
         {
           type: 'autocomplete',
           name: 'account',
@@ -64,13 +60,15 @@ export default class AccountUtils {
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });
-            return accounts.concat(data.rows);
+            const accounts = data.rows as Account[];
+            if (ask_local_account) {
+              accounts.unshift(this.getLocalAccount());
+            }
+            return accounts.map((a) => ({ name: a.name, value: a }));
           },
         },
       ]);
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      account = accounts.find((account) => account.name === answers.account)!;
+      account = answers.account;
       if (!account) {
         throw new Error(`Could not find account=${answers.account}`);
       }
