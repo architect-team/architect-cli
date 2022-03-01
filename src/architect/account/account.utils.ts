@@ -64,8 +64,7 @@ export default class AccountUtils {
           filter: (x) => x, // api filters
           source: async (answers_so_far: any, input: string) => {
             const { data } = await app.api.get('/accounts', { params: { q: input, limit: 10 } });
-            accounts = accounts.concat(data.rows);
-            return accounts;
+            return accounts.concat(data.rows);
           },
         },
       ]);
