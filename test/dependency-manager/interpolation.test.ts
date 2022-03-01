@@ -6,7 +6,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate, { DockerService } from '../../src/common/docker-compose/template';
-import { buildInterfacesRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { buildInterfacesRef, ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import OutputEdge from '../../src/dependency-manager/src/graph/edge/output';
 import ComponentNode from '../../src/dependency-manager/src/graph/node/component';
@@ -1556,21 +1556,21 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpecs('examples/upstream')
     );
 
-    const app_ref = resourceRefToNodeRef('examples/test.services.app');
+    const app_ref = ecsResourceRefToNodeRef('examples/test.services.app');
     const app_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(app_node.config.environment).to.deep.eq({
       API_PORT: '12345',
       API_ADDR: 'http://127.0.0.1:12345'
     })
 
-    const api_ref = resourceRefToNodeRef('examples/test.services.api');
+    const api_ref = ecsResourceRefToNodeRef('examples/test.services.api');
     const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(api_node.config.environment).to.deep.eq({
       MY_PORT: '8080',
       MY_ADDR: 'http://127.0.0.1:8080'
     })
 
-    const upstream_ref = resourceRefToNodeRef('examples/upstream.services.app');
+    const upstream_ref = ecsResourceRefToNodeRef('examples/upstream.services.app');
     const upstream_node = graph.getNodeByRef(upstream_ref) as ServiceNode;
     expect(upstream_node.config.environment).to.deep.eq({
       API_PORT: '12345',

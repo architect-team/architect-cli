@@ -6,7 +6,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { ecsResourceRefToNodeRef, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 
 describe('external spec v1', () => {
 
@@ -381,7 +381,7 @@ describe('external spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const core_ref = resourceRefToNodeRef('architect/component.services.core')
+    const core_ref = ecsResourceRefToNodeRef('architect/component.services.core')
 
     // No host override
     const graph = await manager.getGraph([
@@ -434,7 +434,7 @@ describe('external spec v1', () => {
     });
     manager.use_sidecar = true;
 
-    const core_ref = resourceRefToNodeRef('architect/component.services.core')
+    const core_ref = ecsResourceRefToNodeRef('architect/component.services.core')
 
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('architect/component:latest')

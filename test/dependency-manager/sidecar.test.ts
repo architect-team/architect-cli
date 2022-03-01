@@ -7,7 +7,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import { DockerService } from '../../src/common/docker-compose/template';
-import { DependencyNode, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { DependencyNode, ecsResourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import DependencyGraph from '../../src/dependency-manager/src/graph';
 
 describe('sidecar spec v1', () => {
@@ -67,10 +67,10 @@ describe('sidecar spec v1', () => {
       };
     });
 
-    const branch_ref = resourceRefToNodeRef('test/branch.services.api');
-    const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf');
-    const leaf_db_ref = resourceRefToNodeRef('test/leaf.services.db');
-    const leaf_api_ref = resourceRefToNodeRef('test/leaf.services.api');
+    const branch_ref = ecsResourceRefToNodeRef('test/branch.services.api');
+    const leaf_interfaces_ref = ecsResourceRefToNodeRef('test/leaf');
+    const leaf_db_ref = ecsResourceRefToNodeRef('test/leaf.services.db');
+    const leaf_api_ref = ecsResourceRefToNodeRef('test/leaf.services.api');
 
     it('sidecar should connect two services together', async () => {
       mock_fs({
@@ -201,9 +201,9 @@ describe('sidecar spec v1', () => {
         await manager.loadComponentSpec('test/other-leaf', { interfaces: { publicv1: 'api' } })
       ]);
 
-      const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf');
-      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf.services.api');
-      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf.services.db');
+      const other_leaf_interfaces_ref = ecsResourceRefToNodeRef('test/other-leaf');
+      const other_leaf_api_ref = ecsResourceRefToNodeRef('test/other-leaf.services.api');
+      const other_leaf_db_ref = ecsResourceRefToNodeRef('test/other-leaf.services.db');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -369,8 +369,8 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentSpec('architect/cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud')
-    const api_ref = resourceRefToNodeRef('architect/cloud.services.api')
+    const cloud_interfaces_ref = ecsResourceRefToNodeRef('architect/cloud')
+    const api_ref = ecsResourceRefToNodeRef('architect/cloud.services.api')
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -468,9 +468,9 @@ describe('sidecar spec v1', () => {
       catalog_component,
     ]);
 
-    const admin_ref = resourceRefToNodeRef('voic/admin-ui.services.dashboard@tenant-1', admin_instance_id)
-    const catalog_interface_ref = resourceRefToNodeRef('voic/product-catalog', catalog_instance_id)
-    const api_ref = resourceRefToNodeRef('voic/product-catalog.services.api', catalog_instance_id)
+    const admin_ref = ecsResourceRefToNodeRef('voic/admin-ui.services.dashboard@tenant-1', admin_instance_id)
+    const catalog_interface_ref = ecsResourceRefToNodeRef('voic/product-catalog', catalog_instance_id)
+    const api_ref = ecsResourceRefToNodeRef('voic/product-catalog.services.api', catalog_instance_id)
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interface_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -542,7 +542,7 @@ describe('sidecar spec v1', () => {
       hello_component
     ], undefined, true, false);
 
-    const app_ref = resourceRefToNodeRef('examples/stateless-component.services.stateless-app');
+    const app_ref = ecsResourceRefToNodeRef('examples/stateless-component.services.stateless-app');
     const app_node = graph.getNodeByRef(app_ref);
 
     const ports = [];
@@ -591,7 +591,7 @@ describe('sidecar spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app');
+    const app_ref = ecsResourceRefToNodeRef('architect/smtp.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -651,7 +651,7 @@ describe('sidecar spec v1', () => {
     expect(new_graph).instanceOf(DependencyGraph);
     expect(new_graph.nodes[0]).instanceOf(DependencyNode);
 
-    const app_ref = resourceRefToNodeRef('architect/upstream.services.test-app');
+    const app_ref = ecsResourceRefToNodeRef('architect/upstream.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({

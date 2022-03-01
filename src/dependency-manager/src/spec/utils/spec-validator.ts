@@ -224,7 +224,6 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: Componen
       ref: component_spec.name,
       tag: 'latest',
       instance_date: new Date(),
-      proxy_port_mapping: {},
     };
   }
 

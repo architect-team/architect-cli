@@ -17,7 +17,7 @@ export interface ComponentInstanceMetadata {
   readonly instance_id?: string;
   readonly instance_date: Date;
 
-  proxy_port_mapping: Dictionary<number>;
+  proxy_port_mapping?: Dictionary<number>;
 
   file?: {
     path: string;
