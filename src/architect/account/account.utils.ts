@@ -52,7 +52,7 @@ export default class AccountUtils {
       }
     } else {
       inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
-      let accounts: Account[] = [];
+      const accounts: Account[] = [];
       if (ask_local_account) {
         accounts.push(this.getLocalAccount());
       }
