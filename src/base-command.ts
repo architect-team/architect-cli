@@ -102,7 +102,13 @@ export default abstract class BaseCommand extends Command {
     if (err.response?.data instanceof Object) {
       err.message += `\nmethod: ${err.config.method}`;
       for (const [k, v] of Object.entries(err.response.data)) {
-        err.message += `\n${k}: ${v}`;
+        try {
+          const msg = JSON.parse(v as any).message;
+          if (!msg) { throw new Error('Invalid msg'); }
+          err.message += `\n${k}: ${msg}`;
+        } catch {
+          err.message += `\n${k}: ${v}`;
+        }
       }
     }
 

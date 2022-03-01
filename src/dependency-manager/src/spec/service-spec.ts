@@ -17,18 +17,18 @@ export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
-    description: 'The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).',
-    externalDocs: { url: '/docs/configuration/services#cpu--memory' },
+    description: 'The cpu usage required to trigger scaling.',
+    externalDocs: { url: '/docs/components/services/#cpu--memory' },
   })
   cpu?: number | string;
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).',
-    externalDocs: { url: '/docs/configuration/services#cpu--memory' },
+    ...ExpressionOr({ type: 'number' }),
+    description: 'The memory usage required to trigger scaling.',
+    externalDocs: { url: '/docs/components/services/#cpu--memory' },
   })
-  memory?: string;
+  memory?: number | string;
 }
 
 @JSONSchema({

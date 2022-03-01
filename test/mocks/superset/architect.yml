@@ -85,7 +85,7 @@ services:
       min_replicas: 1
       max_replicas: 3
       metrics:
-        memory: 2GB
+        memory: 80
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12

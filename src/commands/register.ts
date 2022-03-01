@@ -144,9 +144,11 @@ export default class ComponentRegister extends Command {
       }
     }
 
+    const config = classToPlain(new_spec);
+    delete config.metadata;
     const component_dto = {
       tag: tag,
-      config: classToPlain(new_spec),
+      config: config,
     };
 
     let previous_config_data;

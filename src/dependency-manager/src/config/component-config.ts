@@ -120,15 +120,15 @@ export const resourceRefToNodeRef = (resource_ref: string, instance_id = '', max
     ref = `${ref}--${resource_name}`;
   }
 
-  if (parsed.instance_name) {
-    ref = `${ref}---${parsed.instance_name}`;
-  }
-
   const resource_type = (parsed as ParsedResourceSlug).resource_type;
   if (resource_type === 'tasks') {
-    ref = `${ref}.task`;
+    ref = `${ref}--task`;
   } else if (resource_type && resource_type !== 'services') {
     throw new Error(`Invalid resource type: ${resource_type}`);
+  }
+
+  if (parsed.instance_name) {
+    ref = `${ref}---${parsed.instance_name}`;
   }
 
   if (ref.length > max_length) {

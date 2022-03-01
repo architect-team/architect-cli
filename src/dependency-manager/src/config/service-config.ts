@@ -5,7 +5,7 @@ import { SidecarConfig } from './sidecar-config';
 
 export interface ScalingMetricsConfig {
   cpu?: number | string; // TODO:290:number
-  memory?: string;
+  memory?: number | string;
 }
 
 export interface ScalingConfig {
