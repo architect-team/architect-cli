@@ -153,9 +153,9 @@ export default class Dev extends DevCommand {
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
     if (flags['build-parallel']) {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', '--parallel']);
     } else {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build']);
     }
 
     console.clear();
@@ -236,22 +236,19 @@ export default class Dev extends DevCommand {
       compose_args.push('-d');
     }
 
-    const cmd = execa('docker-compose', compose_args);
-    cmd.stdin?.pipe(process.stdin);
-    cmd.stdout?.pipe(process.stdout);
-    cmd.stderr?.pipe(process.stderr);
+    await DockerComposeUtils.dockerCompose(compose_args, {
+      stdin: true,
+      stdout: true,
+    });
 
     process.on('SIGINT', () => {
       this.log('Interrupt received.');
       this.warn('Please wait for architect to exit or containers will still be running in the background.');
       this.log('Gracefully shutting down...');
-      execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
+      execa.sync('docker', ['compose', '-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
       this.log('Stopping operation...');
       fs.removeSync(compose_file);
-      process.exit(0);
     });
-
-    await cmd;
   }
 
   private async runLocal() {

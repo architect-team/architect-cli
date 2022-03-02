@@ -1,5 +1,4 @@
 import { Flags } from '@oclif/core';
-import { spawn } from 'child_process';
 import inquirer from 'inquirer';
 import stream from 'stream';
 import WebSocket, { createWebSocketStream } from 'ws';
@@ -230,11 +229,9 @@ export default class Exec extends Command {
     // execa has an issue where the go library thinks it is not an interactive terminal
     // session. I have not tracked down the root cause, but the default linux behavior
     // works here.
-    const childProcess = spawn('docker-compose', compose_args,
-      { stdio: [process.stdin, process.stdout, process.stderr] });
-
-    await new Promise((resolve) => {
-      childProcess.on('close', resolve);
+    await DockerComposeUtils.dockerComposeSpawn(compose_args, {
+      stdin: true,
+      stdout: true
     });
   }
 

@@ -99,6 +99,10 @@ export default class Logs extends Command {
       compose_args.push('--tail');
       compose_args.push(flags.tail.toString());
     }
+    if (flags.since != '') {
+      compose_args.push('--since');
+      compose_args.push(flags.since.toString());
+    }
     compose_args.push(service_name);
 
     const display_service_name = service_name.substring(0, service_name.lastIndexOf('-'));
@@ -122,7 +126,7 @@ export default class Logs extends Command {
       next();
     };
 
-    const childProcess = spawn('docker-compose', compose_args,
+    const childProcess = spawn('docker', ["compose", ...compose_args],
       { stdio: [process.stdin, null, process.stderr] });
     (childProcess.stdout as Readable).pipe(logger);
 

@@ -1,3 +1,4 @@
+import { spawn } from 'child_process';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -331,22 +332,49 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  public static async dockerCompose(args: string[], opts = { stdout: true }, execa_opts?: Options): Promise<any> {
-    const cmd = execa('docker-compose', args, execa_opts);
-    if (opts.stdout) {
-      cmd.stdout?.pipe(process.stdout);
-      cmd.stderr?.pipe(process.stderr);
-    }
+  private static async dockerCommandCheck(command: () => Promise<void>): Promise<void> {
     try {
-      return await cmd;
+      return await command();
     } catch (err) {
       try {
-        which.sync('docker-compose');
+        which.sync('docker');
       } catch {
         throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
       }
-      throw err;
+      const stdout = execa.sync('docker', ['compose']).stdout;
+      if (stdout.indexOf('docker compose COMMAND --help') !== -1) {
+        throw new Error("Please update your local version of Docker");
+      }
     }
+  }
+
+  public static async dockerComposeSpawn(args: string[], opts = { stdout: true, stdin: false }): Promise<any> {
+    this.dockerCommandCheck(async () => {
+      const stdio = [];
+      stdio.push(opts.stdin ? process.stdin : undefined);
+      stdio.push(opts.stdout ? process.stdout : undefined);
+      stdio.push(opts.stdout ? process.stderr : undefined);
+      const childProcess = spawn('docker', ['compose', ...args],
+        { stdio: stdio });
+
+      await new Promise((resolve) => {
+        childProcess.on('close', resolve);
+      });
+    })
+  }
+
+  public static async dockerCompose(args: string[], opts = { stdout: true, stdin: false }, execa_opts?: Options): Promise<any> {
+    this.dockerCommandCheck(async () => {
+      const cmd = execa('docker', ["compose", ...args], execa_opts);
+      if (opts.stdout) {
+        cmd.stdout?.pipe(process.stdout);
+        cmd.stderr?.pipe(process.stderr);
+        if (opts.stdin) {
+          cmd.stdin?.pipe(process.stdin);
+        }
+      }
+      await cmd;
+    });
   }
 
   public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
@@ -379,7 +407,7 @@ export class DockerComposeUtils {
   }
 
   public static async getLocalServiceForEnvironment(environment: string, compose_file: string, service_name?: string): Promise<string> {
-    const cmd = await execa('docker-compose', ['-f', compose_file, '-p', environment, 'ps']);
+    const cmd = await execa('docker', ['compose', '-f', compose_file, '-p', environment, 'ps']);
     const lines = cmd.stdout.split('\n');
     //Remove the headers
     lines.shift();
