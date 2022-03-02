@@ -12,7 +12,7 @@ import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, Refs, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/src/spec/utils/interpolation';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -104,7 +104,9 @@ export default class ComponentRegister extends Command {
       if (!service_config.build && !service_config.image) {
         service_config.build = { context: '.', dockerfile: 'Dockerfile' };
       }
-      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}:${tag}`;
+
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'services', service_name);
+      const image_tag = `${this.app.config.registry_host}/${ref}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
 
@@ -118,7 +120,7 @@ export default class ComponentRegister extends Command {
         if (!sidecar_config.build && !sidecar_config.image) {
           sidecar_config.build = { context: '.', dockerfile: 'Dockerfile' };
         }
-        const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}-${sidecar_name}:${tag}`;
+        const image_tag = `${this.app.config.registry_host}/${ref}.sidecars.${sidecar_name}:${tag}`;
         const image = await this.pushImageIfNecessary(config_path, service_name, sidecar_config, image_tag);
         sidecar_config.image = image;
       }
@@ -133,7 +135,8 @@ export default class ComponentRegister extends Command {
       if (!task_config.build && !task_config.image) {
         task_config.build = { context: '.', dockerfile: 'Dockerfile' };
       }
-      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${task_name}:${tag}`;
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'tasks', task_name);
+      const image_tag = `${this.app.config.registry_host}/${ref}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
     }
