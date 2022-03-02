@@ -5,6 +5,7 @@ import inquirer from 'inquirer';
 import { Readable, Writable } from 'stream';
 import Account from '../architect/account/account.entity';
 import AccountUtils from '../architect/account/account.utils';
+import Environment from '../architect/environment/environment.entity';
 import { EnvironmentUtils, Replica } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
@@ -139,7 +140,6 @@ export default class Logs extends Command {
     let component_account_name: string | undefined;
     let component_name: string | undefined;
     let resource_name: string | undefined;
-    let tag: string | undefined;
     let instance_name: string | undefined;
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
@@ -156,76 +156,79 @@ export default class Logs extends Command {
       component_instance_name: instance_name,
     };
 
-    let recovery_wait = 0;
-    let started_prompts = false;
-    const poll_interval = 2000;
-    setInterval(async () => {
-      if (!recovery_wait && !started_prompts) {
-        started_prompts = true;
-        const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
-          params: replica_query,
-        });
+    await this.runRemoteLogs(environment, replica_query);
+  }
 
-        if (!replicas.length)
-          throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
+  async runRemoteLogs(environment: Environment, replica_query: any): Promise<void> {
+    const { args, flags } = await this.parse(Logs);
 
-        const replica = await EnvironmentUtils.getReplica(replicas);
+    const { data: replicas }: { data: Replica[] } = await this.app.api.get(`/environments/${environment.id}/replicas`, {
+      params: replica_query,
+    });
 
-        const logs_query: any = {};
-        logs_query.ext_ref = replica.ext_ref;
-        logs_query.container = replica.node_ref;
-        logs_query.follow = flags.follow;
-        if (flags.since)
-          logs_query.since = flags.since;
-        if (flags.tail >= 0)
-          logs_query.tail = flags.tail;
-        logs_query.timestamps = flags.timestamps;
+    if (!replicas.length)
+      throw new ArchitectError(`No replicas found for ${args.resource ? args.resource : 'environment'}`);
 
-        let display_name = replica.display_name;
-        if (!display_name) {
-          const { resource_name } = ResourceSlugUtils.parse(replica.resource_ref);
-          display_name = resource_name;
-        }
+    const replica = await EnvironmentUtils.getReplica(replicas);
 
-        const log = await this.createLogger(display_name);
+    const logs_query: any = {};
+    logs_query.ext_ref = replica.ext_ref;
+    logs_query.container = 'api'; // TODO:344
+    logs_query.follow = flags.follow;
+    if (flags.since)
+      logs_query.since = flags.since;
+    if (flags.tail >= 0)
+      logs_query.tail = flags.tail;
+    logs_query.timestamps = flags.timestamps;
 
-        let log_stream;
-        try {
-          const { data: stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
-            params: logs_query,
-            responseType: 'stream',
-            timeout: 1000 * 60 * 60 * 24, // one day
-          });
-          log_stream = stream;
-        } catch (err) {
-          this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
-        }
+    let display_name = replica.display_name;
+    if (!display_name) {
+      const { resource_name } = ResourceSlugUtils.parse(replica.resource_ref);
+      display_name = resource_name;
+    }
 
-        let stdout = '';
-        log_stream.on('data', (chunk: string) => {
-          stdout += chunk;
-          const lines = stdout.split('\n');
-          while (lines.length > 1) {
-            const line = lines.shift() || '';
-            log(line);
-          }
-          stdout = lines.shift() || '';
-        });
-        log_stream.on('end', async () => {
-          if (stdout) {
-            log(stdout);
-          }
-          recovery_wait = 15; // 2000ms * 15 = 30000 ms
-          started_prompts = false;
-        });
-      } else if (recovery_wait > 0) {
-        const recovery_seconds = recovery_wait * poll_interval / 1000;
-        if (!(recovery_seconds % 10)) {
-          this.log(chalk.yellow(`Log stream ended, attempting to recover in ${recovery_wait * poll_interval / 1000} seconds...`));
-        }
-        recovery_wait--;
+    const log = await this.createLogger(display_name);
+
+    let log_stream;
+    try {
+      const { data: stream } = await this.app.api.get(`/environments/${environment.id}/logs`, {
+        params: logs_query,
+        responseType: 'stream',
+        timeout: 1000 * 60 * 60 * 24, // one day
+      });
+      log_stream = stream;
+    } catch (err) {
+      this.error(chalk.red(`Couldn't get logs from pod ${replica.ext_ref}. Check that the pod is in a steady state.`));
+    }
+
+    let stdout = '';
+    log_stream.on('data', (chunk: string) => {
+      stdout += chunk;
+      const lines = stdout.split('\n');
+      while (lines.length > 1) {
+        const line = lines.shift() || '';
+        log(line);
       }
-    }, poll_interval);
+      stdout = lines.shift() || '';
+    });
+    log_stream.on('end', async () => {
+      if (stdout) {
+        log(stdout);
+      }
+      if (flags.follow) {
+        // Attempt to reconnect in 30s
+        this.log(chalk.yellow(`Log stream ended, attempting to recover in 30 seconds...`));
+        setTimeout(() => {
+          this.log(chalk.yellow(`Log stream ended, attempting to recover in 20 seconds...`));
+        }, 1000 * 10);
+        setTimeout(() => {
+          this.log(chalk.yellow(`Log stream ended, attempting to recover in 10 seconds...`));
+        }, 1000 * 20);
+        setTimeout(() => {
+          this.runRemoteLogs(environment, replica_query);
+        }, 1000 * 30);
+      }
+    });
   }
 
   async run(): Promise<void> {

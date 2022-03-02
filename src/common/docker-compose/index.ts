@@ -371,8 +371,8 @@ export class DockerComposeUtils {
         type: 'autocomplete',
         name: 'environment',
         message: 'Select a environment',
-        source: async () => {
-          return local_enviromments;
+        source: (_: any, input: string) => {
+          return local_enviromments.filter((e) => !input || e.toLowerCase().indexOf(input.toLowerCase()) >= 0);
         },
       },
     ]);
@@ -409,8 +409,8 @@ export class DockerComposeUtils {
         type: 'autocomplete',
         name: 'service',
         message: 'Select a service',
-        source: async () => {
-          return services.map(service => service.display_name);
+        source: async (_: any, input: string) => {
+          return services.map(service => service.display_name).filter((s) => !input || s.toLowerCase().indexOf(input.toLowerCase()) >= 0);
         },
       },
     ]);
