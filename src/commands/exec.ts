@@ -212,7 +212,6 @@ export default class Exec extends Command {
 
   async runLocal(): Promise<void> {
     const { args, flags } = await this.parse(Exec);
-    console.log(args);
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);

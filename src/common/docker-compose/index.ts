@@ -19,6 +19,7 @@ import PortUtil from '../utils/port';
 import DockerComposeTemplate, { DockerService, DockerServiceBuild } from './template';
 
 class LocalService {
+  slugless_name!: string;
   display_name!: string;
   service_name!: string;
 }
@@ -409,22 +410,20 @@ export class DockerComposeUtils {
   public static async getLocalServiceForEnvironment(environment: string, compose_file: string, service_name?: string): Promise<string> {
     const cmd = await execa('docker', ['compose', '-f', compose_file, '-p', environment, 'ps']);
     const lines = cmd.stdout.split('\n');
-    //Remove the headers
-    lines.shift();
-    lines.shift();
     const services = lines.map(line => {
       // Split the line by space but not if the space is in double qoutes
       const line_parts = line.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
       let name = line_parts[0];
       // Remove env name and counter: cloud_gateway_1
-      name = name.substring(name.indexOf('_') + 1);
-      name = name.substring(0, name.lastIndexOf('_'));
+      name = name.substring(environment.length + 1);
+      name = name.substring(0, Math.max(name.lastIndexOf('-'), name.lastIndexOf('_')));
       const service = new LocalService();
       // Remove the slug for the display name and add the status of the service
       const slugless_name = name.substring(0, name.lastIndexOf('-'));
       if (!slugless_name) {
         return service;
       }
+      service.slugless_name = slugless_name;
       service.display_name = slugless_name + ` (${line_parts[3].toUpperCase()})`;
       service.service_name = name;
       return service;
@@ -443,10 +442,10 @@ export class DockerComposeUtils {
         },
       },
     ]);
-    const display_service_name = service_name || answers.service;
-    const full_service_name = services.find((service) => service.display_name == display_service_name)?.service_name;
+    const selected_service_name = service_name || answers.service;
+    const full_service_name = services.find((service) => service.display_name === selected_service_name || service.slugless_name === selected_service_name)?.service_name;
     if (!full_service_name) {
-      throw new Error(`Could not find service=${display_service_name}`);
+      throw new Error(`Could not find service=${selected_service_name}`);
     }
     return full_service_name;
   }
