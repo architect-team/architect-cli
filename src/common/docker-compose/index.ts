@@ -390,8 +390,6 @@ export class DockerComposeUtils {
 
     const services: { name: string, value: { display_name: string, name: string } }[] = [];
     for (const [service_name, service] of Object.entries(compose.services) as [string, DockerService][]) {
-      console.log(service.labels);
-
       const display_name = service.labels?.find((label) => label.startsWith('architect.ref='))?.split('=')[1] || service_name;
       services.push({ name: display_name, value: { name: service_name, display_name } });
     }
