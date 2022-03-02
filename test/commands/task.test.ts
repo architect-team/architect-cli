@@ -3,7 +3,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils, Slugs } from '../../src/dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -60,7 +60,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(tag);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -87,7 +86,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(Slugs.DEFAULT_TAG);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -115,7 +113,6 @@ describe('task:exec', async function () {
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.instance_name).to.eq(instance_name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(tag);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -164,7 +161,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(bad_component_name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(Slugs.DEFAULT_TAG);
         return body;
       })
       .reply(404, { message: 'No component found in the given environment' })
