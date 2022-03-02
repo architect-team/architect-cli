@@ -361,7 +361,7 @@ export class DockerComposeUtils {
       await new Promise((resolve) => {
         childProcess.on('close', resolve);
       });
-    })
+    });
   }
 
   public static async dockerCompose(args: string[], opts = { stdout: true, stdin: false }, execa_opts?: Options): Promise<any> {

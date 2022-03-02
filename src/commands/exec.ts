@@ -230,7 +230,7 @@ export default class Exec extends Command {
     // works here.
     await DockerComposeUtils.dockerComposeSpawn(compose_args, {
       stdin: true,
-      stdout: true
+      stdout: true,
     });
   }
 
