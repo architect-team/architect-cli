@@ -212,14 +212,14 @@ export default class Exec extends Command {
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-    const service_name = await DockerComposeUtils.getLocalServiceForEnvironment(environment_name, compose_file, args.resource);
+    const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
     // https://docs.docker.com/compose/reference/exec/
     if (!flags.tty || !process.stdout.isTTY) {
       compose_args.push('-T');
     }
-    compose_args.push(service_name);
+    compose_args.push(service.name);
     compose_args.push(args.command);
 
     // execa has an issue where the go library thinks it is not an interactive terminal

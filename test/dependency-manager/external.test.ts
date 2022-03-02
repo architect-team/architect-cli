@@ -229,7 +229,8 @@ describe('external spec v1', () => {
           ],
           build: {
             context: path.resolve('/stack')
-          }
+          },
+          labels: ['architect.ref=architect/cloud.services.app']
         }
       },
       'version': '3',

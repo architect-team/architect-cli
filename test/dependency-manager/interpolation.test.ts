@@ -147,7 +147,8 @@ describe('interpolation spec v1', () => {
     ]);
 
     const web_interfaces_ref = resourceRefToNodeRef('concourse/web');
-    const web_ref = resourceRefToNodeRef('concourse/web.services.web');
+    const web_resource_ref = 'concourse/web.services.web';
+    const web_ref = resourceRefToNodeRef(web_resource_ref);
     const worker_ref = resourceRefToNodeRef('concourse/worker.services.worker');
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -179,7 +180,8 @@ describe('interpolation spec v1', () => {
           ],
           'build': {
             'context': path.resolve('/stack')
-          }
+          },
+          labels: ['architect.ref=concourse/web.services.web']
         },
         [worker_ref]: {
           'environment': {
@@ -192,7 +194,8 @@ describe('interpolation spec v1', () => {
           },
           'depends_on': [
             web_ref
-          ]
+          ],
+          labels: ['architect.ref=concourse/worker.services.worker']
         },
       },
       'version': '3',
@@ -225,6 +228,7 @@ describe('interpolation spec v1', () => {
     const expected_web_compose: DockerService = {
       environment: {},
       "labels": [
+        `architect.ref=${web_resource_ref}`,
         "traefik.enable=true",
         "traefik.port=81",
         `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
@@ -255,6 +259,7 @@ describe('interpolation spec v1', () => {
       external_links: [
         'gateway:public.arc.localhost'
       ],
+      labels: ['architect.ref=concourse/worker.services.worker']
     };
     expect(public_template.services[worker_ref]).to.be.deep.equal(expected_worker_compose);
   });
@@ -297,7 +302,8 @@ describe('interpolation spec v1', () => {
       await manager.loadComponentSpec('examples/frontend')
     ]);
 
-    const backend_ref = resourceRefToNodeRef('examples/backend.services.api');
+    const backend_resource_ref = 'examples/backend.services.api';
+    const backend_ref = resourceRefToNodeRef(backend_resource_ref);
     const backend_interface_ref = `${backend_ref}-main`;
     const backend_external_url = `http://main.arc.localhost`
     const frontend_ref = resourceRefToNodeRef('examples/frontend.services.app');
@@ -310,6 +316,7 @@ describe('interpolation spec v1', () => {
       EXTERNAL_API_HOST: backend_external_url,
     })
     expect(template.services[backend_ref].labels).to.deep.eq([
+      `architect.ref=${backend_resource_ref}`,
       'traefik.enable=true',
       "traefik.port=80",
       `traefik.http.routers.${backend_interface_ref}.rule=Host(\`main.arc.localhost\`)`,

@@ -87,7 +87,7 @@ export default class Logs extends Command {
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-    const service_name = await DockerComposeUtils.getLocalServiceForEnvironment(environment_name, compose_file, args.resource);
+    const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'logs'];
     if (flags.follow) {
@@ -100,11 +100,10 @@ export default class Logs extends Command {
       compose_args.push('--tail');
       compose_args.push(flags.tail.toString());
     }
-    compose_args.push(service_name);
+    compose_args.push(service.name);
 
-    const display_service_name = service_name.substring(0, service_name.lastIndexOf('-'));
     let show_header = true;
-    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(display_service_name))} ${chalk.hex('#D3D3D3')('|')}`;
+    const prefix = flags.raw ? '' : `${chalk.cyan(chalk.bold(service.display_name))} ${chalk.hex('#D3D3D3')('|')}`;
 
     const logger = new Writable();
 

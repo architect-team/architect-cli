@@ -247,7 +247,8 @@ describe('local dev environment', function () {
     }
   };
 
-  const seed_app_ref = resourceRefToNodeRef('database-seeding.services.app');
+  const seed_app_resource_ref = 'database-seeding.services.app'
+  const seed_app_ref = resourceRefToNodeRef(seed_app_resource_ref);
   const seed_db_ref = resourceRefToNodeRef('database-seeding.services.my-demo-db');
 
   const seeding_component_expected_compose: DockerComposeTemplate = {
@@ -269,6 +270,7 @@ describe('local dev environment', function () {
           "AUTO_DDL": "seed"
         },
         "labels": [
+          `architect.ref=${seed_app_resource_ref}`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${seed_app_ref}-main.rule=Host(\`app.arc.localhost\`)`,
@@ -296,7 +298,8 @@ describe('local dev environment', function () {
         "image": "postgres:11",
         "external_links": [
           "gateway:app.arc.localhost"
-        ]
+        ],
+        labels: ['architect.ref=database-seeding.services.my-demo-db']
       },
       "gateway": {
         "image": "traefik:v2.4.14",
@@ -322,7 +325,8 @@ describe('local dev environment', function () {
     "volumes": {}
   }
 
-  const hello_api_ref = resourceRefToNodeRef('hello-world.services.api');
+  const resource_ref = 'hello-world.services.api'
+  const hello_api_ref = resourceRefToNodeRef(resource_ref);
   const component_expected_compose: DockerComposeTemplate = {
     "version": "3",
     "services": {
@@ -332,6 +336,7 @@ describe('local dev environment', function () {
         ],
         "environment": {},
         "labels": [
+          `architect.ref=${resource_ref}`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${hello_api_ref}-hello.rule=Host(\`hello.arc.localhost\`)`,
@@ -607,7 +612,7 @@ describe('local dev environment', function () {
 
   describe('instance devs', function () {
     const hello_api_instance_ref = resourceRefToNodeRef('hello-world.services.api@tenant-1');
-    const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref));
+    const expected_instance_compose = JSON.parse(JSON.stringify(component_expected_compose).replace(new RegExp(hello_api_ref, 'g'), hello_api_instance_ref).replace(new RegExp('hello-world.services.api', 'g'), 'hello-world.services.api@tenant-1'));
 
     const local_dev = test
       .timeout(20000)

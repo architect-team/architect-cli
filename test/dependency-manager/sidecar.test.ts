@@ -70,7 +70,8 @@ describe('sidecar spec v1', () => {
     const branch_ref = ecsResourceRefToNodeRef('test/branch.services.api');
     const leaf_interfaces_ref = ecsResourceRefToNodeRef('test/leaf');
     const leaf_db_ref = ecsResourceRefToNodeRef('test/leaf.services.db');
-    const leaf_api_ref = ecsResourceRefToNodeRef('test/leaf.services.api');
+    const left_api_resource_ref = 'test/leaf.services.api';
+    const leaf_api_ref = ecsResourceRefToNodeRef(left_api_resource_ref);
 
     it('sidecar should connect two services together', async () => {
       mock_fs({
@@ -202,7 +203,8 @@ describe('sidecar spec v1', () => {
       ]);
 
       const other_leaf_interfaces_ref = ecsResourceRefToNodeRef('test/other-leaf');
-      const other_leaf_api_ref = ecsResourceRefToNodeRef('test/other-leaf.services.api');
+      const other_leaf_api_resource_ref = 'test/other-leaf.services.api';
+      const other_leaf_api_ref = ecsResourceRefToNodeRef(other_leaf_api_resource_ref);
       const other_leaf_db_ref = ecsResourceRefToNodeRef('test/other-leaf.services.db');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
@@ -264,7 +266,8 @@ describe('sidecar spec v1', () => {
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
-        ]
+        ],
+        labels: ['architect.ref=test/branch.services.api']
       };
       expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
@@ -276,6 +279,7 @@ describe('sidecar spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
         ],
+        labels: ['architect.ref=test/leaf.services.db']
       };
       expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
@@ -288,6 +292,7 @@ describe('sidecar spec v1', () => {
           DB_URL: `postgres://127.0.0.1:12345`
         },
         "labels": [
+          `architect.ref=test/leaf.services.api`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
@@ -311,6 +316,7 @@ describe('sidecar spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
         ],
+        labels: ['architect.ref=test/other-leaf.services.db']
       };
       expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
@@ -323,6 +329,7 @@ describe('sidecar spec v1', () => {
           DB_URL: `postgres://127.0.0.1:12345`
         },
         "labels": [
+          `architect.ref=test/other-leaf.services.api`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
@@ -370,7 +377,8 @@ describe('sidecar spec v1', () => {
     ]);
 
     const cloud_interfaces_ref = ecsResourceRefToNodeRef('architect/cloud')
-    const api_ref = ecsResourceRefToNodeRef('architect/cloud.services.api')
+    const api_resource_ref = 'architect/cloud.services.api';
+    const api_ref = ecsResourceRefToNodeRef(api_resource_ref)
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -386,6 +394,7 @@ describe('sidecar spec v1', () => {
     const expected_compose: DockerService = {
       "environment": {},
       "labels": [
+        `architect.ref=${api_resource_ref}`,
         "traefik.enable=true",
         "traefik.port=80",
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,

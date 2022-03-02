@@ -55,7 +55,8 @@ describe('components spec v1', function () {
             ],
             "build": {
               "context": path.resolve("/stack")
-            }
+            },
+            labels: ['architect.ref=architect/cloud.services.app']
           },
           [api_ref]: {
             "environment": {},
@@ -64,7 +65,8 @@ describe('components spec v1', function () {
             ],
             "build": {
               "context": path.resolve("/stack")
-            }
+            },
+            labels: ['architect.ref=architect/cloud.services.api']
           },
         },
         "version": "3",
@@ -214,7 +216,8 @@ describe('components spec v1', function () {
             ],
             "build": {
               "context": path.resolve("/stack")
-            }
+            },
+            labels: ['architect.ref=architect/cloud.services.api']
           },
           [app_ref]: {
             "depends_on": [
@@ -228,7 +231,8 @@ describe('components spec v1', function () {
             ],
             "build": {
               "context": path.resolve("/stack")
-            }
+            },
+            labels: ['architect.ref=architect/cloud.services.app']
           },
           [db_ref]: {
             "environment": {},
@@ -237,7 +241,8 @@ describe('components spec v1', function () {
             ],
             "build": {
               "context": path.resolve("/stack")
-            }
+            },
+            labels: ['architect.ref=architect/cloud.services.db']
           }
         },
         "version": "3",
