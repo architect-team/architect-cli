@@ -3,7 +3,7 @@ import path from 'path';
 import sinon from 'sinon';
 import { DockerComposeUtils } from '../../src/common/docker-compose/index';
 import * as Docker from '../../src/common/utils/docker';
-import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils, Slugs } from '../../src/dependency-manager/src';
+import { ComponentSlugUtils, ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../../src/dependency-manager/src';
 import { mockArchitectAuth, MOCK_API_HOST } from '../utils/mocks';
 
 describe('task:exec', async function () {
@@ -24,11 +24,6 @@ describe('task:exec', async function () {
     },
   }
 
-  const mock_architect_account_response = {
-    ...mock_account,
-    name: 'architect'
-  }
-
   const mock_component = {
     name: 'basic-task'
   }
@@ -42,9 +37,9 @@ describe('task:exec', async function () {
   const instance_name = 'instance-2';
 
   const namespaced_component_name = ComponentSlugUtils.build(mock_account.name, mock_component.name);
-  const task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name);
+  const task_name = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
   const tagged_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag);
-  const instanced_task_name = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
+  const instanced_task_name = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, instance_name);
   const instanced_component_name = ComponentVersionSlugUtils.build(mock_account.name, mock_component.name, tag, instance_name);
 
   const mock_remote_task_id = 'remote-task-id';
@@ -65,7 +60,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(tag);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -92,7 +86,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(Slugs.DEFAULT_TAG);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -120,7 +113,6 @@ describe('task:exec', async function () {
         expect(body.component_name).to.eq(mock_component.name);
         expect(body.instance_name).to.eq(instance_name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(tag);
         return body;
       })
       .reply(200, mock_remote_task_id)
@@ -169,7 +161,6 @@ describe('task:exec', async function () {
         expect(body.component_account_name).to.eq(mock_account.name);
         expect(body.component_name).to.eq(bad_component_name);
         expect(body.task_name).to.eq(mock_task.name);
-        expect(body.tag).to.eq(Slugs.DEFAULT_TAG);
         return body;
       })
       .reply(404, { message: 'No component found in the given environment' })
@@ -183,9 +174,9 @@ describe('task:exec', async function () {
     .it('fails with a useful message if given a bad component name');
 
   const mock_docker_compose_service: { [key: string]: {} } = {};
-  const mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name);
+  const mock_slug = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name);
   const mock_ref = resourceRefToNodeRef(mock_slug);
-  const instanced_mock_slug = ServiceVersionSlugUtils.build(mock_account.name, mock_component.name, mock_task.name, tag, instance_name);
+  const instanced_mock_slug = ResourceSlugUtils.build(mock_account.name, mock_component.name, 'tasks', mock_task.name, instance_name);
   const instanced_mock_ref = resourceRefToNodeRef(instanced_mock_slug);
   mock_docker_compose_service[mock_ref] = {};
   mock_docker_compose_service[instanced_mock_ref] = {};

@@ -21,8 +21,8 @@ export class Refs {
     }
 
     const sanitized_ref = ref.replace(/[^a-zA-Z0-9-]/g, '-');
-    const truncated_ref = sanitized_ref.substr(0, (max_length - 1) - Refs.HASH_LENGTH);
-    const hash = Refs.toDigest(seed).substr(0, Refs.HASH_LENGTH);
+    const truncated_ref = sanitized_ref.substring(0, (max_length - 1) - Refs.HASH_LENGTH);
+    const hash = Refs.toDigest(seed).substring(0, Refs.HASH_LENGTH);
 
     return `${truncated_ref}-${hash}`;
   }
@@ -37,7 +37,7 @@ export class Refs {
       throw new Error(`Cannot trim ref to length: ${max_length}`);
     }
 
-    const trimmed_name = `${prefix}${split.join('-')}`.substr(0, target_length);
+    const trimmed_name = `${prefix}${split.join('-')}`.substring(0, target_length);
     return `${trimmed_name}${suffix}-${hash}`;
   }
 

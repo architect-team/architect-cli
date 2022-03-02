@@ -1,4 +1,4 @@
-name: examples/rabbitmq
+name: rabbitmq
 description: Example RabbitMQ message broker
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/rabbitmq
 keywords:

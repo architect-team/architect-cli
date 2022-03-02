@@ -12,8 +12,14 @@ export class ValuesConfig {
       let key = component_key.endsWith('*') ? component_key.substring(0, component_key.length - 1) : component_key;
       key = key.endsWith(':') ? key.substring(0, key.length - 1) : key;
       key = key.endsWith('/') ? key.substring(0, key.length - 1) : key;
+
+      // Backwards compat for tags
+      if (ComponentVersionSlugUtils.Validator.test(key)) {
+        const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(key);
+        key = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+      }
+
       if (
-        !ComponentVersionSlugUtils.Validator.test(key) &&
         !ComponentSlugUtils.Validator.test(key) &&
         !Slugs.ArchitectSlugValidator.test(key) &&
         component_key !== '*'

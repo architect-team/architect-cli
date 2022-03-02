@@ -65,10 +65,11 @@ describe('interfaces spec v1', () => {
       };
     });
 
-    const branch_ref = resourceRefToNodeRef('test/branch/api:latest');
-    const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf:latest');
-    const leaf_db_ref = resourceRefToNodeRef('test/leaf/db:latest');
-    const leaf_api_ref = resourceRefToNodeRef('test/leaf/api:latest');
+    const branch_ref = resourceRefToNodeRef('test/branch.services.api');
+    const leaf_interfaces_ref = resourceRefToNodeRef('test/leaf');
+    const leaf_db_ref = resourceRefToNodeRef('test/leaf.services.db');
+    const leaf_api_resource_ref = 'test/leaf.services.api';
+    const leaf_api_ref = resourceRefToNodeRef(leaf_api_resource_ref);
 
     it('should connect two services together', async () => {
       mock_fs({
@@ -191,14 +192,14 @@ describe('interfaces spec v1', () => {
         'test/other-leaf': '/stack/other-leaf/architect.yml'
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('test/leaf', { public: 'api' }),
+        await manager.loadComponentSpec('test/leaf', { interfaces: { public: 'api' } }),
         await manager.loadComponentSpec('test/branch'),
-        await manager.loadComponentSpec('test/other-leaf', { publicv1: 'api' })
+        await manager.loadComponentSpec('test/other-leaf', { interfaces: { publicv1: 'api' } })
       ]);
 
-      const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf:latest');
-      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf/api:latest');
-      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf/db:latest');
+      const other_leaf_interfaces_ref = resourceRefToNodeRef('test/other-leaf');
+      const other_leaf_api_ref = resourceRefToNodeRef('test/other-leaf.services.api');
+      const other_leaf_db_ref = resourceRefToNodeRef('test/other-leaf.services.db');
 
       expect(graph.nodes.map((n) => n.ref)).has.members([
         'gateway',
@@ -259,7 +260,8 @@ describe('interfaces spec v1', () => {
         external_links: [
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
-        ]
+        ],
+        labels: ['architect.ref=test/branch.services.api']
       };
       expect(template.services[branch_ref]).to.be.deep.equal(expected_leaf_compose);
 
@@ -271,6 +273,7 @@ describe('interfaces spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
         ],
+        labels: ['architect.ref=test/leaf.services.db']
       };
       expect(template.services[leaf_db_ref]).to.be.deep.equal(expected_leaf_db_compose);
 
@@ -283,6 +286,7 @@ describe('interfaces spec v1', () => {
           DB_URL: `postgres://${leaf_db_ref}:5432`
         },
         "labels": [
+          `architect.ref=${leaf_api_resource_ref}`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${leaf_api_ref}-api.rule=Host(\`public.arc.localhost\`)`,
@@ -306,6 +310,7 @@ describe('interfaces spec v1', () => {
           'gateway:public.arc.localhost',
           'gateway:publicv1.arc.localhost'
         ],
+        labels: ['architect.ref=test/other-leaf.services.db']
       };
       expect(template.services[other_leaf_db_ref]).to.be.deep.equal(expected_other_leaf_db_compose);
 
@@ -318,6 +323,7 @@ describe('interfaces spec v1', () => {
           DB_URL: `postgres://${other_leaf_db_ref}:5432`
         },
         "labels": [
+          `architect.ref=test/other-leaf.services.api`,
           "traefik.enable=true",
           "traefik.port=80",
           `traefik.http.routers.${other_leaf_api_ref}-api.rule=Host(\`publicv1.arc.localhost\`)`,
@@ -360,11 +366,12 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { app: 'app', admin: 'admin' }),
+      await manager.loadComponentSpec('architect/cloud', { interfaces: { app: 'app', admin: 'admin' } }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud')
+    const api_resource_ref = 'architect/cloud.services.api';
+    const api_ref = resourceRefToNodeRef(api_resource_ref)
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -380,6 +387,7 @@ describe('interfaces spec v1', () => {
     const expected_compose: DockerService = {
       "environment": {},
       "labels": [
+        `architect.ref=${api_resource_ref}`,
         "traefik.enable=true",
         "traefik.port=80",
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
@@ -441,11 +449,12 @@ describe('interfaces spec v1', () => {
       'architect/cloud': '/stack/architect.yml',
     });
     const graph = await manager.getGraph([
-      await manager.loadComponentSpec('architect/cloud', { 'staff2': 'admin2', 'staff3': 'admin3' }, { map_all_interfaces: true }),
+      await manager.loadComponentSpec('architect/cloud', { map_all_interfaces: true, interfaces: { 'staff2': 'admin2', 'staff3': 'admin3' }, }),
     ]);
 
-    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud:latest')
-    const api_ref = resourceRefToNodeRef('architect/cloud/api:latest')
+    const cloud_interfaces_ref = resourceRefToNodeRef('architect/cloud')
+    const api_resource_ref = 'architect/cloud.services.api';
+    const api_ref = resourceRefToNodeRef(api_resource_ref)
 
     expect(graph.nodes.map((n) => n.ref)).has.members([
       'gateway',
@@ -461,6 +470,7 @@ describe('interfaces spec v1', () => {
     const expected_compose: DockerService = {
       "environment": {},
       "labels": [
+        `architect.ref=${api_resource_ref}`,
         "traefik.enable=true",
         "traefik.port=80",
         `traefik.http.routers.${api_ref}-app.rule=Host(\`app.arc.localhost\`)`,
@@ -540,12 +550,12 @@ describe('interfaces spec v1', () => {
     });
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('voic/admin-ui'),
-      await manager.loadComponentSpec('voic/product-catalog', { public2: 'public', admin2: 'admin' }),
+      await manager.loadComponentSpec('voic/product-catalog', { interfaces: { public2: 'public', admin2: 'admin' } }),
     ]);
 
-    const admin_ref = resourceRefToNodeRef('voic/admin-ui/dashboard:latest')
-    const catalog_interfaces_ref = resourceRefToNodeRef('voic/product-catalog:latest')
-    const api_ref = resourceRefToNodeRef('voic/product-catalog/api:latest')
+    const admin_ref = resourceRefToNodeRef('voic/admin-ui.services.dashboard')
+    const catalog_interfaces_ref = resourceRefToNodeRef('voic/product-catalog')
+    const api_ref = resourceRefToNodeRef('voic/product-catalog.services.api')
 
     expect(graph.edges.map(e => e.toString())).members([
       `${catalog_interfaces_ref} [public, admin, private] -> ${api_ref} [public, admin, private]`,
@@ -595,8 +605,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -641,8 +651,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/smtp'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/smtp/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('architect/smtp.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -696,8 +706,8 @@ describe('interfaces spec v1', () => {
       await manager.loadComponentSpec('architect/upstream'),
     ]);
 
-    const mail_ref = resourceRefToNodeRef('architect/smtp/maildev:latest');
-    const app_ref = resourceRefToNodeRef('architect/upstream/test-app:latest');
+    const mail_ref = resourceRefToNodeRef('architect/smtp.services.maildev');
+    const app_ref = resourceRefToNodeRef('architect/upstream.services.test-app');
 
     const test_node = graph.getNodeByRef(app_ref) as ServiceNode;
     expect(test_node.config.environment).to.deep.eq({
@@ -732,18 +742,17 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
+      await manager.loadComponentSpecs('examples/hello-world'));
     const template = await DockerComposeUtils.generate(graph);
 
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     expect(template.services[api_ref].environment).to.deep.eq({
       MY_PATH: '/api',
       MY_ADDR: `http://${api_ref}:8080/api`
     })
 
-    const app_ref = resourceRefToNodeRef('examples/hello-world/app:latest');
+    const app_ref = resourceRefToNodeRef('examples/hello-world.services.app');
     expect(template.services[app_ref].environment).to.deep.eq({
       API_PATH: '/api',
       API_ADDR: `http://${api_ref}:8080/api`
@@ -782,10 +791,9 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      await manager.loadComponentSpecs('examples/hello-world'));
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
 
     const template = await DockerComposeUtils.generate(graph);
     expect(template.services[api_ref].environment).to.deep.eq({
@@ -825,10 +833,9 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'examples/hello-world': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('examples/hello-world');
     let err;
     try {
-      await manager.getGraph(await manager.loadComponentSpecs(config));
+      await manager.getGraph(await manager.loadComponentSpecs('examples/hello-world'));
     } catch (e: any) {
       err = e;
     }
@@ -858,9 +865,8 @@ describe('interfaces spec v1', () => {
     const manager = new LocalDependencyManager(axios.create(), {
       'architect/dependency': '/stack/architect.yml',
     });
-    const config = await manager.loadComponentSpec('architect/dependency');
     const graph = await manager.getGraph(
-      await manager.loadComponentSpecs(config));
+      await manager.loadComponentSpecs('architect/dependency'));
 
     expect(graph.edges.length).eq(1);
 
@@ -868,7 +874,6 @@ describe('interfaces spec v1', () => {
     expect(followed_edge.length).eq(1);
     expect(followed_edge[0].interface_from).eq('service->mysql');
     expect(followed_edge[0].interface_to).eq('mysql');
-    expect(followed_edge[0].node_to.ref).eq('dependency-db-zxdyijfg');
     expect(followed_edge[0].node_to_interface_name).eq('mysql');
   });
 });

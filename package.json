@@ -42,7 +42,7 @@
     "shell-quote": "^1.7.2",
     "simple-oauth2": "^4.2.0",
     "tmp": "^0.2.1",
-    "tslib": "2.1.0",
+    "tslib": "2.3.1",
     "untildify": "4.0.0",
     "which": "^2.0.2",
     "ws": "^8.4.0"
@@ -69,8 +69,8 @@
     "@types/validator": "^13.7.1",
     "@types/which": "^2.0.1",
     "@types/ws": "^8.2.2",
-    "@typescript-eslint/eslint-plugin": "5.10.2",
-    "@typescript-eslint/parser": "5.10.2",
+    "@typescript-eslint/eslint-plugin": "5.12.1",
+    "@typescript-eslint/parser": "5.12.1",
     "chai": "4.3.0",
     "chalk": "4.1.0",
     "copyfiles": "^2.4.1",
@@ -83,7 +83,7 @@
     "nyc": "15.1.0",
     "oclif": "^2.4.2",
     "sinon": "9.2.4",
-    "ts-node": "9.1.1",
+    "ts-node": "10.5.0",
     "typescript": "^4.5.5"
   },
   "engines": {

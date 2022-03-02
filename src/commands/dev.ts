@@ -6,36 +6,17 @@ import fs from 'fs-extra';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
 import opener from 'opener';
+import AccountUtils from '../architect/account/account.utils';
 import { EnvironmentUtils } from '../architect/environment/environment.utils';
-import Command from '../base-command';
-import LocalDependencyManager from '../common/dependency-manager/local-manager';
+import { default as BaseCommand, default as Command } from '../base-command';
+import LocalDependencyManager, { ComponentConfigOpts } from '../common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
-import { ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
-import { buildSpecFromPath } from '../dependency-manager/src/spec/utils/component-builder';
+import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
-export abstract class DevCommand extends Command {
-
-  static flags = {
-    ...Command.flags,
-  };
-
-  protected async parse<F, A extends {
-    [name: string]: any;
-  }>(options?: Interfaces.Input<F>, argv = this.argv): Promise<Interfaces.ParserOutput<F, A>> {
-    const parsed = await super.parse(options, argv) as Interfaces.ParserOutput<F, A>;
-    const flags: any = parsed.flags;
-
-    // Merge any values set via deprecated flags into their supported counterparts
-    parsed.flags = flags;
-
-    return parsed;
-  }
-}
-
-export default class Dev extends DevCommand {
+export default class Dev extends BaseCommand {
   async auth_required(): Promise<boolean> {
     return false;
   }
@@ -43,7 +24,8 @@ export default class Dev extends DevCommand {
   static description = 'Run your stack locally';
 
   static flags = {
-    ...DevCommand.flags,
+    ...BaseCommand.flags,
+    ...AccountUtils.flags,
     ...EnvironmentUtils.flags,
 
     'compose-file': Flags.string({
@@ -270,6 +252,7 @@ export default class Dev extends DevCommand {
     for (const config_or_component of args.configs_or_components) {
 
       let component_version = config_or_component;
+      // Load architect.yml if passed
       if (!ComponentVersionSlugUtils.Validator.test(config_or_component) && !ComponentSlugUtils.Validator.test(config_or_component)) {
         const res = buildSpecFromPath(config_or_component);
         linked_components[res.name] = config_or_component;
@@ -282,6 +265,16 @@ export default class Dev extends DevCommand {
       this.app.api,
       linked_components
     );
+
+    if (flags.account) {
+      const account = await AccountUtils.getAccount(this.app, flags.account);
+      dependency_manager.account = account.name;
+    } else {
+      const config_account = this.app.config.defaultAccount();
+      if (config_account) {
+        dependency_manager.account = config_account;
+      }
+    }
 
     if (flags.environment) {
       dependency_manager.environment = flags.environment;
@@ -298,13 +291,13 @@ export default class Dev extends DevCommand {
     const uniqe_names = component_versions.map(name => name.split('@')[0]).filter(onlyUnique);
     const duplicates = uniqe_names.length !== component_versions.length;
 
-    const component_options = { map_all_interfaces: !flags.production && !duplicates };
+    const component_options: ComponentConfigOpts = { map_all_interfaces: !flags.production && !duplicates, interfaces: interfaces_map };
 
     for (const component_version of component_versions) {
-      const component_config = await dependency_manager.loadComponentSpec(component_version, interfaces_map, component_options);
+      const component_config = await dependency_manager.loadComponentSpec(component_version, component_options);
 
       if (flags.recursive) {
-        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config);
+        const dependency_configs = await dependency_manager.loadComponentSpecs(component_config.metadata.ref);
         component_specs.push(...dependency_configs);
       } else {
         component_specs.push(component_config);

@@ -42,8 +42,8 @@ services:
       POSTGRES_DB: ${{ parameters.param_optional }}
       ENVIRONMENT_UNSET:
     volumes:
-      volume_string: ./some-volume
-      volume_object:
+      volume-string: ./some-volume
+      volume-object:
         mount_path: ./mount-path
         key: volume-key
         description: Volume description
@@ -59,11 +59,11 @@ services:
     deploy:
       strategy: deploy-strategy
       modules:
-        deploy_module:
+        deploy-module:
           path: ./deploy/module
           inputs:
-            deploy_input_string: some_deploy_input
-            deploy_input_unset:
+            deploy-input-string: some_deploy_input
+            deploy-input-unset:
     depends_on:
       - stateful-api
     labels:
@@ -85,7 +85,7 @@ services:
       min_replicas: 1
       max_replicas: 3
       metrics:
-        memory: 2GB
+        memory: 80
     ${{ if architect.environment == 'local' }}:
       description: api-db service debug
       image: postgres:12
@@ -100,13 +100,13 @@ services:
         POSTGRES_DB: ${{ parameters.param_optional }}
         ENVIRONMENT_UNSET:
       volumes:
-        volume_string: ./some-volume
-        volume_object:
+        volume-string: ./some-volume
+        volume-object:
           mount_path: ./mount-path
           key: volume-key
           description: Volume description
           readonly: false
-        another_volume_object:
+        another-volume-object:
           mount_path: ./mount-path
           host_path: ./test
           description: Volume description
@@ -121,11 +121,11 @@ services:
       deploy:
         strategy: deploy-strategy
         modules:
-          deploy_module:
+          deploy-module:
             path: ./deploy/module
             inputs:
-              deploy_input_string: some_deploy_input
-              deploy_input_unset:
+              deploy-input-string: some_deploy_input
+              deploy-input-unset:
       depends_on:
         - stateful-api
       labels:

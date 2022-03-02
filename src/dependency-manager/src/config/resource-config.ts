@@ -1,3 +1,4 @@
+import { ComponentInstanceMetadata } from '../spec/component-spec';
 import { Dictionary } from '../utils/dictionary';
 
 export interface DeployModuleConfig {
@@ -19,8 +20,7 @@ export interface BuildConfig {
 
 export interface ResourceConfig {
   name: string;
-  ref: string;
-  tag: string;
+  metadata: ComponentInstanceMetadata;
   description?: string;
   image?: string; // TODO:290: not optional
   command?: string[];

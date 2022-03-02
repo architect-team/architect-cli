@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import mock_fs from 'mock-fs';
 import nock from 'nock';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
-import { buildSpecFromPath, buildSpecFromYml, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
+import { buildSpecFromPath, buildSpecFromYml, resourceRefToNodeRef, Slugs, ValidationError, ValidationErrors } from '../../src/dependency-manager/src';
 import { ValuesConfig } from '../../src/dependency-manager/src/values/values';
 
 describe('validate spec', () => {
@@ -12,7 +12,7 @@ describe('validate spec', () => {
   describe('component config validation', () => {
     it('valid service ref brackets', async () => {
       const component_config = `
-      name: test/component
+      name: component
       services:
         stateless-app:
           interfaces:
@@ -115,6 +115,33 @@ services:
       expect(errors).lengthOf(1);
       expect(errors[0].message).includes(`services.stateless-app.interfaces.main.url`);
       expect(errors[0].path).eq(`interfaces.frontend`);
+    });
+
+    it('services and tasks can share the same name', async () => {
+      const component_config = `
+      name: component
+      services:
+        app:
+          environment:
+            TEST: 1
+      tasks:
+        app:
+          environment:
+            TEST: 1
+      `
+      mock_fs({ '/architect.yml': component_config });
+      const manager = new LocalDependencyManager(axios.create(), {
+        'component': '/architect.yml',
+      });
+
+      const graph = await manager.getGraph([
+        await manager.loadComponentSpec('component'),
+      ]);
+      expect(graph.nodes).to.have.lengthOf(2)
+      expect(graph.nodes.map((node) => node.ref)).to.have.members([
+        resourceRefToNodeRef('component.services.app'),
+        resourceRefToNodeRef('component.tasks.app')
+      ])
     });
 
     it('valid service depends_on', async () => {
@@ -366,7 +393,7 @@ services:
   describe('component validation', () => {
     it('invalid component name', async () => {
       const component_config = `
-      name: testcomponent
+      name: test_component
       `
 
       mock_fs({
@@ -391,11 +418,11 @@ services:
         'name',
       ])
       expect(errors[0].message).includes('architect/component-name');
-      expect(errors[0].component).eq('testcomponent');
+      expect(errors[0].component).eq('test_component');
       expect(errors[0].start?.row).eq(2);
       expect(errors[0].start?.column).eq(12);
       expect(errors[0].end?.row).eq(2);
-      expect(errors[0].end?.column).eq(25);
+      expect(errors[0].end?.column).eq(26);
     });
 
     it('invalid key value', async () => {
@@ -625,7 +652,7 @@ services:
       let err;
       try {
         await manager.getGraph([
-          await manager.loadComponentSpec('test/component', { api: 'api', api2: 'api2' }),
+          await manager.loadComponentSpec('test/component', { interfaces: { api: 'api', api2: 'api2' } }),
         ]);
       } catch (e: any) {
         err = e;
@@ -927,9 +954,8 @@ services:
       });
       let err;
       try {
-        const component_config = await manager.loadComponentSpec('examples/hello-world');
         await manager.getGraph([
-          ...await manager.loadComponentSpecs(component_config),
+          ...await manager.loadComponentSpecs('examples/hello-world'),
         ]);
       } catch (e: any) {
         err = e;
@@ -951,7 +977,7 @@ services:
       "*": {
         "POSTGRES_HOST": "172.17.0.1"
       },
-      "architect/cloud:latest": {
+      "architect/cloud": {
         "TEST": "string"
       }
 
@@ -986,7 +1012,7 @@ services:
 
   it('invalid value keys in values files fail validation', () => {
     const values_dict = {
-      "architect/cloud:latest": {
+      "architect/cloud": {
         "TE@ST": "string"
       }
     };
@@ -1000,13 +1026,13 @@ services:
     expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(1);
-    expect(errors[0].path).eq(`architect/cloud:latest.TE@ST`);
+    expect(errors[0].path).eq(`architect/cloud.TE@ST`);
   });
 
   it('component values are defined in an object', () => {
     const values_dict = {
-      "architect/cloud:latest": [],
-      "architect/cloud:*": 'string'
+      "architect/cloud": [],
+      "architect/cloud@v2": 'string'
     };
 
     let err;
@@ -1018,16 +1044,16 @@ services:
     expect(err).instanceOf(ValidationErrors);
     const errors = JSON.parse(err.message);
     expect(errors).lengthOf(2);
-    expect(errors[0].path).eq(`architect/cloud:latest`);
-    expect(errors[1].path).eq(`architect/cloud:*`);
+    expect(errors[0].path).eq(`architect/cloud`);
+    expect(errors[1].path).eq(`architect/cloud@v2`);
   });
 
   it('component values are strings only', () => {
     const values_dict = {
-      "architect/cloud:latest": {
+      "architect/cloud": {
         'test': 'test value'
       },
-      "architect/cloud:*": {
+      "architect/cloud@v2": {
         'ANOTHER_test': 'another value'
       },
       "architect/*": {
@@ -1539,7 +1565,7 @@ services:
     let err;
     try {
       await manager.getGraph([
-        await manager.loadComponentSpec('test/component', { 'cloud': 'appppp' }),
+        await manager.loadComponentSpec('test/component', { interfaces: { 'cloud': 'appppp' } }),
       ]);
     } catch (e: any) {
       err = e;

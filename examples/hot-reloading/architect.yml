@@ -1,4 +1,4 @@
-name: examples/hot-reloading
+name: hot-reloading
 description: An example component that shows how to use the debug volume to mount source code and enable live reloading of code changes.
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/hot-reloading
 keywords:

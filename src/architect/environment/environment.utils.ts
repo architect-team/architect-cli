@@ -2,7 +2,7 @@ import { Flags } from '@oclif/core';
 import { AxiosInstance } from 'axios';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { Dictionary, ServiceVersionSlugUtils, sortOnKeys } from '../../dependency-manager/src';
+import { Dictionary, ResourceSlugUtils, sortOnKeys } from '../../dependency-manager/src';
 import Account from '../account/account.entity';
 import Environment from './environment.entity';
 
@@ -108,8 +108,8 @@ export class EnvironmentUtils {
           message: 'Select a replica',
           source: (answers_so_far: any, input: string) => {
             return filtered_replicas.map((r, index) => {
-              const { service_name } = ServiceVersionSlugUtils.parse(r.resource_ref);
-              r.display_name = `${service_name}:${index}`;
+              const { resource_name } = ResourceSlugUtils.parse(r.resource_ref);
+              r.display_name = `${resource_name}:${index}`;
               return {
                 name: `${r.display_name} (${r.ext_ref})`,
                 value: r,

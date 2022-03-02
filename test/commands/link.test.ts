@@ -56,11 +56,11 @@ describe('link', () => {
     await Link.run([component_path]);
 
     expect(log_spy.calledOnce).to.equal(true);
-    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('examples/hello-world')} to local system at ${chalk.green(component_path)}.`);
+    expect(log_spy.firstCall.args[0]).to.equal(`Successfully linked ${chalk.green('hello-world')} to local system at ${chalk.green(component_path)}.`);
 
     const linked_components_file = path.join(tmp_dir, ARCHITECTPATHS.LINKED_COMPONENT_MAP_FILENAME);
     expect(fs.existsSync(linked_components_file)).to.be.true;
     const linked_components = fs.readJSONSync(linked_components_file);
-    expect(linked_components).to.have.property('examples/hello-world', component_path);
+    expect(linked_components).to.have.property('hello-world', component_path);
   });
 })
