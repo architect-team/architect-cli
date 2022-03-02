@@ -173,7 +173,7 @@ export default class Logs extends Command {
 
     const logs_query: any = {};
     logs_query.ext_ref = replica.ext_ref;
-    logs_query.container = 'api'; // TODO:344
+    logs_query.container = replica.node_ref;
     logs_query.follow = flags.follow;
     if (flags.since)
       logs_query.since = flags.since;

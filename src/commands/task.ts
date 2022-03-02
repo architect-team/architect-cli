@@ -131,7 +131,6 @@ export default class TaskExec extends Command {
       component_name: parsed_slug.component_name,
       instance_name: parsed_slug.instance_name,
       task_name: args.task,
-      tag: parsed_slug.tag,
     });
     CliUx.ux.action.stop();
 
