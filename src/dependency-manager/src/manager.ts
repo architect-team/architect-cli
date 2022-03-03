@@ -50,6 +50,13 @@ export default abstract class DependencyManager {
     return nodes;
   }
 
+  getComponentRef(component_string: string): string {
+    const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
+    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
+    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
+    return component_ref;
+  }
+
   addComponentEdges(graph: DependencyGraph, component_config: ComponentConfig, dependency_configs: ComponentConfig[], context_map: Dictionary<ComponentContext>, external_addr: string): void {
     const component = component_config;
 
@@ -76,10 +83,11 @@ export default abstract class DependencyManager {
       while ((matches = environment_ingresses_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, interface_name } = matches.groups;
-        if (dependency_name === component.name) {
+        const dep_ref = this.getComponentRef(dependency_name);
+        if (dep_ref === component.metadata.ref) {
           ingresses.push([component, interface_name]);
         } else {
-          const dep_component = dependency_map[dependency_name];
+          const dep_component = dependency_map[dep_ref];
           ingresses.push([dep_component, interface_name]);
         }
       }
@@ -87,7 +95,8 @@ export default abstract class DependencyManager {
       while ((matches = dependencies_ingresses_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, interface_name } = matches.groups;
-        const dep_component = dependency_map[dependency_name];
+        const dep_ref = this.getComponentRef(dependency_name);
+        const dep_component = dependency_map[dep_ref];
         ingresses.push([dep_component, interface_name]);
       }
       const ingresses_regex = new RegExp(`\\\${{\\s*ingresses\\.(?<interface_name>${Slugs.ArchitectSlugRegexBase})\\.`, 'g');
@@ -157,8 +166,9 @@ export default abstract class DependencyManager {
       while ((matches = dep_interface_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, interface_name } = matches.groups;
+        const dep_ref = this.getComponentRef(dependency_name);
 
-        const dependency = dependency_map[dependency_name];
+        const dependency = dependency_map[dep_ref];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -179,8 +189,8 @@ export default abstract class DependencyManager {
       while ((matches = dep_output_regex.exec(service_string)) != null) {
         if (!matches.groups) { continue; }
         const { dependency_name, output_name } = matches.groups;
-
-        const dependency = dependency_map[dependency_name];
+        const dep_ref = this.getComponentRef(dependency_name);
+        const dependency = dependency_map[dep_ref];
         if (!dependency) continue;
         const to = buildInterfacesRef(dependency);
 
@@ -222,8 +232,8 @@ export default abstract class DependencyManager {
 
       if (!matches.groups) { continue; }
       const { dependency_name, interface_name } = matches.groups;
-
-      const dependency = dependency_map[dependency_name];
+      const dep_ref = this.getComponentRef(dependency_name);
+      const dependency = dependency_map[dep_ref];
       if (!dependency) continue;
       const to = buildInterfacesRef(dependency);
 
@@ -318,10 +328,7 @@ export default abstract class DependencyManager {
 
     const dependency_components: Dictionary<ComponentSpec> = {};
     for (const dep_name of Object.keys(component_spec.dependencies || {})) {
-      const { component_account_name, component_name } = ComponentSlugUtils.parse(dep_name);
-      const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
-      const dep_ref = ComponentSlugUtils.build(resolved_account, component_name);
-
+      const dep_ref = this.getComponentRef(dep_name);
       if (!component_map[dep_ref]) {
         continue;
       }

@@ -39,9 +39,7 @@ export default class LocalDependencyManager extends DependencyManager {
     };
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-
-    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
-    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
+    const component_ref = this.getComponentRef(component_string);
 
     if (this.loaded_components[component_ref]) {
       return this.loaded_components[component_ref];

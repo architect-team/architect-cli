@@ -854,6 +854,7 @@ describe('components spec v1', function () {
               main: 8080
             environment:
               API_ADDR: \${{ dependencies.${combination.dependency}.interfaces.api.url }}
+              EXT_API_ADDR: \${{ dependencies.${combination.dependency}.ingresses.api.url }}
       `
         const api_component_config_yml = `
         name: ${combination.api}
@@ -867,6 +868,8 @@ describe('components spec v1', function () {
             replicas: \${{ parameters.api_replicas }}
             interfaces:
               main: 8080
+            environment:
+              CORS: \${{ ingresses.api.consumers }}
       `
 
         mock_fs({
@@ -888,10 +891,13 @@ describe('components spec v1', function () {
         const graph = await manager.getGraph(configs, { [combination.dependency]: { api_replicas: 2 } });
         const api_node_ref = resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api.services.api`);
         expect(graph.nodes.map((node) => node.ref)).to.have.members([
+          'gateway',
           resourceRefToNodeRef(`${combination.account && cloud_account_name === combination.account ? '' : `${cloud_account_name}/`}cloud.services.app`),
           api_node_ref,
           resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api`)
         ])
+
+        expect(graph.edges).lengthOf(3);
 
         const api_node = graph.getNodeByRef(api_node_ref) as ServiceNode;
         expect(api_node.config.replicas).to.equal(2);
