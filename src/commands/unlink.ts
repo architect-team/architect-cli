@@ -1,7 +1,9 @@
 import { Flags } from '@oclif/core';
 import chalk from 'chalk';
 import path from 'path';
+import untildify from 'untildify';
 import Command from '../base-command';
+import { buildSpecFromPath } from '../dependency-manager/src';
 
 export default class Unlink extends Command {
   async auth_required(): Promise<boolean> {
@@ -20,7 +22,7 @@ export default class Unlink extends Command {
   static args = [{
     name: 'componentPathOrName',
     char: 'p',
-    default: path.basename(process.cwd()),
+    default: '.',
     parse: async (value: string): Promise<string> => value.toLowerCase(),
     required: false,
   }];
@@ -32,6 +34,17 @@ export default class Unlink extends Command {
       this.app.unlinkAllComponents();
       this.log(chalk.green('Successfully purged all linked components'));
       return;
+    }
+
+    if (args.componentPathOrName === '.' || args.componentPathOrName.toLowerCase().endsWith("architect.yml")) {
+      const component_path = path.resolve(untildify(args.componentPathOrName));
+      try {
+        const component_config = buildSpecFromPath(component_path);
+        args.componentPathOrName = component_config.name;
+      } catch (err: any) {
+        this.log(chalk.red('Unable to locate architect.yml file'));
+        return;
+      }
     }
 
     const removedComponentName = this.app.unlinkComponent(args.componentPathOrName);
