@@ -395,7 +395,8 @@ export default abstract class DependencyManager {
     while (component_specs_queue.length) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const { component_spec, seen_refs } = component_specs_queue.pop()!;
-      for (const dep_ref of Object.keys(component_spec.dependencies || {})) {
+      for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+        const dep_ref = this.getComponentRef(dep_name);
         if (seen_refs.includes(dep_ref)) {
           throw new ArchitectError(`Circular component dependency detected (${seen_refs.join(' <> ')})`);
         }
