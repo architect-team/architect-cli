@@ -1,7 +1,6 @@
 import { Flags, Interfaces } from '@oclif/core';
 import axios, { AxiosResponse } from 'axios';
 import chalk from 'chalk';
-import execa from 'execa';
 import fs from 'fs-extra';
 import isCi from 'is-ci';
 import yaml from 'js-yaml';
@@ -135,9 +134,9 @@ export default class Dev extends BaseCommand {
     this.log(`Wrote docker-compose file to: ${compose_file}`);
 
     if (flags['build-parallel']) {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build', '--parallel'], { stdio: 'inherit' });
     } else {
-      await execa('docker-compose', ['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
+      await DockerComposeUtils.dockerCompose(['-f', compose_file, '-p', project_name, 'build'], { stdio: 'inherit' });
     }
 
     console.clear();
@@ -218,22 +217,8 @@ export default class Dev extends BaseCommand {
       compose_args.push('-d');
     }
 
-    const cmd = execa('docker-compose', compose_args);
-    cmd.stdin?.pipe(process.stdin);
-    cmd.stdout?.pipe(process.stdout);
-    cmd.stderr?.pipe(process.stderr);
-
-    process.on('SIGINT', () => {
-      this.log('Interrupt received.');
-      this.warn('Please wait for architect to exit or containers will still be running in the background.');
-      this.log('Gracefully shutting down...');
-      execa.sync('docker-compose', ['-f', compose_file, '-p', project_name, 'stop', '--timeout', '0'], { stdio: 'inherit' });
-      this.log('Stopping operation...');
-      fs.removeSync(compose_file);
-      process.exit(0);
-    });
-
-    await cmd;
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' });
+    fs.removeSync(compose_file);
   }
 
   private async runLocal() {
