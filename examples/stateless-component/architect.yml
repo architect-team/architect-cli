@@ -27,7 +27,7 @@ services:
       http: 8080
     environment:
       LOG_LEVEL: ${{ parameters.log_level }}
-      HELLO_WORLD_ADDR: ${{ dependencies['examples/hello-world'].interfaces.hello.url }}
+      HELLO_WORLD_ADDR: ${{ dependencies.hello-world.interfaces.hello.url }}
 
 interfaces:
   frontend:
