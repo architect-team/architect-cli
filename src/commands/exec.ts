@@ -166,7 +166,6 @@ export default class Exec extends Command {
     let component_account_name: string | undefined;
     let component_name: string | undefined;
     let resource_name: string | undefined;
-    let tag: string | undefined;
     let instance_name: string | undefined;
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
@@ -221,13 +220,7 @@ export default class Exec extends Command {
     compose_args.push(service.name);
     compose_args.push(args.command);
 
-    // execa has an issue where the go library thinks it is not an interactive terminal
-    // session. I have not tracked down the root cause, but the default linux behavior
-    // works here.
-    await DockerComposeUtils.dockerComposeSpawn(compose_args, {
-      stdin: true,
-      stdout: true,
-    });
+    await DockerComposeUtils.dockerCompose(compose_args, { stdio: 'inherit' }, true);
   }
 
   async run(): Promise<void> {

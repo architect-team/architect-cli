@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import execa, { Options } from 'execa';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
@@ -122,7 +121,8 @@ export class DockerComposeUtils {
       const cpu = node.config.cpu;
       const memory = node.config.memory;
       if (cpu || memory) {
-        service.deploy = { resources: { limits: {} } };
+        if (!service.deploy) { service.deploy = {}; }
+        service.deploy.resources = { limits: {} };
         if (cpu) { service.deploy.resources.limits.cpus = `${cpu}`; }
         if (memory) { service.deploy.resources.limits.memory = memory; }
       }
@@ -227,7 +227,8 @@ export class DockerComposeUtils {
       }
 
       if (node instanceof TaskNode) {
-        service.scale = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
+        if (!service.deploy) { service.deploy = {}; }
+        service.deploy.replicas = 0; // set all tasks scale to 0 so they don't start but can be optionally invoked later
       }
 
       compose.services[node.ref] = service;
@@ -338,49 +339,30 @@ export class DockerComposeUtils {
     return raw_config;
   }
 
-  private static async dockerCommandCheck(command: () => Promise<void>): Promise<void> {
+  private static async dockerCommandCheck(): Promise<void> {
     try {
-      return await command();
-    } catch (err) {
-      try {
-        which.sync('docker');
-      } catch {
-        throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
-      }
-      const stdout = execa.sync('docker', ['compose']).stdout;
-      if (stdout.indexOf('docker compose COMMAND --help') !== -1) {
-        throw new Error("Please update your local version of Docker");
-      }
+      which.sync('docker');
+    } catch {
+      throw new Error('Architect requires Docker Compose to be installed. Please install it and try again.');
+    }
+    const stdout = execa.sync('docker', ['compose']).stdout;
+    if (!stdout.includes('docker compose COMMAND --help')) {
+      throw new Error("Please update your local version of Docker");
     }
   }
 
-  public static async dockerComposeSpawn(args: string[], opts = { stdout: true, stdin: false }): Promise<any> {
-    this.dockerCommandCheck(async () => {
-      const stdio = [];
-      stdio.push(opts.stdin ? process.stdin : undefined);
-      stdio.push(opts.stdout ? process.stdout : undefined);
-      stdio.push(opts.stdout ? process.stderr : undefined);
-      const childProcess = spawn('docker', ['compose', ...args],
-        { stdio: stdio });
-
-      await new Promise((resolve) => {
-        childProcess.on('close', resolve);
+  public static async dockerCompose(args: string[], execa_opts?: Options, use_console = false): Promise<execa.ExecaChildProcess<string>> {
+    await this.dockerCommandCheck();
+    if (use_console) {
+      process.stdin.setRawMode(true);
+    }
+    const cmd = execa('docker', ['--log-level', 'error', 'compose', ...args], execa_opts);
+    if (use_console) {
+      cmd.on('exit', () => {
+        process.exit();
       });
-    });
-  }
-
-  public static async dockerCompose(args: string[], opts = { stdout: true, stdin: false }, execa_opts?: Options): Promise<any> {
-    this.dockerCommandCheck(async () => {
-      const cmd = execa('docker', ["compose", ...args], execa_opts);
-      if (opts.stdout) {
-        cmd.stdout?.pipe(process.stdout);
-        cmd.stderr?.pipe(process.stderr);
-        if (opts.stdin) {
-          cmd.stdin?.pipe(process.stdin);
-        }
-      }
-      await cmd;
-    });
+    }
+    return cmd;
   }
 
   public static async getLocalEnvironments(config_dir: string): Promise<string[]> {
@@ -456,7 +438,7 @@ export class DockerComposeUtils {
       'run',
       '--rm',
       service_name,
-    ]);
+    ], { stdio: 'inherit' });
   }
 
   public static buildComposeFilepath(config_dir: string, project_name: string): string {

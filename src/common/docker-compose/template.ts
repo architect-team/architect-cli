@@ -20,7 +20,8 @@ export interface DockerComposeInterface {
 }
 
 export interface DockerComposeDeploy {
-  resources: { limits: { cpus?: string; memory?: string } };
+  replicas?: number;
+  resources?: { limits: { cpus?: string; memory?: string } };
 }
 
 export interface DockerComposeHealthCheck {
@@ -45,7 +46,6 @@ export interface DockerService {
   logging?: { driver?: string };
   external_links?: string[];
   deploy?: DockerComposeDeploy;
-  scale?: number;
   extra_hosts?: string[];
   labels?: string[];
   healthcheck?: DockerComposeHealthCheck;
