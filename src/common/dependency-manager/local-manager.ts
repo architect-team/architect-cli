@@ -39,7 +39,9 @@ export default class LocalDependencyManager extends DependencyManager {
     };
 
     const { component_account_name, component_name, tag, instance_name } = ComponentVersionSlugUtils.parse(component_string);
-    const component_ref = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
+
+    const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
+    const component_ref = ComponentSlugUtils.build(resolved_account, component_name, instance_name);
 
     if (this.loaded_components[component_ref]) {
       return this.loaded_components[component_ref];
@@ -59,7 +61,7 @@ export default class LocalDependencyManager extends DependencyManager {
     }
 
     const account_name = component_account_name || this.account;
-    const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(component_account_name, component_name);
+    const linked_component_key = component_ref in this.linked_components ? component_ref : ComponentSlugUtils.build(account_name, component_name);
     const linked_component = this.linked_components[linked_component_key];
     if (!linked_component && !account_name) {
       throw new ArchitectError(`Didn't find link for component '${component_ref}'.\nPlease run 'architect link' or specify an account via '--account <account>'.`);
@@ -168,7 +170,7 @@ export default class LocalDependencyManager extends DependencyManager {
     };
   }
 
-  async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
+  async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | number | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
     const gateway_port = await PortUtil.getAvailablePort(80);
     const external_addr = `arc.localhost:${gateway_port}`;
     return super.getGraph(component_specs, values, interpolate, validate, external_addr);

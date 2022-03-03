@@ -7,7 +7,7 @@ import path from 'path';
 import LocalDependencyManager from '../../src/common/dependency-manager/local-manager';
 import { DockerComposeUtils } from '../../src/common/docker-compose';
 import DockerComposeTemplate from '../../src/common/docker-compose/template';
-import { resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
+import { ComponentSlugUtils, resourceRefToNodeRef, ServiceNode } from '../../src/dependency-manager/src';
 import IngressEdge from '../../src/dependency-manager/src/graph/edge/ingress';
 import { TaskNode } from '../../src/dependency-manager/src/graph/node/task';
 
@@ -788,6 +788,114 @@ describe('components spec v1', function () {
       const config = await manager.loadComponentSpec('architect/cloud:latest');
 
       await manager.getGraph([config], { '*': { app_replicas: '<redacted>' } }, true, false);
+    });
+
+    it('test account scoping', async () => {
+      const combinations = [
+        {
+          cloud: 'architect/cloud',
+          api: 'architect/cloud-api',
+          dependency: 'architect/cloud-api',
+          account: 'architect'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'cloud-api',
+          dependency: 'architect/cloud-api',
+          account: 'architect'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'architect/cloud-api',
+          dependency: 'cloud-api',
+          account: 'architect'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'cloud-api',
+          dependency: 'cloud-api',
+          account: 'architect'
+        },
+        // Other
+        {
+          cloud: 'architect/cloud',
+          api: 'architect/cloud-api',
+          dependency: 'architect/cloud-api',
+          account: 'other'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'cloud-api',
+          dependency: 'architect/cloud-api',
+          account: 'other'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'architect/cloud-api',
+          dependency: 'cloud-api',
+          account: 'other'
+        },
+        {
+          cloud: 'architect/cloud',
+          api: 'cloud-api',
+          dependency: 'cloud-api',
+          account: 'other'
+        },
+      ]
+
+      for (const combination of combinations) {
+        const cloud_component_config_yml = `
+        name: ${combination.cloud}
+        dependencies:
+          ${combination.dependency}: latest
+        services:
+          app:
+            interfaces:
+              main: 8080
+            environment:
+              API_ADDR: \${{ dependencies.${combination.dependency}.interfaces.api.url }}
+      `
+        const api_component_config_yml = `
+        name: ${combination.api}
+        parameters:
+          api_replicas:
+            default: 1
+        interfaces:
+          api: \${{ services.api.interfaces.main.url }}
+        services:
+          api:
+            replicas: \${{ parameters.api_replicas }}
+            interfaces:
+              main: 8080
+      `
+
+        mock_fs({
+          '/stack/cloud/architect.yml': cloud_component_config_yml,
+          '/stack/api/architect.yml': api_component_config_yml,
+        });
+
+        const manager = new LocalDependencyManager(axios.create(), {
+          [combination.cloud]: '/stack/cloud',
+          [combination.api]: '/stack/api',
+          [combination.dependency]: '/stack/api',
+        });
+        manager.account = combination.account;
+        const configs = await manager.loadComponentSpecs(`${combination.cloud}:latest`);
+
+        const { component_account_name: cloud_account_name } = ComponentSlugUtils.parse(combination.cloud);
+        const { component_account_name: api_account_name } = ComponentSlugUtils.parse(combination.dependency);
+
+        const graph = await manager.getGraph(configs, { [combination.dependency]: { api_replicas: 2 } });
+        const api_node_ref = resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api.services.api`);
+        expect(graph.nodes.map((node) => node.ref)).to.have.members([
+          resourceRefToNodeRef(`${combination.account && cloud_account_name === combination.account ? '' : `${cloud_account_name}/`}cloud.services.app`),
+          api_node_ref,
+          resourceRefToNodeRef(`${(combination.account && api_account_name === combination.account) || !api_account_name ? '' : `${api_account_name}/`}cloud-api`)
+        ])
+
+        const api_node = graph.getNodeByRef(api_node_ref) as ServiceNode;
+        expect(api_node.config.replicas).to.equal(2);
+      }
     });
   });
 });

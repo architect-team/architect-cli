@@ -241,15 +241,17 @@ export default abstract class DependencyManager {
     }
   }
 
-  getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | null>>): Dictionary<ParameterValue> {
+  getSecretsForComponentSpec(component_spec: ComponentSpec, all_values: Dictionary<Dictionary<string | number | null>>): Dictionary<ParameterValue> {
     // pre-sort values dictionary to properly stack/override any colliding keys
     const sorted_values_keys = Object.keys(all_values).sort();
-    const sorted_values_dict: Dictionary<Dictionary<string | null>> = {};
+    const sorted_values_dict: Dictionary<Dictionary<string | number | null>> = {};
     for (const key of sorted_values_keys) {
       sorted_values_dict[key] = all_values[key];
     }
 
     const component_ref = component_spec.metadata.ref;
+    const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(component_ref);
+    const component_ref_with_account = component_account_name ? component_ref : ComponentSlugUtils.build(this.account, component_name, instance_name);
 
     const component_parameters = new Set(Object.keys(component_spec.parameters || {}));
 
@@ -262,7 +264,7 @@ export default abstract class DependencyManager {
         const { component_account_name, component_name, instance_name } = ComponentVersionSlugUtils.parse(pattern);
         pattern = ComponentSlugUtils.build(component_account_name, component_name, instance_name);
       }
-      if (isMatch(component_ref, [pattern])) {
+      if (isMatch(component_ref, [pattern]) || isMatch(component_ref_with_account, [pattern])) {
         for (const [param_key, param_value] of Object.entries(params)) {
           if (component_parameters.has(param_key)) {
             res[param_key] = param_value;
@@ -303,7 +305,7 @@ export default abstract class DependencyManager {
     return res;
   }
 
-  getDependencyComponents(component_spec: ComponentSpec, component_specs: ComponentSpec[]): ComponentSpec[] {
+  getDependencyComponents(component_spec: ComponentSpec, component_specs: ComponentSpec[]): Dictionary<ComponentSpec> {
     const component_map: Dictionary<ComponentSpec[]> = {};
     for (const component_spec of component_specs) {
       const ref = component_spec.metadata.ref;
@@ -314,8 +316,12 @@ export default abstract class DependencyManager {
       component_map[ref].push(component_spec);
     }
 
-    const dependency_components = [];
-    for (const dep_ref of Object.keys(component_spec.dependencies || {})) {
+    const dependency_components: Dictionary<ComponentSpec> = {};
+    for (const dep_name of Object.keys(component_spec.dependencies || {})) {
+      const { component_account_name, component_name } = ComponentSlugUtils.parse(dep_name);
+      const resolved_account = this.account && this.account === component_account_name ? undefined : component_account_name;
+      const dep_ref = ComponentSlugUtils.build(resolved_account, component_name);
+
       if (!component_map[dep_ref]) {
         continue;
       }
@@ -327,7 +333,7 @@ export default abstract class DependencyManager {
       if (!dep_component) {
         continue;
       }
-      dependency_components.push(dep_component);
+      dependency_components[dep_name] = dep_component;
     }
     return dependency_components;
   }
@@ -395,7 +401,7 @@ export default abstract class DependencyManager {
 
   abstract getArchitectContext(): ArchitectContext;
 
-  async getGraph(component_specs: ComponentSpec[], all_secrets: Dictionary<Dictionary<string | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
+  async getGraph(component_specs: ComponentSpec[], all_secrets: Dictionary<Dictionary<string | number | null>> = {}, interpolate = true, validate = true, external_addr: string): Promise<DependencyGraph> {
     if (validate) {
       this.detectCircularDependencies(component_specs);
       ValuesConfig.validate(all_secrets);
@@ -581,7 +587,7 @@ export default abstract class DependencyManager {
     for (const component_spec of evaluated_component_specs) {
       const component_config = transformComponentSpec(component_spec);
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
-      const dependency_configs = dependency_specs.map(d => transformComponentSpec(d));
+      const dependency_configs = Object.values(dependency_specs).map(d => transformComponentSpec(d));
       this.addComponentEdges(graph, component_config, dependency_configs, dependency_context_map, external_addr);
 
       for (const edge of graph.edges) {
@@ -616,17 +622,16 @@ export default abstract class DependencyManager {
 
       const dependency_specs = this.getDependencyComponents(component_spec, component_specs);
       context.dependencies = {};
-      for (const dependency_spec of dependency_specs) {
+      for (const [dep_name, dependency_spec] of Object.entries(dependency_specs)) {
         const dependency_context = dependency_context_map[dependency_spec.metadata.ref];
-        context.dependencies[dependency_spec.name] = {
+        context.dependencies[dep_name] = {
           ingresses: dependency_context.ingresses || {},
           interfaces: dependency_context.interfaces || {},
           outputs: dependency_context.outputs || {},
         };
 
-
         if (component_spec.metadata.proxy_port_mapping) {
-          for (const [dependency_interface_name, dependency_interface] of Object.entries(context.dependencies[dependency_spec.name].interfaces)) {
+          for (const [dependency_interface_name, dependency_interface] of Object.entries(context.dependencies[dep_name].interfaces)) {
             const sidecar_service = `${buildInterfacesRef(dependency_spec)}--${dependency_interface_name}`;
             component_spec.metadata.proxy_port_mapping[sidecar_service];
             if (!component_spec.metadata.proxy_port_mapping[sidecar_service]) {
@@ -640,11 +645,11 @@ export default abstract class DependencyManager {
         }
 
         // Deprecated: environment.ingresses
-        if (!context.environment.ingresses[dependency_spec.name]) {
-          context.environment.ingresses[dependency_spec.name] = {};
+        if (!context.environment.ingresses[dep_name]) {
+          context.environment.ingresses[dep_name] = {};
         }
-        for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dependency_spec.name].ingresses)) {
-          context.environment.ingresses[dependency_spec.name][dep_ingress_name] = dep_ingress;
+        for (const [dep_ingress_name, dep_ingress] of Object.entries(context.dependencies[dep_name].ingresses)) {
+          context.environment.ingresses[dep_name][dep_ingress_name] = dep_ingress;
         }
       }
 
