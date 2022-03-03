@@ -163,9 +163,9 @@ describe('template', () => {
         'examples/hello-world': '/stack/architect.yml',
       });
       const graph = await manager.getGraph([
-        await manager.loadComponentSpec('examples/hello-world', {}, { map_all_interfaces: true }),
+        await manager.loadComponentSpec('examples/hello-world', { map_all_interfaces: true }),
       ]);
-      const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
       const node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(node.config.environment).to.deep.eq({
         LOCAL: '1',
@@ -217,7 +217,7 @@ describe('template', () => {
       const graph = await manager.getGraph([
         await manager.loadComponentSpec('examples/hello-world'),
       ]);
-      const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+      const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
       const api_node = graph.getNodeByRef(api_ref) as ServiceNode;
       expect(api_node.config.environment).to.deep.eq({
         DB_HOST: 'db.aws.com',

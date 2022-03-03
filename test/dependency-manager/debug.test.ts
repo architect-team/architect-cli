@@ -45,7 +45,7 @@ describe('debug spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.command).to.deep.eq(['bash', '-c', 'echo "debug"'])
     expect(node.config.environment).to.deep.eq({
@@ -80,7 +80,7 @@ describe('debug spec v1', () => {
     const graph = await manager.getGraph([
       await manager.loadComponentSpec('examples/hello-world'),
     ]);
-    const api_ref = resourceRefToNodeRef('examples/hello-world/api:latest');
+    const api_ref = resourceRefToNodeRef('examples/hello-world.services.api');
     const node = graph.getNodeByRef(api_ref) as ServiceNode;
     expect(node.config.environment).to.deep.eq({
       NODE_ENV: 'production'

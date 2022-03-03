@@ -17,18 +17,18 @@ export class ScalingMetricsSpec {
   @IsOptional()
   @JSONSchema({
     ...ExpressionOr({ type: 'number' }),
-    description: 'The cpu usage required to trigger scaling. This field is disjunctive with `memory` (only one of `cpu` or `memory` can be set).',
-    externalDocs: { url: '/docs/configuration/services#cpu--memory' },
+    description: 'The cpu usage required to trigger scaling.',
+    externalDocs: { url: '/docs/components/services/#cpu--memory' },
   })
   cpu?: number | string;
 
   @IsOptional()
   @JSONSchema({
-    ...ExpressionOrString(),
-    description: 'The memory usage required to trigger scaling. This field is disjunctive with `cpu` (only one of `memory` or `cpu` can be set).',
-    externalDocs: { url: '/docs/configuration/services#cpu--memory' },
+    ...ExpressionOr({ type: 'number' }),
+    description: 'The memory usage required to trigger scaling.',
+    externalDocs: { url: '/docs/components/services/#cpu--memory' },
   })
-  memory?: string;
+  memory?: number | string;
 }
 
 @JSONSchema({
@@ -138,10 +138,10 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: ExpressionOr(AnyOf(ServiceInterfaceSpec, 'number')),
+      [Slugs.ArchitectSlugValidator.source]: ExpressionOr(AnyOf(ServiceInterfaceSpec, 'number')),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named interfaces to expose service functionality over the network to other services within the same component. A `string` or `number` represents the TCP port that the service is listening on. For more detailed configuration, specify a full `ServiceInterfaceSpec` object.',
   })
@@ -152,10 +152,10 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(SidecarSpec),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(SidecarSpec),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of services to run as a sidecar for this service.',
   })
@@ -170,10 +170,10 @@ export class ServiceSpec extends ResourceSpec {
   @JSONSchema({
     type: 'object',
     patternProperties: {
-      [Slugs.ArchitectSlugNoMaxLengthValidator.source]: AnyOf(VolumeSpec, 'string'),
+      [Slugs.ArchitectSlugValidator.source]: AnyOf(VolumeSpec, 'string'),
     },
     errorMessage: {
-      additionalProperties: Slugs.ArchitectSlugDescriptionNoMaxLength,
+      additionalProperties: Slugs.ArchitectSlugDescription,
     },
     description: 'A set of named volumes to be mounted at deploy-time. Take advantage of volumes to store data that should be shared between running containers or that should persist beyond the lifetime of a container.',
   })

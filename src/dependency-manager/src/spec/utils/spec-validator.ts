@@ -8,8 +8,7 @@ import { ValidationError, ValidationErrors } from '../../utils/errors';
 import { buildContextMap, replaceBrackets } from '../../utils/interpolation';
 import { findPotentialMatch } from '../../utils/match';
 import { ParsedYaml } from '../../utils/types';
-import { ComponentSpec } from '../component-spec';
-import { IF_EXPRESSION_REGEX } from './interpolation';
+import { ComponentInstanceMetadata, ComponentSpec } from '../component-spec';
 import { findDefinition, getArchitectJSONSchema } from './json-schema';
 
 export type AjvError = ErrorObject[] | null | undefined;
@@ -92,7 +91,7 @@ export const mapAjvErrors = (parsed_yml: ParsedYaml, ajv_errors: AjvError): Vali
       continue;
     }
     const normalized_path = replaceBrackets(data_path);
-    let value = context_map[normalized_path?.startsWith('.') ? normalized_path.substr(1) : normalized_path];
+    let value = context_map[normalized_path?.startsWith('.') ? normalized_path.substring(1) : normalized_path];
 
     if (value instanceof Object && JSON.stringify(value).length > 1000) {
       value = '<truncated-object>';
@@ -131,28 +130,6 @@ export const validateSpec = (parsed_yml: ParsedYaml): ValidationError[] => {
     return mapAjvErrors(parsed_yml, _cached_validate.errors);
   }
   return [];
-};
-
-
-export const validateServiceAndTaskKeys = (component: ComponentSpec): ValidationError[] => {
-  const errors = [];
-
-  // checks for duplicate keys across the two dictionaries
-  const service_keys = Object.keys(component.services || {});
-  const task_keys = Object.keys(component.tasks || {});
-  const duplicates = service_keys.filter(s => task_keys.includes(s)).filter(s => !IF_EXPRESSION_REGEX.test(s));
-
-  if (duplicates.length) {
-    const error = new ValidationError({
-      component: component.name,
-      path: 'services',
-      message: 'services and tasks must not share the same keys',
-      value: duplicates,
-    });
-    errors.push(error);
-  }
-
-  return errors;
 };
 
 export const isPartOfCircularReference = (search_name: string, depends_on_map: { [name: string]: string[] }, current_name?: string, seen_names: string[] = []): boolean => {
@@ -231,7 +208,7 @@ export const validateDependsOn = (component: ComponentSpec): ValidationError[] =
   return errors;
 };
 
-export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
+export const validateOrRejectSpec = (parsed_yml: ParsedYaml, metadata?: ComponentInstanceMetadata): ComponentSpec => {
   const errors = validateSpec(parsed_yml);
 
   if (errors && errors.length) {
@@ -239,14 +216,17 @@ export const validateOrRejectSpec = (parsed_yml: ParsedYaml): ComponentSpec => {
   }
 
   const component_spec = plainToClass(ComponentSpec, parsed_yml);
-  component_spec.metadata = {
-    ref: `${component_spec.name}:latest`,
-    tag: 'latest',
-    instance_date: new Date(),
-    proxy_port_mapping: {},
-  };
 
-  errors.push(...validateServiceAndTaskKeys(component_spec));
+  if (metadata) {
+    component_spec.metadata = metadata;
+  } else {
+    component_spec.metadata = {
+      ref: component_spec.name,
+      tag: 'latest',
+      instance_date: new Date(),
+    };
+  }
+
   errors.push(...validateDependsOn(component_spec));
 
   if (errors && errors.length) {

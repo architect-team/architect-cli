@@ -25,8 +25,8 @@ When you run the component locally the task will be configured but won't run on 
 $ architect link .
 
 # Deploy the component locally
-$ architect dev examples/scheduled-tasks:latest
+$ architect dev scheduled-tasks
 
 # In another terminal session, execute the task
-$ architect task:exec --local examples/basic-task:latest curler
+$ architect task:exec --local scheduled-tasks curler
 ```

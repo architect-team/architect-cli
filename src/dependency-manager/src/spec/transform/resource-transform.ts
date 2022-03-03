@@ -3,17 +3,7 @@ import { BuildConfig, ResourceConfig } from '../../config/resource-config';
 import { Dictionary } from '../../utils/dictionary';
 import { ComponentInstanceMetadata } from '../component-spec';
 import { BuildSpec, EnvironmentSpecValue, ResourceSpec } from '../resource-spec';
-import { ComponentVersionSlugUtils, ServiceVersionSlugUtils } from '../utils/slugs';
-
-export const transformResourceSpecName = (name: string | undefined): string => {
-  const split = ServiceVersionSlugUtils.parse(name || '');
-  return split.service_name;
-};
-
-export const transformResourceSpecTag = (name: string | undefined): string => {
-  const split = ServiceVersionSlugUtils.parse(name || '');
-  return split.tag;
-};
+import { ComponentSlugUtils, ResourceSlugUtils, ResourceType } from '../utils/slugs';
 
 export const transformResourceSpecCommand = (command: string | string[] | undefined): string[] => {
   if (!command) return [];
@@ -79,13 +69,15 @@ export const transformBuildSpec = (build: BuildSpec | undefined, image?: string)
   };
 };
 
-export const transformResourceSpec = (key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
+export const transformResourceSpec = (resource_type: ResourceType, key: string, spec: ResourceSpec, metadata: ComponentInstanceMetadata): ResourceConfig => {
   const environment = transformResourceSpecEnvironment(spec.environment);
-  const { component_account_name, component_name } = ComponentVersionSlugUtils.parse(metadata.ref);
+  const { component_account_name, component_name, instance_name } = ComponentSlugUtils.parse(metadata.ref);
   return {
     name: key,
-    ref: ServiceVersionSlugUtils.build(component_account_name, component_name, key, metadata.tag, metadata?.instance_name),
-    tag: metadata.tag,
+    metadata: {
+      ...metadata,
+      ref: ResourceSlugUtils.build(component_account_name, component_name, resource_type, key, instance_name),
+    },
     description: spec.description,
     image: spec.image,
     command: transformResourceSpecCommand(spec.command),

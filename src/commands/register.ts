@@ -12,7 +12,7 @@ import Command from '../base-command';
 import MissingContextError from '../common/errors/missing-build-context';
 import * as Docker from '../common/utils/docker';
 import { oras } from '../common/utils/oras';
-import { ArchitectError, ComponentSlugUtils, Refs, ResourceSpec, Slugs } from '../dependency-manager/src';
+import { ArchitectError, ComponentSlugUtils, Refs, ResourceSlugUtils, ResourceSpec, Slugs } from '../dependency-manager/src';
 import { buildSpecFromPath, dumpToYml } from '../dependency-manager/src/spec/utils/component-builder';
 import { IF_EXPRESSION_REGEX } from '../dependency-manager/src/spec/utils/interpolation';
 import { Dictionary } from '../dependency-manager/src/utils/dictionary';
@@ -25,6 +25,7 @@ export default class ComponentRegister extends Command {
 
   static flags = {
     ...Command.flags,
+    ...AccountUtils.flags,
     arg: Flags.string({
       description: 'Build arg(s) to pass to docker build',
       multiple: true,
@@ -78,6 +79,8 @@ export default class ComponentRegister extends Command {
   }
 
   private async registerComponent(config_path: string, tag: string) {
+    const { flags } = await this.parse(ComponentRegister);
+
     // here we validate spec and config, but only need to send the spec to the API so we don't need the resulting config
     const component_spec = buildSpecFromPath(config_path);
 
@@ -88,8 +91,8 @@ export default class ComponentRegister extends Command {
       throw new Error('Component Config must have a name');
     }
 
-    const account_name = new_spec.name.split('/')[0];
-    const selected_account = await AccountUtils.getAccount(this.app, account_name);
+    const { component_account_name, component_name } = ComponentSlugUtils.parse(new_spec.name);
+    const selected_account = await AccountUtils.getAccount(this.app, component_account_name || flags.account);
 
     const tmpobj = tmp.dirSync({ mode: 0o750, prefix: Refs.safeRef(`${new_spec.name}:${tag}`), unsafeCleanup: true });
     let set_artifact_image = false;
@@ -101,7 +104,9 @@ export default class ComponentRegister extends Command {
       if (!service_config.build && !service_config.image) {
         service_config.build = { context: '.', dockerfile: 'Dockerfile' };
       }
-      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}:${tag}`;
+
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'services', service_name);
+      const image_tag = `${this.app.config.registry_host}/${ref}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, service_name, service_config, image_tag);
       service_config.image = image;
 
@@ -115,7 +120,7 @@ export default class ComponentRegister extends Command {
         if (!sidecar_config.build && !sidecar_config.image) {
           sidecar_config.build = { context: '.', dockerfile: 'Dockerfile' };
         }
-        const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${service_name}-${sidecar_name}:${tag}`;
+        const image_tag = `${this.app.config.registry_host}/${ref}.sidecars.${sidecar_name}:${tag}`;
         const image = await this.pushImageIfNecessary(config_path, service_name, sidecar_config, image_tag);
         sidecar_config.image = image;
       }
@@ -130,7 +135,8 @@ export default class ComponentRegister extends Command {
       if (!task_config.build && !task_config.image) {
         task_config.build = { context: '.', dockerfile: 'Dockerfile' };
       }
-      const image_tag = `${this.app.config.registry_host}/${new_spec.name}-${task_name}:${tag}`;
+      const ref = ResourceSlugUtils.build(selected_account.name, component_name, 'tasks', task_name);
+      const image_tag = `${this.app.config.registry_host}/${ref}:${tag}`;
       const image = await this.pushImageIfNecessary(config_path, task_name, task_config, image_tag);
       task_config.image = image;
     }
@@ -141,14 +147,16 @@ export default class ComponentRegister extends Command {
       }
     }
 
+    const config = classToPlain(new_spec);
+    delete config.metadata;
     const component_dto = {
       tag: tag,
-      config: classToPlain(new_spec),
+      config: config,
     };
 
     let previous_config_data;
     try {
-      previous_config_data = (await this.app.api.get(`/accounts/${account_name}/components/${ComponentSlugUtils.parse(new_spec.name).component_name}/versions/${tag || 'latest'}`)).data.config;
+      previous_config_data = (await this.app.api.get(`/accounts/${selected_account.name}/components/${component_name}/versions/${tag || 'latest'}`)).data.config;
       /* eslint-disable-next-line no-empty */
     } catch { }
 

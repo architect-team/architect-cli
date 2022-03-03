@@ -1,11 +1,11 @@
-name: examples/scheduled-tasks
+name: scheduled-tasks
 description: Example application that calls the API once per 5 minutes and prints the results; showcasing Tasks (cron jobs)
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/scheduled-tasks
 
 tasks:
   curler:
     image: ellerbrock/alpine-bash-curl-ssl # useful public image with bash and curl pre-installed
-    schedule: "0 0 * * *" # every day at 12:00am
+    schedule: '0 0 * * *' # every day at 12:00am
     command:
       - sh
       - -c

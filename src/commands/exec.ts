@@ -165,25 +165,21 @@ export default class Exec extends Command {
 
     let component_account_name: string | undefined;
     let component_name: string | undefined;
-    let service_name: string | undefined;
+    let resource_name: string | undefined;
     let tag: string | undefined;
     let instance_name: string | undefined;
     if (args.resource) {
       const parsed = parseUnknownSlug(args.resource);
       component_account_name = parsed.component_account_name;
       component_name = parsed.component_name;
-      service_name = parsed.service_name;
-      tag = parsed.tag;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      instance_name = parsed.instance_name; //TODO:534
+      resource_name = parsed.resource_name;
+      instance_name = parsed.instance_name;
     }
 
     const replica_query = {
       component_account_name,
       component_name,
-      component_resource_name: service_name,
-      component_tag: tag,
+      component_resource_name: resource_name,
       component_instance_name: instance_name,
     };
 
@@ -215,14 +211,14 @@ export default class Exec extends Command {
 
     const environment_name = await DockerComposeUtils.getLocalEnvironment(this.app.config.getConfigDir(), flags.environment);
     const compose_file = DockerComposeUtils.buildComposeFilepath(this.app.config.getConfigDir(), environment_name);
-    const service_name = await DockerComposeUtils.getLocalServiceForEnvironment(environment_name, compose_file, args.resource);
+    const service = await DockerComposeUtils.getLocalServiceForEnvironment(compose_file, args.resource);
 
     const compose_args = ['-f', compose_file, '-p', environment_name, 'exec'];
     // https://docs.docker.com/compose/reference/exec/
     if (!flags.tty || !process.stdout.isTTY) {
       compose_args.push('-T');
     }
-    compose_args.push(service_name);
+    compose_args.push(service.name);
     compose_args.push(args.command);
 
     // execa has an issue where the go library thinks it is not an interactive terminal
@@ -249,7 +245,7 @@ export default class Exec extends Command {
     }
 
     // If no env is set then we don't know if this is local or remote so ask
-    const account = await AccountUtils.getAccount(this.app, flags.account, undefined, !flags.environment);
+    const account = await AccountUtils.getAccount(this.app, flags.account, { ask_local_account: !flags.environment });
 
     if (AccountUtils.isLocalAccount(account)) {
       return await this.runLocal();

@@ -32,7 +32,7 @@ describe('superset spec validation', function () {
       const manager = new LocalDependencyManager(axios.create());
       const graph = await manager.getGraph([component_spec], values_obj);
 
-      const db_ref = resourceRefToNodeRef(`${component_spec.name}/api-db:latest`);
+      const db_ref = resourceRefToNodeRef(`${component_spec.name}.services.api-db`);
       const db_node = graph.getNodeByRef(db_ref) as ServiceNode;
 
       expect(db_node.config.environment.POSTGRES_USER).to.equal('{\n  "multiline": "value"\n}')
@@ -55,7 +55,7 @@ describe('superset spec validation', function () {
       const manager = new LocalDependencyManager(axios.create());
       const graph = await manager.getGraph([component_spec], values_obj);
 
-      const db_ref = resourceRefToNodeRef(`${component_spec.name}/api-db:latest`);
+      const db_ref = resourceRefToNodeRef(`${component_spec.name}.services.api-db`);
       const db_node = graph.getNodeByRef(db_ref) as ServiceNode;
 
       expect(db_node.config.environment.POSTGRES_USER).to.equal(values_obj['*'].param_string);

@@ -127,8 +127,8 @@ describe('Refs.safeRef', () => {
 
   it(`Refs.safeRef with max_length of 31 cuts component string to 31 chars with seed`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
-    const abridged_slug = `boutique-shop-frontend-w1slfipr`;
+    const service_ref = `example/boutique-shop/frontend`;
+    const abridged_slug = `boutique-shop-frontend-mwwd9bxo`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref, 31);
     expect(safe_ref).to.equal(abridged_slug);
@@ -139,7 +139,7 @@ describe('Refs.safeRef', () => {
 
   it(`Refs.trimSafeRef check hash stays the same`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
+    const service_ref = `example/boutique-shop/frontend`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref);
     const safe_hash = safe_ref.split('-').pop();
@@ -153,7 +153,7 @@ describe('Refs.safeRef', () => {
 
   it(`Refs.trimSafeRef check hash stays the same with prefix`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
+    const service_ref = `example/boutique-shop/frontend`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref);
     const safe_hash = safe_ref.split('-').pop();
@@ -169,7 +169,7 @@ describe('Refs.safeRef', () => {
 
   it(`Refs.trimSafeRef nothing changes if length is larger`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
+    const service_ref = `example/boutique-shop/frontend`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref);
     const safe_hash = safe_ref.split('-').pop();
@@ -183,7 +183,7 @@ describe('Refs.safeRef', () => {
 
   it(`Refs.trimSafeRef suffix`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
+    const service_ref = `example/boutique-shop/frontend`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref);
     const safe_hash = safe_ref.split('-').pop();
@@ -194,12 +194,12 @@ describe('Refs.safeRef', () => {
     expect(safe_hash).to.equal(trim_hash);
     expect(trim_ref).to.not.equal(safe_ref);
     expect(trim_ref.length).to.be.lessThan(trim_length);
-    expect(trim_ref).to.equal('boutique-shop-frontend-main-w1slfipr');
+    expect(trim_ref).to.equal('boutique-shop-frontend-main-mwwd9bxo');
   });
 
   it(`Refs.trimSafeRef suffix shorten`, async () => {
     const service_name = `boutique-shop-frontend`
-    const service_ref = `example/boutique-shop/frontend:latest`;
+    const service_ref = `example/boutique-shop/frontend`;
 
     const safe_ref = Refs.safeRef(service_name, service_ref);
     const safe_hash = safe_ref.split('-').pop();
@@ -211,6 +211,6 @@ describe('Refs.safeRef', () => {
     expect(safe_hash).to.equal(trim_hash);
     expect(trim_ref).to.not.equal(safe_ref);
     expect(trim_ref.length).to.be.equal(trim_length);
-    expect(trim_ref).to.equal(`boutique-shop-fron${suffix}-w1slfipr`);
+    expect(trim_ref).to.equal(`boutique-shop-fron${suffix}-mwwd9bxo`);
   });
 });

@@ -1,4 +1,4 @@
-name: examples/react-app
+name: react-app
 description: |
   Example component that includes a Next.js frontend, Node.js backend, and a postgres database.
 homepage: https://github.com/architect-team/architect-cli/tree/master/examples/react-app

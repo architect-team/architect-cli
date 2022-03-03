@@ -5,7 +5,7 @@ import { EnvironmentUtils } from '../architect/environment/environment.utils';
 import Command from '../base-command';
 import { DockerComposeUtils } from '../common/docker-compose';
 import * as Docker from '../common/utils/docker';
-import { ComponentVersionSlugUtils, resourceRefToNodeRef, ServiceVersionSlugUtils } from '../dependency-manager/src';
+import { ComponentVersionSlugUtils, resourceRefToNodeRef, ResourceSlugUtils } from '../dependency-manager/src';
 
 export default class TaskExec extends Command {
   static aliases = ['task:exec'];
@@ -97,7 +97,7 @@ export default class TaskExec extends Command {
       throw new Error(`Error parsing component: ${err}`);
     }
 
-    const slug = ServiceVersionSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, args.task, parsed_slug.tag, parsed_slug.instance_name);
+    const slug = ResourceSlugUtils.build(parsed_slug.component_account_name, parsed_slug.component_name, 'tasks', args.task, parsed_slug.instance_name);
     const ref = resourceRefToNodeRef(slug);
     const service_name = Object.keys(compose.services).find(name => name === ref);
     if (!service_name) {
@@ -131,7 +131,6 @@ export default class TaskExec extends Command {
       component_name: parsed_slug.component_name,
       instance_name: parsed_slug.instance_name,
       task_name: args.task,
-      tag: parsed_slug.tag,
     });
     CliUx.ux.action.stop();
 

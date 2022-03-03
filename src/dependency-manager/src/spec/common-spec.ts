@@ -134,7 +134,7 @@ export class VolumeSpec {
   @JSONSchema({
     ...ExpressionOrString(),
     description: 'A reference to the underlying volume on the deployment platform of choice. The `docker-compose` volume name, the name of the Kubernetes PersistentVolumeClaim, or the EFS ID of an AWS volume. This field is disjunctive with `host_path` (only one of `key` or `host_path` can be set).',
-    externalDocs: { url: '/docs/configuration/services#volumes' },
+    externalDocs: { url: '/docs/components/services/#volumes' },
   })
   key?: string;
 
