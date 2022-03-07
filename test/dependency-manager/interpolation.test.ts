@@ -230,7 +230,7 @@ describe('interpolation spec v1', () => {
       "labels": [
         `architect.ref=${web_resource_ref}`,
         "traefik.enable=true",
-        "traefik.port=81",
+        "traefik.port=80",
         `traefik.http.routers.${web_ref}-main.rule=Host(\`public.arc.localhost\`)`,
         `traefik.http.routers.${web_ref}-main.service=${web_ref}-main-service`,
         `traefik.http.services.${web_ref}-main-service.loadbalancer.server.port=8080`,

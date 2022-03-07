@@ -8,7 +8,6 @@ import { buildSpecFromPath } from '../../dependency-manager/src/spec/utils/compo
 import { IF_EXPRESSION_REGEX } from '../../dependency-manager/src/spec/utils/interpolation';
 import { generateIngressesOverrideSpec, overrideSpec } from '../../dependency-manager/src/spec/utils/spec-merge';
 import { Dictionary } from '../../dependency-manager/src/utils/dictionary';
-import PortUtil from '../utils/port';
 
 export interface ComponentConfigOpts {
   interfaces?: Dictionary<string>;
@@ -21,6 +20,7 @@ export default class LocalDependencyManager extends DependencyManager {
   linked_components: Dictionary<string>;
   use_sidecar = false;
   environment = 'local';
+  gateway_port = 80;
   now = new Date();
 
   loaded_components: Dictionary<ComponentSpec> = {};
@@ -169,8 +169,7 @@ export default class LocalDependencyManager extends DependencyManager {
   }
 
   async getGraph(component_specs: ComponentSpec[], values: Dictionary<Dictionary<string | number | null>> = {}, interpolate = true, validate = true): Promise<DependencyGraph> {
-    const gateway_port = await PortUtil.getAvailablePort(80);
-    const external_addr = `arc.localhost:${gateway_port}`;
+    const external_addr = `arc.localhost:${this.gateway_port}`;
     return super.getGraph(component_specs, values, interpolate, validate, external_addr);
   }
 }

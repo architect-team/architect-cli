@@ -13,6 +13,7 @@ import { DockerComposeUtils } from '../common/docker-compose';
 import DockerComposeTemplate from '../common/docker-compose/template';
 import DeployUtils from '../common/utils/deploy.utils';
 import * as Docker from '../common/utils/docker';
+import PortUtil from '../common/utils/port';
 import { buildSpecFromPath, ComponentSlugUtils, ComponentSpec, ComponentVersionSlugUtils } from '../dependency-manager/src';
 
 export default class Dev extends BaseCommand {
@@ -64,7 +65,10 @@ export default class Dev extends BaseCommand {
       default: false,
       description: '[default: false] Build docker images in parallel',
     }),
-
+    port: Flags.integer({
+      default: 80,
+      description: '[default: 80] Port for the gateway',
+    }),
     // Used for proxy from deploy to dev. These will be removed once --local is deprecated
     local: Flags.boolean({
       char: 'l',
@@ -250,6 +254,12 @@ export default class Dev extends BaseCommand {
       this.app.api,
       linked_components
     );
+
+    const port_available = await PortUtil.isPortAvailable(flags.port, true);
+    if (!port_available) {
+      this.error(`Could not run architect on port ${flags.port}.\nPlease stop an existing process or specify --port to choose a different port.`);
+    }
+    dependency_manager.gateway_port = flags.port;
 
     if (flags.account) {
       const account = await AccountUtils.getAccount(this.app, flags.account);
