@@ -163,7 +163,7 @@ http://localhost:80/ => gateway
 # begin log stream...
 ```
 
-The command above will transform the component into a fully enriched docker-compose template and then execute it automatically. After a few seconds you should see the each application indicate that its ready for traffic, and at that point you can open http://app.localhost in your browser!
+The command above will transform the component into a fully enriched docker-compose template and then execute it automatically. After a few seconds you should see the each application indicate that its ready for traffic, and at that point you can open http://app.arc.localhost in your browser!
 
 ## Make your own changes
 
