@@ -289,4 +289,4 @@ Note: Circular dependencies and self-references are detected and rejected at com
 
 ## Local development
 
-When developing your service locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](7-local-configuration.md).
+When developing your service locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](https://docs.architect.io/deployments/local-environments/).
