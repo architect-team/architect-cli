@@ -9,7 +9,7 @@ symlinks:
 
 The [cloud-native landscape](https://landscape.cncf.io/) is full of powerful tools, but this landscape is constantly changing and the tools aren't designed for the every day developer. If developers hope to take advantage of modern design patterns, they need a framework designed for them instead of the endless landscape of operator-focused tools being forced upon them.
 
-Architect is a self-service developer platform for cloud-native applications – enabling continuous delivery, [service discovery](docs/1-components/2-service-discovery.md), and continuous security all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
+Architect is a self-service developer platform for cloud-native applications – enabling continuous delivery, [service discovery](1-components/2-service-discovery.md), and continuous security all at once. We've taken inspiration from our experiences in big tech and at startups alike to create an simple, developer-focused framework that allows developers to build and extend cloud services like never before.
 
 ## First steps
 

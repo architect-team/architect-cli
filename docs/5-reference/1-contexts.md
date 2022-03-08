@@ -4,7 +4,7 @@ title: Contexts
 
 # Expressions and Context
 
-When writing [`architect.yml`](docs/1-components/architect-yml.md) files, you can reference information about the runtime or environment, details that are otherwise unique to each deployed environment, through Architect's expression syntax. Encoding component's with these references can help limit the manual configuration needs of your services and make them portable from environment to environment.
+When writing [`architect.yml`](1-components/architect-yml.md) files, you can reference information about the runtime or environment, details that are otherwise unique to each deployed environment, through Architect's expression syntax. Encoding component's with these references can help limit the manual configuration needs of your services and make them portable from environment to environment.
 
 ## Available contexts
 
