@@ -95,28 +95,28 @@ Name of the component that can be resolved by others. Component names must be un
 
 A dictionary of named runtimes for the component. Each service described in an `architect.yml` file will be automatically deployed to your container platform and registered with your service mesh and API gateway as needed.
 
-[Learn more about configuring services](/1-components/1-services.md)
+[Learn more about configuring services](docs/1-components/1-services.md)
 
 ### interfaces
 
-A dictionary of named gateways that broker access to the services inside the component. Services inside the same component can always connect to one another via [service discovery](/1-components/2-service-discovery.md), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications. Interfaces allow components to advertise the features that they want others to be able to connect to.
+A dictionary of named gateways that broker access to the services inside the component. Services inside the same component can always connect to one another via [service discovery](docs/1-components/2-service-discovery.md), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications. Interfaces allow components to advertise the features that they want others to be able to connect to.
 
-[Learn more about configuring interfaces](/1-components/3-interfaces.md)
+[Learn more about configuring interfaces](docs/1-components/3-interfaces.md)
 
 ### dependencies
 
 A key-value store of components and their respective tags that this component depends on. Dependency referencing and resolution is a key feature of Architect that enables distribute teams to collaborate without having to get into the specifics of how to operate dependencies.
 
-[Learn more about configuring dependencies](/1-components/4-dependencies.md)
+[Learn more about configuring dependencies](docs/1-components/4-dependencies.md)
 
 ### tasks
 
 A dictionary of named tasks included with the component. Each task described in an `architect.yml` file will run on its specified schedule and/or be made available as an executable via Architects CLI upon deployment.
 
-[Learn more about configuring tasks](/1-components/5-tasks.md)
+[Learn more about configuring tasks](docs/1-components/5-tasks.md)
 
 ### parameters
 
 (optional) A dictionary of named, configurable fields for the component. Each parameter can include a description so that others know what to assign for values, a default value for when deployers don't specify one, and an indication as to whether or not a value is required.
 
-[Learn more about configuring parameters](/1-components/6-parameters.md)
+[Learn more about configuring parameters](docs/1-components/6-parameters.md)
