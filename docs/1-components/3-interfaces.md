@@ -4,7 +4,7 @@ title: Interfaces
 
 # Interfaces
 
-Interfaces are the primary means by which services and components advertise their resolvable addresses to others. By advertising their functionality, they allow other services and components to connect to them. Services inside the same component can always connect to one another via [service discovery](/docs/components/service-discovery), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications.
+Interfaces are the primary means by which services and components advertise their resolvable addresses to others. By advertising their functionality, they allow other services and components to connect to them. Services inside the same component can always connect to one another via [service discovery](https://docs.architect.io/components/service-discovery), but without an interface at the component-level, services will not be able to be resolved by any outside users or applications.
 
 ```yaml
 interfaces:
