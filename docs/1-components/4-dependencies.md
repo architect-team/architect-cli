@@ -26,7 +26,7 @@ Just like with your favorite package manager, developers can cite the names and 
 
 ## Dependency referencing syntax
 
-We've already shown how Architect enables developers to take advantage of [service discovery](https://docs.architect.io/components/service-discovery) for connecting to peer services, and the same approach can be used to connect to the interfaces of component dependencies. Once you've specified a dependency in your component, you can reference the interfaces of said dependency using the `${{ dependencies.*.interfaces.* }}` expression context.
+We've already shown how Architect enables developers to take advantage of [service discovery](/1-components/2-service-discovery.md) for connecting to peer services, and the same approach can be used to connect to the interfaces of component dependencies. Once you've specified a dependency in your component, you can reference the interfaces of said dependency using the `${{ dependencies.*.interfaces.* }}` expression context.
 
 Referencing component-level interfaces is the same as referencing service-level interfaces, and all the same fields are available to developers for referencing:
 

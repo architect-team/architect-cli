@@ -79,7 +79,7 @@ environment:
 
 ## Local development
 
-When developing your task locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](https://docs.architect.io/components/local-configuration).
+When developing your task locally you may want to mount volumes or alter the command that is used in remote environments. Learn more about how to specify with [local configuration](/1-components/7-local-configuration.md).
 
 ## Manual execution
 

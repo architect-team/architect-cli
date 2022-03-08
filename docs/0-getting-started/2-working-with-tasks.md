@@ -65,7 +65,7 @@ In our `my-task` directory, let's create an architect file to define our compone
 touch architect.yml
 ```
 
-Now we can create a Task in the component file just as we would a Service. In this case we'll give the component a brief description, a blank schedule so it runs only when manually executed, and finally we provide the build context as the local directly. We won't cover all the nuance in the task definition here, but the [Component Task docs](https://docs.architect.io/components/tasks) go into more depth, as do the [Task Reference docs](https://docs.architect.io/reference/architect-yml).
+Now we can create a Task in the component file just as we would a Service. In this case we'll give the component a brief description, a blank schedule so it runs only when manually executed, and finally we provide the build context as the local directly. We won't cover all the nuance in the task definition here, but the [Component Task docs](/1-components/5-tasks.md) go into more depth, as do the [Task Reference docs](/5-reference/2-architect.yml).
 
 The `architect.yml`:
 
@@ -127,7 +127,7 @@ want to test can be a tedious experience. To alleviate this, we can make use of 
 our source code when we run the task without having to re-deploy. This can be achieved by updating the
 component with a debug block, re-deploying (just the once) to update the component configuration. We will
 only use a few of the available local development features, but more info can be found in the
-[Local Configuration docs](https://docs.architect.io/components/local-configuration).
+[Local Configuration docs](/1-components/7-local-configuration.md).
 
 Let's update the architect file with the debug block containing a volume mount that overrides the script in
 the container with the script from the local filesystem:
@@ -178,8 +178,8 @@ Hello, world! 👋
 ## Tasks with Parameters
 
 The task we create supports a `GREETING` environment variable, so let's make use of that as we deploy the component by
-setting a value as a parameter. In addition to adding the `parameters` section to the component, we'll also declare the `GREETING` environment variable on the task, and assign it to the value given by the parameter. More information about parameters can be found in the [Components Parameters docs](https://docs.architect.io/components/parameters) and the
-[Parameters Reference docs](https://docs.architect.io/reference/architect-yml).
+setting a value as a parameter. In addition to adding the `parameters` section to the component, we'll also declare the `GREETING` environment variable on the task, and assign it to the value given by the parameter. More information about parameters can be found in the [Components Parameters docs](/1-components/6-parameters.md) and the
+[Parameters Reference docs](/5-reference/2-architect.yml).
 
 The `architect.yml` file:
 

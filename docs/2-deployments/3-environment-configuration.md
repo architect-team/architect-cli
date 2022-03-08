@@ -4,7 +4,7 @@ title: Environment configuration
 
 # Environment configuration
 
-If you've created a component already, you probably saw that components support [parameters](https://docs.architect.io/components/parameters) to allow the runtimes to receive environment-specific configuration. This can be anything ranging from log levels to production database credentials. Whatever it may be, there are a number of ways for these parameter values to be provided, and this document will outline the available methods. We'll assume you have've registered the following two components:
+If you've created a component already, you probably saw that components support [parameters](/1-components/6-parameters.md) to allow the runtimes to receive environment-specific configuration. This can be anything ranging from log levels to production database credentials. Whatever it may be, there are a number of ways for these parameter values to be provided, and this document will outline the available methods. We'll assume you have've registered the following two components:
 
 ```yaml
 # ./component/architect.yml
