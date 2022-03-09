@@ -4,7 +4,7 @@ title: Automated preview environments
 
 # Automated preview environments
 
-One of the largest benefits of Architects framework is that provisioning new environments is **always** limited to a single step, `architect deploy`. No matter how complex the application is or how many [dependencies](1-components/4-dependencies.md) it has, `architect deploy` is able to automatically provision it in a new environment.
+One of the largest benefits of Architects framework is that provisioning new environments is **always** limited to a single step, `architect deploy`. No matter how complex the application is or how many [dependencies](../1-components/4-dependencies.md) it has, `architect deploy` is able to automatically provision it in a new environment.
 
 What this means is that not only can developers run the stack privately, but the stack can also be provisioned automatically whenever there is a new branch or pull request. This automation is perfect for creating _previews_ of impending code changes so that product managers can review and integration tests can be run end to end.
 
